@@ -1,8 +1,10 @@
 #Check if all the py files were downloaded
 
 import os.path
+from platform import platform
 import tkinter
 from tkinter import messagebox
+import platform
 
 def CheckFilesExist():
     Needed_Files=['AutoRewards.py','BlackOutMonitor.py','CBauto.py','CheckFilesExist.py','ClassicArena.py','log.txt','LoopFindImage.py','Main.py','NightMareAttemptText.py','OpenRaid.py','quitAll.py']
@@ -23,3 +25,13 @@ def CheckFilesExist():
         exit()
 if __name__=='__main__':
     CheckFilesExist()
+
+
+def CheckOS():
+    os=platform.system()
+    if os == 'Darwin':
+        print("Mac being used")
+    elif os == 'Windows':
+        print('PC being uses')
+    else:
+        print('I have no idea what OS this is')
