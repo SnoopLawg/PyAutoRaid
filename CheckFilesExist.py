@@ -23,15 +23,20 @@ def CheckFilesExist():
         print('All 11 files were not downloaded. Only',Total_files,'were')
         tkinter.messagebox.showerror(title='ALL FILES NOT DOWNLOADED',message='You are missing files')
         exit()
-if __name__=='__main__':
-    CheckFilesExist()
 
 
 def CheckOS():
     os=platform.system()
     if os == 'Darwin':
         print("Mac being used")
+        exit()
     elif os == 'Windows':
         print('PC being uses')
     else:
         print('I have no idea what OS this is')
+        exit()
+
+if __name__=='__main__':
+    CheckOS()
+    CheckFilesExist()
+    
