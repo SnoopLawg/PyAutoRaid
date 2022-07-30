@@ -9,7 +9,7 @@ from OpenRaid import openRaid
 import os
 import sys
 
-def AutoCB():
+def AutoCB(xCB=1080,yCB=724):
     with open("log.txt", mode='a') as file:
             file.write("\n deleting ads now")
     while pyautogui.locateOnScreen(r"assets\exitAdd.png",confidence=0.8) !=None:
@@ -74,8 +74,7 @@ def AutoCB():
             file.write("\n claim rewards checked")  
     time.sleep(1)
     while pyautogui.locateOnScreen(r"assets\CBhard.png",confidence=0.8) !=None:
-       #NightmareCB
-        pyautogui.click(1080,724)
+        pyautogui.click(xCB,yCB)
         with open("log.txt", mode='a') as file:
                 file.write("\n clicked random location, nightmare")
         while pyautogui.locateOnScreen(r"assets\CBbattle.png",confidence=0.8) !=None:
@@ -170,3 +169,7 @@ def AutoCB():
 
 if __name__=='__main__':
     AutoCB()
+    #NM
+    # AutoCB(1080,724)
+    #Brutal
+    # AutoCB(1080,647)

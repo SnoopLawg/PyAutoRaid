@@ -41,6 +41,10 @@ def ClassicArena():
                     print("confirm tokens")
                     time.sleep(2)
                     pyautogui.click(1304,457)
+                if pyautogui.locateOnScreen(r"assets\classicArenaRefill.png",confidence=0.8) !=None:
+                    battlex,battley=pyautogui.locateCenterOnScreen(r"assets\classicArenaRefill.png",confidence=0.9)
+                    break
+                    
                 LoopFindImage(r"assets\arenaStart.png","\n arena battle started")
                 print("First Battle")
                 while pyautogui.locateOnScreen(r"assets\tapToContinue.png",confidence=0.8) ==None:
@@ -70,6 +74,9 @@ def ClassicArena():
                     print("confirm tokens")
                     time.sleep(2)
                     pyautogui.click(1304,540)
+                if pyautogui.locateOnScreen(r"assets\classicArenaRefill.png",confidence=0.8) !=None:
+                    battlex,battley=pyautogui.locateCenterOnScreen(r"assets\classicArenaRefill.png",confidence=0.9)
+                    break
                 LoopFindImage(r"assets\arenaStart.png","\n arena battle started")
                 print("Second Battle")
                 while pyautogui.locateOnScreen(r"assets\tapToContinue.png",confidence=0.8) ==None:
@@ -99,6 +106,9 @@ def ClassicArena():
                     print("confirm tokens")
                     time.sleep(2)
                     pyautogui.click(1303,625)
+                if pyautogui.locateOnScreen(r"assets\classicArenaRefill.png",confidence=0.8) !=None:
+                    battlex,battley=pyautogui.locateCenterOnScreen(r"assets\classicArenaRefill.png",confidence=0.9)
+                    break
                 LoopFindImage(r"assets\arenaStart.png","\n arena battle started")
                 print("Third Battle")
                 while pyautogui.locateOnScreen(r"assets\tapToContinue.png",confidence=0.8) ==None:
@@ -129,6 +139,9 @@ def ClassicArena():
                     print("confirm tokens")
                     time.sleep(2)
                     pyautogui.click(1304,711)
+                if pyautogui.locateOnScreen(r"assets\classicArenaRefill.png",confidence=0.8) !=None:
+                    battlex,battley=pyautogui.locateCenterOnScreen(r"assets\classicArenaRefill.png",confidence=0.9)
+                    break
                 LoopFindImage(r"assets\arenaStart.png","\n arena battle started")
                 print("Fourth Battle")
                 while pyautogui.locateOnScreen(r"assets\tapToContinue.png",confidence=0.8) ==None:
@@ -159,6 +172,9 @@ def ClassicArena():
                     print("confirm tokens")
                     time.sleep(2)
                     pyautogui.click(1304,798)
+                if pyautogui.locateOnScreen(r"assets\classicArenaRefill.png",confidence=0.8) !=None:
+                    battlex,battley=pyautogui.locateCenterOnScreen(r"assets\classicArenaRefill.png",confidence=0.9)
+                    break
                 LoopFindImage(r"assets\arenaStart.png","\n arena battle started")
                 print("Fifth Battle")
                 while pyautogui.locateOnScreen(r"assets\tapToContinue.png",confidence=0.8) ==None:
