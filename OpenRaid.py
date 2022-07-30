@@ -1,22 +1,26 @@
 #open Raid
+import operator
 import time
 import os
 import pygetwindow
 from quitAll import quitAll
+import pyautogui
+from CheckFilesExist import CheckFilesExist, CheckOS
 
 def openRaid():
     quitAll()
-    os.startfile("C:\Program Files\RSL_Helper_X64\RSLHelper.exe")
-
-    #if rsl helper isnt wokring
-##    os.startfile(r"C:\Users\logan\AppData\Local\Plarium\PlariumPlay\PlariumPlay.exe")
-##    time.sleep(2)
-##    while pyautogui.locateOnScreen(r"assets\PPlay.png",confidence=0.8) !=None:
-##        PPlayx,PPlayy=pyautogui.locateCenterOnScreen(r"assets\PPlay.png",confidence=0.8)
-##        pyautogui.click(PPlayx,PPlayy)
-##        with open("log.txt", mode='a') as file:
-##        file.write("\n playing PP")
-##        time.sleep(2)
+    operating=CheckOS()
+    if operating == 'Windows':
+        os.startfile("C:\Program Files\RSL_Helper_X64\RSLHelper.exe")
+    elif operating == 'Darwin':
+        os.startfile(r"C:\Users\logan\AppData\Local\Plarium\PlariumPlay\PlariumPlay.exe")
+        time.sleep(2)
+        while pyautogui.locateOnScreen(r"assets\PPlay.png",confidence=0.8) !=None:
+            PPlayx,PPlayy=pyautogui.locateCenterOnScreen(r"assets\PPlay.png",confidence=0.8)
+            pyautogui.click(PPlayx,PPlayy)
+            with open("log.txt", mode='a') as file:
+                file.write("\n playing PP")
+            time.sleep(2)
 
     with open("log.txt", mode='a') as file:
             file.write("\n files opening")

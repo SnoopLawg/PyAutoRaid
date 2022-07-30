@@ -1,5 +1,6 @@
 #Check if all the py files were downloaded
 
+from ast import Global
 import os.path
 from platform import platform
 import tkinter
@@ -26,12 +27,13 @@ def CheckFilesExist():
 
 
 def CheckOS():
-    os=platform.system()
-    if os == 'Darwin':
-        print("Mac being used")
+    operating=platform.system()
+    if operating == 'Darwin':
+        print("***Mac being used")
         exit()
-    elif os == 'Windows':
-        print('PC being uses')
+    elif operating == 'Windows':
+        print('***PC being used')
+        return operating
     else:
         print('I have no idea what OS this is')
         exit()

@@ -7,11 +7,12 @@ from ClassicArena import ClassicArena
 from OpenRaid import openRaid
 from quitAll import quitAll
 from NightmareAttemptText import NightmareAttemptText
-from CheckFilesExist import CheckFilesExist
+from CheckFilesExist import CheckFilesExist,CheckOS
 import sys
 
 
 CheckFilesExist()
+CheckOS()
 try:    
     openRaid()
 except TypeError:
