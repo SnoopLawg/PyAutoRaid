@@ -9,6 +9,7 @@ from quitAll import quitAll
 from NightmareAttemptText import NightmareAttemptText
 from CheckFilesExist import CheckFilesExist,CheckOS
 import sys
+import pyautogui
 
 
 CheckFilesExist()

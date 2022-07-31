@@ -8,6 +8,7 @@ from quitAll import quitAll
 from OpenRaid import openRaid
 import os
 import sys
+from TimeBetween import is_time_between
 
 def AutoCB(xCB=1080,yCB=724):
     with open("log.txt", mode='a') as file:
@@ -168,8 +169,11 @@ def AutoCB(xCB=1080,yCB=724):
     print("test3")
 
 if __name__=='__main__':
-    AutoCB()
-    #NM
-    # AutoCB(1080,724)
-    #Brutal
-    # AutoCB(1080,647)
+    #between 4am to 10pm
+    if is_time_between()==False:
+        #NM
+        AutoCB(1080,724)
+    #between 10pm to 4am
+    if is_time_between()==True:
+        #Brutal
+        AutoCB(1080,647)
