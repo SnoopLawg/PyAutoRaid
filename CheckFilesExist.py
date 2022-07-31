@@ -8,7 +8,7 @@ from tkinter import messagebox
 import platform
 
 def CheckFilesExist():
-    Needed_Files=['AutoRewards.py','BlackOutMonitor.py','CBauto.py','CheckFilesExist.py','ClassicArena.py','log.txt','LoopFindImage.py','Main.py','NightMareAttemptText.py','OpenRaid.py','quitAll.py']
+    Needed_Files=['TimeBetween.py','AutoRewards.py','BlackOutMonitor.py','CBauto.py','CheckFilesExist.py','ClassicArena.py','log.txt','LoopFindImage.py','Main.py','NightMareAttemptText.py','OpenRaid.py','quitAll.py']
     Total_files =0
     for file in Needed_Files:
         file_exists=os.path.exists(file)
