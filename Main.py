@@ -8,35 +8,46 @@ from OpenRaid import openRaid
 from quitAll import quitAll
 from NightmareAttemptText import NightmareAttemptText
 from CheckFilesExist import CheckFilesExist,CheckOS
+from TagTeamArena import TagTeamArena
 import sys
 import pyautogui
 
+def main():
+    CheckFilesExist()
+    CheckOS()
+    try:    
+        openRaid()
+    except TypeError:
+        openRaid()
+    except IndexError:
+        openRaid()
+    try:
+        NightmareAttemptText()
+    except TypeError:
+        NightmareAttemptText()
+    try:    
+        AutoRewards()
+    except TypeError:
+        AutoRewards()
+    try:        
+        AutoCB()
+    except TypeError:
+        AutoCB()
+    try:        
+        ClassicArena()
+    except TypeError:
+        ClassicArena()
+    try:        
+        TagTeamArena()
+    except TypeError:
+        TagTeamArena()  
 
-CheckFilesExist()
-CheckOS()
-try:    
-    openRaid()
-except TypeError:
-    openRaid()
-except IndexError:
-    openRaid()
-try:
-    NightmareAttemptText()
-except TypeError:
-    NightmareAttemptText()
-try:    
-    AutoRewards()
-except TypeError:
-    AutoRewards()
-try:        
-    AutoCB()
-except TypeError:
-    AutoCB()
-try:        
-    ClassicArena()
-except TypeError:
-    ClassicArena()
+    quitAll()
+    BlackOutMonitor()
+    sys.exit()
 
-quitAll()
-BlackOutMonitor()
-sys.exit()
+if __name__=='__main__':
+    try:
+        main()
+    except PermissionError:
+        pass

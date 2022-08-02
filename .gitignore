@@ -13,3 +13,5 @@ __pycache__/CBauto.cpython-39.pyc
 __pycache__
 log.txt
 log.txt
+get_region.py
+get_mouse_pos.py

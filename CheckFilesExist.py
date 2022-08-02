@@ -18,10 +18,10 @@ def CheckFilesExist():
         elif file_exists == False:
             print('Dont have',file)
     missing=int(11-Total_files)
-    if Total_files == 11:
+    if Total_files == len(Needed_Files):
         print(Total_files,'files were downloaded')
     else:
-        print('All 11 files were not downloaded. Only',Total_files,'were')
+        print('All 12 files were not downloaded. Only',Total_files,'were')
         tkinter.messagebox.showerror(title='ALL FILES NOT DOWNLOADED',message='You are missing files')
         exit()
 
