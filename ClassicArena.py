@@ -224,3 +224,4 @@ def ClassicArena():
     
 if __name__=='__main__':
     ClassicArena()
+    time.sleep(2)

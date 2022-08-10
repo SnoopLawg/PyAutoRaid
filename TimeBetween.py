@@ -11,6 +11,6 @@ def is_time_between(begin_time=time(22,0), end_time=time(4,00), check_time=None)
 
 if __name__=='__main__':
     #I want to run a different cb if time is between 10pm and 4 am when script runs
-    print(is_time_between(time(22,0), time(4,00)))
+    is_time_between(time(22,0), time(4,00))
 
 

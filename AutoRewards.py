@@ -4,13 +4,13 @@ import time
 from LoopFindImage import LoopFindImage
 
 def AutoRewards():
-    
+    time.sleep(10)
     while pyautogui.locateOnScreen(r"assets\exitAdd.png",confidence=0.8) ==None:
         with open("log.txt", mode='a') as file:
                 file.write("\n deleting ads now")
     LoopFindImage(r"assets\exitAdd.png","\n ad ")
     
-   #Gem Mine
+    #Gem Mine
     pyautogui.click(532,762)
     time.sleep(2)
     pyautogui.hotkey('esc')  # esc gem mine
@@ -40,7 +40,7 @@ def AutoRewards():
         while pyautogui.locateOnScreen(r"assets\shopShard.png",confidence=0.8) !=None:
             shopShardx,shopShardy=pyautogui.locateCenterOnScreen(r"assets\shopShard.png",confidence=0.8)
             pyautogui.click(shopShardx,shopShardy)
-            time.sleep(1)
+            time.sleep(2)
             while pyautogui.locateOnScreen(r"assets\getShard.png",confidence=0.8) !=None:
                 shopShardx,shopShardy=pyautogui.locateCenterOnScreen(r"assets\getShard.png",confidence=0.8)
                 pyautogui.click(shopShardx,shopShardy)
@@ -51,7 +51,7 @@ def AutoRewards():
         while pyautogui.locateOnScreen(r"assets\marketAS.png",confidence=0.8) !=None:
             shopShardx,shopShardy=pyautogui.locateCenterOnScreen(r"assets\marketAS.png",confidence=0.8)
             pyautogui.click(shopShardx,shopShardy)
-            time.sleep(1)
+            time.sleep(2)
             while pyautogui.locateOnScreen(r"assets\getAS.png",confidence=0.8) !=None:
                 shopShardx,shopShardy=pyautogui.locateCenterOnScreen(r"assets\getAS.png",confidence=0.8)
                 pyautogui.click(shopShardx,shopShardy)
@@ -60,6 +60,7 @@ def AutoRewards():
                 file.write("\n shard bought")
             time.sleep(2)
         LoopFindImage(r"assets\goBack.png","\n back to Bastion x ")
+        LoopFindImage(r"assets\exitAdd.png","\n ad closed ")
 
             
     #SHOP - claim AS, claim MS, check offers for goodieBag,miniPack,smallPack,regularPack, then claim       
@@ -74,29 +75,29 @@ def AutoRewards():
             pyautogui.click(claimASx,claimASy)
             with open("log.txt", mode='a') as file:
                 file.write("\n claiming Ancient Shard")
-            time.sleep(1)
+            time.sleep(2)
             while pyautogui.locateOnScreen(r"assets\defaultClaim.png",confidence=0.8) !=None:
                 defaultClaimx,defaultClaimy=pyautogui.locateCenterOnScreen(r"assets\defaultClaim.png",confidence=0.8)
                 pyautogui.click(defaultClaimx,defaultClaimy)
                 with open("log.txt", mode='a') as file:
                     file.write("\n claimed")
-                time.sleep(2)
+                time.sleep(3)
         while pyautogui.locateOnScreen(r"assets\claimMS.png",confidence=0.8) !=None:
             claimMSx,claimMSy=pyautogui.locateCenterOnScreen(r"assets\claimMS.png",confidence=0.8)
             pyautogui.click(claimMSx,claimMSy)
             with open("log.txt", mode='a') as file:
                 file.write("\n claiming mystery Shard")
-            time.sleep(1)
+            time.sleep(3)
             while pyautogui.locateOnScreen(r"assets\defaultClaim.png",confidence=0.8) !=None:
                 defaultClaimx,defaultClaimy=pyautogui.locateCenterOnScreen(r"assets\defaultClaim.png",confidence=0.8)
                 pyautogui.click(defaultClaimx,defaultClaimy)
                 with open("log.txt", mode='a') as file:
                     file.write("\n claimed")
-                time.sleep(2)
+                time.sleep(3)
         while pyautogui.locateOnScreen(r"assets\offers.png",confidence=0.9) !=None:
             offersx,offersy=pyautogui.locateCenterOnScreen(r"assets\offers.png",confidence=0.8)
             pyautogui.click(offersx,offersy)
-            time.sleep(1)
+            time.sleep(3)
             if pyautogui.locateOnScreen(r"assets\goodieBag.png",confidence=0.8): 
                 goodieBagx,goodieBagy=pyautogui.locateCenterOnScreen(r"assets\goodieBag.png",confidence=0.8)
                 pyautogui.click(goodieBagx,goodieBagy)
@@ -151,6 +152,7 @@ def AutoRewards():
             with open("log.txt", mode='a') as file:
                 file.write("\n Back to bastion")
             time.sleep(1)
+        LoopFindImage(r"assets\exitAdd.png","\n ad closed ")
 
     #GUARDIAN RING - Upgrade cgampions         
     if pyautogui.locateOnScreen(r"assets\guardianRing.png",confidence=0.8):
@@ -158,19 +160,20 @@ def AutoRewards():
         pyautogui.click(guardianRingx,guardianRingy)
         with open("log.txt", mode='a') as file:
             file.write("\n open guardian ring")
-        time.sleep(1)
+        time.sleep(2)
         while pyautogui.locateOnScreen(r"assets\GRupgrade.png",confidence=0.8) !=None:
             GRupgradex,GRupgradey=pyautogui.locateCenterOnScreen(r"assets\GRupgrade.png",confidence=0.8)
             pyautogui.click(GRupgradex,GRupgradey)
             with open("log.txt", mode='a') as file:
                 file.write("\n upgrading champions")
-            time.sleep(1)
+            time.sleep(2)
         while pyautogui.locateOnScreen(r"assets\goBack.png",confidence=0.8) !=None:
             goBackx,goBacky=pyautogui.locateCenterOnScreen(r"assets\goBack.png",confidence=0.8)
             pyautogui.click(goBackx,goBacky)
             with open("log.txt", mode='a') as file:
                 file.write("\n Back to bastion")
-            time.sleep(1)
+            time.sleep(2)
+        LoopFindImage(r"assets\exitAdd.png","\n ad closed ")
             
     #TIME REWARDS
     if pyautogui.locateOnScreen(r"assets\timeRewards.png",confidence=0.8):
@@ -178,37 +181,37 @@ def AutoRewards():
         pyautogui.click(timeRewardsx,timeRewardsy)
         with open("log.txt", mode='a') as file:
             file.write("\n claiming timed rewards")
-        time.sleep(1)
+        time.sleep(2)
         while pyautogui.locateOnScreen(r"assets\5min.png",confidence=0.8) !=None:
             fiveminx,fiveminy=pyautogui.locateCenterOnScreen(r"assets\5min.png",confidence=0.8)
             pyautogui.click(fiveminx,fiveminy)
-            time.sleep(.5)
+            time.sleep(1)
         while pyautogui.locateOnScreen(r"assets\20min.png",confidence=0.8) !=None:
             twentyminx,twentyminy=pyautogui.locateCenterOnScreen(r"assets\20min.png",confidence=0.8)
             pyautogui.click(twentyminx,twentyminy)
-            time.sleep(.5)
+            time.sleep(1)
         while pyautogui.locateOnScreen(r"assets\40min.png",confidence=0.8) !=None:
             fortyminx,fortyminy=pyautogui.locateCenterOnScreen(r"assets\40min.png",confidence=0.8)
             pyautogui.click(fortyminx,fortyminy)
-            time.sleep(.5)
+            time.sleep(1)
         while pyautogui.locateOnScreen(r"assets\60min.png",confidence=0.8) !=None:
             sixtyminx,sixtyminy=pyautogui.locateCenterOnScreen(r"assets\60min.png",confidence=0.8)
             pyautogui.click(sixtyminx,sixtyminy)
-            time.sleep(.5)
+            time.sleep(1)
         while pyautogui.locateOnScreen(r"assets\90min.png",confidence=0.8) !=None:
             ninetyminx,ninetyminy=pyautogui.locateCenterOnScreen(r"assets\90min.png",confidence=0.8)
             pyautogui.click(ninetyminx,ninetyminy)
-            time.sleep(.5)
+            time.sleep(1)
         while pyautogui.locateOnScreen(r"assets\180min.png",confidence=0.8) !=None:
             lastminx,lastminy=pyautogui.locateCenterOnScreen(r"assets\180min.png",confidence=0.8)
             pyautogui.click(lastminx,lastminy)
-            time.sleep(.5)
+            time.sleep(1)
         while pyautogui.locateOnScreen(r"assets\exitAdd.png",confidence=0.8) !=None:
             adx,ady=pyautogui.locateCenterOnScreen(r"assets\exitAdd.png",confidence=0.8)
             pyautogui.click(adx,ady)
             with open("log.txt", mode='a') as file:
                 file.write("\n ad closed")
-            time.sleep(2)
+            time.sleep(3)
             
     #CLAN - check in and claim rewards
     if pyautogui.locateOnScreen(r"assets\clanBTN.png",confidence=0.8):
@@ -234,7 +237,7 @@ def AutoRewards():
             pyautogui.click(goBackx,goBacky)
             with open("log.txt", mode='a') as file:
                 file.write("\n Back to bastion")
-            time.sleep(1)
+            time.sleep(3)
             
     #QUESTS - Check for completed daily and advanced quests and claim
     if pyautogui.locateOnScreen(r"assets\quests.png",confidence=0.8):
@@ -242,7 +245,7 @@ def AutoRewards():
         pyautogui.click(questsx,questsy)
         with open("log.txt", mode='a') as file:
             file.write("\n opening quests button")
-        time.sleep(1)
+        time.sleep(2)
         while pyautogui.locateOnScreen(r"assets\questClaim.png",confidence=0.8) !=None:
             questClaimx,questClaimy=pyautogui.locateCenterOnScreen(r"assets\questClaim.png",confidence=0.8)
             pyautogui.click(questClaimx,questClaimy)

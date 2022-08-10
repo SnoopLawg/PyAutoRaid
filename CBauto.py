@@ -9,8 +9,19 @@ from OpenRaid import openRaid
 import os
 import sys
 from TimeBetween import is_time_between
+#between 4am to 10pm
+if is_time_between()==False:
+    #NM
+    xCB=1080
+    yCB=724
+#between 10pm to 4am
+if is_time_between()==True:
+    #Brutal
+    xCB=1080
+    yCB=647
 
-def AutoCB(xCB=1080,yCB=724):
+def AutoCB(xCB,yCB):
+    time.sleep(1.5)
     with open("log.txt", mode='a') as file:
             file.write("\n deleting ads now")
     while pyautogui.locateOnScreen(r"assets\exitAdd.png",confidence=0.8) !=None:

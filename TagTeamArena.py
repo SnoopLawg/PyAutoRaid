@@ -70,7 +70,7 @@ def TagTeamArena():
             #Second battle
             if done >=4:
                 pyautogui.drag(0,-600,duration=2)
-                time.sleep(3)
+                time.sleep(5)
             if pyautogui.locateOnScreen(r"assets\tagArenaBattle.png",region=(1201,510,193,98),confidence=0.8) !=None:
                 pyautogui.click(1304,540)
                 time.sleep(2)
@@ -105,7 +105,7 @@ def TagTeamArena():
             pyautogui.doubleClick(964,746,interval=1)
             if done >=4:
                 pyautogui.drag(0,-600,duration=2)
-                time.sleep(3)
+                time.sleep(5)
             #Third battle
             if pyautogui.locateOnScreen(r"assets\tagArenaBattle.png",region=(1198,606,198,100),confidence=0.8) !=None:
                 pyautogui.click(1303,625)
@@ -142,7 +142,7 @@ def TagTeamArena():
             time.sleep(1)
             if done >=4:
                 pyautogui.drag(0,-600,duration=2)
-                time.sleep(3)
+                time.sleep(5)
             if pyautogui.locateOnScreen(r"assets\tagArenaBattle.png",region=(1200,702,194,96) ,confidence=0.9) !=None:
             #Fourth battle
                 pyautogui.click(1304,738)
@@ -179,14 +179,14 @@ def TagTeamArena():
             time.sleep(1)
             if done >=4:
                 pyautogui.drag(0,-600,duration=2)
-                time.sleep(3)
-        
-            while pyautogui.locateOnScreen(r"assets\arenaRefresh.png",confidence=0.8) !=None:
-                goBackx,goBacky=pyautogui.locateCenterOnScreen(r"assets\arenaRefresh.png",confidence=0.8)
-                pyautogui.click(goBackx,goBacky)
-                print("arena refreshed")
-                time.sleep(1)
-                done=15
+                time.sleep(5)
+            if done >=7:
+                while pyautogui.locateOnScreen(r"assets\arenaRefresh.png",confidence=0.8) !=None:
+                    goBackx,goBacky=pyautogui.locateCenterOnScreen(r"assets\arenaRefresh.png",confidence=0.8)
+                    pyautogui.click(goBackx,goBacky)
+                    print("arena refreshed")
+                    time.sleep(1)
+                    done=15
 ##            if done!=15:
 ##                if pyautogui.locateOnScreen(r"assets\arenaRefreshGems.png",confidence=0.8) !=None:
 ##                    goBackx,goBacky=pyautogui.locateCenterOnScreen(r"assets\arenaRefreshGems.png",confidence=0.8)

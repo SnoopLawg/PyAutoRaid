@@ -9,12 +9,16 @@ from quitAll import quitAll
 from NightmareAttemptText import NightmareAttemptText
 from CheckFilesExist import CheckFilesExist,CheckOS
 from TagTeamArena import TagTeamArena
+from TimeBetween import is_time_between
 import sys
 import pyautogui
+import multiprocessing
+import time
 
 def main():
     CheckFilesExist()
     CheckOS()
+    is_time_between()
     try:    
         openRaid()
     except TypeError:
@@ -25,14 +29,28 @@ def main():
         NightmareAttemptText()
     except TypeError:
         NightmareAttemptText()
-    try:    
-        AutoRewards()
-    except TypeError:
-        AutoRewards()
+    #try:    
+    AutoRewards()
+    # except TypeError:
+    #     AutoRewards()
     try:        
-        AutoCB()
+        #between 4am to 10pm
+        if is_time_between()==False:
+            #NM
+            AutoCB(1080,724)
+        #between 10pm to 4am
+        if is_time_between()==True:
+            #Brutal
+            AutoCB(1080,647)
     except TypeError:
-        AutoCB()
+        #between 4am to 10pm
+        if is_time_between()==False:
+            #NM
+            AutoCB(1080,724)
+        #between 10pm to 4am
+        if is_time_between()==True:
+            #Brutal
+            AutoCB(1080,647)
     try:        
         ClassicArena()
     except TypeError:
@@ -47,7 +65,21 @@ def main():
     sys.exit()
 
 if __name__=='__main__':
-    try:
-        main()
-    except PermissionError:
-        pass
+    p = multiprocessing.Process(target=main, name="main")
+    p.start()
+
+    # Wait 20 min for foo
+    time.sleep(1200)
+
+    # Terminate foo
+    p.terminate()
+
+    # Cleanup
+    p.join()
+    
+    
+    
+    # try:
+    #     main()
+    # except PermissionError:
+    #     pass
