@@ -180,13 +180,13 @@ def TagTeamArena():
             if done >=4:
                 pyautogui.drag(0,-600,duration=2)
                 time.sleep(5)
-            if done >=7:
-                while pyautogui.locateOnScreen(r"assets\arenaRefresh.png",confidence=0.8) !=None:
-                    goBackx,goBacky=pyautogui.locateCenterOnScreen(r"assets\arenaRefresh.png",confidence=0.8)
-                    pyautogui.click(goBackx,goBacky)
-                    print("arena refreshed")
-                    time.sleep(1)
-                    done=15
+        
+            while pyautogui.locateOnScreen(r"assets\arenaRefresh.png",confidence=0.8) !=None:
+                goBackx,goBacky=pyautogui.locateCenterOnScreen(r"assets\arenaRefresh.png",confidence=0.8)
+                pyautogui.click(goBackx,goBacky)
+                print("arena refreshed")
+                time.sleep(1)
+                done=15
 ##            if done!=15:
 ##                if pyautogui.locateOnScreen(r"assets\arenaRefreshGems.png",confidence=0.8) !=None:
 ##                    goBackx,goBacky=pyautogui.locateCenterOnScreen(r"assets\arenaRefreshGems.png",confidence=0.8)

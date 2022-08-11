@@ -13,9 +13,15 @@ from TimeBetween import is_time_between
 import sys
 import pyautogui
 import multiprocessing
+from datetime import datetime
 import time
 
 def main():
+    
+    current = datetime.now()
+    dt_string1 = int(current.strftime("%H%M%S"))
+    print(dt_string1)
+
     CheckFilesExist()
     CheckOS()
     is_time_between()
@@ -61,6 +67,12 @@ def main():
         TagTeamArena()  
 
     quitAll()
+
+    current = datetime.now()
+    dt_string2 = int(current.strftime("%H%M%S"))
+    print(dt_string2)
+    timeittook=dt_string2-dt_string1
+    print(timeittook)
     BlackOutMonitor()
     sys.exit()
 
