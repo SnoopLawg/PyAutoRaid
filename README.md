@@ -8,7 +8,7 @@ I am trying to automate Raid: Shadow Legends  without accessing game data but us
 - [x] ClassicArena()
 - [x] quitAll()
 - [x] BlackOutMonitor()
-- [ ] TagTeamArena()
+- [x] TagTeamArena()
 - [ ] AutoUpgrader
 - [ ] Gui
 - [ ] Exe file for all of this
