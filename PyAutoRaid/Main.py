@@ -15,13 +15,14 @@ import pyautogui
 import multiprocessing
 from datetime import datetime
 import time
+from multiprocessing import Process
+import os
+
 
 def main():
     
-    current = datetime.now()
-    dt_string1 = int(current.strftime("%H%M%S"))
-    print(dt_string1)
-
+    #wake up pc
+    pyautogui.click(0,5)
     CheckFilesExist()
     CheckOS()
     is_time_between()
@@ -60,38 +61,39 @@ def main():
     try:        
         ClassicArena()
     except TypeError:
-        ClassicArena()
+        pass    
     try:        
         TagTeamArena()
     except TypeError:
         TagTeamArena()  
 
     quitAll()
-
-    current = datetime.now()
-    dt_string2 = int(current.strftime("%H%M%S"))
-    print(dt_string2)
-    timeittook=dt_string2-dt_string1
-    print(timeittook)
     BlackOutMonitor()
+    os.system("taskkill /f /im Main.exe")
+    os.system("taskkill /f /im python.exe")
     sys.exit()
 
+
+
 if __name__=='__main__':
+    multiprocessing.freeze_support()
     p = multiprocessing.Process(target=main, name="main")
     p.start()
 
-    # Wait 20 min for foo
-    time.sleep(1200)
-
-    # Terminate foo
+    # Wait 20 min for process
+    time.sleep(2400)
+    
+    # Terminate 
     p.terminate()
 
     # Cleanup
     p.join()
+
+    
     
     
     
     # try:
     #     main()
     # except PermissionError:
-    #     pass
+    #     print ('permission error')

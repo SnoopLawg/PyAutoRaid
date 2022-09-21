@@ -31,6 +31,27 @@ def TagTeamArena():
         with open("log.txt", mode='a') as file:
             file.write("\n classic arena tab clicked")
         time.sleep(2)
+    if pyautogui.locateOnScreen(r"assets\tagTeamBazaar.png",confidence=0.8) !=None:
+            goBackx,goBacky=pyautogui.locateCenterOnScreen(r"assets\tagTeamBazaar.png",confidence=0.8)
+            pyautogui.click(goBackx,goBacky)
+            print("tag team bazaar opened")
+            time.sleep(1)
+    if pyautogui.locateOnScreen(r"assets\tagTeamknight.png",confidence=0.8) !=None:
+            goBackx,goBacky=pyautogui.locateCenterOnScreen(r"assets\tagTeamknight.png",confidence=0.8)
+            pyautogui.click(goBackx,goBacky)
+            print("tag team knight clicked")
+            time.sleep(1)
+            pyautogui.click(1071,691)
+            time.sleep(1)
+            pyautogui.click(592,355)
+    while pyautogui.locateOnScreen(r"assets\exitAdd.png",confidence=0.8) !=None:
+            adx,ady=pyautogui.locateCenterOnScreen(r"assets\exitAdd.png",confidence=0.8)
+            pyautogui.click(adx,ady)
+            with open("log.txt", mode='a') as file:
+                file.write("\n ad closed")
+            time.sleep(2)
+            pyautogui.click(592,355)
+    
 ######################################################Need to not make this forever loop happen
     done=0
     for i in range(0,2):
@@ -45,6 +66,8 @@ def TagTeamArena():
                     time.sleep(2)
                     pyautogui.click(1304,457)
                     time.sleep(1)
+                if pyautogui.locateOnScreen(r"assets\TagArenaNeedGems.png",confidence=0.8) !=None:
+                    break
                 LoopFindImage(r"assets\arenaStart.png","\n arena battle started")
                 print("First Battle")
                 while pyautogui.locateOnScreen(r"assets\tapToContinue.png",confidence=0.8) ==None:
@@ -81,6 +104,8 @@ def TagTeamArena():
                     time.sleep(2)
                     pyautogui.click(1304,540)
                     time.sleep(1)
+                if pyautogui.locateOnScreen(r"assets\TagArenaNeedGems.png",confidence=0.8) !=None:
+                    exit()
                 LoopFindImage(r"assets\arenaStart.png","\n arena battle started")
                 print("Second Battle")
                 while pyautogui.locateOnScreen(r"assets\tapToContinue.png",confidence=0.8) ==None:
@@ -117,6 +142,8 @@ def TagTeamArena():
                     time.sleep(2)
                     pyautogui.click(1303,625)
                     time.sleep(1)
+                if pyautogui.locateOnScreen(r"assets\TagArenaNeedGems.png",confidence=0.8) !=None:
+                    break
                 LoopFindImage(r"assets\arenaStart.png","\n arena battle started")
                 print("Third Battle")
                 while pyautogui.locateOnScreen(r"assets\tapToContinue.png",confidence=0.8) ==None:
@@ -154,6 +181,8 @@ def TagTeamArena():
                     time.sleep(2)
                     pyautogui.click(1304,711)
                     time.sleep(1)
+                if pyautogui.locateOnScreen(r"assets\TagArenaNeedGems.png",confidence=0.8) !=None:
+                    break
                 LoopFindImage(r"assets\arenaStart.png","\n arena battle started")
                 print("Fourth Battle")
                 while pyautogui.locateOnScreen(r"assets\tapToContinue.png",confidence=0.8) ==None:

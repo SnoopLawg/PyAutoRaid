@@ -7,6 +7,9 @@ import pygetwindow
 from quitAll import quitAll
 import pyautogui
 from CheckFilesExist import CheckFilesExist, CheckOS
+import pathlib
+
+dir=str(pathlib.Path().absolute())
 
 def openRaid():
     quitAll()
@@ -25,29 +28,39 @@ def openRaid():
         #os.startfile("C:\Program Files\RSL_Helper_X64\RSLHelper.exe")
         os.startfile(r"C:\Users\logan\AppData\Local\PlariumPlay\PlariumPlay.exe")
         #skips after while
-        time.sleep(25)
-        if pyautogui.locateOnScreen(r"assets\PPMyLibrary.png",confidence=0.8) !=None:
-            PPlayx,PPlayy=pyautogui.locateCenterOnScreen(r"assets\PPMyLibrary.png",confidence=0.8)
+        time.sleep(30)
+        if pyautogui.locateOnScreen(dir+r"\\assets\\MyLibraryPP.png",confidence=0.8) !=None:
+            PPlayx,PPlayy=pyautogui.locateCenterOnScreen(dir+r"\\assets\\MyLibraryPP.png",confidence=0.8)
             pyautogui.click(PPlayx,PPlayy)
             with open("log.txt", mode='a') as file:
                 file.write("\n clicking library")
             time.sleep(5)
-            if pyautogui.locateOnScreen(r"assets\PPlay.png",confidence=0.8) !=None:
-                PPlayx,PPlayy=pyautogui.locateCenterOnScreen(r"assets\PPlay.png",confidence=0.8)
+            if pyautogui.locateOnScreen(dir+r"\\assets\PPlay.png",confidence=0.8) !=None:
+                PPlayx,PPlayy=pyautogui.locateCenterOnScreen(dir+r"\\assets\PPlay.png",confidence=0.8)
                 pyautogui.click(PPlayx,PPlayy)
                 with open("log.txt", mode='a') as file:
                     file.write("\n playing PP")
+        else:
+            pyautogui.click(440,362)
+            time.sleep(5)
+            if pyautogui.locateOnScreen(dir+r"\\assets\PPlay.png",confidence=0.8) !=None:
+                PPlayx,PPlayy=pyautogui.locateCenterOnScreen(dir+r"\\assets\PPlay.png",confidence=0.8)
+                pyautogui.click(PPlayx,PPlayy)
+                with open("log.txt", mode='a') as file:
+                    file.write("\n playing PP")
+
     with open("log.txt", mode='a') as file:
             file.write("\n files opening")
     time_out=0
-    while pyautogui.locateOnScreen(r"assets\exitAdd.png",confidence=0.8) ==None:
+    while pyautogui.locateOnScreen(dir+r"\\assets\exitAdd.png",confidence=0.8) ==None:
         time.sleep(.5)
         time_out+=1
         if time_out>=200:
             print('raid never opened lol')
             quitAll()
-            sys.exit()
-        while pyautogui.locateOnScreen(r"assets\exitAdd.png",confidence=0.8) !=None:
+            pyautogui.hotkey('winleft', 'm')
+            pyautogui.doubleClick(440,362)
+        while pyautogui.locateOnScreen(dir+r"\\assets\exitAdd.png",confidence=0.8) !=None:
             try:
                 win = pygetwindow.getWindowsWithTitle('Raid: Shadow Legends')[0]
                 win.size = (900, 600)

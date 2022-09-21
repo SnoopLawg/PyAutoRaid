@@ -59,7 +59,7 @@ def AutoCB(xCB,yCB):
         pyautogui.click(demonLord2x,demonLord2y)
         with open("log.txt", mode='a') as file:
             file.write("\n demonlord clicked")
-        time.sleep(2)
+        time.sleep(4)
     while pyautogui.locateOnScreen(r"assets\CBreward.png",confidence=0.8) !=None:
         CBrewardx,CBrewardy=pyautogui.locateCenterOnScreen(r"assets\CBreward.png",confidence=0.8)
         time.sleep(2)
@@ -84,7 +84,7 @@ def AutoCB(xCB,yCB):
         pyautogui.click()
         with open("log.txt", mode='a') as file:
             file.write("\n claim rewards checked")  
-    time.sleep(1)
+    time.sleep(2)
     while pyautogui.locateOnScreen(r"assets\CBhard.png",confidence=0.8) !=None:
         pyautogui.click(xCB,yCB)
         with open("log.txt", mode='a') as file:
