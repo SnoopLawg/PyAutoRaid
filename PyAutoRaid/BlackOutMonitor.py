@@ -1,8 +1,9 @@
 #Black out the monitor in the end. Put it to sleep so ya boy can sleep
 import sys
+import time
 
 def BlackOutMonitor():
-
+        time.sleep(2)
         if sys.platform.startswith('linux'):
                 import os
                 os.system("xset dpms force off")

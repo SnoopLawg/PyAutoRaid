@@ -6,12 +6,16 @@ from platform import platform
 import tkinter
 from tkinter import messagebox
 import platform
+import pyautogui
+import pathlib
 
 def CheckFilesExist():
-    Needed_Files=['TimeBetween.py','AutoRewards.py','BlackOutMonitor.py','CBauto.py','CheckFilesExist.py','ClassicArena.py','log.txt','LoopFindImage.py','Main.py','NightMareAttemptText.py','OpenRaid.py','quitAll.py']
+    Needed_Files=["TimeBetween.py",'AutoRewards.py','BlackOutMonitor.py','CBauto.py','CheckFilesExist.py','ClassicArena.py','log.txt','LoopFindImage.py','Main.py','NightMareAttemptText.py','OpenRaid.py','quitAll.py']
     Total_files =0
     for file in Needed_Files:
-        file_exists=os.path.exists(file)
+        dir=str(pathlib.Path().absolute())
+        filepath=dir+'\\'+file
+        file_exists=os.path.exists(filepath)
         if file_exists == True:
             print('Have',file)
             Total_files+= 1
@@ -33,6 +37,7 @@ def CheckOS():
         exit()
     elif operating == 'Windows':
         print('***PC being used')
+        # pyautogui.hotkey('winleft', 'm')
         return operating
     else:
         print('I have no idea what OS this is')
