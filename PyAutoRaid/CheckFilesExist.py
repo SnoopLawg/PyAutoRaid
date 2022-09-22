@@ -50,7 +50,7 @@ def CheckOS():
     operating = platform.system()
     if operating == "Darwin":
         print("***Mac being used")
-        exit()
+        return operating
     elif operating == "Windows":
         print("***PC being used")
         # pyautogui.hotkey('winleft', 'm')

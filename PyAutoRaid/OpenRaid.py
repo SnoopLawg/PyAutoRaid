@@ -1,8 +1,8 @@
 # open Raid
 import operator
+from posixpath import expanduser
 import time
-import sys
-import os
+import os, sys, subprocess
 import pygetwindow
 from quitAll import quitAll
 import pyautogui
@@ -11,25 +11,32 @@ import pathlib
 
 dir = str(pathlib.Path().absolute())
 
+PATH = "/Applications/Plarium Play"
+
 
 def openRaid():
     quitAll()
     time.sleep(5)
     operating = CheckOS()
     if operating == "Darwin":
-        os.startfile(r"C:\Users\logan\AppData\Local\PlariumPlay\PlariumPlay.exe")
-        time.sleep(8)
-        while pyautogui.locateOnScreen(r"assets\PPlay.png", confidence=0.8) != None:
-            PPlayx, PPlayy = pyautogui.locateCenterOnScreen(
-                r"assets\PPlay.png", confidence=0.8
-            )
-            pyautogui.click(PPlayx, PPlayy)
-            with open("log.txt", mode="a") as file:
-                file.write("\n playing PP")
-            time.sleep(2)
+        PATH = "/Applications/Plarium Play.app"
+        FULL_PATH = os.path.expanduser(PATH)
+        subprocess.call(["open", FULL_PATH])
+        time.sleep(30)
+        # TODO: Fix the clicks to open raid
+        # while pyautogui.locateOnScreen(r"assets\PPlay.png", confidence=0.8) != None:
+        #     PPlayx, PPlayy = pyautogui.locateCenterOnScreen(
+        #         r"assets\PPlay.png", confidence=0.8
+        #     )
+        #     pyautogui.click(PPlayx, PPlayy)
+        #     with open("log.txt", mode="a") as file:
+        #         file.write("\n playing PP")
+        #     time.sleep(2)
     elif operating == "Windows":
+        PATH = "/Applications/Plarium Play.exe"
+        FULL_PATH = os.path.expanduser(PATH, +".exe")
         # os.startfile("C:\Program Files\RSL_Helper_X64\RSLHelper.exe")
-        os.startfile(r"C:\Users\logan\AppData\Local\PlariumPlay\PlariumPlay.exe")
+        os.startfile(r + FULL_PATH)
         # skips after while
         time.sleep(30)
         if (
