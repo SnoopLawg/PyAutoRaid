@@ -1,23 +1,25 @@
 import pyautogui
 import time
+import pathlib
 
+dir = str(pathlib.Path().absolute())
 while True:
     if (
         pyautogui.locateOnScreen(
-            r"C:\\Users\\logan\\OneDrive\\Desktop\\AutoRaidAutomate\\PyAutoRaid\\assets\Paragon2.png",
+            dir + r"\\assets\Paragon2.png",
             confidence=0.9,
         )
         != None
     ):
         while (
             pyautogui.locateOnScreen(
-                r"C:\\Users\\logan\\OneDrive\\Desktop\\AutoRaidAutomate\\PyAutoRaid\\assets\Paragon2.png",
+                dir + r"\\assets\Paragon2.png",
                 confidence=0.8,
             )
             != None
         ):
             goBackx, goBacky = pyautogui.locateCenterOnScreen(
-                r"C:\\Users\\logan\\OneDrive\\Desktop\\AutoRaidAutomate\\PyAutoRaid\\assets\Paragon2.png",
+                dir + r"\\assets\Paragon2.png",
                 confidence=0.8,
             )
             pyautogui.click(goBackx, goBacky)
@@ -25,20 +27,20 @@ while True:
             pyautogui.click(853, 625)
     elif (
         pyautogui.locateOnScreen(
-            r"C:\\Users\\logan\\OneDrive\\Desktop\\AutoRaidAutomate\\PyAutoRaid\\assets\Paragon2.png",
+            dir + r"\\assets\Paragon2.png",
             confidence=0.9,
         )
         != None
     ):
         while (
             pyautogui.locateOnScreen(
-                r"C:\\Users\\logan\\OneDrive\\Desktop\\AutoRaidAutomate\\PyAutoRaid\\assets\Paragon2.png",
+                dir + r"\\assets\Paragon2.png",
                 confidence=0.8,
             )
             != None
         ):
             goBackx, goBacky = pyautogui.locateCenterOnScreen(
-                r"C:\\Users\\logan\\OneDrive\\Desktop\\AutoRaidAutomate\\PyAutoRaid\\assets\Paragon2.png",
+                dir + r"\\assets\Paragon2.png",
                 confidence=0.8,
             )
             pyautogui.click(goBackx, goBacky)
@@ -46,20 +48,20 @@ while True:
             pyautogui.click(853, 625)
     elif (
         pyautogui.locateOnScreen(
-            r"C:\\Users\\logan\\OneDrive\\Desktop\\AutoRaidAutomate\\PyAutoRaid\\assets\Paragon1.png",
+            dir + r"\\assets\Paragon1.png",
             confidence=0.8,
         )
         != None
     ):
         while (
             pyautogui.locateOnScreen(
-                r"C:\\Users\\logan\\OneDrive\\Desktop\\AutoRaidAutomate\\PyAutoRaid\\assets\Paragon1.png",
+                dir + r"\\assets\Paragon1.png",
                 confidence=0.8,
             )
             != None
         ):
             goBackx, goBacky = pyautogui.locateCenterOnScreen(
-                r"C:\\Users\\logan\\OneDrive\\Desktop\\AutoRaidAutomate\\PyAutoRaid\\assets\Paragon1.png",
+                dir + r"\\assets\Paragon1.png",
                 confidence=0.8,
             )
             pyautogui.click(goBackx, goBacky)

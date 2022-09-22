@@ -1,5 +1,6 @@
 # Just ad NM in Log.txt
 from datetime import datetime
+import pathlib
 
 
 def NightmareAttemptText():
