@@ -1,6 +1,7 @@
-#quit all python processes
+# quit all python processes
 import time
 import os
+
 
 def quitAll():
     time.sleep(5)
@@ -10,5 +11,7 @@ def quitAll():
     time.sleep(3)
     os.system("taskkill /f /im PlariumPlay.exe")
     print()
-if __name__=='__main__':
-        quitAll()
+
+
+if __name__ == "__main__":
+    quitAll()

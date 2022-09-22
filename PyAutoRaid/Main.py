@@ -1,4 +1,4 @@
-#Run all of the raid functions. 
+# Run all of the raid functions.
 
 from CBauto import AutoCB
 from AutoRewards import AutoRewards
@@ -7,7 +7,7 @@ from ClassicArena import ClassicArena
 from OpenRaid import openRaid
 from quitAll import quitAll
 from NightmareAttemptText import NightmareAttemptText
-from CheckFilesExist import CheckFilesExist,CheckOS
+from CheckFilesExist import CheckFilesExist, CheckOS
 from TagTeamArena import TagTeamArena
 from TimeBetween import is_time_between
 import sys
@@ -20,13 +20,13 @@ import os
 
 
 def main():
-    
-    #wake up pc
-    pyautogui.click(0,5)
+
+    # wake up pc
+    pyautogui.click(0, 5)
     CheckFilesExist()
     CheckOS()
     is_time_between()
-    try:    
+    try:
         openRaid()
     except TypeError:
         openRaid()
@@ -36,36 +36,36 @@ def main():
         NightmareAttemptText()
     except TypeError:
         NightmareAttemptText()
-    #try:    
+    # try:
     AutoRewards()
     # except TypeError:
     #     AutoRewards()
-    try:        
-        #between 4am to 10pm
-        if is_time_between()==False:
-            #NM
-            AutoCB(1080,724)
-        #between 10pm to 4am
-        if is_time_between()==True:
-            #Brutal
-            AutoCB(1080,647)
+    try:
+        # between 4am to 10pm
+        if is_time_between() == False:
+            # NM
+            AutoCB(1080, 724)
+        # between 10pm to 4am
+        if is_time_between() == True:
+            # Brutal
+            AutoCB(1080, 647)
     except TypeError:
-        #between 4am to 10pm
-        if is_time_between()==False:
-            #NM
-            AutoCB(1080,724)
-        #between 10pm to 4am
-        if is_time_between()==True:
-            #Brutal
-            AutoCB(1080,647)
-    try:        
+        # between 4am to 10pm
+        if is_time_between() == False:
+            # NM
+            AutoCB(1080, 724)
+        # between 10pm to 4am
+        if is_time_between() == True:
+            # Brutal
+            AutoCB(1080, 647)
+    try:
         ClassicArena()
     except TypeError:
-        pass    
-    try:        
+        pass
+    try:
         TagTeamArena()
     except TypeError:
-        TagTeamArena()  
+        TagTeamArena()
 
     quitAll()
     BlackOutMonitor()
@@ -74,25 +74,20 @@ def main():
     sys.exit()
 
 
-
-if __name__=='__main__':
+if __name__ == "__main__":
     multiprocessing.freeze_support()
     p = multiprocessing.Process(target=main, name="main")
     p.start()
 
     # Wait 20 min for process
     time.sleep(2400)
-    
-    # Terminate 
+
+    # Terminate
     p.terminate()
 
     # Cleanup
     p.join()
 
-    
-    
-    
-    
     # try:
     #     main()
     # except PermissionError:

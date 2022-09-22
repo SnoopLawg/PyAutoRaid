@@ -1,4 +1,4 @@
-#Check if all the py files were downloaded
+# Check if all the py files were downloaded
 
 from ast import Global
 import os.path
@@ -9,41 +9,57 @@ import platform
 import pyautogui
 import pathlib
 
+
 def CheckFilesExist():
-    Needed_Files=["TimeBetween.py",'AutoRewards.py','BlackOutMonitor.py','CBauto.py','CheckFilesExist.py','ClassicArena.py','log.txt','LoopFindImage.py','Main.py','NightMareAttemptText.py','OpenRaid.py','quitAll.py']
-    Total_files =0
+    Needed_Files = [
+        "TimeBetween.py",
+        "AutoRewards.py",
+        "BlackOutMonitor.py",
+        "CBauto.py",
+        "CheckFilesExist.py",
+        "ClassicArena.py",
+        "log.txt",
+        "LoopFindImage.py",
+        "Main.py",
+        "NightMareAttemptText.py",
+        "OpenRaid.py",
+        "quitAll.py",
+    ]
+    Total_files = 0
     for file in Needed_Files:
-        dir=str(pathlib.Path().absolute())
-        filepath=dir+'\\'+file
-        file_exists=os.path.exists(filepath)
+        dir = str(pathlib.Path().absolute())
+        filepath = dir + "\\" + file
+        file_exists = os.path.exists(filepath)
         if file_exists == True:
-            print('Have',file)
-            Total_files+= 1
+            print("Have", file)
+            Total_files += 1
         elif file_exists == False:
-            print('Dont have',file)
-    missing=int(11-Total_files)
+            print("Dont have", file)
+    missing = int(11 - Total_files)
     if Total_files == len(Needed_Files):
-        print(Total_files,'files were downloaded')
+        print(Total_files, "files were downloaded")
     else:
-        print('All 12 files were not downloaded. Only',Total_files,'were')
-        tkinter.messagebox.showerror(title='ALL FILES NOT DOWNLOADED',message='You are missing files')
+        print("All 12 files were not downloaded. Only", Total_files, "were")
+        tkinter.messagebox.showerror(
+            title="ALL FILES NOT DOWNLOADED", message="You are missing files"
+        )
         exit()
 
 
 def CheckOS():
-    operating=platform.system()
-    if operating == 'Darwin':
+    operating = platform.system()
+    if operating == "Darwin":
         print("***Mac being used")
         exit()
-    elif operating == 'Windows':
-        print('***PC being used')
+    elif operating == "Windows":
+        print("***PC being used")
         # pyautogui.hotkey('winleft', 'm')
         return operating
     else:
-        print('I have no idea what OS this is')
+        print("I have no idea what OS this is")
         exit()
 
-if __name__=='__main__':
+
+if __name__ == "__main__":
     CheckOS()
     CheckFilesExist()
-    
