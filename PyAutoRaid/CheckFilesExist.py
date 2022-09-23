@@ -30,7 +30,7 @@ def CheckFilesExist():
         operating = CheckOS()
         dir = str(pathlib.Path().absolute())
         if operating == "Windows":
-            filepath = dir + "\\" + file
+            filepath = dir + "\\PyAutoRaid\\" + file
         elif operating == "Darwin":
             filepath = dir + "/" + file
         file_exists = os.path.exists(filepath)
@@ -40,7 +40,7 @@ def CheckFilesExist():
         elif file_exists == False:
             print("Dont have", file)
     missing = int(11 - Total_files)
-    if Total_files == len(Needed_Files) - 1:
+    if Total_files >= len(Needed_Files) - 1:
         print(Total_files, "files were downloaded")
     else:
         print("All 11 files were not downloaded. Only", Total_files, "were")
