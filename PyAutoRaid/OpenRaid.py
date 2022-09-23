@@ -6,12 +6,11 @@ import os, sys, subprocess
 import pygetwindow
 from quitAll import quitAll
 import pyautogui
-from CheckFilesExist import CheckFilesExist, CheckOS
+from CheckFilesExist import CheckOS
 import pathlib
 
-dir = str(pathlib.Path().absolute())
 
-PATH = "/Applications/Plarium Play"
+DIR = str(pathlib.Path().absolute())
 
 
 def openRaid():
@@ -33,29 +32,29 @@ def openRaid():
         #         file.write("\n playing PP")
         #     time.sleep(2)
     elif operating == "Windows":
-        PATH = "/Applications/Plarium Play.exe"
-        FULL_PATH = os.path.expanduser(PATH, +".exe")
+        PATH = "~\AppData\Local\PlariumPlay\PlariumPlay.exe"
+        FULL_PATH = os.path.expanduser(PATH)
         # os.startfile("C:\Program Files\RSL_Helper_X64\RSLHelper.exe")
-        os.startfile(r + FULL_PATH)
+        os.startfile(FULL_PATH)
         # skips after while
         time.sleep(30)
         if (
-            pyautogui.locateOnScreen(dir + r"\\assets\\MyLibraryPP.png", confidence=0.8)
+            pyautogui.locateOnScreen(DIR + r"\\assets\\MyLibraryPP.png", confidence=0.8)
             != None
         ):
             PPlayx, PPlayy = pyautogui.locateCenterOnScreen(
-                dir + r"\\assets\\MyLibraryPP.png", confidence=0.8
+                DIR + r"\\assets\\MyLibraryPP.png", confidence=0.8
             )
             pyautogui.click(PPlayx, PPlayy)
             with open("log.txt", mode="a") as file:
                 file.write("\n clicking library")
             time.sleep(5)
             if (
-                pyautogui.locateOnScreen(dir + r"\\assets\PPlay.png", confidence=0.8)
+                pyautogui.locateOnScreen(DIR + r"\\assets\PPlay.png", confidence=0.8)
                 != None
             ):
                 PPlayx, PPlayy = pyautogui.locateCenterOnScreen(
-                    dir + r"\\assets\PPlay.png", confidence=0.8
+                    DIR + r"\\assets\PPlay.png", confidence=0.8
                 )
                 pyautogui.click(PPlayx, PPlayy)
                 with open("log.txt", mode="a") as file:
@@ -64,11 +63,11 @@ def openRaid():
             pyautogui.click(440, 362)
             time.sleep(5)
             if (
-                pyautogui.locateOnScreen(dir + r"\\assets\PPlay.png", confidence=0.8)
+                pyautogui.locateOnScreen(DIR + r"\\assets\PPlay.png", confidence=0.8)
                 != None
             ):
                 PPlayx, PPlayy = pyautogui.locateCenterOnScreen(
-                    dir + r"\\assets\PPlay.png", confidence=0.8
+                    DIR + r"\\assets\PPlay.png", confidence=0.8
                 )
                 pyautogui.click(PPlayx, PPlayy)
                 with open("log.txt", mode="a") as file:
@@ -78,7 +77,7 @@ def openRaid():
         file.write("\n files opening")
     time_out = 0
     while (
-        pyautogui.locateOnScreen(dir + r"\\assets\exitAdd.png", confidence=0.8) == None
+        pyautogui.locateOnScreen(DIR + r"\\assets\exitAdd.png", confidence=0.8) == None
     ):
         time.sleep(0.5)
         time_out += 1
@@ -88,7 +87,7 @@ def openRaid():
             pyautogui.hotkey("winleft", "m")
             pyautogui.doubleClick(440, 362)
         while (
-            pyautogui.locateOnScreen(dir + r"\\assets\exitAdd.png", confidence=0.8)
+            pyautogui.locateOnScreen(DIR + r"\\assets\exitAdd.png", confidence=0.8)
             != None
         ):
             try:
