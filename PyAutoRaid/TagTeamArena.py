@@ -6,65 +6,82 @@ import time
 from LoopFindImage import LoopFindImage
 import pathlib
 
-dir = str(pathlib.Path().absolute())
+DIR = str(pathlib.Path().absolute())
 
 
 def TagTeamArena():
-    while pyautogui.locateOnScreen(dir + r"assets\exitAdd.png", confidence=0.8) != None:
+    while (
+        pyautogui.locateOnScreen(
+            DIR + "\\PyAutoRaid\\assets\\exitAdd.png", confidence=0.8
+        )
+        != None
+    ):
         adx, ady = pyautogui.locateCenterOnScreen(
-            dir + r"assets\exitAdd.png", confidence=0.8
+            DIR + "\\PyAutoRaid\\assets\\exitAdd.png", confidence=0.8
         )
         pyautogui.click(adx, ady)
         with open("log.txt", mode="a") as file:
             file.write("\n ad closed")
         time.sleep(2)
     while (
-        pyautogui.locateOnScreen(dir + r"assets\battleBTN.png", confidence=0.8) != None
+        pyautogui.locateOnScreen(
+            DIR + "\\PyAutoRaid\\assets\\battleBTN.png", confidence=0.8
+        )
+        != None
     ):
         battlex, battley = pyautogui.locateCenterOnScreen(
-            dir + r"assets\battleBTN.png", confidence=0.9
+            DIR + "\\PyAutoRaid\\assets\\battleBTN.png", confidence=0.9
         )
         pyautogui.click(battlex, battley)
         with open("log.txt", mode="a") as file:
             file.write("\n battle button pressed")
         time.sleep(2)
     while (
-        pyautogui.locateOnScreen(dir + r"assets\arenaTab.png", confidence=0.8) != None
+        pyautogui.locateOnScreen(
+            DIR + "\\PyAutoRaid\\assets\\arenaTab.png", confidence=0.8
+        )
+        != None
     ):
         battlex, battley = pyautogui.locateCenterOnScreen(
-            dir + r"assets\arenaTab.png", confidence=0.9
+            DIR + "\\PyAutoRaid\\assets\\arenaTab.png", confidence=0.9
         )
         pyautogui.click(battlex, battley)
         with open("log.txt", mode="a") as file:
             file.write("\n arena tab clicked")
         time.sleep(2)
     while (
-        pyautogui.locateOnScreen(dir + r"assets\TagTeamArena.png", confidence=0.8)
+        pyautogui.locateOnScreen(
+            DIR + "\\PyAutoRaid\\assets\\TagTeamArena.png", confidence=0.8
+        )
         != None
     ):
         battlex, battley = pyautogui.locateCenterOnScreen(
-            dir + r"assets\TagTeamArena.png", confidence=0.9
+            DIR + "\\PyAutoRaid\\assets\\TagTeamArena.png", confidence=0.9
         )
         pyautogui.click(battlex, battley)
         with open("log.txt", mode="a") as file:
             file.write("\n classic arena tab clicked")
         time.sleep(2)
     if (
-        pyautogui.locateOnScreen(dir + r"assets\tagTeamBazaar.png", confidence=0.8)
+        pyautogui.locateOnScreen(
+            DIR + "\\PyAutoRaid\\assets\\tagTeamBazaar.png", confidence=0.8
+        )
         != None
     ):
         goBackx, goBacky = pyautogui.locateCenterOnScreen(
-            dir + r"assets\tagTeamBazaar.png", confidence=0.8
+            DIR + "\\PyAutoRaid\\assets\\tagTeamBazaar.png", confidence=0.8
         )
         pyautogui.click(goBackx, goBacky)
         print("tag team bazaar opened")
         time.sleep(1)
     if (
-        pyautogui.locateOnScreen(dir + r"assets\tagTeamknight.png", confidence=0.8)
+        pyautogui.locateOnScreen(
+            DIR + "\\PyAutoRaid\\assets\\tagTeamknight.png", confidence=0.8
+        )
         != None
     ):
         goBackx, goBacky = pyautogui.locateCenterOnScreen(
-            dir + r"assets\tagTeamknight.png", confidence=0.8
+            DIR + "\\PyAutoRaid\\assets\\tagTeamknight.png", confidence=0.8
         )
         pyautogui.click(goBackx, goBacky)
         print("tag team knight clicked")
@@ -72,9 +89,14 @@ def TagTeamArena():
         pyautogui.click(1071, 691)
         time.sleep(1)
         pyautogui.click(592, 355)
-    while pyautogui.locateOnScreen(dir + r"assets\exitAdd.png", confidence=0.8) != None:
+    while (
+        pyautogui.locateOnScreen(
+            DIR + "\\PyAutoRaid\\assets\\exitAdd.png", confidence=0.8
+        )
+        != None
+    ):
         adx, ady = pyautogui.locateCenterOnScreen(
-            dir + r"assets\exitAdd.png", confidence=0.8
+            DIR + "\\PyAutoRaid\\assets\\exitAdd.png", confidence=0.8
         )
         pyautogui.click(adx, ady)
         with open("log.txt", mode="a") as file:
@@ -88,7 +110,7 @@ def TagTeamArena():
         # Top battle
         if (
             pyautogui.locateOnScreen(
-                dir + r"assets\tagArenaBattle.png",
+                DIR + "\\PyAutoRaid\\assets\\tagArenaBattle.png",
                 region=(1199, 415, 193, 100),
                 confidence=0.8,
             )
@@ -98,12 +120,12 @@ def TagTeamArena():
             time.sleep(1)
             while (
                 pyautogui.locateOnScreen(
-                    dir + r"assets\arenaConfirm.png", confidence=0.8
+                    DIR + "\\PyAutoRaid\\assets\\arenaConfirm.png", confidence=0.8
                 )
                 != None
             ):
                 battlex, battley = pyautogui.locateCenterOnScreen(
-                    dir + r"assets\arenaConfirm.png", confidence=0.9
+                    DIR + "\\PyAutoRaid\\assets\\arenaConfirm.png", confidence=0.9
                 )
                 pyautogui.click(battlex, battley)
                 print("confirm tokens")
@@ -112,16 +134,18 @@ def TagTeamArena():
                 time.sleep(1)
             if (
                 pyautogui.locateOnScreen(
-                    dir + r"assets\TagArenaNeedGems.png", confidence=0.8
+                    DIR + "\\PyAutoRaid\\assets\\TagArenaNeedGems.png", confidence=0.8
                 )
                 != None
             ):
                 break
-            LoopFindImage(dir + r"assets\arenaStart.png", "\n arena battle started")
+            LoopFindImage(
+                DIR + "\\PyAutoRaid\\assets\\arenaStart.png", "\n arena battle started"
+            )
             print("First Battle")
             while (
                 pyautogui.locateOnScreen(
-                    dir + r"assets\tapToContinue.png", confidence=0.8
+                    DIR + "\\PyAutoRaid\\assets\\tapToContinue.png", confidence=0.8
                 )
                 == None
             ):
@@ -133,13 +157,13 @@ def TagTeamArena():
                 time.sleep(1)
                 while (
                     pyautogui.locateOnScreen(
-                        dir + r"assets\tapToContinue.png", confidence=0.8
+                        DIR + "\\PyAutoRaid\\assets\\tapToContinue.png", confidence=0.8
                     )
                     != None
                 ):
                     time.sleep(1)
                     goBackx, goBacky = pyautogui.locateCenterOnScreen(
-                        dir + r"assets\tapToContinue.png", confidence=0.8
+                        DIR + "\\PyAutoRaid\\assets\\tapToContinue.png", confidence=0.8
                     )
                     pyautogui.click(goBackx, goBacky)
                     print("finishing arena battle")
@@ -157,7 +181,7 @@ def TagTeamArena():
             time.sleep(5)
         if (
             pyautogui.locateOnScreen(
-                dir + r"assets\tagArenaBattle.png",
+                DIR + "\\PyAutoRaid\\assets\\tagArenaBattle.png",
                 region=(1201, 510, 193, 98),
                 confidence=0.8,
             )
@@ -167,12 +191,12 @@ def TagTeamArena():
             time.sleep(2)
             while (
                 pyautogui.locateOnScreen(
-                    dir + r"assets\arenaConfirm.png", confidence=0.8
+                    DIR + "\\PyAutoRaid\\assets\\arenaConfirm.png", confidence=0.8
                 )
                 != None
             ):
                 battlex, battley = pyautogui.locateCenterOnScreen(
-                    dir + r"assets\arenaConfirm.png", confidence=0.9
+                    DIR + "\\PyAutoRaid\\assets\\arenaConfirm.png", confidence=0.9
                 )
                 pyautogui.click(battlex, battley)
                 print("confirm tokens")
@@ -181,16 +205,18 @@ def TagTeamArena():
                 time.sleep(1)
             if (
                 pyautogui.locateOnScreen(
-                    dir + r"assets\TagArenaNeedGems.png", confidence=0.8
+                    DIR + "\\PyAutoRaid\\assets\\TagArenaNeedGems.png", confidence=0.8
                 )
                 != None
             ):
                 exit()
-            LoopFindImage(dir + r"assets\arenaStart.png", "\n arena battle started")
+            LoopFindImage(
+                DIR + "\\PyAutoRaid\\assets\\arenaStart.png", "\n arena battle started"
+            )
             print("Second Battle")
             while (
                 pyautogui.locateOnScreen(
-                    dir + r"assets\tapToContinue.png", confidence=0.8
+                    DIR + "\\PyAutoRaid\\assets\\tapToContinue.png", confidence=0.8
                 )
                 == None
             ):
@@ -202,13 +228,13 @@ def TagTeamArena():
                 time.sleep(1)
                 while (
                     pyautogui.locateOnScreen(
-                        dir + r"assets\tapToContinue.png", confidence=0.8
+                        DIR + "\\PyAutoRaid\\assets\\tapToContinue.png", confidence=0.8
                     )
                     != None
                 ):
                     time.sleep(1)
                     goBackx, goBacky = pyautogui.locateCenterOnScreen(
-                        dir + r"assets\tapToContinue.png", confidence=0.8
+                        DIR + "\\PyAutoRaid\\assets\\tapToContinue.png", confidence=0.8
                     )
                     pyautogui.click(goBackx, goBacky)
                     print("finishing arena battle")
@@ -226,7 +252,7 @@ def TagTeamArena():
         # Third battle
         if (
             pyautogui.locateOnScreen(
-                dir + r"assets\tagArenaBattle.png",
+                DIR + "\\PyAutoRaid\\assets\\tagArenaBattle.png",
                 region=(1198, 606, 198, 100),
                 confidence=0.8,
             )
@@ -236,12 +262,12 @@ def TagTeamArena():
             time.sleep(1)
             while (
                 pyautogui.locateOnScreen(
-                    dir + r"assets\arenaConfirm.png", confidence=0.8
+                    DIR + "\\PyAutoRaid\\assets\\arenaConfirm.png", confidence=0.8
                 )
                 != None
             ):
                 battlex, battley = pyautogui.locateCenterOnScreen(
-                    dir + r"assets\arenaConfirm.png", confidence=0.9
+                    DIR + "\\PyAutoRaid\\assets\\arenaConfirm.png", confidence=0.9
                 )
                 pyautogui.click(battlex, battley)
                 print("confirm tokens")
@@ -250,16 +276,18 @@ def TagTeamArena():
                 time.sleep(1)
             if (
                 pyautogui.locateOnScreen(
-                    dir + r"assets\TagArenaNeedGems.png", confidence=0.8
+                    DIR + "\\PyAutoRaid\\assets\\TagArenaNeedGems.png", confidence=0.8
                 )
                 != None
             ):
                 break
-            LoopFindImage(dir + r"assets\arenaStart.png", "\n arena battle started")
+            LoopFindImage(
+                DIR + "\\PyAutoRaid\\assets\\arenaStart.png", "\n arena battle started"
+            )
             print("Third Battle")
             while (
                 pyautogui.locateOnScreen(
-                    dir + r"assets\tapToContinue.png", confidence=0.8
+                    DIR + "\\PyAutoRaid\\assets\\tapToContinue.png", confidence=0.8
                 )
                 == None
             ):
@@ -271,13 +299,13 @@ def TagTeamArena():
                 time.sleep(1)
                 while (
                     pyautogui.locateOnScreen(
-                        dir + r"assets\tapToContinue.png", confidence=0.8
+                        DIR + "\\PyAutoRaid\\assets\\tapToContinue.png", confidence=0.8
                     )
                     != None
                 ):
                     time.sleep(1)
                     goBackx, goBacky = pyautogui.locateCenterOnScreen(
-                        dir + r"assets\tapToContinue.png", confidence=0.8
+                        DIR + "\\PyAutoRaid\\assets\\tapToContinue.png", confidence=0.8
                     )
                     pyautogui.click(goBackx, goBacky)
                     print("finishing arena battle")
@@ -295,7 +323,7 @@ def TagTeamArena():
             time.sleep(5)
         if (
             pyautogui.locateOnScreen(
-                dir + r"assets\tagArenaBattle.png",
+                DIR + "\\PyAutoRaid\\assets\\tagArenaBattle.png",
                 region=(1200, 702, 194, 96),
                 confidence=0.9,
             )
@@ -306,12 +334,12 @@ def TagTeamArena():
             time.sleep(1)
             while (
                 pyautogui.locateOnScreen(
-                    dir + r"assets\arenaConfirm.png", confidence=0.8
+                    DIR + "\\PyAutoRaid\\assets\\arenaConfirm.png", confidence=0.8
                 )
                 != None
             ):
                 battlex, battley = pyautogui.locateCenterOnScreen(
-                    dir + r"assets\arenaConfirm.png", confidence=0.9
+                    DIR + "\\PyAutoRaid\\assets\\arenaConfirm.png", confidence=0.9
                 )
                 pyautogui.click(battlex, battley)
                 print("confirm tokens")
@@ -320,16 +348,18 @@ def TagTeamArena():
                 time.sleep(1)
             if (
                 pyautogui.locateOnScreen(
-                    dir + r"assets\TagArenaNeedGems.png", confidence=0.8
+                    DIR + "\\PyAutoRaid\\assets\\TagArenaNeedGems.png", confidence=0.8
                 )
                 != None
             ):
                 break
-            LoopFindImage(dir + r"assets\arenaStart.png", "\n arena battle started")
+            LoopFindImage(
+                DIR + "\\PyAutoRaid\\assets\\arenaStart.png", "\n arena battle started"
+            )
             print("Fourth Battle")
             while (
                 pyautogui.locateOnScreen(
-                    dir + r"assets\tapToContinue.png", confidence=0.8
+                    DIR + "\\PyAutoRaid\\assets\\tapToContinue.png", confidence=0.8
                 )
                 == None
             ):
@@ -341,13 +371,13 @@ def TagTeamArena():
                 time.sleep(1)
                 while (
                     pyautogui.locateOnScreen(
-                        dir + r"assets\tapToContinue.png", confidence=0.8
+                        DIR + "\\PyAutoRaid\\assets\\tapToContinue.png", confidence=0.8
                     )
                     != None
                 ):
                     time.sleep(1)
                     goBackx, goBacky = pyautogui.locateCenterOnScreen(
-                        dir + r"assets\tapToContinue.png", confidence=0.8
+                        DIR + "\\PyAutoRaid\\assets\\tapToContinue.png", confidence=0.8
                     )
                     pyautogui.click(goBackx, goBacky)
                     print("finishing arena battle")
@@ -365,65 +395,86 @@ def TagTeamArena():
             time.sleep(5)
 
         while (
-            pyautogui.locateOnScreen(dir + r"assets\arenaRefresh.png", confidence=0.8)
+            pyautogui.locateOnScreen(
+                DIR + "\\PyAutoRaid\\assets\\arenaRefresh.png", confidence=0.8
+            )
             != None
         ):
             goBackx, goBacky = pyautogui.locateCenterOnScreen(
-                dir + r"assets\arenaRefresh.png", confidence=0.8
+                DIR + "\\PyAutoRaid\\assets\\arenaRefresh.png", confidence=0.8
             )
             pyautogui.click(goBackx, goBacky)
             print("arena refreshed")
             time.sleep(1)
             done = 15
     ##            if done!=15:
-    ##                if pyautogui.locateOnScreen(dir + r"assets\arenaRefreshGems.png",confidence=0.8) !=None:
-    ##                    goBackx,goBacky=pyautogui.locateCenterOnScreen(dir + r"assets\arenaRefreshGems.png",confidence=0.8)
+    ##                if pyautogui.locateOnScreen(DIR + "\\PyAutoRaid\\assets\\arenaRefreshGems.png",confidence=0.8) !=None:
+    ##                    goBackx,goBacky=pyautogui.locateCenterOnScreen(DIR + "\\PyAutoRaid\\assets\\arenaRefreshGems.png",confidence=0.8)
     ##                    pyautogui.click(goBackx,goBacky)
     ##                    print("arena refreshed with gems")
     ##                    time.sleep(1)
     ##                    done=6
     # Out of the loop back out now
     if (
-        pyautogui.locateOnScreen(dir + r"assets\tagTeamBazaar.png", confidence=0.8)
+        pyautogui.locateOnScreen(
+            DIR + "\\PyAutoRaid\\assets\\tagTeamBazaar.png", confidence=0.8
+        )
         != None
     ):
         goBackx, goBacky = pyautogui.locateCenterOnScreen(
-            dir + r"assets\tagTeamBazaar.png", confidence=0.8
+            DIR + "\\PyAutoRaid\\assets\\tagTeamBazaar.png", confidence=0.8
         )
         pyautogui.click(goBackx, goBacky)
         print("tag team bazaar opened")
         time.sleep(1)
     if (
-        pyautogui.locateOnScreen(dir + r"assets\tagTeamknight.png", confidence=0.8)
+        pyautogui.locateOnScreen(
+            DIR + "\\PyAutoRaid\\assets\\tagTeamknight.png", confidence=0.8
+        )
         != None
     ):
         goBackx, goBacky = pyautogui.locateCenterOnScreen(
-            dir + r"assets\tagTeamknight.png", confidence=0.8
+            DIR + "\\PyAutoRaid\\assets\\tagTeamknight.png", confidence=0.8
         )
         pyautogui.click(goBackx, goBacky)
         print("tag team knight clicked")
         time.sleep(1)
         pyautogui.click(1071, 691)
         time.sleep(1)
-    while pyautogui.locateOnScreen(dir + r"assets\exitAdd.png", confidence=0.8) != None:
+    while (
+        pyautogui.locateOnScreen(
+            DIR + "\\PyAutoRaid\\assets\\exitAdd.png", confidence=0.8
+        )
+        != None
+    ):
         adx, ady = pyautogui.locateCenterOnScreen(
-            dir + r"assets\exitAdd.png", confidence=0.8
+            DIR + "\\PyAutoRaid\\assets\\exitAdd.png", confidence=0.8
         )
         pyautogui.click(adx, ady)
         with open("log.txt", mode="a") as file:
             file.write("\n ad closed")
         time.sleep(2)
-    while pyautogui.locateOnScreen(dir + r"assets\goBack.png", confidence=0.8) != None:
+    while (
+        pyautogui.locateOnScreen(
+            DIR + "\\PyAutoRaid\\assets\\goBack.png", confidence=0.8
+        )
+        != None
+    ):
         goBackx, goBacky = pyautogui.locateCenterOnScreen(
-            dir + r"assets\goBack.png", confidence=0.8
+            DIR + "\\PyAutoRaid\\assets\\goBack.png", confidence=0.8
         )
         pyautogui.click(goBackx, goBacky)
         with open("log.txt", mode="a") as file:
             file.write("\n Back to bastion")
         time.sleep(1)
-    while pyautogui.locateOnScreen(dir + r"assets\exitAdd.png", confidence=0.8) != None:
+    while (
+        pyautogui.locateOnScreen(
+            DIR + "\\PyAutoRaid\\assets\\exitAdd.png", confidence=0.8
+        )
+        != None
+    ):
         adx, ady = pyautogui.locateCenterOnScreen(
-            dir + r"assets\exitAdd.png", confidence=0.8
+            DIR + "\\PyAutoRaid\\assets\\exitAdd.png", confidence=0.8
         )
         pyautogui.click(adx, ady)
         with open("log.txt", mode="a") as file:
