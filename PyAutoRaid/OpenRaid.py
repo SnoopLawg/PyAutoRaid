@@ -52,19 +52,18 @@ def openRaid():
             print("waiting to click library")
             time.sleep(1)
         time.sleep(1.5)
-        PPlayx, PPlayy = pyautogui.locateCenterOnScreen(
+        PPlibraryx, PPlibraryy = pyautogui.locateCenterOnScreen(
             DIR + "\\PyAutoRaid\\assets\\MyLibraryPP.png", confidence=0.8
         )
-        pyautogui.click(PPlayx, PPlayy)
+        pyautogui.click(PPlibraryx, PPlibraryy)
         with open("log.txt", mode="a") as file:
             file.write("\n clicking library")
-        time.sleep(5)
-
+        time.sleep(2)
         if (
             pyautogui.locateOnScreen(
                 DIR + "\\PyAutoRaid\\assets\\PPlay.png", confidence=0.8
             )
-            == None
+            != None
         ):
             while (
                 pyautogui.locateOnScreen(
@@ -76,7 +75,7 @@ def openRaid():
             PPlayx, PPlayy = pyautogui.locateCenterOnScreen(
                 DIR + "\\PyAutoRaid\\\\assets\PPlay.png", confidence=0.8
             )
-            time.sleep(3)
+            time.sleep(1)
             pyautogui.click(PPlayx, PPlayy)
             with open("log.txt", mode="a") as file:
                 file.write("\n playing PP")
@@ -99,6 +98,10 @@ def openRaid():
                 all_windows = pygetwindow.getAllTitles()
                 if "Raid: Shadow Legends" in all_windows:
                     break
+                time_out += 1
+                if time_out >= 200:
+                    print("raid never opened lol")
+                    quitAll()
 
     with open("log.txt", mode="a") as file:
         file.write("\n files opening")
