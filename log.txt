@@ -1,5 +1,7 @@
 CB NIGHTMARE ATTEMPT
-23/09/2022 23:39:35
+25/09/2022 20:44:03
+ deleting ads now
+ deleting ads now
  deleting ads now
  deleting ads now
  deleting ads now
@@ -21,6 +23,7 @@ CB NIGHTMARE ATTEMPT
  opening quests button
  Back to bastion
  deleting ads now
+ ad closed
  battle button pressed
  cb tab clicked
  demonlord clicked
@@ -31,6 +34,13 @@ CB NIGHTMARE ATTEMPT
  Back to bastion
  Back to bastion
  Back to bastion
+ battle button pressed
+ arena tab clicked
+ classic arena tab clicked
+ Back to bastion
+ Back to bastion
+ Back to bastion
+ Back to bastion
  ad closed
  battle button pressed
  arena tab clicked
@@ -39,15 +49,7 @@ CB NIGHTMARE ATTEMPT
  arena battle started
  arena battle started
  arena battle started
- arena battle started
- arena battle started
- arena battle started
- arena battle started
  Back to bastion
  Back to bastion
  Back to bastion
  ad closed
- battle button pressed
- arena tab clicked
- classic arena tab clicked
- arena battle started

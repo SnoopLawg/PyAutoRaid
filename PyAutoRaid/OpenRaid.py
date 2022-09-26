@@ -39,7 +39,8 @@ def openRaid():
         os.startfile(FULL_PATH)
         # skips after while
         all_windows = pygetwindow.getAllTitles()
-        while "PlariumPlay" not in all_windows:
+        while "Plarium Play" not in all_windows:
+            all_windows = pygetwindow.getAllTitles()
             print("Waiting for Plarium Play to open")
             time.sleep(1)
         while (
