@@ -28,7 +28,7 @@ def main():
     # CheckFilesExist()
     CheckOS()
     is_time_between()
-    gui()
+    # gui()
     SQL()
     try:
         openRaid()
@@ -83,16 +83,15 @@ if __name__ == "__main__":
     p = multiprocessing.Process(target=main, name="main")
     p.start()
 
+    g = multiprocessing.Process(target=gui, name="PyAutoRaidGui")
+    g.start()
+
     # Wait 20 min for process
     time.sleep(2400)
 
     # Terminate
     p.terminate()
-
+    g.terminate()
     # Cleanup
     p.join()
-
-    # try:
-    #     main()
-    # except PermissionError:
-    #     print ('permission error')
+    g.join()
