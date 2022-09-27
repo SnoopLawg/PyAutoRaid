@@ -1,6 +1,5 @@
 import sqlite3 as sql
 import pathlib
-from RAIDGUI import gui
 from RAIDGUI import (
     AutoClanBoss,
     AutoReward,
@@ -12,7 +11,7 @@ from RAIDGUI import (
 dir = str(pathlib.Path().absolute())
 
 
-def SQL():
+def SQL(results=[]):
     AutoReward1 = AutoReward()
     AutoClanBoss1 = AutoClanBoss()
     AutoClassicArena1 = AutoClassicArena()
@@ -47,6 +46,7 @@ def SQL():
     results = cursor.fetchall()
     connection.commit()
     print(results)
+    return results
 
 
 if __name__ == "__main__":
