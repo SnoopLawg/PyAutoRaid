@@ -17,15 +17,19 @@ from datetime import datetime
 import time
 from multiprocessing import Process
 import os
+from RAIDGUI import gui
+from SQL_test import SQL
 
 
 def main():
 
     # wake up pc
     pyautogui.click(0, 5)
-    CheckFilesExist()
+    # CheckFilesExist()
     CheckOS()
     is_time_between()
+    gui()
+    SQL()
     try:
         openRaid()
     except TypeError:
