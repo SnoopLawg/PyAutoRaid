@@ -184,6 +184,18 @@ def gui():
     ttk.Button(tab1, text="SUBMIT", command=submission).grid(
         column=0, row=1, padx=30, pady=30
     )
+    ttk.Button(tab2, text="SUBMIT", command=submission).grid(
+        column=0, row=1, padx=30, pady=30
+    )
+    ttk.Button(tab3, text="SUBMIT", command=submission).grid(
+        column=0, row=1, padx=30, pady=30
+    )
+    ttk.Button(tab4, text="SUBMIT", command=submission).grid(
+        column=0, row=1, padx=30, pady=30
+    )
+    ttk.Button(tab5, text="SUBMIT", command=submission).grid(
+        column=0, row=1, padx=30, pady=30
+    )
 
     root.mainloop()
 
