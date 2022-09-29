@@ -1,19 +1,27 @@
 # Retrieve all rewards at Bastion
+from re import sub
 import pyautogui
 import time
 from LoopFindImage import LoopFindImage
 import pathlib
-from SQL_test import SQL
+from RAIDGUI import AutoReward, submission
+import sqlite3 as sql
+
 
 DIR = str(pathlib.Path().absolute())
 # import os
+connection = sql.connect(DIR + "/Settings.db")
+
+cursor = connection.cursor()
 
 
-def AutoRewards(Run=True):
-    # time.sleep(10)
-    Run = SQL()
+def AutoRewards():
+    cursor.execute("SELECT * FROM PyAutoRaid")
+    results = cursor.fetchall()
+    connection.commit()
+    Run = results
     Run = Run[0][1]
-    if Run == True:
+    if Run == "True":
         while (
             pyautogui.locateOnScreen(
                 DIR + "\\PyAutoRaid\\assets\\exitAdd.png",
@@ -638,6 +646,8 @@ def AutoRewards(Run=True):
                 with open("log.txt", mode="a") as file:
                     file.write("\n Back to bastion")
                 time.sleep(1)
+    else:
+        pass
 
 
 if __name__ == "__main__":

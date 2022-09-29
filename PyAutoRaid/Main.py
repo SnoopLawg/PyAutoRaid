@@ -29,7 +29,7 @@ def main():
     CheckOS()
     is_time_between()
     # gui()
-    SQL()
+    # SQL()
     try:
         openRaid()
     except TypeError:
@@ -81,17 +81,28 @@ def main():
 if __name__ == "__main__":
     multiprocessing.freeze_support()
     p = multiprocessing.Process(target=main, name="main")
+    g = multiprocessing.Process(target=gui, name="PyAutoRaidGui")
+    # sq = multiprocessing.Process(target=SQL, name="SQL")
+
     p.start()
 
-    g = multiprocessing.Process(target=gui, name="PyAutoRaidGui")
     g.start()
-
+    # sq.start()
+    # while True:
+    #     time.sleep(10)
+    #     counters = +1
+    #     sq = multiprocessing.Process(target=SQL, name="SQL")
+    #     sq.start()
+    #     if counters >= 240:
+    #         break
     # Wait 20 min for process
     time.sleep(2400)
 
     # Terminate
     p.terminate()
     g.terminate()
+    # sq.terminate()
     # Cleanup
     p.join()
     g.join()
+    # sq.join()

@@ -1,13 +1,23 @@
 # Black out the monitor in the end. Put it to sleep so ya boy can sleep
 import sys
 import time
-from SQL_test import SQL
+import sqlite3 as sql
+import pathlib
+
+DIR = str(pathlib.Path().absolute())
+
+connection = sql.connect(DIR + "/Settings.db")
+
+cursor = connection.cursor()
 
 
 def BlackOutMonitor():
-    Run = SQL()
+    cursor.execute("SELECT * FROM PyAutoRaid")
+    results = cursor.fetchall()
+    connection.commit()
+    Run = results
     Run = Run[0][5]
-    if Run == True:
+    if Run == "True":
         time.sleep(2)
         if sys.platform.startswith("linux"):
             import os

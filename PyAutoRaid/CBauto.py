@@ -1,4 +1,5 @@
 # fight the CB, this one is NM
+import sqlite3
 import pyautogui
 import time
 from datetime import datetime
@@ -10,9 +11,13 @@ import os
 import sys
 from TimeBetween import is_time_between
 import pathlib
-from SQL_test import SQL
+import sqlite3 as sql
 
 DIR = str(pathlib.Path().absolute())
+
+connection = sql.connect(DIR + "/Settings.db")
+
+cursor = connection.cursor()
 # between 4am to 10pm
 if is_time_between() == False:
     # NM
@@ -26,9 +31,12 @@ if is_time_between() == True:
 
 
 def AutoCB(xCB, yCB):
-    Run = SQL()
+    cursor.execute("SELECT * FROM PyAutoRaid")
+    results = cursor.fetchall()
+    connection.commit()
+    Run = results
     Run = Run[0][2]
-    if Run == True:
+    if Run == "True":
         time.sleep(1.5)
         with open("log.txt", mode="a") as file:
             file.write("\n deleting ads now")

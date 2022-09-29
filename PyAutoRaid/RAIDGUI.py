@@ -3,6 +3,20 @@
 import tkinter as tk
 from tkinter import ttk
 from tkinter import *
+import sqlite3 as sql
+import pathlib
+
+
+dir = str(pathlib.Path().absolute())
+# from SQL_test import SQL
+connection = sql.connect(dir + "/Settings.db")
+
+cursor = connection.cursor()
+
+command1 = """CREATE TABLE IF NOT EXISTS
+    PyAutoRaid(user_id INTEGER PRIMARY KEY, auto_cb TEXT, auto_ca TEXT, auto_tta TEXT, auto_r TEXT, blackout_monitor TEXT)"""
+
+cursor.execute(command1)
 
 
 root = Tk()
@@ -19,17 +33,65 @@ tab_control.add(tab3, text="Classic Arena")
 tab_control.add(tab4, text="Tag Team Arena")
 tab_control.add(tab5, text="Other Settings")
 
-var1 = tk.BooleanVar(value=True)
-var2 = tk.BooleanVar(value=True)
-var3 = tk.BooleanVar(value=True)
-var4 = tk.BooleanVar(value=True)
-var5 = tk.BooleanVar(value=True)
+# AutoReward1 = "True"
+# AutoClanBoss1 = "True"
+# AutoClassicArena1 = "True"
+# AutoTagTeamArena1 = "True"
+# BlackOutMonitors1 = "True"
+
+# TODO: fix the submission of arguments
+
+
+# value2 = True
+# value3 = True
+# value4 = True
+# value5 = True
+
+
+def submission():
+    var1.get()
+    var2.get()
+    var3.get()
+    var4.get()
+    var5.get()
+    cursor.execute(
+        "INSERT OR REPLACE INTO PyAutoRaid (user_id,auto_cb, auto_ca, auto_tta, auto_r, blackout_monitor) VALUES (1,'{}', '{}', '{}','{}', '{}')".format(
+            var1.get(),
+            var2.get(),
+            var3.get(),
+            var4.get(),
+            var5.get(),
+        )
+    )
+
+    cursor.execute("SELECT * FROM PyAutoRaid")
+
+    results = cursor.fetchall()
+    connection.commit()
+
+    print(results)
+    return results
+
+
+####################
+cursor.execute("SELECT * FROM PyAutoRaid")
+
+results = cursor.fetchall()
+connection.commit()
+
+
+var1 = tk.BooleanVar(value=results[0][1])
+var2 = tk.BooleanVar(value=results[0][2])
+var3 = tk.BooleanVar(value=results[0][3])
+var4 = tk.BooleanVar(value=results[0][4])
+var5 = tk.BooleanVar(value=results[0][5])
 
 
 def AutoReward():
     if var1.get() == False:
         print("False")
         return "False"
+
     elif var1.get() == True:
         print("True")
         return "True"
@@ -65,13 +127,17 @@ def AutoTagTeamArena():
 def BlackOutMonitors():
     if var5.get() == False:
         print("False")
+        global BlackOutMonitors1
+        BlackOutMonitors1 = "False"
         return "False"
     elif var5.get() == True:
         print("True")
+        BlackOutMonitors1 = "True"
         return "True"
 
 
 def gui():
+
     tab_control.pack(expand=1, fill="both")
 
     ttk.Checkbutton(
@@ -114,6 +180,10 @@ def gui():
         onvalue=True,
         command=BlackOutMonitors,
     ).grid(column=0, row=0, padx=30, pady=30)
+
+    ttk.Button(tab1, text="SUBMIT", command=submission).grid(
+        column=0, row=1, padx=30, pady=30
+    )
 
     root.mainloop()
 

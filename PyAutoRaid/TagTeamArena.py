@@ -5,15 +5,22 @@ import tkinter as ttk
 import time
 from LoopFindImage import LoopFindImage
 import pathlib
-from SQL_test import SQL
+import sqlite3 as sql
 
 DIR = str(pathlib.Path().absolute())
 
+connection = sql.connect(DIR + "/Settings.db")
+
+cursor = connection.cursor()
+
 
 def TagTeamArena():
-    Run = SQL()
+    cursor.execute("SELECT * FROM PyAutoRaid")
+    results = cursor.fetchall()
+    connection.commit()
+    Run = results
     Run = Run[0][4]
-    if Run == True:
+    if Run == "True":
         while (
             pyautogui.locateOnScreen(
                 DIR + "\\PyAutoRaid\\assets\\exitAdd.png", confidence=0.8

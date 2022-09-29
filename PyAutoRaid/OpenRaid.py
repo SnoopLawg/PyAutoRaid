@@ -58,7 +58,7 @@ def openRaid():
         pyautogui.click(PPlibraryx, PPlibraryy)
         with open("log.txt", mode="a") as file:
             file.write("\n clicking library")
-        time.sleep(2)
+        time.sleep(3.5)
         if (
             pyautogui.locateOnScreen(
                 DIR + "\\PyAutoRaid\\assets\\PPlay.png", confidence=0.8
@@ -112,8 +112,9 @@ def openRaid():
         )
         == None
     ):
-        time.sleep(0.5)
         time_out += 1
+        time.sleep(0.5)
+
         if time_out >= 200:
             print("raid never opened lol")
             quitAll()
@@ -134,7 +135,7 @@ def openRaid():
             win.size = (900, 600)
             win.moveTo(510, 240)
             break
-    time.sleep(10)
+    time.sleep(15)
     os.system("taskkill /f /im PlariumPlay.exe")
 
 

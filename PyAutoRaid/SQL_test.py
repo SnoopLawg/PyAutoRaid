@@ -1,6 +1,9 @@
 import sqlite3 as sql
 import pathlib
+import time
+import multiprocessing
 from RAIDGUI import (
+    gui,
     AutoClanBoss,
     AutoReward,
     AutoTagTeamArena,
@@ -12,11 +15,12 @@ dir = str(pathlib.Path().absolute())
 
 
 def SQL(results=[]):
-    AutoReward1 = AutoReward()
-    AutoClanBoss1 = AutoClanBoss()
-    AutoClassicArena1 = AutoClassicArena()
-    AutoTagTeamArena1 = AutoTagTeamArena()
-    BlackOutMonitors1 = BlackOutMonitors()
+
+    # AutoReward1 = AutoReward()
+    # AutoClanBoss1 = AutoClanBoss
+    # AutoClassicArena1 = AutoClassicArena
+    # AutoTagTeamArena1 = AutoTagTeamArena
+    # BlackOutMonitors1 = BlackOutMonitors
 
     connection = sql.connect(dir + "/Settings.db")
 
@@ -27,17 +31,17 @@ def SQL(results=[]):
 
     cursor.execute(command1)
 
-    cursor.execute(
-        "INSERT OR REPLACE INTO PyAutoRaid (user_id,auto_cb, auto_ca, auto_tta, auto_r, blackout_monitor) VALUES (1,'True', 'True', 'True','True', 'True')",
-    )
+    # cursor.execute(
+    #     "INSERT OR REPLACE INTO PyAutoRaid (user_id,auto_cb, auto_ca, auto_tta, auto_r, blackout_monitor) VALUES (1,'True', 'True', 'True','True', 'True')",
+    # )
 
     cursor.execute(
         "INSERT OR REPLACE INTO PyAutoRaid (user_id,auto_cb, auto_ca, auto_tta, auto_r, blackout_monitor) VALUES (1,'{}', '{}', '{}','{}', '{}')".format(
-            AutoReward1,
-            AutoClanBoss1,
-            AutoClassicArena1,
-            AutoTagTeamArena1,
-            BlackOutMonitors1,
+            AutoReward(),
+            "Truee",
+            "Truee",
+            "Truee",
+            "Truee",
         )
     )
 
@@ -45,10 +49,13 @@ def SQL(results=[]):
 
     results = cursor.fetchall()
     connection.commit()
+
     print(results)
     return results
 
 
 if __name__ == "__main__":
     # gui()
+    # g = multiprocessing.Process(target=gui, name="PyAutoRaidGui")
+    # g.start()
     SQL()
