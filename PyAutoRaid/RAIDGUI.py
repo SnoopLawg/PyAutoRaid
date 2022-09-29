@@ -5,7 +5,7 @@ from tkinter import ttk
 from tkinter import *
 import sqlite3 as sql
 import pathlib
-
+from PyAutoRaid import main_func
 
 dir = str(pathlib.Path().absolute())
 # from SQL_test import SQL
@@ -196,6 +196,21 @@ def gui():
     ttk.Button(tab5, text="SUBMIT", command=submission).grid(
         column=0, row=1, padx=30, pady=30
     )
+    # ttk.Button(tab1, text="Restart PyAutoRaid", command=Main.main).grid(
+    #     column=1, row=1, padx=30, pady=30
+    # )
+    # ttk.Button(tab2, text="Restart PyAutoRaid", command=Main.main).grid(
+    #     column=1, row=1, padx=30, pady=30
+    # )
+    # ttk.Button(tab3, text="Restart PyAutoRaid", command=Main.main).grid(
+    #     column=1, row=1, padx=30, pady=30
+    # )
+    # ttk.Button(tab4, text="Restart PyAutoRaid", command=Main.main).grid(
+    #     column=1, row=1, padx=30, pady=30
+    # )
+    # ttk.Button(tab5, text="Restart PyAutoRaid", command=Main.main).grid(
+    #     column=1, row=1, padx=30, pady=30
+    # )
 
     root.mainloop()
 
