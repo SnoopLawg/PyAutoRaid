@@ -18,7 +18,6 @@ import time
 from multiprocessing import Process
 import os
 from RAIDGUI import gui
-from SQL_test import SQL
 
 
 def main():
@@ -28,8 +27,7 @@ def main():
     # CheckFilesExist()
     CheckOS()
     is_time_between()
-    # gui()
-    # SQL()
+
     try:
         openRaid()
     except TypeError:
@@ -40,10 +38,7 @@ def main():
         NightmareAttemptText()
     except TypeError:
         NightmareAttemptText()
-    # try:
     AutoRewards()
-    # except TypeError:
-    #     AutoRewards()
     try:
         # between 4am to 10pm
         if is_time_between() == False:
@@ -82,27 +77,17 @@ if __name__ == "__main__":
     multiprocessing.freeze_support()
     p = multiprocessing.Process(target=main, name="main")
     g = multiprocessing.Process(target=gui, name="PyAutoRaidGui")
-    # sq = multiprocessing.Process(target=SQL, name="SQL")
 
     p.start()
 
     g.start()
-    # sq.start()
-    # while True:
-    #     time.sleep(10)
-    #     counters = +1
-    #     sq = multiprocessing.Process(target=SQL, name="SQL")
-    #     sq.start()
-    #     if counters >= 240:
-    #         break
+
     # Wait 20 min for process
     time.sleep(2400)
 
     # Terminate
     p.terminate()
     g.terminate()
-    # sq.terminate()
     # Cleanup
     p.join()
     g.join()
-    # sq.join()
