@@ -24,14 +24,6 @@ def openRaid():
         subprocess.call(["open", FULL_PATH])
         time.sleep(30)
         # TODO: Fix the clicks to open raid
-        # while pyautogui.locateOnScreen(r"assets\PPlay.png", confidence=0.8) != None:
-        #     PPlayx, PPlayy = pyautogui.locateCenterOnScreen(
-        #         r"assets\PPlay.png", confidence=0.8
-        #     )
-        #     pyautogui.click(PPlayx, PPlayy)
-        #     with open("log.txt", mode="a") as file:
-        #         file.write("\n playing PP")
-        #     time.sleep(2)
     elif operating == "Windows":
         PATH = "~\AppData\Local\PlariumPlay\PlariumPlay.exe"
         FULL_PATH = os.path.expanduser(PATH)
@@ -58,6 +50,7 @@ def openRaid():
         pyautogui.click(PPlibraryx, PPlibraryy)
         with open("log.txt", mode="a") as file:
             file.write("\n clicking library")
+        # wait till plarium play button becomes available
         time.sleep(3.5)
         if (
             pyautogui.locateOnScreen(
@@ -95,6 +88,7 @@ def openRaid():
                 time.sleep(1)
                 pyautogui.click(84, 240)
                 pyautogui.click(953, 139)
+                time_out = 0
                 all_windows = pygetwindow.getAllTitles()
                 if "Raid: Shadow Legends" in all_windows:
                     break
