@@ -5,7 +5,7 @@ from tkinter import ttk
 from tkinter import *
 import sqlite3 as sql
 import pathlib
-from PyAutoRaid import main_func
+
 
 dir = str(pathlib.Path().absolute())
 # from SQL_test import SQL
