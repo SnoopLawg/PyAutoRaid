@@ -18,7 +18,8 @@ command1 = """CREATE TABLE IF NOT EXISTS
 
 cursor.execute(command1)
 
-
+###################################################
+# The setup of the tkinter window and tabs
 root = Tk()
 root.title("PyAutoRaid Settings")
 tab_control = ttk.Notebook(root)
@@ -33,21 +34,8 @@ tab_control.add(tab3, text="Classic Arena")
 tab_control.add(tab4, text="Tag Team Arena")
 tab_control.add(tab5, text="Other Settings")
 
-# AutoReward1 = "True"
-# AutoClanBoss1 = "True"
-# AutoClassicArena1 = "True"
-# AutoTagTeamArena1 = "True"
-# BlackOutMonitors1 = "True"
-
-# TODO: fix the submission of arguments
-
-
-# value2 = True
-# value3 = True
-# value4 = True
-# value5 = True
-
-
+#####################################################
+# Get what all the radiobuttons are set as and submit to settings.db
 def submission():
     var1.get()
     var2.get()
@@ -63,7 +51,7 @@ def submission():
             var5.get(),
         )
     )
-
+    # Read and set 'results' to be equal to current settings from setting.db
     cursor.execute("SELECT * FROM PyAutoRaid")
 
     results = cursor.fetchall()
@@ -74,6 +62,7 @@ def submission():
 
 
 ####################
+# Set the radiobuttons to have the value it was last set on from results variable from settings.db
 cursor.execute("SELECT * FROM PyAutoRaid")
 
 results = cursor.fetchall()
@@ -86,7 +75,7 @@ var3 = tk.BooleanVar(value=results[0][3])
 var4 = tk.BooleanVar(value=results[0][4])
 var5 = tk.BooleanVar(value=results[0][5])
 
-
+###########################
 def AutoReward():
     if var1.get() == False:
         print("False")
@@ -127,15 +116,14 @@ def AutoTagTeamArena():
 def BlackOutMonitors():
     if var5.get() == False:
         print("False")
-        global BlackOutMonitors1
-        BlackOutMonitors1 = "False"
         return "False"
     elif var5.get() == True:
         print("True")
-        BlackOutMonitors1 = "True"
         return "True"
 
 
+#################################
+# The actual tkinter window widgets
 def gui():
 
     tab_control.pack(expand=1, fill="both")
