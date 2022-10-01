@@ -73,29 +73,29 @@ def TagTeamArena():
             with open("log.txt", mode="a") as file:
                 file.write("\n classic arena tab clicked")
             time.sleep(2)
-        if (
-            pyautogui.locateOnScreen(
-                DIR + "\\PyAutoRaid\\assets\\tagTeamBazaar.png", confidence=0.8
-            )
-            != None
-        ):
-            goBackx, goBacky = pyautogui.locateCenterOnScreen(
-                DIR + "\\PyAutoRaid\\assets\\tagTeamBazaar.png", confidence=0.8
-            )
-            pyautogui.click(goBackx, goBacky)
-            print("tag team bazaar opened")
-            time.sleep(1)
-        if (
-            pyautogui.locateOnScreen(
-                DIR + "\\PyAutoRaid\\assets\\tagTeamknight.png", confidence=0.8
-            )
-            != None
-        ):
-            goBackx, goBacky = pyautogui.locateCenterOnScreen(
-                DIR + "\\PyAutoRaid\\assets\\tagTeamknight.png", confidence=0.8
-            )
-            pyautogui.click(goBackx, goBacky)
-            print("tag team knight clicked")
+            # if (
+            #     pyautogui.locateOnScreen(
+            #         DIR + "\\PyAutoRaid\\assets\\tagTeamBazaar.png", confidence=0.8
+            #     )
+            #     != None
+            # ):
+            #     goBackx, goBacky = pyautogui.locateCenterOnScreen(
+            #         DIR + "\\PyAutoRaid\\assets\\tagTeamBazaar.png", confidence=0.8
+            #     )
+            #     pyautogui.click(goBackx, goBacky)
+            #     print("tag team bazaar opened")
+            #     time.sleep(1)
+            # if (
+            #     pyautogui.locateOnScreen(
+            #         DIR + "\\PyAutoRaid\\assets\\tagTeamknight.png", confidence=0.8
+            #     )
+            #     != None
+            # ):
+            #     goBackx, goBacky = pyautogui.locateCenterOnScreen(
+            #         DIR + "\\PyAutoRaid\\assets\\tagTeamknight.png", confidence=0.8
+            #     )
+            #     pyautogui.click(goBackx, goBacky)
+            #     print("tag team knight clicked")
             time.sleep(1)
             pyautogui.click(1071, 691)
             time.sleep(1)

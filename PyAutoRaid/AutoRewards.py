@@ -6,7 +6,7 @@ from LoopFindImage import LoopFindImage
 import pathlib
 from RAIDGUI import AutoReward, submission
 import sqlite3 as sql
-
+import os
 
 DIR = str(pathlib.Path().absolute())
 # import os
@@ -29,13 +29,14 @@ def AutoRewards():
             )
             == None
         ):
+            
             with open("log.txt", mode="a") as file:
                 file.write("\n deleting ads now")
         LoopFindImage(
             DIR + "\\PyAutoRaid\\assets\\exitAdd.png",
             "\n ad ",
         )
-
+        os.system("taskkill /f /im PlariumPlay.exe")
         # Gem Mine
         pyautogui.click(579, 684)
         time.sleep(2)
@@ -52,21 +53,21 @@ def AutoRewards():
         ##        with open("log.txt", mode='a') as file:
         ##            file.write("\n ad closed")
         ##        time.sleep(2)
-        while (
-            pyautogui.locateOnScreen(
-                DIR + "\\PyAutoRaid\\assets\\yesBTN.png",
-                confidence=0.8,
-            )
-            != None
-        ):
-            yesBTNx, yesBTNy = pyautogui.locateCenterOnScreen(
-                DIR + "\\PyAutoRaid\\assets\\yesBTN.png",
-                confidence=0.8,
-            )
-            pyautogui.click(yesBTNx, yesBTNy)
-            with open("log.txt", mode="a") as file:
-                file.write("\n yes button clicked")
-            time.sleep(2)
+        # while (
+        #     pyautogui.locateOnScreen(
+        #         DIR + "\\PyAutoRaid\\assets\\yesBTN.png",
+        #         confidence=0.8,
+        #     )
+        #     != None
+        # ):
+        #     yesBTNx, yesBTNy = pyautogui.locateCenterOnScreen(
+        #         DIR + "\\PyAutoRaid\\assets\\yesBTN.png",
+        #         confidence=0.8,
+        #     )
+        #     pyautogui.click(yesBTNx, yesBTNy)
+        #     with open("log.txt", mode="a") as file:
+        #         file.write("\n yes button clicked")
+        #     time.sleep(2)
 
         # MARKET - check for shards
         if pyautogui.locateOnScreen(

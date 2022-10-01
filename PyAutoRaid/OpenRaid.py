@@ -130,7 +130,6 @@ def openRaid():
             win.moveTo(510, 240)
             break
     time.sleep(15)
-    os.system("taskkill /f /im PlariumPlay.exe")
 
 
 if __name__ == "__main__":
