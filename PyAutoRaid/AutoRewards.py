@@ -7,6 +7,7 @@ import pathlib
 from RAIDGUI import AutoReward, submission
 import sqlite3 as sql
 import os
+import pygetwindow as gw
 
 DIR = str(pathlib.Path().absolute())
 # import os
@@ -21,6 +22,7 @@ def AutoRewards():
     connection.commit()
     Run = results
     Run = Run[0][1]
+    active_raid_window = 0
     if Run == "True":
         while (
             pyautogui.locateOnScreen(
@@ -29,9 +31,16 @@ def AutoRewards():
             )
             == None
         ):
-            
+
             with open("log.txt", mode="a") as file:
                 file.write("\n deleting ads now")
+
+            active_raid_window += 1
+            if active_raid_window <= 1:
+                Raid = gw.getWindowsWithTitle("Raid: Shadow Legends")[0]
+                Raid.minimize()
+                Raid.restore()
+
         LoopFindImage(
             DIR + "\\PyAutoRaid\\assets\\exitAdd.png",
             "\n ad ",

@@ -18,6 +18,9 @@ import time
 from multiprocessing import Process
 import os
 from RAIDGUI import gui
+import pathlib
+
+DIR = str(pathlib.Path().absolute())
 
 
 def main():
@@ -81,13 +84,45 @@ if __name__ == "__main__":
     p.start()
 
     g.start()
+    count = 0
+    while True:
+        if (
+            pyautogui.locateOnScreen(
+                DIR + "\\PyAutoRaid\\assets\\CBcrashed.png", confidence=0.8
+            )
+            != None
+        ):
+            quitAll()
+            os.system("taskkill /f /im Main.exe")
+            os.system("taskkill /f /im python.exe")
+            p.start()
+            g.start()
+        if (
+            pyautogui.locateOnScreen(
+                DIR + "\\PyAutoRaid\\assets\\CBcrashed2.png", confidence=0.8
+            )
+            != None
+        ):
+            quitAll()
+            os.system("taskkill /f /im Main.exe")
+            os.system("taskkill /f /im python.exe")
+            p.start()
+            g.start()
+        count += 1
+        if count >= 2400:
+            # Terminate
+            p.terminate()
+            g.terminate()
+            # Cleanup
+            p.join()
+            g.join()
 
-    # Wait 20 min for process
-    time.sleep(2400)
+    # # Wait 20 min for process
+    # time.sleep(2400)
 
-    # Terminate
-    p.terminate()
-    g.terminate()
-    # Cleanup
-    p.join()
-    g.join()
+    # # Terminate
+    # p.terminate()
+    # g.terminate()
+    # # Cleanup
+    # p.join()
+    # g.join()

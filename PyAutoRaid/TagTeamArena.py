@@ -21,6 +21,11 @@ def TagTeamArena():
     Run = results
     Run = Run[0][4]
     if Run == "True":
+        time.sleep(2)
+        LoopFindImage(
+            DIR + "\\PyAutoRaid\\assets\\exitAdd.png",
+            "\n ad ",
+        )
         while (
             pyautogui.locateOnScreen(
                 DIR + "\\PyAutoRaid\\assets\\exitAdd.png", confidence=0.8

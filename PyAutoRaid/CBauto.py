@@ -290,7 +290,7 @@ def AutoCB(xCB, yCB):
                         file.write("\n finished CB battle")
                     pyautogui.click(gotoBastionx, gotoBastiony)
                     break
-        print("test1")
+        pyautogui.click(566, 790)
         while (
             pyautogui.locateOnScreen(
                 DIR + "\\PyAutoRaid\\assets\\exitAdd.png", confidence=0.8
@@ -304,7 +304,6 @@ def AutoCB(xCB, yCB):
             with open("log.txt", mode="a") as file:
                 file.write("\n ad closed")
             time.sleep(2)
-        print("test2")
         while (
             pyautogui.locateOnScreen(
                 DIR + "\\PyAutoRaid\\assets\\goBack.png", confidence=0.8
@@ -330,7 +329,6 @@ def AutoCB(xCB, yCB):
             pyautogui.click(adx, ady)
             with open("log.txt", mode="a") as file:
                 file.write("\n ad closed")
-        print("test3")
 
 
 if __name__ == "__main__":

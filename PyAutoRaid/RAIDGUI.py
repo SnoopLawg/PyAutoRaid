@@ -6,7 +6,7 @@ from tkinter import *
 import sqlite3 as sql
 import pathlib
 import os
-from PyAutoRaid import main
+
 
 dir = str(pathlib.Path().absolute())
 # from SQL_test import SQL
@@ -34,6 +34,7 @@ tab_control.add(tab2, text="Clan Boss")
 tab_control.add(tab3, text="Classic Arena")
 tab_control.add(tab4, text="Tag Team Arena")
 tab_control.add(tab5, text="Other Settings")
+
 
 #####################################################
 # Get what all the radiobuttons are set as and submit to settings.db
@@ -137,7 +138,14 @@ def quit_everything():
 
 #################################
 def restart():
-    main()
+    # not the best
+    PATH = "~\OneDrive\Desktop\AutoRaidAutomate\Main.exe"
+    FULL_PATH = os.path.expanduser(PATH)
+    os.system("taskkill /f /im RSLHelper.exe")
+    os.system("taskkill /f /im  Raid.exe")
+    os.system("taskkill /f /im PlariumPlay.exe")
+    os.system("taskkill /f /im Main.exe")
+    os.startfile(FULL_PATH)
 
 
 # The actual tkinter window widgets
@@ -201,19 +209,19 @@ def gui():
     ttk.Button(tab5, text="SUBMIT", command=submission).grid(
         column=0, row=1, padx=30, pady=30
     )
-    ttk.Button(tab1, text="Restart PyAutoRaid", command=restart).grid(
-        column=1, row=1, padx=30, pady=30
-    )
-    # ttk.Button(tab2, text="Restart PyAutoRaid", command=Main.main).grid(
+    # ttk.Button(tab_control, text="Restart PyAutoRaid", command=restart).grid(
+    #     column=0, row=0, padx=30, pady=30
+    # )
+    # ttk.Button(tab2, text="Restart PyAutoRaid", command=restart).grid(
     #     column=1, row=1, padx=30, pady=30
     # )
-    # ttk.Button(tab3, text="Restart PyAutoRaid", command=Main.main).grid(
+    # ttk.Button(tab3, text="Restart PyAutoRaid", command=restart).grid(
     #     column=1, row=1, padx=30, pady=30
     # )
-    # ttk.Button(tab4, text="Restart PyAutoRaid", command=Main.main).grid(
+    # ttk.Button(tab4, text="Restart PyAutoRaid", command=restart).grid(
     #     column=1, row=1, padx=30, pady=30
     # )
-    # ttk.Button(tab5, text="Restart PyAutoRaid", command=Main.main).grid(
+    # ttk.Button(tab5, text="Restart PyAutoRaid", command=restart).grid(
     #     column=1, row=1, padx=30, pady=30
     # )
     ttk.Button(tab1, text="Quit All", command=quit_everything).grid(
