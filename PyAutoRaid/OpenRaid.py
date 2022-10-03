@@ -8,10 +8,21 @@ from quitAll import quitAll
 import pyautogui
 from CheckFilesExist import CheckOS
 import pathlib
-
+from screeninfo import Monitor, get_monitors
 
 DIR = str(pathlib.Path().absolute())
 import os
+
+
+def get_screen():
+    for m in get_monitors():
+        width = m.width
+        height = m.height
+        main = m.is_primary
+        if main == True:
+            center_width = int((width / 2) - 450)
+            center_height = int((height / 2) - 300)
+            return (center_width, center_height)
 
 
 def openRaid():
@@ -93,7 +104,7 @@ def openRaid():
                 if "Raid: Shadow Legends" in all_windows:
                     break
                 time_out += 1
-                if time_out >= 200:
+                if time_out >= 100:
                     print("raid never opened lol")
                     quitAll()
 
@@ -109,7 +120,7 @@ def openRaid():
         time_out += 1
         time.sleep(0.5)
 
-        if time_out >= 200:
+        if time_out >= 100:
             print("raid never opened lol")
             quitAll()
             pyautogui.hotkey("winleft", "m")
@@ -118,10 +129,13 @@ def openRaid():
             all_windows = pygetwindow.getAllTitles()
             print("Waiting for Raid to open")
             time.sleep(1)
+
+        center = get_screen()
+
         try:
             win = pygetwindow.getWindowsWithTitle("Raid: Shadow Legends")[0]
             win.size = (900, 600)
-            win.moveTo(510, 240)
+            win.moveTo(center[0], center[1])
             break
         except IndexError:
             time.sleep(20)
