@@ -92,22 +92,36 @@ if __name__ == "__main__":
             )
             != None
         ):
-            quitAll()
-            os.system("taskkill /f /im Main.exe")
-            os.system("taskkill /f /im python.exe")
-            p.start()
-            g.start()
+            time.sleep(5)
+            if (
+                pyautogui.locateOnScreen(
+                    DIR + "\\PyAutoRaid\\assets\\CBcrashed.png", confidence=0.8
+                )
+                != None
+            ):
+                quitAll()
+                os.system("taskkill /f /im Main.exe")
+                # os.system("taskkill /f /im python.exe")
+                p.start()
+                g.start()
         if (
             pyautogui.locateOnScreen(
                 DIR + "\\PyAutoRaid\\assets\\CBcrashed2.png", confidence=0.8
             )
             != None
         ):
-            quitAll()
-            os.system("taskkill /f /im Main.exe")
-            os.system("taskkill /f /im python.exe")
-            p.start()
-            g.start()
+            time.sleep(5)
+            if (
+                pyautogui.locateOnScreen(
+                    DIR + "\\PyAutoRaid\\assets\\CBcrashed.png", confidence=0.8
+                )
+                != None
+            ):
+                quitAll()
+                os.system("taskkill /f /im Main.exe")
+                # os.system("taskkill /f /im python.exe")
+                p.start()
+                g.start()
         count += 1
         if count >= 2400:
             # Terminate

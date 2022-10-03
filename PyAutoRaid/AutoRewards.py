@@ -658,6 +658,100 @@ def AutoRewards():
                 time.sleep(1)
     else:
         pass
+    ###################################
+    # inbox collect
+    time.sleep(1)
+    pyautogui.hotkey("i")
+    while (
+        pyautogui.locateOnScreen(
+            DIR + "\\PyAutoRaid\\assets\\inbox_brew.png",
+            confidence=0.8,
+        )
+        != None
+    ):
+        brew = pyautogui.locateOnScreen(
+            DIR + "\\PyAutoRaid\\assets\\inbox_brew.png", confidence=0.8
+        )
+
+        pyautogui.moveTo(brew)
+        pyautogui.moveRel(250, 0)
+        pyautogui.click()
+        time.sleep(2)
+    while (
+        pyautogui.locateOnScreen(
+            DIR + "\\PyAutoRaid\\assets\\inbox_purple_forge.png",
+            confidence=0.8,
+        )
+        != None
+    ):
+        forgepurple = pyautogui.locateOnScreen(
+            DIR + "\\PyAutoRaid\\assets\\inbox_purple_forge.png", confidence=0.8
+        )
+
+        pyautogui.moveTo(forgepurple)
+        pyautogui.moveRel(250, 0)
+        pyautogui.click()
+        time.sleep(2)
+    while (
+        pyautogui.locateOnScreen(
+            DIR + "\\PyAutoRaid\\assets\\inbox_yellow_forge.png",
+            confidence=0.8,
+        )
+        != None
+    ):
+        forgeyellow = pyautogui.locateOnScreen(
+            DIR + "\\PyAutoRaid\\assets\\inbox_yellow_forge.png", confidence=0.8
+        )
+
+        pyautogui.moveTo(forgeyellow)
+        pyautogui.moveRel(250, 0)
+        pyautogui.click()
+        time.sleep(2)
+    while (
+        pyautogui.locateOnScreen(
+            DIR + "\\PyAutoRaid\\assets\\inbox_coin.png",
+            confidence=0.8,
+        )
+        != None
+    ):
+        inboxcoin = pyautogui.locateOnScreen(
+            DIR + "\\PyAutoRaid\\assets\\inbox_coin.png", confidence=0.8
+        )
+
+        pyautogui.moveTo(inboxcoin)
+        pyautogui.moveRel(250, 0)
+        pyautogui.click()
+        time.sleep(2)
+    while (
+        pyautogui.locateOnScreen(
+            DIR + "\\PyAutoRaid\\assets\\inbox_potion.png",
+            confidence=0.8,
+        )
+        != None
+    ):
+        potion = pyautogui.locateOnScreen(
+            DIR + "\\PyAutoRaid\\assets\\inbox_potion.png", confidence=0.8
+        )
+
+        pyautogui.moveTo(potion)
+        pyautogui.moveRel(250, 0)
+        pyautogui.click()
+        time.sleep(2)
+    while (
+        pyautogui.locateOnScreen(
+            DIR + "\\PyAutoRaid\\assets\\goBack.png",
+            confidence=0.8,
+        )
+        != None
+    ):
+        goBackx, goBacky = pyautogui.locateCenterOnScreen(
+            DIR + "\\PyAutoRaid\\assets\\goBack.png",
+            confidence=0.8,
+        )
+        pyautogui.click(goBackx, goBacky)
+        with open("log.txt", mode="a") as file:
+            file.write("\n Back to bastion")
+        time.sleep(1)
 
 
 if __name__ == "__main__":

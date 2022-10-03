@@ -36,3 +36,4 @@ PyAutoRaid/build/main/localpycs/pyimod01_archive.pyc
 PyAutoRaid/build/main/localpycs/pyimod02_importers.pyc
 PyAutoRaid/build/main/localpycs/pyimod03_ctypes.pyc
 PyAutoRaid/build/main/localpycs/struct.pyc
+PyAutoRaid/inboxtest.py
