@@ -141,7 +141,7 @@ def openRaid():
             time.sleep(20)
             win = pygetwindow.getWindowsWithTitle("Raid: Shadow Legends")[0]
             win.size = (900, 600)
-            win.moveTo(510, 240)
+            win.moveTo(center[0], center[1])
             break
     time.sleep(15)
 
