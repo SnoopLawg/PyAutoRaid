@@ -27,7 +27,7 @@ def main():
 
     # wake up pc
     pyautogui.click(0, 5)
-    # CheckFilesExist()
+    CheckFilesExist()
     CheckOS()
     is_time_between()
 
@@ -80,7 +80,8 @@ if __name__ == "__main__":
     multiprocessing.freeze_support()
     p = multiprocessing.Process(target=main, name="main")
     g = multiprocessing.Process(target=gui, name="PyAutoRaidGui")
-
+    p2 = multiprocessing.Process(target=main, name="main")
+    g2 = multiprocessing.Process(target=gui, name="PyAutoRaidGui")
     p.start()
 
     g.start()
@@ -102,8 +103,8 @@ if __name__ == "__main__":
                 quitAll()
                 os.system("taskkill /f /im Main.exe")
                 # os.system("taskkill /f /im python.exe")
-                p.start()
-                g.start()
+                p2.start()
+                g2.start()
         if (
             pyautogui.locateOnScreen(
                 DIR + "\\PyAutoRaid\\assets\\CBcrashed2.png", confidence=0.8
@@ -120,16 +121,23 @@ if __name__ == "__main__":
                 quitAll()
                 os.system("taskkill /f /im Main.exe")
                 # os.system("taskkill /f /im python.exe")
-                p.start()
-                g.start()
+                p2.start()
+                g2.start()
         count += 1
         if count >= 2400:
             # Terminate
-            p.terminate()
-            g.terminate()
-            # Cleanup
-            p.join()
-            g.join()
+            try:
+                p.terminate()
+                g.terminate()
+                p2.terminate()
+                g2.terminate()
+                # Cleanup
+                p.join()
+                g.join()
+                p2.join()
+                g2.join()
+            except:
+                pass
 
     # # Wait 20 min for process
     # time.sleep(2400)
