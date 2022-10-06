@@ -10,7 +10,7 @@ import os
 import pygetwindow as gw
 
 DIR = str(pathlib.Path().absolute())
-# import os
+
 connection = sql.connect(DIR + "/Settings.db")
 
 cursor = connection.cursor()
@@ -54,29 +54,8 @@ def AutoRewards():
         LoopFindImage(
             DIR + "\\PyAutoRaid\\assets\\exitAdd.png",
             "\n ad closed ",
-        )  # if gem mine empty closes the wuit window so doesnt quit
+        )  # if gem mine empty closes the quit window so doesnt quit
         time.sleep(1)
-        ##    while pyautogui.locateOnScreen(DIR + "\\PyAutoRaid\\assets\\exitAdd.png",confidence=0.8) !=None:
-        ##        adx,ady=pyautogui.locateCenterOnScreen(DIR + "\\PyAutoRaid\\assets\\exitAdd.png",confidence=0.8)
-        ##        pyautogui.click(adx,ady)
-        ##        with open("log.txt", mode='a') as file:
-        ##            file.write("\n ad closed")
-        ##        time.sleep(2)
-        # while (
-        #     pyautogui.locateOnScreen(
-        #         DIR + "\\PyAutoRaid\\assets\\yesBTN.png",
-        #         confidence=0.8,
-        #     )
-        #     != None
-        # ):
-        #     yesBTNx, yesBTNy = pyautogui.locateCenterOnScreen(
-        #         DIR + "\\PyAutoRaid\\assets\\yesBTN.png",
-        #         confidence=0.8,
-        #     )
-        #     pyautogui.click(yesBTNx, yesBTNy)
-        #     with open("log.txt", mode="a") as file:
-        #         file.write("\n yes button clicked")
-        #     time.sleep(2)
 
         # MARKET - check for shards
         if pyautogui.locateOnScreen(
@@ -111,11 +90,11 @@ def AutoRewards():
                     )
                     != None
                 ):
-                    shopShardx, shopShardy = pyautogui.locateCenterOnScreen(
+                    getShardx, getShardy = pyautogui.locateCenterOnScreen(
                         DIR + "\\PyAutoRaid\\assets\\getShard.png",
                         confidence=0.8,
                     )
-                    pyautogui.click(shopShardx, shopShardy)
+                    pyautogui.click(getShardx, getShardy)
                     continue
                 with open("log.txt", mode="a") as file:
                     file.write("\n shard bought")
@@ -127,11 +106,11 @@ def AutoRewards():
                 )
                 != None
             ):
-                shopShardx, shopShardy = pyautogui.locateCenterOnScreen(
+                marketASx, marketASy = pyautogui.locateCenterOnScreen(
                     DIR + "\\PyAutoRaid\\assets\\marketAS.png",
                     confidence=0.8,
                 )
-                pyautogui.click(shopShardx, shopShardy)
+                pyautogui.click(marketASx, marketASy)
                 time.sleep(2)
                 while (
                     pyautogui.locateOnScreen(
@@ -140,11 +119,11 @@ def AutoRewards():
                     )
                     != None
                 ):
-                    shopShardx, shopShardy = pyautogui.locateCenterOnScreen(
+                    getASx, getASy = pyautogui.locateCenterOnScreen(
                         DIR + "\\PyAutoRaid\\assets\\getAS.png",
                         confidence=0.8,
                     )
-                    pyautogui.click(shopShardx, shopShardy)
+                    pyautogui.click(getASx, getASy)
                     continue
                 with open("log.txt", mode="a") as file:
                     file.write("\n shard bought")
