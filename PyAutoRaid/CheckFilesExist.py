@@ -30,7 +30,7 @@ def CheckFilesExist():
         operating = CheckOS()
         dir = str(pathlib.Path().absolute())
         if operating == "Windows":
-            filepath = dir + "\\PyAutoRaid\\" + file
+            filepath = dir + "\\AutoRaidAutomate\\PyAutoRaid\\" + file
         elif operating == "Darwin":
             filepath = dir + "/" + file
         file_exists = os.path.exists(filepath)

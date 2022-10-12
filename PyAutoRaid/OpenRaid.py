@@ -10,6 +10,8 @@ from CheckFilesExist import CheckOS
 import pathlib
 from screeninfo import Monitor, get_monitors
 
+# import Main
+
 DIR = str(pathlib.Path().absolute())
 import os
 
@@ -48,7 +50,8 @@ def openRaid():
             time.sleep(1)
         while (
             pyautogui.locateOnScreen(
-                DIR + "\\PyAutoRaid\\assets\\MyLibraryPP.png", confidence=0.8
+                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\MyLibraryPP.png",
+                confidence=0.8,
             )
             is None
         ):
@@ -56,7 +59,8 @@ def openRaid():
             time.sleep(1)
         time.sleep(1.5)
         PPlibraryx, PPlibraryy = pyautogui.locateCenterOnScreen(
-            DIR + "\\PyAutoRaid\\assets\\MyLibraryPP.png", confidence=0.8
+            DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\MyLibraryPP.png",
+            confidence=0.8,
         )
         pyautogui.click(PPlibraryx, PPlibraryy)
         with open("log.txt", mode="a") as file:
@@ -65,19 +69,21 @@ def openRaid():
         time.sleep(3.5)
         if (
             pyautogui.locateOnScreen(
-                DIR + "\\PyAutoRaid\\assets\\PPlay.png", confidence=0.8
+                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\PPlay.png",
+                confidence=0.8,
             )
             != None
         ):
             while (
                 pyautogui.locateOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\PPlay.png", confidence=0.8
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\PPlay.png",
+                    confidence=0.8,
                 )
                 == None
             ):
                 print("waiting to click play")
             PPlayx, PPlayy = pyautogui.locateCenterOnScreen(
-                DIR + "\\PyAutoRaid\\\\assets\PPlay.png", confidence=0.8
+                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\PPlay.png", confidence=0.8
             )
             time.sleep(1)
             pyautogui.click(PPlayx, PPlayy)
@@ -92,7 +98,8 @@ def openRaid():
             time.sleep(5)
             while (
                 pyautogui.locateOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\PPlay.png", confidence=0.8
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\PPlay.png",
+                    confidence=0.8,
                 )
                 == None
             ):
@@ -107,13 +114,17 @@ def openRaid():
                 if time_out >= 100:
                     print("raid never opened lol")
                     quitAll()
+                    import Main
+
+                    Main.main()
 
     with open("log.txt", mode="a") as file:
         file.write("\n files opening")
     time_out = 0
     while (
         pyautogui.locateOnScreen(
-            DIR + "\\PyAutoRaid\\assets\\exitAdd.png", confidence=0.8
+            DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\exitAdd.png",
+            confidence=0.8,
         )
         == None
     ):

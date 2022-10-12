@@ -8,7 +8,7 @@ from SQL_test import SQL
 import sqlite3 as sql
 
 DIR = str(pathlib.Path().absolute())
-connection = sql.connect(DIR + "/Settings.db")
+connection = sql.connect(DIR + "/AutoRaidAutomate/Settings.db")
 
 cursor = connection.cursor()
 
@@ -22,38 +22,41 @@ def ClassicArena():
     if Run == "True":
         while (
             pyautogui.locateOnScreen(
-                DIR + "\\PyAutoRaid\\assets\\goBack.png", confidence=0.8
+                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\goBack.png",
+                confidence=0.8,
             )
             != None
         ):
             goBackx, goBacky = pyautogui.locateCenterOnScreen(
-                DIR + "\\PyAutoRaid\\assets\\goBack.png", confidence=0.8
+                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\goBack.png",
+                confidence=0.8,
             )
             pyautogui.click(goBackx, goBacky)
-            with open("log.txt", mode="a") as file:
-                file.write("\n Back to bastion")
-            time.sleep(1)
+
         while (
             pyautogui.locateOnScreen(
-                DIR + "\\PyAutoRaid\\assets\\exitAdd.png", confidence=0.8
+                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\exitAdd.png",
+                confidence=0.8,
             )
             != None
         ):
             adx, ady = pyautogui.locateCenterOnScreen(
-                DIR + "\\PyAutoRaid\\assets\\exitAdd.png", confidence=0.8
+                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\exitAdd.png",
+                confidence=0.8,
             )
             pyautogui.click(adx, ady)
-            with open("log.txt", mode="a") as file:
-                file.write("\n ad closed")
+
             time.sleep(2)
         while (
             pyautogui.locateOnScreen(
-                DIR + "\\PyAutoRaid\\assets\\battleBTN.png", confidence=0.8
+                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\battleBTN.png",
+                confidence=0.8,
             )
             != None
         ):
             battlex, battley = pyautogui.locateCenterOnScreen(
-                DIR + "\\PyAutoRaid\\assets\\battleBTN.png", confidence=0.9
+                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\battleBTN.png",
+                confidence=0.9,
             )
             pyautogui.click(battlex, battley)
             with open("log.txt", mode="a") as file:
@@ -61,12 +64,14 @@ def ClassicArena():
             time.sleep(2)
         while (
             pyautogui.locateOnScreen(
-                DIR + "\\PyAutoRaid\\assets\\arenaTab.png", confidence=0.8
+                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\arenaTab.png",
+                confidence=0.8,
             )
             != None
         ):
             battlex, battley = pyautogui.locateCenterOnScreen(
-                DIR + "\\PyAutoRaid\\assets\\arenaTab.png", confidence=0.9
+                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\arenaTab.png",
+                confidence=0.9,
             )
             pyautogui.click(battlex, battley)
             with open("log.txt", mode="a") as file:
@@ -74,16 +79,17 @@ def ClassicArena():
             time.sleep(2)
         while (
             pyautogui.locateOnScreen(
-                DIR + "\\PyAutoRaid\\assets\\classicArena.png", confidence=0.8
+                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\classicArena.png",
+                confidence=0.8,
             )
             != None
         ):
             battlex, battley = pyautogui.locateCenterOnScreen(
-                DIR + "\\PyAutoRaid\\assets\\classicArena.png", confidence=0.9
+                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\classicArena.png",
+                confidence=0.9,
             )
             pyautogui.click(battlex, battley)
-            with open("log.txt", mode="a") as file:
-                file.write("\n classic arena tab clicked")
+
             time.sleep(2)
         ######################################################Need to not make this forever loop happen
         done = 0
@@ -92,7 +98,7 @@ def ClassicArena():
             # Top battle
             if (
                 pyautogui.locateOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\arenaBattle.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\arenaBattle.png",
                     region=(1215, 423, 167, 58),
                     confidence=0.8,
                 )
@@ -102,12 +108,16 @@ def ClassicArena():
                 time.sleep(2)
                 while (
                     pyautogui.locateOnScreen(
-                        DIR + "\\PyAutoRaid\\assets\\arenaConfirm.png", confidence=0.8
+                        DIR
+                        + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\arenaConfirm.png",
+                        confidence=0.8,
                     )
                     != None
                 ):
                     battlex, battley = pyautogui.locateCenterOnScreen(
-                        DIR + "\\PyAutoRaid\\assets\\arenaConfirm.png", confidence=0.9
+                        DIR
+                        + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\arenaConfirm.png",
+                        confidence=0.9,
                     )
                     pyautogui.click(battlex, battley)
                     print("confirm tokens")
@@ -115,25 +125,29 @@ def ClassicArena():
                     pyautogui.click(1304, 457)
                 if (
                     pyautogui.locateOnScreen(
-                        DIR + "\\PyAutoRaid\\assets\\classicArenaRefill.png",
+                        DIR
+                        + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\classicArenaRefill.png",
                         confidence=0.8,
                     )
                     != None
                 ):
                     battlex, battley = pyautogui.locateCenterOnScreen(
-                        DIR + "\\PyAutoRaid\\assets\\classicArenaRefill.png",
+                        DIR
+                        + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\classicArenaRefill.png",
                         confidence=0.9,
                     )
                     break
                 time.sleep(2)
                 LoopFindImage(
-                    DIR + "\\PyAutoRaid\\assets\\arenaStart.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\arenaStart.png",
                     "\n arena battle started",
                 )
                 print("First Battle")
                 while (
                     pyautogui.locateOnScreen(
-                        DIR + "\\PyAutoRaid\\assets\\tapToContinue.png", confidence=0.8
+                        DIR
+                        + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\tapToContinue.png",
+                        confidence=0.8,
                     )
                     == None
                 ):
@@ -143,14 +157,16 @@ def ClassicArena():
                     time.sleep(1)
                     while (
                         pyautogui.locateOnScreen(
-                            DIR + "\\PyAutoRaid\\assets\\tapToContinue.png",
+                            DIR
+                            + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\tapToContinue.png",
                             confidence=0.8,
                         )
                         != None
                     ):
                         time.sleep(1)
                         goBackx, goBacky = pyautogui.locateCenterOnScreen(
-                            DIR + "\\PyAutoRaid\\assets\\tapToContinue.png",
+                            DIR
+                            + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\tapToContinue.png",
                             confidence=0.8,
                         )
                         pyautogui.click(goBackx, goBacky)
@@ -166,7 +182,7 @@ def ClassicArena():
             # Second battle
             if (
                 pyautogui.locateOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\arenaBattle.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\arenaBattle.png",
                     region=(1212, 508, 170, 59),
                     confidence=0.8,
                 )
@@ -176,12 +192,16 @@ def ClassicArena():
                 time.sleep(4)
                 while (
                     pyautogui.locateOnScreen(
-                        DIR + "\\PyAutoRaid\\assets\\arenaConfirm.png", confidence=0.8
+                        DIR
+                        + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\arenaConfirm.png",
+                        confidence=0.8,
                     )
                     != None
                 ):
                     battlex, battley = pyautogui.locateCenterOnScreen(
-                        DIR + "\\PyAutoRaid\\assets\\arenaConfirm.png", confidence=0.9
+                        DIR
+                        + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\arenaConfirm.png",
+                        confidence=0.9,
                     )
                     pyautogui.click(battlex, battley)
                     print("confirm tokens")
@@ -189,25 +209,29 @@ def ClassicArena():
                     pyautogui.click(1304, 540)
                 if (
                     pyautogui.locateOnScreen(
-                        DIR + "\\PyAutoRaid\\assets\\classicArenaRefill.png",
+                        DIR
+                        + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\classicArenaRefill.png",
                         confidence=0.8,
                     )
                     != None
                 ):
                     battlex, battley = pyautogui.locateCenterOnScreen(
-                        DIR + "\\PyAutoRaid\\assets\\classicArenaRefill.png",
+                        DIR
+                        + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\classicArenaRefill.png",
                         confidence=0.9,
                     )
                     break
                 time.sleep(2)
                 LoopFindImage(
-                    DIR + "\\PyAutoRaid\\assets\\arenaStart.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\arenaStart.png",
                     "\n arena battle started",
                 )
                 print("Second Battle")
                 while (
                     pyautogui.locateOnScreen(
-                        DIR + "\\PyAutoRaid\\assets\\tapToContinue.png", confidence=0.8
+                        DIR
+                        + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\tapToContinue.png",
+                        confidence=0.8,
                     )
                     == None
                 ):
@@ -217,14 +241,16 @@ def ClassicArena():
                     time.sleep(1)
                     while (
                         pyautogui.locateOnScreen(
-                            DIR + "\\PyAutoRaid\\assets\\tapToContinue.png",
+                            DIR
+                            + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\tapToContinue.png",
                             confidence=0.8,
                         )
                         != None
                     ):
                         time.sleep(1)
                         goBackx, goBacky = pyautogui.locateCenterOnScreen(
-                            DIR + "\\PyAutoRaid\\assets\\tapToContinue.png",
+                            DIR
+                            + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\tapToContinue.png",
                             confidence=0.8,
                         )
                         pyautogui.click(goBackx, goBacky)
@@ -240,7 +266,7 @@ def ClassicArena():
             # Third battle
             if (
                 pyautogui.locateOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\arenaBattle.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\arenaBattle.png",
                     region=(1217, 596, 164, 58),
                     confidence=0.8,
                 )
@@ -250,12 +276,16 @@ def ClassicArena():
                 time.sleep(4)
                 while (
                     pyautogui.locateOnScreen(
-                        DIR + "\\PyAutoRaid\\assets\\arenaConfirm.png", confidence=0.8
+                        DIR
+                        + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\arenaConfirm.png",
+                        confidence=0.8,
                     )
                     != None
                 ):
                     battlex, battley = pyautogui.locateCenterOnScreen(
-                        DIR + "\\PyAutoRaid\\assets\\arenaConfirm.png", confidence=0.9
+                        DIR
+                        + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\arenaConfirm.png",
+                        confidence=0.9,
                     )
                     pyautogui.click(battlex, battley)
                     print("confirm tokens")
@@ -263,25 +293,29 @@ def ClassicArena():
                     pyautogui.click(1303, 625)
                 if (
                     pyautogui.locateOnScreen(
-                        DIR + "\\PyAutoRaid\\assets\\classicArenaRefill.png",
+                        DIR
+                        + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\classicArenaRefill.png",
                         confidence=0.8,
                     )
                     != None
                 ):
                     battlex, battley = pyautogui.locateCenterOnScreen(
-                        DIR + "\\PyAutoRaid\\assets\\classicArenaRefill.png",
+                        DIR
+                        + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\classicArenaRefill.png",
                         confidence=0.9,
                     )
                     break
                 time.sleep(2)
                 LoopFindImage(
-                    DIR + "\\PyAutoRaid\\assets\\arenaStart.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\arenaStart.png",
                     "\n arena battle started",
                 )
                 print("Third Battle")
                 while (
                     pyautogui.locateOnScreen(
-                        DIR + "\\PyAutoRaid\\assets\\tapToContinue.png", confidence=0.8
+                        DIR
+                        + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\tapToContinue.png",
+                        confidence=0.8,
                     )
                     == None
                 ):
@@ -291,14 +325,16 @@ def ClassicArena():
                     time.sleep(2)
                     while (
                         pyautogui.locateOnScreen(
-                            DIR + "\\PyAutoRaid\\assets\\tapToContinue.png",
+                            DIR
+                            + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\tapToContinue.png",
                             confidence=0.8,
                         )
                         != None
                     ):
                         time.sleep(1)
                         goBackx, goBacky = pyautogui.locateCenterOnScreen(
-                            DIR + "\\PyAutoRaid\\assets\\tapToContinue.png",
+                            DIR
+                            + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\tapToContinue.png",
                             confidence=0.8,
                         )
                         pyautogui.click(goBackx, goBacky)
@@ -314,7 +350,7 @@ def ClassicArena():
             time.sleep(1)
             if (
                 pyautogui.locateOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\arenaBattle.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\arenaBattle.png",
                     region=(1212, 679, 170, 62),
                     confidence=0.9,
                 )
@@ -325,12 +361,16 @@ def ClassicArena():
                 time.sleep(2)
                 while (
                     pyautogui.locateOnScreen(
-                        DIR + "\\PyAutoRaid\\assets\\arenaConfirm.png", confidence=0.8
+                        DIR
+                        + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\arenaConfirm.png",
+                        confidence=0.8,
                     )
                     != None
                 ):
                     battlex, battley = pyautogui.locateCenterOnScreen(
-                        DIR + "\\PyAutoRaid\\assets\\arenaConfirm.png", confidence=0.9
+                        DIR
+                        + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\arenaConfirm.png",
+                        confidence=0.9,
                     )
                     pyautogui.click(battlex, battley)
                     print("confirm tokens")
@@ -338,25 +378,29 @@ def ClassicArena():
                     pyautogui.click(1304, 711)
                 if (
                     pyautogui.locateOnScreen(
-                        DIR + "\\PyAutoRaid\\assets\\classicArenaRefill.png",
+                        DIR
+                        + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\classicArenaRefill.png",
                         confidence=0.8,
                     )
                     != None
                 ):
                     battlex, battley = pyautogui.locateCenterOnScreen(
-                        DIR + "\\PyAutoRaid\\assets\\classicArenaRefill.png",
+                        DIR
+                        + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\classicArenaRefill.png",
                         confidence=0.9,
                     )
                     break
                 time.sleep(2)
                 LoopFindImage(
-                    DIR + "\\PyAutoRaid\\assets\\arenaStart.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\arenaStart.png",
                     "\n arena battle started",
                 )
                 print("Fourth Battle")
                 while (
                     pyautogui.locateOnScreen(
-                        DIR + "\\PyAutoRaid\\assets\\tapToContinue.png", confidence=0.8
+                        DIR
+                        + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\tapToContinue.png",
+                        confidence=0.8,
                     )
                     == None
                 ):
@@ -366,14 +410,16 @@ def ClassicArena():
                     time.sleep(1)
                     while (
                         pyautogui.locateOnScreen(
-                            DIR + "\\PyAutoRaid\\assets\\tapToContinue.png",
+                            DIR
+                            + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\tapToContinue.png",
                             confidence=0.8,
                         )
                         != None
                     ):
                         time.sleep(1)
                         goBackx, goBacky = pyautogui.locateCenterOnScreen(
-                            DIR + "\\PyAutoRaid\\assets\\tapToContinue.png",
+                            DIR
+                            + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\tapToContinue.png",
                             confidence=0.8,
                         )
                         pyautogui.click(goBackx, goBacky)
@@ -389,7 +435,7 @@ def ClassicArena():
             time.sleep(1)
             if (
                 pyautogui.locateOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\arenaBattle.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\arenaBattle.png",
                     region=(1208, 761, 177, 68),
                     confidence=0.8,
                 )
@@ -400,12 +446,16 @@ def ClassicArena():
                 time.sleep(1)
                 while (
                     pyautogui.locateOnScreen(
-                        DIR + "\\PyAutoRaid\\assets\\arenaConfirm.png", confidence=0.8
+                        DIR
+                        + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\arenaConfirm.png",
+                        confidence=0.8,
                     )
                     != None
                 ):
                     battlex, battley = pyautogui.locateCenterOnScreen(
-                        DIR + "\\PyAutoRaid\\assets\\arenaConfirm.png", confidence=0.9
+                        DIR
+                        + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\arenaConfirm.png",
+                        confidence=0.9,
                     )
                     pyautogui.click(battlex, battley)
                     print("confirm tokens")
@@ -413,25 +463,29 @@ def ClassicArena():
                     pyautogui.click(1304, 798)
                 if (
                     pyautogui.locateOnScreen(
-                        DIR + "\\PyAutoRaid\\assets\\classicArenaRefill.png",
+                        DIR
+                        + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\classicArenaRefill.png",
                         confidence=0.8,
                     )
                     != None
                 ):
                     battlex, battley = pyautogui.locateCenterOnScreen(
-                        DIR + "\\PyAutoRaid\\assets\\classicArenaRefill.png",
+                        DIR
+                        + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\classicArenaRefill.png",
                         confidence=0.9,
                     )
                     break
                 time.sleep(2)
                 LoopFindImage(
-                    DIR + "\\PyAutoRaid\\assets\\arenaStart.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\arenaStart.png",
                     "\n arena battle started",
                 )
                 print("Fifth Battle")
                 while (
                     pyautogui.locateOnScreen(
-                        DIR + "\\PyAutoRaid\\assets\\tapToContinue.png", confidence=0.8
+                        DIR
+                        + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\tapToContinue.png",
+                        confidence=0.8,
                     )
                     == None
                 ):
@@ -441,14 +495,16 @@ def ClassicArena():
                     time.sleep(1)
                     while (
                         pyautogui.locateOnScreen(
-                            DIR + "\\PyAutoRaid\\assets\\tapToContinue.png",
+                            DIR
+                            + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\tapToContinue.png",
                             confidence=0.8,
                         )
                         != None
                     ):
                         time.sleep(1)
                         goBackx, goBacky = pyautogui.locateCenterOnScreen(
-                            DIR + "\\PyAutoRaid\\assets\\tapToContinue.png",
+                            DIR
+                            + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\tapToContinue.png",
                             confidence=0.8,
                         )
                         pyautogui.click(goBackx, goBacky)
@@ -464,12 +520,14 @@ def ClassicArena():
 
             while (
                 pyautogui.locateOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\arenaRefresh.png", confidence=0.8
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\arenaRefresh.png",
+                    confidence=0.8,
                 )
                 != None
             ):
                 goBackx, goBacky = pyautogui.locateCenterOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\arenaRefresh.png", confidence=0.8
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\arenaRefresh.png",
+                    confidence=0.8,
                 )
                 pyautogui.click(goBackx, goBacky)
                 print("arena refreshed")
@@ -479,29 +537,30 @@ def ClassicArena():
         # Out of the loop back out now
         while (
             pyautogui.locateOnScreen(
-                DIR + "\\PyAutoRaid\\assets\\goBack.png", confidence=0.8
+                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\goBack.png",
+                confidence=0.8,
             )
             != None
         ):
             goBackx, goBacky = pyautogui.locateCenterOnScreen(
-                DIR + "\\PyAutoRaid\\assets\\goBack.png", confidence=0.8
+                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\goBack.png",
+                confidence=0.8,
             )
             pyautogui.click(goBackx, goBacky)
-            with open("log.txt", mode="a") as file:
-                file.write("\n Back to bastion")
-            time.sleep(1)
+
         while (
             pyautogui.locateOnScreen(
-                DIR + "\\PyAutoRaid\\assets\\exitAdd.png", confidence=0.8
+                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\exitAdd.png",
+                confidence=0.8,
             )
             != None
         ):
             adx, ady = pyautogui.locateCenterOnScreen(
-                DIR + "\\PyAutoRaid\\assets\\exitAdd.png", confidence=0.8
+                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\exitAdd.png",
+                confidence=0.8,
             )
             pyautogui.click(adx, ady)
-            with open("log.txt", mode="a") as file:
-                file.write("\n ad closed")
+
             time.sleep(2)
 
 
@@ -510,4 +569,5 @@ if __name__ == "__main__":
         ClassicArena()
         time.sleep(2)
     except TypeError:
-        pass
+        print(TypeError)
+        quit()

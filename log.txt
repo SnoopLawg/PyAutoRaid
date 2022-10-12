@@ -1,5 +1,6 @@
 CB NIGHTMARE ATTEMPT
-05/10/2022 20:15:01
+11/10/2022 18:07:32
+ deleting ads now
  deleting ads now
  deleting ads now
  deleting ads now
@@ -15,7 +16,9 @@ CB NIGHTMARE ATTEMPT
  deleting ads now
  deleting ads now
  ad 
+ ad 
  shop clicked
+ shard bought
  back to Bastion x 
  open guardian ring
  Back to bastion
@@ -23,35 +26,26 @@ CB NIGHTMARE ATTEMPT
  ad closed
  opening clan button
  Back to bastion
- opening quests button
- Back to bastion
  Back to bastion
  deleting ads now
  ad closed
  battle button pressed
  cb tab clicked
  demonlord clicked
+ rewards checked
+ claim rewards checked
  clicked random location, nightmare
  about to battle clan boss
- no keys left
- Back to bastion
- Back to bastion
- Back to bastion
- battle button pressed
- arena tab clicked
- classic arena tab clicked
- arena battle started
- arena battle started
- arena battle started
- arena battle started
- Back to bastion
- Back to bastion
- Back to bastion
- Back to bastion
+
+ battling clan boss11/10/2022 18:09:49
+ Date and time of CB battle 11/10/2022 18:09:49
  ad closed
  battle button pressed
  arena tab clicked
  classic arena tab clicked
+ arena battle started
+ arena battle started
+ arena battle started
  arena battle started
  arena battle started
  arena battle started

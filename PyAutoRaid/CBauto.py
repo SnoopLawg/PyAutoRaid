@@ -15,7 +15,7 @@ import sqlite3 as sql
 
 DIR = str(pathlib.Path().absolute())
 
-connection = sql.connect(DIR + "/Settings.db")
+connection = sql.connect(DIR + "/AutoRaidAutomate/Settings.db")
 
 cursor = connection.cursor()
 # between 4am to 10pm
@@ -30,7 +30,7 @@ if is_time_between() == True:
     yCB = 647
 
 
-def AutoCB(xCB, yCB):
+def ClanBoss(xCB, yCB):
     cursor.execute("SELECT * FROM PyAutoRaid")
     results = cursor.fetchall()
     connection.commit()
@@ -42,12 +42,14 @@ def AutoCB(xCB, yCB):
             file.write("\n deleting ads now")
         while (
             pyautogui.locateOnScreen(
-                DIR + "\\PyAutoRaid\\assets\\exitAdd.png", confidence=0.8
+                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\exitAdd.png",
+                confidence=0.8,
             )
             != None
         ):
             adx, ady = pyautogui.locateCenterOnScreen(
-                DIR + "\\PyAutoRaid\\assets\\exitAdd.png", confidence=0.8
+                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\exitAdd.png",
+                confidence=0.8,
             )
             pyautogui.click(adx, ady)
             with open("log.txt", mode="a") as file:
@@ -55,12 +57,14 @@ def AutoCB(xCB, yCB):
             time.sleep(2)
         while (
             pyautogui.locateOnScreen(
-                DIR + "\\PyAutoRaid\\assets\\battleBTN.png", confidence=0.8
+                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\battleBTN.png",
+                confidence=0.8,
             )
             != None
         ):
             battlex, battley = pyautogui.locateCenterOnScreen(
-                DIR + "\\PyAutoRaid\\assets\\battleBTN.png", confidence=0.9
+                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\battleBTN.png",
+                confidence=0.9,
             )
             pyautogui.click(battlex, battley)
             with open("log.txt", mode="a") as file:
@@ -68,12 +72,12 @@ def AutoCB(xCB, yCB):
             time.sleep(2)
         while (
             pyautogui.locateOnScreen(
-                DIR + "\\PyAutoRaid\\assets\\CB.png", confidence=0.9
+                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\CB.png", confidence=0.9
             )
             != None
         ):
             CBx, CBy = pyautogui.locateCenterOnScreen(
-                DIR + "\\PyAutoRaid\\assets\\CB.png", confidence=0.9
+                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\CB.png", confidence=0.9
             )
             pyautogui.click(CBx, CBy)
             with open("log.txt", mode="a") as file:
@@ -81,12 +85,12 @@ def AutoCB(xCB, yCB):
             time.sleep(3)
         while (
             pyautogui.locateOnScreen(
-                DIR + "\\PyAutoRaid\\assets\\CB2.png", confidence=0.9
+                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\CB2.png", confidence=0.9
             )
             != None
         ):
             CB2x, CB2y = pyautogui.locateCenterOnScreen(
-                DIR + "\\PyAutoRaid\\assets\\CB2.png", confidence=0.9
+                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\CB2.png", confidence=0.9
             )
             pyautogui.click(CB2x, CB2y)
             with open("log.txt", mode="a") as file:
@@ -94,12 +98,14 @@ def AutoCB(xCB, yCB):
             time.sleep(3)
         while (
             pyautogui.locateOnScreen(
-                DIR + "\\PyAutoRaid\\assets\\demonLord.png", confidence=0.9
+                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\demonLord.png",
+                confidence=0.9,
             )
             != None
         ):
             demonLordx, demonLordy = pyautogui.locateCenterOnScreen(
-                DIR + "\\PyAutoRaid\\assets\\demonLord.png", confidence=0.8
+                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\demonLord.png",
+                confidence=0.8,
             )
             pyautogui.click(demonLordx, demonLordy)
             with open("log.txt", mode="a") as file:
@@ -107,12 +113,14 @@ def AutoCB(xCB, yCB):
             time.sleep(2)
         while (
             pyautogui.locateOnScreen(
-                DIR + "\\PyAutoRaid\\assets\\demonLord2.png", confidence=0.9
+                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\demonLord2.png",
+                confidence=0.9,
             )
             != None
         ):
             demonLord2x, demonLord2y = pyautogui.locateCenterOnScreen(
-                DIR + "\\PyAutoRaid\\assets\\demonLord2.png", confidence=0.8
+                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\demonLord2.png",
+                confidence=0.8,
             )
             pyautogui.click(demonLord2x, demonLord2y)
             with open("log.txt", mode="a") as file:
@@ -120,12 +128,14 @@ def AutoCB(xCB, yCB):
             time.sleep(4)
         while (
             pyautogui.locateOnScreen(
-                DIR + "\\PyAutoRaid\\assets\\CBreward.png", confidence=0.8
+                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\CBreward.png",
+                confidence=0.8,
             )
             != None
         ):
             CBrewardx, CBrewardy = pyautogui.locateCenterOnScreen(
-                DIR + "\\PyAutoRaid\\assets\\CBreward.png", confidence=0.8
+                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\CBreward.png",
+                confidence=0.8,
             )
             time.sleep(2)
             pyautogui.click(CBrewardx, CBrewardy)
@@ -134,12 +144,15 @@ def AutoCB(xCB, yCB):
             time.sleep(2)
             while (
                 pyautogui.locateOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\nightmareClaimed.png", confidence=0.8
+                    DIR
+                    + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\nightmareClaimed.png",
+                    confidence=0.8,
                 )
                 != None
             ):
                 nightmareClaimedx, nightmareClaimedy = pyautogui.locateCenterOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\CBclaim.png", confidence=0.5
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\CBclaim.png",
+                    confidence=0.5,
                 )
                 pyautogui.click(nightmareClaimedx, nightmareClaimedy)
                 time.sleep(1)
@@ -151,12 +164,14 @@ def AutoCB(xCB, yCB):
                 pyautogui.click()
         while (
             pyautogui.locateOnScreen(
-                DIR + "\\PyAutoRaid\\assets\\CBclaim.png", confidence=0.8
+                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\CBclaim.png",
+                confidence=0.8,
             )
             != None
         ):
             CBclaimx, CBclaimy = pyautogui.locateCenterOnScreen(
-                DIR + "\\PyAutoRaid\\assets\\CBclaim.png", confidence=0.5
+                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\CBclaim.png",
+                confidence=0.5,
             )
             pyautogui.click(CBclaimx, CBclaimy)
             time.sleep(1)
@@ -166,7 +181,8 @@ def AutoCB(xCB, yCB):
         time.sleep(2)
         while (
             pyautogui.locateOnScreen(
-                DIR + "\\PyAutoRaid\\assets\\CBhard.png", confidence=0.8
+                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\CBhard.png",
+                confidence=0.8,
             )
             != None
         ):
@@ -175,12 +191,14 @@ def AutoCB(xCB, yCB):
                 file.write("\n clicked random location, nightmare")
             while (
                 pyautogui.locateOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\CBbattle.png", confidence=0.8
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\CBbattle.png",
+                    confidence=0.8,
                 )
                 != None
             ):
                 CBbattlex, CBbattley = pyautogui.locateCenterOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\CBbattle.png", confidence=0.8
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\CBbattle.png",
+                    confidence=0.8,
                 )
                 time.sleep(2)
                 pyautogui.click(CBbattlex, CBbattley)
@@ -189,7 +207,8 @@ def AutoCB(xCB, yCB):
                 time.sleep(1)
                 if (
                     pyautogui.locateOnScreen(
-                        DIR + "\\PyAutoRaid\\assets\\CBnokey.png", confidence=0.8
+                        DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\CBnokey.png",
+                        confidence=0.8,
                     )
                     != None
                 ):
@@ -199,12 +218,14 @@ def AutoCB(xCB, yCB):
             time.sleep(1)
         while (
             pyautogui.locateOnScreen(
-                DIR + "\\PyAutoRaid\\assets\\CBstart.png", confidence=0.8
+                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\CBstart.png",
+                confidence=0.8,
             )
             != None
         ):
             CBstartx, CBstarty = pyautogui.locateCenterOnScreen(
-                DIR + "\\PyAutoRaid\\assets\\CBstart.png", confidence=0.8
+                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\CBstart.png",
+                confidence=0.8,
             )
             time.sleep(2)
             pyautogui.click(CBstartx, CBstarty)
@@ -220,12 +241,14 @@ def AutoCB(xCB, yCB):
             time.sleep(1)
             while (
                 pyautogui.locateOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\CBcontinue.png", confidence=0.8
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\CBcontinue.png",
+                    confidence=0.8,
                 )
                 != None
             ):
                 CBcontinuex, CBcontinuey = pyautogui.locateCenterOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\CBcontinue.png", confidence=0.8
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\CBcontinue.png",
+                    confidence=0.8,
                 )
                 time.sleep(2)
                 pyautogui.click(CBcontinuex, CBcontinuey)
@@ -233,13 +256,15 @@ def AutoCB(xCB, yCB):
 
             while (
                 pyautogui.locateOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\gotoBastion.png", confidence=0.8
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\gotoBastion.png",
+                    confidence=0.8,
                 )
                 == None
             ):
                 while (
                     pyautogui.locateOnScreen(
-                        DIR + "\\PyAutoRaid\\assets\\CBcrashed.png", confidence=0.8
+                        DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\CBcrashed.png",
+                        confidence=0.8,
                     )
                     != None
                 ):
@@ -253,13 +278,14 @@ def AutoCB(xCB, yCB):
                     openRaid()
                     AutoRewards()
                     os.system("taskkill /pid RSLHelper.exe")
-                    AutoCB()
+                    ClanBoss()
                     quitAll()
                     BlackOutMonitor()
                     sys.exit()
                 while (
                     pyautogui.locateOnScreen(
-                        DIR + "\\PyAutoRaid\\assets\\CBcrashed2.png", confidence=0.8
+                        DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\CBcrashed2.png",
+                        confidence=0.8,
                     )
                     != None
                 ):
@@ -273,18 +299,20 @@ def AutoCB(xCB, yCB):
                     openRaid()
                     AutoRewards()
                     os.system("taskkill /pid RSLHelper.exe")
-                    AutoCB()
+                    ClanBoss()
                     quitAll()
                     BlackOutMonitor()
                     sys.exit()
                 while (
                     pyautogui.locateOnScreen(
-                        DIR + "\\PyAutoRaid\\assets\\gotoBastion.png", confidence=0.8
+                        DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\gotoBastion.png",
+                        confidence=0.8,
                     )
                     != None
                 ):
                     gotoBastionx, gotoBastiony = pyautogui.locateCenterOnScreen(
-                        DIR + "\\PyAutoRaid\\assets\\gotoBastion.png", confidence=0.8
+                        DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\gotoBastion.png",
+                        confidence=0.8,
                     )
                     with open("log.txt", mode="a") as file:
                         file.write("\n finished CB battle")
@@ -293,12 +321,14 @@ def AutoCB(xCB, yCB):
         pyautogui.click(566, 790)
         while (
             pyautogui.locateOnScreen(
-                DIR + "\\PyAutoRaid\\assets\\exitAdd.png", confidence=0.8
+                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\exitAdd.png",
+                confidence=0.8,
             )
             != None
         ):
             adx, ady = pyautogui.locateCenterOnScreen(
-                DIR + "\\PyAutoRaid\\assets\\exitAdd.png", confidence=0.8
+                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\exitAdd.png",
+                confidence=0.8,
             )
             pyautogui.click(adx, ady)
             with open("log.txt", mode="a") as file:
@@ -306,12 +336,14 @@ def AutoCB(xCB, yCB):
             time.sleep(2)
         while (
             pyautogui.locateOnScreen(
-                DIR + "\\PyAutoRaid\\assets\\goBack.png", confidence=0.8
+                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\goBack.png",
+                confidence=0.8,
             )
             != None
         ):
             goBackx, goBacky = pyautogui.locateCenterOnScreen(
-                DIR + "\\PyAutoRaid\\assets\\goBack.png", confidence=0.8
+                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\goBack.png",
+                confidence=0.8,
             )
             pyautogui.click(goBackx, goBacky)
             with open("log.txt", mode="a") as file:
@@ -319,12 +351,14 @@ def AutoCB(xCB, yCB):
             time.sleep(1)
         while (
             pyautogui.locateOnScreen(
-                DIR + "\\PyAutoRaid\\assets\\exitAdd.png", confidence=0.8
+                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\exitAdd.png",
+                confidence=0.8,
             )
             != None
         ):
             adx, ady = pyautogui.locateCenterOnScreen(
-                DIR + "\\PyAutoRaid\\assets\\exitAdd.png", confidence=0.8
+                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\exitAdd.png",
+                confidence=0.8,
             )
             pyautogui.click(adx, ady)
             with open("log.txt", mode="a") as file:
@@ -335,8 +369,8 @@ if __name__ == "__main__":
     # between 4am to 10pm
     if is_time_between() == False:
         # NM
-        AutoCB(1080, 724)
+        ClanBoss(1080, 724)
     # between 10pm to 4am
     if is_time_between() == True:
         # Brutal
-        AutoCB(1080, 647)
+        ClanBoss(1080, 647)

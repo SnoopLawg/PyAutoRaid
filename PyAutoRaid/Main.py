@@ -1,6 +1,6 @@
 # Run all of the raid functions.
 
-from CBauto import AutoCB
+from CBauto import ClanBoss
 from AutoRewards import AutoRewards
 from BlackOutMonitor import BlackOutMonitor
 from ClassicArena import ClassicArena
@@ -46,20 +46,20 @@ def main():
         # between 4am to 10pm
         if is_time_between() == False:
             # NM
-            AutoCB(1080, 724)
+            ClanBoss(1080, 724)
         # between 10pm to 4am
         if is_time_between() == True:
             # Brutal
-            AutoCB(1080, 647)
+            ClanBoss(1080, 647)
     except TypeError:
         # between 4am to 10pm
         if is_time_between() == False:
             # NM
-            AutoCB(1080, 724)
+            ClanBoss(1080, 724)
         # between 10pm to 4am
         if is_time_between() == True:
             # Brutal
-            AutoCB(1080, 647)
+            ClanBoss(1080, 647)
     try:
         ClassicArena()
     except TypeError:

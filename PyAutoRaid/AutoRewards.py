@@ -11,7 +11,7 @@ import pygetwindow as gw
 
 DIR = str(pathlib.Path().absolute())
 
-connection = sql.connect(DIR + "/Settings.db")
+connection = sql.connect(DIR + "/AutoRaidAutomate/Settings.db")
 
 cursor = connection.cursor()
 
@@ -26,7 +26,7 @@ def AutoRewards():
     if Run == "True":
         while (
             pyautogui.locateOnScreen(
-                DIR + "\\PyAutoRaid\\assets\\exitAdd.png",
+                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\exitAdd.png",
                 confidence=0.8,
             )
             == None
@@ -42,7 +42,7 @@ def AutoRewards():
                 Raid.restore()
 
         LoopFindImage(
-            DIR + "\\PyAutoRaid\\assets\\exitAdd.png",
+            DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\exitAdd.png",
             "\n ad ",
         )
         os.system("taskkill /f /im PlariumPlay.exe")
@@ -52,18 +52,18 @@ def AutoRewards():
         pyautogui.hotkey("esc")  # esc gem mine
         time.sleep(2)
         LoopFindImage(
-            DIR + "\\PyAutoRaid\\assets\\exitAdd.png",
+            DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\exitAdd.png",
             "\n ad closed ",
         )  # if gem mine empty closes the quit window so doesnt quit
         time.sleep(1)
 
         # MARKET - check for shards
         if pyautogui.locateOnScreen(
-            DIR + "\\PyAutoRaid\\assets\\theMarket.png",
+            DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\theMarket.png",
             confidence=0.8,
         ):
             theMarketx, theMarkety = pyautogui.locateCenterOnScreen(
-                DIR + "\\PyAutoRaid\\assets\\theMarket.png",
+                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\theMarket.png",
                 confidence=0.8,
             )
             pyautogui.click(theMarketx, theMarkety)
@@ -72,26 +72,26 @@ def AutoRewards():
             time.sleep(2)
             while (
                 pyautogui.locateOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\shopShard.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\shopShard.png",
                     confidence=0.8,
                 )
                 != None
             ):
                 shopShardx, shopShardy = pyautogui.locateCenterOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\shopShard.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\shopShard.png",
                     confidence=0.8,
                 )
                 pyautogui.click(shopShardx, shopShardy)
                 time.sleep(2)
                 while (
                     pyautogui.locateOnScreen(
-                        DIR + "\\PyAutoRaid\\assets\\getShard.png",
+                        DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\getShard.png",
                         confidence=0.8,
                     )
                     != None
                 ):
                     getShardx, getShardy = pyautogui.locateCenterOnScreen(
-                        DIR + "\\PyAutoRaid\\assets\\getShard.png",
+                        DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\getShard.png",
                         confidence=0.8,
                     )
                     pyautogui.click(getShardx, getShardy)
@@ -101,26 +101,26 @@ def AutoRewards():
                 time.sleep(2)
             while (
                 pyautogui.locateOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\marketAS.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\marketAS.png",
                     confidence=0.8,
                 )
                 != None
             ):
                 marketASx, marketASy = pyautogui.locateCenterOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\marketAS.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\marketAS.png",
                     confidence=0.8,
                 )
                 pyautogui.click(marketASx, marketASy)
                 time.sleep(2)
                 while (
                     pyautogui.locateOnScreen(
-                        DIR + "\\PyAutoRaid\\assets\\getAS.png",
+                        DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\getAS.png",
                         confidence=0.8,
                     )
                     != None
                 ):
                     getASx, getASy = pyautogui.locateCenterOnScreen(
-                        DIR + "\\PyAutoRaid\\assets\\getAS.png",
+                        DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\getAS.png",
                         confidence=0.8,
                     )
                     pyautogui.click(getASx, getASy)
@@ -129,21 +129,21 @@ def AutoRewards():
                     file.write("\n shard bought")
                 time.sleep(2)
             LoopFindImage(
-                DIR + "\\PyAutoRaid\\assets\\goBack.png",
+                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\goBack.png",
                 "\n back to Bastion x ",
             )
             LoopFindImage(
-                DIR + "\\PyAutoRaid\\assets\\exitAdd.png",
+                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\exitAdd.png",
                 "\n ad closed ",
             )
 
         # SHOP - claim AS, claim MS, check offers for goodieBag,miniPack,smallPack,regularPack, then claim
         if pyautogui.locateOnScreen(
-            DIR + "\\PyAutoRaid\\assets\\shopBTN.png",
+            DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\shopBTN.png",
             confidence=0.8,
         ):
             shopBTNx, shopBTNy = pyautogui.locateCenterOnScreen(
-                DIR + "\\PyAutoRaid\\assets\\shopBTN.png",
+                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\shopBTN.png",
                 confidence=0.8,
             )
             pyautogui.click(shopBTNx, shopBTNy)
@@ -152,13 +152,13 @@ def AutoRewards():
             time.sleep(2)
             while (
                 pyautogui.locateOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\claimAS.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\claimAS.png",
                     confidence=0.8,
                 )
                 != None
             ):
                 claimASx, claimASy = pyautogui.locateCenterOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\claimAS.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\claimAS.png",
                     confidence=0.8,
                 )
                 pyautogui.click(claimASx, claimASy)
@@ -167,13 +167,15 @@ def AutoRewards():
                 time.sleep(2)
                 while (
                     pyautogui.locateOnScreen(
-                        DIR + "\\PyAutoRaid\\assets\\defaultClaim.png",
+                        DIR
+                        + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\defaultClaim.png",
                         confidence=0.8,
                     )
                     != None
                 ):
                     defaultClaimx, defaultClaimy = pyautogui.locateCenterOnScreen(
-                        DIR + "\\PyAutoRaid\\assets\\defaultClaim.png",
+                        DIR
+                        + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\defaultClaim.png",
                         confidence=0.8,
                     )
                     pyautogui.click(defaultClaimx, defaultClaimy)
@@ -182,13 +184,13 @@ def AutoRewards():
                     time.sleep(3)
             while (
                 pyautogui.locateOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\claimMS.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\claimMS.png",
                     confidence=0.8,
                 )
                 != None
             ):
                 claimMSx, claimMSy = pyautogui.locateCenterOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\claimMS.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\claimMS.png",
                     confidence=0.8,
                 )
                 pyautogui.click(claimMSx, claimMSy)
@@ -197,13 +199,15 @@ def AutoRewards():
                 time.sleep(3)
                 while (
                     pyautogui.locateOnScreen(
-                        DIR + "\\PyAutoRaid\\assets\\defaultClaim.png",
+                        DIR
+                        + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\defaultClaim.png",
                         confidence=0.8,
                     )
                     != None
                 ):
                     defaultClaimx, defaultClaimy = pyautogui.locateCenterOnScreen(
-                        DIR + "\\PyAutoRaid\\assets\\defaultClaim.png",
+                        DIR
+                        + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\defaultClaim.png",
                         confidence=0.8,
                     )
                     pyautogui.click(defaultClaimx, defaultClaimy)
@@ -212,134 +216,136 @@ def AutoRewards():
                     time.sleep(3)
             while (
                 pyautogui.locateOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\offers.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\offers.png",
                     confidence=0.9,
                 )
                 != None
             ):
                 offersx, offersy = pyautogui.locateCenterOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\offers.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\offers.png",
                     confidence=0.8,
                 )
                 pyautogui.click(offersx, offersy)
                 time.sleep(3)
                 if pyautogui.locateOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\goodieBag.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\goodieBag.png",
                     confidence=0.8,
                 ):
                     goodieBagx, goodieBagy = pyautogui.locateCenterOnScreen(
-                        DIR + "\\PyAutoRaid\\assets\\goodieBag.png",
+                        DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\goodieBag.png",
                         confidence=0.8,
                     )
                     pyautogui.click(goodieBagx, goodieBagy)
                     time.sleep(1)
                 if pyautogui.locateOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\miniPack.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\miniPack.png",
                     confidence=0.8,
                 ):
                     goodieBagx, goodieBagy = pyautogui.locateCenterOnScreen(
-                        DIR + "\\PyAutoRaid\\assets\\miniPack.png",
+                        DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\miniPack.png",
                         confidence=0.8,
                     )
                     pyautogui.click(goodieBagx, goodieBagy)
                     time.sleep(1)
                 if pyautogui.locateOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\smallPack.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\smallPack.png",
                     confidence=0.8,
                 ):
                     smallPackx, smallPacky = pyautogui.locateCenterOnScreen(
-                        DIR + "\\PyAutoRaid\\assets\\smallPack.png",
+                        DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\smallPack.png",
                         confidence=0.8,
                     )
                     pyautogui.click(smallPackx, smallPacky)
                     time.sleep(1)
                 LoopFindImage(
-                    DIR + "\\PyAutoRaid\\assets\\regularPack.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\regularPack.png",
                     "\n regualr pack claimed ",
                 )
                 pyautogui.click(724, 333)
                 LoopFindImage(
-                    DIR + "\\PyAutoRaid\\assets\\claimFreeGift.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\claimFreeGift.png",
                     "\n claiming free gift ",
                 )
                 time.sleep(1)
                 pyautogui.click(793, 333)
                 LoopFindImage(
-                    DIR + "\\PyAutoRaid\\assets\\claimFreeGift.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\claimFreeGift.png",
                     "\n claiming free gift ",
                 )
                 time.sleep(1.5)
                 pyautogui.click(860, 333)
                 LoopFindImage(
-                    DIR + "\\PyAutoRaid\\assets\\claimFreeGift.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\claimFreeGift.png",
                     "\n claiming free gift ",
                 )
                 time.sleep(1.5)
                 pyautogui.click(928, 333)
                 LoopFindImage(
-                    DIR + "\\PyAutoRaid\\assets\\claimFreeGift.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\claimFreeGift.png",
                     "\n claiming free gift ",
                 )
                 time.sleep(1.5)
                 pyautogui.click(998, 333)
                 LoopFindImage(
-                    DIR + "\\PyAutoRaid\\assets\\claimFreeGift.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\claimFreeGift.png",
                     "\n claiming free gift ",
                 )
                 time.sleep(1.5)
                 pyautogui.click(1072, 333)
                 LoopFindImage(
-                    DIR + "\\PyAutoRaid\\assets\\claimFreeGift.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\claimFreeGift.png",
                     "\n claiming free gift ",
                 )
                 time.sleep(1.5)
                 pyautogui.click(1138, 333)
                 LoopFindImage(
-                    DIR + "\\PyAutoRaid\\assets\\claimFreeGift.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\claimFreeGift.png",
                     "\n claiming free gift ",
                 )
                 time.sleep(1.5)
                 pyautogui.click(1207, 333)
                 LoopFindImage(
-                    DIR + "\\PyAutoRaid\\assets\\claimFreeGift.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\claimFreeGift.png",
                     "\n claiming free gift ",
                 )
                 time.sleep(1.5)
                 pyautogui.click(1278, 333)
                 LoopFindImage(
-                    DIR + "\\PyAutoRaid\\assets\\claimFreeGift.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\claimFreeGift.png",
                     "\n claiming free gift ",
                 )
                 time.sleep(1.5)
                 pyautogui.click(1351, 333)
                 LoopFindImage(
-                    DIR + "\\PyAutoRaid\\assets\\claimFreeGift.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\claimFreeGift.png",
                     "\n regualr pack claimed ",
                 )
                 time.sleep(1.5)
                 # keep adding offers
                 while (
                     pyautogui.locateOnScreen(
-                        DIR + "\\PyAutoRaid\\assets\\claimFreeGift.png",
+                        DIR
+                        + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\claimFreeGift.png",
                         confidence=0.8,
                     )
                     != None
                 ):
                     miniPackx, miniPacky = pyautogui.locateCenterOnScreen(
-                        DIR + "\\PyAutoRaid\\assets\\claimFreeGift.png",
+                        DIR
+                        + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\claimFreeGift.png",
                         confidence=0.8,
                     )
                     pyautogui.click(miniPackx, miniPacky)
                     time.sleep(1)
             while (
                 pyautogui.locateOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\goBack.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\goBack.png",
                     confidence=0.8,
                 )
                 != None
             ):
                 goBackx, goBacky = pyautogui.locateCenterOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\goBack.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\goBack.png",
                     confidence=0.8,
                 )
                 pyautogui.click(goBackx, goBacky)
@@ -347,17 +353,17 @@ def AutoRewards():
                     file.write("\n Back to bastion")
                 time.sleep(1)
             LoopFindImage(
-                DIR + "\\PyAutoRaid\\assets\\exitAdd.png",
+                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\exitAdd.png",
                 "\n ad closed ",
             )
 
         # GUARDIAN RING - Upgrade cgampions
         if pyautogui.locateOnScreen(
-            DIR + "\\PyAutoRaid\\assets\\guardianRing.png",
+            DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\guardianRing.png",
             confidence=0.8,
         ):
             guardianRingx, guardianRingy = pyautogui.locateCenterOnScreen(
-                DIR + "\\PyAutoRaid\\assets\\guardianRing.png",
+                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\guardianRing.png",
                 confidence=0.8,
             )
             pyautogui.click(guardianRingx, guardianRingy)
@@ -366,13 +372,13 @@ def AutoRewards():
             time.sleep(2)
             while (
                 pyautogui.locateOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\GRupgrade.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\GRupgrade.png",
                     confidence=0.8,
                 )
                 != None
             ):
                 GRupgradex, GRupgradey = pyautogui.locateCenterOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\GRupgrade.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\GRupgrade.png",
                     confidence=0.8,
                 )
                 pyautogui.click(GRupgradex, GRupgradey)
@@ -381,13 +387,13 @@ def AutoRewards():
                 time.sleep(2)
             while (
                 pyautogui.locateOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\goBack.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\goBack.png",
                     confidence=0.8,
                 )
                 != None
             ):
                 goBackx, goBacky = pyautogui.locateCenterOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\goBack.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\goBack.png",
                     confidence=0.8,
                 )
                 pyautogui.click(goBackx, goBacky)
@@ -395,17 +401,17 @@ def AutoRewards():
                     file.write("\n Back to bastion")
                 time.sleep(2)
             LoopFindImage(
-                DIR + "\\PyAutoRaid\\assets\\exitAdd.png",
+                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\exitAdd.png",
                 "\n ad closed ",
             )
 
         # TIME REWARDS
         if pyautogui.locateOnScreen(
-            DIR + "\\PyAutoRaid\\assets\\timeRewards.png",
+            DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\timeRewards.png",
             confidence=0.8,
         ):
             timeRewardsx, timeRewardsy = pyautogui.locateCenterOnScreen(
-                DIR + "\\PyAutoRaid\\assets\\timeRewards.png",
+                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\timeRewards.png",
                 confidence=0.8,
             )
             pyautogui.click(timeRewardsx, timeRewardsy)
@@ -414,91 +420,91 @@ def AutoRewards():
             time.sleep(2)
             while (
                 pyautogui.locateOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\5min.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\5min.png",
                     confidence=0.8,
                 )
                 != None
             ):
                 fiveminx, fiveminy = pyautogui.locateCenterOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\5min.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\5min.png",
                     confidence=0.8,
                 )
                 pyautogui.click(fiveminx, fiveminy)
                 time.sleep(1)
             while (
                 pyautogui.locateOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\20min.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\20min.png",
                     confidence=0.8,
                 )
                 != None
             ):
                 twentyminx, twentyminy = pyautogui.locateCenterOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\20min.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\20min.png",
                     confidence=0.8,
                 )
                 pyautogui.click(twentyminx, twentyminy)
                 time.sleep(1)
             while (
                 pyautogui.locateOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\40min.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\40min.png",
                     confidence=0.8,
                 )
                 != None
             ):
                 fortyminx, fortyminy = pyautogui.locateCenterOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\40min.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\40min.png",
                     confidence=0.8,
                 )
                 pyautogui.click(fortyminx, fortyminy)
                 time.sleep(1)
             while (
                 pyautogui.locateOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\60min.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\60min.png",
                     confidence=0.8,
                 )
                 != None
             ):
                 sixtyminx, sixtyminy = pyautogui.locateCenterOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\60min.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\60min.png",
                     confidence=0.8,
                 )
                 pyautogui.click(sixtyminx, sixtyminy)
                 time.sleep(1)
             while (
                 pyautogui.locateOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\90min.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\90min.png",
                     confidence=0.8,
                 )
                 != None
             ):
                 ninetyminx, ninetyminy = pyautogui.locateCenterOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\90min.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\90min.png",
                     confidence=0.8,
                 )
                 pyautogui.click(ninetyminx, ninetyminy)
                 time.sleep(1)
             while (
                 pyautogui.locateOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\180min.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\180min.png",
                     confidence=0.8,
                 )
                 != None
             ):
                 lastminx, lastminy = pyautogui.locateCenterOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\180min.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\180min.png",
                     confidence=0.8,
                 )
                 pyautogui.click(lastminx, lastminy)
                 time.sleep(1)
             while (
                 pyautogui.locateOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\exitAdd.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\exitAdd.png",
                     confidence=0.8,
                 )
                 != None
             ):
                 adx, ady = pyautogui.locateCenterOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\exitAdd.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\exitAdd.png",
                     confidence=0.8,
                 )
                 pyautogui.click(adx, ady)
@@ -508,11 +514,11 @@ def AutoRewards():
 
         # CLAN - check in and claim rewards
         if pyautogui.locateOnScreen(
-            DIR + "\\PyAutoRaid\\assets\\clanBTN.png",
+            DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\clanBTN.png",
             confidence=0.8,
         ):
             clanBTNx, clanBTNy = pyautogui.locateCenterOnScreen(
-                DIR + "\\PyAutoRaid\\assets\\clanBTN.png",
+                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\clanBTN.png",
                 confidence=0.8,
             )
             pyautogui.click(clanBTNx, clanBTNy)
@@ -521,49 +527,49 @@ def AutoRewards():
             time.sleep(1)
             while (
                 pyautogui.locateOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\clanMembers.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\clanMembers.png",
                     confidence=0.8,
                 )
                 != None
             ):
                 clanMembersx, clanMembersy = pyautogui.locateCenterOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\clanMembers.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\clanMembers.png",
                     confidence=0.8,
                 )
                 pyautogui.click(clanMembersx, clanMembersy)
                 time.sleep(1)
             while (
                 pyautogui.locateOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\clanCheckIn.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\clanCheckIn.png",
                     confidence=0.8,
                 )
                 != None
             ):
                 clanCheckInx, clanCheckIny = pyautogui.locateCenterOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\clanCheckIn.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\clanCheckIn.png",
                     confidence=0.8,
                 )
                 pyautogui.click(clanCheckInx, clanCheckIny)
                 time.sleep(1)
             if pyautogui.locateOnScreen(
-                DIR + "\\PyAutoRaid\\assets\\clanTreasure.png",
+                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\clanTreasure.png",
                 confidence=0.8,
             ):
                 clanTreasurex, clanTreasurey = pyautogui.locateCenterOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\clanTreasure.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\clanTreasure.png",
                     confidence=0.8,
                 )
                 pyautogui.click(clanTreasurex, clanTreasurey)
                 time.sleep(1)
             while (
                 pyautogui.locateOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\goBack.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\goBack.png",
                     confidence=0.8,
                 )
                 != None
             ):
                 goBackx, goBacky = pyautogui.locateCenterOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\goBack.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\goBack.png",
                     confidence=0.8,
                 )
                 pyautogui.click(goBackx, goBacky)
@@ -573,11 +579,11 @@ def AutoRewards():
 
         # QUESTS - Check for completed daily and advanced quests and claim
         if pyautogui.locateOnScreen(
-            DIR + "\\PyAutoRaid\\assets\\quests.png",
+            DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\quests.png",
             confidence=0.8,
         ):
             questsx, questsy = pyautogui.locateCenterOnScreen(
-                DIR + "\\PyAutoRaid\\assets\\quests.png",
+                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\quests.png",
                 confidence=0.8,
             )
             pyautogui.click(questsx, questsy)
@@ -586,49 +592,49 @@ def AutoRewards():
             time.sleep(2)
             while (
                 pyautogui.locateOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\questClaim.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\questClaim.png",
                     confidence=0.8,
                 )
                 != None
             ):
                 questClaimx, questClaimy = pyautogui.locateCenterOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\questClaim.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\questClaim.png",
                     confidence=0.8,
                 )
                 pyautogui.click(questClaimx, questClaimy)
                 time.sleep(1)
             if pyautogui.locateOnScreen(
-                DIR + "\\PyAutoRaid\\assets\\advancedQuests.png",
+                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\advancedQuests.png",
                 confidence=0.8,
             ):
                 advancedQuestsx, advancedQuestsy = pyautogui.locateCenterOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\advancedQuests.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\advancedQuests.png",
                     confidence=0.8,
                 )
                 pyautogui.click(advancedQuestsx, advancedQuestsy)
                 time.sleep(1)
             while (
                 pyautogui.locateOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\questClaim.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\questClaim.png",
                     confidence=0.8,
                 )
                 != None
             ):
                 questClaimx, questClaimy = pyautogui.locateCenterOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\questClaim.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\questClaim.png",
                     confidence=0.8,
                 )
                 pyautogui.click(questClaimx, questClaimy)
                 time.sleep(1)
             while (
                 pyautogui.locateOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\goBack.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\goBack.png",
                     confidence=0.8,
                 )
                 != None
             ):
                 goBackx, goBacky = pyautogui.locateCenterOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\goBack.png",
+                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\goBack.png",
                     confidence=0.8,
                 )
                 pyautogui.click(goBackx, goBacky)
@@ -643,13 +649,14 @@ def AutoRewards():
     pyautogui.hotkey("i")
     while (
         pyautogui.locateOnScreen(
-            DIR + "\\PyAutoRaid\\assets\\inbox_brew.png",
+            DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\inbox_brew.png",
             confidence=0.8,
         )
         != None
     ):
         brew = pyautogui.locateOnScreen(
-            DIR + "\\PyAutoRaid\\assets\\inbox_brew.png", confidence=0.8
+            DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\inbox_brew.png",
+            confidence=0.8,
         )
 
         pyautogui.moveTo(brew)
@@ -658,13 +665,14 @@ def AutoRewards():
         time.sleep(2)
     while (
         pyautogui.locateOnScreen(
-            DIR + "\\PyAutoRaid\\assets\\inbox_purple_forge.png",
+            DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\inbox_purple_forge.png",
             confidence=0.8,
         )
         != None
     ):
         forgepurple = pyautogui.locateOnScreen(
-            DIR + "\\PyAutoRaid\\assets\\inbox_purple_forge.png", confidence=0.8
+            DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\inbox_purple_forge.png",
+            confidence=0.8,
         )
 
         pyautogui.moveTo(forgepurple)
@@ -673,13 +681,14 @@ def AutoRewards():
         time.sleep(2)
     while (
         pyautogui.locateOnScreen(
-            DIR + "\\PyAutoRaid\\assets\\inbox_yellow_forge.png",
+            DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\inbox_yellow_forge.png",
             confidence=0.8,
         )
         != None
     ):
         forgeyellow = pyautogui.locateOnScreen(
-            DIR + "\\PyAutoRaid\\assets\\inbox_yellow_forge.png", confidence=0.8
+            DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\inbox_yellow_forge.png",
+            confidence=0.8,
         )
 
         pyautogui.moveTo(forgeyellow)
@@ -688,13 +697,14 @@ def AutoRewards():
         time.sleep(2)
     while (
         pyautogui.locateOnScreen(
-            DIR + "\\PyAutoRaid\\assets\\inbox_coin.png",
+            DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\inbox_coin.png",
             confidence=0.8,
         )
         != None
     ):
         inboxcoin = pyautogui.locateOnScreen(
-            DIR + "\\PyAutoRaid\\assets\\inbox_coin.png", confidence=0.8
+            DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\inbox_coin.png",
+            confidence=0.8,
         )
 
         pyautogui.moveTo(inboxcoin)
@@ -703,13 +713,14 @@ def AutoRewards():
         time.sleep(2)
     while (
         pyautogui.locateOnScreen(
-            DIR + "\\PyAutoRaid\\assets\\inbox_potion.png",
+            DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\inbox_potion.png",
             confidence=0.8,
         )
         != None
     ):
         potion = pyautogui.locateOnScreen(
-            DIR + "\\PyAutoRaid\\assets\\inbox_potion.png", confidence=0.8
+            DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\inbox_potion.png",
+            confidence=0.8,
         )
 
         pyautogui.moveTo(potion)
@@ -718,13 +729,13 @@ def AutoRewards():
         time.sleep(2)
     while (
         pyautogui.locateOnScreen(
-            DIR + "\\PyAutoRaid\\assets\\goBack.png",
+            DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\goBack.png",
             confidence=0.8,
         )
         != None
     ):
         goBackx, goBacky = pyautogui.locateCenterOnScreen(
-            DIR + "\\PyAutoRaid\\assets\\goBack.png",
+            DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\goBack.png",
             confidence=0.8,
         )
         pyautogui.click(goBackx, goBacky)
