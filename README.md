@@ -10,5 +10,5 @@ I am trying to automate Raid: Shadow Legends  without accessing game data but us
 - [x] BlackOutMonitor()
 - [x] TagTeamArena()
 - [ ] AutoUpgrader
-- [ ] Gui
-- [ ] Exe file for all of this
+- [x] Gui
+- [x] Exe file for all of this
