@@ -1,17 +1,12 @@
-# Check if all the py files were downloaded
-
-from ast import Global
-import os.path
-from platform import platform
-import tkinter
-from tkinter import messagebox
-import platform
-import pyautogui
+import os
 import pathlib
+import platform
+import tkinter
+from tkinter import messagebox, filedialog
 
 
-def CheckFilesExist():
-    Needed_Files = [
+def check_files_exist():
+    needed_files = [
         "TimeBetween.py",
         "AutoRewards.py",
         "BlackOutMonitor.py",
@@ -24,44 +19,58 @@ def CheckFilesExist():
         "NightMareAttemptText.py",
         "OpenRaid.py",
         "quitAll.py",
+        "Raid.exe",
     ]
-    Total_files = 0
-    for file in Needed_Files:
-        operating = CheckOS()
-        dir = str(pathlib.Path().absolute())
-        if operating == "Windows":
-            filepath = dir + "\\AutoRaidAutomate\\PyAutoRaid\\" + file
-        elif operating == "Darwin":
-            filepath = dir + "/" + file
-        file_exists = os.path.exists(filepath)
-        if file_exists == True:
-            print("Have", file)
-            Total_files += 1
-        elif file_exists == False:
-            print("Dont have", file)
-    missing = int(11 - Total_files)
-    if Total_files >= len(Needed_Files) - 1:
-        print(Total_files, "files were downloaded")
+    total_files = 0
+    for file in needed_files:
+        operating_system = check_os()
+        current_dir = str(pathlib.Path().absolute())
+        if operating_system == "Windows":
+            filepath = f"{current_dir}\\{file}"
+        elif operating_system == "Darwin":
+            filepath = f"{current_dir}/{file}"
+        if os.path.exists(filepath):
+            print(f"Found {file}")
+            total_files += 1
+        elif file == "Raid.exe":
+            if operating_system == "Windows":
+                default_install_path = f"C:\\Users\\{os.getlogin()}\\AppData\\Local\\PlariumPlay\\StandAloneApps\\raid\\34744\\Raid.exe"
+                filepath = default_install_path
+                if not os.path.exists(filepath):
+                    tkinter.messagebox.showerror(
+                        "Error",
+                        "You do not have Raid downloaded. Please select the file path of your Raid.exe.",
+                    )
+                    filepath = filedialog.askopenfilename(
+                        initialdir="C:\\",
+                        title="Select Raid.exe",
+                        filetypes=(("Executable files", "*.exe"), ("all files", "*.*")),
+                    )
+                    if not os.path.exists(filepath):
+                        tkinter.messagebox.showerror(
+                            "Error", "Invalid file path. Please try again."
+                        )
+                        check_files_exist()
+                total_files += 1
+        else:
+            print(f"Missing {file}")
+    if total_files >= len(needed_files) - 1:
+        print(f"{total_files} files were found.")
     else:
-        print("All 11 files were not downloaded. Only", Total_files, "were")
-        tkinter.messagebox.showerror(
-            title="ALL FILES NOT DOWNLOADED", message="You have missing files"
-        )
-        exit()
+        print(f"Not all {len(needed_files)} files were found. Only {total_files} were.")
+        tkinter.messagebox.showerror("Error", "Some files are missing.")
+    return filepath
 
 
-def CheckOS():
-    operating = platform.system()
-    if operating == "Darwin":
-        return operating
-    elif operating == "Windows":
-        # pyautogui.hotkey('winleft', 'm')
-        return operating
+def check_os():
+    operating_system = platform.system()
+    if operating_system in ["Darwin", "Windows"]:
+        return operating_system
     else:
         print("I have no idea what OS this is")
         exit()
 
 
 if __name__ == "__main__":
-    CheckOS()
-    CheckFilesExist()
+    check_os()
+    check_files_exist()
