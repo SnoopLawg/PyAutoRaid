@@ -160,11 +160,11 @@ def gui():
 
     tab_control.pack(expand=1, fill="both")
 
-    def create_tab(tab, command, text):
+    def create_tab(tab, var, command, text):
         ttk.Checkbutton(
             tab,
             text=text,
-            variable=var1,
+            variable=var,
             offvalue=False,
             onvalue=True,
             command=command,
@@ -179,12 +179,12 @@ def gui():
             column=2, row=1, padx=30, pady=30
         )
 
-    create_tab(tab1, AutoReward, "Activate Auto Rewards?")
-    create_tab(tab2, AutoClanBoss, "Activate Clan Boss?")
-    create_tab(tab3, AutoClassicArena, "Activate Classic Arenas?")
-    create_tab(tab4, AutoTagTeamArena, "Activate Tag Team Arena?")
-    create_tab(tab5, BlackOutMonitors, "Activate Black Out your Monitor after?")
-
+    create_tab(tab1, var1, AutoReward, "Activate Auto Rewards?")
+    create_tab(tab2, var2, AutoClanBoss, "Activate Clan Boss?")
+    create_tab(tab3, var3, AutoClassicArena, "Activate Classic Arenas?")
+    create_tab(tab4, var4, AutoTagTeamArena, "Activate Tag Team Arena?")
+    create_tab(tab5, var5, BlackOutMonitors, "Activate Black Out your Monitor after?")
+    submission()
     root.mainloop()
 
 

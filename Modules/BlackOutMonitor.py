@@ -4,6 +4,9 @@ import time
 import sqlite3 as sql
 import pathlib
 import os
+import subprocess
+import win32api
+import win32con
 
 DIR = os.getcwd()
 DB_PATH = os.path.join(DIR, "Data", "Settings.db")
@@ -26,21 +29,14 @@ def BlackOutMonitor():
             os.system("xset dpms force off")
 
         elif sys.platform.startswith("win"):
-            import win32gui
-            import win32con
-
-            SC_MONITORPOWER = 0xF170
-            win32gui.SendMessageTimeout(
+            win32api.SendMessage(
                 win32con.HWND_BROADCAST,
                 win32con.WM_SYSCOMMAND,
-                SC_MONITORPOWER,
+                win32con.SC_MONITORPOWER,
                 2,
-                win32con.SMTO_NOTIMEOUTIFNOTHUNG,
-                1000,
             )
 
         elif sys.platform.startswith("darwin"):
-            import subprocess
 
             subprocess.call(
                 "echo 'tell application \"Finder\" to sleep' | osascript", shell=True
