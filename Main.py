@@ -1,15 +1,15 @@
 # Run all of the raid functions.
 
-from CBauto import ClanBoss
-from AutoRewards import AutoRewards
-from BlackOutMonitor import BlackOutMonitor
-from ClassicArena import ClassicArena
-from OpenRaid import openRaid
-from quitAll import quitAll
-from NightmareAttemptText import NightmareAttemptText
-from CheckFilesExist import CheckFilesExist, CheckOS
-from TagTeamArena import TagTeamArena
-from TimeBetween import is_time_between
+from Modules.CBauto import ClanBoss
+from Modules.AutoRewards import AutoRewards
+from Modules.BlackOutMonitor import BlackOutMonitor
+from Modules.ClassicArena import ClassicArena
+from Modules.OpenRaid import openRaid
+from Modules.quitAll import quitAll
+from Modules.NightmareAttemptText import NightmareAttemptText
+
+from Modules.TagTeamArena import TagTeamArena
+from Modules.TimeBetween import is_time_between
 import sys
 import pyautogui
 import multiprocessing
@@ -17,8 +17,9 @@ from datetime import datetime
 import time
 from multiprocessing import Process
 import os
-from RAIDGUI import gui
+from Modules.RAIDGUI import gui
 import pathlib
+from Modules.CheckFilesExist import Check_files_exist, Check_os
 
 DIR = str(pathlib.Path().absolute())
 
@@ -27,8 +28,8 @@ def main():
 
     # wake up pc
     pyautogui.click(0, 5)
-    CheckFilesExist()
-    CheckOS()
+    Check_files_exist()
+    Check_os()
     is_time_between()
 
     try:
@@ -88,15 +89,13 @@ if __name__ == "__main__":
     count = 0
     while True:
         if (
-            pyautogui.locateOnScreen(
-                DIR + "\\PyAutoRaid\\assets\\CBcrashed.png", confidence=0.8
-            )
+            pyautogui.locateOnScreen(DIR + "\\assets\\CBcrashed.png", confidence=0.8)
             != None
         ):
             time.sleep(5)
             if (
                 pyautogui.locateOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\CBcrashed.png", confidence=0.8
+                    DIR + "\\assets\\CBcrashed.png", confidence=0.8
                 )
                 != None
             ):
@@ -106,15 +105,13 @@ if __name__ == "__main__":
                 p2.start()
                 g2.start()
         if (
-            pyautogui.locateOnScreen(
-                DIR + "\\PyAutoRaid\\assets\\CBcrashed2.png", confidence=0.8
-            )
+            pyautogui.locateOnScreen(DIR + "\\assets\\CBcrashed2.png", confidence=0.8)
             != None
         ):
             time.sleep(5)
             if (
                 pyautogui.locateOnScreen(
-                    DIR + "\\PyAutoRaid\\assets\\CBcrashed.png", confidence=0.8
+                    DIR + "\\assets\\CBcrashed.png", confidence=0.8
                 )
                 != None
             ):

@@ -4,16 +4,19 @@ from posixpath import expanduser
 import time
 import os, sys, subprocess
 import pygetwindow
-from quitAll import quitAll
+from Modules.quitAll import quitAll
 import pyautogui
-from CheckFilesExist import CheckOS
+from Modules.CheckFilesExist import *
 import pathlib
 from screeninfo import Monitor, get_monitors
 
 # import Main
 
-DIR = str(pathlib.Path().absolute())
+DIR = os.getcwd()
+ASSETS_PATH = os.path.join(DIR, "assets")
 import os
+
+test = ASSETS_PATH + "MyLibraryPP.png"
 
 
 def get_screen():
@@ -30,7 +33,7 @@ def get_screen():
 def openRaid():
     quitAll()
     time.sleep(5)
-    operating = CheckOS()
+    operating = Check_os()
     if operating == "Darwin":
         PATH = "/Applications/Plarium Play.app"
         FULL_PATH = os.path.expanduser(PATH)
@@ -50,7 +53,7 @@ def openRaid():
             time.sleep(1)
         while (
             pyautogui.locateOnScreen(
-                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\MyLibraryPP.png",
+                ASSETS_PATH + "\\MyLibraryPP.png",
                 confidence=0.8,
             )
             is None
@@ -59,7 +62,7 @@ def openRaid():
             time.sleep(1)
         time.sleep(1.5)
         PPlibraryx, PPlibraryy = pyautogui.locateCenterOnScreen(
-            DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\MyLibraryPP.png",
+            ASSETS_PATH + "\\MyLibraryPP.png",
             confidence=0.8,
         )
         pyautogui.click(PPlibraryx, PPlibraryy)
@@ -69,21 +72,21 @@ def openRaid():
         time.sleep(3.5)
         if (
             pyautogui.locateOnScreen(
-                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\PPlay.png",
+                ASSETS_PATH + "\\PPlay.png",
                 confidence=0.8,
             )
             != None
         ):
             while (
                 pyautogui.locateOnScreen(
-                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\PPlay.png",
+                    ASSETS_PATH + "\\PPlay.png",
                     confidence=0.8,
                 )
                 == None
             ):
                 print("waiting to click play")
             PPlayx, PPlayy = pyautogui.locateCenterOnScreen(
-                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\PPlay.png", confidence=0.8
+                ASSETS_PATH + "\\PPlay.png", confidence=0.8
             )
             time.sleep(1)
             pyautogui.click(PPlayx, PPlayy)
@@ -98,7 +101,7 @@ def openRaid():
             time.sleep(5)
             while (
                 pyautogui.locateOnScreen(
-                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\PPlay.png",
+                    ASSETS_PATH + "\\PPlay.png",
                     confidence=0.8,
                 )
                 == None
@@ -123,7 +126,7 @@ def openRaid():
     time_out = 0
     while (
         pyautogui.locateOnScreen(
-            DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\exitAdd.png",
+            ASSETS_PATH + "\\exitAdd.png",
             confidence=0.8,
         )
         == None

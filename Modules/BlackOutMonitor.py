@@ -3,11 +3,12 @@ import sys
 import time
 import sqlite3 as sql
 import pathlib
+import os
 
-DIR = str(pathlib.Path().absolute())
-
-connection = sql.connect(DIR + "/Settings.db")
-
+DIR = os.getcwd()
+DB_PATH = os.path.join(DIR, "Data", "Settings.db")
+ASSETS_PATH = os.path.join(DIR, "assets")
+connection = sql.connect(DB_PATH)
 cursor = connection.cursor()
 
 

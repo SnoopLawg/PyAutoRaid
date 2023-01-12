@@ -3,20 +3,21 @@ import sqlite3
 import pyautogui
 import time
 from datetime import datetime
-from AutoRewards import AutoRewards
-from BlackOutMonitor import BlackOutMonitor
-from quitAll import quitAll
-from OpenRaid import openRaid
+from Modules.AutoRewards import AutoRewards
+from Modules.BlackOutMonitor import BlackOutMonitor
+from Modules.quitAll import quitAll
+from Modules.OpenRaid import openRaid
 import os
 import sys
-from TimeBetween import is_time_between
+from Modules.TimeBetween import is_time_between
 import pathlib
 import sqlite3 as sql
 
-DIR = str(pathlib.Path().absolute())
+DIR = os.getcwd()
+DB_PATH = os.path.join(DIR, "Data", "Settings.db")
 
-connection = sql.connect(DIR + "/AutoRaidAutomate/Settings.db")
-
+ASSETS_PATH = os.path.join(DIR, "assets")
+connection = sql.connect(DB_PATH)
 cursor = connection.cursor()
 # between 4am to 10pm
 if is_time_between() == False:
@@ -42,13 +43,13 @@ def ClanBoss(xCB, yCB):
             file.write("\n deleting ads now")
         while (
             pyautogui.locateOnScreen(
-                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\exitAdd.png",
+                ASSETS_PATH +"\\exitAdd.png",
                 confidence=0.8,
             )
             != None
         ):
             adx, ady = pyautogui.locateCenterOnScreen(
-                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\exitAdd.png",
+                ASSETS_PATH +"\\exitAdd.png",
                 confidence=0.8,
             )
             pyautogui.click(adx, ady)
@@ -57,13 +58,13 @@ def ClanBoss(xCB, yCB):
             time.sleep(2)
         while (
             pyautogui.locateOnScreen(
-                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\battleBTN.png",
+                ASSETS_PATH +"\\battleBTN.png",
                 confidence=0.8,
             )
             != None
         ):
             battlex, battley = pyautogui.locateCenterOnScreen(
-                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\battleBTN.png",
+                ASSETS_PATH +"\\battleBTN.png",
                 confidence=0.9,
             )
             pyautogui.click(battlex, battley)
@@ -72,12 +73,12 @@ def ClanBoss(xCB, yCB):
             time.sleep(2)
         while (
             pyautogui.locateOnScreen(
-                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\CB.png", confidence=0.9
+                ASSETS_PATH +"\\CB.png", confidence=0.9
             )
             != None
         ):
             CBx, CBy = pyautogui.locateCenterOnScreen(
-                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\CB.png", confidence=0.9
+                ASSETS_PATH +"\\CB.png", confidence=0.9
             )
             pyautogui.click(CBx, CBy)
             with open("log.txt", mode="a") as file:
@@ -85,12 +86,12 @@ def ClanBoss(xCB, yCB):
             time.sleep(3)
         while (
             pyautogui.locateOnScreen(
-                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\CB2.png", confidence=0.9
+                ASSETS_PATH +"\\CB2.png", confidence=0.9
             )
             != None
         ):
             CB2x, CB2y = pyautogui.locateCenterOnScreen(
-                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\CB2.png", confidence=0.9
+                ASSETS_PATH +"\\CB2.png", confidence=0.9
             )
             pyautogui.click(CB2x, CB2y)
             with open("log.txt", mode="a") as file:
@@ -98,13 +99,13 @@ def ClanBoss(xCB, yCB):
             time.sleep(3)
         while (
             pyautogui.locateOnScreen(
-                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\demonLord.png",
+                ASSETS_PATH +"\\demonLord.png",
                 confidence=0.9,
             )
             != None
         ):
             demonLordx, demonLordy = pyautogui.locateCenterOnScreen(
-                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\demonLord.png",
+                ASSETS_PATH +"\\demonLord.png",
                 confidence=0.8,
             )
             pyautogui.click(demonLordx, demonLordy)
@@ -113,13 +114,13 @@ def ClanBoss(xCB, yCB):
             time.sleep(2)
         while (
             pyautogui.locateOnScreen(
-                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\demonLord2.png",
+                ASSETS_PATH +"\\demonLord2.png",
                 confidence=0.9,
             )
             != None
         ):
             demonLord2x, demonLord2y = pyautogui.locateCenterOnScreen(
-                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\demonLord2.png",
+                ASSETS_PATH +"\\demonLord2.png",
                 confidence=0.8,
             )
             pyautogui.click(demonLord2x, demonLord2y)
@@ -128,13 +129,13 @@ def ClanBoss(xCB, yCB):
             time.sleep(4)
         while (
             pyautogui.locateOnScreen(
-                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\CBreward.png",
+                ASSETS_PATH +"\\CBreward.png",
                 confidence=0.8,
             )
             != None
         ):
             CBrewardx, CBrewardy = pyautogui.locateCenterOnScreen(
-                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\CBreward.png",
+                ASSETS_PATH +"\\CBreward.png",
                 confidence=0.8,
             )
             time.sleep(2)
@@ -151,7 +152,7 @@ def ClanBoss(xCB, yCB):
                 != None
             ):
                 nightmareClaimedx, nightmareClaimedy = pyautogui.locateCenterOnScreen(
-                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\CBclaim.png",
+                    ASSETS_PATH +"\\CBclaim.png",
                     confidence=0.5,
                 )
                 pyautogui.click(nightmareClaimedx, nightmareClaimedy)
@@ -164,13 +165,13 @@ def ClanBoss(xCB, yCB):
                 pyautogui.click()
         while (
             pyautogui.locateOnScreen(
-                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\CBclaim.png",
+                ASSETS_PATH +"\\CBclaim.png",
                 confidence=0.8,
             )
             != None
         ):
             CBclaimx, CBclaimy = pyautogui.locateCenterOnScreen(
-                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\CBclaim.png",
+                ASSETS_PATH +"\\CBclaim.png",
                 confidence=0.5,
             )
             pyautogui.click(CBclaimx, CBclaimy)
@@ -181,7 +182,7 @@ def ClanBoss(xCB, yCB):
         time.sleep(2)
         while (
             pyautogui.locateOnScreen(
-                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\CBhard.png",
+                ASSETS_PATH +"\\CBhard.png",
                 confidence=0.8,
             )
             != None
@@ -191,13 +192,13 @@ def ClanBoss(xCB, yCB):
                 file.write("\n clicked random location, nightmare")
             while (
                 pyautogui.locateOnScreen(
-                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\CBbattle.png",
+                    ASSETS_PATH +"\\CBbattle.png",
                     confidence=0.8,
                 )
                 != None
             ):
                 CBbattlex, CBbattley = pyautogui.locateCenterOnScreen(
-                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\CBbattle.png",
+                    ASSETS_PATH +"\\CBbattle.png",
                     confidence=0.8,
                 )
                 time.sleep(2)
@@ -207,7 +208,7 @@ def ClanBoss(xCB, yCB):
                 time.sleep(1)
                 if (
                     pyautogui.locateOnScreen(
-                        DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\CBnokey.png",
+                        ASSETS_PATH +"\\CBnokey.png",
                         confidence=0.8,
                     )
                     != None
@@ -218,13 +219,13 @@ def ClanBoss(xCB, yCB):
             time.sleep(1)
         while (
             pyautogui.locateOnScreen(
-                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\CBstart.png",
+                ASSETS_PATH +"\\CBstart.png",
                 confidence=0.8,
             )
             != None
         ):
             CBstartx, CBstarty = pyautogui.locateCenterOnScreen(
-                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\CBstart.png",
+                ASSETS_PATH +"\\CBstart.png",
                 confidence=0.8,
             )
             time.sleep(2)
@@ -241,13 +242,13 @@ def ClanBoss(xCB, yCB):
             time.sleep(1)
             while (
                 pyautogui.locateOnScreen(
-                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\CBcontinue.png",
+                    ASSETS_PATH +"\\CBcontinue.png",
                     confidence=0.8,
                 )
                 != None
             ):
                 CBcontinuex, CBcontinuey = pyautogui.locateCenterOnScreen(
-                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\CBcontinue.png",
+                    ASSETS_PATH +"\\CBcontinue.png",
                     confidence=0.8,
                 )
                 time.sleep(2)
@@ -256,14 +257,14 @@ def ClanBoss(xCB, yCB):
 
             while (
                 pyautogui.locateOnScreen(
-                    DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\gotoBastion.png",
+                    ASSETS_PATH +"\\gotoBastion.png",
                     confidence=0.8,
                 )
                 == None
             ):
                 while (
                     pyautogui.locateOnScreen(
-                        DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\CBcrashed.png",
+                        ASSETS_PATH +"\\CBcrashed.png",
                         confidence=0.8,
                     )
                     != None
@@ -284,7 +285,7 @@ def ClanBoss(xCB, yCB):
                     sys.exit()
                 while (
                     pyautogui.locateOnScreen(
-                        DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\CBcrashed2.png",
+                        ASSETS_PATH +"\\CBcrashed2.png",
                         confidence=0.8,
                     )
                     != None
@@ -305,13 +306,13 @@ def ClanBoss(xCB, yCB):
                     sys.exit()
                 while (
                     pyautogui.locateOnScreen(
-                        DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\gotoBastion.png",
+                        ASSETS_PATH +"\\gotoBastion.png",
                         confidence=0.8,
                     )
                     != None
                 ):
                     gotoBastionx, gotoBastiony = pyautogui.locateCenterOnScreen(
-                        DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\gotoBastion.png",
+                        ASSETS_PATH +"\\gotoBastion.png",
                         confidence=0.8,
                     )
                     with open("log.txt", mode="a") as file:
@@ -321,13 +322,13 @@ def ClanBoss(xCB, yCB):
         pyautogui.click(566, 790)
         while (
             pyautogui.locateOnScreen(
-                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\exitAdd.png",
+                ASSETS_PATH +"\\exitAdd.png",
                 confidence=0.8,
             )
             != None
         ):
             adx, ady = pyautogui.locateCenterOnScreen(
-                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\exitAdd.png",
+                ASSETS_PATH +"\\exitAdd.png",
                 confidence=0.8,
             )
             pyautogui.click(adx, ady)
@@ -336,13 +337,13 @@ def ClanBoss(xCB, yCB):
             time.sleep(2)
         while (
             pyautogui.locateOnScreen(
-                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\goBack.png",
+                ASSETS_PATH +"\\goBack.png",
                 confidence=0.8,
             )
             != None
         ):
             goBackx, goBacky = pyautogui.locateCenterOnScreen(
-                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\goBack.png",
+                ASSETS_PATH +"\\goBack.png",
                 confidence=0.8,
             )
             pyautogui.click(goBackx, goBacky)
@@ -351,13 +352,13 @@ def ClanBoss(xCB, yCB):
             time.sleep(1)
         while (
             pyautogui.locateOnScreen(
-                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\exitAdd.png",
+                ASSETS_PATH +"\\exitAdd.png",
                 confidence=0.8,
             )
             != None
         ):
             adx, ady = pyautogui.locateCenterOnScreen(
-                DIR + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\exitAdd.png",
+                ASSETS_PATH +"\\exitAdd.png",
                 confidence=0.8,
             )
             pyautogui.click(adx, ady)

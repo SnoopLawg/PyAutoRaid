@@ -7,12 +7,13 @@ import sqlite3 as sql
 import pathlib
 import os
 
+DIR = os.getcwd()
+ASSETS_PATH = os.path.join(DIR, "assets")
+DB_PATH = os.path.join(DIR, "Data", "Settings.db")
 
-dir = str(pathlib.Path().absolute())
-# from SQL_test import SQL
-connection = sql.connect(dir + "/AutoRaidAutomate/Settings.db")
-
+connection = sql.connect(DB_PATH)
 cursor = connection.cursor()
+
 
 command1 = """CREATE TABLE IF NOT EXISTS
     PyAutoRaid(user_id INTEGER PRIMARY KEY, auto_cb TEXT, auto_ca TEXT, auto_tta TEXT, auto_r TEXT, blackout_monitor TEXT)"""
@@ -73,11 +74,18 @@ results = cursor.fetchall()
 connection.commit()
 
 
-var1 = tk.BooleanVar(value=results[0][1])
-var2 = tk.BooleanVar(value=results[0][2])
-var3 = tk.BooleanVar(value=results[0][3])
-var4 = tk.BooleanVar(value=results[0][4])
-var5 = tk.BooleanVar(value=results[0][5])
+if len(results) > 0:
+    var1 = tk.BooleanVar(value=results[0][1])
+    var2 = tk.BooleanVar(value=results[0][2])
+    var3 = tk.BooleanVar(value=results[0][3])
+    var4 = tk.BooleanVar(value=results[0][4])
+    var5 = tk.BooleanVar(value=results[0][5])
+else:
+    var1 = tk.BooleanVar(value=True)
+    var2 = tk.BooleanVar(value=True)
+    var3 = tk.BooleanVar(value=True)
+    var4 = tk.BooleanVar(value=True)
+    var5 = tk.BooleanVar(value=True)
 
 ###########################
 def AutoReward():
@@ -152,92 +160,31 @@ def gui():
 
     tab_control.pack(expand=1, fill="both")
 
-    ttk.Checkbutton(
-        tab1,
-        text="Activate AutoRewards?",
-        variable=var1,
-        offvalue=False,
-        onvalue=True,
-        command=AutoReward,
-    ).grid(column=0, row=0, padx=30, pady=30)
-    ttk.Checkbutton(
-        tab2,
-        text="Activate Auto Clan Boss?",
-        variable=var2,
-        offvalue=False,
-        onvalue=True,
-        command=AutoClanBoss,
-    ).grid(column=0, row=0, padx=30, pady=30)
-    ttk.Checkbutton(
-        tab3,
-        text="Activate Auto Classic Arena?",
-        variable=var3,
-        offvalue=False,
-        onvalue=True,
-        command=AutoClassicArena,
-    ).grid(column=0, row=0, padx=30, pady=30)
-    ttk.Checkbutton(
-        tab4,
-        text="Activate Auto Tag Team Arena?",
-        variable=var4,
-        offvalue=False,
-        onvalue=True,
-        command=AutoTagTeamArena,
-    ).grid(column=0, row=0, padx=30, pady=30)
-    ttk.Checkbutton(
-        tab5,
-        text="Activate Blackout Screen After?",
-        variable=var5,
-        offvalue=False,
-        onvalue=True,
-        command=BlackOutMonitors,
-    ).grid(column=0, row=0, padx=30, pady=30)
+    def create_tab(tab, command, text):
+        ttk.Checkbutton(
+            tab,
+            text=text,
+            variable=var1,
+            offvalue=False,
+            onvalue=True,
+            command=command,
+        ).grid(column=0, row=0, padx=30, pady=30)
+        ttk.Button(tab, text="SUBMIT", command=submission).grid(
+            column=0, row=1, padx=30, pady=30
+        )
+        ttk.Button(tab, text="Restart PyAutoRaid", command=restart).grid(
+            column=1, row=1, padx=30, pady=30
+        )
+        ttk.Button(tab, text="Quit All", command=quit_everything).grid(
+            column=2, row=1, padx=30, pady=30
+        )
 
-    ttk.Button(tab1, text="SUBMIT", command=submission).grid(
-        column=0, row=1, padx=30, pady=30
-    )
-    ttk.Button(tab2, text="SUBMIT", command=submission).grid(
-        column=0, row=1, padx=30, pady=30
-    )
-    ttk.Button(tab3, text="SUBMIT", command=submission).grid(
-        column=0, row=1, padx=30, pady=30
-    )
-    ttk.Button(tab4, text="SUBMIT", command=submission).grid(
-        column=0, row=1, padx=30, pady=30
-    )
-    ttk.Button(tab5, text="SUBMIT", command=submission).grid(
-        column=0, row=1, padx=30, pady=30
-    )
-    ttk.Button(tab1, text="Restart PyAutoRaid", command=restart).grid(
-        column=1, row=1, padx=30, pady=30
-    )
-    ttk.Button(tab2, text="Restart PyAutoRaid", command=restart).grid(
-        column=1, row=1, padx=30, pady=30
-    )
-    ttk.Button(tab3, text="Restart PyAutoRaid", command=restart).grid(
-        column=1, row=1, padx=30, pady=30
-    )
-    ttk.Button(tab4, text="Restart PyAutoRaid", command=restart).grid(
-        column=1, row=1, padx=30, pady=30
-    )
-    ttk.Button(tab5, text="Restart PyAutoRaid", command=restart).grid(
-        column=1, row=1, padx=30, pady=30
-    )
-    ttk.Button(tab1, text="Quit All", command=quit_everything).grid(
-        column=2, row=1, padx=30, pady=30
-    )
-    ttk.Button(tab2, text="Quit All", command=quit_everything).grid(
-        column=2, row=1, padx=30, pady=30
-    )
-    ttk.Button(tab3, text="Quit All", command=quit_everything).grid(
-        column=2, row=1, padx=30, pady=30
-    )
-    ttk.Button(tab4, text="Quit All", command=quit_everything).grid(
-        column=2, row=1, padx=30, pady=30
-    )
-    ttk.Button(tab5, text="Quit All", command=quit_everything).grid(
-        column=2, row=1, padx=30, pady=30
-    )
+    create_tab(tab1, AutoReward, "Activate Auto Rewards?")
+    create_tab(tab2, AutoClanBoss, "Activate Clan Boss?")
+    create_tab(tab3, AutoClassicArena, "Activate Classic Arenas?")
+    create_tab(tab4, AutoTagTeamArena, "Activate Tag Team Arena?")
+    create_tab(tab5, BlackOutMonitors, "Activate Black Out your Monitor after?")
+
     root.mainloop()
 
 

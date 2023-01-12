@@ -2,7 +2,7 @@ import sqlite3 as sql
 import pathlib
 import time
 import multiprocessing
-from RAIDGUI import (
+from Modules.RAIDGUI import (
     gui,
     AutoClanBoss,
     AutoReward,

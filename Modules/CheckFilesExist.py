@@ -5,7 +5,7 @@ import tkinter
 from tkinter import messagebox, filedialog
 
 
-def check_files_exist():
+def Check_files_exist():
     needed_files = [
         "TimeBetween.py",
         "AutoRewards.py",
@@ -13,9 +13,7 @@ def check_files_exist():
         "CBauto.py",
         "CheckFilesExist.py",
         "ClassicArena.py",
-        "log.txt",
         "LoopFindImage.py",
-        "Main.py",
         "NightMareAttemptText.py",
         "OpenRaid.py",
         "quitAll.py",
@@ -23,10 +21,10 @@ def check_files_exist():
     ]
     total_files = 0
     for file in needed_files:
-        operating_system = check_os()
+        operating_system = Check_os()
         current_dir = str(pathlib.Path().absolute())
         if operating_system == "Windows":
-            filepath = f"{current_dir}\\{file}"
+            filepath = f"{current_dir}\\Modules\\{file}"
         elif operating_system == "Darwin":
             filepath = f"{current_dir}/{file}"
         if os.path.exists(filepath):
@@ -50,7 +48,7 @@ def check_files_exist():
                         tkinter.messagebox.showerror(
                             "Error", "Invalid file path. Please try again."
                         )
-                        check_files_exist()
+                        Check_files_exist()
                 total_files += 1
         else:
             print(f"Missing {file}")
@@ -62,7 +60,7 @@ def check_files_exist():
     return filepath
 
 
-def check_os():
+def Check_os():
     operating_system = platform.system()
     if operating_system in ["Darwin", "Windows"]:
         return operating_system
@@ -72,5 +70,5 @@ def check_os():
 
 
 if __name__ == "__main__":
-    check_os()
-    check_files_exist()
+    Check_os()
+    Check_files_exist()

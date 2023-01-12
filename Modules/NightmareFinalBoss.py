@@ -1,25 +1,27 @@
 import pyautogui
 import time
 import pathlib
+import os
+DIR = os.getcwd()
 
-dir = str(pathlib.Path().absolute())
+ASSETS_PATH = os.path.join(DIR, "assets")
 while True:
     if (
         pyautogui.locateOnScreen(
-            dir + r"\\assets\Paragon2.png",
+            ASSETS_PATH +"\\Paragon2.png",
             confidence=0.9,
         )
         != None
     ):
         while (
             pyautogui.locateOnScreen(
-                dir + r"\\assets\Paragon2.png",
+                ASSETS_PATH +"\\Paragon2.png",
                 confidence=0.8,
             )
             != None
         ):
             goBackx, goBacky = pyautogui.locateCenterOnScreen(
-                dir + r"\\assets\Paragon2.png",
+                ASSETS_PATH +"\\Paragon2.png",
                 confidence=0.8,
             )
             pyautogui.click(goBackx, goBacky)
@@ -27,20 +29,20 @@ while True:
             pyautogui.click(853, 625)
     elif (
         pyautogui.locateOnScreen(
-            dir + r"\\assets\Paragon2.png",
+            ASSETS_PATH +"\\Paragon2.png",
             confidence=0.9,
         )
         != None
     ):
         while (
             pyautogui.locateOnScreen(
-                dir + r"\\assets\Paragon2.png",
+                ASSETS_PATH +"\\Paragon2.png",
                 confidence=0.8,
             )
             != None
         ):
             goBackx, goBacky = pyautogui.locateCenterOnScreen(
-                dir + r"\\assets\Paragon2.png",
+                ASSETS_PATH +"\\Paragon2.png",
                 confidence=0.8,
             )
             pyautogui.click(goBackx, goBacky)
@@ -48,20 +50,20 @@ while True:
             pyautogui.click(853, 625)
     elif (
         pyautogui.locateOnScreen(
-            dir + r"\\assets\Paragon1.png",
+            ASSETS_PATH +"\\Paragon1.png",
             confidence=0.8,
         )
         != None
     ):
         while (
             pyautogui.locateOnScreen(
-                dir + r"\\assets\Paragon1.png",
+                ASSETS_PATH +"\\Paragon1.png",
                 confidence=0.8,
             )
             != None
         ):
             goBackx, goBacky = pyautogui.locateCenterOnScreen(
-                dir + r"\\assets\Paragon1.png",
+                ASSETS_PATH +"\\Paragon1.png",
                 confidence=0.8,
             )
             pyautogui.click(goBackx, goBacky)
