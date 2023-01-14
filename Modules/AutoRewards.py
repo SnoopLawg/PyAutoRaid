@@ -33,8 +33,12 @@ def AutoRewards():
             == None
         ):
 
-            with open("log.txt", mode="a") as file:
-                file.write("\n deleting ads now")
+            import logging
+
+            # Set up logging to a file 'log.txt'
+            logging.basicConfig(filename="log.txt", level=logging.DEBUG, filemode="a")
+
+            logging.debug("deleting ads now")
 
             active_raid_window += 1
             if active_raid_window <= 1:
@@ -168,15 +172,13 @@ def AutoRewards():
                 time.sleep(2)
                 while (
                     pyautogui.locateOnScreen(
-                        DIR
-                        + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\defaultClaim.png",
+                        ASSETS_PATH + "\\defaultClaim.png",
                         confidence=0.8,
                     )
                     != None
                 ):
                     defaultClaimx, defaultClaimy = pyautogui.locateCenterOnScreen(
-                        DIR
-                        + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\defaultClaim.png",
+                        ASSETS_PATH + "\\defaultClaim.png",
                         confidence=0.8,
                     )
                     pyautogui.click(defaultClaimx, defaultClaimy)
@@ -200,15 +202,13 @@ def AutoRewards():
                 time.sleep(3)
                 while (
                     pyautogui.locateOnScreen(
-                        DIR
-                        + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\defaultClaim.png",
+                        ASSETS_PATH + "\\defaultClaim.png",
                         confidence=0.8,
                     )
                     != None
                 ):
                     defaultClaimx, defaultClaimy = pyautogui.locateCenterOnScreen(
-                        DIR
-                        + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\defaultClaim.png",
+                        ASSETS_PATH + "\\defaultClaim.png",
                         confidence=0.8,
                     )
                     pyautogui.click(defaultClaimx, defaultClaimy)
@@ -325,15 +325,13 @@ def AutoRewards():
                 # keep adding offers
                 while (
                     pyautogui.locateOnScreen(
-                        DIR
-                        + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\claimFreeGift.png",
+                        ASSETS_PATH + "\\claimFreeGift.png",
                         confidence=0.8,
                     )
                     != None
                 ):
                     miniPackx, miniPacky = pyautogui.locateCenterOnScreen(
-                        DIR
-                        + "\\AutoRaidAutomate\\PyAutoRaid\\assets\\claimFreeGift.png",
+                        ASSETS_PATH + "\\claimFreeGift.png",
                         confidence=0.8,
                     )
                     pyautogui.click(miniPackx, miniPacky)
