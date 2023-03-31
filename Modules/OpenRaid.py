@@ -5,8 +5,8 @@ import time
 import os, sys, subprocess
 import pygetwindow
 from Modules.quitAll import quitAll
-import pyautogui
 from Modules.CheckFilesExist import *
+import pyautogui
 import pathlib
 from screeninfo import Monitor, get_monitors
 
@@ -15,8 +15,6 @@ from screeninfo import Monitor, get_monitors
 DIR = os.getcwd()
 ASSETS_PATH = os.path.join(DIR, "assets")
 import os
-
-test = ASSETS_PATH + "MyLibraryPP.png"
 
 
 def get_screen():
@@ -41,16 +39,28 @@ def openRaid():
         time.sleep(30)
         # TODO: Fix the clicks to open raid
     elif operating == "Windows":
-        PATH = "~\AppData\Local\PlariumPlay\PlariumPlay.exe"
-        FULL_PATH = os.path.expanduser(PATH)
+        PATH_PP = "~\AppData\Local\PlariumPlay\PlariumPlay.exe"
+        FULL_PATH_PP = os.path.expanduser(PATH_PP)
+        # PATH_RSL = (
+        #     "~\\AppData\\Local\\PlariumPlay\\StandAloneApps\\raid\\36484\\Raid.exe"
+        # )
+        # FULL_PATH_RSL = os.path.expanduser(PATH_PP)
         # os.startfile("C:\Program Files\RSL_Helper_X64\RSLHelper.exe")
-        os.startfile(FULL_PATH)
+        os.startfile(FULL_PATH_PP)
         # skips after while
         all_windows = pygetwindow.getAllTitles()
         while "Plarium Play" not in all_windows:
             all_windows = pygetwindow.getAllTitles()
             print("Waiting for Plarium Play to open")
             time.sleep(1)
+        # time.sleep(5)
+        # os.startfile(FULL_PATH_RSL)
+        # count = 0
+        # while "Raid: Shadow Legends" not in all_windows or count == 30:
+        #     all_windows = pygetwindow.getAllTitles()
+        #     print("Waiting for Raid to open")
+        #     time.sleep(1)
+        #     count += 1
         while (
             pyautogui.locateOnScreen(
                 ASSETS_PATH + "\\MyLibraryPP.png",
@@ -158,6 +168,7 @@ def openRaid():
             win.moveTo(center[0], center[1])
             break
     time.sleep(15)
+    return "Raid Opened"
 
 
 if __name__ == "__main__":

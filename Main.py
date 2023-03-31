@@ -1,5 +1,5 @@
 # Run all of the raid functions.
-
+from Modules.PyAutoRaid_Configure import PyAutoRaid_Configure
 from Modules.CBauto import ClanBoss
 from Modules.AutoRewards import AutoRewards
 from Modules.BlackOutMonitor import BlackOutMonitor
@@ -7,7 +7,7 @@ from Modules.ClassicArena import ClassicArena
 from Modules.OpenRaid import openRaid
 from Modules.quitAll import quitAll
 from Modules.NightmareAttemptText import NightmareAttemptText
-
+import sqlite3 as sql
 from Modules.TagTeamArena import TagTeamArena
 from Modules.TimeBetween import is_time_between
 import sys
@@ -20,61 +20,77 @@ import os
 from Modules.RAIDGUI import gui
 import pathlib
 from Modules.CheckFilesExist import Check_files_exist, Check_os
+import time
+from Modules.PushNotifications import push
 
+DIR = os.getcwd()
+DB_PATH = os.path.join(DIR, "Settings.db")
+# update the 'finished' column of a specific row
+connection = sql.connect(DB_PATH)
+cursor = connection.cursor()
+
+results = []
+start_time = time.time()
+max_running_time = (
+    1500  # 25 minutes in seconds so that the file doesnt run for too long.
+)
 DIR = str(pathlib.Path().absolute())
 
 
 def main():
-
+    push("Started")
     # wake up pc
     pyautogui.click(0, 5)
-    Check_files_exist()
-    Check_os()
-    is_time_between()
 
+    PyAutoRaid_Configure("reset")
+    # commit the changes to the database
+    connection.commit()
+
+    Check_files_exist()
+
+    Check_os()
+
+    # Opening Raid
     try:
-        openRaid()
+        results.append(openRaid())
     except TypeError:
+        print(TypeError)
         openRaid()
     except IndexError:
+        print(IndexError)
         openRaid()
-    try:
-        NightmareAttemptText()
-    except TypeError:
-        NightmareAttemptText()
-    AutoRewards()
-    try:
-        # between 4am to 10pm
-        if is_time_between() == False:
-            # NM
-            ClanBoss(1080, 724)
-        # between 10pm to 4am
-        if is_time_between() == True:
-            # Brutal
-            ClanBoss(1080, 647)
-    except TypeError:
-        # between 4am to 10pm
-        if is_time_between() == False:
-            # NM
-            ClanBoss(1080, 724)
-        # between 10pm to 4am
-        if is_time_between() == True:
-            # Brutal
-            ClanBoss(1080, 647)
-    try:
-        ClassicArena()
-    except TypeError:
-        pass
-    try:
-        TagTeamArena()
-    except TypeError:
-        TagTeamArena()
 
-    quitAll()
+    # AutoReward Collection
+    AutoRewards()
+
+    # CLAN BOSS
+    results.append(ClanBoss())
+
+    # ClassicArena fights
+    try:
+        results.append(ClassicArena())
+    except TypeError:
+        print(TypeError)
+        pass
+
+    # TagTeamArena fights
+    try:
+        results.append(TagTeamArena())
+    except TypeError:
+        print(TypeError)
+        TagTeamArena()
+    # Remove Nne in Notificarti
+    results.remove(None)
+    push("Finishing", results)
+    time.sleep(1)
+    command = f"UPDATE PyAutoRaid_Configure SET finished='done' WHERE user_id=1"
+    cursor.execute(command)
+
+    # commit the changes to the database
+    connection.commit()
+
     BlackOutMonitor()
-    os.system("taskkill /f /im Main.exe")
-    os.system("taskkill /f /im python.exe")
-    sys.exit()
+    quitAll()
 
 
 if __name__ == "__main__":
@@ -86,8 +102,15 @@ if __name__ == "__main__":
     p.start()
 
     g.start()
+    DIR = os.getcwd()
+    DB_PATH = os.path.join(DIR, "Settings.db")
+    connection = sql.connect(DB_PATH)
+    cursor = connection.cursor()
     count = 0
     while True:
+        count += 1
+        if count == 1:
+            time.sleep(4)
         if (
             pyautogui.locateOnScreen(DIR + "\\assets\\CBcrashed.png", confidence=0.8)
             != None
@@ -99,11 +122,10 @@ if __name__ == "__main__":
                 )
                 != None
             ):
+                push("Crashed", results)
                 quitAll()
                 os.system("taskkill /f /im Main.exe")
-                # os.system("taskkill /f /im python.exe")
-                p2.start()
-                g2.start()
+
         if (
             pyautogui.locateOnScreen(DIR + "\\assets\\CBcrashed2.png", confidence=0.8)
             != None
@@ -115,14 +137,28 @@ if __name__ == "__main__":
                 )
                 != None
             ):
+                push("Crashed", results)
                 quitAll()
                 os.system("taskkill /f /im Main.exe")
                 # os.system("taskkill /f /im python.exe")
-                p2.start()
-                g2.start()
-        count += 1
-        if count >= 2400:
+                # p2.start()
+                # g2.start()
+        current_time = time.time()
+        if connection:
+            command2 = "SELECT finished FROM PyAutoRaid_Configure"
+            cursor.execute(command2)
+            PARCresults = cursor.fetchall()
+            # print(PARCresults[0][0])
+            end = PARCresults[0][0]
+        else:
+            print("no connection")
+        if current_time - start_time > max_running_time or end == "done":
+            Total_time = current_time - start_time
+            time.sleep(10)
+            # connection.close()
             # Terminate
+            push("Cancelling", results, Total_time)
+            time.sleep(1)
             try:
                 p.terminate()
                 g.terminate()
@@ -133,15 +169,9 @@ if __name__ == "__main__":
                 g.join()
                 p2.join()
                 g2.join()
+                quitAll()
+                exit()
             except:
-                pass
-
-    # # Wait 20 min for process
-    # time.sleep(2400)
-
-    # # Terminate
-    # p.terminate()
-    # g.terminate()
-    # # Cleanup
-    # p.join()
-    # g.join()
+                print("fail")
+                quitAll()
+                exit()

@@ -9,7 +9,7 @@ import win32api
 import win32con
 
 DIR = os.getcwd()
-DB_PATH = os.path.join(DIR, "Data", "Settings.db")
+DB_PATH = os.path.join(DIR, "Settings.db")
 ASSETS_PATH = os.path.join(DIR, "assets")
 connection = sql.connect(DB_PATH)
 cursor = connection.cursor()
@@ -35,6 +35,7 @@ def BlackOutMonitor():
                 win32con.SC_MONITORPOWER,
                 2,
             )
+            print("uhh")
 
         elif sys.platform.startswith("darwin"):
 

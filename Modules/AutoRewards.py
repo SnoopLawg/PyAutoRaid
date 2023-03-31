@@ -11,7 +11,7 @@ import os
 import pygetwindow as gw
 
 DIR = os.getcwd()
-DB_PATH = os.path.join(DIR, "Data", "Settings.db")
+DB_PATH = os.path.join(DIR, "Settings.db")
 ASSETS_PATH = os.path.join(DIR, "assets")
 connection = sql.connect(DB_PATH)
 cursor = connection.cursor()
@@ -46,13 +46,39 @@ def AutoRewards():
                 Raid.minimize()
                 Raid.restore()
 
-        LoopFindImage(
-            ASSETS_PATH + "\\exitAdd.png",
-            "\n ad ",
-        )
+        # LoopFindImage(
+        #     ASSETS_PATH + "\\exitAdd.png",
+        #     "\n ad ",
+        # )
+        while (
+            pyautogui.locateOnScreen(
+                ASSETS_PATH + "\\exitAdd.png",
+                confidence=0.8,
+            )
+            != None
+        ):
+            adx, ady = pyautogui.locateCenterOnScreen(
+                ASSETS_PATH + "\\exitAdd.png",
+                confidence=0.8,
+            )
+            pyautogui.click(adx, ady)
+            time.sleep(2)
+            while (
+                pyautogui.locateOnScreen(
+                    r"C:\Users\Logan Singleton\Documents\Code\Raid Shadow Legends\PyAutoRaid\assets\closeLightningDeal.png",
+                    confidence=0.8,
+                )
+                != None
+            ):
+                ldx, ldy = pyautogui.locateCenterOnScreen(
+                    ASSETS_PATH + "\\closeLightningDeal.png",
+                    confidence=0.8,
+                )
+                pyautogui.click(ldx, ldy)
+                time.sleep(2)
         os.system("taskkill /f /im PlariumPlay.exe")
         # Gem Mine
-        pyautogui.click(579, 684)
+        pyautogui.click(583, 595)
         time.sleep(2)
         pyautogui.hotkey("esc")  # esc gem mine
         time.sleep(2)
@@ -417,84 +443,107 @@ def AutoRewards():
             with open("log.txt", mode="a") as file:
                 file.write("\n claiming timed rewards")
             time.sleep(2)
+            # while (
+            #     pyautogui.locateOnScreen(
+            #         ASSETS_PATH + "\\5min.png",
+            #         confidence=0.8,
+            #     )
+            #     != None
+            # ):
+            #     fiveminx, fiveminy = pyautogui.locateCenterOnScreen(
+            #         ASSETS_PATH + "\\5min.png",
+            #         confidence=0.8,
+            #     )
+            #     pyautogui.click(fiveminx, fiveminy)
+            #     time.sleep(1)
+            # while (
+            #     pyautogui.locateOnScreen(
+            #         ASSETS_PATH + "\\20min.png",
+            #         confidence=0.8,
+            #     )
+            #     != None
+            # ):
+            #     twentyminx, twentyminy = pyautogui.locateCenterOnScreen(
+            #         ASSETS_PATH + "\\20min.png",
+            #         confidence=0.8,
+            #     )
+            #     pyautogui.click(twentyminx, twentyminy)
+            #     time.sleep(1)
+            # while (
+            #     pyautogui.locateOnScreen(
+            #         ASSETS_PATH + "\\40min.png",
+            #         confidence=0.8,
+            #     )
+            #     != None
+            # ):
+            #     fortyminx, fortyminy = pyautogui.locateCenterOnScreen(
+            #         ASSETS_PATH + "\\40min.png",
+            #         confidence=0.8,
+            #     )
+            #     pyautogui.click(fortyminx, fortyminy)
+            #     time.sleep(1)
+            # while (
+            #     pyautogui.locateOnScreen(
+            #         ASSETS_PATH + "\\60min.png",
+            #         confidence=0.8,
+            #     )
+            #     != None
+            # ):
+            #     sixtyminx, sixtyminy = pyautogui.locateCenterOnScreen(
+            #         ASSETS_PATH + "\\60min.png",
+            #         confidence=0.8,
+            #     )
+            #     pyautogui.click(sixtyminx, sixtyminy)
+            #     time.sleep(1)
+            # while (
+            #     pyautogui.locateOnScreen(
+            #         ASSETS_PATH + "\\90min.png",
+            #         confidence=0.8,
+            #     )
+            #     != None
+            # ):
+            #     ninetyminx, ninetyminy = pyautogui.locateCenterOnScreen(
+            #         ASSETS_PATH + "\\90min.png",
+            #         confidence=0.8,
+            #     )
+            #     pyautogui.click(ninetyminx, ninetyminy)
+            #     time.sleep(1)
+            # while (
+            #     pyautogui.locateOnScreen(
+            #         ASSETS_PATH + "\\180min.png",
+            #         confidence=0.8,
+            #     )
+            #     != None
+            # ):
+            #     lastminx, lastminy = pyautogui.locateCenterOnScreen(
+            #         ASSETS_PATH + "\\180min.png",
+            #         confidence=0.8,
+            #     )
+            #     pyautogui.click(lastminx, lastminy)
+            #     time.sleep(1)
             while (
                 pyautogui.locateOnScreen(
-                    ASSETS_PATH + "\\5min.png",
+                    ASSETS_PATH + "\\redNotificationDot.png",
                     confidence=0.8,
                 )
                 != None
             ):
-                fiveminx, fiveminy = pyautogui.locateCenterOnScreen(
-                    ASSETS_PATH + "\\5min.png",
+                redx, redy = pyautogui.locateCenterOnScreen(
+                    ASSETS_PATH + "\\redNotificationDot.png",
                     confidence=0.8,
                 )
-                pyautogui.click(fiveminx, fiveminy)
+                pyautogui.click(redx, redy)
                 time.sleep(1)
-            while (
-                pyautogui.locateOnScreen(
-                    ASSETS_PATH + "\\20min.png",
-                    confidence=0.8,
-                )
-                != None
-            ):
-                twentyminx, twentyminy = pyautogui.locateCenterOnScreen(
-                    ASSETS_PATH + "\\20min.png",
-                    confidence=0.8,
-                )
-                pyautogui.click(twentyminx, twentyminy)
-                time.sleep(1)
-            while (
-                pyautogui.locateOnScreen(
-                    ASSETS_PATH + "\\40min.png",
-                    confidence=0.8,
-                )
-                != None
-            ):
-                fortyminx, fortyminy = pyautogui.locateCenterOnScreen(
-                    ASSETS_PATH + "\\40min.png",
-                    confidence=0.8,
-                )
-                pyautogui.click(fortyminx, fortyminy)
-                time.sleep(1)
-            while (
-                pyautogui.locateOnScreen(
-                    ASSETS_PATH + "\\60min.png",
-                    confidence=0.8,
-                )
-                != None
-            ):
-                sixtyminx, sixtyminy = pyautogui.locateCenterOnScreen(
-                    ASSETS_PATH + "\\60min.png",
-                    confidence=0.8,
-                )
-                pyautogui.click(sixtyminx, sixtyminy)
-                time.sleep(1)
-            while (
-                pyautogui.locateOnScreen(
-                    ASSETS_PATH + "\\90min.png",
-                    confidence=0.8,
-                )
-                != None
-            ):
-                ninetyminx, ninetyminy = pyautogui.locateCenterOnScreen(
-                    ASSETS_PATH + "\\90min.png",
-                    confidence=0.8,
-                )
-                pyautogui.click(ninetyminx, ninetyminy)
-                time.sleep(1)
-            while (
-                pyautogui.locateOnScreen(
-                    ASSETS_PATH + "\\180min.png",
-                    confidence=0.8,
-                )
-                != None
-            ):
-                lastminx, lastminy = pyautogui.locateCenterOnScreen(
-                    ASSETS_PATH + "\\180min.png",
-                    confidence=0.8,
-                )
-                pyautogui.click(lastminx, lastminy)
-                time.sleep(1)
+            pyautogui.click(669, 500)
+            pyautogui.click(769, 500)
+            pyautogui.click(869, 500)
+            pyautogui.click(969, 500)
+            pyautogui.click(1069, 500)
+            pyautogui.click(1069, 500)
+            pyautogui.click(1169, 500)
+            pyautogui.click(1269, 500)
+            time.sleep(1)
+            pyautogui.click(1269, 500)
             while (
                 pyautogui.locateOnScreen(
                     ASSETS_PATH + "\\exitAdd.png",
@@ -560,6 +609,20 @@ def AutoRewards():
                 )
                 pyautogui.click(clanTreasurex, clanTreasurey)
                 time.sleep(1)
+            if (
+                pyautogui.locateAllOnScreen(
+                    ASSETS_PATH + "\\redNotificationDot.png",
+                    confidence=0.8,
+                )
+                != None
+            ):
+                for dotsx, doty, z, c in pyautogui.locateAllOnScreen(
+                    ASSETS_PATH + "\\redNotificationDot.png",
+                    confidence=0.8,
+                ):
+                    pyautogui.click(dotsx, doty + 10)
+                    time.sleep(3)
+
             while (
                 pyautogui.locateOnScreen(
                     ASSETS_PATH + "\\goBack.png",
@@ -646,6 +709,22 @@ def AutoRewards():
     # inbox collect
     time.sleep(1)
     pyautogui.hotkey("i")
+    while (
+        pyautogui.locateOnScreen(
+            ASSETS_PATH + "\\inbox_energy.png",
+            confidence=0.8,
+        )
+        != None
+    ):
+        energy = pyautogui.locateOnScreen(
+            ASSETS_PATH + "\\inbox_energy.png",
+            confidence=0.8,
+        )
+
+        pyautogui.moveTo(energy)
+        pyautogui.moveRel(250, 0)
+        pyautogui.click()
+        time.sleep(2)
     while (
         pyautogui.locateOnScreen(
             ASSETS_PATH + "\\inbox_brew.png",

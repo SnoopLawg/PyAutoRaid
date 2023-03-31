@@ -7,6 +7,7 @@ from Modules.AutoRewards import AutoRewards
 from Modules.BlackOutMonitor import BlackOutMonitor
 from Modules.quitAll import quitAll
 from Modules.OpenRaid import openRaid
+from Modules.PyAutoRaid_Configure import PyAutoRaid_Configure
 import os
 import sys
 from Modules.TimeBetween import is_time_between
@@ -14,7 +15,7 @@ import pathlib
 import sqlite3 as sql
 
 DIR = os.getcwd()
-DB_PATH = os.path.join(DIR, "Data", "Settings.db")
+DB_PATH = os.path.join(DIR, "Settings.db")
 
 ASSETS_PATH = os.path.join(DIR, "assets")
 connection = sql.connect(DB_PATH)
@@ -30,14 +31,69 @@ if is_time_between() == True:
     xCB = 1080
     yCB = 647
 
+CBlevels = ["UltraNightmare", "Nightmare", "Brutal", "Hard", "Normal", "Easy"]
 
-def ClanBoss(xCB, yCB):
+
+def ClanBoss():
+    difficulty = ""
     cursor.execute("SELECT * FROM PyAutoRaid")
     results = cursor.fetchall()
     connection.commit()
     Run = results
     Run = Run[0][2]
     if Run == "True":
+        donewithbattles = []
+        for i in CBlevels:
+            cursor.execute(f"SELECT {i} FROM PyAutoRaid_DailyCompleted")
+            dailybattle = cursor.fetchone()[0]
+            battlesetting = i + "_set"
+            cursor.execute(f"SELECT {battlesetting} FROM PyAutoRaid_DailyCompleted")
+            battlesettingvalue = cursor.fetchone()[0]
+            if battlesettingvalue == 0:
+                print(battlesettingvalue, "battles set for", i)
+                donewithbattles.append(i)
+                if donewithbattles == CBlevels:
+                    print(donewithbattles, CBlevels)
+                    xCB = 1080
+                    yCB = 690
+                    break
+            elif dailybattle >= battlesettingvalue:
+                print(
+                    dailybattle,
+                    "battles have been completed today for",
+                    i,
+                    ". Moving on to next Clan Boss levels",
+                )
+                donewithbattles.append(i)
+                if donewithbattles == CBlevels:
+                    print(donewithbattles, CBlevels)
+                    xCB = 1080
+                    yCB = 690
+                    break
+            else:
+                if i == "UltraNightmare":
+                    xCB = 1080
+                    yCB = 690
+                    break
+                elif i == "Nightmare":
+                    # NM
+                    xCB = 1080
+                    yCB = 724
+                    break
+                elif i == "Brutal":
+                    # Brutal
+                    xCB = 1080
+                    yCB = 647
+                    break
+                elif i == "Hard":
+                    print("not able to click Hard cb yet")
+                    break
+                elif i == "Normal":
+                    print("not able to click Brutal cb yet")
+                    break
+                elif i == "Easy":
+                    print("not able to click Easy cb yet")
+                    break
         time.sleep(1.5)
         with open("log.txt", mode="a") as file:
             file.write("\n deleting ads now")
@@ -121,6 +177,8 @@ def ClanBoss(xCB, yCB):
             with open("log.txt", mode="a") as file:
                 file.write("\n demonlord clicked")
             time.sleep(4)
+        pyautogui.click(1080, 724)
+        pyautogui.drag(0, -200, duration=1)
         while (
             pyautogui.locateOnScreen(
                 ASSETS_PATH + "\\CBreward.png",
@@ -144,7 +202,10 @@ def ClanBoss(xCB, yCB):
                 )
                 != None
             ):
-                nightmareClaimedx, nightmareClaimedy = pyautogui.locateCenterOnScreen(
+                (
+                    nightmareClaimedx,
+                    nightmareClaimedy,
+                ) = pyautogui.locateCenterOnScreen(
                     ASSETS_PATH + "\\CBclaim.png",
                     confidence=0.5,
                 )
@@ -173,6 +234,8 @@ def ClanBoss(xCB, yCB):
             with open("log.txt", mode="a") as file:
                 file.write("\n claim rewards checked")
         time.sleep(2)
+        pyautogui.click(1080, 724)
+        pyautogui.drag(0, +200, duration=1)
         while (
             pyautogui.locateOnScreen(
                 ASSETS_PATH + "\\CBhard.png",
@@ -180,9 +243,13 @@ def ClanBoss(xCB, yCB):
             )
             != None
         ):
-            pyautogui.click(xCB, yCB)
-            with open("log.txt", mode="a") as file:
-                file.write("\n clicked random location, nightmare")
+            if yCB == 690:
+                pyautogui.click(1080, 724)
+                pyautogui.drag(0, -200, duration=1)
+                pyautogui.click(1080, 690)
+            else:
+                pyautogui.click(xCB, yCB)
+
             while (
                 pyautogui.locateOnScreen(
                     ASSETS_PATH + "\\CBbattle.png",
@@ -255,48 +322,48 @@ def ClanBoss(xCB, yCB):
                 )
                 == None
             ):
-                while (
-                    pyautogui.locateOnScreen(
-                        ASSETS_PATH + "\\CBcrashed.png",
-                        confidence=0.8,
-                    )
-                    != None
-                ):
-                    quitAll()
-                    with open("log.txt", mode="a") as file:
-                        file.write("\n RESTARTING DUE TO CRASH")
-                    time.sleep(2)
-                    with open("log.txt", mode="a") as file:
-                        file.write("\n Closing for restart")
-                    time.sleep(2)
-                    openRaid()
-                    AutoRewards()
-                    os.system("taskkill /pid RSLHelper.exe")
-                    ClanBoss()
-                    quitAll()
-                    BlackOutMonitor()
-                    sys.exit()
-                while (
-                    pyautogui.locateOnScreen(
-                        ASSETS_PATH + "\\CBcrashed2.png",
-                        confidence=0.8,
-                    )
-                    != None
-                ):
-                    quitAll()
-                    with open("log.txt", mode="a") as file:
-                        file.write("\n RESTARTING DUE TO CRASH")
-                    time.sleep(2)
-                    with open("log.txt", mode="a") as file:
-                        file.write("\n Closing for restart")
-                    time.sleep(2)
-                    openRaid()
-                    AutoRewards()
-                    os.system("taskkill /pid RSLHelper.exe")
-                    ClanBoss()
-                    quitAll()
-                    BlackOutMonitor()
-                    sys.exit()
+                # while (
+                #     pyautogui.locateOnScreen(
+                #         ASSETS_PATH + "\\CBcrashed.png",
+                #         confidence=0.8,
+                #     )
+                #     != None
+                # ):
+                #     quitAll()
+                #     with open("log.txt", mode="a") as file:
+                #         file.write("\n RESTARTING DUE TO CRASH")
+                #     time.sleep(2)
+                #     with open("log.txt", mode="a") as file:
+                #         file.write("\n Closing for restart")
+                #     time.sleep(2)
+                #     openRaid()
+                #     AutoRewards()
+                #     os.system("taskkill /pid RSLHelper.exe")
+                #     ClanBoss()
+                #     quitAll()
+                #     BlackOutMonitor()
+                #     sys.exit()
+                # while (
+                #     pyautogui.locateOnScreen(
+                #         ASSETS_PATH + "\\CBcrashed2.png",
+                #         confidence=0.8,
+                #     )
+                #     != None
+                # ):
+                #     quitAll()
+                #     with open("log.txt", mode="a") as file:
+                #         file.write("\n RESTARTING DUE TO CRASH")
+                #     time.sleep(2)
+                #     with open("log.txt", mode="a") as file:
+                #         file.write("\n Closing for restart")
+                #     time.sleep(2)
+                #     openRaid()
+                #     AutoRewards()
+                #     os.system("taskkill /pid RSLHelper.exe")
+                #     ClanBoss()
+                #     quitAll()
+                #     BlackOutMonitor()
+                #     sys.exit()
                 while (
                     pyautogui.locateOnScreen(
                         ASSETS_PATH + "\\gotoBastion.png",
@@ -312,6 +379,24 @@ def ClanBoss(xCB, yCB):
                         file.write("\n finished CB battle")
                     pyautogui.click(gotoBastionx, gotoBastiony)
                     break
+            if yCB == 724:
+                difficulty = "Nightmare"
+                PyAutoRaid_Configure("Nightmare")
+            elif yCB == 647:
+                difficulty = "Brutal"
+                PyAutoRaid_Configure("Brutal")
+            elif yCB == 690:
+                difficulty = "UltraNightmare"
+                PyAutoRaid_Configure("UltraNightmare")
+            elif yCB == 647:
+                difficulty = "Hard"
+                PyAutoRaid_Configure("Hard")
+            elif yCB == 724:
+                difficulty = "Normal"
+                PyAutoRaid_Configure("Normal")
+            elif yCB == 647:
+                difficulty = "Easy"
+                PyAutoRaid_Configure("Easy")
         pyautogui.click(566, 790)
         while (
             pyautogui.locateOnScreen(
@@ -342,7 +427,7 @@ def ClanBoss(xCB, yCB):
             pyautogui.click(goBackx, goBacky)
             with open("log.txt", mode="a") as file:
                 file.write("\n Back to bastion")
-            time.sleep(1)
+            time.sleep(1.5)
         while (
             pyautogui.locateOnScreen(
                 ASSETS_PATH + "\\exitAdd.png",
@@ -355,16 +440,13 @@ def ClanBoss(xCB, yCB):
                 confidence=0.8,
             )
             pyautogui.click(adx, ady)
+            time.sleep(1)
             with open("log.txt", mode="a") as file:
                 file.write("\n ad closed")
+    if difficulty == "":
+        difficulty = "No"
+    return f"{difficulty} Clan boss fought"
 
 
 if __name__ == "__main__":
-    # between 4am to 10pm
-    if is_time_between() == False:
-        # NM
-        ClanBoss(1080, 724)
-    # between 10pm to 4am
-    if is_time_between() == True:
-        # Brutal
-        ClanBoss(1080, 647)
+    ClanBoss()

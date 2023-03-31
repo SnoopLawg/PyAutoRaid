@@ -9,7 +9,7 @@ import sqlite3 as sql
 import os
 
 DIR = os.getcwd()
-DB_PATH = os.path.join(DIR, "Data", "Settings.db")
+DB_PATH = os.path.join(DIR, "Settings.db")
 ASSETS_PATH = os.path.join(DIR, "assets")
 connection = sql.connect(DB_PATH)
 cursor = connection.cursor()
@@ -21,6 +21,7 @@ def TagTeamArena():
     connection.commit()
     Run = results
     Run = Run[0][4]
+    message = ""
     if Run == "True":
         time.sleep(2)
         LoopFindImage(
@@ -174,6 +175,8 @@ def TagTeamArena():
                     time.sleep(2)
                     pyautogui.click(1304, 457)
                     time.sleep(1)
+                time.sleep(2)
+                print("need gems?")
                 if (
                     pyautogui.locateOnScreen(
                         ASSETS_PATH + "\\TagArenaNeedGems.png",
@@ -187,6 +190,7 @@ def TagTeamArena():
                     "\n arena battle started",
                 )
                 print("First Battle")
+                message = "tag team fought"
                 while (
                     pyautogui.locateOnScreen(
                         ASSETS_PATH + "\\tapToContinue.png",
@@ -560,6 +564,8 @@ def TagTeamArena():
             with open("log.txt", mode="a") as file:
                 file.write("\n ad closed")
             time.sleep(2)
+    if message != "":
+        return message
 
 
 if __name__ == "__main__":
