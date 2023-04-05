@@ -3,34 +3,35 @@
 
 ### Technical
 I am trying to automate Raid: Shadow Legends  without accessing game data but using pyautogui and finding images on the game's screen. I wish to do it with gamedata but I do not know how, and I know autoclickers are allowed in RSL so this is my novice attempt at it.
-- [x] CheckIfFileExists()
+- [x] CheckIfFileExists()<br>
       -Checks if you have the correct files
-- [x] OpenRaid()
+- [x] OpenRaid()<br>
       -Starts and awaits raid to open
-- [x] AutoRewards()
+- [x] AutoRewards()<br>
       -Collects Gem Mine, Daily quests, Advanced Quests, Inbox, Upgrades champions in autoupgrade thing, and buys mystery and ancient shards from market.
-- [x] AutoCB()
+- [x] AutoCB()<br>
       -My FAVORITE (and reason I made this app). Attacks clan boss depending on what you set in your GUI. If met the number of battles (Ex. 2/2 UNM fights) it will move on to the next difficulty. If you completed all fights you need (you put in the gui) it will default to UNM fighting.
-- [x] ClassicArena()
+- [x] ClassicArena()<br>
       -Battles 10 times or until out of coins. Will also buy Drexthar Bloodtwin if not yet purchased
-- [x] quitAll()
+- [x] quitAll()<br>
       -Quits out of everything including Raid, Plarium and this app.
-- [x] BlackOutMonitor()
+- [x] BlackOutMonitor()<br>
       -Blacks out your monitors without turning off your computer. (I use this so I can run this like every hour and not have my monitors on always)
-- [x] TagTeamArena()
+- [x] TagTeamArena()<br>
       -Battles 10 times or until out of coins
-- [ ] AutoUpgrader
+- [ ] AutoUpgrader<br>
       -Cannot control mouseclicks when I run RSLHELPER by farbstoff... so I would have to get gamedata. (NEED HELP!!)
-- [x] Gui
+- [x] Gui<br>
       -Gui popup to manage what you want to run
-- [x] Exe file for all of this
+- [x] Exe file for all of this<br>
       -PyAutoRaid.exe created
 
 ### How to Use
 1. Download PyAutoRaid.exe
+[DOWNLOADE HERE](https://github.com/SnoopLawg/PyAutoRaid/releases/download/v1.0-beta/Main.exe)<br>
 (You can now run it by clicking it)
 
-optional:
+optional:<br>
   Make the app run incrementally:
 
 2. Open "Windows Task Scheduler"
