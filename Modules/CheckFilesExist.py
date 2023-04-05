@@ -32,7 +32,7 @@ def Check_files_exist():
             total_files += 1
         elif file == "Raid.exe":
             if operating_system == "Windows":
-                default_install_path = f"C:\\Users\\{os.getlogin()}\\AppData\\Local\\PlariumPlay\\StandAloneApps\\raid\\36484\\Raid.exe"
+                default_install_path = f"C:\\Users\\{os.getlogin()}\\AppData\\Local\\PlariumPlay\\StandAloneApps\\raid\\36872\\Raid.exe"
                 filepath = default_install_path
                 if not os.path.exists(filepath):
                     tkinter.messagebox.showerror(

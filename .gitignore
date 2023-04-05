@@ -12,3 +12,7 @@ relative.py
 Modules/PushNotifications.py
 log.txt
 main.bat
+Modules/CheckFilesExist.py
+log.txt
+Main.spec
+Modules/Test.py

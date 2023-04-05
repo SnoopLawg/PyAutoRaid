@@ -7,6 +7,7 @@ import sqlite3 as sql
 import pathlib
 import os
 from tkinter import messagebox
+from ttkthemes import ThemedTk
 
 DIR = os.getcwd()
 ASSETS_PATH = os.path.join(DIR, "assets")
@@ -20,11 +21,13 @@ command1 = """CREATE TABLE IF NOT EXISTS
     PyAutoRaid(user_id INTEGER PRIMARY KEY, auto_cb TEXT, auto_ca TEXT, auto_tta TEXT, auto_r TEXT, blackout_monitor TEXT)"""
 
 cursor.execute(command1)
+##
 
 ###################################################
 # The setup of the tkinter window and tabs
-root = Tk()
+root = ThemedTk(theme="equilux")
 root.title("PyAutoRaid Settings")
+
 tab_control = ttk.Notebook(root)
 tab1 = ttk.Frame(tab_control)
 tab2 = ttk.Frame(tab_control)

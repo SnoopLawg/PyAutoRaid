@@ -46,7 +46,7 @@ def main():
     # commit the changes to the database
     connection.commit()
 
-    Check_files_exist()
+    # Check_files_exist()
 
     Check_os()
 
