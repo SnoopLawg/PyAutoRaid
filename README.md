@@ -1,6 +1,24 @@
 # PyAutoRaid
 ![raid-header](https://user-images.githubusercontent.com/30202466/181846024-930b7120-0af6-4280-b727-87bdd4ade7b8.jpeg)
 
+### How to Use
+1. Download PyAutoRaid.exe
+[DOWNLOADE HERE](https://github.com/SnoopLawg/PyAutoRaid/releases/download/v1.0-beta/Main.exe)<br>
+(You can now run it by clicking it)
+
+###### optional:<br>
+  Make the app run incrementally:
+
+2. Open "Windows Task Scheduler"
+3. Click "Create Task" on the top right
+4. Name it whatever you want (doesnt matter)
+5. Click "Run with Hightest Privileges"
+6. Click "Triggers", then "New".., and then select whatever you want. (however often you want it to run. I run it "Daily" , and I set the start to be todays date and the top of the next hour. I then click the "Repeat task every hour""
+7. Click OK
+8. Click "Actions", then "New...", "Browse...", and then find the exe file wherever you placed it.
+9. Click OK
+10. This should now run the app however often you set it in Windows Task Scheduler. You can test to see if it works by clicking on your task under the Task Scheduler Library Folder on the top left, and clicking Run on the far right side.
+
 ### Technical
 I am trying to automate Raid: Shadow Legends  without accessing game data but using pyautogui and finding images on the game's screen. I wish to do it with gamedata but I do not know how, and I know autoclickers are allowed in RSL so this is my novice attempt at it.
 - [x] CheckIfFileExists()<br>
@@ -26,20 +44,4 @@ I am trying to automate Raid: Shadow Legends  without accessing game data but us
 - [x] Exe file for all of this<br>
       -PyAutoRaid.exe created
 
-### How to Use
-1. Download PyAutoRaid.exe
-[DOWNLOADE HERE](https://github.com/SnoopLawg/PyAutoRaid/releases/download/v1.0-beta/Main.exe)<br>
-(You can now run it by clicking it)
 
-optional:<br>
-  Make the app run incrementally:
-
-2. Open "Windows Task Scheduler"
-3. Click "Create Task" on the top right
-4. Name it whatever you want (doesnt matter)
-5. Click "Run with Hightest Privileges"
-6. Click "Triggers", then "New".., and then select whatever you want. (however often you want it to run. I run it "Daily" , and I set the start to be todays date and the top of the next hour. I then click the "Repeat task every hour""
-7. Click OK
-8. Click "Actions", then "New...", "Browse...", and then find the exe file wherever you placed it.
-9. Click OK
-10. This should now run the app however often you set it in Windows Task Scheduler. You can test to see if it works by clicking on your task under the Task Scheduler Library Folder on the top left, and clicking Run on the far right side.
