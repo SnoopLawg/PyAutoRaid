@@ -19,6 +19,8 @@
 9. Click OK
 10. This should now run the app however often you set it in Windows Task Scheduler. You can test to see if it works by clicking on your task under the Task Scheduler Library Folder on the top left, and clicking Run on the far right side.
 
+When running the program for the first time be sure to make your changes then submit on the gui.
+
 ### Technical
 I am trying to automate Raid: Shadow Legends  without accessing game data but using pyautogui and finding images on the game's screen. I wish to do it with gamedata but I do not know how, and I know autoclickers are allowed in RSL so this is my novice attempt at it.
 - [x] CheckIfFileExists()<br>
