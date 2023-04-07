@@ -31,15 +31,17 @@ def quitAll():
     if check_process_exists("RSLHelper.exe") == True:
         print("RSLHelper open. Shutting down.")
         os.system("taskkill /f /im Main.exe")
+        os.system("taskkill /f /im PyAutoRaid.exe")
         os.system("taskkill /f /im python.exe")
         os.system("taskkill /f /im main.py")
         os.system("taskkill /f /im PlariumPlay.exe")
         time.sleep(1)
 
     elif check_process_exists("Raid.exe") == True:
-        os.system("taskkill /f /im  Raid.exe")
+        os.system("taskkill /f /im Raid.exe")
         os.system("taskkill /f /im PlariumPlay.exe")
         os.system("taskkill /f /im Main.exe")
+        os.system("taskkill /f /im PyAutoRaid.exe")
         os.system("taskkill /f /im python.exe")
         os.system("taskkill /f /im main.py")
 
