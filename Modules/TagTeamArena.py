@@ -266,7 +266,7 @@ def TagTeamArena():
                     )
                     != None
                 ):
-                    exit()
+                    quit()
                 LoopFindImage(
                     ASSETS_PATH + "\\arenaStart.png",
                     "\n arena battle started",
