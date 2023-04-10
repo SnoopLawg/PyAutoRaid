@@ -3,7 +3,6 @@ import sqlite3 as sql
 import pygetwindow
 import time
 import datetime
-from Modules.PushNotifications import push
 
 
 def PyAutoRaid_Configure(cbBattle=None):
@@ -73,6 +72,8 @@ def PyAutoRaid_Configure(cbBattle=None):
                     (Current_day, 0, 0, 0, 0, 0, 0),
                 )
                 connection.commit()
+                from Modules.PushNotifications import push
+
                 push("RESETTING CLAN BOSS")
         if battle == cbBattle:
             if cbBattle != "reset":

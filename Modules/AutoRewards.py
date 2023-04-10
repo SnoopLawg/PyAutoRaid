@@ -46,10 +46,29 @@ def AutoRewards():
                 Raid.minimize()
                 Raid.restore()
 
-        # LoopFindImage(
-        #     ASSETS_PATH + "\\exitAdd.png",
-        #     "\n ad ",
-        # )
+            # LoopFindImage(
+            #     ASSETS_PATH + "\\exitAdd.png",
+            #     "\n ad ",
+            # )
+            while (
+                pyautogui.locateOnScreen(
+                    ASSETS_PATH + "\\tapToContinue.png",
+                    confidence=0.8,
+                )
+                != None
+            ):
+                time.sleep(1)
+                goBackx, goBacky = pyautogui.locateCenterOnScreen(
+                    ASSETS_PATH + "\\tapToContinue.png",
+                    confidence=0.8,
+                )
+                pyautogui.click(goBackx, goBacky)
+                print("weekly classic arena")
+                time.sleep(1)
+                LoopFindImage(
+                    ASSETS_PATH + "\\goBack.png",
+                    "\n back to Bastion x ",
+                )
         while (
             pyautogui.locateOnScreen(
                 ASSETS_PATH + "\\exitAdd.png",
@@ -63,9 +82,10 @@ def AutoRewards():
             )
             pyautogui.click(adx, ady)
             time.sleep(2)
+            Closelightningvar = ASSETS_PATH + "\\closeLightningDeal.png"
             while (
                 pyautogui.locateOnScreen(
-                    r"C:\Users\Logan Singleton\Documents\Code\Raid Shadow Legends\PyAutoRaid\assets\closeLightningDeal.png",
+                    r"{}".format(Closelightningvar),
                     confidence=0.8,
                 )
                 != None

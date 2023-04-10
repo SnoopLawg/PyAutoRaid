@@ -14,17 +14,8 @@ def check_process_exists(process_name):
     return False
 
 
-print(check_process_exists("Raid.exe"))
-
-
 def quitAll():
-    # time.sleep(5)
     print()
-    # os.system("taskkill /f /im RSLHelper.exe")
-    # os.system("taskkill /f /im  Raid.exe")
-    # os.system("taskkill /f /im PlariumPlay.exe")
-    # time.sleep(3)
-
     print()
 
     all_windows = pygetwindow.getAllTitles()
@@ -41,7 +32,9 @@ def quitAll():
         os.system("taskkill /f /im Raid.exe")
         os.system("taskkill /f /im PlariumPlay.exe")
         os.system("taskkill /f /im Main.exe")
-        os.system("taskkill /f /im PyAutoRaid.exe")
+        for proc in psutil.process_iter(["name"]):
+            if proc.info["name"] == "PyAutoRaid.exe":
+                os.system("taskkill /f /im PyAutoRaid.exe")
         os.system("taskkill /f /im python.exe")
         os.system("taskkill /f /im main.py")
 
