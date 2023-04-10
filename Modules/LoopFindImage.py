@@ -10,7 +10,7 @@ def LoopFindImage(image, txtfile):
         pyautogui.click(adx, ady)
         with open("log.txt", mode="a") as file:
             file.write(txtfile)
-        time.sleep(2)
+        time.sleep(3)
 
 
 def IfFindImage(image, txtfile):

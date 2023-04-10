@@ -56,6 +56,7 @@ def TagTeamArena():
             with open("log.txt", mode="a") as file:
                 file.write("\n ad closed")
             time.sleep(2)
+        print("made it")
         while (
             pyautogui.locateOnScreen(
                 ASSETS_PATH + "\\battleBTN.png",
@@ -71,6 +72,7 @@ def TagTeamArena():
             with open("log.txt", mode="a") as file:
                 file.write("\n battle button pressed")
             time.sleep(2)
+            print("made it battle btn")
         while (
             pyautogui.locateOnScreen(
                 ASSETS_PATH + "\\arenaTab.png",
@@ -86,6 +88,7 @@ def TagTeamArena():
             with open("log.txt", mode="a") as file:
                 file.write("\n arena tab clicked")
             time.sleep(2)
+            print("arena tab")
         while (
             pyautogui.locateOnScreen(
                 ASSETS_PATH + "\\TagTeamArena.png",
