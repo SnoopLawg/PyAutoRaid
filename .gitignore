@@ -1,7 +1,6 @@
 dist/
 um49945610_Artefacts.tmp
 log.txt
-log.txt
 get_region.py
 get_mouse_pos.py
 Modules/run.py
@@ -9,10 +8,8 @@ build/
 __pycache__/
 Testingmod.py
 relative.py
-log.txt
 main.bat
 Modules/CheckFilesExist.py
-log.txt
 Main.spec
 Modules/Test.py
 Modules/configSetup.py

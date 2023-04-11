@@ -80,7 +80,10 @@ def main():
         print(TypeError)
         TagTeamArena()
     # Remove Nne in Notificarti
-    results.remove(None)
+    try:
+        results.remove(None)
+    except:
+        pass
     push("Finishing", results)
     time.sleep(1)
     command = f"UPDATE PyAutoRaid_Configure SET finished='done' WHERE user_id=1"
