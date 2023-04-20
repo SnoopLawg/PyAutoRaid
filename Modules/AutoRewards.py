@@ -245,7 +245,7 @@ def AutoRewards():
                 pyautogui.click(claimMSx, claimMSy)
                 with open("log.txt", mode="a") as file:
                     file.write("\n claiming mystery Shard")
-                time.sleep(3)
+                time.sleep(5)
                 while (
                     pyautogui.locateOnScreen(
                         ASSETS_PATH + "\\defaultClaim.png",
@@ -414,7 +414,7 @@ def AutoRewards():
             pyautogui.click(guardianRingx, guardianRingy)
             with open("log.txt", mode="a") as file:
                 file.write("\n open guardian ring")
-            time.sleep(2)
+            time.sleep(4)
             while (
                 pyautogui.locateOnScreen(
                     ASSETS_PATH + "\\GRupgrade.png",

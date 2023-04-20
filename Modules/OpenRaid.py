@@ -48,40 +48,41 @@ def openRaid():
                 "-tray-start",
             ]
         )
+        time.sleep(30)
         time_out = 0
-    while (
-        pyautogui.locateOnScreen(
-            ASSETS_PATH + "\\exitAdd.png",
-            confidence=0.8,
-        )
-        == None
-    ):
-        time_out += 1
-        time.sleep(0.5)
+        while (
+            pyautogui.locateOnScreen(
+                ASSETS_PATH + "\\exitAdd.png",
+                confidence=0.8,
+            )
+            == None
+        ):
+            time_out += 1
+            time.sleep(0.5)
 
-        if time_out >= 100:
-            print("raid never opened lol")
-            quitAll()
-            pyautogui.hotkey("winleft", "m")
-            pyautogui.doubleClick(440, 362)
-        while "Raid: Shadow Legends" not in all_windows:
-            all_windows = pygetwindow.getAllTitles()
-            print("Waiting for Raid to open")
-            time.sleep(1)
+            if time_out >= 100:
+                print("raid never opened lol")
+                quitAll()
+                pyautogui.hotkey("winleft", "m")
+                pyautogui.doubleClick(440, 362)
+            while "Raid: Shadow Legends" not in all_windows:
+                all_windows = pygetwindow.getAllTitles()
+                print("Waiting for Raid to open")
+                time.sleep(10)
 
-        center = get_screen()
+            center = get_screen()
 
-        try:
-            win = pygetwindow.getWindowsWithTitle("Raid: Shadow Legends")[0]
-            win.size = (900, 600)
-            win.moveTo(center[0], center[1])
-            break
-        except IndexError:
-            time.sleep(20)
-            win = pygetwindow.getWindowsWithTitle("Raid: Shadow Legends")[0]
-            win.size = (900, 600)
-            win.moveTo(center[0], center[1])
-            break
+            try:
+                win = pygetwindow.getWindowsWithTitle("Raid: Shadow Legends")[0]
+                win.size = (900, 600)
+                win.moveTo(center[0], center[1])
+                break
+            except IndexError:
+                time.sleep(20)
+                win = pygetwindow.getWindowsWithTitle("Raid: Shadow Legends")[0]
+                win.size = (900, 600)
+                win.moveTo(center[0], center[1])
+                break
     time.sleep(15)
     return "Raid Opened"
 

@@ -111,7 +111,8 @@ def ClanBoss():
             pyautogui.click(adx, ady)
             with open("log.txt", mode="a") as file:
                 file.write("\n ad closed")
-            time.sleep(2)
+            time.sleep(3)
+        time.sleep(3)
         while (
             pyautogui.locateOnScreen(
                 ASSETS_PATH + "\\battleBTN.png",
