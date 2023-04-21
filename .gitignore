@@ -14,5 +14,4 @@ Main.spec
 Modules/Test.py
 Modules/configSetup.py
 config.ini
-Settings.db
-PARSetup.exe
+PARInstaller.exe
