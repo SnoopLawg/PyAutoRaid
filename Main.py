@@ -110,6 +110,7 @@ if __name__ == "__main__":
     connection = sql.connect(DB_PATH)
     cursor = connection.cursor()
     count = 0
+    time.sleep(30)
     while True:
         count += 1
         if count == 1:
