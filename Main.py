@@ -31,8 +31,8 @@ else:
     # we are running in a normal Python environment
     DIR = os.getcwd()
 
-DIR = os.getcwd()
 DB_PATH = os.path.join(DIR, "Settings.db")
+ASSETS_PATH = os.path.join(DIR, "assets")
 # update the 'finished' column of a specific row
 connection = sql.connect(DB_PATH)
 cursor = connection.cursor()
@@ -124,13 +124,13 @@ if __name__ == "__main__":
         if count == 1:
             time.sleep(4)
         if (
-            pyautogui.locateOnScreen(DIR + "\\assets\\CBcrashed.png", confidence=0.8)
+            pyautogui.locateOnScreen(ASSETS_PATH + "\\CBcrashed.png", confidence=0.8)
             != None
         ):
             time.sleep(5)
             if (
                 pyautogui.locateOnScreen(
-                    DIR + "\\assets\\CBcrashed.png", confidence=0.8
+                    ASSETS_PATH + "\\CBcrashed.png", confidence=0.8
                 )
                 != None
             ):
@@ -139,14 +139,12 @@ if __name__ == "__main__":
                 os.system("taskkill /f /im Main.exe")
 
         if (
-            pyautogui.locateOnScreen(DIR + "\\assets\\CBcrashed2.png", confidence=0.8)
+            pyautogui.locateOnScreen(ASSETS_PATH + "\\CBcrashed2.png", confidence=0.8)
             != None
         ):
             time.sleep(5)
             if (
-                pyautogui.locateOnScreen(
-                    DIR + "\\assets\\CBcrashed.png", confidence=0.8
-                )
+                pyautogui.locateOnScreen(ASSETS_PATH + "CBcrashed.png", confidence=0.8)
                 != None
             ):
                 push("Crashed", results)
