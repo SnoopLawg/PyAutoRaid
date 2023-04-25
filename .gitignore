@@ -15,3 +15,6 @@ Modules/Test.py
 Modules/configSetup.py
 config.ini
 PARInstaller.exe
+Dailies.spec
+Dallies.spec
+Settings.db
