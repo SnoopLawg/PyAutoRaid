@@ -22,6 +22,14 @@ import pathlib
 from Modules.CheckFilesExist import Check_files_exist, Check_os
 import time
 from Modules.PushNotifications import push
+import sys
+
+if getattr(sys, "frozen", False):
+    # we are running in a bundle
+    DIR = sys._MEIPASS
+else:
+    # we are running in a normal Python environment
+    DIR = os.getcwd()
 
 DIR = os.getcwd()
 DB_PATH = os.path.join(DIR, "Settings.db")

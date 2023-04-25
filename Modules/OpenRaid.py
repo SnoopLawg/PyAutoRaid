@@ -12,7 +12,14 @@ from screeninfo import Monitor, get_monitors
 
 # import Main
 
-DIR = os.getcwd()
+import sys
+
+if getattr(sys, "frozen", False):
+    # we are running in a bundle
+    DIR = sys._MEIPASS
+else:
+    # we are running in a normal Python environment
+    DIR = os.getcwd()
 ASSETS_PATH = os.path.join(DIR, "assets")
 import os
 

@@ -9,7 +9,14 @@ import os
 from tkinter import messagebox
 from ttkthemes import ThemedTk
 
-DIR = os.getcwd()
+import sys
+
+if getattr(sys, "frozen", False):
+    # we are running in a bundle
+    DIR = sys._MEIPASS
+else:
+    # we are running in a normal Python environment
+    DIR = os.getcwd()
 ASSETS_PATH = os.path.join(DIR, "assets")
 DB_PATH = os.path.join(DIR, "Settings.db")
 

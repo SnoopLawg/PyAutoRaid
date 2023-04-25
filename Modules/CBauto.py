@@ -14,7 +14,14 @@ from Modules.TimeBetween import is_time_between
 import pathlib
 import sqlite3 as sql
 
-DIR = os.getcwd()
+import sys
+
+if getattr(sys, "frozen", False):
+    # we are running in a bundle
+    DIR = sys._MEIPASS
+else:
+    # we are running in a normal Python environment
+    DIR = os.getcwd()
 DB_PATH = os.path.join(DIR, "Settings.db")
 
 ASSETS_PATH = os.path.join(DIR, "assets")

@@ -6,7 +6,14 @@ import datetime
 
 
 def PyAutoRaid_Configure(cbBattle=None):
-    DIR = os.getcwd()
+    import sys
+
+    if getattr(sys, "frozen", False):
+        # we are running in a bundle
+        DIR = sys._MEIPASS
+    else:
+        # we are running in a normal Python environment
+        DIR = os.getcwd()
     ASSETS_PATH = os.path.join(DIR, "assets")
     DB_PATH = os.path.join(DIR, "Settings.db")
     connection = sql.connect(DB_PATH)
