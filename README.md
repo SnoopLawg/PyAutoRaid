@@ -3,7 +3,7 @@
 
 ### How to Use
 1. Download PyAutoRaid.exe
-[DOWNLOADE HERE](https://github.com/SnoopLawg/PyAutoRaid/releases/download/v1.4-beta/PARInstaller.exe)<br>
+[DOWNLOADE HERE](https://github.com/SnoopLawg/PyAutoRaid/releases/download/v1.5-beta/Main.exe)<br>
 (You can now run it by clicking it)
 This installs the folders needed (Modules and Assets). 
 ##DO NOT REMOVE THE .exe from this folder.
