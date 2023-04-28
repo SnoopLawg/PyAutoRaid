@@ -1,3 +1,240 @@
+<!-- Improved compatibility of back to top link: See: https://github.com/othneildrew/Best-README-Template/pull/73 -->
+<a name="readme-top"></a>
+<!--
+*** Thanks for checking out the Best-README-Template. If you have a suggestion
+*** that would make this better, please fork the repo and create a pull request
+*** or simply open an issue with the tag "enhancement".
+*** Don't forget to give the project a star!
+*** Thanks again! Now go create something AMAZING! :D
+-->
+
+
+
+<!-- PROJECT SHIELDS -->
+<!--
+*** I'm using markdown "reference style" links for readability.
+*** Reference links are enclosed in brackets [ ] instead of parentheses ( ).
+*** See the bottom of this document for the declaration of the reference variables
+*** for contributors-url, forks-url, etc. This is an optional, concise syntax you may use.
+*** https://www.markdownguide.org/basic-syntax/#reference-style-links
+-->
+[![Contributors][contributors-shield]][contributors-url]
+[![Forks][forks-shield]][forks-url]
+[![Stargazers][stars-shield]][stars-url]
+[![Issues][issues-shield]][issues-url]
+[![MIT License][license-shield]][license-url]
+
+
+
+
+<!-- PROJECT LOGO -->
+<br />
+<div align="center">
+  <a href="https://github.com/SnoopLawg/PyAutoRaid">
+    <img src="https://user-images.githubusercontent.com/30202466/181846024-930b7120-0af6-4280-b727-87bdd4ade7b8.jpeg" alt="Logo">
+  </a>
+
+<h3 align="center">PyAutoRaid</h3>
+
+  <p align="center">
+    I am trying to automate Raid: Shadow Legends  without accessing game data but using pyautogui and finding images on the game's screen. I wish to do it with gamedata but I do not know how, and I know autoclickers are allowed in RSL so this is my novice attempt at it.
+    <br />
+    <!--<a href="https://github.com/SnoopLawg/PyAutoRaid"><strong>Explore the docs »</strong></a>-->
+    <br />
+    <br />
+    <a href="https://github.com/SnoopLawg/PyAutoRaid">View Code</a>
+    ·
+    <a href="https://github.com/SnoopLawg/PyAutoRaid/issues">Report Bug</a>
+    ·
+    <a href="https://github.com/SnoopLawg/PyAutoRaid/issues">Request Feature</a>
+  </p>
+</div>
+
+
+
+<!-- TABLE OF CONTENTS -->
+<details>
+  <summary>Table of Contents</summary>
+  <ol>
+    <li>
+      <a href="#about-the-project">About The Project</a>
+      <ul>
+        <li><a href="#built-with">Built With</a></li>
+      </ul>
+    </li>
+    <li>
+      <a href="#getting-started">Getting Started</a>
+      <ul>
+        <li><a href="#prerequisites">Prerequisites</a></li>
+        <li><a href="#installation">Installation</a></li>
+      </ul>
+    </li>
+    <li><a href="#usage">Usage</a></li>
+    <li><a href="#roadmap">Roadmap</a></li>
+    <li><a href="#contributing">Contributing</a></li>
+    <li><a href="#license">License</a></li>
+    <li><a href="#contact">Contact</a></li>
+    <li><a href="#acknowledgments">Acknowledgments</a></li>
+  </ol>
+</details>
+
+
+
+<!-- ABOUT THE PROJECT -->
+## About The Project
+<!--
+[![Product Name Screen Shot][Exe, GUI Interface, and Raid]](https://user-images.githubusercontent.com/30202466/235019154-2fb0524d-bddc-4a16-833a-ffc9c6d115bc.png)
+
+Here's a blank template to get started: To avoid retyping too much info. Do a search and replace with your text editor for the following: `github_username`, `repo_name`, `twitter_handle`, `linkedin_username`, `email_client`, `email`, `project_title`, `project_description`
+-->
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+
+### Built With
+
+* ![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
+* ![SQLite](https://img.shields.io/badge/sqlite-%2307405e.svg?style=for-the-badge&logo=sqlite&logoColor=white)
+
+
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+
+<!-- GETTING STARTED -->
+## Getting Started
+
+Downloade the newest release of PyAutoRaid. It was created with "Windows Task Scheduler" in mind. You can click the app manually and it will run through and fight the Clan boss, Collect your rewards like gems and upgrade in the sparring pit, and fight some battles in classic and Tag Team Arena. The purpose though is for the app to run on its own, so "Windows Task Scheduler" is pre-built in Windows and can run your downloaded PyAutoRaid.exe file every so often.
+
+
+### Prerequisites
+
+Must be on a Windows Computer. 
+Tested on:
+-Windows 10
+-1920 x 1080 Monitor
+
+### Installation
+
+1. [CLICK HERE](https://github.com/SnoopLawg/PyAutoRaid/releases/download/v1.5-beta/Main.exe) to download PyAutoRaid.exe (Main.exe for now)<br>
+2.  Create a shortcut for it if you would like on your desktop
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+
+<!-- USAGE EXAMPLES -->
+## Usage
+
+##### PyAutoRaid.exe (Main.exe)
+  - Double click Main.exe in your downloads folder to start it.
+  - The "GUI Interface" should show up first and then raid begins to open. Nothing else needs to be touched unless it is your first time using the application, in which you should click the boxes of what Tasks you want to run. 
+  - Following clicking all the checkboxes of what tasks you plan to run, make sure you have the number of Clan Boss fights for each difficulty inputted. (Ex. 4 battles for UNM) 
+  - Click "Calculate" then "Submit"
+
+>In some cases the database does not fully create and it returns an "SQLite error, PyAutoRaid_Configure table not found".
+
+To fix this (for now) just run it again.
+______________________________________________________________________________________________________________________________
+##### Windows Task Scheduler
+This is needed if you want the app to run every hour.
+
+1. Open "Windows Task Scheduler"
+2. Click "Create Task" on the top right
+3. Name it whatever you want (doesnt matter)
+4. Click "Run with Hightest Privileges"
+5. Click "Triggers", then "New".., and then select whatever you want. (however often you want it to run. I run it "Daily" , and I set the start to be todays date and the top of the next hour. I then click the "Repeat task every hour""
+6. Click OK
+7. Click "Actions", then "New...", "Browse...", and then find the exe file wherever you placed it.
+8. Click OK
+9. This should now run the app however often you set it in Windows Task Scheduler. You can test to see if it works by clicking on your task under the Task Scheduler Library Folder on the top left, and clicking Run on the far right side.
+
+_For more examples, please refer to the ![Step-by-Step-Video]([https://example.com](https://img.youtube.com/vi/YOUTUBE_VIDEO_ID_HERE/0.jpg)](https://www.veed.io/view/975c29ce-a472-4b2a-acfa-7b22edb42753?sharingWidget=true&panel=share))_
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+
+<!-- ROADMAP -->
+## Roadmap
+
+- [ ] Make it so the mouse isn't taken control of entirely.
+- [ ] Collect/Do Daily quests ??
+- [ ] Click and do game events without mouse entirely
+    - [ ] Need to remove Image recognition and get game data instead.
+
+See the [open issues](https://github.com/github_username/repo_name/issues) for a full list of proposed features (and known issues).
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+
+<!-- CONTRIBUTING -->
+## Contributing
+
+Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+
+If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue with the tag "enhancement".
+Don't forget to give the project a star! Thanks again!
+
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+
+<!-- LICENSE -->
+## License
+
+No License. See `LICENSE.txt` for more information.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+
+<!-- CONTACT -->
+## Contact
+
+Project Link: [https://github.com/SnoopLawg/PyAutoRaid](https://github.com/SnoopLawg/PyAutoRaid)
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+
+<!-- ACKNOWLEDGMENTS -->
+## Acknowledgments
+
+* [SnoopLawg](https://github.com/SnoopLawg)
+* [Raid](https://plarium.com/landings/en/desktop/raid/rdo/cro/cave_f002p_a_m_jt2180_v1?plid=1031237&pxl=google_search&publisherid=raid%20shadow%20legends_kwd-828443951496_143343244765&placement=643747462252_143343244765&adpartnerset=143343244765&gad=1&gclid=CjwKCAjwuqiiBhBtEiwATgvixKqwMslbeEV2CreSpaOkwCs8Wk0CwqZOKILvnYzQL2KYciqV4-wZExoCI6MQAvD_BwE)for not being free-to-play friendly for a busy man
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+
+<!-- MARKDOWN LINKS & IMAGES -->
+<!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
+[contributors-shield]: https://img.shields.io/github/contributors/SnoopLawg/PyAutoRaid.svg?style=for-the-badge
+[contributors-url]: https://github.com/SnoopLawg/PyAutoRaid/graphs/contributors
+[forks-shield]: https://img.shields.io/github/forks/SnoopLawg/PyAutoRaid.svg?style=for-the-badge
+[forks-url]: https://github.com/SnoopLawg/PyAutoRaid/network/members
+[stars-shield]: https://img.shields.io/github/stars/SnoopLawg/PyAutoRaid.svg?style=for-the-badge
+[stars-url]: https://github.com/SnoopLawg/PyAutoRaid/stargazers
+[issues-shield]: https://img.shields.io/github/issues/SnoopLawg/PyAutoRaid.svg?style=for-the-badge
+[issues-url]: https://github.com/SnoopLawg/PyAutoRaid/issues
+[license-shield]: https://img.shields.io/github/license/SnoopLawg/PyAutoRaid.svg?style=for-the-badge
+[license-url]: https://github.com/SnoopLawg/PyAutoRaid/blob/master/LICENSE.txt
+[linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
+[linkedin-url]: https://linkedin.com/in/linkedin_username
+[product-screenshot]: images/screenshot.png
+[Next.js]: https://img.shields.io/badge/next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white
+[Next-url]: https://nextjs.org/
+
+<!--  
 # PyAutoRaid
 ![raid-header](https://user-images.githubusercontent.com/30202466/181846024-930b7120-0af6-4280-b727-87bdd4ade7b8.jpeg)
 
@@ -49,4 +286,4 @@ I am trying to automate Raid: Shadow Legends  without accessing game data but us
 - [x] Exe file for all of this<br>
       -PyAutoRaid.exe created
 
-
+-->
