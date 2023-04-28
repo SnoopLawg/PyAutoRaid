@@ -4,12 +4,10 @@
 [![Step-by-Step Video Download Guide](https://img.youtube.com/vi/YOUTUBE_VIDEO_ID_HERE/0.jpg)](https://www.veed.io/view/975c29ce-a472-4b2a-acfa-7b22edb42753?sharingWidget=true&panel=share)
 
 ### How to Use
-1. Download PyAutoRaid.exe
+1. Download Main.exe
 [DOWNLOADE HERE](https://github.com/SnoopLawg/PyAutoRaid/releases/download/v1.5-beta/Main.exe)<br>
 (You can now run it by clicking it)
-This installs the folders needed (Modules and Assets). 
-##DO NOT REMOVE THE .exe from this folder.
-(Make a shortcut instead on the desktop.)
+
 
 ###### optional:<br>
   Make the app run incrementally:
