@@ -110,10 +110,10 @@ Downloade the newest release of PyAutoRaid. It was created with "Windows Task Sc
 
 ### Prerequisites
 
-Must be on a Windows Computer. 
-Tested on:
--Windows 10
--1920 x 1080 Monitor
+Must be on a Windows Computer.<br> 
+Tested on:<br>
+*Windows 10
+*1920 x 1080 Monitor
 
 ### Installation
 
