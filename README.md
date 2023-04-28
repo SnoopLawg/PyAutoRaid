@@ -93,8 +93,8 @@ Here's a blank template to get started: To avoid retyping too much info. Do a se
 
 ### Built With
 
-* ![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
-* ![SQLite](https://img.shields.io/badge/sqlite-%2307405e.svg?style=for-the-badge&logo=sqlite&logoColor=white)
+![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
+![SQLite](https://img.shields.io/badge/sqlite-%2307405e.svg?style=for-the-badge&logo=sqlite&logoColor=white)
 
 
 
@@ -112,8 +112,8 @@ Downloade the newest release of PyAutoRaid. It was created with "Windows Task Sc
 
 Must be on a Windows Computer.<br> 
 Tested on:<br>
-*Windows 10
-*1920 x 1080 Monitor
+* Windows 10
+* 1920 x 1080 Monitor
 
 ### Installation
 
