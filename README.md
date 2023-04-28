@@ -1,7 +1,7 @@
 # PyAutoRaid
 ![raid-header](https://user-images.githubusercontent.com/30202466/181846024-930b7120-0af6-4280-b727-87bdd4ade7b8.jpeg)
 
-[![Step-by-Step Video Download Guide](https://img.youtube.com/vi/YOUTUBE_VIDEO_ID_HERE/0.jpg)](https://www.veed.io/view/debfc16b-bd96-4cad-b453-3d308da56cb4?panel=share)
+[![Step-by-Step Video Download Guide](https://img.youtube.com/vi/YOUTUBE_VIDEO_ID_HERE/0.jpg)](https://www.veed.io/view/975c29ce-a472-4b2a-acfa-7b22edb42753?sharingWidget=true&panel=share)
 
 ### How to Use
 1. Download PyAutoRaid.exe
