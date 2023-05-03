@@ -8,6 +8,7 @@ from Modules.OpenRaid import openRaid
 from Modules.quitAll import quitAll
 from Modules.NightmareAttemptText import NightmareAttemptText
 import sqlite3 as sql
+from Modules.Temporary_download_settings import temp_settings
 from Modules.TagTeamArena import TagTeamArena
 from Modules.TimeBetween import is_time_between
 import sys
@@ -46,6 +47,7 @@ DIR = str(pathlib.Path().absolute())
 
 
 def main():
+    temp_settings()
     push("Started")
     # wake up pc
     pyautogui.click(0, 5)
