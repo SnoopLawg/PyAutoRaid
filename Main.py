@@ -155,6 +155,7 @@ if __name__ == "__main__":
                 # g2.start()
         current_time = time.time()
         if connection:
+            time.sleep(30)
             command2 = "SELECT finished FROM PyAutoRaid_Configure"
             cursor.execute(command2)
             PARCresults = cursor.fetchall()
