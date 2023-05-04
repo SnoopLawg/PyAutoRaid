@@ -113,7 +113,7 @@ if __name__ == "__main__":
     p2 = multiprocessing.Process(target=main, name="main")
     g2 = multiprocessing.Process(target=gui, name="PyAutoRaidGui")
     p.start()
-
+    time.sleep(5)
     g.start()
     DIR = os.getcwd()
     DB_PATH = os.path.join(DIR, "Settings.db")

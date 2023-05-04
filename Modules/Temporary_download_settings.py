@@ -4,8 +4,9 @@ import requests
 def temp_settings():
     url = "https://raw.githubusercontent.com/SnoopLawg/PyAutoRaid/main/Settings.db"
     filename = "Settings.db"
-
-    if not os.path.exists(filename):
+    current_folder=os.getcwd()
+    settings_path=os.path.join(current_folder,filename)
+    if not os.path.exists(settings_path):
         response = requests.get(url)
         with open(filename, "wb") as f:
             f.write(response.content)
