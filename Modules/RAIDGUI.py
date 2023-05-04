@@ -193,26 +193,25 @@ def gui():
         ttk.Button(tab, text="SUBMIT", command=submission).grid(
             column=0, row=1, padx=30, pady=30
         )
-        ttk.Button(tab, text="Restart PyAutoRaid", command=restart).grid(
-            column=1, row=1, padx=30, pady=30
-        )
+        # ttk.Button(tab, text="Restart PyAutoRaid", command=restart).grid(
+        #     column=1, row=1, padx=30, pady=30
+        # )
         ttk.Button(tab, text="Quit All", command=quit_everything).grid(
             column=2, row=1, padx=30, pady=30
         )
 
     def clanbosslevels(text, varr):
-        label = ttk.Checkbutton(
+        label = ttk.Label(
             tab2,
-            text=text,
-            variable=varr,
+            textvariable=varr,
         )
 
         ttk.Button(tab2, text="SUBMIT", command=submission).grid(
             column=0, row=1, padx=30, pady=30
         )
-        ttk.Button(tab2, text="Restart PyAutoRaid", command=restart).grid(
-            column=1, row=1, padx=30, pady=30
-        )
+        # ttk.Button(tab2, text="Restart PyAutoRaid", command=restart).grid(
+        #     column=1, row=1, padx=30, pady=30
+        # )
         ttk.Button(tab2, text="Quit All", command=quit_everything).grid(
             column=2, row=1, padx=30, pady=30
         )
@@ -254,24 +253,24 @@ def gui():
     ultranightmare_label = clanbosslevels(text="UltraNightmare:", varr=spin6)
 
     # create spinboxes for the inputs
-
+    ttk.Label(tab2, text="Easy: ").grid(row=2, column=0, padx=20)
     spin1.grid(row=2, column=1)
-    easy_label.grid(row=2, column=0, sticky="w")
-
+    easy_label.grid(row=2, column=0, sticky="w", pady=5)
+    ttk.Label(tab2, text="Normal: ").grid(row=3, column=0, padx=20)
     spin2.grid(row=3, column=1)
-    normal_label.grid(row=3, column=0, sticky="w")
-
+    normal_label.grid(row=3, column=0, sticky="w", pady=5)
+    ttk.Label(tab2, text="Hard: ").grid(row=4, column=0, padx=20)
     spin3.grid(row=4, column=1)
-    hard_label.grid(row=4, column=0, sticky="w")
-
+    hard_label.grid(row=4, column=0, sticky="w", pady=5)
+    ttk.Label(tab2, text="Brutal: ").grid(row=5, column=0, padx=20)
     spin4.grid(row=5, column=1)
-    brutal_label.grid(row=5, column=0, sticky="w")
-
+    brutal_label.grid(row=5, column=0, sticky="w", pady=5)
+    ttk.Label(tab2, text="Nightmare: ").grid(row=6, column=0, padx=20)
     spin5.grid(row=6, column=1)
-    nightmare_label.grid(row=6, column=0, sticky="w")
-
+    nightmare_label.grid(row=6, column=0, sticky="w", pady=5)
+    ttk.Label(tab2, text="UltraNightmare: ").grid(row=7, column=0, padx=20)
     spin6.grid(row=7, column=1)
-    ultranightmare_label.grid(row=7, column=0, sticky="w")
+    ultranightmare_label.grid(row=7, column=0, sticky="w", pady=5)
 
     def calculate_sum():
         # get the values of spinboxes and calculate their sum
@@ -285,7 +284,10 @@ def gui():
 
         # check if the sum is greater than 4 and show a message box
         if total_sum > 4:
-            tk.messagebox.showerror("Error", "The sum of inputs cannot exceed 4.")
+            tk.messagebox.showerror(
+                "Warning",
+                "Most accounts only have 4 keys in a day. If you mark more than four fights total, you must have the extra keys for the other fights. If you do not, the extra battles will not be fought. (Example: I mark 4 UNM and 2 NM. Only the first 4 UNM will be fought as their are only 4 keys generated in a day. Battles are prioritized descending from UNM --> Easy.) ",
+            )
         else:
             tk.messagebox.showinfo("Result", f"The sum of inputs is {total_sum}.")
 
@@ -306,12 +308,15 @@ def gui():
         )
         connection.commit()
 
+    ttk.Label(tab2, text="Set fight amounts and then click the button below").grid(
+        row=4, column=2, padx=20
+    )
     # create a button to calculate the sum of inputs
-    tk.Button(
+    ttk.Button(
         tab2,
-        text="Calculate",
+        text="Set Number of Fights",
         command=calculate_sum,
-    ).grid(row=6, column=2)
+    ).grid(row=6, column=2, padx=30)
 
     create_tab(tab1, var1, AutoReward, "Activate Auto Rewards?")
     create_tab(tab2, var2, AutoClanBoss, "Activate Clan Boss?")
