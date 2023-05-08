@@ -28,12 +28,13 @@ import sys
 if getattr(sys, "frozen", False):
     # we are running in a bundle
     DIR = sys._MEIPASS
+    setting=os.getcwd()
 else:
     # we are running in a normal Python environment
     DIR = os.getcwd()
-
-DB_PATH = os.path.join(DIR, "Settings.db")
+    setting=os.getcwd()
 ASSETS_PATH = os.path.join(DIR, "assets")
+DB_PATH = os.path.join(setting, "Settings.db")
 # update the 'finished' column of a specific row
 connection = sql.connect(DB_PATH)
 cursor = connection.cursor()
@@ -47,7 +48,7 @@ DIR = str(pathlib.Path().absolute())
 
 
 def main():
-    temp_settings()
+    # temp_settings()
     push("Started")
     # wake up pc
     pyautogui.click(0, 5)

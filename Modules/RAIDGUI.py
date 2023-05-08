@@ -14,11 +14,13 @@ import sys
 if getattr(sys, "frozen", False):
     # we are running in a bundle
     DIR = sys._MEIPASS
+    setting=os.getcwd()
 else:
     # we are running in a normal Python environment
     DIR = os.getcwd()
+    setting=os.getcwd()
 ASSETS_PATH = os.path.join(DIR, "assets")
-DB_PATH = os.path.join(DIR, "Settings.db")
+DB_PATH = os.path.join(setting, "Settings.db")
 
 connection = sql.connect(DB_PATH)
 cursor = connection.cursor()
@@ -302,11 +304,28 @@ def gui():
         print(easy, normal, hard, brutal, nightmare, ultra_nightmare)
 
         # insert some data into the tables
+        table_name = "PyAutoRaid_DailyCompleted"
+        sql = f"""
+            CREATE TABLE IF NOT EXISTS {table_name} (
+                user_id INTEGER PRIMARY KEY,
+                Easy_set INTEGER,
+                Normal_set INTEGER,
+                Hard_set INTEGER,
+                Brutal_set INTEGER,
+                Nightmare_set INTEGER,
+                UltraNightmare_set INTEGER
+            );
+            """
+
+        cursor.execute(sql)
+
         cursor.execute(
             "UPDATE PyAutoRaid_DailyCompleted SET Easy_set = ?, Normal_set = ?, Hard_set = ?, Brutal_set = ?, Nightmare_set = ?, UltraNightmare_set = ? WHERE user_id = 1",
             (easy, normal, hard, brutal, nightmare, ultra_nightmare),
         )
+        
         connection.commit()
+
 
     ttk.Label(tab2, text="Set fight amounts and then click the button below").grid(
         row=4, column=2, padx=20
