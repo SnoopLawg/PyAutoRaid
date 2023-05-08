@@ -118,7 +118,7 @@ Tested on:<br>
 
 ### Installation
 
-1. [CLICK HERE](https://github.com/SnoopLawg/PyAutoRaid/releases/download/v1.5-beta/Main.exe) to download PyAutoRaid.exe (Main.exe for now)<br>
+1. [CLICK HERE](https://github.com/SnoopLawg/PyAutoRaid/releases/download/v1.7-beta/Main.exe) to download PyAutoRaid.exe (Main.exe for now)<br>
 2.  Create a shortcut for it if you would like on your desktop
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
