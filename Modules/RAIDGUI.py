@@ -110,6 +110,7 @@ else:
     var5 = tk.BooleanVar(value=True)
 
 ###########################
+#Check Toggle of Modules
 def AutoReward():
     if var1.get() == False:
         print("False")

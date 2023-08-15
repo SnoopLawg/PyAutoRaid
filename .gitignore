@@ -18,3 +18,8 @@ PARInstaller.exe
 Dailies.spec
 Dallies.spec
 Settings.db
+Settings.db
+ClassA.py
+Modules/irontwins.py
+Modules/invisMouseClick.py
+Logging.log

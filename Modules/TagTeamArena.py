@@ -7,7 +7,7 @@ from Modules.LoopFindImage import LoopFindImage
 import pathlib
 import sqlite3 as sql
 import os
-
+from Modules.Logger import *
 import sys
 
 if getattr(sys, "frozen", False):
@@ -62,10 +62,8 @@ def TagTeamArena():
                 confidence=0.8,
             )
             pyautogui.click(adx, ady)
-            with open("log.txt", mode="a") as file:
-                file.write("\n ad closed")
             time.sleep(2)
-        print("made it")
+        Log_start("TagTeamArena")
         while (
             pyautogui.locateOnScreen(
                 ASSETS_PATH + "\\battleBTN.png",
@@ -78,10 +76,7 @@ def TagTeamArena():
                 confidence=0.9,
             )
             pyautogui.click(battlex, battley)
-            with open("log.txt", mode="a") as file:
-                file.write("\n battle button pressed")
             time.sleep(2)
-            print("made it battle btn")
         while (
             pyautogui.locateOnScreen(
                 ASSETS_PATH + "\\arenaTab.png",
@@ -94,10 +89,7 @@ def TagTeamArena():
                 confidence=0.9,
             )
             pyautogui.click(battlex, battley)
-            with open("log.txt", mode="a") as file:
-                file.write("\n arena tab clicked")
             time.sleep(2)
-            print("arena tab")
         while (
             pyautogui.locateOnScreen(
                 ASSETS_PATH + "\\TagTeamArena.png",
@@ -110,33 +102,7 @@ def TagTeamArena():
                 confidence=0.9,
             )
             pyautogui.click(battlex, battley)
-            with open("log.txt", mode="a") as file:
-                file.write("\n classic arena tab clicked")
-            time.sleep(2)
-            # if (
-            #     pyautogui.locateOnScreen(
-            #         ASSETS_PATH +"\\tagTeamBazaar.png", confidence=0.8
-            #     )
-            #     != None
-            # ):
-            #     goBackx, goBacky = pyautogui.locateCenterOnScreen(
-            #         ASSETS_PATH +"\\tagTeamBazaar.png", confidence=0.8
-            #     )
-            #     pyautogui.click(goBackx, goBacky)
-            #     print("tag team bazaar opened")
-            #     time.sleep(1)
-            # if (
-            #     pyautogui.locateOnScreen(
-            #         ASSETS_PATH +"\\tagTeamknight.png", confidence=0.8
-            #     )
-            #     != None
-            # ):
-            #     goBackx, goBacky = pyautogui.locateCenterOnScreen(
-            #         ASSETS_PATH +"\\tagTeamknight.png", confidence=0.8
-            #     )
-            #     pyautogui.click(goBackx, goBacky)
-            #     print("tag team knight clicked")
-            time.sleep(1)
+            time.sleep(3)
             pyautogui.click(1071, 691)
             time.sleep(1)
             pyautogui.click(592, 355)
@@ -152,8 +118,6 @@ def TagTeamArena():
                 confidence=0.8,
             )
             pyautogui.click(adx, ady)
-            with open("log.txt", mode="a") as file:
-                file.write("\n ad closed")
             time.sleep(2)
             pyautogui.click(592, 355)
 
@@ -183,12 +147,11 @@ def TagTeamArena():
                         confidence=0.9,
                     )
                     pyautogui.click(battlex, battley)
-                    print("confirm tokens")
+                    Log_info("Using Tag Team coins from inbox")
                     time.sleep(2)
                     pyautogui.click(1304, 457)
                     time.sleep(1)
                 time.sleep(2)
-                print("need gems?")
                 if (
                     pyautogui.locateOnScreen(
                         ASSETS_PATH + "\\TagArenaNeedGems.png",
@@ -196,6 +159,7 @@ def TagTeamArena():
                     )
                     != None
                 ):
+                    Log_info("No Tag Team Coins left. Need to spend Gems.")
                     break
                 LoopFindImage(
                     ASSETS_PATH + "\\arenaStart.png",
@@ -275,7 +239,7 @@ def TagTeamArena():
                     )
                     != None
                 ):
-                    quit()
+                    exit()
                 LoopFindImage(
                     ASSETS_PATH + "\\arenaStart.png",
                     "\n arena battle started",
@@ -531,6 +495,8 @@ def TagTeamArena():
             time.sleep(1)
             pyautogui.click(1071, 691)
             time.sleep(1)
+        Log_finish("TagTeamArena")
+        Log_info()
         while (
             pyautogui.locateOnScreen(
                 ASSETS_PATH + "\\exitAdd.png",
@@ -543,8 +509,6 @@ def TagTeamArena():
                 confidence=0.8,
             )
             pyautogui.click(adx, ady)
-            with open("log.txt", mode="a") as file:
-                file.write("\n ad closed")
             time.sleep(2)
         while (
             pyautogui.locateOnScreen(
@@ -558,8 +522,7 @@ def TagTeamArena():
                 confidence=0.8,
             )
             pyautogui.click(goBackx, goBacky)
-            with open("log.txt", mode="a") as file:
-                file.write("\n Back to bastion")
+            
             time.sleep(1)
         while (
             pyautogui.locateOnScreen(

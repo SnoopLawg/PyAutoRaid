@@ -4,10 +4,10 @@ import pyautogui
 import time
 from Modules.LoopFindImage import LoopFindImage
 import pathlib
-from Modules.SQL_test import SQL
+# from Modules.SQL_test import SQL
 import sqlite3 as sql
 import os
-
+from Modules.Logger import *
 import sys
 
 if getattr(sys, "frozen", False):
@@ -32,6 +32,7 @@ def ClassicArena():
     Run = results
     Run = Run[0][3]
     if Run == "True":
+        Log_start("ClassicArena")
         while (
             pyautogui.locateOnScreen(
                 ASSETS_PATH + "\\goBack.png",
@@ -540,6 +541,8 @@ def ClassicArena():
             )
             pyautogui.click(adx, ady)
             time.sleep(2)
+        Log_finish(f"Classic Arena, {battles} Battles Fought ")
+        Log_info()
         return f"{battles} Fought in Classic Arena"
 
 

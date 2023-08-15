@@ -1,5 +1,5 @@
 # Run all of the raid functions.
-from Modules.PyAutoRaid_Configure import PyAutoRaid_Configure
+from Modules.PyAutoRaid_Configure_Settings import PyAutoRaid_Configure_Settings
 from Modules.CBauto import ClanBoss
 from Modules.AutoRewards import AutoRewards
 from Modules.BlackOutMonitor import BlackOutMonitor
@@ -8,22 +8,16 @@ from Modules.OpenRaid import openRaid
 from Modules.quitAll import quitAll
 from Modules.NightmareAttemptText import NightmareAttemptText
 import sqlite3 as sql
-from Modules.Temporary_download_settings import temp_settings
 from Modules.TagTeamArena import TagTeamArena
 from Modules.TimeBetween import is_time_between
-import sys
-import pyautogui
-import multiprocessing
+import sys,pyautogui,multiprocessing,time,os,pathlib,sys
 from datetime import datetime
-import time
 from multiprocessing import Process
-import os
 from Modules.RAIDGUI import gui
-import pathlib
 from Modules.CheckFilesExist import Check_files_exist, Check_os
-import time
 from Modules.PushNotifications import push
-import sys
+from Modules.Logger import *
+####################################################################
 
 if getattr(sys, "frozen", False):
     # we are running in a bundle
@@ -33,42 +27,48 @@ else:
     # we are running in a normal Python environment
     DIR = os.getcwd()
     setting=os.getcwd()
+
 ASSETS_PATH = os.path.join(DIR, "assets")
 DB_PATH = os.path.join(setting, "Settings.db")
-# update the 'finished' column of a specific row
+
+####################################################################
+
 connection = sql.connect(DB_PATH)
 cursor = connection.cursor()
 
+####################################################################
+#Timing started. Set max run time just in case.
 results = []
 start_time = time.time()
-max_running_time = (
-    1500  # 25 minutes in seconds so that the file doesnt run for too long.
-)
+max_running_time = (1500)  # 25 minutes in seconds so that the file doesnt run for too long.
+
+
 DIR = str(pathlib.Path().absolute())
 
+####################################################################
 
 def main():
-    # temp_settings()
+    Erase_Log()
     push("Started")
+    Log_start("PyAutoRaid")
+    Log_info()
+
     # wake up pc
     pyautogui.click(0, 5)
 
-    PyAutoRaid_Configure("reset")
+    PyAutoRaid_Configure_Settings("reset")
     # commit the changes to the database
     connection.commit()
 
-    # Check_files_exist()
-
-    Check_os()
-
+    Check_files_exist()
     # Opening Raid
     try:
         results.append(openRaid())
     except TypeError:
-        print(TypeError)
+        Throw_log_error(f"{TypeError} -- Open Raid")
         openRaid()
     except IndexError:
-        print(IndexError)
+        Throw_log_error(f"{IndexError} -- Open Raid")
         openRaid()
 
     # AutoReward Collection
@@ -104,6 +104,7 @@ def main():
     connection.commit()
 
     BlackOutMonitor()
+    Log_finish("PyAutoRaid -- Finished Successfully")
     quitAll()
 
 
@@ -111,8 +112,8 @@ if __name__ == "__main__":
     multiprocessing.freeze_support()
     p = multiprocessing.Process(target=main, name="main")
     g = multiprocessing.Process(target=gui, name="PyAutoRaidGui")
-    p2 = multiprocessing.Process(target=main, name="main")
-    g2 = multiprocessing.Process(target=gui, name="PyAutoRaidGui")
+    # p2 = multiprocessing.Process(target=main, name="main")
+    # g2 = multiprocessing.Process(target=gui, name="PyAutoRaidGui")
     p.start()
     time.sleep(5)
     g.start()
@@ -176,16 +177,17 @@ if __name__ == "__main__":
             try:
                 p.terminate()
                 g.terminate()
-                p2.terminate()
-                g2.terminate()
+                # p2.terminate()
+                # g2.terminate()
                 # Cleanup
                 p.join()
                 g.join()
-                p2.join()
-                g2.join()
+                # p2.join()
+                # g2.join()
+                Log_finish("PyAutoRaid")
                 quitAll()
                 exit()
             except:
-                print("fail")
+                Throw_log_error("did not finish properly")
                 quitAll()
                 exit()

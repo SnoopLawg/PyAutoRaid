@@ -3,9 +3,9 @@ import sqlite3 as sql
 import pygetwindow
 import time
 import datetime
+from Modules.Logger import *
 
-
-def PyAutoRaid_Configure(cbBattle=None):
+def PyAutoRaid_Configure_Settings(cbBattle=None):
     import sys
 
     if getattr(sys, "frozen", False):
@@ -16,13 +16,16 @@ def PyAutoRaid_Configure(cbBattle=None):
         # we are running in a normal Python environment
         DIR = os.getcwd()
         setting=os.getcwd()
+
     ASSETS_PATH = os.path.join(DIR, "assets")
     DB_PATH = os.path.join(setting, "Settings.db")
+
     connection = sql.connect(DB_PATH)
     cursor = connection.cursor()
-
+    
+    ####################################################################
     command1 = """CREATE TABLE IF NOT EXISTS
-        PyAutoRaid_Configure(user_id INTEGER PRIMARY KEY, finished TEXT, directory_path TEXT, settingsdb_path TEXT, assets_path TEXT)"""
+        PyAutoRaid_Configure  (user_id INTEGER PRIMARY KEY, finished TEXT, directory_path TEXT, settingsdb_path TEXT, assets_path TEXT)"""
     cursor.execute(command1)
 
     # insert some data into the tables
@@ -76,13 +79,14 @@ def PyAutoRaid_Configure(cbBattle=None):
     for battle in ClanBosses:
         if cbBattle == "reset":
             if today_utc[10:] == Reset_time[10:]:
+                Log_start("Reset recorded battles for the day in settings")
                 cursor.execute(
                     "UPDATE PyAutoRaid_DailyCompleted SET current_day = ?,Easy = ?, Normal = ?, Hard = ?, Brutal = ?, Nightmare = ?, UltraNightmare = ? WHERE user_id = 1",
                     (Current_day, 0, 0, 0, 0, 0, 0),
                 )
                 connection.commit()
                 from Modules.PushNotifications import push
-
+                Log_finish(", all battles Reset")
                 push("RESETTING CLAN BOSS")
         if battle == cbBattle:
             if cbBattle != "reset":
@@ -102,4 +106,4 @@ def PyAutoRaid_Configure(cbBattle=None):
 
 
 if __name__ == "__main__":
-    PyAutoRaid_Configure()
+    PyAutoRaid_Configure_Settings()

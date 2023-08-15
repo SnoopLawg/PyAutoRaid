@@ -9,7 +9,7 @@ from Modules.CheckFilesExist import *
 import pyautogui
 import pathlib
 from screeninfo import Monitor, get_monitors
-
+from Modules.Logger import *
 # import Main
 
 if getattr(sys, "frozen", False):
@@ -40,6 +40,7 @@ def openRaid():
     quitAll()
     time.sleep(5)
     operating = Check_os()
+    Log_start("openRaid")
     if operating == "Darwin":
         PATH = "/Applications/Plarium Play.app"
         FULL_PATH = os.path.expanduser(PATH)
@@ -92,6 +93,8 @@ def openRaid():
                 win.moveTo(center[0], center[1])
                 break
     time.sleep(15)
+    Log_finish("openRaid")
+    Log_info()
     return "Raid Opened"
 
 

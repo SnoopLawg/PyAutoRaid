@@ -3,20 +3,11 @@ import pathlib
 import platform
 import tkinter
 from tkinter import messagebox, filedialog
-
+from Modules.Logger import *
 
 def Check_files_exist():
+    Log_start("Check_files_exist")
     needed_files = [
-        "TimeBetween.py",
-        "AutoRewards.py",
-        "BlackOutMonitor.py",
-        "CBauto.py",
-        "CheckFilesExist.py",
-        "ClassicArena.py",
-        "LoopFindImage.py",
-        "NightMareAttemptText.py",
-        "OpenRaid.py",
-        "quitAll.py",
         "Raid.exe",
     ]
     total_files = 0
@@ -26,13 +17,20 @@ def Check_files_exist():
         if operating_system == "Windows":
             filepath = f"{current_dir}\\Modules\\{file}"
         elif operating_system == "Darwin":
-            filepath = f"{current_dir}/{file}"
+            tkinter.messagebox.showerror(
+                        "Error",
+                        "Mac is not supported for PyAutoRaid to run",
+                    )
+
         if os.path.exists(filepath):
             print(f"Found {file}")
             total_files += 1
         elif file == "Raid.exe":
             if operating_system == "Windows":
-                default_install_path = f"C:\\Users\\{os.getlogin()}\\AppData\\Local\\PlariumPlay\\StandAloneApps\\raid\\36872\\Raid.exe"
+                pp=os.path.join(os.getenv("LOCALAPPDATA"), "PlariumPlay\\StandAloneApps\\raid")
+                items=os.listdir(pp)
+                Raid_folder=items[0]
+                default_install_path = f"C:\\Users\\{os.getlogin()}\\AppData\\Local\\PlariumPlay\\StandAloneApps\\raid\\{Raid_folder}\\Raid.exe"
                 filepath = default_install_path
                 if not os.path.exists(filepath):
                     tkinter.messagebox.showerror(
@@ -57,6 +55,8 @@ def Check_files_exist():
     else:
         print(f"Not all {len(needed_files)} files were found. Only {total_files} were.")
         tkinter.messagebox.showerror("Error", "Some files are missing.")
+    Log_finish("Check_files_exist")
+    Log_info()
     return filepath
 
 
@@ -64,10 +64,13 @@ def Check_os():
     operating_system = platform.system()
     if operating_system in ["Darwin", "Windows"]:
         return operating_system
+    
     else:
-        print("I have no idea what OS this is")
+        tkinter.messagebox.showerror(
+                        "Error",
+                        "Unrecognized operating system",
+                    )
         exit()
-
 
 if __name__ == "__main__":
     Check_os()
