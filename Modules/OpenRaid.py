@@ -57,7 +57,7 @@ def openRaid():
                 "-tray-start",
             ]
         )
-        time.sleep(30)
+        # time.sleep(30)
         time_out = 0
         while (
             pyautogui.locateOnScreen(
@@ -78,7 +78,7 @@ def openRaid():
                 all_windows = pygetwindow.getAllTitles()
                 print("Waiting for Raid to open")
                 time.sleep(10)
-
+            # time.sleep(15)
             center = get_screen()
 
             try:
@@ -92,7 +92,7 @@ def openRaid():
                 win.size = (900, 600)
                 win.moveTo(center[0], center[1])
                 break
-    time.sleep(15)
+    # time.sleep(15)
     Log_finish("openRaid")
     Log_info()
     return "Raid Opened"

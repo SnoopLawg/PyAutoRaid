@@ -269,7 +269,6 @@ def AutoRewards():
                     confidence=0.8,
                 )
                 pyautogui.click(offersx, offersy)
-                Log_finish("Claiming free bundle")
                 time.sleep(3)
                 if pyautogui.locateOnScreen(
                     ASSETS_PATH + "\\goodieBag.png",

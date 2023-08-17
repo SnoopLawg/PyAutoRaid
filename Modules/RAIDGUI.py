@@ -345,6 +345,40 @@ def gui():
     create_tab(tab4, var4, AutoTagTeamArena, "Activate Tag Team Arena?")
     create_tab(tab5, var5, BlackOutMonitors, "Activate Black Out your Monitor after?")
     submission()
+
+    import time
+    def read_most_recent_line(file_path):
+        with open(file_path, 'r') as file:
+            lines = file.readlines()
+            if lines:
+                return lines[-1].strip()
+            else:
+                return "No data in the log."
+
+    def update_label():
+        recent_line = read_most_recent_line('Logging.log')
+        label.config(text=recent_line)
+
+    def periodic_update():
+        while True:
+            update_label()
+            time.sleep(3)  # Wait for 3 seconds before checking again
+    # Create a label to display the recent log line
+    label = tk.Label(root, text="", wraplength=400)
+    label.pack(padx=10, pady=10)
+
+    # Start the periodic update loop in a separate thread
+    import threading
+    update_thread = threading.Thread(target=periodic_update)
+    update_thread.daemon = True
+    update_thread.start()
+
+        # Calculate the position of the GUI window
+    gui_x_position = 10  # Position to the left of the existing application
+    gui_y_position = 240
+
+    # Set the initial geometry of the GUI window
+    root.geometry(f"500x560+{gui_x_position}+{gui_y_position}")
     root.mainloop()
 
 

@@ -6,19 +6,19 @@ def Log_start(func="???"):
     if func=="???":
         logging.warning("LS Function not passed as parameter to log")
     else:
-        logging.info(f'Starting {func}')
+        logging.info(f' Starting {func}')
 
 def Log_finish(func="???"):
     if func=="???":
-        logging.warning("LF Function not passed as parameter to log")
+        logging.warning(" LF Function not passed as parameter to log")
     else:
-        logging.info(f'Finishing {func}')
+        logging.info(f' Finishing {func}')
 def Erase_Log():
     with open('Logging.log', 'w'):
         pass
 def Throw_log_error(func="???"):
     if func=="???":
-        logging.warning("LF Function not passed as parameter to log")
+        logging.warning(" LF Function not passed as parameter to log")
     else:
         logging.error(f'{func}')
 def Log_info(func=""):
