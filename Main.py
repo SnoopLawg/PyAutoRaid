@@ -81,14 +81,14 @@ def main():
     try:
         results.append(ClassicArena())
     except TypeError:
-        print(TypeError)
+        Throw_log_error(f"{TypeError} -- Classic Arena")
         pass
 
     # TagTeamArena fights
     try:
         results.append(TagTeamArena())
     except TypeError:
-        print(TypeError)
+        Throw_log_error(f"{TypeError} -- Tag Team Arena")
         TagTeamArena()
     # Remove Nne in Notificarti
     try:
@@ -104,7 +104,7 @@ def main():
     connection.commit()
 
     BlackOutMonitor()
-    Log_finish("PyAutoRaid -- Finished Successfully")
+    Log_finish(f"PyAutoRaid -- Finished Successfully, {results}")
     quitAll()
 
 
