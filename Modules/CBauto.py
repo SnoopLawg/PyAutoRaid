@@ -99,6 +99,11 @@ def ClanBoss():
                     diff=i
                     print("not able to click Easy cb yet")
                     break
+        cursor.execute("SELECT * FROM PyAutoRaid_DailyCompleted")
+        results = cursor.fetchall()
+        trimmed_results = results[0][2:-6]
+        totaltoday=sum(trimmed_results)
+        Log_info(f"{totaltoday} total battles fought today so far")
         time.sleep(1.5)
         while (
             pyautogui.locateOnScreen(

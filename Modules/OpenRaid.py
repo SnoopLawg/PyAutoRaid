@@ -22,8 +22,6 @@ else:
     setting=os.getcwd()
 ASSETS_PATH = os.path.join(DIR, "assets")
 DB_PATH = os.path.join(setting, "Settings.db")
-import os
-
 
 def get_screen():
     for m in get_monitors():
