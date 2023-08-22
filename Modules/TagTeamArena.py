@@ -536,8 +536,6 @@ def TagTeamArena():
                 confidence=0.8,
             )
             pyautogui.click(adx, ady)
-            with open("log.txt", mode="a") as file:
-                file.write("\n ad closed")
             time.sleep(2)
     if message != "":
         return message

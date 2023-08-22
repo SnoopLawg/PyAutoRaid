@@ -8,8 +8,6 @@ def LoopFindImage(image, txtfile):
         time.sleep(0.5)
         adx, ady = pyautogui.locateCenterOnScreen(image, confidence=0.8)
         pyautogui.click(adx, ady)
-        with open("log.txt", mode="a") as file:
-            file.write(txtfile)
         time.sleep(3)
 
 
@@ -18,8 +16,6 @@ def IfFindImage(image, txtfile):
         time.sleep(0.5)
         adx, ady = pyautogui.locateCenterOnScreen(image, confidence=0.8)
         pyautogui.click(adx, ady)
-        with open("log.txt", mode="a") as file:
-            file.write(txtfile)
         time.sleep(2)
 
 

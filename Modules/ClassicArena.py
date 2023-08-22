@@ -72,8 +72,6 @@ def ClassicArena():
                 confidence=0.9,
             )
             pyautogui.click(battlex, battley)
-            with open("log.txt", mode="a") as file:
-                file.write("\n battle button pressed")
             time.sleep(2)
         while (
             pyautogui.locateOnScreen(
@@ -87,8 +85,6 @@ def ClassicArena():
                 confidence=0.9,
             )
             pyautogui.click(battlex, battley)
-            with open("log.txt", mode="a") as file:
-                file.write("\n arena tab clicked")
             time.sleep(2)
         while (
             pyautogui.locateOnScreen(

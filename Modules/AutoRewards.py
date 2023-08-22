@@ -176,8 +176,7 @@ def AutoRewards():
                     Log_finish("buying Ancient Shard")
                     pyautogui.click(getASx, getASy)
                     continue
-                with open("log.txt", mode="a") as file:
-                    file.write("\n shard bought")
+                
                 time.sleep(2)
             LoopFindImage(
                 ASSETS_PATH + "\\goBack.png",
@@ -226,8 +225,7 @@ def AutoRewards():
                         confidence=0.8,
                     )
                     pyautogui.click(defaultClaimx, defaultClaimy)
-                    with open("log.txt", mode="a") as file:
-                        file.write("\n claimed")
+                    
                     time.sleep(3)
             while (
                 pyautogui.locateOnScreen(
