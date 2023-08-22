@@ -6,10 +6,8 @@ from Modules.BlackOutMonitor import BlackOutMonitor
 from Modules.ClassicArena import ClassicArena
 from Modules.OpenRaid import openRaid
 from Modules.quitAll import quitAll
-from Modules.NightmareAttemptText import NightmareAttemptText
 import sqlite3 as sql
 from Modules.TagTeamArena import TagTeamArena
-from Modules.TimeBetween import is_time_between
 import sys,pyautogui,multiprocessing,time,os,pathlib,sys
 from datetime import datetime
 from multiprocessing import Process
