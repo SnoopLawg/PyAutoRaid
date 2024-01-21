@@ -10,7 +10,6 @@ from Modules.OpenRaid import openRaid
 from Modules.PyAutoRaid_Configure_Settings import PyAutoRaid_Configure_Settings
 import os
 import sys
-from Modules.TimeBetween import is_time_between
 import pathlib
 import sqlite3 as sql
 from Modules.Logger import *
@@ -279,7 +278,8 @@ def ClanBoss():
                     Log_info("-No keys currently available")
                     break
             time.sleep(1)
-        while (
+        time.sleep(5)
+        if (
             pyautogui.locateOnScreen(
                 ASSETS_PATH + "\\CBstart.png",
                 confidence=0.8,

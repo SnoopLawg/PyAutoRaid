@@ -24,3 +24,7 @@ Modules/irontwins.py
 Modules/invisMouseClick.py
 Logging.log
 Settings.db
+Results.txt
+DailyQuests.spec
+Modules/testy.py
+Settings.db

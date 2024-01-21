@@ -22,6 +22,8 @@ else:
     setting=os.getcwd()
 ASSETS_PATH = os.path.join(DIR, "assets")
 DB_PATH = os.path.join(setting, "Settings.db")
+print(DIR)
+print(ASSETS_PATH)
 
 def get_screen():
     for m in get_monitors():
@@ -57,6 +59,8 @@ def openRaid():
         )
         # time.sleep(30)
         time_out = 0
+        file=ASSETS_PATH + "\\exitAdd.png"
+        print(os.path.exists(file))
         while (
             pyautogui.locateOnScreen(
                 ASSETS_PATH + "\\exitAdd.png",
@@ -76,7 +80,7 @@ def openRaid():
                 all_windows = pygetwindow.getAllTitles()
                 print("Waiting for Raid to open")
                 time.sleep(10)
-            # time.sleep(15)
+            time.sleep(5)
             center = get_screen()
 
             try:
