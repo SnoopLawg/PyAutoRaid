@@ -106,7 +106,7 @@ Here's a blank template to get started: To avoid retyping too much info. Do a se
 <!-- GETTING STARTED -->
 ## Getting Started
 
-Downloade the newest release of PyAutoRaid. It was created with "Windows Task Scheduler" in mind. You can click the app manually and it will run through and fight the Clan boss, Collect your rewards like gems and upgrade in the sparring pit, and fight some battles in classic and Tag Team Arena. The purpose though is for the app to run on its own, so "Windows Task Scheduler" is pre-built in Windows and can run your downloaded PyAutoRaid.exe file every so often.
+Download the newest release of DailyQuests.exe. It was created with "Windows Task Scheduler" in mind. You can click the app manually and it will run through and  Collect your rewards like gems and upgrade in the sparring pit, and fight some battles in classicand campaign. The purpose though is for the app to run on its own, so "Windows Task Scheduler" is pre-built in Windows and can run your downloaded DailyQuests.exe file every so often if you please.
 
 
 ### Prerequisites
@@ -118,7 +118,7 @@ Tested on:<br>
 
 ### Installation
 
-1. [CLICK HERE](https://github.com/SnoopLawg/PyAutoRaid/releases/download/v1.7-beta/Main.exe) to download PyAutoRaid.exe (Main.exe for now)<br>
+1. [CLICK HERE](https://github.com/SnoopLawg/PyAutoRaid/releases/download/v1-beta/DailyQuests.exe) to download DailyQuests.exe<br>
 2.  Create a shortcut for it if you would like on your desktop
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -128,15 +128,13 @@ Tested on:<br>
 <!-- USAGE EXAMPLES -->
 ## Usage
 
-##### PyAutoRaid.exe (Main.exe)
-  - Double click Main.exe in your downloads folder to start it.
-  - The "GUI Interface" should show up first and then raid begins to open. Nothing else needs to be touched unless it is your first time using the application, in which you should click the boxes of what Tasks you want to run. 
-  - Following clicking all the checkboxes of what tasks you plan to run, make sure you have the number of Clan Boss fights for each difficulty inputted. (Ex. 4 battles for UNM) 
-  - Click "Calculate" then "Submit"
+##### DailyQuests.exe 
+Watch this video for a comprehensive introduction. [CLICK HERE](https://youtu.be/FOaXg9hXk3s )
+  - Double click DailyQuests.exe in your downloads folder to start it. (it may take a second to open raid) 
+  - The "GUI Interface" should show up and then raid begins to open. Nothing else needs to be touched unless it is your first time using the application, in which you should click the boxes of what Tasks you want to run. 
+  - If you do not want it to run automatically, go to your DQconfig.ini file and change the automated to equal False
+  - If you have manual off, you can do manual runs
 
->In some cases the database does not fully create and it returns an "SQLite error, PyAutoRaid_Configure table not found".
-
-To fix this (for now) just run it again.
 ______________________________________________________________________________________________________________________________
 ##### Windows Task Scheduler
 This is needed if you want the app to run every hour.
@@ -161,7 +159,7 @@ _For more examples, please refer to the ![Step-by-Step-Video]([https://example.c
 ## Roadmap
 
 - [ ] Make it so the mouse isn't taken control of entirely.
-- [ ] Collect/Do Daily quests ??
+- [x] Collect/Do Daily quests ??
 - [ ] Click and do game events without mouse entirely
     - [ ] Need to remove Image recognition and get game data instead.
 
@@ -211,7 +209,7 @@ Project Link: [https://github.com/SnoopLawg/PyAutoRaid](https://github.com/Snoop
 ## Acknowledgments
 
 * [SnoopLawg](https://github.com/SnoopLawg)
-* [Raid](https://plarium.com/landings/en/desktop/raid/rdo/cro/cave_f002p_a_m_jt2180_v1?plid=1031237&pxl=google_search&publisherid=raid%20shadow%20legends_kwd-828443951496_143343244765&placement=643747462252_143343244765&adpartnerset=143343244765&gad=1&gclid=CjwKCAjwuqiiBhBtEiwATgvixKqwMslbeEV2CreSpaOkwCs8Wk0CwqZOKILvnYzQL2KYciqV4-wZExoCI6MQAvD_BwE)for not being free-to-play friendly for a busy man
+* [Raid](https://plarium.com/landings/en/desktop/raid/rdo/cro/cave_f002p_a_m_jt2180_v1?plid=1031237&pxl=google_search&publisherid=raid%20shadow%20legends_kwd-828443951496_143343244765&placement=643747462252_143343244765&adpartnerset=143343244765&gad=1&gclid=CjwKCAjwuqiiBhBtEiwATgvixKqwMslbeEV2CreSpaOkwCs8Wk0CwqZOKILvnYzQL2KYciqV4-wZExoCI6MQAvD_BwE) for not being free-to-play friendly for a busy man
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
