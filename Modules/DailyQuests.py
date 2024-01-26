@@ -1,8 +1,14 @@
-import pyautogui, platform, tkinter, logging, os, sys,subprocess,time,random
+import pyautogui, platform, tkinter, logging, os, sys,subprocess,time,random,configparser,psutil,pygetwindow
 from screeninfo import Monitor, get_monitors
 from tkinter import messagebox
+from tkinter import ttk
+from tkinter import *
+from ttkthemes import ThemedTk
+import threading
 class Daily:
-    def __init__(self):
+    def __init__(self,master):
+        self.running = True
+        self.master = master
         logging.basicConfig(filename='Logging.log', format='%(levelname)s:%(message)s', encoding='utf-8', level=logging.DEBUG)
         # Clear the existing log file
         with open('Logging.log', 'w'):
@@ -12,10 +18,17 @@ class Daily:
         self.raidLoc = self.find_raid_path()
         self.asset_path=self.get_asset_path()
         self.folders_for_exe()
-        if len(pyautogui.getWindowsWithTitle("Raid: Shadow Legends")) == 0:
+        windows=pygetwindow.getWindowsWithTitle("Raid: Shadow Legends")
+        numwindows=len(pygetwindow.getWindowsWithTitle("Raid: Shadow Legends"))
+        # for win in windows:
+        #     if win.isMinimized:  # Check if the window is minimized
+        #         win.restore()    # Restore it before activating
+        #     win.activate() 
+        if len(pygetwindow.getWindowsWithTitle("Raid: Shadow Legends")) < 1:
             self.open_raid()
         else:
             self.initiate_raid(False)
+        os.system("taskkill /f /im PlariumPlay.exe")
         self.classic_battles = 0
         self.AS_bought=0
         self.MS_bought=0
@@ -23,6 +36,56 @@ class Daily:
         self.height=0
         self.GR_upgrades=0
         self.quests_completed=0
+        self.config = configparser.ConfigParser()
+        self.config_file()
+        self.ToDo=dict(self.config.items("QuestsToDo"))
+        self.height=0
+        self.settings_config=dict(self.config.items("Settings"))
+        self.manual_run_triggered=False
+
+    def stop(self,):
+        self.running = False
+        os.system("taskkill /f /im DailyQuests.exe")
+        os.system("taskkill /f /im PyAutoRaid.exe")
+        os.system("taskkill /f /im python.exe")
+        os.system("taskkill /f /im DailyQuests.py")
+        os.system("taskkill /f /im PlariumPlay.exe")
+
+    def trigger_manual_run(self,TF):
+        self.manual_run_triggered = TF
+
+    def run(self):
+        while self.running:
+            # Re-read the config file to update the settings
+            self.config.read('DQconfig.ini')
+            self.ToDo = dict(self.config.items("QuestsToDo"))
+            self.settings_config = dict(self.config.items("Settings"))
+
+            if self.settings_config.get("automated_mode".lower().replace(' ', '_'), 'False') == 'True':
+                for key in self.ToDo:
+                    if self.ToDo[key].lower() == 'true':  # Make sure to compare with 'true'
+                        method_to_call = getattr(self, key, None)
+                        if method_to_call:
+                            method_to_call()
+                        else:
+                            print(f"Method for {key} not found.")
+                self.close_gui()
+                sys.exit()
+            else:
+                if self.manual_run_triggered:
+                    for key in self.ToDo:
+                        if self.ToDo[key].lower() == 'true':  # Make sure to compare with 'true'
+                            method_to_call = getattr(self, key, None)
+                            if method_to_call:
+                                method_to_call()
+                            else:
+                                print(f"Method for {key} not found.")
+                    self.trigger_manual_run(False)
+            time.sleep(1)  # Sleep to prevent busy waiting
+            
+    def close_gui(self):
+        if self.master:
+            self.master.after(0, self.master.destroy)
 
     def folders_for_exe(self):
         if getattr(sys, 'frozen', False):
@@ -86,6 +149,16 @@ class Daily:
                 logging.error("Could not find the assets folder. This folder contains all of the images needed for this program to use. It must be in the same folder as this program.")
                 sys.exit(1)
 
+    def config_file(self):
+        if os.path.exists("DQconfig.ini"):
+            self.config.read('DQconfig.ini')
+        else:
+            self.config['QuestsToDo'] = {'rewards': True,"daily_seven_boss_battles": True,
+            'daily_summon_three': True,'daily_artifact_upgrade': True,'daily_tavern_upgrade': True,'daily_five_classic_arena': True}
+            self.config['Settings'] ={'automated_mode':True}
+            with open('DQconfig.ini', 'w') as configfile:
+                self.config.write(configfile)
+
     def open_raid(self):
         subprocess.Popen(
             [
@@ -100,6 +173,7 @@ class Daily:
     def wait_for_game_window(self, title, timeout):
         start_time = time.time()
         while time.time() - start_time < timeout:
+            print("opening raid")
             if pyautogui.getWindowsWithTitle(title):
                 logging.debug("Game window found, game should be loading in now.")
                 self.steps["Open_raid"]="True"
@@ -724,11 +798,11 @@ class Daily:
                 )
                 == None
             ):
-            pass
+            time.sleep(2)
             x=random.randint(770,1145)
             y=random.randint(371,814)
             pyautogui.click(x,y)
-            time.sleep(.2)
+            time.sleep(2)
         while (
                 pyautogui.locateOnScreen(
                     self.asset_path + "\\upgradeArtifact.png",
@@ -953,26 +1027,102 @@ class Daily:
         self.back_to_bastion()
         self.delete_popup()
     
-    def results_txt(self):
-        # Determine the maximum length for each column for formatting
-        max_lengths = {key: max(len(key), len(str(value))) for key, value in app.steps.items()}
+    # def results_txt(self):
+    #     # Determine the maximum length for each column for formatting
+    #     max_lengths = {key: max(len(key), len(str(value))) for key, value in app.steps.items()}
 
-        # Create a formatted string for the table
-        formatted_data = ' | '.join([f"{key.ljust(max_lengths[key])}" for key in app.steps]) + '\n'
-        formatted_data += ' | '.join([f"{str(value).ljust(max_lengths[key])}" for key, value in app.steps.items()])
+    #     # Create a formatted string for the table
+    #     formatted_data = ' | '.join([f"{key.ljust(max_lengths[key])}" for key in app.steps]) + '\n'
+    #     formatted_data += ' | '.join([f"{str(value).ljust(max_lengths[key])}" for key, value in app.steps.items()])
 
-        # Write the formatted string to a text file
-        with open('Results.txt', 'w') as file:
-            file.write(formatted_data)
-        return formatted_data
+    #     # Write the formatted string to a text file
+    #     with open('Results.txt', 'w') as file:
+    #         file.write(formatted_data)
+    #     return formatted_data
+
+class GUI:
+    def __init__(self, master):
+        self.app = Daily(master)  # Create the Daily instance
+        self.daily_thread = threading.Thread(target=self.app.run)  # Create the thread
+        self.daily_thread.start()  # Start the thread
+        self.config = configparser.ConfigParser()
+        self.config.read('DQconfig.ini')
+        tasks_config = dict(self.config.items("QuestsToDo"))
+        settings_config=dict(self.config.items("Settings"))
+        self.master = master
+        master.title("DailyQuests Task Selector")
+
+        # Creating a ttk Frame which will contain all other widgets
+        main_frame = ttk.Frame(master)
+        main_frame.pack(fill=tkinter.BOTH, expand=True)
+        config_keys=['rewards',"daily_seven_boss_battles",
+            'daily_summon_three','daily_artifact_upgrade','daily_tavern_upgrade','daily_five_classic_arena']
+        # Automated Mode Checkbox
+        self.automated_mode = tkinter.IntVar()
+        if settings_config.get("automated_mode") == 'True':
+            self.automated_mode.set(1)
+        self.chk_automated_mode = ttk.Checkbutton(main_frame, text="Automated Mode", variable=self.automated_mode)
+        self.chk_automated_mode.grid(row=0, column=0, padx=10, pady=(10,0), sticky="W")
+
+        # Separator
+        self.separator = ttk.Separator(main_frame, orient='horizontal')
+        self.separator.grid(row=1, column=0, padx=10, pady=5, sticky="EW")
+
+        def checkbox_callback(var_name, index, mode, config_key, var):
+            updated_value = str(bool(var.get()))
+            self.config['QuestsToDo'][config_key] = updated_value
+            with open('DQconfig.ini', 'w') as configfile:
+                self.config.write(configfile)
+
+        # Other Checkboxes
+        self.checkbox_texts = [
+            "Collect Rewards", "Campaign Battles", "Summon Ten Mystery Shards",
+            "Upgrade Artifact", "Upgrade Champion", "5 Classic Arena Battles", "Claim Quest again"
+        ]
+        self.checkboxes = []
+        self.vars = []
+        
+        for i, text in enumerate(config_keys, start=2):
+            guiname=self.checkbox_texts[i-2]
+            var = tkinter.IntVar()
+            config_key = config_keys[i-2]
+            if tasks_config.get(config_key, 'False') == 'True':
+                var.set(1)
+                # Set trace on the variable
+            var.trace_add('write', lambda var_name, index, mode, var=var, config_key=config_key: checkbox_callback(var_name, index, mode, config_key, var))
+            chk = ttk.Checkbutton(main_frame, text=guiname, variable=var)
+            chk.grid(row=i, column=0, padx=10, pady=(0,5), sticky="W")
+            self.checkboxes.append(chk)
+            self.vars.append(var)
+        # Buttons in the main_frame
+        self.btn_manual_run = ttk.Button(main_frame, text="Manual Run", command=self.manual_run)
+        self.btn_manual_run.grid(row=len(self.checkbox_texts) + 3, column=0, padx=10, pady=(5, 5), sticky="W")
+
+        self.btn_quit_all = ttk.Button(main_frame, text="Quit All", command=self.quit_all)
+        self.btn_quit_all.grid(row=len(self.checkbox_texts) + 3, column=1, padx=10, pady=(5, 5), sticky="E")
+        # Create and start the Daily thread
+        
+
+    def manual_run(self):
+    # Define what should happen when Manual Run is clicked
+        if self.app:
+            self.app.trigger_manual_run(True)
+
+    def quit_all(self):
+        os.system("taskkill /f /im DailyQuests.exe")
+        os.system("taskkill /f /im PyAutoRaid.exe")
+        os.system("taskkill /f /im python.exe")
+        os.system("taskkill /f /im DailyQuests.py")
+        os.system("taskkill /f /im PlariumPlay.exe")
+
+    
 
 if __name__ == "__main__":
-    app = Daily()
-    app.rewards()
-    app.daily_seven_boss_battles()
-    app.daily_summon_three()
-    app.daily_artifact_upgrade()
-    app.daily_tavern_upgrade()
-    app.daily_five_classic_arena()
-    app.daily_quest_claims()
-    print(app.results_txt())
+    root = ThemedTk(theme="equilux")
+    root.geometry("500x560+10+240")
+
+    my_gui = GUI(root)
+
+    root.mainloop()
+
+    

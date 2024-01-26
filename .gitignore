@@ -28,3 +28,6 @@ Results.txt
 DailyQuests.spec
 Modules/testy.py
 Settings.db
+DQconfig.ini
+PARconfig.ini
+Modules/CreateTask.py
