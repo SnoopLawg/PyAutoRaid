@@ -106,7 +106,7 @@ Here's a blank template to get started: To avoid retyping too much info. Do a se
 <!-- GETTING STARTED -->
 ## Getting Started
 
-Download the newest release of DailyQuests.exe. It was created with "Windows Task Scheduler" in mind. You can click the app manually and it will run through and  Collect your rewards like gems and upgrade in the sparring pit, and fight some battles in classicand campaign. The purpose though is for the app to run on its own, so "Windows Task Scheduler" is pre-built in Windows and can run your downloaded DailyQuests.exe file every so often if you please.
+Download the newest release of DailyQuests.exe and PyautoRaid.exe. It was created with "Windows Task Scheduler" in mind. You can click the app manually and it will run through and  Collect your rewards like gems and upgrade in the sparring pit, and fight some battles in classicand campaign. The purpose though is for the app to run on its own, so "Windows Task Scheduler" is pre-built in Windows and can run your downloaded exe file every so often if you please.
 
 
 ### Prerequisites
@@ -118,8 +118,9 @@ Tested on:<br>
 
 ### Installation
 
-1. [CLICK HERE](https://github.com/SnoopLawg/PyAutoRaid/releases/download/v1-beta/DailyQuests.exe) to download DailyQuests.exe<br>
-2.  Create a shortcut for it if you would like on your desktop
+1. [CLICK HERE](https://github.com/SnoopLawg/PyAutoRaid/releases/tag/v2.0-beta/DailyQuests.exe) to download DailyQuests.exe<br>
+2. [CLICK HERE](https://github.com/SnoopLawg/PyAutoRaid/releases/tag/v2.0-beta/PyAutoRaid.exe) to download PyAutoRaid.exe<br>
+3. Create a shortcut for it if you would like on your desktop
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
