@@ -118,9 +118,8 @@ Tested on:<br>
 
 ### Installation
 
-1. [CLICK HERE](https://github.com/SnoopLawg/PyAutoRaid/releases/download/v2.0-beta/DailyQuests.exe) to download DailyQuests.exe<br>
-2. [CLICK HERE](https://github.com/SnoopLawg/PyAutoRaid/releases/download/v2.0-beta/PyAutoRaid.exe) to download PyAutoRaid.exe<br> 
-3. Create a shortcut for it if you would like on your desktop
+1. [CLICK HERE](https://github.com/SnoopLawg/PyAutoRaid/releases/download/v2.1-beta/PARinstaller.exe) to download both PyAutoRaid.exe and DailyQuests.exe<br>
+2. Click through the installer. Once finished, make sure your antivirus will allow you run them :).
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
