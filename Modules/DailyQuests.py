@@ -42,6 +42,7 @@ class Daily:
         self.height=0
         self.settings_config=dict(self.config.items("Settings"))
         self.manual_run_triggered=False
+        
 
     def stop(self,):
         self.running = False
@@ -62,15 +63,23 @@ class Daily:
             self.settings_config = dict(self.config.items("Settings"))
 
             if self.settings_config.get("automated_mode".lower().replace(' ', '_'), 'False') == 'True':
-                for key in self.ToDo:
-                    if self.ToDo[key].lower() == 'true':  # Make sure to compare with 'true'
-                        method_to_call = getattr(self, key, None)
-                        if method_to_call:
-                            method_to_call()
-                        else:
-                            print(f"Method for {key} not found.")
-                self.close_gui()
-                sys.exit()
+                try:
+                    for key in self.ToDo:
+                        if self.ToDo[key].lower() == 'true':  # Make sure to compare with 'true'
+                            method_to_call = getattr(self, key, None)
+                            if method_to_call:
+                                method_to_call()
+                            else:
+                                print(f"Method for {key} not found.")
+                    self.close_gui()
+                    os.system("taskkill /f /im Raid.exe")
+                    # sys.exit()
+                    break
+                except:
+                    self.close_gui()
+                    os.system("taskkill /f /im Raid.exe")
+                    break
+                    # sys.exit()
             else:
                 if self.manual_run_triggered:
                     for key in self.ToDo:
@@ -213,7 +222,7 @@ class Daily:
                 confidence=0.8,
             )
             pyautogui.click(bastionx, bastiony)
-            time.sleep(1)
+            time.sleep(2)
 
     def get_screen_info(self):
         for m in get_monitors():
@@ -233,12 +242,18 @@ class Daily:
     def window_sizing_centering(self):
         center = self.get_screen_info()
         try:
-            win = pyautogui.getWindowsWithTitle("Raid: Shadow Legends")[0]
+            win = pygetwindow.getWindowsWithTitle("Raid: Shadow Legends")[0]
+            if win:
+                # Minimize and then maximize the window
+                win.minimize()
+                win.restore()
+            else:
+                print("No window found with the title 'Raid: Shadow Legends'")
             win.size = (900, 600)
             win.moveTo(center[0], center[1])       
-        except IndexError:
+        except:
             time.sleep(20)
-            win = pyautogui.getWindowsWithTitle("Raid: Shadow Legends")[0]
+            win = pygetwindow.getWindowsWithTitle("Raid: Shadow Legends")[0]
             win.size = (900, 600)
             win.moveTo(center[0], center[1])
 
@@ -253,16 +268,17 @@ class Daily:
                 == None
             ):
                 pass
+        self.back_to_bastion()
         self.delete_popup()
         self.steps["Initiate_raid"]="True"
         # os.system("taskkill /f /im PlariumPlay.exe")
 #################################################################################################################
     def rewards(self):
         self.daily_gem_mine()
-        self.daily_market_purchase()
         self.daily_shop()
         self.daily_guardian_ring()
         self.daily_clan()
+        self.daily_market_purchase()
         self.daily_timed_rewards()
         self.daily_quest_claims()
         self.daily_inbox()
@@ -665,9 +681,10 @@ class Daily:
 
     def daily_seven_boss_battles(self):
         campaign_images=["\\battleBTN.png","\\campaignButtonJump.png","\\campaignStart.png",]
+        self.campaignreached=0
         for i in campaign_images:
             image=i
-            while (
+            if (
                 pyautogui.locateOnScreen(
                     self.asset_path + image,
                     confidence=0.8,
@@ -679,53 +696,55 @@ class Daily:
                     confidence=0.9,
                 )
                 pyautogui.click(battlex, battley)
+                self.campaignreached+=1
                 time.sleep(2)
-        for i in range(0,6):
+        if self.campaignreached==3:
+            for i in range(0,6):
+                while (
+                    pyautogui.locateOnScreen(
+                        self.asset_path + "\\replayCampaign.png",
+                        confidence=0.8,
+                    )
+                    == None
+                ):
+                    pass
+                while (
+                    pyautogui.locateOnScreen(
+                        self.asset_path + "\\replayCampaign.png",
+                        confidence=0.8,
+                    )
+                    != None
+                ):
+                    battlex, battley = pyautogui.locateCenterOnScreen(
+                        self.asset_path + "\\replayCampaign.png",
+                        confidence=0.9,
+                    )
+                    pyautogui.click(battlex, battley)
+                    time.sleep(2)
             while (
-                pyautogui.locateOnScreen(
-                    self.asset_path + "\\replayCampaign.png",
-                    confidence=0.8,
-                )
-                == None
-            ):
+                    pyautogui.locateOnScreen(
+                        self.asset_path + "\\replayCampaign.png",
+                        confidence=0.8,
+                    )
+                    == None
+                ):
                 pass
             while (
-                pyautogui.locateOnScreen(
-                    self.asset_path + "\\replayCampaign.png",
-                    confidence=0.8,
-                )
-                != None
-            ):
-                battlex, battley = pyautogui.locateCenterOnScreen(
-                    self.asset_path + "\\replayCampaign.png",
-                    confidence=0.9,
-                )
-                pyautogui.click(battlex, battley)
-                time.sleep(2)
-        while (
-                pyautogui.locateOnScreen(
-                    self.asset_path + "\\replayCampaign.png",
-                    confidence=0.8,
-                )
-                == None
-            ):
-            pass
-        while (
-                pyautogui.locateOnScreen(
-                    self.asset_path + "\\bastion.png",
-                    confidence=0.8,
-                )
-                != None
-            ):
-                battlex, battley = pyautogui.locateCenterOnScreen(
-                    self.asset_path + "\\bastion.png",
-                    confidence=0.9,
-                )
-                pyautogui.click(battlex, battley)
-                time.sleep(2)
-        self.steps["7_campaign_battles"]="Accessed"
-        self.back_to_bastion()
-        self.delete_popup()
+                    pyautogui.locateOnScreen(
+                        self.asset_path + "\\bastion.png",
+                        confidence=0.8,
+                    )
+                    != None
+                ):
+                    battlex, battley = pyautogui.locateCenterOnScreen(
+                        self.asset_path + "\\bastion.png",
+                        confidence=0.9,
+                    )
+                    pyautogui.click(battlex, battley)
+                    time.sleep(2)
+            self.steps["7_campaign_battles"]="Accessed"
+            self.back_to_bastion()
+            self.delete_popup()
     
     def daily_summon_three(self):
         while (
@@ -752,21 +771,38 @@ class Daily:
                     self.asset_path + "\\dailyAS.png",
                     confidence=0.9,
                 )
+                self.summoned_champs=0
                 pyautogui.click(battlex, battley)
                 time.sleep(2)
                 if (
                     pyautogui.locateOnScreen(
-                        self.asset_path + "\\summonTen.png",
+                        self.asset_path + "\\summonOne.png",
                         confidence=0.8,
                     )
                     != None
                 ):
                     battlex, battley = pyautogui.locateCenterOnScreen(
-                        self.asset_path + "\\summonTen.png",
+                        self.asset_path + "\\summonOne.png",
                         confidence=0.9,
                     )
                     pyautogui.click(battlex, battley)
-                    time.sleep(10)
+                    self.summoned_champs+=1
+                    time.sleep(6)
+                    for i in range(0,5):
+                        if (
+                        pyautogui.locateOnScreen(
+                            self.asset_path + "\\summonOneMore.png",
+                            confidence=0.8,
+                        )
+                        != None
+                    ):
+                            battlex, battley = pyautogui.locateCenterOnScreen(
+                            self.asset_path + "\\summonOneMore.png",
+                            confidence=0.9,
+                        )
+                        pyautogui.click(battlex, battley)
+                        self.summoned_champs+=1
+                        time.sleep(8)
         self.steps["Daily_summon"]="Accessed"
         self.delete_popup()
         self.back_to_bastion()
@@ -862,10 +898,25 @@ class Daily:
             pyautogui.click(battlex, battley)
             time.sleep(2)
             pyautogui.click(560,390)
-            for i in range(0,2):
+            for i in range(0,1):
                 for x in range(560, 700, 60):
                     for y in range(570, 750, 90):
                         pyautogui.click(x, y)
+                        time.sleep(1)
+                        if self.summoned_champs==6:
+                            if (
+                                pyautogui.locateOnScreen(
+                                    self.asset_path + "\\sacrifice1.png",
+                                    confidence=0.8,
+                                )
+                                != None
+                            ):
+                                battlex, battley = pyautogui.locateCenterOnScreen(
+                                    self.asset_path + "\\sacrifice1.png",
+                                    confidence=0.9,
+                                )
+                                pyautogui.click(battlex, battley)
+                                time.sleep(2)
                 time.sleep(2)
                 if (
                     pyautogui.locateOnScreen(
@@ -942,6 +993,19 @@ class Daily:
             pyautogui.click(battlex, battley)
             time.sleep(2)
             regions=[[1215, 423, 167, 58,[1304, 457]],[1215, 508, 167, 58,[1304, 540]],[1215, 596, 167, 58,[1303, 625]],[1215, 681, 167, 58,[1304, 711]],[1208, 762, 190, 68,[1304, 800]]] #?
+            while (
+                            pyautogui.locateOnScreen(
+                                self.asset_path + "\\arenaRefresh.png",
+                                confidence=0.8,
+                            )
+                            != None
+                        ):
+                            battlex, battley = pyautogui.locateCenterOnScreen(
+                                self.asset_path + "\\arenaRefresh.png",
+                                confidence=0.9,
+                            )
+                            pyautogui.click(battlex, battley)
+                            time.sleep(2)
             for i in regions:
                 if (
                     pyautogui.locateOnScreen(
@@ -952,7 +1016,7 @@ class Daily:
                     != None
                 ):
                     pyautogui.click(i[4][0], i[4][1])
-                    time.sleep(2)
+                    time.sleep(3)
                     #Replenish tokens or quit if out of them
                     while (
                         pyautogui.locateOnScreen(
@@ -1043,6 +1107,7 @@ class Daily:
 class GUI:
     def __init__(self, master):
         self.app = Daily(master)  # Create the Daily instance
+        self.timer_thread()
         self.daily_thread = threading.Thread(target=self.app.run)  # Create the thread
         self.daily_thread.start()  # Start the thread
         self.config = configparser.ConfigParser()
@@ -1076,7 +1141,7 @@ class GUI:
 
         # Other Checkboxes
         self.checkbox_texts = [
-            "Collect Rewards", "Campaign Battles", "Summon Ten Mystery Shards",
+            "Collect Rewards", "Campaign Battles", "Summon Six Mystery Shards",
             "Upgrade Artifact", "Upgrade Champion", "5 Classic Arena Battles", "Claim Quest again"
         ]
         self.checkboxes = []
@@ -1108,21 +1173,37 @@ class GUI:
         if self.app:
             self.app.trigger_manual_run(True)
 
-    def quit_all(self):
+    def quit_all(self,timer=False):
+        if timer:
+            os.system("taskkill /f /im Raid.exe")
         os.system("taskkill /f /im DailyQuests.exe")
         os.system("taskkill /f /im PyAutoRaid.exe")
         os.system("taskkill /f /im python.exe")
         os.system("taskkill /f /im DailyQuests.py")
         os.system("taskkill /f /im PlariumPlay.exe")
 
-    
+    def timer_thread(self):
+        timeout = 1800
+        # Create a timer that will call quit_all() after the timeout
+        self.timer = threading.Timer(timeout, lambda: self.quit_all(timer=True))
+        self.timer.name = "timer_thread"
+        # Start the timer
+        self.timer.start()
+
+def on_closing():
+    if my_gui.quit_timer.is_alive():
+        my_gui.quit_timer.cancel()
+    if my_gui.daily_thread.is_alive():
+        my_gui.daily_thread.join(timeout=1)
+    root.destroy()
 
 if __name__ == "__main__":
     root = ThemedTk(theme="equilux")
     root.geometry("500x560+10+240")
 
     my_gui = GUI(root)
-
+    root.protocol("WM_DELETE_WINDOW", on_closing)  # To ensure clean exit
     root.mainloop()
+    
 
     

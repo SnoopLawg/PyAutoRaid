@@ -7,9 +7,9 @@ import os
 import subprocess
 import win32api
 import win32con
-
+import pyautogui
 import sys
-
+pyautogui.displayMousePosition()
 if getattr(sys, "frozen", False):
     # we are running in a bundle
     DIR = sys._MEIPASS

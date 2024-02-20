@@ -1,8 +1,16 @@
-import pyautogui, platform, tkinter, logging, os, sys,subprocess,time,random,configparser
+import pyautogui, platform, tkinter, logging, os, sys,subprocess,time,random,configparser,pygetwindow,datetime
 from screeninfo import Monitor, get_monitors
 from tkinter import messagebox
+from tkinter import messagebox
+from tkinter import ttk
+from tkinter import *
+from ttkthemes import ThemedTk
+import threading
+import win32gui
 class Daily:
-    def __init__(self):
+    def __init__(self,master):
+        self.running = True
+        self.master = master
         logging.basicConfig(filename='Logging.log', format='%(levelname)s:%(message)s', encoding='utf-8', level=logging.DEBUG)
         # Clear the existing log file
         with open('Logging.log', 'w'):
@@ -12,7 +20,7 @@ class Daily:
         self.raidLoc = self.find_raid_path()
         self.asset_path=self.get_asset_path()
         self.folders_for_exe()
-        if len(pyautogui.getWindowsWithTitle("Raid: Shadow Legends")) == 0:
+        if len(pygetwindow.getWindowsWithTitle("Raid: Shadow Legends")) < 1:
             self.open_raid()
         else:
             self.initiate_raid(False)
@@ -25,8 +33,77 @@ class Daily:
         self.GR_upgrades=0
         self.quests_completed=0
         self.config = configparser.ConfigParser()
-        self.config_file()
+        self.utc_now = datetime.datetime.now(datetime.timezone.utc)
+        self.utc_now_hour=self.utc_now.hour
+        self.utc_now_str = self.utc_now.strftime("%d/%m/%Y")
+        self.config_file(self.utc_now_str)
+        self.manual_run_triggered=False
+        self.settings_config=dict(self.config.items("Settings"))
+        self.yesterday_utc=self.utc_now- datetime.timedelta(days=1)
+        self.yesterday_now_str = self.yesterday_utc.strftime("%d/%m/%Y")
+        self.two_days_ago=self.utc_now- datetime.timedelta(days=2)
+        self.two_days_ago_str = self.two_days_ago.strftime("%d/%m/%Y")
+        self.today_utc_str=self.utc_now.strftime("%d/%m/%Y")
+        self.config.read('PARconfig.ini')
+        configdate=self.config.get('Settings', 'utc_today')
+        if (self.yesterday_now_str==configdate) and (self.utc_now_hour>=10):
+            self.config_file(self.utc_now_str,True)
+        if (self.two_days_ago_str==configdate) and (self.utc_now_hour>=10):
+            self.config_file(self.utc_now_str,True)
+        if (self.today_utc_str==configdate) and (self.utc_now_hour<=10):
+            self.config_file(self.utc_now_str,True)
 
+
+
+    def trigger_manual_run(self,TF):
+        self.manual_run_triggered = TF
+
+    def run(self):
+        while self.running:
+            # Re-read the config file to update the settings
+            self.config.read('PARconfig.ini')
+            self.ToDo = dict(self.config.items("Settings"))
+            self.settings_config = dict(self.config.items("Settings"))
+
+            if self.settings_config.get("automated_mode".lower().replace(' ', '_'), 'False') == 'True':
+                try:
+                    for key in self.ToDo:
+                        if self.ToDo[key].lower() == 'true':  # Make sure to compare with 'true'
+                            if key=='clanboss':
+                                key='ClanBoss'
+                            method_to_call = getattr(self, key, None)
+                            if method_to_call:
+                                method_to_call()
+                            else:
+                                print(f"Method for {key} not found.")
+                    self.close_gui()
+                    os.system("taskkill /f /im Raid.exe")
+                    # sys.exit()
+                    break
+                except:
+                    self.close_gui()
+                    os.system("taskkill /f /im Raid.exe")
+                    # sys.exit()
+                    break
+            else:
+                if self.manual_run_triggered:
+                    for key in self.ToDo:
+                        
+                        if self.ToDo[key].lower() == 'true':  # Make sure to compare with 'true'
+                            if key=='clanboss':
+                                key='ClanBoss'
+                            method_to_call = getattr(self, key, None)
+                            if method_to_call:
+                                method_to_call()
+                            else:
+                                print(f"Method for {key} not found.")
+                    self.trigger_manual_run(False)
+            time.sleep(1)  # Sleep to prevent busy waiting
+            
+    def close_gui(self):
+        if self.master:
+            self.master.after(0, self.master.destroy)
+            # self.master.after(0, sys.exit)
 
     def folders_for_exe(self):
         if getattr(sys, 'frozen', False):
@@ -90,16 +167,23 @@ class Daily:
                 logging.error("Could not find the assets folder. This folder contains all of the images needed for this program to use. It must be in the same folder as this program.")
                 sys.exit(1)
 
-    def config_file(self):
+    def config_file(self,day,adjust=False):
         if os.path.exists("PARconfig.ini"):
             self.config.read('PARconfig.ini')
         else:
+            self.config['Settings'] = {'UTC_today':day,'rewards': True,'ClanBoss':True,'automated_mode':True,'daily_ten_classic_arena':True}
             self.config['PlannedClanBossFightsToday'] = {'Easy': 0,
             'Normal': 0,'Hard': 0,'Brutal': 0,'Nightmare': 1,'Ultra-Nightmare': 3}
             self.config['ActualClanBossFightsToday'] = {'Easy': 0,
             'Normal': 0,'Hard': 0,'Brutal': 0,'Nightmare': 0,'Ultra-Nightmare': 0}
             self.config['XYclanbossCoordinates'] = {'EasyX': 1080,'EasyY': 'IDK Coords yet'
             ,'NormalX': 1080,'NormalY': 'IDK Coords yet','HardX': 1080,'HardY': 'IDK Coords yet','BrutalX': 1080,'BrutalY': 647,'NightmareX': 1080,'NightmareY': 724,'Ultra-NightmareX': 1080,'Ultra-NightmareY': 690}
+            with open('PARconfig.ini', 'w') as configfile:
+                self.config.write(configfile)
+        if adjust:
+            self.config['Settings'] = {'UTC_today':day,'rewards': self.settings_config['rewards'],'ClanBoss':self.settings_config['clanboss'],'automated_mode':self.settings_config['automated_mode'],'daily_ten_classic_arena':self.settings_config['daily_ten_classic_arena']}
+            self.config['ActualClanBossFightsToday'] = {'Easy': 0,
+            'Normal': 0,'Hard': 0,'Brutal': 0,'Nightmare': 0,'ultra-nightmare': 0}
             with open('PARconfig.ini', 'w') as configfile:
                 self.config.write(configfile)
 
@@ -156,7 +240,7 @@ class Daily:
                 confidence=0.8,
             )
             pyautogui.click(bastionx, bastiony)
-            time.sleep(1)
+            time.sleep(2)
 
     def get_screen_info(self):
         for m in get_monitors():
@@ -176,12 +260,18 @@ class Daily:
     def window_sizing_centering(self):
         center = self.get_screen_info()
         try:
-            win = pyautogui.getWindowsWithTitle("Raid: Shadow Legends")[0]
+            win = pygetwindow.getWindowsWithTitle("Raid: Shadow Legends")[0]
+            if win:
+                # Minimize and then maximize the window
+                win.minimize()
+                win.restore()
+            else:
+                print("No window found with the title 'Raid: Shadow Legends'")
             win.size = (900, 600)
             win.moveTo(center[0], center[1])       
-        except IndexError:
+        except:
             time.sleep(20)
-            win = pyautogui.getWindowsWithTitle("Raid: Shadow Legends")[0]
+            win = pygetwindow.getWindowsWithTitle("Raid: Shadow Legends")[0]
             win.size = (900, 600)
             win.moveTo(center[0], center[1])
 
@@ -196,6 +286,7 @@ class Daily:
                 == None
             ):
                 pass
+        self.back_to_bastion()
         self.delete_popup()
         self.steps["Initiate_raid"]="True"
         # os.system("taskkill /f /im PlariumPlay.exe")
@@ -651,7 +742,19 @@ class Daily:
             time.sleep(2)
             regions=[[1215, 423, 167, 58,[1304, 457]],[1215, 508, 167, 58,[1304, 540]],[1215, 596, 167, 58,[1303, 625]],[1215, 681, 167, 58,[1304, 711]],[1208, 762, 190, 68,[1304, 800]]] #?
             for j in range(0,2):
-                
+                while (
+                            pyautogui.locateOnScreen(
+                                self.asset_path + "\\arenaRefresh.png",
+                                confidence=0.8,
+                            )
+                            != None
+                        ):
+                            battlex, battley = pyautogui.locateCenterOnScreen(
+                                self.asset_path + "\\arenaRefresh.png",
+                                confidence=0.9,
+                            )
+                            pyautogui.click(battlex, battley)
+                            time.sleep(2)
                 for i in regions:
                     
                     if (
@@ -663,7 +766,7 @@ class Daily:
                         != None
                     ):
                         pyautogui.click(i[4][0], i[4][1])
-                        time.sleep(2)
+                        time.sleep(3)
                         #Replenish tokens or quit if out of them
                         while (
                             pyautogui.locateOnScreen(
@@ -678,7 +781,7 @@ class Daily:
                             )
                             pyautogui.click(battlex, battley)
                             print("confirm tokens")
-                            time.sleep(4)
+                            time.sleep(5)
                             pyautogui.click(i[4][0], i[4][1])
                         if (
                             pyautogui.locateOnScreen(
@@ -737,7 +840,7 @@ class Daily:
                             time.sleep(3)
                         if j ==1:
                             pyautogui.doubleClick(969, 788, interval=1)
-                            pyautogui.dragRel(0,-380,duration=2)
+                            pyautogui.dragRel(0,-381,duration=2)#DRAGGGGG
                             time.sleep(3)
                     time.sleep(1)
                     pyautogui.doubleClick(969, 788, interval=1)
@@ -747,7 +850,7 @@ class Daily:
                     pyautogui.doubleClick(969, 788, interval=1)
                     pyautogui.dragRel(0,-380,duration=2)
                     time.sleep(3)    
-                
+        time.sleep(3)
                 
 
         print(self.classic_battles)
@@ -878,12 +981,16 @@ class Daily:
             )
             != None
         ):
+            yCB=690
+            xCB=1080
+            difficulty = 'nightmare'
             for i in CBDIFFICULTYS:
                 if self.config["ActualClanBossFightsToday"][i]<self.config["PlannedClanBossFightsToday"][i]:
                     yCB=int(self.config["XYclanbossCoordinates"][i+'y'])
                     xCB=int(self.config["XYclanbossCoordinates"][i+'x'])
                     difficulty = i
                     break
+                
             if yCB == 690:
                 pyautogui.click(1080, 724)
                 pyautogui.drag(0, -200, duration=1)
@@ -968,8 +1075,10 @@ class Daily:
                 newactual = int(self.config['ActualClanBossFightsToday'][difficulty])
                 newactual += 1
                 self.config['ActualClanBossFightsToday'][difficulty] = str(newactual)
+                with open('PARconfig.ini', 'w') as configfile:
+                    self.config.write(configfile)
                 time.sleep(2)
-        pyautogui.click(566, 790)
+        # pyautogui.click(566, 790)
         self.delete_popup()
         self.back_to_bastion()
         self.delete_popup()
@@ -977,23 +1086,107 @@ class Daily:
         if difficulty == "":
             difficulty = "No"
         return f"{difficulty} Clan boss fought"
-    
-    def results_txt(self):
-        # Determine the maximum length for each column for formatting
-        max_lengths = {key: max(len(key), len(str(value))) for key, value in app.steps.items()}
 
-        # Create a formatted string for the table
-        formatted_data = ' | '.join([f"{key.ljust(max_lengths[key])}" for key in app.steps]) + '\n'
-        formatted_data += ' | '.join([f"{str(value).ljust(max_lengths[key])}" for key, value in app.steps.items()])
 
-        # Write the formatted string to a text file
-        with open('Results.txt', 'w') as file:
-            file.write(formatted_data)
-        return formatted_data
+class GUI:
+    def __init__(self, master):
+        self.app = Daily(master)  # Create the Daily instance
+        self.timer_thread()
+        self.daily_thread = threading.Thread(target=self.app.run)  # Create the thread
+        self.daily_thread.start()  # Start the thread
+        self.daily_thread.name="PAR"
+        self.config = configparser.ConfigParser()
+        self.config.read('PARconfig.ini')
+        tasks_config = dict(self.config.items("Settings"))
+        settings_config=dict(self.config.items("Settings"))
+        self.master = master
+        master.title("PyAutoRaid Task Selector")
+
+        # Creating a ttk Frame which will contain all other widgets
+        main_frame = ttk.Frame(master)
+        main_frame.pack(fill=tkinter.BOTH, expand=True)
+        config_keys=['rewards','daily_ten_classic_arena',
+            'clanboss']
+        # Automated Mode Checkbox
+        self.automated_mode = tkinter.IntVar()
+        if settings_config.get("automated_mode") == 'True':
+            self.automated_mode.set(1)
+        self.chk_automated_mode = ttk.Checkbutton(main_frame, text="Automated Mode", variable=self.automated_mode)
+        self.chk_automated_mode.grid(row=0, column=0, padx=10, pady=(10,0), sticky="W")
+
+        # Separator
+        self.separator = ttk.Separator(main_frame, orient='horizontal')
+        self.separator.grid(row=1, column=0, padx=10, pady=5, sticky="EW")
+
+        def checkbox_callback(var_name, index, mode, config_key, var):
+            updated_value = str(bool(var.get()))
+            self.config['Settings'][config_key] = updated_value
+            with open('PARconfig.ini', 'w') as configfile:
+                self.config.write(configfile)
+
+        # Other Checkboxes
+        self.checkbox_texts = [
+            "Collect Rewards", "Ten Classic Arena Battles", "Clan Boss",
+        ]
+        self.checkboxes = []
+        self.vars = []
+        
+        for i, text in enumerate(config_keys, start=2):
+            guiname=self.checkbox_texts[i-2]
+            var = tkinter.IntVar()
+            config_key = config_keys[i-2]
+            if tasks_config.get(config_key, 'False') == 'True':
+                var.set(1)
+                # Set trace on the variable
+            var.trace_add('write', lambda var_name, index, mode, var=var, config_key=config_key: checkbox_callback(var_name, index, mode, config_key, var))
+            chk = ttk.Checkbutton(main_frame, text=guiname, variable=var)
+            chk.grid(row=i, column=0, padx=10, pady=(0,5), sticky="W")
+            self.checkboxes.append(chk)
+            self.vars.append(var)
+        # Buttons in the main_frame
+        self.btn_manual_run = ttk.Button(main_frame, text="Manual Run", command=self.manual_run)
+        self.btn_manual_run.grid(row=len(self.checkbox_texts) + 3, column=0, padx=10, pady=(5, 5), sticky="W")
+
+        self.btn_quit_all = ttk.Button(main_frame, text="Quit All", command=self.quit_all)
+        self.btn_quit_all.grid(row=len(self.checkbox_texts) + 3, column=1, padx=10, pady=(5, 5), sticky="E")
+        # Create and start the Daily thread
+        
+
+    def manual_run(self):
+    # Define what should happen when Manual Run is clicked
+        if self.app:
+            self.app.trigger_manual_run(True)
+
+    def quit_all(self,timer=False):
+        if timer:
+            os.system("taskkill /f /im Raid.exe")
+        os.system("taskkill /f /im DailyQuests.exe")
+        os.system("taskkill /f /im PyAutoRaid.exe")
+        os.system("taskkill /f /im python.exe")
+        os.system("taskkill /f /im DailyQuests.py")
+        os.system("taskkill /f /im PlariumPlay.exe")
+
+    def timer_thread(self):
+        timeout = 1800
+        # Create a timer that will call quit_all() after the timeout
+        self.timer = threading.Timer(timeout, lambda: self.quit_all(timer=True))
+        self.timer.name = "timer_thread"
+        self.timer.daemon = True
+        # Start the timer
+        self.timer.start()
+
+def on_closing():
+    if my_gui.quit_timer.is_alive():
+        my_gui.quit_timer.cancel()
+    if my_gui.daily_thread.is_alive():
+        my_gui.daily_thread.join(timeout=1)
+    root.destroy()
 
 if __name__ == "__main__":
-    app = Daily()
-    # app.rewards()
-    # app.daily_ten_classic_arena()
-    app.ClanBoss()
-    # print(app.results_txt())
+    root = ThemedTk(theme="equilux")
+    root.geometry("500x560+10+240")
+
+    my_gui = GUI(root)
+    root.protocol("WM_DELETE_WINDOW", on_closing)  # To ensure clean exit
+    root.mainloop()
+    
