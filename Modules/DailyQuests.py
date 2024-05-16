@@ -5,6 +5,7 @@ from tkinter import ttk
 from tkinter import *
 from ttkthemes import ThemedTk
 import threading
+import datetime
 class Daily:
     def __init__(self,master):
         self.running = True
@@ -14,6 +15,7 @@ class Daily:
         with open('Logging.log', 'w'):
             pass
         self.steps = {}
+        # self.resetCBDay()
         self.OS = self.Check_os()  # Call the method here
         self.raidLoc = self.find_raid_path()
         self.asset_path=self.get_asset_path()

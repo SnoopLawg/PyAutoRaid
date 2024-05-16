@@ -16,6 +16,7 @@ class Daily:
         with open('Logging.log', 'w'):
             pass
         self.steps = {}
+        self.resetCBDay()
         self.OS = self.Check_os()  # Call the method here
         self.raidLoc = self.find_raid_path()
         self.asset_path=self.get_asset_path()
@@ -32,28 +33,28 @@ class Daily:
         self.height=0
         self.GR_upgrades=0
         self.quests_completed=0
+        
+
+    def check_previous_days(self):
+        self.config = configparser.ConfigParser()
+        today_date_str=self.utc_now.strftime("%d/%m/%Y")
+        self.config_file(today_date_str)
+        self.settings_config=dict(self.config.items("Settings"))
+        self.config.read('PARconfig.ini')
+        configdate = self.config.get('Settings', 'utc_today')
+        days_to_check = 60  # Example: Check up to 30 days in the past
+        
+        for day in range(1, days_to_check + 1):
+            past_date = self.utc_now - datetime.timedelta(days=day)
+            past_date_str = past_date.strftime("%d/%m/%Y")
+            if past_date_str == configdate and self.utc_now.hour >= 10:
+                self.config_file(today_date_str, True)
+                return True
+        
+    def resetCBDay(self):
         self.config = configparser.ConfigParser()
         self.utc_now = datetime.datetime.now(datetime.timezone.utc)
-        self.utc_now_hour=self.utc_now.hour
-        self.utc_now_str = self.utc_now.strftime("%d/%m/%Y")
-        self.config_file(self.utc_now_str)
-        self.manual_run_triggered=False
-        self.settings_config=dict(self.config.items("Settings"))
-        self.yesterday_utc=self.utc_now- datetime.timedelta(days=1)
-        self.yesterday_now_str = self.yesterday_utc.strftime("%d/%m/%Y")
-        self.two_days_ago=self.utc_now- datetime.timedelta(days=2)
-        self.two_days_ago_str = self.two_days_ago.strftime("%d/%m/%Y")
-        self.today_utc_str=self.utc_now.strftime("%d/%m/%Y")
-        self.config.read('PARconfig.ini')
-        configdate=self.config.get('Settings', 'utc_today')
-        if (self.yesterday_now_str==configdate) and (self.utc_now_hour>=10):
-            self.config_file(self.utc_now_str,True)
-        if (self.two_days_ago_str==configdate) and (self.utc_now_hour>=10):
-            self.config_file(self.utc_now_str,True)
-        if (self.today_utc_str==configdate) and (self.utc_now_hour<=10):
-            self.config_file(self.utc_now_str,True)
-
-
+        self.check_previous_days()
 
     def trigger_manual_run(self,TF):
         self.manual_run_triggered = TF
@@ -985,6 +986,8 @@ class Daily:
             xCB=1080
             difficulty = 'nightmare'
             for i in CBDIFFICULTYS:
+                ac=self.config["ActualClanBossFightsToday"][i]
+                plan=self.config["PlannedClanBossFightsToday"][i]
                 if self.config["ActualClanBossFightsToday"][i]<self.config["PlannedClanBossFightsToday"][i]:
                     yCB=int(self.config["XYclanbossCoordinates"][i+'y'])
                     xCB=int(self.config["XYclanbossCoordinates"][i+'x'])
