@@ -1,0 +1,63 @@
+name: Compile Python to EXE and Create Dynamic Release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+
+    - name: Install PyInstaller
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyinstaller
+
+    - name: Compile DailyQuests to EXE with Administrator Manifest
+      run: |
+        pyinstaller --onefile --manifest=admin.manifest Modules/DailyQuests.py
+
+    - name: Compile PyAutoRaid to EXE with Administrator Manifest
+      run: |
+        pyinstaller --onefile --manifest=admin.manifest Modules/PyAutoRaid.py
+
+    - name: Install Inno Setup
+      run: |
+        choco install innosetup --yes
+
+    - name: Generate Installer with Inno Setup
+      run: |
+        "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" setup.iss
+
+    - name: Create GitHub Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ github.run_number }}-$(date +'%Y%m%d%H%M%S')
+        release_name: Release ${{ github.run_number }}-$(date +'%Y%m%d%H%M%S')
+        body: |
+          Compiled installer for the latest release.
+        draft: false
+        prerelease: false
+
+    - name: Upload Installer to Release
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: PARinstaller.exe
+        asset_name: PARinstaller.exe
+        asset_content_type: application/octet-stream
