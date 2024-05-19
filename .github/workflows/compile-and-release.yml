@@ -46,14 +46,8 @@ jobs:
     - name: Increment Version
       id: increment_version
       run: |
-        python increment_version.py
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      shell: bash
-
-    - name: Get New Version
-      id: get_new_version
-      run: echo "new_version=$(python increment_version.py)" >> $GITHUB_ENV
+        new_version=$(python increment_version.py)
+        echo "::set-output name=new_version::$new_version"
 
     - name: Create GitHub Release
       id: create_release
@@ -61,8 +55,8 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: ${{ env.new_version }}
-        release_name: Release ${{ env.new_version }}
+        tag_name: ${{ steps.increment_version.outputs.new_version }}
+        release_name: Release ${{ steps.increment_version.outputs.new_version }}
         body: |
           Compiled installer for the latest release.
         draft: false
