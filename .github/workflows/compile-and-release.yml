@@ -37,11 +37,11 @@ jobs:
 
     - name: Compile DailyQuests to EXE with Administrator Manifest and Icon
       run: |
-        pyinstaller --onefile --manifest=admin_dailyquests.manifest --icon=assets/Icons/image0.jpeg Modules/DailyQuests.py
+        pyinstaller --onefile --manifest=admin_dailyquests.manifest --icon=assets/Icons/image0.ico Modules/DailyQuests.py
 
     - name: Compile PyAutoRaid to EXE with Administrator Manifest and Icon
       run: |
-        pyinstaller --onefile --manifest=admin_pyautoraid.manifest --icon=assets/Icons/image1.jpeg Modules/PyAutoRaid.py
+        pyinstaller --onefile --manifest=admin_pyautoraid.manifest --icon=assets/Icons/image1.ico Modules/PyAutoRaid.py
 
     - name: Install Inno Setup
       run: |
