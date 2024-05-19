@@ -21,6 +21,7 @@ jobs:
     - name: Install Dependencies
       run: |
         python -m pip install --upgrade pip
+        pip install pyinstaller
         pip install -r requirements.txt  # Install all dependencies from requirements.txt
 
     - name: Install Resource Hacker
@@ -42,11 +43,11 @@ jobs:
 
     - name: Compile DailyQuests to EXE with Icon
       run: |
-        pyinstaller --onefile --icon=assets/Icons/image0.ico --hidden-import=pyautogui --hidden-import=requests Modules/DailyQuests.py
+        python -m PyInstaller --onefile --icon=assets/Icons/image0.ico --hidden-import=pyautogui --hidden-import=requests Modules/DailyQuests.py
 
     - name: Compile PyAutoRaid to EXE with Icon
       run: |
-        pyinstaller --onefile --icon=assets/Icons/image1.ico --hidden-import=pyautogui --hidden-import=requests Modules/PyAutoRaid.py
+        python -m PyInstaller --onefile --icon=assets/Icons/image1.ico --hidden-import=pyautogui --hidden-import=requests Modules/PyAutoRaid.py
 
     - name: Embed Manifest into DailyQuests
       run: |
@@ -86,10 +87,4 @@ jobs:
 
     - name: Upload Installer to Release
       uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: PARinstaller.exe
-        asset_name: PARinstaller.exe
-        asset_content_type: application/octet-stream
+    
