@@ -18,10 +18,15 @@ jobs:
       with:
         python-version: '3.x'
 
-    - name: Install PyInstaller
+    - name: Install Dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install pyinstaller
+        pip install pyinstaller requests  # Include requests here for increment_version.py
+
+    - name: Install Resource Hacker
+      run: |
+        curl -L -o reshacker_setup.exe "http://www.angusj.com/resourcehacker/reshacker_setup.exe"
+        start /wait reshacker_setup.exe /VERYSILENT /DIR="C:\Program Files\Resource Hacker"
 
     - name: Generate DailyQuests Manifest
       run: |
@@ -35,13 +40,21 @@ jobs:
       run: |
         sed 's/{{EXE_NAME}}/PARInstaller/' admin_template.manifest > admin_parinstaller.manifest
 
-    - name: Compile DailyQuests to EXE with Administrator Manifest and Icon
+    - name: Compile DailyQuests to EXE with Icon
       run: |
-        pyinstaller --onefile --manifest=admin_dailyquests.manifest --icon=assets/Icons/image0.ico Modules/DailyQuests.py
+        pyinstaller --onefile --icon=assets/Icons/image0.jpeg Modules/DailyQuests.py
 
-    - name: Compile PyAutoRaid to EXE with Administrator Manifest and Icon
+    - name: Compile PyAutoRaid to EXE with Icon
       run: |
-        pyinstaller --onefile --manifest=admin_pyautoraid.manifest --icon=assets/Icons/image1.ico Modules/PyAutoRaid.py
+        pyinstaller --onefile --icon=assets/Icons/image1.jpeg Modules/PyAutoRaid.py
+
+    - name: Embed Manifest into DailyQuests
+      run: |
+        "C:\Program Files\Resource Hacker\ResourceHacker.exe" -open dist\DailyQuests.exe -save dist\DailyQuests.exe -action addoverwrite -res admin_dailyquests.manifest -mask MANIFEST,1,
+
+    - name: Embed Manifest into PyAutoRaid
+      run: |
+        "C:\Program Files\Resource Hacker\ResourceHacker.exe" -open dist\PyAutoRaid.exe -save dist\PyAutoRaid.exe -action addoverwrite -res admin_pyautoraid.manifest -mask MANIFEST,1,
 
     - name: Install Inno Setup
       run: |
@@ -50,10 +63,6 @@ jobs:
     - name: Generate Installer with Inno Setup
       run: |
         & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" setup.iss
-
-    - name: Install Requests Module
-      run: |
-        pip install requests
 
     - name: Increment Version
       id: increment_version
