@@ -23,13 +23,25 @@ jobs:
         python -m pip install --upgrade pip
         pip install pyinstaller
 
-    - name: Compile DailyQuests to EXE with Administrator Manifest
+    - name: Generate DailyQuests Manifest
       run: |
-        pyinstaller --onefile --manifest=admin.manifest Modules/DailyQuests.py
+        sed 's/{{EXE_NAME}}/DailyQuests/' admin_template.manifest > admin_dailyquests.manifest
 
-    - name: Compile PyAutoRaid to EXE with Administrator Manifest
+    - name: Generate PyAutoRaid Manifest
       run: |
-        pyinstaller --onefile --manifest=admin.manifest Modules/PyAutoRaid.py
+        sed 's/{{EXE_NAME}}/PyAutoRaid/' admin_template.manifest > admin_pyautoraid.manifest
+
+    - name: Generate PARInstaller Manifest
+      run: |
+        sed 's/{{EXE_NAME}}/PARInstaller/' admin_template.manifest > admin_parinstaller.manifest
+
+    - name: Compile DailyQuests to EXE with Administrator Manifest and Icon
+      run: |
+        pyinstaller --onefile --manifest=admin_dailyquests.manifest --icon=assets/Icons/image0.jpeg Modules/DailyQuests.py
+
+    - name: Compile PyAutoRaid to EXE with Administrator Manifest and Icon
+      run: |
+        pyinstaller --onefile --manifest=admin_pyautoraid.manifest --icon=assets/Icons/image1.jpeg Modules/PyAutoRaid.py
 
     - name: Install Inno Setup
       run: |
