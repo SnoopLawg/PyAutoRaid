@@ -21,7 +21,7 @@ jobs:
     - name: Install Dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install pyinstaller requests  # Include requests here for increment_version.py
+        pip install pyinstaller requests pyautogui  # Include requests here for increment_version.py
 
     - name: Install Resource Hacker
       run: |
@@ -42,11 +42,11 @@ jobs:
 
     - name: Compile DailyQuests to EXE with Icon
       run: |
-        pyinstaller --onefile --icon=assets/Icons/image0.ico Modules/DailyQuests.py
+        pyinstaller -w --onefile --icon=assets/Icons/image0.ico --add-data 'assets;assets'Modules/DailyQuests.py
 
     - name: Compile PyAutoRaid to EXE with Icon
       run: |
-        pyinstaller --onefile --icon=assets/Icons/image1.ico Modules/PyAutoRaid.py
+        pyinstaller -w --onefile --icon=assets/Icons/image1.ico --add-data 'assets;assets' Modules/PyAutoRaid.py
 
     - name: Embed Manifest into DailyQuests
       run: |
