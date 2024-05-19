@@ -42,19 +42,19 @@ jobs:
 
     - name: Compile DailyQuests to EXE with Icon
       run: |
-        pyinstaller --onefile --icon=assets/Icons/image0.ico Modules/DailyQuests.py
+        pyinstaller --onefile --icon=assets/Icons/image0.jpeg Modules/DailyQuests.py
 
     - name: Compile PyAutoRaid to EXE with Icon
       run: |
-        pyinstaller --onefile --icon=assets/Icons/image1.ico Modules/PyAutoRaid.py
+        pyinstaller --onefile --icon=assets/Icons/image1.jpeg Modules/PyAutoRaid.py
 
     - name: Embed Manifest into DailyQuests
       run: |
-        "C:\Program Files\Resource Hacker\ResourceHacker.exe" -open dist\DailyQuests.exe -save dist\DailyQuests.exe -action addoverwrite -res admin_dailyquests.manifest -mask MANIFEST,1,
+        & "C:\Program Files\Resource Hacker\ResourceHacker.exe" -open dist\DailyQuests.exe -save dist\DailyQuests.exe -action addoverwrite -res admin_dailyquests.manifest -mask MANIFEST,1
 
     - name: Embed Manifest into PyAutoRaid
       run: |
-        "C:\Program Files\Resource Hacker\ResourceHacker.exe" -open dist\PyAutoRaid.exe -save dist\PyAutoRaid.exe -action addoverwrite -res admin_pyautoraid.manifest -mask MANIFEST,1,
+        & "C:\Program Files\Resource Hacker\ResourceHacker.exe" -open dist\PyAutoRaid.exe -save dist\PyAutoRaid.exe -action addoverwrite -res admin_pyautoraid.manifest -mask MANIFEST,1
 
     - name: Install Inno Setup
       run: |
