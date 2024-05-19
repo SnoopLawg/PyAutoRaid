@@ -42,11 +42,11 @@ jobs:
 
     - name: Compile DailyQuests to EXE with Icon
       run: |
-        pyinstaller --onefile --icon=assets/Icons/image0.jpeg Modules/DailyQuests.py
+        pyinstaller --onefile --icon=assets/Icons/image0.ico Modules/DailyQuests.py
 
     - name: Compile PyAutoRaid to EXE with Icon
       run: |
-        pyinstaller --onefile --icon=assets/Icons/image1.jpeg Modules/PyAutoRaid.py
+        pyinstaller --onefile --icon=assets/Icons/image1.ico Modules/PyAutoRaid.py
 
     - name: Embed Manifest into DailyQuests
       run: |
