@@ -48,6 +48,7 @@ jobs:
       run: |
         new_version=$(python increment_version.py)
         echo "::set-output name=new_version::$new_version"
+      shell: bash
 
     - name: Create GitHub Release
       id: create_release
