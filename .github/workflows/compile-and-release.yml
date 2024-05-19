@@ -26,7 +26,7 @@ jobs:
     - name: Install Resource Hacker
       run: |
         curl -L -o reshacker_setup.exe "http://www.angusj.com/resourcehacker/reshacker_setup.exe"
-        start /wait reshacker_setup.exe /VERYSILENT /DIR="C:\Program Files\Resource Hacker"
+        Start-Process -FilePath .\reshacker_setup.exe -ArgumentList '/VERYSILENT', '/DIR="C:\Program Files\Resource Hacker"' -Wait
 
     - name: Generate DailyQuests Manifest
       run: |
