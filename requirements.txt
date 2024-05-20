@@ -2,6 +2,8 @@ psutil==5.9.5
 PyAutoGUI==0.9.53
 PyGetWindow==0.0.9
 pywin32==306
-Requests==2.31.0
+requests==2.31.0
 screeninfo==0.8.1
 ttkthemes==3.2.2
+pyscreeze  # Ensure pyscreeze is included as it's a dependency of PyAutoGUI
+Pillow  # Ensure Pillow is included as it's a dependency of pyscreeze
