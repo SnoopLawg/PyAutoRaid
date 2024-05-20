@@ -5,5 +5,6 @@ pywin32==306
 requests==2.31.0
 screeninfo==0.8.1
 ttkthemes==3.2.2
-pyscreeze==0.1.27  # Ensure pyscreeze is included as it's a dependency of PyAutoGUI
-Pillow==9.5.0  # Ensure Pillow is included as it's a dependency of pyscreeze
+pyscreeze==0.1.27
+Pillow==9.5.0
+opencv-python==4.5.5.64  # Add OpenCV

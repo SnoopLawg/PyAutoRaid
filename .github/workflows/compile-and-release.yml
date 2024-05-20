@@ -43,11 +43,11 @@ jobs:
 
     - name: Compile DailyQuests to EXE with Icon and Data
       run: |
-        python -m PyInstaller --onefile --icon=assets/Icons/image0.ico --hidden-import=pyautogui --hidden-import=pyscreeze --hidden-import=Pillow --hidden-import=pywin32 --hidden-import=psutil --hidden-import=PyGetWindow --hidden-import=requests --hidden-import=screeninfo --hidden-import=ttkthemes --add-data "assets;assets" Modules/DailyQuests.py
+        python -m PyInstaller --onefile --icon=assets/Icons/image0.ico --hidden-import=pyautogui --hidden-import=pyscreeze --hidden-import=Pillow --hidden-import=pywin32 --hidden-import=psutil --hidden-import=PyGetWindow --hidden-import=requests --hidden-import=screeninfo --hidden-import=ttkthemes --hidden-import=cv2 --add-data "assets;assets" Modules/DailyQuests.py
 
     - name: Compile PyAutoRaid to EXE with Icon and Data
       run: |
-        python -m PyInstaller --onefile --icon=assets/Icons/image1.ico --hidden-import=pyautogui --hidden-import=pyscreeze --hidden-import=Pillow --hidden-import=pywin32 --hidden-import=psutil --hidden-import=PyGetWindow --hidden-import=requests --hidden-import=screeninfo --hidden-import=ttkthemes --add-data "assets;assets" Modules/PyAutoRaid.py
+        python -m PyInstaller --onefile --icon=assets/Icons/image1.ico --hidden-import=pyautogui --hidden-import=pyscreeze --hidden-import=Pillow --hidden-import=pywin32 --hidden-import=psutil --hidden-import=PyGetWindow --hidden-import=requests --hidden-import=screeninfo --hidden-import=ttkthemes --hidden-import=cv2 --add-data "assets;assets" Modules/PyAutoRaid.py
 
     - name: Embed Manifest into DailyQuests
       run: |
