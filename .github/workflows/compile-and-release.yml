@@ -43,11 +43,11 @@ jobs:
 
     - name: Compile DailyQuests to EXE with Icon
       run: |
-        python -m PyInstaller --onefile --icon=assets/Icons/image0.ico --hidden-import=pyautogui --hidden-import=requests Modules/DailyQuests.py
+        python -m PyInstaller --onefile --icon=assets/Icons/image0.ico --hidden-import=requests --add-data 'assets;assets' Modules/DailyQuests.py
 
     - name: Compile PyAutoRaid to EXE with Icon
       run: |
-        python -m PyInstaller --onefile --icon=assets/Icons/image1.ico --hidden-import=pyautogui --hidden-import=requests Modules/PyAutoRaid.py
+        python -m PyInstaller --onefile --icon=assets/Icons/image1.ico --hidden-import=requests --add-data 'assets;assets' Modules/PyAutoRaid.py
 
     - name: Embed Manifest into DailyQuests
       run: |
