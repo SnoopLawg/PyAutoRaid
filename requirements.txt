@@ -1,13 +1,11 @@
 psutil==5.9.5
 PyGetWindow==0.0.9
 pywin32==306
-requests==2.31.0
+Requests==2.32.3
 screeninfo==0.8.1
 ttkthemes==3.2.2
-PyAutoGUI==0.9.50
-# PyScreeze==0.1.18
+PyAutoGUI==0.9.53
+PyScreeze==0.1.28
 Pillow==9.5.0
 opencv-python==4.10.0.84
-screeninfo==0.8.1
-ttkthemes==3.2.2
 numpy==2.1.2
