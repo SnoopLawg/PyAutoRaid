@@ -616,13 +616,15 @@ class ClanBossCommand(Command):
             pyautogui.click(1080, 724)
             pyautogui.drag(0, -200, duration=1)
             while pyautogui.locateOnScreen(CB_reward_image, confidence=0.8):
-                CBrewardx, CBrewardy = pyautogui.locateCenterOnScreen(
-                    CB_reward_image, confidence=0.8
-                )
-                time.sleep(2)
-                pyautogui.click(CBrewardx, CBrewardy)
-                time.sleep(2)
-                logger.info("Collected Clan Boss reward.")
+                for CBreward in pyautogui.locateAllOnScreen(CB_reward_image, confidence=0.8):
+                    CBrewardx, CBrewardy = pyautogui.center(CBreward)
+                    pyautogui.click(CBrewardx, CBrewardy)
+                    time.sleep(2)
+                    for ClaimButton in pyautogui.locateAllOnScreen(CB_claim_image, confidence=0.8):
+                        Claimx, Claimy = pyautogui.center(ClaimButton)
+                        pyautogui.click(Claimx, Claimy)
+                        time.sleep(3)
+                        pyautogui.click(Claimx, Claimy)
 
             # Collect claimed rewards
             while pyautogui.locateOnScreen(nightmare_claimed_image, confidence=0.8):
