@@ -16,6 +16,8 @@ from tkinter import ttk
 from tkinter import *
 from ttkthemes import ThemedTk
 import pyscreeze
+from FactionWars import FactionWarsCommand
+
 pyscreeze.USE_IMAGE_NOT_FOUND_EXCEPTION = False
 # Configure logging
 logging.basicConfig(
@@ -778,6 +780,7 @@ class Daily:
             'rewards': RewardsCommand(self),
             'daily_ten_classic_arena': DailyTenClassicArenaCommand(self),
             'clanboss': ClanBossCommand(self),
+            'faction_wars': FactionWarsCommand(self)
             # Add other commands as needed
         }
 
@@ -1156,7 +1159,7 @@ class GUI:
             # Creating a ttk Frame which will contain all other widgets
             main_frame = ttk.Frame(master)
             main_frame.pack(fill=tkinter.BOTH, expand=True)
-            config_keys = ['rewards', 'daily_ten_classic_arena', 'clanboss']
+            config_keys = ['rewards', 'daily_ten_classic_arena', 'clanboss', 'faction_wars']
             # Automated Mode Checkbox
             self.automated_mode = tkinter.IntVar()
             if settings_config.get("automated_mode") == 'True':
@@ -1177,7 +1180,7 @@ class GUI:
 
             # Other Checkboxes
             self.checkbox_texts = [
-                "Collect Rewards", "Ten Classic Arena Battles", "Clan Boss",
+                "Collect Rewards", "Ten Classic Arena Battles", "Clan Boss", "Faction Wars"
             ]
             self.checkboxes = []
             self.vars = []
