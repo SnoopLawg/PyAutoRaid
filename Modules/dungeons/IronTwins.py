@@ -28,7 +28,7 @@ class IronTwinsCommand(Command):
             dungeons_image = os.path.join(self.app.asset_path, "dungeons.png")
             iron_twins_image = os.path.join(self.app.asset_path, "ironTwinsDungeon.png")
             iron_twins_stage_15_image = os.path.join(self.app.asset_path, "ironTwinsStage15.png")
-            multi_battle_image = os.path.join(self.app.asset_path, "factionWarsMultiBattle.png")
+            multi_battle_image = os.path.join(self.app.asset_path, "multiBattleButton.png")
             start_stage_multi_battle_image = os.path.join(self.app.asset_path, "startMultiBattle.png")
             in_battle_image = os.path.join(self.app.asset_path, "inBattle.png")
             in_mutli_battle_image = os.path.join(self.app.asset_path, "turnOffMultiBattle.png")

@@ -17,9 +17,9 @@ from tkinter import ttk
 from tkinter import *
 from ttkthemes import ThemedTk
 import pyscreeze
-from FactionWars import FactionWarsCommand
-from IronTwins import IronTwinsCommand
-from DoomTower import DoomTowerCommand
+from Modules.faction_wars.FactionWars import FactionWarsCommand
+from Modules.dungeons.IronTwins import IronTwinsCommand
+from Modules.doom_tower.DoomTower import DoomTowerCommand
 
 pyscreeze.USE_IMAGE_NOT_FOUND_EXCEPTION = False
 # Configure logging

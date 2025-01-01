@@ -46,7 +46,7 @@ class FactionWarsCommand(Command):
             battle_btn_image = os.path.join(self.app.asset_path, "battleBTN.png")
             faction_wars_image = os.path.join(self.app.asset_path, "factionWars.png")
             stage_open_image = os.path.join(self.app.asset_path, "stageStart.png")
-            faction_wars_multi_battle_image = os.path.join(self.app.asset_path, "factionWarsMultiBattle.png")
+            faction_wars_multi_battle_image = os.path.join(self.app.asset_path, "multiBattleButton.png")
             start_stage_multi_battle_image = os.path.join(self.app.asset_path, "startMultiBattle.png")
             mutli_battle_complete_image = os.path.join(self.app.asset_path, "mutliBattleComplete.png")
             in_battle_image = os.path.join(self.app.asset_path, "inBattle.png")
