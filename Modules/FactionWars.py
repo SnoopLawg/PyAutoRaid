@@ -150,16 +150,26 @@ class FactionWarsCommand(Command):
                 logger.warning("No Battle button found.")
                 break
 
-        # Handle multi-battle
+        # Check for the multi-battle option
         while pyautogui.locateOnScreen(faction_wars_multi_battle_image, confidence=0.8):
             logger.info("Multi-battle option detected. Starting multi-battle.")
+            self.click_image(faction_wars_multi_battle_image, "Multi-battle button")
+            self.click_image(start_stage_multi_battle_image, "Start Multi-battle")
             x, y = pyautogui.locateCenterOnScreen(faction_wars_multi_battle_image, confidence=0.8)
             pyautogui.click(x, y)
             time.sleep(1)
-            x, y = pyautogui.locateCenterOnScreen(start_stage_multi_battle_image, confidence=0.8)
-            pyautogui.click(x, y)
-            time.sleep(1)
             
+            # Check for the start stage multi-battle image
+            position = pyautogui.locateCenterOnScreen(start_stage_multi_battle_image, confidence=0.8)
+            if position:
+                x, y = position
+                pyautogui.click(x, y)
+                time.sleep(1)
+            else:
+                logger.error("Start stage multi-battle image not found on the screen.")
+        else:
+            logger.error("Multi-battle option not detected.")
+        
         # Wait for battle to complete
         while pyautogui.locateOnScreen(in_battle_image, confidence=0.8) or pyautogui.locateOnScreen(in_mutli_battle_image, confidence=0.8):
             logger.info("Waiting for the battle results.")
