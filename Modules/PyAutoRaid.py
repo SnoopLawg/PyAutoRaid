@@ -17,9 +17,9 @@ from tkinter import ttk
 from tkinter import *
 from ttkthemes import ThemedTk
 import pyscreeze
-from Modules.faction_wars.FactionWars import FactionWarsCommand
-from Modules.dungeons.IronTwins import IronTwinsCommand
-from Modules.doom_tower.DoomTower import DoomTowerCommand
+from faction_wars.FactionWars import FactionWarsCommand
+from dungeons.IronTwins import IronTwinsCommand
+from doom_tower.DoomTower import DoomTowerCommand
 
 pyscreeze.USE_IMAGE_NOT_FOUND_EXCEPTION = False
 # Configure logging
@@ -783,7 +783,7 @@ class Daily:
             'rewards': RewardsCommand(self),
             'daily_ten_classic_arena': DailyTenClassicArenaCommand(self),
             'clanboss': ClanBossCommand(self),
-            'faction_wars': FactionWarsCommand(self),
+            'faction_wars': FactionWarsCommand(self, logger),
             'iron_twins': IronTwinsCommand(self),
             'doom_tower': DoomTowerCommand(self)
             # Add other commands as needed
