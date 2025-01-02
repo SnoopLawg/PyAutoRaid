@@ -1,27 +1,19 @@
 import os
 import time
 import pyautogui
-import logging
-
-logging.basicConfig(
-    filename='PyAutoRaid.log',
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    filemode='w',
-    level=logging.DEBUG
-)
-logger = logging.getLogger(__name__)
 
 class Command:
     def execute(self):
         pass
 
 class DoomTowerCommand(Command):
-    def __init__(self, app):
+    def __init__(self, app, logger):
         self.app = app        
+        self.logger = logger
 
     def execute(self):
         try:
-            logger.info("Starting Doom Tower task.")
+            self.logger.info("Starting Doom Tower task.")
 
             # Define image paths
             battle_btn_image = os.path.join(self.app.asset_path, "battleBTN.png")
@@ -33,7 +25,7 @@ class DoomTowerCommand(Command):
             in_mutli_battle_image = os.path.join(self.app.asset_path, "turnOffMultiBattle.png")
             mutli_battle_complete_image = os.path.join(self.app.asset_path, "mutliBattleComplete.png")
             
-            logger.info("Attempting to close any existing pop-ups.")
+            self.logger.info("Attempting to close any existing pop-ups.")
             self.app.delete_popup()
 
             # Navigate to battle screen
@@ -54,11 +46,11 @@ class DoomTowerCommand(Command):
                 # If Wave stage Start Multi Battle
                 x, y = pyautogui.locateCenterOnScreen(doom_tower_start_battle, confidence=0.8)
                 pyautogui.click(x, y)
-                logger.info(f"Clicked on Doom Tower Start Battle at coordinates ({x}, {y}).")
+                self.logger.info(f"Clicked on Doom Tower Start Battle at coordinates ({x}, {y}).")
                 time.sleep(2)
                 
                 if pyautogui.locateOnScreen(doom_tower_start_battle, confidence=0.8):
-                    logger.info("Must not have enough keys. Doom Tower Comlete")
+                    self.logger.info("Must not have enough keys. Doom Tower Comlete")
                     pyautogui.press("esc")
                     time.sleep(1)
                     pyautogui.press("esc")
@@ -67,7 +59,7 @@ class DoomTowerCommand(Command):
                 
                 # Wait for battle to complete
                 while pyautogui.locateOnScreen(in_battle_image, confidence=0.8) or pyautogui.locateOnScreen(in_mutli_battle_image, confidence=0.8):
-                    logger.info("Waiting for the battle results.")
+                    self.logger.info("Waiting for the battle results.")
                     time.sleep(10)
                 while pyautogui.locateOnScreen(mutli_battle_complete_image, confidence=0.8):
                     # Back to doom tower to check if the boss is ready or failed run
@@ -90,13 +82,13 @@ class DoomTowerCommand(Command):
             time.sleep(5)
             # Wait for battle to complete
             while pyautogui.locateOnScreen(in_battle_image, confidence=0.8):
-                logger.info("Waiting for the battle results.")
+                self.logger.info("Waiting for the battle results.")
                 time.sleep(10)            
             
             self.app.back_to_bastion()
-            logger.info("Faction Wars task completed successfully.")
+            self.logger.info("Faction Wars task completed successfully.")
         except Exception as e:
-            logger.error(f"Error in IronTwinsCommand: {e}", exc_info=True)
+            self.logger.error(f"Error in IronTwinsCommand: {e}", exc_info=True)
             self.app.back_to_bastion()
 
     def click_image(self, imagePath, description):
@@ -104,5 +96,5 @@ class DoomTowerCommand(Command):
         while pyautogui.locateOnScreen(imagePath, confidence=0.8):
             x, y = pyautogui.locateCenterOnScreen(imagePath, confidence=0.8)
             pyautogui.click(x, y)
-            logger.info(f"Clicked on {description} at coordinates ({x}, {y}).")
+            self.logger.info(f"Clicked on {description} at coordinates ({x}, {y}).")
             time.sleep(2)

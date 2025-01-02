@@ -1,27 +1,19 @@
 import os
 import time
 import pyautogui
-import logging
-
-logging.basicConfig(
-    filename='PyAutoRaid.log',
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    filemode='w',
-    level=logging.DEBUG
-)
-logger = logging.getLogger(__name__)
 
 class Command:
     def execute(self):
         pass
 
 class IronTwinsCommand(Command):
-    def __init__(self, app):
+    def __init__(self, app, logger):
         self.app = app        
+        self.logger = logger
 
     def execute(self):
         try:
-            logger.info("Starting Iron Twinstask.")
+            self.logger.info("Starting Iron Twinstask.")
 
             # Define image paths
             battle_btn_image = os.path.join(self.app.asset_path, "battleBTN.png")
@@ -34,7 +26,7 @@ class IronTwinsCommand(Command):
             in_mutli_battle_image = os.path.join(self.app.asset_path, "turnOffMultiBattle.png")
             mutli_battle_complete_image = os.path.join(self.app.asset_path, "mutliBattleComplete.png")
             
-            logger.info("Attempting to close any existing pop-ups.")
+            self.logger.info("Attempting to close any existing pop-ups.")
             self.app.delete_popup()
 
             # Navigate to battle screen
@@ -56,21 +48,21 @@ class IronTwinsCommand(Command):
                     
                     # Click the battle button
                     pyautogui.click(bottom_x, bottom_y)
-                    logger.info(f"Clicked on the highest stage Battle button at coordinates: ({bottom_x}, {bottom_y}).")
+                    self.logger.info(f"Clicked on the highest stage Battle button at coordinates: ({bottom_x}, {bottom_y}).")
                     time.sleep(1)
 
                     # Check if the battle button is still visible
                     if pyautogui.locateOnScreen(iron_twins_stage_15_image, confidence=0.8):
-                        logger.warning("Battle button is still visible. Pressing escape to go back.")
+                        self.logger.warning("Battle button is still visible. Pressing escape to go back.")
                         pyautogui.press("esc")
                         time.sleep(1)
                     break
                 else:
-                    logger.warning("No Battle button found.")
+                    self.logger.warning("No Battle button found.")
                     break
             # Start Multi Battle
             while pyautogui.locateOnScreen(multi_battle_image, confidence=0.8):
-                logger.info("Multi-battle option detected. Starting multi-battle.")
+                self.logger.info("Multi-battle option detected. Starting multi-battle.")
                 x, y = pyautogui.locateCenterOnScreen(multi_battle_image, confidence=0.8)
                 pyautogui.click(x, y)
                 time.sleep(1)
@@ -81,7 +73,7 @@ class IronTwinsCommand(Command):
             
              # Wait for battle to complete
             while pyautogui.locateOnScreen(in_battle_image, confidence=0.8) or pyautogui.locateOnScreen(in_mutli_battle_image, confidence=0.8):
-                logger.info("Waiting for the battle results.")
+                self.logger.info("Waiting for the battle results.")
                 time.sleep(10)
                 
             while pyautogui.locateOnScreen(mutli_battle_complete_image, confidence=0.8):
@@ -90,9 +82,9 @@ class IronTwinsCommand(Command):
             
             
             self.app.back_to_bastion()
-            logger.info("Iron Twins task completed successfully.")
+            self.logger.info("Iron Twins task completed successfully.")
         except Exception as e:
-            logger.error(f"Error in IronTwinsCommand: {e}", exc_info=True)
+            self.logger.error(f"Error in IronTwinsCommand: {e}", exc_info=True)
             self.app.back_to_bastion()
 
     def click_image(self, image_path, description):
@@ -100,5 +92,5 @@ class IronTwinsCommand(Command):
         while pyautogui.locateOnScreen(image_path, confidence=0.8):
             x, y = pyautogui.locateCenterOnScreen(image_path, confidence=0.8)
             pyautogui.click(x, y)
-            logger.info(f"Clicked on {description} at coordinates ({x}, {y}).")
+            self.logger.info(f"Clicked on {description} at coordinates ({x}, {y}).")
             time.sleep(2)

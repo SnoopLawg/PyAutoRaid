@@ -784,8 +784,8 @@ class Daily:
             'daily_ten_classic_arena': DailyTenClassicArenaCommand(self),
             'clanboss': ClanBossCommand(self),
             'faction_wars': FactionWarsCommand(self, logger),
-            'iron_twins': IronTwinsCommand(self),
-            'doom_tower': DoomTowerCommand(self)
+            'iron_twins': IronTwinsCommand(self, logger),
+            'doom_tower': DoomTowerCommand(self, logger)
             # Add other commands as needed
         }
 
