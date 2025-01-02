@@ -68,13 +68,18 @@ class DoomTowerCommand(Command):
                     pyautogui.press("esc")
                     time.sleep(1)
 
+            if not pyautogui.locateOnScreen(doom_tower_stages_screen, confidence=0.7):
+                self.logger.info("Can't find doom tower stages screen.")
+            
             # If Boss Stage Click Boss Right Hand Side
-            if pyautogui.locateOnScreen(doom_tower_stages_screen, confidence=0.8):
-                pyautogui.click(540, 1270)
+            if pyautogui.locateOnScreen(doom_tower_stages_screen, confidence=0.7):
+                self.logger.info("Found doom tower stages screen. Clicking Right Side")
+                pyautogui.click(1250, 500)
                 time.sleep(2)
 
             # Click on boss that is stage 120
-            if pyautogui.locateOnScreen(doom_tower_stages_screen, confidence=0.8):
+            if pyautogui.locateOnScreen(doom_tower_stages_screen, confidence=0.7):
+                self.logger.info("Found doom tower stages screen. Clicking Middle (for stage 120)")
                 pyautogui.click(950, 500)
                 time.sleep(2)
                 
@@ -83,18 +88,31 @@ class DoomTowerCommand(Command):
             # Wait for battle to complete
             while pyautogui.locateOnScreen(in_battle_image, confidence=0.8):
                 self.logger.info("Waiting for the battle results.")
-                time.sleep(10)            
-            
+                time.sleep(10)    
+                        
+            pyautogui.press("esc")
             self.app.back_to_bastion()
-            self.logger.info("Faction Wars task completed successfully.")
+            self.logger.info("Doom Tower task completed successfully.")
         except Exception as e:
-            self.logger.error(f"Error in IronTwinsCommand: {e}", exc_info=True)
+            self.logger.error(f"Error in DoomTowerCommand: {e}", exc_info=True)
             self.app.back_to_bastion()
 
-    def click_image(self, imagePath, description):
+    def click_image(self, imagePath, description, retry=True):
         """Helper to click an image on screen."""
-        while pyautogui.locateOnScreen(imagePath, confidence=0.8):
-            x, y = pyautogui.locateCenterOnScreen(imagePath, confidence=0.8)
-            pyautogui.click(x, y)
-            self.logger.info(f"Clicked on {description} at coordinates ({x}, {y}).")
-            time.sleep(2)
+        if retry:
+            # Retry until the image is found and clicked
+            while pyautogui.locateOnScreen(imagePath, confidence=0.8):
+                x, y = pyautogui.locateCenterOnScreen(imagePath, confidence=0.8)
+                pyautogui.click(x, y)
+                self.logger.info(f"Clicked on {description} at coordinates ({x}, {y}).")
+                time.sleep(2)
+        else:
+            # Single attempt to click the image
+            location = pyautogui.locateOnScreen(imagePath, confidence=0.8)
+            if location:
+                x, y = pyautogui.locateCenterOnScreen(imagePath, confidence=0.8)
+                pyautogui.click(x, y)
+                time.sleep(2)
+                self.logger.info(f"Clicked on {description} at coordinates ({x}, {y}).")
+            else:
+                self.logger.warning(f"{description} not found for a single click attempt.")
