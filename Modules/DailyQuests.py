@@ -682,7 +682,7 @@ class Daily:
         self.delete_popup()
 
     def daily_seven_boss_battles(self):
-        campaign_images=["\\battleBTN.png","\\campaignButtonJump.png","\\campaignStart.png",]
+        campaign_images=["\\battleBTN.png","\\campaignButtonJump.png","\\campaignStart.png","\\campaignStartSuper.png",]
         self.campaignreached=0
         for i in campaign_images:
             image=i
