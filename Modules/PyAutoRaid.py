@@ -12,10 +12,15 @@ import datetime
 import threading
 from screeninfo import get_monitors
 from tkinter import messagebox
+from tkinter import scrolledtext
 from tkinter import ttk
 from tkinter import *
 from ttkthemes import ThemedTk
 import pyscreeze
+from faction_wars.FactionWars import FactionWarsCommand
+from dungeons.IronTwins import IronTwinsCommand
+from doom_tower.DoomTower import DoomTowerCommand
+
 pyscreeze.USE_IMAGE_NOT_FOUND_EXCEPTION = False
 # Configure logging
 logging.basicConfig(
@@ -773,11 +778,14 @@ class Daily:
         self.AS_bought = 0
         self.MS_bought = 0
         self.manual_run_triggered = False
-
+ 
         self.command_registry = {
             'rewards': RewardsCommand(self),
             'daily_ten_classic_arena': DailyTenClassicArenaCommand(self),
             'clanboss': ClanBossCommand(self),
+            'faction_wars': FactionWarsCommand(self, logger),
+            'iron_twins': IronTwinsCommand(self, logger),
+            'doom_tower': DoomTowerCommand(self, logger)
             # Add other commands as needed
         }
 
@@ -865,19 +873,42 @@ class Daily:
 
     def find_raid_path(self):
         try:
+            logger.info("Starting focused search for Raid.exe...")
             appdata_local = os.path.join(os.environ['LOCALAPPDATA'])
             raid_feature = "Raid.exe"
-            for root, dirs, files in os.walk(appdata_local):
-                if raid_feature in dirs or raid_feature in files:
+
+            # Most specific likely path
+            current_path = os.path.join(appdata_local, "PlariumPlay", "StandAloneApps", "raid-shadow-legends")
+
+            # Step 1: Check if the likely path exists; move backward if it doesn't
+            while not os.path.exists(current_path) and current_path != appdata_local:
+                logger.debug(f"Path not found: {current_path}. Moving to parent directory.")
+                current_path = os.path.dirname(current_path)
+
+            if not os.path.exists(current_path):
+                logger.error("No valid path found starting from likely paths.")
+                self.steps["Raid_path"] = "False"
+                sys.exit(1)
+
+            logger.debug(f"Valid path found: {current_path}. Starting recursive search here.")
+
+            # Step 2: Perform a recursive search starting from the valid path
+            for root, dirs, files in os.walk(current_path, topdown=True):
+                # Check for the target file
+                if raid_feature in files:
                     raidloc = os.path.join(root, raid_feature)
-                    logging.debug(f"Found Raid.exe installed at {raidloc}")
+                    logger.debug(f"Found Raid.exe at {raidloc}")
                     self.steps["Raid_path"] = "True"
                     return raidloc
+
+            # Step 3: If not found, log an error
             self.steps["Raid_path"] = "False"
-            logging.error("Raid.exe was not found.")
+            logger.error("Raid.exe was not found after recursive search.")
             sys.exit(1)
+
         except Exception as e:
             logger.error(f"Error in find_raid_path: {e}")
+
 
     def get_asset_path(self):
         try:
@@ -1009,19 +1040,33 @@ class Daily:
                 self.width = m.width
                 self.height = m.height
                 main = m.is_primary
-                if self.width != 1920 or self.height != 1080:
-                    tkinter.messagebox.showerror(
-                        "Warning",
-                        "Your Screen pixel is not 1920 by 1080. This may cause issues",
-                    )
-                    logger.warning("Screen resolution is not 1920x1080.")
-                if main == True:
+
+                # Log screen resolution
+                logger.info(f"Detected screen resolution: width={self.width}, height={self.height}, primary={main}")
+
+                if main:  # Only consider the primary monitor
+                    if self.width != 1920 or self.height != 1080:
+                        logger.warning("Screen resolution is not 1920x1080. This may cause issues.")
+                        tkinter.messagebox.showerror(
+                            "Warning",
+                            "Your screen resolution is not 1920x1080. This may cause issues.",
+                        )
+                    else:
+                        logger.info("Screen resolution is 1920x1080.")
+
                     center_width = int((self.width / 2) - 450)
                     center_height = int((self.height / 2) - 300)
-                    logger.info(f"Screen info obtained: width={self.width}, height={self.height}")
+                    logger.info(f"Screen info obtained: center_width={center_width}, center_height={center_height}")
                     return (center_width, center_height)
+
+            # If no primary monitor was detected
+            logger.error("No primary monitor detected.")
+            raise RuntimeError("No primary monitor detected.")
+
         except Exception as e:
             logger.error(f"Error in get_screen_info: {e}")
+            raise
+
 
     def window_sizing_centering(self):
         try:
@@ -1044,10 +1089,12 @@ class Daily:
         try:
             self.window_sizing_centering()
             exit_add_image = os.path.join(self.asset_path, "exitAdd.png")
+            home_battle_button = os.path.join(self.asset_path, "battleBTN.png")
+            
             while True:
                 try:
                     # Attempt to locate the image
-                    if pyautogui.locateOnScreen(exit_add_image, confidence=0.7) is not None:
+                    if pyautogui.locateOnScreen(exit_add_image, confidence=0.7) is not None or pyautogui.locateOnScreen(home_battle_button, confidence=0.7):
                         logger.info("Image found. Breaking the loop.")
                         break
                     else:
@@ -1137,7 +1184,6 @@ class Daily:
                 os.system("taskkill /f /im Raid.exe")
                 break
 
-# GUI class with error handling and logging
 class GUI:
     def __init__(self, master):
         try:
@@ -1156,7 +1202,7 @@ class GUI:
             # Creating a ttk Frame which will contain all other widgets
             main_frame = ttk.Frame(master)
             main_frame.pack(fill=tkinter.BOTH, expand=True)
-            config_keys = ['rewards', 'daily_ten_classic_arena', 'clanboss']
+            config_keys = ['rewards', 'daily_ten_classic_arena', 'clanboss', 'faction_wars', 'iron_twins', 'doom_tower']
             # Automated Mode Checkbox
             self.automated_mode = tkinter.IntVar()
             if settings_config.get("automated_mode") == 'True':
@@ -1177,7 +1223,7 @@ class GUI:
 
             # Other Checkboxes
             self.checkbox_texts = [
-                "Collect Rewards", "Ten Classic Arena Battles", "Clan Boss",
+                "Collect Rewards", "Ten Classic Arena Battles", "Clan Boss", "Faction Wars", "Iron Twins", "Doom Tower"
             ]
             self.checkboxes = []
             self.vars = []
@@ -1200,6 +1246,18 @@ class GUI:
 
             self.btn_quit_all = ttk.Button(main_frame, text="Quit All", command=self.quit_all)
             self.btn_quit_all.grid(row=len(self.checkbox_texts) + 3, column=1, padx=10, pady=(5, 5), sticky="E")
+
+            # Separator above the log box
+            self.separator2 = ttk.Separator(main_frame, orient='horizontal')
+            self.separator2.grid(row=len(self.checkbox_texts) + 4, column=0, columnspan=2, padx=10, pady=5, sticky="EW")
+
+            # Log Text Box
+            self.log_text = scrolledtext.ScrolledText(main_frame, wrap=tkinter.WORD, height=10, state="disabled")
+            self.log_text.grid(row=len(self.checkbox_texts) + 5, column=0, columnspan=2, padx=10, pady=(5, 10), sticky="EW")
+
+            # Redirect logs to the text box
+            self.redirect_logs()
+
             logger.info("GUI initialized successfully.")
         except Exception as e:
             logger.error(f"Error initializing GUI: {e}")
@@ -1237,6 +1295,24 @@ class GUI:
             logger.info("Timer thread started.")
         except Exception as e:
             logger.error(f"Error in timer_thread: {e}")
+            
+    def redirect_logs(self):
+        """Redirect log output to the text box."""
+        class TextHandler(logging.Handler):
+            def __init__(self, widget):
+                super().__init__()
+                self.widget = widget
+
+            def emit(self, record):
+                msg = self.format(record)
+                self.widget.config(state="normal")
+                self.widget.insert(tkinter.END, msg + "\n")
+                self.widget.config(state="disabled")
+                self.widget.see(tkinter.END)
+
+        handler = TextHandler(self.log_text)
+        handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
+        logger.addHandler(handler)
 
 def on_closing():
     try:
