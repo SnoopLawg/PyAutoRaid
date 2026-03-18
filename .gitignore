@@ -1,2 +1,10 @@
 DQconfig.ini
 PARconfig.ini
+*.log
+Logging.log
+PyAutoRaid.log
+__pycache__/
+*.pyc
+dist/
+build/
+*.spec
