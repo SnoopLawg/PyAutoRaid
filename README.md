@@ -18,8 +18,7 @@
 *** for contributors-url, forks-url, etc. This is an optional, concise syntax you may use.
 *** https://www.markdownguide.org/basic-syntax/#reference-style-links
 -->
-Total downloads: 1815
---- 
+[![Downloads][downloads-shield]][downloads-url]
 [![Contributors][contributors-shield]][contributors-url]
 [![Forks][forks-shield]][forks-url]
 [![Stargazers][stars-shield]][stars-url]
@@ -218,6 +217,8 @@ Project Link: [https://github.com/SnoopLawg/PyAutoRaid](https://github.com/Snoop
 
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
+[downloads-shield]: https://img.shields.io/github/downloads/SnoopLawg/PyAutoRaid/total.svg?style=for-the-badge
+[downloads-url]: https://github.com/SnoopLawg/PyAutoRaid/releases
 [contributors-shield]: https://img.shields.io/github/contributors/SnoopLawg/PyAutoRaid.svg?style=for-the-badge
 [contributors-url]: https://github.com/SnoopLawg/PyAutoRaid/graphs/contributors
 [forks-shield]: https://img.shields.io/github/forks/SnoopLawg/PyAutoRaid.svg?style=for-the-badge
