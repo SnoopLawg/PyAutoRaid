@@ -69,6 +69,19 @@ Extends `BaseDaily`. Uses `getattr()` to dynamically call methods based on `DQco
 
 `.github/workflows/compile-and-release.yml`: PyInstaller compile, embed admin manifests via Resource Hacker, Inno Setup installer, auto-increment version tag, upload to GitHub Releases.
 
+### Hybrid Controller (`Modules/hybrid_controller.py`) — NEW
+
+Next-gen approach using Raid Toolkit SDK for game state + pyautogui for clicks.
+
+**Architecture:**
+- `rtk_client.py` — WebSocket client to RTK at `ws://localhost:9090`. Synchronous wrapper (uses threading Events instead of asyncio). Provides typed access to all RTK APIs: AccountApi, RealtimeApi, StaticDataApi.
+- `game_state.py` — State machine layer. `View` enum maps 200+ RTK ViewKey strings. `GameState` class provides `current_view()`, `wait_for_view()`, `wait_for_battle_end()`, `ensure_village()`, `smart_click()` (click + verify via RTK).
+- `hybrid_controller.py` — Closed-loop controller. Each task reads state from RTK, clicks via pyautogui, then verifies the state change via RTK. Entry point: `python Modules/hybrid_controller.py`
+
+**Requires Raid Toolkit SDK** installed and running on Windows alongside the game. Install from https://raidtoolkit.com
+
+**Key advantage over pure screen automation:** Screen identity is read from RTK (200+ named views) instead of fragile image matching. Battle completion is detected via RTK events instead of pixel polling.
+
 ## Key Constraints
 
 - **Windows-only**: Uses pywin32, PyGetWindow, Windows Task Scheduler
