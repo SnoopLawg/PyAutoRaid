@@ -1,11 +1,15 @@
 """
-Hybrid controller: RTK for game state + pyautogui for actions.
+Hybrid controller: RTK for game state + Win32/pyautogui for actions.
 
 This is the next-gen replacement for pure screen automation.
 Every action verifies its result through RTK instead of image matching.
+Uses Win32 PostMessage for background clicks when possible, falls back
+to pyautogui if the game doesn't accept synthetic messages.
 
 Usage:
-    python hybrid_controller.py
+    python hybrid_controller.py              # auto-detect input mode
+    python hybrid_controller.py --background # force Win32 background mode
+    python hybrid_controller.py --foreground # force pyautogui mode
 
 Requires:
     - Raid Toolkit SDK installed and running (https://raidtoolkit.com)
@@ -23,6 +27,7 @@ import pyautogui
 from base import BaseDaily, asset, locate_and_click, locate_and_click_loop, MAX_RETRIES
 from rtk_client import RTKClient, RTKConnectionError, RTKApiError
 from game_state import GameState, View
+from win32_input import InputBackend
 
 logging.basicConfig(
     filename='HybridController.log',
@@ -60,14 +65,15 @@ class HybridController:
     Loop:
     1. Read current view from RTK
     2. Decide action based on state + config
-    3. Execute click via pyautogui
+    3. Execute click via Win32 PostMessage (background) or pyautogui (fallback)
     4. Verify state change via RTK
     5. Repeat
     """
 
-    def __init__(self):
+    def __init__(self, prefer_background=True):
         self.rtk = RTKClient()
         self.game = None
+        self.input = InputBackend(prefer_background=prefer_background)
         self.asset_path = self._get_asset_path()
         self.results = {}
 
@@ -89,6 +95,7 @@ class HybridController:
     def connect(self):
         """Connect to RTK and initialize game state."""
         logger.info("Connecting to Raid Toolkit...")
+        logger.info(f"Input mode: {'background (Win32)' if self.input.is_background else 'foreground (pyautogui)'}")
         try:
             self.rtk.connect()
             self.game = GameState(self.rtk, self.asset_path)
@@ -118,10 +125,8 @@ class HybridController:
             logger.error("Could not navigate to village.")
             return False
 
-        pyautogui.click(*GEM_MINE_POS)
-        time.sleep(2)
-        pyautogui.hotkey("esc")
-        time.sleep(2)
+        self.input.click(*GEM_MINE_POS, sleep_after=2)
+        self.input.press_escape(sleep_after=2)
 
         # Verify we're back at village
         self.game.ensure_village()
@@ -142,7 +147,7 @@ class HybridController:
 
             if locate_and_click(offers_image, confidence=0.9, sleep_after=3):
                 for i in range(724, 1400, 50):
-                    pyautogui.click(i, 333)
+                    self.input.click(i, 333, sleep_after=0.1)
                     locate_and_click(free_gift_image, sleep_after=1)
 
             self.game.ensure_village()
@@ -165,8 +170,7 @@ class HybridController:
         if locate_and_click(time_rewards_image, sleep_after=2):
             locate_and_click_loop(red_dot_image, sleep_after=1)
             for i in TIMED_REWARDS_X_RANGE:
-                time.sleep(0.2)
-                pyautogui.click(i, TIMED_REWARDS_Y)
+                self.input.click(i, TIMED_REWARDS_Y, sleep_after=0.2)
             time.sleep(1)
 
             self.game.ensure_village()
@@ -221,8 +225,7 @@ class HybridController:
         if not self.game.ensure_village():
             return False
 
-        pyautogui.hotkey("i")
-        time.sleep(1)
+        self.input.press_char("i", sleep_after=1)
 
         inbox_items = [
             "inbox_energy", "inbox_brew", "inbox_purple_forge",
@@ -235,10 +238,9 @@ class HybridController:
                 location = pyautogui.locateOnScreen(png, confidence=0.8)
                 if not location:
                     break
-                pyautogui.moveTo(location)
-                pyautogui.moveRel(250, 0)
-                pyautogui.click()
-                time.sleep(2)
+                # Click 250px to the right of the inbox item (the collect button)
+                cx, cy = pyautogui.center(location)
+                self.input.click(cx + 250, cy, sleep_after=2)
                 retries += 1
 
         self.game.ensure_village()
@@ -282,8 +284,7 @@ class HybridController:
                 break
 
             if pyautogui.locateOnScreen(arena_battle_image, region=(rx, ry, rw, rh), confidence=0.6):
-                pyautogui.click(cx, cy)
-                time.sleep(3)
+                self.input.click(cx, cy, sleep_after=3)
 
                 # Check if out of tokens
                 if pyautogui.locateOnScreen(arena_refill_image, confidence=0.8):
@@ -305,8 +306,7 @@ class HybridController:
 
                         # Click through results screen
                         time.sleep(2)
-                        pyautogui.click(960, 540)  # Click center to dismiss
-                        time.sleep(3)
+                        self.input.click(960, 540, sleep_after=3)
 
         self.game.ensure_village()
         self.results["arena"] = f"{battles_fought} battles fought"
@@ -410,7 +410,8 @@ class HybridController:
 
 
 def main():
-    controller = HybridController()
+    prefer_background = "--foreground" not in sys.argv
+    controller = HybridController(prefer_background=prefer_background)
 
     if not controller.connect():
         print("\nFailed to connect. Checklist:")
