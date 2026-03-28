@@ -239,27 +239,37 @@ class MemoryReader:
 
     # --- Attach / Detach ---
 
-    def attach(self):
-        """Attach to Raid.exe and resolve game singletons."""
-        try:
-            self.pm = pymem.Pymem("Raid.exe")
-            ga = pymem.process.module_from_name(
-                self.pm.process_handle, "GameAssembly.dll"
-            )
-            self.ga_base = ga.lpBaseOfDll
-            self._resolve_app_model()
-            self._resolve_app_view_model()
-            logger.info(
-                f"Attached to Raid.exe (PID {self.pm.process_id}), "
-                f"AppModel @ {hex(self._app_model)}"
-            )
-            return True
-        except pymem.exception.ProcessNotFound:
-            logger.error("Raid.exe not found")
-            return False
-        except Exception as e:
-            logger.error(f"Attach failed: {e}")
-            return False
+    def attach(self, max_retries=5, retry_delay=10):
+        """Attach to Raid.exe and resolve game singletons.
+        Retries if the game isn't fully loaded yet (common after VM boot).
+        """
+        for attempt in range(max_retries):
+            try:
+                if not self.pm:
+                    self.pm = pymem.Pymem("Raid.exe")
+                    ga = pymem.process.module_from_name(
+                        self.pm.process_handle, "GameAssembly.dll"
+                    )
+                    self.ga_base = ga.lpBaseOfDll
+                    logger.info(f"Attached to Raid.exe (PID {self.pm.process_id})")
+
+                self._resolve_app_model()
+                self._resolve_app_view_model()
+                logger.info(f"AppModel @ {hex(self._app_model)}")
+                return True
+            except pymem.exception.ProcessNotFound:
+                logger.error("Raid.exe not found")
+                return False
+            except Exception as e:
+                if attempt < max_retries - 1:
+                    logger.warning(
+                        f"Attach attempt {attempt + 1}/{max_retries} failed: {e}. "
+                        f"Retrying in {retry_delay}s..."
+                    )
+                    time.sleep(retry_delay)
+                else:
+                    logger.error(f"Attach failed after {max_retries} attempts: {e}")
+                    return False
 
     def detach(self):
         """Close process handle and clear cached pointers."""
