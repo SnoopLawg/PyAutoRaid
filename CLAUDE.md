@@ -218,6 +218,113 @@ Inject a C#/.NET DLL into the game process for deepest access:
 - Event-driven automation (react to game events in real-time)
 - **Tradeoff**: Most complex, highest anti-cheat risk
 
+### Account Intelligence (`Modules/account_intel.py`)
+
+Smart decision layer over RTK data. Consumed by the hybrid controller.
+
+- **Resource checks:** `has_arena_tokens()`, `has_cb_keys()`, `has_energy()` — tasks skip immediately if resources empty
+- **Hero analysis:** `get_top_heroes()`, `get_total_team_power()`, `find_hero_by_name()` — roster queries for team selection
+- **Arena intelligence:** `rank_arena_opponents()`, `pick_best_opponent()` — evaluates opponent power vs your team, picks weakest winnable (up to 1.2x your power)
+- **Artifact scoring:** `score_artifact()` (0-100 based on rank/rarity/level), `get_bad_artifacts(threshold)` — identifies sellable gear
+- **Dungeon readiness:** `can_farm_dungeon(energy_per_run, num_runs)` — returns whether you can run and how many affordable runs
+- **Snapshots:** `get_snapshot()` for before/after tracking of automation runs
+
+### Hybrid Controller Features
+
+- **Smart arena:** Win/loss tracking, auto-refresh opponent page, escape recovery on failed starts
+- **Auto gear sell:** `sell_bad_artifacts(score_threshold, max_sells)` — navigates to artifact sell screen, selects low-score gear from grid, confirms sell
+- **Dungeon farming:** `farm_dungeon(dungeon_type, num_runs, energy_per_run)` — energy-aware campaign/iron twins farming with replay button loop and RTK battle verification
+
+## VM Deployment (mothership2)
+
+PyAutoRaid runs headless on a Windows 10 LTSC VM on the homelab server (Dell Optiplex i5-9600T, 16GB RAM).
+
+### VM Details
+
+| Property | Value |
+|----------|-------|
+| Host | mothership2 (`192.168.0.244`) |
+| Hypervisor | QEMU/KVM (SeaBIOS, not UEFI) |
+| VM specs | 4 vCPUs, 4GB RAM, 60GB AHCI/SATA disk, e1000 NIC |
+| OS | Windows 10 Enterprise LTSC 2021 |
+| VM user | `snoop` / `raid` |
+| VM files | `/home/snoop/vms/win10-raid/` |
+| Code | `C:\PyAutoRaid` (zip download from GitHub) |
+| Python | 3.12.4 (system-wide, on PATH) |
+
+### Port Forwarding (QEMU user-mode networking)
+
+| Host Port | Service |
+|-----------|---------|
+| 3389 | RDP (Windows Remote Desktop) |
+| 5900 | VNC (QEMU display) |
+| 5985 | WinRM (PowerShell remoting) |
+| 9090 | RTK WebSocket API |
+
+### Scripts (`/home/snoop/vms/win10-raid/`)
+
+- `start-vm.sh` — Boot the VM. Pass ISO path as arg for reinstall: `./start-vm.sh Win10.iso`
+- `stop-vm.sh` — ACPI shutdown via QEMU monitor (Python, no socat needed)
+- `type-cmd.py <text>` — Type a command into the VM via QEMU monitor sendkey
+- `run-pyautoraid.sh` — Trigger automation (WinRM or manual VNC/RDP)
+
+### Automation Schedule
+
+**Linux cron (host):**
+```
+50 6 * * *  start-vm.sh   # Boot VM 10 min before first run
+0 22 * * *  stop-vm.sh    # Shut down to free RAM for Minecraft
+```
+
+**Windows Scheduled Task "PyAutoRaid":**
+- Runs `python C:\PyAutoRaid\Modules\hybrid_controller.py` at **7am, 1pm, 7pm**
+- Plarium Play auto-starts with Windows and launches Raid via startup shortcut
+
+### Daily Flow
+
+1. **6:50am** — Linux cron starts the VM
+2. **Boot** — Windows auto-logs in → Plarium Play launches Raid → RTK starts
+3. **7am, 1pm, 7pm** — Scheduled Task runs `hybrid_controller.py`
+4. **10pm** — Linux cron shuts down the VM
+
+### Connecting to the VM
+
+- **RDP (interactive):** `192.168.0.244:3389` — use "Windows App" on Mac (user `snoop`, pass `raid`)
+- **VNC (view only):** `vncviewer 192.168.0.244:5900` (no password, no input — use for screenshots)
+- **PowerShell via monitor:** `python3 type-cmd.py 'your-command-here'` from the server
+
+### Windows Optimizations Applied
+
+- Services disabled: SysMain, DiagTrack, WSearch, MapsBroker, Windows Update
+- UAC disabled for admin user
+- High performance power plan
+- Notifications disabled
+
+## Future Plans
+
+### Phase 1: Smart Automation via RTK Data (current)
+Maximize the existing RTK WebSocket API. `getAccountDump` returns the full account — heroes with computed stats, all artifacts with substats/rolls, resources, arena state. Use this data to make intelligent decisions:
+- **Smart arena**: Read opponent power/teams, pick winnable fights instead of blindly clicking
+- **Gear management**: Evaluate artifact substats, auto-sell bad rolls
+- **Resource-aware tasking**: Check energy/keys/tokens before attempting tasks, skip if empty
+- **Optimal CB teams**: Select team based on affinity, buffs, hero stats
+- **Full account dump caching**: Snapshot account state before/after runs for tracking progress
+
+### Phase 2: Direct IL2CPP Memory Reading (pymem)
+Skip the RTK middleman. Use `pymem` to read `GameAssembly.dll` process memory directly:
+- Dump class structures with Il2CppDumper
+- Read live game objects — mid-battle HP, turn order, buff/debuff timers, cooldowns
+- Enemy team stats before fights (arena opponent builds)
+- Dungeon wave composition in advance
+- **Tradeoff**: Offsets break every game update, must maintain them manually
+
+### Phase 3: DLL Injection (RSL Helper approach)
+Inject a C#/.NET DLL into the game process for deepest access:
+- Hook game functions directly (battle events, screen transitions, loot drops)
+- Event-driven automation (react to game events in real-time, no polling)
+- Intercept network calls for server-side data
+- **Tradeoff**: Most complex, highest anti-cheat risk, requires C#/.NET knowledge
+
 ## Key Constraints
 
 - **Windows-only**: Uses pywin32, PyGetWindow, Windows Task Scheduler

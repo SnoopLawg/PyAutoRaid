@@ -531,6 +531,244 @@ class HybridController:
         return True
 
     # =========================================================================
+    # Dungeon Farming (Event-Aware)
+    # =========================================================================
+
+    # Dungeon button names in the Dungeons map (for mod API / image matching)
+    DUNGEON_REGIONS = {
+        "dragon": {"region": 206, "image": "dungeonDragon.png"},
+        "ice_golem": {"region": 207, "image": "dungeonIceGolem.png"},
+        "fire_knight": {"region": 208, "image": "dungeonFireKnight.png"},
+        "spider": {"region": 209, "image": "dungeonSpider.png"},
+        "minotaur": {"region": 210, "image": "dungeonMinotaur.png"},
+    }
+
+    def _detect_best_dungeon(self):
+        """Check active events and pick the optimal dungeon to farm.
+        Returns dungeon name (e.g. 'dragon', 'ice_golem') or None.
+        """
+        if not self.reader:
+            return None
+        running = self.reader.get_running_events()
+        all_events = running["solo_events"] + running["tournaments"]
+
+        # Check event names for dungeon hints
+        for event in all_events:
+            name = event.get("name", "").lower()
+            if "dragon" in name:
+                return "dragon"
+            if "spider" in name:
+                return "spider"
+            if "fire knight" in name or "fire_knight" in name:
+                return "fire_knight"
+            if "ice golem" in name or "ice_golem" in name:
+                return "ice_golem"
+            if "minotaur" in name:
+                return "minotaur"
+
+        # Generic dungeon event — default to dragon (best gear drops)
+        if self.reader.should_farm_dungeons():
+            return "dragon"
+
+        return None
+
+    def _nav_to_dungeons(self):
+        """Navigate from village to the dungeons map."""
+        self._click_nav("battle", BTN_BATTLE, sleep_after=3)
+
+        # Look for dungeons tab/button
+        if self.mod:
+            path = self.mod.find_button("Dungeons") or self.mod.find_button("dungeon")
+            if path and self.mod.click_path(path):
+                time.sleep(3)
+                return True
+
+        # Fallback: image matching
+        dungeons_btn = asset(self.asset_path, "dungeonsTab.png")
+        if locate_and_click(dungeons_btn, confidence=0.7, sleep_after=3, max_attempts=3):
+            return True
+
+        # Check if we're already at dungeons map
+        if self.reader:
+            vk = self.reader.get_current_view()
+            if vk in (1027, 1028):  # DungeonsMap or DungeonsHUD
+                return True
+
+        return False
+
+    def _select_dungeon(self, dungeon_name):
+        """Click on a specific dungeon on the dungeons map."""
+        info = self.DUNGEON_REGIONS.get(dungeon_name)
+        if not info:
+            return False
+
+        # Try mod API first
+        if self.mod:
+            # Search for buttons matching dungeon name
+            search_terms = {
+                "dragon": "Dragon", "ice_golem": "IceGolem",
+                "fire_knight": "FireKnight", "spider": "Spider",
+                "minotaur": "Minotaur",
+            }
+            term = search_terms.get(dungeon_name, dungeon_name)
+            path = self.mod.find_button(term)
+            if path and self.mod.click_path(path):
+                time.sleep(3)
+                return True
+
+        # Fallback: image matching
+        img = asset(self.asset_path, info["image"])
+        if img and locate_and_click(img, confidence=0.7, sleep_after=3, max_attempts=3):
+            return True
+
+        return False
+
+    def _select_difficulty(self, target_level=20):
+        """On the dungeon stage selection screen, scroll to and select
+        the target difficulty level (default: highest available, 20 or 25).
+        """
+        # Scroll down to reach higher stages
+        gx = self.game.win_x + 450
+        for _ in range(5):
+            pyautogui.moveTo(gx, self.game.win_y + 450)
+            time.sleep(0.15)
+            pyautogui.mouseDown()
+            pyautogui.moveTo(gx, self.game.win_y + 100, duration=0.3)
+            pyautogui.mouseUp()
+            time.sleep(0.3)
+        time.sleep(1)
+
+        # Click the highest visible stage (should be at bottom after scrolling)
+        # Look for a stage button with the right level
+        stage_btn = asset(self.asset_path, "dungeonStage.png")
+        if stage_btn and locate_and_click(stage_btn, confidence=0.6, sleep_after=3):
+            return True
+
+        # Fallback: click the last visible stage (bottom of scrolled list)
+        self._click((450, 500), sleep_after=3)
+        return True
+
+    def run_dungeon_farming(self, dungeon_name=None, max_runs=20,
+                             energy_floor=1000, target_level=20):
+        """Farm a dungeon, spending energy for gear drops + event points.
+
+        Args:
+            dungeon_name: Which dungeon ('dragon', 'spider', etc).
+                         Auto-detected from events if None.
+            max_runs: Maximum runs before stopping.
+            energy_floor: Stop when energy drops below this.
+            target_level: Dungeon stage to farm (default 20).
+        """
+        # Auto-detect best dungeon from events
+        if not dungeon_name:
+            dungeon_name = self._detect_best_dungeon()
+            if not dungeon_name:
+                logger.info("No dungeon events active — skipping farming")
+                self.results["dungeon_farming"] = "Skipped (no active events)"
+                return True
+
+        logger.info(f"=== Dungeon Farming: {dungeon_name} (max {max_runs} runs, "
+                     f"energy floor {energy_floor}) ===")
+
+        # Log active events
+        if self.reader:
+            running = self.reader.get_running_events()
+            for e in running["solo_events"] + running["tournaments"]:
+                if e.get("active"):
+                    hours = e.get("hours_left", "?")
+                    logger.info(f"  Active: {e['name']} ({hours:.1f}h left)")
+
+        if not self.game.ensure_village():
+            return False
+
+        # Check energy
+        if self.reader:
+            energy = int(self.reader.get_resources().get("energy", 0))
+            if energy < energy_floor:
+                logger.info(f"Energy {energy:,} below floor {energy_floor} — skipping")
+                self.results["dungeon_farming"] = f"Skipped (energy={energy:,})"
+                return True
+            logger.info(f"Energy: {energy:,} (floor: {energy_floor})")
+
+        # Navigate to dungeons
+        if not self._nav_to_dungeons():
+            logger.error("Failed to navigate to dungeons")
+            self.game.ensure_village()
+            return False
+
+        # Select the target dungeon
+        if not self._select_dungeon(dungeon_name):
+            logger.error(f"Failed to select {dungeon_name}")
+            self.game.ensure_village()
+            return False
+
+        # Select difficulty
+        self._select_difficulty(target_level)
+
+        runs = 0
+        start_btn = asset(self.asset_path, "dungeonStart.png")
+        replay_btn = asset(self.asset_path, "dungeonReplay.png")
+
+        while runs < max_runs:
+            # Check energy before each run
+            if self.reader:
+                energy = int(self.reader.get_resources().get("energy", 0))
+                if energy < energy_floor:
+                    logger.info(f"Energy {energy:,} below floor — stopping")
+                    break
+
+            # Start the run
+            if runs == 0:
+                # First run: click Start on team selection
+                if self.reader:
+                    vk = self.reader.get_current_view()
+                    logger.info(f"Pre-start view: {self.reader.get_current_view_name()}")
+
+                if not locate_and_click(start_btn, confidence=0.7, sleep_after=3,
+                                        max_attempts=5):
+                    # Try clicking a generic "Battle" or "Start" button
+                    cb_start = asset(self.asset_path, "CBstart.png")
+                    arena_start = asset(self.asset_path, "arenaStart.png")
+                    if not (locate_and_click(cb_start, confidence=0.6, sleep_after=3) or
+                            locate_and_click(arena_start, confidence=0.6, sleep_after=3)):
+                        logger.error("Could not find start button")
+                        break
+            else:
+                # Subsequent runs: click Replay
+                if not locate_and_click(replay_btn, confidence=0.7, sleep_after=3,
+                                        max_attempts=5):
+                    # Also try a generic replay/restart button
+                    logger.info("No replay button found, trying to restart manually")
+                    break
+
+            # Wait for battle to end
+            result = self._wait_battle(timeout=300)
+            runs += 1
+            logger.info(f"Run {runs}/{max_runs}: {result.get('result', 'unknown')}")
+
+            # Dismiss battle results
+            time.sleep(2)
+            for _ in range(10):
+                if self.reader:
+                    vk = self.reader.get_current_view()
+                    # If we see replay option or are back at dungeon dialog, we're good
+                    if vk in (1029, 1063):  # DungeonDialog or BattleFinishDungeon
+                        break
+                tap = asset(self.asset_path, "tapToContinue.png")
+                if locate_and_click(tap, confidence=0.7, sleep_after=2):
+                    continue
+                self._click(CENTER, sleep_after=2)
+
+        self.game.ensure_village()
+
+        # Log results
+        if self.reader:
+            energy_after = int(self.reader.get_resources().get("energy", 0))
+            logger.info(f"Energy after: {energy_after:,}")
+        self.results["dungeon_farming"] = f"{dungeon_name}: {runs} runs"
+        return True
+
+    # =========================================================================
     # Main daily run
     # =========================================================================
 
@@ -549,6 +787,17 @@ class HybridController:
             logger.info(f"Pre: E={int(res['energy']):,} S={int(res['silver']):,} "
                         f"G={int(res['gems'])} A={res['arena_tokens']:.1f} CB={int(res['cb_keys'])}")
 
+        # Log active events
+        if self.reader:
+            events = self.reader.get_active_events()
+            running_solo = [e for e in events["solo_events"] if e.get("active")]
+            running_tourn = [e for e in events["tournaments"] if e.get("active")]
+            if running_solo or running_tourn:
+                logger.info("Active events:")
+                for e in running_solo + running_tourn:
+                    hours = e.get("hours_left", "?")
+                    logger.info(f"  {e['name']} ({hours:.1f}h left)")
+
         for name, fn in [
             ("Gem Mine", self.collect_gem_mine),
             ("Shop Rewards", self.collect_shop_rewards),
@@ -558,6 +807,8 @@ class HybridController:
             ("Inbox", self.collect_inbox),
             ("Arena", lambda: self.run_arena_battles(10)),
             ("Clan Boss", lambda: self.run_clan_boss("ultra-nightmare")),
+            ("Dungeon Farming", lambda: self.run_dungeon_farming(
+                max_runs=10, energy_floor=1000)),
         ]:
             try:
                 logger.info(f"[{name}] Starting...")
@@ -586,7 +837,45 @@ def main():
     if not ctrl.connect():
         sys.exit(1)
     try:
-        ctrl.run_daily()
+        if "--farm" in sys.argv:
+            # Dungeon farming mode: farm based on active events
+            dungeon = None
+            max_runs = 20
+            energy_floor = 1000
+            for arg in sys.argv:
+                if arg.startswith("--dungeon="):
+                    dungeon = arg.split("=")[1]
+                if arg.startswith("--runs="):
+                    max_runs = int(arg.split("=")[1])
+                if arg.startswith("--energy-floor="):
+                    energy_floor = int(arg.split("=")[1])
+            ctrl.run_dungeon_farming(dungeon_name=dungeon,
+                                      max_runs=max_runs,
+                                      energy_floor=energy_floor)
+        elif "--events" in sys.argv:
+            # Just show active events and farming recommendations
+            if ctrl.reader:
+                events = ctrl.reader.get_active_events()
+                print("\n=== Active Events ===")
+                for e in events["solo_events"]:
+                    active = "ACTIVE" if e.get("active") else "inactive"
+                    hours = f" ({e.get('hours_left', '?'):.1f}h left)" if e.get("hours_left") else ""
+                    print(f"  SOLO: {e['name'][:50]:50s} {active}{hours}")
+                for e in events["tournaments"]:
+                    active = "ACTIVE" if e.get("active") else "inactive"
+                    hours = f" ({e.get('hours_left', '?'):.1f}h left)" if e.get("hours_left") else ""
+                    print(f"  TOUR: {e['name'][:50]:50s} {active}{hours}")
+                print(f"\nRecommendations:")
+                print(f"  Farm dungeons: {ctrl.reader.should_farm_dungeons()}")
+                print(f"  Farm arena:    {ctrl.reader.should_farm_arena()}")
+                print(f"  Upgrade gear:  {ctrl.reader.should_upgrade_artifacts()}")
+                print(f"  Summon:        {ctrl.reader.should_summon_champions()}")
+                print(f"  Train:         {ctrl.reader.should_level_champions()}")
+                best = ctrl._detect_best_dungeon()
+                if best:
+                    print(f"  Best dungeon:  {best}")
+        else:
+            ctrl.run_daily()
     except KeyboardInterrupt:
         logger.info("Interrupted.")
     finally:

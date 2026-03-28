@@ -67,6 +67,8 @@ UW_ACCOUNT = 0x20    # AccountWrapper
 UW_HEROES = 0x28     # HeroesWrapper
 UW_ARENA = 0xB0      # ArenaWrapper
 UW_BATTLE = 0x158    # BattleWrapper
+UW_SOLO_EVENTS = 0x130   # SoloEventsWrapper
+UW_TOURNAMENTS = 0x140   # TournamentsWrapper
 
 # AccountWrapperReadOnly -> UserAccount
 ACCTWRAP_DATA = 0x20
@@ -125,6 +127,31 @@ TEAM_POWER = 0x10       # int CombatPower
 # BattleStateNotifier
 BATTLE_STATE = 0x28     # BattleProcessingState enum
 
+# SoloEventsWrapperReadOnly -> GlobalEventsWrapper -> UpdatableGlobalEventsData
+SEW_GLOBAL_EVENTS = 0x58    # GlobalEventsWrapper (from SoloEventsWrapperReadOnly)
+GEW_DATA = 0x20             # UpdatableGlobalEventsData (from GlobalEventsWrapperReadOnly)
+GEDATA_EVENTS = 0x18        # List<GlobalEvent> (from GlobalEventsDataForUser base)
+GEDATA_SOLO = 0x20          # ICollection<GlobalEvent> _soloEvents
+GEDATA_TOURNAMENTS = 0x28   # ICollection<GlobalEvent> _tournaments
+
+# GlobalEvent fields
+GE_ID = 0x10                # int Id
+GE_GBOID = 0x14             # int GboId
+GE_DATE_COND = 0x28         # GlobalRatingDateCondition
+GE_QUEST_DATA = 0x30        # GlobalEventQuestData
+GE_IS_FULL = 0x40           # bool IsFull
+
+# GlobalRatingDateCondition (DateTime is 8 bytes, Nullable<DateTime> has bool+padding before)
+DATECON_TEASER_START = 0x10  # Nullable<DateTime> TeaserStart
+DATECON_START = 0x20         # Nullable<DateTime> Start
+DATECON_END = 0x30           # Nullable<DateTime> End
+DATECON_PRIZE_DEADLINE = 0x40  # Nullable<DateTime> TakePrizeDeadline
+
+# GlobalEventQuestData -> Quest -> Name
+GEQDATA_QUEST = 0x10         # Quest
+QUEST_NAME = 0x58            # SharedLTextKey -> .DefaultValue (+0x18)
+QUEST_COMPLETIONS = 0x88     # List<QuestCompletion> (progress entries for the quest)
+
 
 # =============================================================================
 # AppViewModel field offsets
@@ -178,6 +205,44 @@ RESOURCE_NAMES = {
     RES_AUTO_TICKET: "auto_tickets",
 }
 
+# GlobalEventAction (what activities earn event points)
+GEA_HERO_LEVELUP = 1
+GEA_HERO_RANKUP = 2
+GEA_HERO_ASCEND = 3
+GEA_HERO_SKILLLEVELUP = 4
+GEA_HERO_SUMMON = 5
+GEA_HERO_FUSE = 6
+GEA_ARTIFACT_COLLECT = 21
+GEA_ARTIFACT_UPGRADE = 22
+GEA_SHARDS_OPEN = 31
+GEA_BATTLE_STORY = 50
+GEA_BATTLE_DUNGEON = 51
+GEA_BATTLE_ARENA = 52
+GEA_BATTLE_DUNGEON_REWARD = 53
+GEA_BATTLE_ARENA_3X3 = 54
+GEA_BATTLE_DUNGEON_TURN = 55
+
+# GlobalEventStateId
+EVENT_CREATED = 1
+EVENT_TEASER = 2
+EVENT_RUNNING = 3
+EVENT_REWARDING = 4
+EVENT_FINISHED = 5
+
+# RegionTypeId (dungeons we care about for farming)
+REGION_DRAGON = 206       # DragonsLair
+REGION_ICE_GOLEM = 207    # IceGolemCave
+REGION_FIRE_KNIGHT = 208  # FireGolemCave (Fire Knight)
+REGION_SPIDER = 209       # SpiderCave
+REGION_MINOTAUR = 210     # MinotaurCave
+
+REGION_NAMES = {
+    206: "Dragon", 207: "Ice Golem", 208: "Fire Knight",
+    209: "Spider", 210: "Minotaur",
+    201: "Void Keep", 202: "Spirit Keep", 203: "Magic Keep",
+    204: "Force Keep", 205: "Arcane Keep",
+}
+
 RARITY_NAMES = {1: "Common", 2: "Uncommon", 3: "Rare", 4: "Epic", 5: "Legendary", 6: "Mythical"}
 FACTION_NAMES = {
     0: "Unknown", 1: "BannerLords", 2: "HighElves", 3: "SacredOrder",
@@ -206,17 +271,30 @@ VIEW_HERO_SELECT_CB = 1072
 VIEW_BATTLE_MODE_SELECT = 1022
 VIEW_CB_SCREEN = 1071
 
+VIEW_DUNGEONS_MAP = 1027
+VIEW_DUNGEONS_HUD = 1028
+VIEW_DUNGEON_DIALOG = 1029
+VIEW_HERO_SELECT_DUNGEON = 1008
+VIEW_AUTO_BATTLE_SETTINGS = 2089
+VIEW_AUTO_BATTLE_HEROES = 2090
+VIEW_MULTI_RUN_INFO = 1130
+
 VIEW_NAMES = {
     0: "None",
-    1011: "HeroSelectArena", 1012: "BattleLoading",
-    1013: "BattleFinishStory", 1014: "BattleFinishArena",
-    1015: "BattleHUD", 1022: "BattleModeSelect",
+    1008: "HeroSelectDungeon", 1011: "HeroSelectArena",
+    1012: "BattleLoading", 1013: "BattleFinishStory",
+    1014: "BattleFinishArena", 1015: "BattleHUD",
+    1022: "BattleModeSelect", 1025: "RegionDialog",
+    1027: "DungeonsMap", 1028: "DungeonsHUD",
+    1029: "DungeonDialog",
     1032: "Village", 1033: "VillageHUD",
     1034: "GemMine", 1038: "Shop",
     1042: "Inbox", 1049: "Quests",
     1051: "Arena", 1063: "BattleFinishDungeon",
     1071: "ClanBoss", 1072: "HeroSelectCB",
-    1100: "BattleFinishCB", 1143: "AllianceActivityHUD",
+    1100: "BattleFinishCB", 1130: "MultiRunInfo",
+    1143: "AllianceActivityHUD",
+    2089: "AutoBattleSettings", 2090: "AutoBattleHeroes",
 }
 
 
@@ -695,6 +773,212 @@ class MemoryReader:
         arena_wrap = self._ptr(self._uw + UW_ARENA)
         arena_data = self._ptr(arena_wrap + ARENAWRAP_DATA)
         return self.pm.read_longlong(arena_data + ARENA_POINTS) if arena_data else 0
+
+    # =========================================================================
+    # Events & Tournaments
+    # =========================================================================
+
+    def _read_datetime(self, addr):
+        """Read a C# DateTime (8 bytes, ticks since 0001-01-01).
+        Returns a Python datetime or None."""
+        try:
+            from datetime import datetime, timedelta, timezone
+            ticks = self.pm.read_ulonglong(addr)
+            if ticks == 0:
+                return None
+            # C# ticks: 100-nanosecond intervals since 0001-01-01
+            # Python: seconds since 1970-01-01
+            epoch_ticks = 621355968000000000  # ticks from 0001-01-01 to 1970-01-01
+            seconds = (ticks - epoch_ticks) / 10_000_000
+            return datetime.fromtimestamp(seconds, tz=timezone.utc)
+        except Exception:
+            return None
+
+    def _read_nullable_datetime(self, addr):
+        """Read a Nullable<DateTime>. Layout: bool hasValue (1 byte),
+        padding to 8-byte boundary, then DateTime value (8 bytes).
+        The Nullable<DateTime> at the given offset is already the struct start."""
+        try:
+            # Nullable<DateTime> in IL2CPP: stored as 16 bytes total
+            # Offset +0x00: DateTime value (8 bytes)
+            # Offset +0x08: bool hasValue (in some layouts)
+            # But C# Nullable<T> in memory: hasValue first, then value
+            # For reference types the layout may differ — try reading the DateTime directly
+            # and validate the year is reasonable
+            dt = self._read_datetime(addr)
+            if dt and 2020 < dt.year < 2030:
+                return dt
+            # Try offset +8
+            dt = self._read_datetime(addr + 8)
+            if dt and 2020 < dt.year < 2030:
+                return dt
+            return None
+        except Exception:
+            return None
+
+    def _read_event_name(self, event_ptr):
+        """Read event name from GlobalEvent -> QuestData -> Quest -> Name."""
+        quest_data = self._ptr(event_ptr + GE_QUEST_DATA)
+        if not quest_data:
+            return ""
+        quest = self._ptr(quest_data + GEQDATA_QUEST)
+        if not quest:
+            return ""
+        name_key = self._ptr(quest + QUEST_NAME)  # SharedLTextKey
+        if not name_key:
+            return ""
+        name_str = self._ptr(name_key + 0x18)  # .DefaultValue
+        return self._read_il2cpp_string(name_str)
+
+    def _get_global_events_data(self):
+        """Navigate to UpdatableGlobalEventsData from UserWrapper.
+        Chain: UW -> SoloEventsWrapper -> _globalEvents -> _data
+        """
+        solo_wrap = self._ptr(self._uw + UW_SOLO_EVENTS)
+        if not solo_wrap:
+            return None
+        global_events = self._ptr(solo_wrap + SEW_GLOBAL_EVENTS)
+        if not global_events:
+            return None
+        return self._ptr(global_events + GEW_DATA)
+
+    def _read_event_list(self, collection_ptr):
+        """Read events from an ICollection<GlobalEvent> (typically a List)."""
+        if not collection_ptr:
+            return []
+        # ICollection backed by List — read as list
+        ptrs = self._read_list_ptrs(collection_ptr)
+        events = []
+        for ptr in ptrs:
+            try:
+                event_id = self.pm.read_int(ptr + GE_ID)
+                if event_id <= 0 or event_id > 100000:
+                    continue
+
+                # Read date condition
+                date_cond = self._ptr(ptr + GE_DATE_COND)
+                start_time = None
+                end_time = None
+                if date_cond:
+                    start_time = self._read_nullable_datetime(date_cond + DATECON_START)
+                    end_time = self._read_nullable_datetime(date_cond + DATECON_END)
+
+                name = self._read_event_name(ptr)
+
+                events.append({
+                    "id": event_id,
+                    "name": name,
+                    "start": start_time,
+                    "end": end_time,
+                    "is_full": self.pm.read_bytes(ptr + GE_IS_FULL, 1)[0] != 0,
+                })
+            except Exception:
+                continue
+        return events
+
+    def get_active_events(self):
+        """Read all active solo events and tournaments.
+        Returns {"solo_events": [...], "tournaments": [...]}.
+        Each event has: id, name, start, end, is_full, active (bool).
+        """
+        from datetime import datetime, timezone
+
+        ge_data = self._get_global_events_data()
+        if not ge_data:
+            logger.warning("Could not read global events data")
+            return {"solo_events": [], "tournaments": []}
+
+        now = datetime.now(timezone.utc)
+
+        def annotate(events):
+            for e in events:
+                s, end = e.get("start"), e.get("end")
+                e["active"] = (s is not None and end is not None
+                               and s <= now <= end)
+                if s:
+                    e["start"] = s.isoformat()
+                if end:
+                    e["end"] = end.isoformat()
+                    e["hours_left"] = max(0, (end - now).total_seconds() / 3600)
+            return events
+
+        solo_ptr = self._ptr(ge_data + GEDATA_SOLO)
+        tourn_ptr = self._ptr(ge_data + GEDATA_TOURNAMENTS)
+
+        solo = annotate(self._read_event_list(solo_ptr))
+        tournaments = annotate(self._read_event_list(tourn_ptr))
+
+        # Fallback: try the base class Events list (0x18) which has all events
+        if not solo and not tournaments:
+            all_ptr = self._ptr(ge_data + GEDATA_EVENTS)
+            all_events = annotate(self._read_event_list(all_ptr))
+            if all_events:
+                logger.info(f"Read {len(all_events)} events from base Events list")
+                return {"solo_events": all_events, "tournaments": []}
+
+        logger.info(f"Events: {len(solo)} solo, {len(tournaments)} tournaments")
+        return {"solo_events": solo, "tournaments": tournaments}
+
+    def get_running_events(self):
+        """Get only currently active (running) events."""
+        data = self.get_active_events()
+        running_solo = [e for e in data["solo_events"] if e.get("active")]
+        running_tourn = [e for e in data["tournaments"] if e.get("active")]
+        return {"solo_events": running_solo, "tournaments": running_tourn}
+
+    def should_farm_dungeons(self):
+        """Check if any active event rewards dungeon battles.
+        Returns True if a 'Dungeon Divers' style event or dungeon tournament
+        is currently running, meaning dungeon farming would double-dip.
+        """
+        running = self.get_running_events()
+        dungeon_keywords = ["dungeon", "dragon", "spider", "fire knight",
+                            "ice golem", "keeps", "divers"]
+        for event in running["solo_events"] + running["tournaments"]:
+            name = event.get("name", "").lower()
+            if any(kw in name for kw in dungeon_keywords):
+                return True
+        return False
+
+    def should_farm_arena(self):
+        """Check if any active event rewards arena battles."""
+        running = self.get_running_events()
+        arena_keywords = ["arena", "gladiator"]
+        for event in running["solo_events"] + running["tournaments"]:
+            name = event.get("name", "").lower()
+            if any(kw in name for kw in arena_keywords):
+                return True
+        return False
+
+    def should_upgrade_artifacts(self):
+        """Check if any active event rewards artifact upgrades."""
+        running = self.get_running_events()
+        artifact_keywords = ["artifact", "enhancement", "forge", "gear"]
+        for event in running["solo_events"] + running["tournaments"]:
+            name = event.get("name", "").lower()
+            if any(kw in name for kw in artifact_keywords):
+                return True
+        return False
+
+    def should_summon_champions(self):
+        """Check if any active event rewards summoning."""
+        running = self.get_running_events()
+        summon_keywords = ["summon", "invocation", "champion chase"]
+        for event in running["solo_events"] + running["tournaments"]:
+            name = event.get("name", "").lower()
+            if any(kw in name for kw in summon_keywords):
+                return True
+        return False
+
+    def should_level_champions(self):
+        """Check if any active event rewards champion training."""
+        running = self.get_running_events()
+        training_keywords = ["training", "champion chase", "level up"]
+        for event in running["solo_events"] + running["tournaments"]:
+            name = event.get("name", "").lower()
+            if any(kw in name for kw in training_keywords):
+                return True
+        return False
 
     # =========================================================================
     # View / Screen Detection
