@@ -1,20 +1,21 @@
 """
-Hybrid controller: RTK for game state + Win32/pyautogui for actions.
+Hybrid daily automation controller for Raid: Shadow Legends.
 
-This is the next-gen replacement for pure screen automation.
-Every action verifies its result through RTK instead of image matching.
-Uses Win32 PostMessage for background clicks when possible, falls back
-to pyautogui if the game doesn't accept synthetic messages.
+Combines three automation strategies:
+  1. Coordinate clicks — fixed positions for known UI elements (nav bar, etc.)
+  2. Memory reading — game state via pymem (resources, battle, ViewKey, opponents)
+  3. Image matching — only for dynamic/unpredictable elements (popups, battle results)
+
+Memory reading provides:
+  - Instant battle completion detection (no image polling timeouts)
+  - Smart resource checks (skip arena if no tokens, skip CB if no keys)
+  - Arena opponent evaluation (pick weakest target)
+  - Navigation verification via ViewKey (know exactly what screen we're on)
+  - Instant fight support (CB quick battles detected via state + key count)
 
 Usage:
-    python hybrid_controller.py              # auto-detect input mode
-    python hybrid_controller.py --background # force Win32 background mode
-    python hybrid_controller.py --foreground # force pyautogui mode
-
-Requires:
-    - Raid Toolkit SDK installed and running (https://raidtoolkit.com)
-    - Raid: Shadow Legends running via Plarium Play
-    - websocket-client package (pip install websocket-client)
+    python hybrid_controller.py              # full daily run
+    python hybrid_controller.py --no-memory  # screen-only fallback
 """
 
 import logging
@@ -23,362 +24,424 @@ import sys
 import os
 
 import pyautogui
+pyautogui.FAILSAFE = False
 
-from base import BaseDaily, asset, locate_and_click, locate_and_click_loop, MAX_RETRIES
-from rtk_client import RTKClient, RTKConnectionError, RTKApiError
-from game_state import GameState, View
+from base import asset, locate_and_click, locate_and_click_loop, MAX_RETRIES
+from screen_state import ScreenState
 from win32_input import InputBackend
 
 logging.basicConfig(
     filename='HybridController.log',
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    filemode='w',
-    level=logging.DEBUG,
-)
+    filemode='w', level=logging.DEBUG)
 logger = logging.getLogger(__name__)
-
-# Also log to console
 console = logging.StreamHandler()
 console.setLevel(logging.INFO)
 logger.addHandler(console)
 
-# ---------------------------------------------------------------------------
-# Named coordinates (same as PyAutoRaid, game window 900x600 centered)
-# ---------------------------------------------------------------------------
-GEM_MINE_POS = (583, 595)
-TIMED_REWARDS_Y = 500
-TIMED_REWARDS_X_RANGE = range(669, 1269, 100)
-CB_SCROLL_POS = (1080, 724)
-ARENA_REGIONS = [
-    (1215, 423, 167, 58, 1304, 457),
-    (1215, 508, 167, 58, 1304, 540),
-    (1215, 596, 167, 58, 1303, 625),
-    (1215, 681, 167, 58, 1304, 711),
-    (1208, 762, 190, 68, 1304, 800),
-]
+
+# =============================================================================
+# Game-relative coordinates (900x600 window, set by ScreenState.initialize)
+# =============================================================================
+
+# Bottom navigation bar
+BTN_SHOP = (74, 556)
+BTN_QUESTS = (263, 560)
+BTN_CLAN = (527, 561)
+BTN_BATTLE = (807, 560)
+
+# Village elements
+GEM_MINE = (73, 355)
+
+# Timed rewards sidebar
+TIMED_REWARDS_Y = 260
+TIMED_REWARDS_X_RANGE = range(159, 759, 100)
+
+# Generic click targets
+CENTER = (450, 300)
+
+
+def _abs(game, rel):
+    """Convert game-relative (x, y) to screen-absolute coordinates."""
+    return (rel[0] + game.win_x, rel[1] + game.win_y)
 
 
 class HybridController:
-    """
-    Closed-loop game automation controller.
+    """Daily automation controller using coordinates + memory + minimal images."""
 
-    Loop:
-    1. Read current view from RTK
-    2. Decide action based on state + config
-    3. Execute click via Win32 PostMessage (background) or pyautogui (fallback)
-    4. Verify state change via RTK
-    5. Repeat
-    """
-
-    def __init__(self, prefer_background=True):
-        self.rtk = RTKClient()
-        self.game = None
-        self.input = InputBackend(prefer_background=prefer_background)
+    def __init__(self, use_memory=True):
+        self.game = None       # ScreenState (window management, popups, image fallback)
+        self.reader = None     # MemoryReader (game data, battle state, ViewKey)
+        self.input = InputBackend(prefer_background=False)
         self.asset_path = self._get_asset_path()
         self.results = {}
+        self._use_memory = use_memory
 
     def _get_asset_path(self):
-        """Resolve asset path from script location."""
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        candidate = os.path.join(current_dir, '..', 'assets')
-        if os.path.exists(candidate):
-            return os.path.abspath(candidate)
-        candidate = os.path.join(current_dir, 'assets')
-        if os.path.exists(candidate):
-            return os.path.abspath(candidate)
-        # Frozen exe
-        if getattr(sys, 'frozen', False):
-            return os.path.join(sys._MEIPASS, 'assets')
-        logger.error("Could not find assets folder.")
+        d = os.path.dirname(os.path.abspath(__file__))
+        for c in [os.path.join(d, '..', 'assets'), os.path.join(d, 'assets')]:
+            if os.path.exists(c):
+                return os.path.abspath(c)
         return None
 
     def connect(self):
-        """Connect to RTK and initialize game state."""
-        logger.info("Connecting to Raid Toolkit...")
-        logger.info(f"Input mode: {'background (Win32)' if self.input.is_background else 'foreground (pyautogui)'}")
+        """Initialize screen state and memory reader."""
+        logger.info("Initializing...")
         try:
-            self.rtk.connect()
-            self.game = GameState(self.rtk, self.asset_path)
+            self.game = ScreenState(self.asset_path)
             self.game.initialize()
-            logger.info("Connected. Ready to automate.")
-            return True
-        except RTKConnectionError as e:
-            logger.error(f"RTK connection failed: {e}")
-            logger.error("Make sure Raid Toolkit is installed and running.")
+            logger.info(f"Screen ready — window at ({self.game.win_x}, {self.game.win_y})")
+        except Exception as e:
+            logger.error(f"Screen init failed: {e}")
             return False
-        except RTKApiError as e:
-            logger.error(f"RTK API error: {e}")
-            logger.error("Make sure Raid: Shadow Legends is running.")
-            return False
+
+        if self._use_memory:
+            try:
+                from memory_reader import MemoryReader
+                self.reader = MemoryReader()
+                if self.reader.attach():
+                    res = self.reader.get_resources()
+                    logger.info(f"Memory active — Lv{self.reader.get_account_level()} "
+                                f"Power {int(self.reader.get_total_power()):,}")
+                    logger.info(f"  Energy={int(res['energy']):,} Silver={int(res['silver']):,} "
+                                f"Gems={int(res['gems'])} Arena={res['arena_tokens']:.1f} "
+                                f"CB={int(res['cb_keys'])}")
+                else:
+                    self.reader = None
+            except Exception as e:
+                logger.warning(f"Memory init failed: {e}")
+                self.reader = None
+        return True
 
     def disconnect(self):
-        """Clean up connections."""
-        if self.rtk:
-            self.rtk.close()
+        if self.reader:
+            self.reader.detach()
 
-    # --- Task runners (state-aware versions of PyAutoRaid commands) ---
+    def _click(self, game_rel, sleep_after=1):
+        """Click at game-relative coordinates."""
+        x, y = _abs(self.game, game_rel)
+        self.input.click(x, y, sleep_after=sleep_after)
+
+    def _wait_battle(self, timeout=300):
+        """Wait for battle end. Memory-based if available, else image polling."""
+        if self.reader:
+            state = self.reader.wait_for_battle_end(timeout=timeout, poll_interval=2)
+            return {"result": "finished" if state >= 6 else "timeout", "state": state}
+        return self.game.wait_for_battle_end(timeout=timeout)
+
+    def _wait_battle_or_view(self, from_view, keys_before=None, timeout=120):
+        """Wait for instant/quick battle completion via any signal."""
+        if self.reader:
+            return self.reader.wait_for_battle_or_view_change(
+                from_view, keys_before=keys_before, timeout=timeout)
+        time.sleep(10)
+        return {"method": "sleep_fallback"}
+
+    # =========================================================================
+    # Daily tasks
+    # =========================================================================
 
     def collect_gem_mine(self):
-        """Collect gem mine — verify we're in village first."""
         logger.info("=== Gem Mine ===")
         if not self.game.ensure_village():
-            logger.error("Could not navigate to village.")
             return False
-
-        self.input.click(*GEM_MINE_POS, sleep_after=2)
+        self._click(GEM_MINE, sleep_after=2)
         self.input.press_escape(sleep_after=2)
-
-        # Verify we're back at village
         self.game.ensure_village()
         self.results["gem_mine"] = "Collected"
-        logger.info("Gem mine collected.")
         return True
 
     def collect_shop_rewards(self):
-        """Navigate to shop, collect free gifts."""
         logger.info("=== Shop Rewards ===")
         if not self.game.ensure_village():
             return False
-
-        if self.game.smart_click("shop.png", expected_view=View.SHOP):
-            # Look for free offers
-            offers_image = asset(self.asset_path, "offers.png")
-            free_gift_image = asset(self.asset_path, "claimFreeGift.png")
-
-            if locate_and_click(offers_image, confidence=0.9, sleep_after=3):
-                for i in range(724, 1400, 50):
-                    self.input.click(i, 333, sleep_after=0.1)
-                    locate_and_click(free_gift_image, sleep_after=1)
-
-            self.game.ensure_village()
-            self.results["shop"] = "Collected"
-            logger.info("Shop rewards collected.")
-            return True
-        else:
-            logger.warning("Could not navigate to shop.")
-            return False
+        self._click(BTN_SHOP, sleep_after=2)
+        offers = asset(self.asset_path, "offers.png")
+        free = asset(self.asset_path, "claimFreeGift.png")
+        if locate_and_click(offers, confidence=0.9, sleep_after=3):
+            for rx in range(214, 890, 50):
+                self._click((rx, 93), sleep_after=0.1)
+                locate_and_click(free, sleep_after=1)
+        self.game.ensure_village()
+        self.results["shop"] = "Collected"
+        return True
 
     def collect_timed_rewards(self):
-        """Collect timed rewards."""
         logger.info("=== Timed Rewards ===")
         if not self.game.ensure_village():
             return False
-
-        time_rewards_image = asset(self.asset_path, "timeRewards.png")
-        red_dot_image = asset(self.asset_path, "redNotificationDot.png")
-
-        if locate_and_click(time_rewards_image, sleep_after=2):
-            locate_and_click_loop(red_dot_image, sleep_after=1)
-            for i in TIMED_REWARDS_X_RANGE:
-                self.input.click(i, TIMED_REWARDS_Y, sleep_after=0.2)
+        tr = asset(self.asset_path, "timeRewards.png")
+        rd = asset(self.asset_path, "redNotificationDot.png")
+        if locate_and_click(tr, sleep_after=2):
+            locate_and_click_loop(rd, sleep_after=1)
+            for rx in TIMED_REWARDS_X_RANGE:
+                self._click((rx, TIMED_REWARDS_Y), sleep_after=0.2)
             time.sleep(1)
-
             self.game.ensure_village()
             self.results["timed_rewards"] = "Collected"
-            logger.info("Timed rewards collected.")
             return True
         return False
 
     def collect_quests(self):
-        """Claim completed quests."""
         logger.info("=== Quest Claims ===")
         if not self.game.ensure_village():
             return False
-
-        quest_claim_image = asset(self.asset_path, "questClaim.png")
-        advanced_quests_image = asset(self.asset_path, "advancedQuests.png")
-
-        if self.game.smart_click("quests.png"):
-            claimed = locate_and_click_loop(quest_claim_image, sleep_after=1)
-            if locate_and_click(advanced_quests_image, sleep_after=1):
-                claimed += locate_and_click_loop(quest_claim_image, sleep_after=1)
-
-            self.game.ensure_village()
-            self.results["quests"] = f"{claimed} claimed"
-            logger.info(f"Quests: {claimed} claimed.")
-            return True
-        return False
+        self._click(BTN_QUESTS, sleep_after=2)
+        qc = asset(self.asset_path, "questClaim.png")
+        aq = asset(self.asset_path, "advancedQuests.png")
+        claimed = locate_and_click_loop(qc, sleep_after=1)
+        if locate_and_click(aq, sleep_after=1):
+            claimed += locate_and_click_loop(qc, sleep_after=1)
+        self.game.ensure_village()
+        self.results["quests"] = f"{claimed} claimed"
+        return True
 
     def collect_clan(self):
-        """Check in and collect clan rewards."""
         logger.info("=== Clan ===")
         if not self.game.ensure_village():
             return False
-
-        clan_check_in = asset(self.asset_path, "clanCheckIn.png")
-        clan_treasure = asset(self.asset_path, "clanTreasure.png")
-
-        if self.game.smart_click("clanBTN.png"):
-            locate_and_click(asset(self.asset_path, "clanMembers.png"), sleep_after=2)
-            locate_and_click_loop(clan_check_in, sleep_after=1)
-            locate_and_click(clan_treasure, sleep_after=1)
-
-            self.game.ensure_village()
-            self.results["clan"] = "Checked in"
-            logger.info("Clan check-in done.")
-            return True
-        return False
+        self._click(BTN_CLAN, sleep_after=2)
+        locate_and_click(asset(self.asset_path, "clanMembers.png"), sleep_after=2)
+        locate_and_click_loop(asset(self.asset_path, "clanCheckIn.png"), sleep_after=1)
+        locate_and_click(asset(self.asset_path, "clanTreasure.png"), sleep_after=1)
+        self.game.ensure_village()
+        self.results["clan"] = "Checked in"
+        return True
 
     def collect_inbox(self):
-        """Collect inbox items."""
         logger.info("=== Inbox ===")
         if not self.game.ensure_village():
             return False
-
         self.input.press_char("i", sleep_after=1)
-
-        inbox_items = [
-            "inbox_energy", "inbox_brew", "inbox_purple_forge",
-            "inbox_yellow_forge", "inbox_coin", "inbox_potion",
-        ]
-        for item in inbox_items:
+        for item in ["inbox_energy", "inbox_brew", "inbox_purple_forge",
+                      "inbox_yellow_forge", "inbox_coin", "inbox_potion"]:
             png = asset(self.asset_path, f"{item}.png")
             retries = 0
             while retries < MAX_RETRIES:
-                location = pyautogui.locateOnScreen(png, confidence=0.8)
-                if not location:
+                loc = pyautogui.locateOnScreen(png, confidence=0.8)
+                if not loc:
                     break
-                # Click 250px to the right of the inbox item (the collect button)
-                cx, cy = pyautogui.center(location)
+                cx, cy = pyautogui.center(loc)
                 self.input.click(cx + 250, cy, sleep_after=2)
                 retries += 1
-
         self.game.ensure_village()
         self.results["inbox"] = "Collected"
-        logger.info("Inbox collected.")
         return True
+
+    # =========================================================================
+    # Arena
+    # =========================================================================
+
+    def _nav_to_arena(self):
+        """Navigate from village to classic arena opponent list."""
+        self._click(BTN_BATTLE, sleep_after=2)
+        if not self.game.smart_click("arenaTab.png", max_attempts=3):
+            self.game.ensure_village()
+            return False
+        time.sleep(2)
+        self.game.smart_click("classicArena.png", max_attempts=2)
+        time.sleep(2)
+        return True
+
+    def _dismiss_arena_results(self):
+        """Click through arena battle result screens."""
+        tap = asset(self.asset_path, "tapToContinue.png")
+        ret = asset(self.asset_path, "returnToArena.png")
+        bat = asset(self.asset_path, "arenaBattle.png")
+        for _ in range(12):
+            if pyautogui.locateOnScreen(bat, confidence=0.6):
+                return True
+            if locate_and_click(tap, confidence=0.7, sleep_after=2):
+                continue
+            if locate_and_click(ret, confidence=0.7, sleep_after=3):
+                continue
+            self.game._clear_popups()
+            self._click(CENTER, sleep_after=2)
+        return False
 
     def run_arena_battles(self, num_battles=10):
-        """
-        Run arena battles with RTK-verified battle completion.
-        This is where the hybrid approach really shines — we know
-        exactly when battles end instead of polling for pixel changes.
-        """
         logger.info(f"=== Arena ({num_battles} battles) ===")
+
+        # Smart check: skip if no tokens
+        if self.reader:
+            res = self.reader.get_resources()
+            tokens = res.get("arena_tokens", 0)
+            if tokens < 1:
+                self.results["arena"] = f"Skipped ({tokens:.1f} tokens)"
+                logger.info(f"Skipping arena — {tokens:.1f} tokens")
+                return True
+            # Log opponent analysis
+            opps = self.reader.get_arena_opponents()
+            available = sorted([o for o in opps if o["available"]], key=lambda o: o["power"])
+            if available:
+                logger.info(f"Opponents: {len(available)} available, "
+                            f"weakest={available[0]['name']} ({available[0]['power']:,})")
+
         if not self.game.ensure_village():
             return False
-
-        battles_fought = 0
-
-        # Navigate to arena
-        if not self.game.smart_click("battleBTN.png"):
+        if not self._nav_to_arena():
             return False
-        time.sleep(2)
 
-        if not self.game.smart_click("arenaTab.png"):
-            self.game.ensure_village()
-            return False
-        time.sleep(2)
+        battles = 0
+        arena_battle = asset(self.asset_path, "arenaBattle.png")
+        arena_start = asset(self.asset_path, "arenaStart.png")
+        arena_refill = asset(self.asset_path, "classicArenaRefill.png")
 
-        if not self.game.smart_click("classicArena.png"):
-            self.game.ensure_village()
-            return False
-        time.sleep(2)
-
-        arena_battle_image = asset(self.asset_path, "arenaBattle.png")
-        arena_start_image = asset(self.asset_path, "arenaStart.png")
-        arena_refill_image = asset(self.asset_path, "classicArenaRefill.png")
-
-        for rx, ry, rw, rh, cx, cy in ARENA_REGIONS:
-            if battles_fought >= num_battles:
+        while battles < num_battles:
+            # Check tokens before each fight
+            if self.reader and not self.reader.has_arena_tokens():
+                logger.info("Out of arena tokens (memory).")
                 break
 
-            if pyautogui.locateOnScreen(arena_battle_image, region=(rx, ry, rw, rh), confidence=0.6):
-                self.input.click(cx, cy, sleep_after=3)
-
-                # Check if out of tokens
-                if pyautogui.locateOnScreen(arena_refill_image, confidence=0.8):
-                    logger.info("Out of arena tokens.")
+            loc = pyautogui.locateOnScreen(arena_battle, confidence=0.6)
+            if not loc:
+                refresh = asset(self.asset_path, "arenaRefresh.png")
+                locate_and_click(refresh, confidence=0.7, sleep_after=3)
+                loc = pyautogui.locateOnScreen(arena_battle, confidence=0.6)
+                if not loc:
                     break
 
-                # Start battle
-                if locate_and_click(arena_start_image, confidence=0.9, sleep_after=2):
-                    # === THE KEY DIFFERENCE ===
-                    # Instead of pixel-polling for "tap to continue",
-                    # we use RTK to know when the battle view changes
-                    if self.game.wait_for_view(View.BATTLE_HUD, timeout=10):
-                        battle_result = self.game.wait_for_battle_end(timeout=300)
-                        battles_fought += 1
-                        logger.info(
-                            f"Battle {battles_fought}/{num_battles} complete. "
-                            f"Result: {battle_result.get('result', 'unknown')}"
-                        )
+            cx, cy = pyautogui.center(loc)
+            pyautogui.click(cx, cy)
+            time.sleep(3)
 
-                        # Click through results screen
-                        time.sleep(2)
-                        self.input.click(960, 540, sleep_after=3)
+            if pyautogui.locateOnScreen(arena_refill, confidence=0.8):
+                logger.info("Out of tokens (refill prompt).")
+                pyautogui.press('escape')
+                time.sleep(1)
+                break
+
+            if not locate_and_click(arena_start, confidence=0.9, sleep_after=3):
+                pyautogui.press('escape')
+                time.sleep(2)
+                continue
+
+            # Memory-based battle detection (instant) or image polling (fallback)
+            result = self._wait_battle(timeout=180)
+            battles += 1
+            logger.info(f"Battle {battles}/{num_battles}: {result['result']}")
+
+            time.sleep(2)
+            if not self._dismiss_arena_results():
+                self.game.ensure_village()
+                if not self._nav_to_arena():
+                    break
 
         self.game.ensure_village()
-        self.results["arena"] = f"{battles_fought} battles fought"
-        logger.info(f"Arena: {battles_fought}/{num_battles} battles fought.")
+        self.results["arena"] = f"{battles} battles fought"
         return True
 
+    # =========================================================================
+    # Clan Boss
+    # =========================================================================
+
     def run_clan_boss(self, difficulty="ultra-nightmare"):
-        """
-        Fight clan boss with RTK-verified battle completion.
-        """
         logger.info(f"=== Clan Boss ({difficulty}) ===")
+
+        # Smart check: skip if no keys
+        if self.reader:
+            keys_before = int(self.reader.get_resources().get("cb_keys", 0))
+            if keys_before < 1:
+                self.results["clan_boss"] = f"Skipped ({keys_before} keys)"
+                logger.info(f"Skipping CB — {keys_before} keys")
+                return True
+        else:
+            keys_before = None
+
         if not self.game.ensure_village():
             return False
 
-        # Navigate: Village -> Battle -> CB
-        if not self.game.smart_click("battleBTN.png"):
+        # Navigate: Village -> Battle -> CB -> Demon Lord
+        self._click(BTN_BATTLE, sleep_after=3)
+        cb = asset(self.asset_path, "CB.png")
+        if not locate_and_click(cb, confidence=0.8, sleep_after=3, max_attempts=5):
+            self.game.ensure_village()
             return False
+        dl = asset(self.asset_path, "demonLord2.png")
+        if not locate_and_click(dl, confidence=0.7, sleep_after=4, max_attempts=5):
+            self.game.ensure_village()
+            return False
+
+        # Verify we're on CB screen via ViewKey
+        if self.reader:
+            logger.info(f"CB screen: {self.reader.get_current_view_name()}")
+
+        # Claim any available rewards
+        locate_and_click_loop(asset(self.asset_path, "CBreward.png"), sleep_after=2, max_retries=3)
+        locate_and_click_loop(asset(self.asset_path, "CBclaim.png"), sleep_after=2, max_retries=3)
+
+        # Scroll difficulty panel to show higher difficulties (UNM)
+        gx = self.game.win_x + 490
+        pyautogui.moveTo(gx, self.game.win_y + 350)
+        time.sleep(0.2)
+        pyautogui.mouseDown()
+        pyautogui.moveTo(gx, self.game.win_y + 120, duration=0.5)
+        pyautogui.mouseUp()
         time.sleep(2)
 
-        locate_and_click_loop(asset(self.asset_path, "CB.png"), sleep_after=2)
-        locate_and_click_loop(asset(self.asset_path, "demonLord2.png"), sleep_after=4)
+        # Click Battle button
+        cb_battle = asset(self.asset_path, "CBbattle.png")
+        if not locate_and_click(cb_battle, confidence=0.6, sleep_after=3, max_attempts=3):
+            logger.info("No CB battle button (already fought today).")
+            self.game.ensure_village()
+            return True
 
-        # Collect any available rewards first
-        cb_reward_image = asset(self.asset_path, "CBreward.png")
-        cb_claim_image = asset(self.asset_path, "CBclaim.png")
-        locate_and_click_loop(cb_reward_image, sleep_after=2)
-        locate_and_click_loop(cb_claim_image, sleep_after=2)
-
-        # Start the fight
-        cb_battle_image = asset(self.asset_path, "CBbattle.png")
-        cb_start_image = asset(self.asset_path, "CBstart.png")
-        cb_no_key_image = asset(self.asset_path, "CBnokey.png")
-
-        if locate_and_click(cb_battle_image, sleep_after=2):
-            if pyautogui.locateOnScreen(cb_no_key_image, confidence=0.8):
-                logger.warning("No keys available for Clan Boss.")
+        # Verify we're at team selection
+        if self.reader:
+            vk = self.reader.get_current_view()
+            logger.info(f"After Battle click: {self.reader.get_current_view_name()}")
+            if vk != 1072:  # HeroesSelectionDialogToAllianceBoss
+                logger.warning(f"Not at CB team selection (view={vk})")
                 self.game.ensure_village()
                 return False
 
-            time.sleep(2)
-            if locate_and_click(cb_start_image, sleep_after=2):
-                # Wait for battle using RTK
-                if self.game.wait_for_view(View.BATTLE_HUD, timeout=15):
-                    battle_result = self.game.wait_for_battle_end(timeout=600)
-                    logger.info(f"Clan Boss battle complete: {battle_result}")
-                    self.results["clan_boss"] = f"{difficulty} fought"
+        # Click Start
+        cb_start = asset(self.asset_path, "CBstart.png")
+        if not locate_and_click(cb_start, confidence=0.8, sleep_after=3, max_attempts=5):
+            logger.warning("CBstart not found")
+            self.game.ensure_village()
+            return False
 
-                    # Click through results
-                    time.sleep(3)
-                    goto_bastion = asset(self.asset_path, "gotoBastion.png")
-                    locate_and_click(goto_bastion, sleep_after=2, max_attempts=10)
+        # Wait for battle completion (supports instant/quick fights)
+        logger.info("CB battle started, waiting...")
+        if self.reader:
+            result = self._wait_battle_or_view(
+                from_view=1072, keys_before=keys_before, timeout=600)
+            logger.info(f"CB complete: {result}")
+            self.results["clan_boss"] = f"{difficulty} fought"
+        else:
+            result = self._wait_battle(timeout=600)
+            self.results["clan_boss"] = f"{difficulty}: {result['result']}"
+
+        # Dismiss results and return to village
+        time.sleep(3)
+        for _ in range(10):
+            if self.reader and self.reader.is_at_village():
+                break
+            goto = asset(self.asset_path, "gotoBastion.png")
+            if locate_and_click(goto, confidence=0.7, sleep_after=3):
+                continue
+            self._click(CENTER, sleep_after=2)
 
         self.game.ensure_village()
         return True
 
-    # --- Main run ---
+    # =========================================================================
+    # Main daily run
+    # =========================================================================
 
     def run_daily(self):
-        """Run all daily tasks."""
+        mode = "coords + memory" if self.reader else "screen-only"
         logger.info("=" * 50)
-        logger.info("Starting daily automation (hybrid mode)")
+        logger.info(f"Daily automation ({mode})")
         logger.info("=" * 50)
 
-        # Show account status
-        try:
-            resources = self.game.get_resources()
-            logger.info(f"Resources: {resources}")
-        except Exception as e:
-            logger.debug(f"Could not fetch resources: {e}")
+        if self.reader:
+            res = self.reader.get_resources()
+            logger.info(f"Pre: E={int(res['energy']):,} S={int(res['silver']):,} "
+                        f"G={int(res['gems'])} A={res['arena_tokens']:.1f} CB={int(res['cb_keys'])}")
 
-        # Run tasks
-        tasks = [
+        for name, fn in [
             ("Gem Mine", self.collect_gem_mine),
             ("Shop Rewards", self.collect_shop_rewards),
             ("Timed Rewards", self.collect_timed_rewards),
@@ -387,13 +450,10 @@ class HybridController:
             ("Inbox", self.collect_inbox),
             ("Arena", lambda: self.run_arena_battles(10)),
             ("Clan Boss", lambda: self.run_clan_boss("ultra-nightmare")),
-        ]
-
-        for name, task_fn in tasks:
+        ]:
             try:
-                view = self.game.current_view()
-                logger.info(f"[{name}] Starting (current view: {view.value})")
-                task_fn()
+                logger.info(f"[{name}] Starting...")
+                fn()
             except Exception as e:
                 logger.error(f"[{name}] Failed: {e}", exc_info=True)
                 try:
@@ -401,31 +461,28 @@ class HybridController:
                 except Exception:
                     pass
 
-        # Summary
+        if self.reader:
+            res = self.reader.get_resources()
+            logger.info(f"Post: E={int(res['energy']):,} S={int(res['silver']):,} "
+                        f"G={int(res['gems'])} A={res['arena_tokens']:.1f} CB={int(res['cb_keys'])}")
+
         logger.info("=" * 50)
-        logger.info("Daily automation complete. Results:")
-        for task, result in self.results.items():
-            logger.info(f"  {task}: {result}")
+        logger.info("Results:")
+        for k, v in self.results.items():
+            logger.info(f"  {k}: {v}")
         logger.info("=" * 50)
 
 
 def main():
-    prefer_background = "--foreground" not in sys.argv
-    controller = HybridController(prefer_background=prefer_background)
-
-    if not controller.connect():
-        print("\nFailed to connect. Checklist:")
-        print("  1. Is Raid Toolkit installed? (https://raidtoolkit.com)")
-        print("  2. Is Raid Toolkit running? (check system tray)")
-        print("  3. Is Raid: Shadow Legends running?")
+    ctrl = HybridController(use_memory="--no-memory" not in sys.argv)
+    if not ctrl.connect():
         sys.exit(1)
-
     try:
-        controller.run_daily()
+        ctrl.run_daily()
     except KeyboardInterrupt:
-        logger.info("Interrupted by user.")
+        logger.info("Interrupted.")
     finally:
-        controller.disconnect()
+        ctrl.disconnect()
 
 
 if __name__ == "__main__":

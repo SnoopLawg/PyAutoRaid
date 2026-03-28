@@ -69,21 +69,158 @@ Extends `BaseDaily`. Uses `getattr()` to dynamically call methods based on `DQco
 
 `.github/workflows/compile-and-release.yml`: PyInstaller compile, embed admin manifests via Resource Hacker, Inno Setup installer, auto-increment version tag, upload to GitHub Releases.
 
-### Hybrid Controller (`Modules/hybrid_controller.py`) — NEW
+### Hybrid Controller (`Modules/hybrid_controller.py`) — Active
 
-Next-gen approach using Raid Toolkit SDK for game state + pyautogui for clicks.
+The primary automation controller. Combines three strategies:
+1. **Coordinate clicks** — fixed positions for known UI elements (nav bar buttons, gem mine)
+2. **Memory reading** — game state via pymem (resources, battle state, ViewKey, arena opponents)
+3. **Image matching** — only for dynamic/unpredictable elements (popups, battle result screens)
 
-**Architecture:**
-- `rtk_client.py` — WebSocket client to RTK at `ws://localhost:9090`. Synchronous wrapper (uses threading Events instead of asyncio). Provides typed access to all RTK APIs: AccountApi, RealtimeApi, StaticDataApi.
-- `game_state.py` — State machine layer. `View` enum maps 200+ RTK ViewKey strings. `GameState` class provides `current_view()`, `wait_for_view()`, `wait_for_battle_end()`, `ensure_village()`, `smart_click()` (click + verify via RTK).
-- `hybrid_controller.py` — Closed-loop controller. Each task reads state from RTK, clicks via pyautogui, then verifies the state change via RTK. Entry point: `python Modules/hybrid_controller.py`
+Entry point: `python Modules/hybrid_controller.py` (or `--no-memory` for screen-only fallback)
 
-**Requires Raid Toolkit SDK** installed and running on Windows alongside the game. Install from https://raidtoolkit.com
+**Key modules:**
+- `memory_reader.py` — pymem wrapper that reads IL2CPP game objects from Raid.exe process memory
+- `screen_state.py` — pyautogui/pygetwindow for window management, popup clearing, image-based navigation fallback
+- `base.py` — shared helpers (`locate_and_click`, `asset()`, etc.)
+- `win32_input.py` — input backend (pyautogui clicks)
 
-**Key advantage over pure screen automation:** Screen identity is read from RTK (200+ named views) instead of fragile image matching. Battle completion is detected via RTK events instead of pixel polling.
+### Memory Reader (`Modules/memory_reader.py`) — Phase 2
+
+Direct IL2CPP memory reading via pymem. Replaces the dead RTK dependency with process memory access.
+
+**How it works:**
+- Attaches to `Raid.exe` process via `pymem.Pymem()`
+- Finds `GameAssembly.dll` base address
+- Resolves `AppModel` and `AppViewModel` singletons via IL2CPP TypeInfo pointer chains
+- Reads game data by following field offsets from the Il2CppDumper output
+
+**Singleton access chain:**
+```
+GA_BASE + TypeInfo_RVA -> klass
+  -> +0xC8 (generic class info)
+  -> +0x08 (specialized klass)
+  -> +0xB8 (static_fields)
+  -> +0x08 (_instance)
+```
+
+**What it reads:**
+| Data | Method | Used For |
+|------|--------|----------|
+| Resources (energy, silver, gems, arena tokens, CB keys) | `get_resources()` | Skip tasks when empty |
+| Account level & power | `get_account_level()`, `get_total_power()` | Logging |
+| Hero roster (500 heroes, grade/level/empower) | `get_heroes()` | Future team building |
+| Arena opponents (name, power, status) | `get_arena_opponents()` | Pick weakest target |
+| Battle state (Started/Finished/Stopped) | `get_battle_state()` | Instant battle detection |
+| Current screen (497 ViewKeys) | `get_current_view()` | Navigation verification |
+
+**Offsets source:** Il2CppDumper v6.7.46 output for Raid v11.30.0 (metadata v31, Unity 6000.0.60).
+Dump files at `C:\Tools\Il2CppDumper\output\` on the VM. Full ViewKey map at `C:\PyAutoRaid\offsets\viewkeys.json`.
+
+**Key TypeInfo RVAs (in GameAssembly.dll):**
+- AppModel: `0x4DC1558`
+- AppViewModel: `0x4DC2A28`
+
+**RTK status:** Dead. Raid Toolkit SDK v2.8.22 cannot parse IL2CPP metadata v31. `rtk_client.py` and `game_state.py` are legacy dead code.
+
+### Screen State (`Modules/screen_state.py`)
+
+Handles game window management and image-based fallback navigation:
+- Window resize/center to 900x600
+- Popup clearing (`exitAdd.png`, `closeLO.png`)
+- `ensure_village()` — ESC + goBack + quit dialog handling + village verification
+- `smart_click()` — locate image and click with retries
+
+## VM Deployment (mothership2)
+
+PyAutoRaid runs headless on a Windows 10 LTSC VM on the homelab server (Dell Optiplex i5-9600T, 16GB RAM).
+
+### VM Details
+
+| Property | Value |
+|----------|-------|
+| Host | mothership2 (`192.168.0.244`) |
+| Hypervisor | QEMU/KVM (SeaBIOS, not UEFI) |
+| VM specs | 4 vCPUs, 4GB RAM, 60GB AHCI/SATA disk, e1000 NIC |
+| OS | Windows 10 Enterprise LTSC 2021 |
+| VM user | `snoop` / `raid` |
+| VM files | `/home/snoop/vms/win10-raid/` |
+| Code | `C:\PyAutoRaid` (zip download from GitHub) |
+| Python | 3.12.4 (system-wide, on PATH) |
+
+### Port Forwarding (QEMU user-mode networking)
+
+| Host Port | Service |
+|-----------|---------|
+| 3389 | RDP (Windows Remote Desktop) |
+| 5900 | VNC (QEMU display) |
+| 5985 | WinRM (PowerShell remoting) |
+| 9090 | RTK WebSocket API |
+
+### Scripts (`/home/snoop/vms/win10-raid/`)
+
+- `start-vm.sh` — Boot the VM. Pass ISO path as arg for reinstall: `./start-vm.sh Win10.iso`
+- `stop-vm.sh` — ACPI shutdown via QEMU monitor (Python, no socat needed)
+- `type-cmd.py <text>` — Type a command into the VM via QEMU monitor sendkey
+- `run-pyautoraid.sh` — Trigger automation (WinRM or manual VNC/RDP)
+
+### Automation Schedule
+
+**Linux cron (host):**
+```
+50 6 * * *  start-vm.sh   # Boot VM 10 min before first run
+0 22 * * *  stop-vm.sh    # Shut down to free RAM for Minecraft
+```
+
+**Windows Scheduled Task "PyAutoRaid":**
+- Runs `python C:\PyAutoRaid\Modules\hybrid_controller.py` at **7am, 1pm, 7pm**
+- Plarium Play auto-starts with Windows and launches Raid via startup shortcut
+
+### Daily Flow
+
+1. **6:50am** — Linux cron starts the VM
+2. **Boot** — Windows auto-logs in → Plarium Play launches Raid → RTK starts
+3. **7am, 1pm, 7pm** — Scheduled Task runs `hybrid_controller.py`
+4. **10pm** — Linux cron shuts down the VM
+
+### Connecting to the VM
+
+- **RDP (interactive):** `192.168.0.244:3389` — use "Windows App" on Mac (user `snoop`, pass `raid`)
+- **VNC (view only):** `vncviewer 192.168.0.244:5900` (no password, no input — use for screenshots)
+- **PowerShell via monitor:** `python3 type-cmd.py 'your-command-here'` from the server
+
+### Windows Optimizations Applied
+
+- Services disabled: SysMain, DiagTrack, WSearch, MapsBroker, Windows Update
+- UAC disabled for admin user
+- High performance power plan
+- Notifications disabled
+
+## Future Plans
+
+### Phase 2: Direct IL2CPP Memory Reading (ACTIVE)
+Using `pymem` to read `GameAssembly.dll` process memory directly. Currently implemented:
+- Account data (level, power, resources)
+- Hero roster (500 heroes with stats)
+- Arena opponents (name, power, win/loss status)
+- Battle state detection (instant, no image polling)
+- ViewKey screen identification (497 game screens mapped)
+- Instant/quick fight detection
+
+**Remaining Phase 2 work:**
+- Hero type_id -> champion name mapping (needs static data extraction)
+- Arena opponent team composition reading
+- Artifact data reading for auto-sell
+- Offset update tooling for game patches (`update_offsets.py`)
+
+### Phase 3: DLL Injection (Future)
+Inject a C#/.NET DLL into the game process for deepest access:
+- Hook game functions directly (battle events, screen transitions)
+- Event-driven automation (react to game events in real-time)
+- **Tradeoff**: Most complex, highest anti-cheat risk
 
 ## Key Constraints
 
 - **Windows-only**: Uses pywin32, PyGetWindow, Windows Task Scheduler
 - **Resolution-dependent**: Hardcoded pixel coordinates assume 1920x1080. Named constants for coordinates are defined at the top of each module.
 - **Asset path handling**: Resolves `assets/` differently from source vs frozen PyInstaller exe (`sys._MEIPASS`)
+
