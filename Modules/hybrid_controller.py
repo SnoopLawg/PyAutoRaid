@@ -232,6 +232,10 @@ class HybridController:
     # Arena
     # =========================================================================
 
+    # Arena opponent row layout (game-relative Y positions for 5 visible slots)
+    ARENA_ROW_Y = [195, 275, 355, 435, 515]
+    ARENA_BATTLE_X = 820  # Battle button on right side of each row
+
     def _nav_to_arena(self):
         """Navigate from village to classic arena opponent list."""
         self._click(BTN_BATTLE, sleep_after=2)
@@ -259,6 +263,62 @@ class HybridController:
             self._click(CENTER, sleep_after=2)
         return False
 
+    def _pick_and_click_opponent(self):
+        """Use memory to pick the weakest available opponent and click
+        their Battle button by calculated position. Falls back to image
+        matching if memory unavailable.
+        Returns True if we navigated to team selection.
+        """
+        arena_battle = asset(self.asset_path, "arenaBattle.png")
+
+        if not self.reader:
+            # Fallback: click first visible battle button
+            loc = pyautogui.locateOnScreen(arena_battle, confidence=0.6)
+            if loc:
+                pyautogui.click(*pyautogui.center(loc))
+                time.sleep(3)
+                return True
+            return False
+
+        opps = self.reader.get_arena_opponents()
+        # Only consider the first 5 (visible without scrolling)
+        available = [(i, o) for i, o in enumerate(opps[:5]) if o["available"]]
+        if not available:
+            # Try all 10 with image fallback
+            logger.info("No available opponents in top 5, using image fallback.")
+            loc = pyautogui.locateOnScreen(arena_battle, confidence=0.6)
+            if loc:
+                pyautogui.click(*pyautogui.center(loc))
+                time.sleep(3)
+                return True
+            return False
+
+        # Sort by power (weakest first = easiest win)
+        available.sort(key=lambda x: x[1]["power"])
+        target_idx, target = available[0]
+        logger.info(f"Target: [{target_idx}] {target['name']} "
+                     f"(power={target['power']:,})")
+
+        # Click the Battle button for this visible slot
+        btn_y = self.ARENA_ROW_Y[target_idx]
+        self._click((self.ARENA_BATTLE_X, btn_y), sleep_after=3)
+
+        # Verify we reached team selection via ViewKey
+        if self.reader:
+            vk = self.reader.get_current_view()
+            if vk == 1011:  # HeroesSelectionDialogToArena
+                return True
+            # Click didn't work — fall back to image matching
+            logger.info(f"Click didn't navigate (view={vk}), trying image fallback")
+            loc = pyautogui.locateOnScreen(arena_battle, confidence=0.6)
+            if loc:
+                pyautogui.click(*pyautogui.center(loc))
+                time.sleep(3)
+                return True
+            return False
+
+        return True
+
     def run_arena_battles(self, num_battles=10):
         logger.info(f"=== Arena ({num_battles} battles) ===")
 
@@ -270,12 +330,11 @@ class HybridController:
                 self.results["arena"] = f"Skipped ({tokens:.1f} tokens)"
                 logger.info(f"Skipping arena — {tokens:.1f} tokens")
                 return True
-            # Log opponent analysis
+            # Log full opponent analysis
             opps = self.reader.get_arena_opponents()
             available = sorted([o for o in opps if o["available"]], key=lambda o: o["power"])
-            if available:
-                logger.info(f"Opponents: {len(available)} available, "
-                            f"weakest={available[0]['name']} ({available[0]['power']:,})")
+            for o in available:
+                logger.info(f"  {o['name']:20s} power={o['power']:>10,}")
 
         if not self.game.ensure_village():
             return False
@@ -283,7 +342,6 @@ class HybridController:
             return False
 
         battles = 0
-        arena_battle = asset(self.asset_path, "arenaBattle.png")
         arena_start = asset(self.asset_path, "arenaStart.png")
         arena_refill = asset(self.asset_path, "classicArenaRefill.png")
 
@@ -293,24 +351,24 @@ class HybridController:
                 logger.info("Out of arena tokens (memory).")
                 break
 
-            loc = pyautogui.locateOnScreen(arena_battle, confidence=0.6)
-            if not loc:
+            # Pick and click the weakest opponent
+            if not self._pick_and_click_opponent():
+                # Try refreshing the list
                 refresh = asset(self.asset_path, "arenaRefresh.png")
-                locate_and_click(refresh, confidence=0.7, sleep_after=3)
-                loc = pyautogui.locateOnScreen(arena_battle, confidence=0.6)
-                if not loc:
+                if locate_and_click(refresh, confidence=0.7, sleep_after=3):
+                    if not self._pick_and_click_opponent():
+                        break
+                else:
                     break
 
-            cx, cy = pyautogui.center(loc)
-            pyautogui.click(cx, cy)
-            time.sleep(3)
-
+            # Check for refill prompt (out of tokens)
             if pyautogui.locateOnScreen(arena_refill, confidence=0.8):
                 logger.info("Out of tokens (refill prompt).")
                 pyautogui.press('escape')
                 time.sleep(1)
                 break
 
+            # Click Start on team selection
             if not locate_and_click(arena_start, confidence=0.9, sleep_after=3):
                 pyautogui.press('escape')
                 time.sleep(2)
@@ -370,30 +428,40 @@ class HybridController:
         locate_and_click_loop(asset(self.asset_path, "CBreward.png"), sleep_after=2, max_retries=3)
         locate_and_click_loop(asset(self.asset_path, "CBclaim.png"), sleep_after=2, max_retries=3)
 
-        # Scroll difficulty panel to show higher difficulties (UNM)
+        # Scroll difficulty panel down to Ultra-Nightmare
+        # The panel is on the right side (~x=490). Drag multiple times to ensure
+        # we reach the bottom (UNM is the last difficulty).
         gx = self.game.win_x + 490
-        pyautogui.moveTo(gx, self.game.win_y + 350)
-        time.sleep(0.2)
-        pyautogui.mouseDown()
-        pyautogui.moveTo(gx, self.game.win_y + 120, duration=0.5)
-        pyautogui.mouseUp()
-        time.sleep(2)
+        for drag in range(3):
+            pyautogui.moveTo(gx, self.game.win_y + 380)
+            time.sleep(0.15)
+            pyautogui.mouseDown()
+            pyautogui.moveTo(gx, self.game.win_y + 100, duration=0.4)
+            pyautogui.mouseUp()
+            time.sleep(0.5)
+        time.sleep(1)
 
-        # Click Battle button
+        # Click Battle button (should now be for UNM after scrolling)
         cb_battle = asset(self.asset_path, "CBbattle.png")
         if not locate_and_click(cb_battle, confidence=0.6, sleep_after=3, max_attempts=3):
             logger.info("No CB battle button (already fought today).")
             self.game.ensure_village()
             return True
 
-        # Verify we're at team selection
+        # Verify we're at team selection via ViewKey
         if self.reader:
             vk = self.reader.get_current_view()
             logger.info(f"After Battle click: {self.reader.get_current_view_name()}")
             if vk != 1072:  # HeroesSelectionDialogToAllianceBoss
-                logger.warning(f"Not at CB team selection (view={vk})")
-                self.game.ensure_village()
-                return False
+                # Might have clicked a dead boss's row — try clicking Battle again
+                logger.warning(f"Not at team selection (view={vk}), retrying...")
+                if not locate_and_click(cb_battle, confidence=0.6, sleep_after=3, max_attempts=3):
+                    self.game.ensure_village()
+                    return False
+                vk = self.reader.get_current_view()
+                if vk != 1072:
+                    self.game.ensure_village()
+                    return False
 
         # Click Start
         cb_start = asset(self.asset_path, "CBstart.png")
@@ -402,7 +470,7 @@ class HybridController:
             self.game.ensure_village()
             return False
 
-        # Wait for battle completion (supports instant/quick fights)
+        # Wait for battle — supports normal and instant/quick fights
         logger.info("CB battle started, waiting...")
         if self.reader:
             result = self._wait_battle_or_view(
@@ -413,7 +481,7 @@ class HybridController:
             result = self._wait_battle(timeout=600)
             self.results["clan_boss"] = f"{difficulty}: {result['result']}"
 
-        # Dismiss results and return to village
+        # Dismiss results
         time.sleep(3)
         for _ in range(10):
             if self.reader and self.reader.is_at_village():

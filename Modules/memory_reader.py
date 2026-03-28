@@ -82,6 +82,7 @@ HEROESWRAP_DATA = 0x88          # UpdatableHeroData (inherits UserHeroData)
 HERODATA_HEROBYID = 0x18        # Dictionary<int, Hero>
 
 # Hero fields
+HERO_TYPE_PTR = 0x10    # HeroType* (for name/faction/rarity lookup)
 HERO_ID = 0x18          # int
 HERO_TYPEID = 0x1C      # int
 HERO_GRADE = 0x20       # HeroGrade enum (1-6 stars)
@@ -90,6 +91,22 @@ HERO_EXP = 0x28         # int
 HERO_EMPOWER = 0x30     # int (empowerment level)
 HERO_LOCKED = 0x34      # bool
 HERO_INSTORAGE = 0x35   # bool
+
+# HeroType fields (via Hero._type pointer)
+HEROTYPE_NAME = 0x18    # SharedLTextKey -> .DefaultValue (+0x18) = champion name
+HEROTYPE_FRACTION = 0x38  # HeroFraction enum
+HEROTYPE_RARITY = 0x3C  # HeroRarity enum
+
+# Artifact fields
+ART_ID = 0x10           # int
+ART_SELL_PRICE = 0x28   # int
+ART_LEVEL = 0x30        # int (0-16)
+ART_KIND = 0x40         # ArtifactKindId enum (weapon/helmet/shield/etc)
+ART_RANK = 0x44         # ArtifactRankId enum (1-6 stars)
+ART_RARITY = 0x48       # ItemRarity enum (common-legendary)
+ART_PRIMARY = 0x50      # ArtifactBonus ptr (primary stat)
+ART_SECONDARIES = 0x58  # List<ArtifactBonus> (substats)
+ART_SET = 0x68          # ArtifactSetKindId enum
 
 # ArenaWrapperReadOnly -> UserArenaData
 ARENAWRAP_DATA = 0x40
@@ -159,6 +176,15 @@ RESOURCE_NAMES = {
     RES_ARENA_3X3: "arena_3x3_tokens",
     RES_LIVE_ARENA: "live_arena_tokens",
     RES_AUTO_TICKET: "auto_tickets",
+}
+
+RARITY_NAMES = {1: "Common", 2: "Uncommon", 3: "Rare", 4: "Epic", 5: "Legendary", 6: "Mythical"}
+FACTION_NAMES = {
+    0: "Unknown", 1: "BannerLords", 2: "HighElves", 3: "SacredOrder",
+    4: "CovenOfMagi", 5: "OgrynTribes", 6: "LizardMen", 7: "Skinwalkers",
+    8: "Orcs", 9: "Demonspawn", 10: "UndeadHordes", 11: "DarkElves",
+    12: "KnightsRevenant", 13: "Barbarians", 14: "SylvanWatchers",
+    15: "Samurai", 16: "Dwarves", 17: "Olympians",
 }
 
 # ViewKey (key screens — full list of 497 in offsets/viewkeys.json)
@@ -517,8 +543,28 @@ class MemoryReader:
     # Heroes
     # =========================================================================
 
-    def get_heroes(self):
-        """Read all heroes as a list of dicts."""
+    def _read_hero_name(self, hero_ptr):
+        """Read champion name from Hero._type -> HeroType.Name.DefaultValue."""
+        hero_type = self._ptr(hero_ptr + HERO_TYPE_PTR)
+        if not hero_type:
+            return ""
+        name_key = self._ptr(hero_type + HEROTYPE_NAME)  # SharedLTextKey
+        if not name_key:
+            return ""
+        name_str = self._ptr(name_key + 0x18)  # .DefaultValue
+        return self._read_il2cpp_string(name_str)
+
+    def _read_hero_type_info(self, hero_ptr):
+        """Read faction and rarity from Hero._type -> HeroType."""
+        hero_type = self._ptr(hero_ptr + HERO_TYPE_PTR)
+        if not hero_type:
+            return "", ""
+        frac = self.pm.read_int(hero_type + HEROTYPE_FRACTION)
+        rar = self.pm.read_int(hero_type + HEROTYPE_RARITY)
+        return FACTION_NAMES.get(frac, f"?{frac}"), RARITY_NAMES.get(rar, f"?{rar}")
+
+    def get_heroes(self, with_names=True):
+        """Read all heroes. Set with_names=False for faster reads."""
         heroes_wrap = self._ptr(self._uw + UW_HEROES)
         hero_data = self._ptr(heroes_wrap + HEROESWRAP_DATA)
         hero_dict = self._ptr(hero_data + HERODATA_HEROBYID)
@@ -535,11 +581,73 @@ class MemoryReader:
                     "locked": self.pm.read_bytes(ptr + HERO_LOCKED, 1)[0] != 0,
                     "in_storage": self.pm.read_bytes(ptr + HERO_INSTORAGE, 1)[0] != 0,
                 }
-                if 1 <= h["grade"] <= 6 and 1 <= h["level"] <= 60:
-                    heroes.append(h)
+                if not (1 <= h["grade"] <= 6 and 1 <= h["level"] <= 60):
+                    continue
+                if with_names:
+                    h["name"] = self._read_hero_name(ptr)
+                    h["faction"], h["rarity"] = self._read_hero_type_info(ptr)
+                heroes.append(h)
             except Exception:
                 continue
         return heroes
+
+    # =========================================================================
+    # Artifacts
+    # =========================================================================
+
+    def get_artifacts(self):
+        """Read all artifacts with set, rank, rarity, level, and sell price."""
+        equip_wrap = self._ptr(self._uw + 0x30)  # UW_ARTIFACTS
+        if not equip_wrap:
+            return []
+        # EquipmentWrapperReadOnly stores artifact data similarly to heroes
+        # Search for the artifact dictionary in the wrapper
+        for data_off in [0x88, 0x90, 0x80, 0x78]:
+            art_data = self._ptr(equip_wrap + data_off)
+            if not art_data:
+                continue
+            # Look for ArtifactById dictionary at common offsets
+            for dict_off in [0x18, 0x10, 0x20]:
+                art_dict = self._ptr(art_data + dict_off)
+                if not art_dict:
+                    continue
+                try:
+                    count = self.pm.read_int(art_dict + DICT_COUNT)
+                    if count < 10 or count > 5000:
+                        continue
+                    entries = self._read_dict_int_obj(art_dict, max_items=min(count, 2000))
+                    if not entries:
+                        continue
+                    # Validate first entry looks like an artifact
+                    _, test_ptr = entries[0]
+                    test_level = self.pm.read_int(test_ptr + ART_LEVEL)
+                    test_rank = self.pm.read_int(test_ptr + ART_RANK)
+                    if not (0 <= test_level <= 16 and 1 <= test_rank <= 6):
+                        continue
+                    # Found it — read all artifacts
+                    artifacts = []
+                    for _, ptr in entries:
+                        try:
+                            a = {
+                                "id": self.pm.read_int(ptr + ART_ID),
+                                "level": self.pm.read_int(ptr + ART_LEVEL),
+                                "rank": self.pm.read_int(ptr + ART_RANK),
+                                "rarity": self.pm.read_int(ptr + ART_RARITY),
+                                "set": self.pm.read_int(ptr + ART_SET),
+                                "kind": self.pm.read_int(ptr + ART_KIND),
+                                "sell_price": self.pm.read_int(ptr + ART_SELL_PRICE),
+                            }
+                            if 0 <= a["level"] <= 16 and 1 <= a["rank"] <= 6:
+                                a["rarity_name"] = RARITY_NAMES.get(a["rarity"], "?")
+                                artifacts.append(a)
+                        except Exception:
+                            continue
+                    logger.info(f"Read {len(artifacts)} artifacts (from offset 0x{data_off:X}/0x{dict_off:X})")
+                    return artifacts
+                except Exception:
+                    continue
+        logger.warning("Could not find artifact dictionary")
+        return []
 
     # =========================================================================
     # Arena
