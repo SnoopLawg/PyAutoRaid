@@ -110,6 +110,20 @@ ART_PRIMARY = 0x50      # ArtifactBonus ptr (primary stat)
 ART_SECONDARIES = 0x58  # List<ArtifactBonus> (substats)
 ART_SET = 0x68          # ArtifactSetKindId enum
 
+# ArtifactBonus fields
+BONUS_STAT_KIND = 0x10  # StatKindId enum
+BONUS_VALUE = 0x18      # BonusValue (inline: isAbsolute at +0x10, Fixed _value at +0x18)
+BONUS_VALUE_IS_ABS = 0x18  # bool _isAbsolute (relative to ArtifactBonus)
+BONUS_VALUE_VAL = 0x20     # Fixed _value (8 bytes, relative to ArtifactBonus)
+BONUS_LEVEL = 0x38      # int _level (number of upgrade rolls into this substat)
+
+# ArtifactStorageResolver — static singleton for artifact storage
+# Chain: TypeInfo → static_fields → _implementation → _cachedArtifacts → _artifacts dict
+ARTIFACT_RESOLVER_TYPEINFO_RVA = 0x4DE5890
+ARTRESOLVER_IMPL = 0x00          # _implementation (ExternalArtifactsStorage)
+EXTERNAL_CACHED = 0x10           # _cachedArtifacts (CachedArtifacts)
+CACHED_ARTIFACTS_DICT = 0x18     # _artifacts (Dictionary<int, Artifact>)
+
 # ArenaWrapperReadOnly -> UserArenaData
 ARENAWRAP_DATA = 0x40
 ARENA_POINTS = 0x10             # long
@@ -242,6 +256,48 @@ REGION_NAMES = {
     201: "Void Keep", 202: "Spirit Keep", 203: "Magic Keep",
     204: "Force Keep", 205: "Arcane Keep",
 }
+
+# StatKindId
+STAT_HP = 1
+STAT_ATK = 2
+STAT_DEF = 3
+STAT_SPD = 4
+STAT_RES = 5
+STAT_ACC = 6
+STAT_CRIT_RATE = 7
+STAT_CRIT_DMG = 8
+
+STAT_NAMES = {
+    1: "HP", 2: "ATK", 3: "DEF", 4: "SPD",
+    5: "RES", 6: "ACC", 7: "C.Rate", 8: "C.Dmg",
+}
+
+# ArtifactSetKindId
+SET_NAMES = {
+    0: "None", 1: "HP", 2: "ATK", 3: "DEF", 4: "Speed",
+    5: "C.Rate", 6: "C.Dmg", 7: "ACC", 8: "RES",
+    9: "Lifesteal", 10: "Savage", 11: "Sleep", 12: "BlockHeal",
+    13: "Frost", 14: "Stamina", 15: "Heal", 16: "BlockDebuff",
+    17: "Shield", 18: "Relentless", 19: "IgnoreDef", 20: "DecMaxHP",
+    21: "Stun", 22: "Toxic", 23: "Provoke", 24: "Counterattack",
+    25: "Retaliation", 26: "AoeDmgDec", 27: "Reflex", 28: "CritHeal",
+    29: "Cruel", 30: "Immortal", 31: "Fury", 32: "Perception",
+    33: "Resilience", 34: "Swiftparry", 35: "Untouchable",
+    36: "Deflection", 37: "Stalwart", 38: "Guardian", 39: "Lethal",
+    40: "Bolster", 41: "Frenzy", 42: "Frostbite",
+}
+
+# ArtifactKindId
+KIND_NAMES = {
+    1: "Helmet", 2: "Chest", 3: "Gloves", 4: "Boots",
+    5: "Weapon", 6: "Shield", 7: "Ring", 8: "Cloak", 9: "Banner",
+}
+
+# "Bottom row" pieces — gloves/chest/boots have variable primary stats
+BOTTOM_ROW_KINDS = {2, 3, 4}  # Chest, Gloves, Boots
+
+# Desirable sets for keeping
+GOOD_SETS = {4, 9, 10, 29, 31, 19, 32, 34, 35}  # Speed, Lifesteal, Savage, Cruel, Fury, IgnoreDef, Perception, Swiftparry, Untouchable
 
 RARITY_NAMES = {1: "Common", 2: "Uncommon", 3: "Rare", 4: "Epic", 5: "Legendary", 6: "Mythical"}
 FACTION_NAMES = {
@@ -673,59 +729,143 @@ class MemoryReader:
     # Artifacts
     # =========================================================================
 
-    def get_artifacts(self):
-        """Read all artifacts with set, rank, rarity, level, and sell price."""
-        equip_wrap = self._ptr(self._uw + 0x30)  # UW_ARTIFACTS
-        if not equip_wrap:
+    def _resolve_artifact_dict(self):
+        """Resolve the artifact dictionary via ArtifactStorageResolver static singleton.
+        Chain: TypeInfo → static_fields → _implementation → _cachedArtifacts → _artifacts
+        """
+        ti = self._ptr(self.ga_base + ARTIFACT_RESOLVER_TYPEINFO_RVA)
+        if not ti:
+            return None
+        sf = self._ptr(ti + 0xB8)  # static_fields
+        if not sf:
+            return None
+        impl = self._ptr(sf + ARTRESOLVER_IMPL)
+        if not impl:
+            return None
+        cached = self._ptr(impl + EXTERNAL_CACHED)
+        if not cached:
+            return None
+        return self._ptr(cached + CACHED_ARTIFACTS_DICT)
+
+    def _read_artifact_bonus(self, bonus_ptr):
+        """Read an ArtifactBonus (primary or substat).
+        Returns {"stat": int, "stat_name": str, "is_flat": bool, "value": float, "rolls": int}.
+        """
+        if not bonus_ptr:
+            return None
+        stat_kind = self.pm.read_int(bonus_ptr + BONUS_STAT_KIND)
+        is_abs = self.pm.read_bytes(bonus_ptr + BONUS_VALUE_IS_ABS, 1)[0] != 0
+        # Fixed value is 8 bytes at offset 0x20 from bonus ptr
+        raw = struct.unpack('<q', self.pm.read_bytes(bonus_ptr + BONUS_VALUE_VAL, 8))[0]
+        # Fixed-point: divide by appropriate scale. Common scales are 100 or 10000.
+        # For percentage stats, raw is already the percentage * some factor.
+        # Flat stats (is_abs=True): value is the flat amount
+        # Percentage stats (is_abs=False): value is percentage (e.g. 5 = 5%)
+        level = self.pm.read_int(bonus_ptr + BONUS_LEVEL)
+        return {
+            "stat": stat_kind,
+            "stat_name": STAT_NAMES.get(stat_kind, f"?{stat_kind}"),
+            "is_flat": is_abs,
+            "value": raw,
+            "rolls": level,
+        }
+
+    def get_artifacts(self, with_substats=False):
+        """Read all artifacts from the ArtifactStorageResolver cache.
+        Set with_substats=True to include primary and secondary stat details.
+        """
+        art_dict = self._resolve_artifact_dict()
+        if not art_dict:
+            logger.warning("Could not resolve artifact storage")
             return []
-        # EquipmentWrapperReadOnly stores artifact data similarly to heroes
-        # Search for the artifact dictionary in the wrapper
-        for data_off in [0x88, 0x90, 0x80, 0x78]:
-            art_data = self._ptr(equip_wrap + data_off)
-            if not art_data:
+
+        count = self.pm.read_int(art_dict + DICT_COUNT)
+        if count <= 0:
+            return []
+
+        entries = self._read_dict_int_obj(art_dict, max_items=min(count, 5000))
+        artifacts = []
+        for _, ptr in entries:
+            try:
+                a = {
+                    "id": self.pm.read_int(ptr + ART_ID),
+                    "level": self.pm.read_int(ptr + ART_LEVEL),
+                    "rank": self.pm.read_int(ptr + ART_RANK),
+                    "rarity": self.pm.read_int(ptr + ART_RARITY),
+                    "set": self.pm.read_int(ptr + ART_SET),
+                    "kind": self.pm.read_int(ptr + ART_KIND),
+                    "sell_price": self.pm.read_int(ptr + ART_SELL_PRICE),
+                }
+                if not (0 <= a["level"] <= 16 and 1 <= a["rank"] <= 6):
+                    continue
+                a["rarity_name"] = RARITY_NAMES.get(a["rarity"], "?")
+                a["set_name"] = SET_NAMES.get(a["set"], f"?{a['set']}")
+                a["kind_name"] = KIND_NAMES.get(a["kind"], f"?{a['kind']}")
+
+                if with_substats:
+                    # Primary bonus
+                    pri = self._ptr(ptr + ART_PRIMARY)
+                    a["primary"] = self._read_artifact_bonus(pri)
+
+                    # Secondary bonuses (substats)
+                    secs = self._ptr(ptr + ART_SECONDARIES)
+                    a["substats"] = []
+                    if secs:
+                        sec_ptrs = self._read_list_ptrs(secs, max_items=4)
+                        for sp in sec_ptrs:
+                            bonus = self._read_artifact_bonus(sp)
+                            if bonus:
+                                a["substats"].append(bonus)
+
+                artifacts.append(a)
+            except Exception:
                 continue
-            # Look for ArtifactById dictionary at common offsets
-            for dict_off in [0x18, 0x10, 0x20]:
-                art_dict = self._ptr(art_data + dict_off)
-                if not art_dict:
-                    continue
-                try:
-                    count = self.pm.read_int(art_dict + DICT_COUNT)
-                    if count < 10 or count > 5000:
-                        continue
-                    entries = self._read_dict_int_obj(art_dict, max_items=min(count, 2000))
-                    if not entries:
-                        continue
-                    # Validate first entry looks like an artifact
-                    _, test_ptr = entries[0]
-                    test_level = self.pm.read_int(test_ptr + ART_LEVEL)
-                    test_rank = self.pm.read_int(test_ptr + ART_RANK)
-                    if not (0 <= test_level <= 16 and 1 <= test_rank <= 6):
-                        continue
-                    # Found it — read all artifacts
-                    artifacts = []
-                    for _, ptr in entries:
-                        try:
-                            a = {
-                                "id": self.pm.read_int(ptr + ART_ID),
-                                "level": self.pm.read_int(ptr + ART_LEVEL),
-                                "rank": self.pm.read_int(ptr + ART_RANK),
-                                "rarity": self.pm.read_int(ptr + ART_RARITY),
-                                "set": self.pm.read_int(ptr + ART_SET),
-                                "kind": self.pm.read_int(ptr + ART_KIND),
-                                "sell_price": self.pm.read_int(ptr + ART_SELL_PRICE),
-                            }
-                            if 0 <= a["level"] <= 16 and 1 <= a["rank"] <= 6:
-                                a["rarity_name"] = RARITY_NAMES.get(a["rarity"], "?")
-                                artifacts.append(a)
-                        except Exception:
-                            continue
-                    logger.info(f"Read {len(artifacts)} artifacts (from offset 0x{data_off:X}/0x{dict_off:X})")
-                    return artifacts
-                except Exception:
-                    continue
-        logger.warning("Could not find artifact dictionary")
-        return []
+
+        logger.info(f"Read {len(artifacts)} artifacts")
+        return artifacts
+
+    def score_artifact(self, art):
+        """Score an artifact 0-100 for quality.
+        Higher = better, should keep. Lower = sell candidate.
+
+        Scoring:
+          - Base: rank(1-6) * 8 + rarity(1-6) * 5  (max 78)
+          - Speed substat bonus: +15 per speed sub
+          - Good set bonus: +5
+          - Flat stat penalty on bottom row: -20
+          - Level bonus: +level (0-16)
+        """
+        score = art["rank"] * 8 + art["rarity"] * 5 + art["level"]
+
+        # Good set bonus
+        if art["set"] in GOOD_SETS:
+            score += 5
+
+        # Substat analysis (requires with_substats=True)
+        if "substats" in art:
+            for sub in art["substats"]:
+                if sub["stat"] == STAT_SPD:
+                    score += 15  # Speed is king
+                if sub["is_flat"] and art["kind"] in BOTTOM_ROW_KINDS:
+                    score -= 10  # Flat stats on bottom row = bad
+
+        return min(100, max(0, score))
+
+    def get_sellable_artifacts(self, threshold=40):
+        """Get artifacts scoring below threshold — candidates for selling.
+        Excludes leveled artifacts (level > 0) and locked heroes' gear.
+        """
+        arts = self.get_artifacts(with_substats=True)
+        sellable = []
+        for a in arts:
+            if a["level"] > 0:
+                continue  # Don't sell leveled gear
+            score = self.score_artifact(a)
+            a["score"] = score
+            if score < threshold:
+                sellable.append(a)
+        sellable.sort(key=lambda x: x["score"])
+        return sellable
 
     # =========================================================================
     # Arena
