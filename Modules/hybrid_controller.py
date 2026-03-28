@@ -67,11 +67,12 @@ def _abs(game, rel):
 
 
 class HybridController:
-    """Daily automation controller using coordinates + memory + minimal images."""
+    """Daily automation: mod API > memory > coordinates > image matching."""
 
     def __init__(self, use_memory=True):
         self.game = None       # ScreenState (window management, popups, image fallback)
         self.reader = None     # MemoryReader (game data, battle state, ViewKey)
+        self.mod = None        # ModClient (direct UI button clicks via game API)
         self.input = InputBackend(prefer_background=False)
         self.asset_path = self._get_asset_path()
         self.results = {}
@@ -111,6 +112,18 @@ class HybridController:
             except Exception as e:
                 logger.warning(f"Memory init failed: {e}")
                 self.reader = None
+
+        # Initialize mod API client (MelonLoader HTTP API)
+        try:
+            from mod_client import ModClient
+            self.mod = ModClient()
+            if self.mod.available:
+                logger.info("Mod API active — direct UI control enabled")
+            else:
+                self.mod = None
+        except Exception:
+            self.mod = None
+
         return True
 
     def disconnect(self):
@@ -121,6 +134,15 @@ class HybridController:
         """Click at game-relative coordinates."""
         x, y = _abs(self.game, game_rel)
         self.input.click(x, y, sleep_after=sleep_after)
+
+    def _click_nav(self, name, game_rel_fallback, sleep_after=2):
+        """Click a navigation button. Uses mod API if available, else coordinates."""
+        if self.mod:
+            if self.mod.click_button(name):
+                time.sleep(sleep_after)
+                return True
+        self._click(game_rel_fallback, sleep_after=sleep_after)
+        return True
 
     def _wait_battle(self, timeout=300):
         """Wait for battle end. Memory-based if available, else image polling."""
@@ -155,7 +177,7 @@ class HybridController:
         logger.info("=== Shop Rewards ===")
         if not self.game.ensure_village():
             return False
-        self._click(BTN_SHOP, sleep_after=2)
+        self._click_nav("shop", BTN_SHOP)
         offers = asset(self.asset_path, "offers.png")
         free = asset(self.asset_path, "claimFreeGift.png")
         if locate_and_click(offers, confidence=0.9, sleep_after=3):
@@ -186,7 +208,7 @@ class HybridController:
         logger.info("=== Quest Claims ===")
         if not self.game.ensure_village():
             return False
-        self._click(BTN_QUESTS, sleep_after=2)
+        self._click_nav("quests", BTN_QUESTS)
         qc = asset(self.asset_path, "questClaim.png")
         aq = asset(self.asset_path, "advancedQuests.png")
         claimed = locate_and_click_loop(qc, sleep_after=1)
@@ -200,7 +222,7 @@ class HybridController:
         logger.info("=== Clan ===")
         if not self.game.ensure_village():
             return False
-        self._click(BTN_CLAN, sleep_after=2)
+        self._click_nav("clan", BTN_CLAN)
         locate_and_click(asset(self.asset_path, "clanMembers.png"), sleep_after=2)
         locate_and_click_loop(asset(self.asset_path, "clanCheckIn.png"), sleep_after=1)
         locate_and_click(asset(self.asset_path, "clanTreasure.png"), sleep_after=1)
@@ -212,7 +234,10 @@ class HybridController:
         logger.info("=== Inbox ===")
         if not self.game.ensure_village():
             return False
-        self.input.press_char("i", sleep_after=1)
+        # Open inbox: mod API > keyboard shortcut
+        if not (self.mod and self.mod.click_button("inbox")):
+            self.input.press_char("i", sleep_after=1)
+        time.sleep(1)
         for item in ["inbox_energy", "inbox_brew", "inbox_purple_forge",
                       "inbox_yellow_forge", "inbox_coin", "inbox_potion"]:
             png = asset(self.asset_path, f"{item}.png")
@@ -238,7 +263,18 @@ class HybridController:
 
     def _nav_to_arena(self):
         """Navigate from village to classic arena opponent list."""
-        self._click(BTN_BATTLE, sleep_after=2)
+        self._click_nav("battle", BTN_BATTLE)
+        # Arena tab: try mod API first, then image matching
+        if self.mod:
+            path = self.mod.find_button("ArenaHub") or self.mod.find_button("Arena")
+            if path and self.mod.click_path(path):
+                time.sleep(2)
+                path2 = self.mod.find_button("ClassicArena") or self.mod.find_button("classic")
+                if path2:
+                    self.mod.click_path(path2)
+                    time.sleep(2)
+                    return True
+        # Fallback to image matching
         if not self.game.smart_click("arenaTab.png", max_attempts=3):
             self.game.ensure_village()
             return False
@@ -410,7 +446,7 @@ class HybridController:
             return False
 
         # Navigate: Village -> Battle -> CB -> Demon Lord
-        self._click(BTN_BATTLE, sleep_after=3)
+        self._click_nav("battle", BTN_BATTLE, sleep_after=3)
         cb = asset(self.asset_path, "CB.png")
         if not locate_and_click(cb, confidence=0.8, sleep_after=3, max_attempts=5):
             self.game.ensure_village()
@@ -499,7 +535,11 @@ class HybridController:
     # =========================================================================
 
     def run_daily(self):
-        mode = "coords + memory" if self.reader else "screen-only"
+        parts = []
+        if self.mod: parts.append("mod API")
+        if self.reader: parts.append("memory")
+        parts.append("screen")
+        mode = " + ".join(parts)
         logger.info("=" * 50)
         logger.info(f"Daily automation ({mode})")
         logger.info("=" * 50)
