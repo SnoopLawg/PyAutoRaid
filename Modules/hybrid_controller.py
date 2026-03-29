@@ -780,40 +780,46 @@ class HybridController:
     ART_TILE_SIZE = 50       # Approximate tile width/height
     ART_TILES_PER_ROW = 8    # Artifacts per row
 
-    def _open_artifact_inventory(self):
-        """Navigate to Champions screen and open artifact inventory panel.
-        Returns True if the inventory panel with SellMode toggle is accessible.
+    def _open_manage_screen(self):
+        """Navigate to Champions → artifact slot → Manage screen.
+        Returns True if on the artifact management screen.
         """
         if not self.game.ensure_village():
             return False
 
-        # Open Champions screen via keyboard (mod API HeroesButton goes to Battle)
+        # Open Champions screen via keyboard
         self.input.press_char("c", sleep_after=3)
 
-        # Click an equipped artifact slot to open the inventory panel
-        # Weapon slot is at approximately (700, 155) game-relative
+        # Click equipped artifact slot to open inventory panel
         self._click((700, 155), sleep_after=3)
 
-        # Verify the inventory opened by checking for SellMode toggle
+        # Click "Manage" button to open the full artifact management screen
+        manage_btn = asset(self.asset_path, "manageBtn.png")
+        if manage_btn:
+            try:
+                if locate_and_click(manage_btn, confidence=0.7, sleep_after=3):
+                    logger.info("Clicked Manage button")
+                    return True
+            except Exception:
+                pass
+
+        # Fallback: try coordinate click for Manage
+        # Manage button is at approximately (130, 380) game-relative
+        self._click((130, 380), sleep_after=3)
+
+        # Verify we're on the manage screen by checking for SellMode toggle
         if self.mod:
             tog = self.mod.find_toggle("SellMode")
             if tog:
-                logger.info("Artifact inventory opened")
+                logger.info("Artifact manage screen opened")
                 return True
 
-        # Retry with a different slot position
-        self._click((660, 155), sleep_after=3)
-        if self.mod:
-            tog = self.mod.find_toggle("SellMode")
-            if tog:
-                logger.info("Artifact inventory opened (retry)")
-                return True
-
-        logger.warning("Could not open artifact inventory")
+        logger.warning("Could not open manage screen")
         return False
 
-    def _close_artifact_inventory(self):
-        """Close artifact inventory and return to village."""
+    def _close_manage_screen(self):
+        """Close manage screen and return to village."""
+        self.input.press_escape(sleep_after=2)
         self.input.press_escape(sleep_after=2)
         self.input.press_escape(sleep_after=2)
         self.game.ensure_village()
@@ -823,10 +829,11 @@ class HybridController:
 
         Flow:
         1. Read artifacts from memory, score them, identify junk
-        2. Navigate to Champions → artifact inventory
-        3. Enable SellMode via mod API toggle
-        4. Click artifacts in the grid to select them
-        5. Click the Sell/Confirm button
+        2. Navigate to Champions → artifact slot → Manage screen
+        3. Switch to Artifacts tab, click "Sell" button at top to enter sell mode
+        4. Click "Select All" (or individual artifacts) to select junk
+        5. Click "Apply" (sell) on the sell panel
+        6. Confirm in the modal dialog
 
         Args:
             score_threshold: Sell artifacts scoring below this (0-100)
@@ -852,56 +859,63 @@ class HybridController:
             logger.info(f"  Score={a['score']:3d} | {a['rank']}* {a['rarity_name']:9s} "
                         f"{a['kind_name']:7s} {a['set_name']:12s} Sell={a['sell_price']:,}")
 
-        # Step 2: Open artifact inventory
-        if not self._open_artifact_inventory():
-            self.results["artifact_sell"] = "Failed (couldn't open inventory)"
+        # Step 2: Open the manage screen
+        if not self._open_manage_screen():
+            self.results["artifact_sell"] = "Failed (couldn't open manage screen)"
             return False
 
-        # Step 3: Enable SellMode
-        if not self.mod or not self.mod.set_sell_mode(on=True):
-            logger.warning("Could not enable SellMode")
-            self._close_artifact_inventory()
-            self.results["artifact_sell"] = "Failed (SellMode toggle)"
+        # Step 3: Switch to Artifacts tab (use pointer click, not toggle)
+        if self.mod:
+            art_tab = self.mod.find_toggle("Tab1.Artifacts")
+            if art_tab and not art_tab["on"]:
+                self.mod.click_path(art_tab["path"])
+                time.sleep(2)
+                logger.info("Switched to Artifacts tab")
+
+        # Step 4: Activate sell mode by clicking the "Sell" button
+        # The Sell button is the SellMode toggle at top-right of the panel
+        # Use pyautogui physical click at the button position
+        self._click((420, 75), sleep_after=2)
+        logger.info("Clicked Sell button position")
+
+        # Verify sell mode activated by checking for the sell panel buttons
+        sell_panel_active = False
+        for attempt in range(5):
+            time.sleep(1)
+            if self.mod:
+                # Look for SelectAll or Apply buttons from SellArtifactsPanel
+                btns = self.mod.get_buttons()
+                for btn in btns.get("buttons", []):
+                    if "SellArtifactsPanel" in btn["path"]:
+                        sell_panel_active = True
+                        logger.info(f"Sell panel active (found: {btn['path'].split('/')[-1]})")
+                        break
+            if sell_panel_active:
+                break
+            logger.info(f"Waiting for sell panel (attempt {attempt + 1})...")
+
+        if not sell_panel_active:
+            logger.warning("Could not activate sell mode")
+            self._close_manage_screen()
+            self.results["artifact_sell"] = "Failed (sell mode)"
             return False
 
-        logger.info("SellMode enabled — selecting artifacts...")
-        time.sleep(1)
-
-        # Step 4: Select artifacts in the grid
-        # The inventory groups artifacts by set. Each artifact is a clickable tile.
-        # We can't easily match memory artifact IDs to grid positions,
-        # so we use a rank/rarity-based approach: click artifacts that LOOK like junk.
-        #
-        # Strategy: Since most sellable artifacts are 1-3 star common/uncommon,
-        # we use the rank/rarity filter to show only low-quality artifacts,
-        # then select them in bulk.
-        #
-        # For now: click individual artifact tiles in the grid. The inventory
-        # shows them grouped by set — we click tiles and rely on the visual
-        # checkmark/selection highlight.
-
-        # Get the current artifact grid items visible
+        # Step 5: Select artifacts
+        # Use "Select All" for bulk selling, or click individual tiles
+        # For safety, let's click individual artifact tiles first
         selected = 0
         sell_count = min(len(sellable), max_sells)
-
-        # Click artifact tiles in the inventory grid
-        # The grid is in the center panel, starting at approximately (195, 200) game-rel
-        # Tiles are arranged in rows, with set headers between groups
-        # We scroll down and click tiles that appear in the grid
-
-        # First pass: click tiles in the visible grid area
-        # Each row has ~8 tiles, tiles are ~50px apart
-        gy = self.game.win_y
         gx = self.game.win_x
+        gy = self.game.win_y
 
-        for row in range(8):  # Up to 8 visible rows
-            for col in range(8):  # 8 tiles per row
+        # Click artifact tiles in the visible grid
+        for row in range(6):
+            for col in range(8):
                 if selected >= sell_count:
                     break
                 tile_x = gx + self.ART_GRID_START_X + col * self.ART_TILE_SIZE
-                tile_y = gy + self.ART_GRID_START_Y + row * 65  # Rows are ~65px apart (tile + gap)
-                # Only click if the position is within the inventory panel area
-                if tile_y > gy + 500:  # Don't click below the panel
+                tile_y = gy + self.ART_GRID_START_Y + row * 65
+                if tile_y > gy + 480:
                     break
                 pyautogui.click(tile_x, tile_y)
                 time.sleep(0.3)
@@ -909,76 +923,48 @@ class HybridController:
             if selected >= sell_count:
                 break
 
-        logger.info(f"Selected {selected} artifacts for selling")
+        logger.info(f"Clicked {selected} artifact tiles")
 
         if selected == 0:
-            self.mod.set_sell_mode(on=False)
-            self._close_artifact_inventory()
+            self._close_manage_screen()
             self.results["artifact_sell"] = "No artifacts selected"
             return True
 
-        # Step 5: Click the Sell button that appears after selecting artifacts
+        # Step 6: Click "Apply" (Sell) button on the sell panel
         time.sleep(1)
-        sold = False
-
-        # Try mod API first — look for any new sell/confirm buttons
         if self.mod:
-            for search in ["SellButton", "Sell", "SellSelected", "ConfirmSell"]:
-                path = self.mod.find_button(search)
-                if path and "SellMode" not in path:
-                    logger.info(f"Found sell button: {path.split('/')[-1]}")
-                    self.mod.click_path(path)
-                    time.sleep(2)
-                    sold = True
-                    break
+            apply_path = self.mod.find_button("Apply")
+            if apply_path and "SellArtifactsPanel" in apply_path:
+                logger.info("Clicking Apply (sell)")
+                self.mod.click_path(apply_path)
+                time.sleep(2)
 
-        # Fallback: try image matching for the sell confirm button
-        if not sold:
-            sell_btn = asset(self.asset_path, "sellConfirm.png")
-            if sell_btn:
-                try:
-                    if locate_and_click(sell_btn, confidence=0.7, sleep_after=2):
-                        sold = True
-                except Exception:
-                    pass
-
-        # Fallback: click where the sell button typically appears
-        if not sold:
-            logger.info("Using coordinate click for sell button")
-            self._click((300, 480), sleep_after=2)
-
-        # Handle confirmation dialog (OK/Confirm popup)
+        # Step 7: Confirm in the modal dialog
+        # Modal has: Buttons_h/0 (Cancel) and Buttons_h/1 (Sell confirm)
         time.sleep(1)
-        confirmed = False
-
         if self.mod:
-            for search in ["Confirm", "OK", "OkButton", "Yes", "Accept"]:
-                path = self.mod.find_button(search)
-                if path:
-                    logger.info(f"Clicking confirm: {path.split('/')[-1]}")
-                    self.mod.click_path(path)
-                    confirmed = True
-                    time.sleep(2)
-                    break
+            # The gold "Sell" confirm button is Buttons_h/1
+            confirm_path = self.mod.find_button("Buttons_h/1")
+            if confirm_path:
+                logger.info("Confirming sell")
+                self.mod.click_path(confirm_path)
+                time.sleep(3)
+            else:
+                # Try BTN_Close or any button with index 1
+                btns = self.mod.get_buttons()
+                for btn in btns.get("buttons", []):
+                    if "Buttons_h/1" in btn["path"]:
+                        self.mod.click_path(btn["path"])
+                        time.sleep(3)
+                        break
 
-        if not confirmed:
-            ok_btn = asset(self.asset_path, "OKbutton.png")
-            if ok_btn:
-                try:
-                    locate_and_click(ok_btn, confidence=0.7, sleep_after=2)
-                except Exception:
-                    pass
-
-        # Step 6: Verify silver increased
+        # Step 8: Verify silver increased
         if self.reader:
             res = self.reader.get_resources()
-            logger.info(f"Silver after sell: {int(res.get('silver', 0)):,}")
+            silver = int(res.get("silver", 0))
+            logger.info(f"Silver after sell: {silver:,}")
 
-        # Clean up
-        if self.mod:
-            self.mod.set_sell_mode(on=False)
-        self._close_artifact_inventory()
-
+        self._close_manage_screen()
         self.results["artifact_sell"] = f"{selected} artifacts sold"
         return True
 
