@@ -129,8 +129,15 @@ namespace RaidAutomation
                         int md = int.TryParse(QP(query, "depth"), out int d) ? d : 2;
                         response = RunOnMainThread(() => DumpScene(md));
                         break;
+                    case "/toggles":
+                        response = RunOnMainThread(() => ListToggles());
+                        break;
+                    case "/toggle":
+                        string tp = QP(query, "path");
+                        response = RunOnMainThread(() => SetToggle(tp));
+                        break;
                     default:
-                        response = "{\"endpoints\":[\"/status\",\"/buttons\",\"/click?path=X\",\"/find?name=X\",\"/scene?depth=N\"]}";
+                        response = "{\"endpoints\":[\"/status\",\"/buttons\",\"/click?path=X\",\"/find?name=X\",\"/scene?depth=N\",\"/toggles\",\"/toggle?path=X\"]}";
                         break;
                 }
             }
@@ -224,6 +231,39 @@ namespace RaidAutomation
             }
             sb.Append("]}");
             return sb.ToString();
+        }
+
+        private string ListToggles()
+        {
+            var all = UnityEngine.Object.FindObjectsOfType<UnityEngine.UI.Toggle>();
+            var sb = new StringBuilder();
+            sb.Append("{\"count\":" + all.Length + ",\"toggles\":[");
+            int n = 0;
+            foreach (var tog in all)
+            {
+                if (!tog.gameObject.activeInHierarchy) continue;
+                if (n > 0) sb.Append(",");
+                sb.Append("{\"path\":\"" + Esc(GetPath(tog.transform)) +
+                          "\",\"on\":" + (tog.isOn ? "true" : "false") +
+                          ",\"interactable\":" + (tog.interactable ? "true" : "false") + "}");
+                if (++n >= 100) break;
+            }
+            sb.Append("]}");
+            return sb.ToString();
+        }
+
+        private string SetToggle(string objPath)
+        {
+            if (string.IsNullOrEmpty(objPath))
+                return "{\"error\":\"path required\"}";
+            var go = GameObject.Find(objPath);
+            if (go == null)
+                return "{\"error\":\"not found\"}";
+            var tog = go.GetComponent<UnityEngine.UI.Toggle>();
+            if (tog == null)
+                return "{\"error\":\"no Toggle component\"}";
+            tog.isOn = !tog.isOn;
+            return "{\"toggled\":\"" + Esc(objPath) + "\",\"now\":" + (tog.isOn ? "true" : "false") + "}";
         }
 
         // === Helpers ===
