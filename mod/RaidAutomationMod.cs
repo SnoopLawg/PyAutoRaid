@@ -262,7 +262,11 @@ namespace RaidAutomation
             var tog = go.GetComponent<UnityEngine.UI.Toggle>();
             if (tog == null)
                 return "{\"error\":\"no Toggle component\"}";
-            tog.isOn = !tog.isOn;
+            // Use the property setter which triggers onValueChanged
+            bool newVal = !tog.isOn;
+            tog.Set(newVal, true);
+            // Also invoke onValueChanged manually to ensure listeners fire
+            tog.onValueChanged.Invoke(newVal);
             return "{\"toggled\":\"" + Esc(objPath) + "\",\"now\":" + (tog.isOn ? "true" : "false") + "}";
         }
 
