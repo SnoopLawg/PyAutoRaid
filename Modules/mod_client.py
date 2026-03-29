@@ -119,3 +119,40 @@ class ModClient:
         """Search for GameObjects by name."""
         encoded = urllib.parse.quote(name, safe='')
         return self._get(f"/find?name={encoded}")
+
+    # === Toggle API ===
+
+    def get_toggles(self):
+        """Get all active Toggle components with on/off state."""
+        return self._get("/toggles")
+
+    def toggle_path(self, game_object_path):
+        """Toggle a Toggle component on/off by its full GameObject path."""
+        encoded = urllib.parse.quote(game_object_path, safe='')
+        result = self._get(f"/toggle?path={encoded}")
+        if "error" in result:
+            logger.warning(f"Toggle failed: {result['error']}")
+            return False
+        logger.info(f"Toggled: {game_object_path.split('/')[-1]} -> {result.get('now')}")
+        return True
+
+    def find_toggle(self, search):
+        """Find a toggle by partial name match."""
+        try:
+            data = self.get_toggles()
+            search_lower = search.lower()
+            for tog in data.get("toggles", []):
+                if search_lower in tog["path"].lower():
+                    return tog
+        except Exception:
+            pass
+        return None
+
+    def set_sell_mode(self, on=True):
+        """Enable or disable artifact sell mode in the inventory panel."""
+        tog = self.find_toggle("SellMode")
+        if not tog:
+            return False
+        if tog["on"] == on:
+            return True
+        return self.toggle_path(tog["path"])
