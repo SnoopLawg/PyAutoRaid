@@ -305,32 +305,64 @@ namespace RaidAutomation
                 // Create sell command with artifact IDs
                 var cmd = new Il2CppClient.Model.Gameplay.Artifacts.Commands.SellArtifactsCmd(idList);
 
-                // Execute command by casting and calling ICmdQueueItem.Execute directly
-                var cmdItem = cmd.Cast<Il2CppClient.Model.Network.GameServer.CmdQueueLogic.ICmdQueueItem>();
+                // Get or create UserEditGuard
+                var uw = appModel._userWrapper;
+                if (uw == null)
+                    return "{\"error\":\"wrapper null\"}";
 
-                // Try multiple execution methods
-                string method = "none";
+                // Try to get existing guard from static Current field
+                Il2CppClient.Model.Guard.UserEditGuard existingGuard = null;
+                string guardSource = "none";
                 try
                 {
-                    // Method 1: Direct ICmdQueueItem.Execute
-                    cmdItem.Execute();
-                    method = "Execute";
+                    var current = Il2CppClient.Model.Guard.UserEditGuard.Current;
+                    if (current != null)
+                    {
+                        existingGuard = current.TryCast<Il2CppClient.Model.Guard.UserEditGuard>();
+                        if (existingGuard != null) guardSource = "existing";
+                    }
                 }
-                catch (Exception ex1)
+                catch { }
+
+                if (existingGuard == null)
                 {
                     try
                     {
-                        // Method 2: CmdQueue.Enqueue with null guard
-                        appModel.CmdQueue.Enqueue(null, cmdItem);
-                        method = "Enqueue(null)";
+                        // Allocate without constructor to avoid NullRef from missing tracker
+                        var il2cppClass = Il2CppInterop.Runtime.Il2CppClassPointerStore<Il2CppClient.Model.Guard.UserEditGuard>.NativeClassPtr;
+                        var ptr = Il2CppInterop.Runtime.IL2CPP.il2cpp_object_new(il2cppClass);
+                        existingGuard = new Il2CppClient.Model.Guard.UserEditGuard(ptr);
+                        existingGuard.UserWrapper = uw;
+
+                        // No tracker needed - the guard is just a wrapper for authorization
+
+                        guardSource = "manual";
                     }
-                    catch (Exception ex2)
+                    catch (Exception gEx)
                     {
-                        return "{\"error\":\"Execute: " + Esc(ex1.Message) + " | Enqueue: " + Esc(ex2.Message) + "\"}";
+                        return "{\"error\":\"guard(" + guardSource + "): " + Esc(gEx.GetType().Name + ": " + gEx.Message) + "\"}";
                     }
                 }
 
-                return "{\"queued\":" + idList.Count + ",\"ids\":\"" + Esc(idsStr) + "\"}";
+                // Enqueue sell command
+                var cmdItem = cmd.Cast<Il2CppClient.Model.Network.GameServer.CmdQueueLogic.ICmdQueueItem>();
+                try
+                {
+                    appModel.CmdQueue.Enqueue(existingGuard, cmdItem);
+                }
+                catch (Exception eEx)
+                {
+                    return "{\"error\":\"enqueue: " + Esc(eEx.GetType().Name + ": " + eEx.Message) + "\"}";
+                }
+
+                // Also try direct command execution as backup
+                try
+                {
+                    cmdItem.Execute();
+                }
+                catch { }
+
+                return "{\"sold\":" + idList.Count + ",\"guard\":\"" + guardSource + "\",\"ids\":\"" + Esc(idsStr) + "\"}";
             }
             catch (Exception ex)
             {

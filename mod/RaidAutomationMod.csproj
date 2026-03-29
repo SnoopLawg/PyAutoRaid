@@ -3,6 +3,7 @@
     <TargetFramework>net6.0</TargetFramework>
     <AssemblyName>RaidAutomationMod</AssemblyName>
     <Nullable>disable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="LavaGang.MelonLoader" Version="0.7.0" />
