@@ -140,6 +140,10 @@ namespace RaidAutomation
                         string sp = QP(query, "path");
                         response = RunOnMainThread(() => SimulateClick(sp));
                         break;
+                    case "/sell":
+                        string ids = QP(query, "ids");
+                        response = RunOnMainThread(() => SellArtifacts(ids));
+                        break;
                     default:
                         response = "{\"endpoints\":[\"/status\",\"/buttons\",\"/click?path=X\",\"/find?name=X\",\"/scene?depth=N\",\"/toggles\",\"/toggle?path=X\"]}";
                         break;
@@ -272,6 +276,66 @@ namespace RaidAutomation
             // Also invoke onValueChanged manually to ensure listeners fire
             tog.onValueChanged.Invoke(newVal);
             return "{\"toggled\":\"" + Esc(objPath) + "\",\"now\":" + (tog.isOn ? "true" : "false") + "}";
+        }
+
+        private string SellArtifacts(string idsStr)
+        {
+            if (string.IsNullOrEmpty(idsStr))
+                return "{\"error\":\"ids required (comma-separated artifact IDs)\"}";
+
+            try
+            {
+                // Parse artifact IDs
+                string[] parts = idsStr.Split(',');
+                var idList = new Il2CppSystem.Collections.Generic.List<int>();
+                foreach (var p in parts)
+                {
+                    if (int.TryParse(p.Trim(), out int id))
+                        idList.Add(id);
+                }
+
+                if (idList.Count == 0)
+                    return "{\"error\":\"no valid IDs\"}";
+
+                // Get AppModel singleton
+                var appModel = Il2CppClient.Model.AppModel.Instance;
+                if (appModel == null)
+                    return "{\"error\":\"AppModel not found\"}";
+
+                // Create sell command with artifact IDs
+                var cmd = new Il2CppClient.Model.Gameplay.Artifacts.Commands.SellArtifactsCmd(idList);
+
+                // Execute command by casting and calling ICmdQueueItem.Execute directly
+                var cmdItem = cmd.Cast<Il2CppClient.Model.Network.GameServer.CmdQueueLogic.ICmdQueueItem>();
+
+                // Try multiple execution methods
+                string method = "none";
+                try
+                {
+                    // Method 1: Direct ICmdQueueItem.Execute
+                    cmdItem.Execute();
+                    method = "Execute";
+                }
+                catch (Exception ex1)
+                {
+                    try
+                    {
+                        // Method 2: CmdQueue.Enqueue with null guard
+                        appModel.CmdQueue.Enqueue(null, cmdItem);
+                        method = "Enqueue(null)";
+                    }
+                    catch (Exception ex2)
+                    {
+                        return "{\"error\":\"Execute: " + Esc(ex1.Message) + " | Enqueue: " + Esc(ex2.Message) + "\"}";
+                    }
+                }
+
+                return "{\"queued\":" + idList.Count + ",\"ids\":\"" + Esc(idsStr) + "\"}";
+            }
+            catch (Exception ex)
+            {
+                return "{\"error\":\"" + Esc(ex.Message) + "\"}";
+            }
         }
 
         private string SimulateClick(string objPath)
