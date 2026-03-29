@@ -136,6 +136,10 @@ namespace RaidAutomation
                         string tp = QP(query, "path");
                         response = RunOnMainThread(() => SetToggle(tp));
                         break;
+                    case "/simclick":
+                        string sp = QP(query, "path");
+                        response = RunOnMainThread(() => SimulateClick(sp));
+                        break;
                     default:
                         response = "{\"endpoints\":[\"/status\",\"/buttons\",\"/click?path=X\",\"/find?name=X\",\"/scene?depth=N\",\"/toggles\",\"/toggle?path=X\"]}";
                         break;
@@ -268,6 +272,37 @@ namespace RaidAutomation
             // Also invoke onValueChanged manually to ensure listeners fire
             tog.onValueChanged.Invoke(newVal);
             return "{\"toggled\":\"" + Esc(objPath) + "\",\"now\":" + (tog.isOn ? "true" : "false") + "}";
+        }
+
+        private string SimulateClick(string objPath)
+        {
+            if (string.IsNullOrEmpty(objPath))
+                return "{\"error\":\"path required\"}";
+            var go = GameObject.Find(objPath);
+            if (go == null)
+                return "{\"error\":\"not found\"}";
+            // Full pointer event sequence — triggers all handlers including sell mode selection
+            var ped = new UnityEngine.EventSystems.PointerEventData(
+                UnityEngine.EventSystems.EventSystem.current);
+            ped.button = UnityEngine.EventSystems.PointerEventData.InputButton.Left;
+            ped.clickCount = 1;
+            // Get world position from the object's RectTransform
+            var rt = go.GetComponent<RectTransform>();
+            if (rt != null)
+            {
+                ped.position = new Vector2(rt.position.x, rt.position.y);
+            }
+            // Fire the full sequence: Down, Click, Up
+            UnityEngine.EventSystems.ExecuteEvents.Execute(go,
+                ped, UnityEngine.EventSystems.ExecuteEvents.pointerDownHandler);
+            UnityEngine.EventSystems.ExecuteEvents.Execute(go,
+                ped, UnityEngine.EventSystems.ExecuteEvents.pointerClickHandler);
+            UnityEngine.EventSystems.ExecuteEvents.Execute(go,
+                ped, UnityEngine.EventSystems.ExecuteEvents.pointerUpHandler);
+            // Also bubble up through parents
+            UnityEngine.EventSystems.ExecuteEvents.ExecuteHierarchy(go,
+                ped, UnityEngine.EventSystems.ExecuteEvents.pointerClickHandler);
+            return "{\"simulated\":\"" + Esc(objPath) + "\"}";
         }
 
         // === Helpers ===
