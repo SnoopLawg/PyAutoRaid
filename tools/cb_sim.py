@@ -720,6 +720,10 @@ CB_AOE_MULT = 3.5      # AoE multiplier
 CB_STUN_MULT = 5.0     # Stun (A1) multiplier
 GATHERING_FURY_START_ROUND = 4  # starts ramping at round 4 (~turn 10)
 GATHERING_FURY_RATE = 0.02  # +2% ATK per ROUND (1 round = 3 CB turns) after start
+# Turn 50 hard enrage: CB ignores Unkillable/Block Damage. In practice, the game
+# severely limits damage output on the final turn. Calibrated from battle logs:
+# real turn 50 = 75K (one poison tick), sim was predicting 1M+.
+ENRAGE_TURN = 50
 LIFESTEAL_RATE = 0.30  # Lifesteal set: 30% of damage dealt as healing
 CONT_HEAL_RATE = 0.075  # Continuous Heal: 7.5% max HP per tick
 
@@ -787,14 +791,15 @@ class CBSimulator:
         """Run full simulation. Set max_cb_turns=0 for unlimited (run until all dead)."""
         tick = 0
         effective_max = max_cb_turns if max_cb_turns > 0 else 999
+        enraged = False
         while self.cb_turn < effective_max:
             tick += 1
             if tick > 100000:
                 self.errors.append("Exceeded 100K ticks")
                 break
 
-            # Check if all heroes are dead
-            if all(c.is_dead for c in self.champions):
+            # Check if all heroes are dead or enraged
+            if all(c.is_dead for c in self.champions) or enraged:
                 break
 
             # Fill turn meters (DWJ: speed buff/debuff = ±30% of BASE speed)
@@ -831,6 +836,12 @@ class CBSimulator:
                 kind, actor = ready[0]
                 if kind == "cb":
                     self._cb_turn(tick)
+                    # Turn 50 enrage: after this CB turn, no more champion actions.
+                    # Real game: CB ignores UK/BD and kills everyone. Only DoT ticks
+                    # on this final CB turn contribute damage (already processed above).
+                    if self.cb_turn >= ENRAGE_TURN:
+                        enraged = True
+                        break
                 else:
                     self._champion_turn(actor, tick)
 

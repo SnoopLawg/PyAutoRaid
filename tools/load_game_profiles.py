@@ -572,6 +572,19 @@ def load_profiles():
         from desc_profiler import parse_all_descriptions
         desc_parsed = parse_all_descriptions()
 
+        # Load book bonuses: type=2 entries sum to debuff chance bonus per skill
+        skills_db_path = base / "skills_db.json"
+        book_bonuses = {}  # (hero_name, skill_type_id) -> debuff_chance_bonus
+        if skills_db_path.exists():
+            sdb = json.loads(skills_db_path.read_text())
+            for hname, sklist in sdb.items():
+                for sk in sklist:
+                    stid = sk.get("skill_type_id", 0)
+                    bonus = sum(lb.get("value", 0) for lb in sk.get("level_bonuses", [])
+                                if lb.get("type") == 2)
+                    if bonus > 0:
+                        book_bonuses[(hname, stid)] = bonus / 100.0  # convert to fraction
+
         for hero_name in skill_data:
             dp = desc_parsed.get(hero_name, {})
             if not dp:
@@ -584,16 +597,17 @@ def load_profiles():
                 if not p or not sd_entry:
                     continue
 
-                # Fix debuff chances from descriptions (game data often has 100% when real is lower)
+                # Fix debuff chances: use description base chance + book bonuses
+                stid = p.get("skill_type_id", 0)
+                book_bonus = book_bonuses.get((hero_name, stid), 0)
                 for desc_db in p.get("debuffs", []):
                     if desc_db.get("on_self"):
                         continue
+                    booked_chance = min(1.0, desc_db["chance"] + book_bonus)
                     for eff in eff_list:
                         if (eff.get("effect_type") == "debuff" and
                             eff["params"].get("debuff", "").startswith(desc_db["type"].split("_")[0])):
-                            # Update chance from description if different
-                            if abs(eff["params"].get("chance", 1.0) - desc_db["chance"]) > 0.01:
-                                eff["params"]["chance"] = desc_db["chance"]
+                            eff["params"]["chance"] = booked_chance
 
                 # Fix ignore_def from descriptions
                 if p.get("ignore_def_pct", 0) > 0 and sd_entry.get("ignore_def", 0) == 0:
