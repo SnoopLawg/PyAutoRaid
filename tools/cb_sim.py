@@ -1203,9 +1203,17 @@ class CBSimulator:
         if chosen.self_tm_fill > 0:
             champ.tm += chosen.self_tm_fill * TM_THRESHOLD
 
-        # Ninja combo counter: increment on each skill use against boss
+        # Ninja Escalation: combo counter increments when ALL 3 active skills
+        # hit the same target in a single round. In CB (single boss), this happens
+        # every time A1+A2+A3 have all been used. Track which skills have been
+        # used this cycle and increment when all 3 are hit.
         if champ.combo_atk_pct > 0 or champ.combo_cd_pct > 0:
-            champ.combo_counter += 1
+            if not hasattr(champ, '_combo_skills_used'):
+                champ._combo_skills_used = set()
+            champ._combo_skills_used.add(chosen.name)
+            if len(champ._combo_skills_used) >= len([s for s in champ.skills if s.multiplier > 0]):
+                champ.combo_counter += 1
+                champ._combo_skills_used = set()
 
         # Calculate hit damage
         if chosen.multiplier > 0 and chosen.hit_count > 0:
@@ -1309,8 +1317,11 @@ class CBSimulator:
             scaling *= 1.5
 
         # Ninja passive (kind=4013): +combo_atk_pct per combo counter on bosses
+        # Capped at +100% ATK (5 stacks at 20%) per game description
         if champ.combo_atk_pct > 0 and skill.scaling_stat == "ATK":
-            scaling *= (1.0 + champ.combo_atk_pct * champ.combo_counter)
+            max_stacks = int(1.0 / champ.combo_atk_pct)  # 100% / 20% = 5
+            effective_stacks = min(champ.combo_counter, max_stacks)
+            scaling *= (1.0 + champ.combo_atk_pct * effective_stacks)
 
         # Sicia passive (kind=4013): +burn_stat_pct per HP Burn on field
         if champ.burn_stat_pct > 0 and skill.scaling_stat == "ATK":
@@ -1328,9 +1339,11 @@ class CBSimulator:
         if champ.has_buff("inc_cd_30"):
             effective_cd += 30
 
-        # Ninja passive: +combo_cd_pct per combo counter
+        # Ninja passive: +combo_cd_pct per combo counter (capped at +25% CD)
         if champ.combo_cd_pct > 0:
-            effective_cd += champ.combo_cd_pct * 100 * champ.combo_counter
+            max_cd_stacks = int(0.25 / champ.combo_cd_pct) if champ.combo_cd_pct > 0 else 0
+            effective_stacks = min(champ.combo_counter, max_cd_stacks)
+            effective_cd += champ.combo_cd_pct * 100 * effective_stacks
 
         effective_cr = champ.stats.get(CR, 15)
         # Inc C.RATE buff (Fahrakin A3, Cardiel A3: +30% CR)
