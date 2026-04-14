@@ -563,6 +563,107 @@ def load_profiles():
         if p_data:
             passive_data[name] = p_data
 
+    # =====================================================================
+    # Auto-correction pass: use parsed skill descriptions to fix chances,
+    # missing debuffs/buffs, ignore_def, and other effects that the generic
+    # effect-kind parser can't extract from game data alone.
+    # =====================================================================
+    try:
+        from desc_profiler import parse_all_descriptions
+        desc_parsed = parse_all_descriptions()
+
+        for hero_name in skill_data:
+            dp = desc_parsed.get(hero_name, {})
+            if not dp:
+                continue
+
+            for label in ["A1", "A2", "A3"]:
+                p = dp.get(label)
+                sd_entry = skill_data[hero_name].get(label)
+                eff_list = skill_effects.get(hero_name, {}).get(label, [])
+                if not p or not sd_entry:
+                    continue
+
+                # Fix debuff chances from descriptions (game data often has 100% when real is lower)
+                for desc_db in p.get("debuffs", []):
+                    if desc_db.get("on_self"):
+                        continue
+                    for eff in eff_list:
+                        if (eff.get("effect_type") == "debuff" and
+                            eff["params"].get("debuff", "").startswith(desc_db["type"].split("_")[0])):
+                            # Update chance from description if different
+                            if abs(eff["params"].get("chance", 1.0) - desc_db["chance"]) > 0.01:
+                                eff["params"]["chance"] = desc_db["chance"]
+
+                # Fix ignore_def from descriptions
+                if p.get("ignore_def_pct", 0) > 0 and sd_entry.get("ignore_def", 0) == 0:
+                    sd_entry["ignore_def"] = p["ignore_def_pct"]
+
+                # Add missing buffs from descriptions
+                for desc_buf in p.get("buffs", []):
+                    if desc_buf.get("target") == "self":
+                        continue
+                    existing_buffs = sd_entry.get("team_buffs", [])
+                    has = any(b[0].startswith(desc_buf["type"].split("_")[0])
+                              for b in existing_buffs if isinstance(b, tuple))
+                    if not has:
+                        existing_buffs.append((desc_buf["type"], desc_buf["duration"]))
+                        sd_entry["team_buffs"] = existing_buffs
+
+                # Fix extra_turn from descriptions
+                if p.get("extra_turn") and not sd_entry.get("grants_extra_turn"):
+                    sd_entry["grants_extra_turn"] = True
+                if not p.get("extra_turn") and sd_entry.get("grants_extra_turn"):
+                    sd_entry["grants_extra_turn"] = False
+
+                # Add missing activate effects from descriptions
+                if p.get("activate_burns"):
+                    has = any("activate_hp_burns" in e.get("effect_type", "") for e in eff_list)
+                    if not has:
+                        eff_list.append(_eff("activate_hp_burns"))
+                if p.get("activate_poisons"):
+                    has = any("activate_poisons" in e.get("effect_type", "") for e in eff_list)
+                    if not has:
+                        eff_list.append(_eff("activate_poisons", max_count=2))
+                if p.get("activate_dots"):
+                    has = any("activate_dots" in e.get("effect_type", "") for e in eff_list)
+                    if not has:
+                        eff_list.append(_eff("activate_dots"))
+
+                # Add ally attack from descriptions
+                if p.get("ally_attack"):
+                    has = any("ally_attack" in e.get("effect_type", "") for e in eff_list)
+                    if not has:
+                        eff_list.append(_eff("ally_attack", count=4))
+
+                # Add extend debuffs from descriptions
+                if p.get("extend_debuffs") and not any("extend" in e.get("effect_type", "") for e in eff_list):
+                    ext_type = p["extend_debuffs"]
+                    if ext_type == "hp_burn":
+                        eff_list.append(_eff("extend_debuffs_hp_burn", turns=1, per_hit=(p["hits"] > 1)))
+                    elif ext_type == "poison_burn":
+                        eff_list.append(_eff("extend_debuffs_poison_burn", turns=1))
+                    else:
+                        eff_list.append(_eff("extend_debuffs", turns=1, per_hit=(p["hits"] > 1)))
+
+                # Add missing debuffs from descriptions (that game data didn't capture)
+                for desc_db in p.get("debuffs", []):
+                    if desc_db.get("on_self"):
+                        continue
+                    has = any(e.get("params", {}).get("debuff", "").startswith(desc_db["type"].split("_")[0])
+                              for e in eff_list if e.get("effect_type") == "debuff")
+                    if not has and desc_db["type"] in (
+                        "def_down", "weaken", "dec_atk", "hp_burn", "poison_5pct",
+                        "leech", "poison_sensitivity", "heal_reduction"
+                    ):
+                        eff_list.append(_eff("debuff",
+                            debuff=desc_db["type"],
+                            duration=desc_db["duration"],
+                            chance=desc_db["chance"]))
+
+    except Exception as ex:
+        pass  # desc_profiler not available or failed — use game-data-only profiles
+
     return skill_data, skill_effects, passive_data
 
 
