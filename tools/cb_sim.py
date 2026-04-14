@@ -97,12 +97,22 @@ class DebuffBar:
         return True
 
     def tick(self) -> List[DebuffSlot]:
-        """Tick all durations at start of CB turn. Returns expired slots."""
+        """Tick all durations at start of CB turn. Returns expired slots.
+
+        Game mechanic: debuffs tick AFTER their effects apply on this turn.
+        A 2-turn debuff is active for 2 CB turns:
+          - Placed: remaining=2
+          - CB turn 1: active (remaining=2), then tick → remaining=1
+          - CB turn 2: active (remaining=1), then tick → remaining=0 → expired
+
+        Implementation: decrement first, expire at < 0 (not <= 0).
+        This gives one extra turn of activity matching in-game behavior.
+        """
         expired = []
         remaining = []
         for s in self.slots:
             s.remaining -= 1
-            if s.remaining <= 0:
+            if s.remaining < 0:
                 expired.append(s)
             else:
                 remaining.append(s)
