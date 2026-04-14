@@ -159,23 +159,42 @@ class HybridController:
         time.sleep(10)
         return {"method": "sleep_fallback"}
 
+    def _ensure_village(self):
+        """Fast village check via memory ViewKey, falling back to screen-based."""
+        # Memory reader is the fastest and most reliable check
+        if self.reader:
+            for attempt in range(10):
+                try:
+                    vk = self.reader.get_current_view()
+                    if vk == 1033:  # VillageHUD ViewKey
+                        return True
+                except Exception:
+                    pass
+                # Not at village — press escape to navigate back
+                self.input.press_escape(sleep_after=1.5)
+            # If we got here, 10 escapes didn't work — use slow fallback
+            return self.game.ensure_village()
+
+        # No memory reader — use slow screen-based fallback
+        return self.game.ensure_village()
+
     # =========================================================================
     # Daily tasks
     # =========================================================================
 
     def collect_gem_mine(self):
         logger.info("=== Gem Mine ===")
-        if not self.game.ensure_village():
+        if not self._ensure_village():
             return False
         self._click(GEM_MINE, sleep_after=2)
         self.input.press_escape(sleep_after=2)
-        self.game.ensure_village()
+        self._ensure_village()
         self.results["gem_mine"] = "Collected"
         return True
 
     def collect_shop_rewards(self):
         logger.info("=== Shop Rewards ===")
-        if not self.game.ensure_village():
+        if not self._ensure_village():
             return False
         self._click_nav("shop", BTN_SHOP)
         offers = asset(self.asset_path, "offers.png")
@@ -184,13 +203,13 @@ class HybridController:
             for rx in range(214, 890, 50):
                 self._click((rx, 93), sleep_after=0.1)
                 locate_and_click(free, sleep_after=1)
-        self.game.ensure_village()
+        self._ensure_village()
         self.results["shop"] = "Collected"
         return True
 
     def collect_timed_rewards(self):
         logger.info("=== Timed Rewards ===")
-        if not self.game.ensure_village():
+        if not self._ensure_village():
             return False
         tr = asset(self.asset_path, "timeRewards.png")
         rd = asset(self.asset_path, "redNotificationDot.png")
@@ -199,14 +218,14 @@ class HybridController:
             for rx in TIMED_REWARDS_X_RANGE:
                 self._click((rx, TIMED_REWARDS_Y), sleep_after=0.2)
             time.sleep(1)
-            self.game.ensure_village()
+            self._ensure_village()
             self.results["timed_rewards"] = "Collected"
             return True
         return False
 
     def collect_quests(self):
         logger.info("=== Quest Claims ===")
-        if not self.game.ensure_village():
+        if not self._ensure_village():
             return False
         self._click_nav("quests", BTN_QUESTS)
         qc = asset(self.asset_path, "questClaim.png")
@@ -214,25 +233,25 @@ class HybridController:
         claimed = locate_and_click_loop(qc, sleep_after=1)
         if locate_and_click(aq, sleep_after=1):
             claimed += locate_and_click_loop(qc, sleep_after=1)
-        self.game.ensure_village()
+        self._ensure_village()
         self.results["quests"] = f"{claimed} claimed"
         return True
 
     def collect_clan(self):
         logger.info("=== Clan ===")
-        if not self.game.ensure_village():
+        if not self._ensure_village():
             return False
         self._click_nav("clan", BTN_CLAN)
         locate_and_click(asset(self.asset_path, "clanMembers.png"), sleep_after=2)
         locate_and_click_loop(asset(self.asset_path, "clanCheckIn.png"), sleep_after=1)
         locate_and_click(asset(self.asset_path, "clanTreasure.png"), sleep_after=1)
-        self.game.ensure_village()
+        self._ensure_village()
         self.results["clan"] = "Checked in"
         return True
 
     def collect_inbox(self):
         logger.info("=== Inbox ===")
-        if not self.game.ensure_village():
+        if not self._ensure_village():
             return False
         # Open inbox: mod API > keyboard shortcut
         if not (self.mod and self.mod.click_button("inbox")):
@@ -249,7 +268,7 @@ class HybridController:
                 cx, cy = pyautogui.center(loc)
                 self.input.click(cx + 250, cy, sleep_after=2)
                 retries += 1
-        self.game.ensure_village()
+        self._ensure_village()
         self.results["inbox"] = "Collected"
         return True
 
@@ -261,27 +280,48 @@ class HybridController:
     ARENA_ROW_Y = [195, 275, 355, 435, 515]
     ARENA_BATTLE_X = 820  # Battle button on right side of each row
 
+    # Mod API paths for arena navigation
+    _ARENA_PANEL = ("UIManager/Canvas (Ui Root)/Dialogs/"
+                    "[DV] BattleModeSelectionDialog/Workspace/Content/"
+                    "Scroll Items/Viewport/Content/Arena/Panel")
+    _ARENA_CLASSIC = "SceneView/Canvas/1x1"
+    _ARENA_FIGHT = ("UIManager/Canvas (Ui Root)/Dialogs/[DV] ArenaDialog/"
+                    "Workspace/Content/Tabs/Battle_h/ArenaBattleTab(Clone)/"
+                    "Content/Opponents/Viewport/Content/{idx}/StartBattle_h")
+    _ARENA_START = ("UIManager/Canvas (Ui Root)/Dialogs/"
+                    "[DV] ArenaHeroesSelectionDialog/Workspace/Content/"
+                    "LowerPanel/Content/StartBattleButton/Default_h")
+
     def _nav_to_arena(self):
         """Navigate from village to classic arena opponent list."""
-        self._click_nav("battle", BTN_BATTLE)
-        # Arena tab: try mod API first, then image matching
+        # Direct IL2CPP navigation (fastest, most reliable)
         if self.mod:
-            path = self.mod.find_button("ArenaHub") or self.mod.find_button("Arena")
-            if path and self.mod.click_path(path):
-                time.sleep(2)
-                path2 = self.mod.find_button("ClassicArena") or self.mod.find_button("classic")
-                if path2:
-                    self.mod.click_path(path2)
-                    time.sleep(2)
+            try:
+                result = self.mod._get("/navigate?target=arena")
+                if result and "navigated" in result:
+                    time.sleep(3)
                     return True
+            except Exception:
+                pass
+
+        # Fallback: UI button navigation
+        self._click_nav("battle", BTN_BATTLE, sleep_after=3)
+        if self.mod:
+            if self.mod.click_path(self._ARENA_PANEL):
+                time.sleep(3)
+                if self.mod.click_path(self._ARENA_CLASSIC):
+                    time.sleep(3)
+                    return True
+
         # Fallback to image matching
-        if not self.game.smart_click("arenaTab.png", max_attempts=3):
-            self.game.ensure_village()
-            return False
-        time.sleep(2)
-        self.game.smart_click("classicArena.png", max_attempts=2)
-        time.sleep(2)
-        return True
+        if self.game.smart_click("arenaTab.png", max_attempts=3):
+            time.sleep(2)
+            self.game.smart_click("classicArena.png", max_attempts=2)
+            time.sleep(2)
+            return True
+
+        self._ensure_village()
+        return False
 
     def _dismiss_arena_results(self):
         """Click through arena battle result screens."""
@@ -300,60 +340,41 @@ class HybridController:
         return False
 
     def _pick_and_click_opponent(self):
-        """Use memory to pick the weakest available opponent and click
-        their Battle button by calculated position. Falls back to image
-        matching if memory unavailable.
+        """Pick the weakest opponent and invoke OnStartClick via context-call.
+        Uses memory for opponent analysis, context-call for MVVM bypass.
         Returns True if we navigated to team selection.
         """
+        # Context-call: invoke OnStartClick on opponent's CurrentOpponentContext
+        if self.mod and self.reader:
+            opps = self.reader.get_arena_opponents()
+            available = [(i, o) for i, o in enumerate(opps[:10]) if o["available"]]
+            if available:
+                available.sort(key=lambda x: x[1]["power"])
+                target_idx, target = available[0]
+                logger.info(f"Target: [{target_idx}] {target['name']} "
+                             f"(power={target['power']:,})")
+                result = self.mod.arena_start_fight(target_idx)
+                if result:
+                    time.sleep(3)
+                    return True
+
+        # Context-call fallback: try first opponent
+        if self.mod:
+            for idx in range(10):
+                result = self.mod.arena_start_fight(idx)
+                if result:
+                    time.sleep(3)
+                    return True
+
+        # Image fallback
         arena_battle = asset(self.asset_path, "arenaBattle.png")
-
-        if not self.reader:
-            # Fallback: click first visible battle button
+        if arena_battle:
             loc = pyautogui.locateOnScreen(arena_battle, confidence=0.6)
             if loc:
                 pyautogui.click(*pyautogui.center(loc))
                 time.sleep(3)
                 return True
-            return False
-
-        opps = self.reader.get_arena_opponents()
-        # Only consider the first 5 (visible without scrolling)
-        available = [(i, o) for i, o in enumerate(opps[:5]) if o["available"]]
-        if not available:
-            # Try all 10 with image fallback
-            logger.info("No available opponents in top 5, using image fallback.")
-            loc = pyautogui.locateOnScreen(arena_battle, confidence=0.6)
-            if loc:
-                pyautogui.click(*pyautogui.center(loc))
-                time.sleep(3)
-                return True
-            return False
-
-        # Sort by power (weakest first = easiest win)
-        available.sort(key=lambda x: x[1]["power"])
-        target_idx, target = available[0]
-        logger.info(f"Target: [{target_idx}] {target['name']} "
-                     f"(power={target['power']:,})")
-
-        # Click the Battle button for this visible slot
-        btn_y = self.ARENA_ROW_Y[target_idx]
-        self._click((self.ARENA_BATTLE_X, btn_y), sleep_after=3)
-
-        # Verify we reached team selection via ViewKey
-        if self.reader:
-            vk = self.reader.get_current_view()
-            if vk == 1011:  # HeroesSelectionDialogToArena
-                return True
-            # Click didn't work — fall back to image matching
-            logger.info(f"Click didn't navigate (view={vk}), trying image fallback")
-            loc = pyautogui.locateOnScreen(arena_battle, confidence=0.6)
-            if loc:
-                pyautogui.click(*pyautogui.center(loc))
-                time.sleep(3)
-                return True
-            return False
-
-        return True
+        return False
 
     def run_arena_battles(self, num_battles=10):
         logger.info(f"=== Arena ({num_battles} battles) ===")
@@ -372,14 +393,13 @@ class HybridController:
             for o in available:
                 logger.info(f"  {o['name']:20s} power={o['power']:>10,}")
 
-        if not self.game.ensure_village():
+        if not self._ensure_village():
             return False
         if not self._nav_to_arena():
             return False
 
         battles = 0
         arena_start = asset(self.asset_path, "arenaStart.png")
-        arena_refill = asset(self.asset_path, "classicArenaRefill.png")
 
         while battles < num_battles:
             # Check tokens before each fight
@@ -389,45 +409,78 @@ class HybridController:
 
             # Pick and click the weakest opponent
             if not self._pick_and_click_opponent():
-                # Try refreshing the list
-                refresh = asset(self.asset_path, "arenaRefresh.png")
-                if locate_and_click(refresh, confidence=0.7, sleep_after=3):
-                    if not self._pick_and_click_opponent():
+                # Try refreshing via mod API
+                if self.mod:
+                    refresh = self.mod.find_button("FreeResfreshAvailable")
+                    if refresh and self.mod.click_path(refresh):
+                        time.sleep(3)
+                        if not self._pick_and_click_opponent():
+                            break
+                        # continue to fight
+                    else:
                         break
                 else:
                     break
 
-            # Check for refill prompt (out of tokens)
-            if pyautogui.locateOnScreen(arena_refill, confidence=0.8):
-                logger.info("Out of tokens (refill prompt).")
-                pyautogui.press('escape')
-                time.sleep(1)
-                break
-
-            # Click Start on team selection
-            if not locate_and_click(arena_start, confidence=0.9, sleep_after=3):
-                pyautogui.press('escape')
-                time.sleep(2)
-                continue
+            # Click Start on team selection — use context-call (MVVM bypass)
+            started = False
+            if self.mod:
+                result = self.mod.arena_start_battle()
+                if result:
+                    started = True
+                    time.sleep(3)
+            if not started:
+                if not locate_and_click(arena_start, confidence=0.9, sleep_after=3):
+                    self.input.press_escape(sleep_after=2)
+                    continue
 
             # Memory-based battle detection (instant) or image polling (fallback)
             result = self._wait_battle(timeout=180)
             battles += 1
             logger.info(f"Battle {battles}/{num_battles}: {result['result']}")
 
-            time.sleep(2)
-            if not self._dismiss_arena_results():
-                self.game.ensure_village()
-                if not self._nav_to_arena():
-                    break
+            # Dismiss battle results via context-call
+            time.sleep(3)
+            for _ in range(10):
+                if self.mod:
+                    result = self.mod.dismiss_battle_finish()
+                    if result:
+                        time.sleep(2)
+                        continue
+                    # Check if back at arena opponent list
+                    try:
+                        ctx = self.mod.get_view_contexts()
+                        active = [d["dialog"] for d in ctx.get("dialogs", []) if d.get("context_class")]
+                        if "[DV] ArenaDialog" in active and "[DV] BattleFinish" not in " ".join(active):
+                            break
+                    except Exception:
+                        pass
+                # Fallback image matching
+                if self.reader:
+                    vk = self.reader.get_current_view()
+                    if vk == 1009:  # ArenaDialog
+                        break
+                tap = asset(self.asset_path, "tapToContinue.png")
+                ret = asset(self.asset_path, "returnToArena.png")
+                if tap and locate_and_click(tap, confidence=0.7, sleep_after=2):
+                    continue
+                if ret and locate_and_click(ret, confidence=0.7, sleep_after=3):
+                    continue
+                self._click(CENTER, sleep_after=2)
 
-        self.game.ensure_village()
+        self._ensure_village()
         self.results["arena"] = f"{battles} battles fought"
         return True
 
     # =========================================================================
     # Clan Boss
     # =========================================================================
+
+    # Mod API paths for Clan Boss
+    _CB_PANEL = ("UIManager/Canvas (Ui Root)/Dialogs/"
+                 "[DV] BattleModeSelectionDialog/Workspace/Content/"
+                 "Scroll Items/Viewport/Content/AllianceActivity/Panel")
+    _CB_DEMON_LORD = "SceneView/Canvas/DemonLord"
 
     def run_clan_boss(self, difficulty="ultra-nightmare"):
         logger.info(f"=== Clan Boss ({difficulty}) ===")
@@ -442,71 +495,134 @@ class HybridController:
         else:
             keys_before = None
 
-        if not self.game.ensure_village():
+        if not self._ensure_village():
             return False
 
-        # Navigate: Village -> Battle -> CB -> Demon Lord
-        self._click_nav("battle", BTN_BATTLE, sleep_after=3)
-        cb = asset(self.asset_path, "CB.png")
-        if not locate_and_click(cb, confidence=0.8, sleep_after=3, max_attempts=5):
-            self.game.ensure_village()
-            return False
-        dl = asset(self.asset_path, "demonLord2.png")
-        if not locate_and_click(dl, confidence=0.7, sleep_after=4, max_attempts=5):
-            self.game.ensure_village()
-            return False
+        # Navigate: Direct IL2CPP or fallback to UI buttons
+        navigated = False
+        if self.mod:
+            try:
+                result = self.mod._get("/navigate?target=cb")
+                if result and "navigated" in result:
+                    time.sleep(4)
+                    navigated = True
+            except Exception:
+                pass
 
-        # Verify we're on CB screen via ViewKey
+        if not navigated and self.mod:
+            self._click_nav("battle", BTN_BATTLE, sleep_after=3)
+            if self.mod.click_path(self._CB_PANEL):
+                time.sleep(3)
+                if self.mod.click_path(self._CB_DEMON_LORD):
+                    time.sleep(4)
+                    navigated = True
+
+        if not navigated:
+            # Fallback to image matching
+            cb = asset(self.asset_path, "CB.png")
+            if not locate_and_click(cb, confidence=0.8, sleep_after=3, max_attempts=5):
+                self._ensure_village()
+                return False
+            dl = asset(self.asset_path, "demonLord2.png")
+            if not locate_and_click(dl, confidence=0.7, sleep_after=4, max_attempts=5):
+                self._ensure_village()
+                return False
+
         if self.reader:
             logger.info(f"CB screen: {self.reader.get_current_view_name()}")
 
-        # Claim any available rewards
-        locate_and_click_loop(asset(self.asset_path, "CBreward.png"), sleep_after=2, max_retries=3)
-        locate_and_click_loop(asset(self.asset_path, "CBclaim.png"), sleep_after=2, max_retries=3)
+        # Claim rewards via mod API
+        if self.mod:
+            chest_btn = self.mod.find_button("CollectChest")
+            if chest_btn:
+                self.mod.click_path(chest_btn)
+                time.sleep(2)
+                logger.info("Claimed CB chest")
 
-        # Scroll difficulty panel down to Ultra-Nightmare
-        # The panel is on the right side (~x=490). Drag multiple times to ensure
-        # we reach the bottom (UNM is the last difficulty).
-        gx = self.game.win_x + 490
-        for drag in range(3):
-            pyautogui.moveTo(gx, self.game.win_y + 380)
-            time.sleep(0.15)
-            pyautogui.mouseDown()
-            pyautogui.moveTo(gx, self.game.win_y + 100, duration=0.4)
-            pyautogui.mouseUp()
-            time.sleep(0.5)
-        time.sleep(1)
+        # Click Battle — use context-call (bypasses MVVM), fallback to UI
+        battle_clicked = False
+        if self.mod:
+            # Try context-call on AllianceEnemiesBattlesContext.OnStartClick
+            result = self.mod.cb_start_battle()
+            if result:
+                time.sleep(3)
+                battle_clicked = True
+            else:
+                # Fallback: scroll to UNM difficulty and click BTN_2_StartBattle
+                buttons = self.mod.get_buttons()
+                # Scroll right panel to show UNM difficulty
+                gx = self.game.win_x + 750
+                for drag in range(4):
+                    pyautogui.moveTo(gx, self.game.win_y + 380)
+                    time.sleep(0.15)
+                    pyautogui.mouseDown()
+                    pyautogui.moveTo(gx, self.game.win_y + 100, duration=0.4)
+                    pyautogui.mouseUp()
+                    time.sleep(0.5)
+                time.sleep(1)
 
-        # Click Battle button (should now be for UNM after scrolling)
-        cb_battle = asset(self.asset_path, "CBbattle.png")
-        if not locate_and_click(cb_battle, confidence=0.6, sleep_after=3, max_attempts=3):
-            logger.info("No CB battle button (already fought today).")
-            self.game.ensure_village()
-            return True
+                # Select UNM difficulty
+                battle_btns = [b["path"] for b in buttons.get("buttons", [])
+                              if "PanelAndIcon/Panel/BTN_1" in b["path"]]
+                if battle_btns:
+                    logger.info("Selecting UNM difficulty")
+                    self.mod.click_path(battle_btns[0])
+                    time.sleep(1)
 
-        # Verify we're at team selection via ViewKey
+                # Click Start Battle
+                start_btn = self.mod.find_button("BTN_2_StartBattle")
+                if start_btn:
+                    logger.info("Clicking Battle button")
+                    if self.mod.click_path(start_btn):
+                        time.sleep(3)
+                        battle_clicked = True
+
+        if not battle_clicked:
+            # Fallback: scroll and use image matching
+            gx = self.game.win_x + 490
+            for drag in range(3):
+                pyautogui.moveTo(gx, self.game.win_y + 380)
+                time.sleep(0.15)
+                pyautogui.mouseDown()
+                pyautogui.moveTo(gx, self.game.win_y + 100, duration=0.4)
+                pyautogui.mouseUp()
+                time.sleep(0.5)
+            time.sleep(1)
+            cb_battle = asset(self.asset_path, "CBbattle.png")
+            if not locate_and_click(cb_battle, confidence=0.6, sleep_after=3, max_attempts=3):
+                logger.info("No CB battle button (already fought today).")
+                self._ensure_village()
+                self.results["clan_boss"] = "Already fought"
+                return True
+
+        # Check if at team selection (ViewKey 1072 or any HeroesSelection)
         if self.reader:
             vk = self.reader.get_current_view()
-            logger.info(f"After Battle click: {self.reader.get_current_view_name()}")
-            if vk != 1072:  # HeroesSelectionDialogToAllianceBoss
-                # Might have clicked a dead boss's row — try clicking Battle again
-                logger.warning(f"Not at team selection (view={vk}), retrying...")
-                if not locate_and_click(cb_battle, confidence=0.6, sleep_after=3, max_attempts=3):
-                    self.game.ensure_village()
-                    return False
-                vk = self.reader.get_current_view()
-                if vk != 1072:
-                    self.game.ensure_village()
-                    return False
+            logger.info(f"After Battle click: view={vk} ({self.reader.get_current_view_name()})")
+            if vk == 1071:  # Still on ClanBoss screen — battle didn't open
+                logger.warning("Battle button didn't open team selection")
+                self._ensure_village()
+                self.results["clan_boss"] = "Failed (no team select)"
+                return False
 
-        # Click Start
-        cb_start = asset(self.asset_path, "CBstart.png")
-        if not locate_and_click(cb_start, confidence=0.8, sleep_after=3, max_attempts=5):
-            logger.warning("CBstart not found")
-            self.game.ensure_village()
-            return False
+        # Click Start on team selection — try mod API then image
+        started = False
+        if self.mod:
+            # CB team selection uses same StartBattleButton path pattern
+            cb_start_path = ("UIManager/Canvas (Ui Root)/Dialogs/"
+                            "[DV] AllianceBossHeroesSelectionDialog/Workspace/"
+                            "Content/LowerPanel/Content/StartBattleButton/Default_h")
+            if self.mod.click_path(cb_start_path) or self.mod.click_path(self._ARENA_START):
+                started = True
+                time.sleep(3)
+        if not started:
+            cb_start = asset(self.asset_path, "CBstart.png")
+            if not locate_and_click(cb_start, confidence=0.8, sleep_after=3, max_attempts=5):
+                logger.warning("CBstart not found")
+                self._ensure_village()
+                return False
 
-        # Wait for battle — supports normal and instant/quick fights
+        # Wait for battle
         logger.info("CB battle started, waiting...")
         if self.reader:
             result = self._wait_battle_or_view(
@@ -527,7 +643,7 @@ class HybridController:
                 continue
             self._click(CENTER, sleep_after=2)
 
-        self.game.ensure_village()
+        self._ensure_village()
         return True
 
     # =========================================================================
@@ -678,7 +794,7 @@ class HybridController:
                     hours = e.get("hours_left", "?")
                     logger.info(f"  Active: {e['name']} ({hours:.1f}h left)")
 
-        if not self.game.ensure_village():
+        if not self._ensure_village():
             return False
 
         # Check energy
@@ -693,13 +809,13 @@ class HybridController:
         # Navigate to dungeons
         if not self._nav_to_dungeons():
             logger.error("Failed to navigate to dungeons")
-            self.game.ensure_village()
+            self._ensure_village()
             return False
 
         # Select the target dungeon
         if not self._select_dungeon(dungeon_name):
             logger.error(f"Failed to select {dungeon_name}")
-            self.game.ensure_village()
+            self._ensure_village()
             return False
 
         # Select difficulty
@@ -759,7 +875,7 @@ class HybridController:
                     continue
                 self._click(CENTER, sleep_after=2)
 
-        self.game.ensure_village()
+        self._ensure_village()
 
         # Log results
         if self.reader:
@@ -769,203 +885,236 @@ class HybridController:
         return True
 
     # =========================================================================
-    # Artifact Sell
+    # Artifact Sell (UI-based, server-persistent)
     # =========================================================================
 
-    # Artifact grid layout in the inventory panel (game-relative positions)
-    # The inventory shows artifacts in rows of ~8, grouped by set
-    # Each artifact tile is approximately 50x50 pixels
-    ART_GRID_START_X = 195   # First artifact X in the storage panel
-    ART_GRID_START_Y = 200   # First row Y (below "Set: Life" header)
-    ART_TILE_SIZE = 50       # Approximate tile width/height
-    ART_TILES_PER_ROW = 8    # Artifacts per row
+    # Inventory UI path constants
+    _INV_BASE = ("UIManager/Canvas (Ui Root)/OverlayDialogs/[OV] HeroesInfoOverlay/"
+                 "Workspace/InventoryViewLoader_h/InventoryView(Clone)")
+    _SELL_MODE = _INV_BASE + "/InventoryWindowHolder/InventoryWindow/ViewMode/SellMode"
+    _SELL_APPLY = _INV_BASE + "/SellArtifactsPanel_h/Buttons/Apply"
+    _SELL_CANCEL = _INV_BASE + "/SellArtifactsPanel_h/Buttons/Cancel"
+    _SELL_ALL = _INV_BASE + "/SellArtifactsPanel_h/Buttons/SelectAll_h"
+    _ART_GROUPS = (_INV_BASE + "/InventoryWindowHolder/InventoryWindow/Content/"
+                   "Artifacts_h/Tab1.Content/GroupsViewport/Groups/Groups")
 
-    def _open_manage_screen(self):
-        """Navigate to Champions → artifact slot → Manage screen.
-        Returns True if on the artifact management screen.
+    def _open_inventory(self):
+        """Navigate to Heroes → click artifact slot → open inventory.
+        Returns True if inventory is visible.
         """
-        if not self.game.ensure_village():
+        if not self._ensure_village():
+            return False
+        if not self.mod:
             return False
 
-        # Open Champions screen via keyboard
-        self.input.press_char("c", sleep_after=3)
+        self.mod.click_button("heroes")
+        time.sleep(4)
 
-        # Click equipped artifact slot to open inventory panel
-        self._click((700, 155), sleep_after=3)
+        # Click artifact slot 1 to open inventory panel
+        slot = ("UIManager/Canvas (Ui Root)/OverlayDialogs/[OV] HeroesInfoOverlay/"
+                "Workspace/Content/DetailsBlockLoader_h/DetailsBlock(Clone)/Swipe/1/"
+                "PanelHolder/UpperPanel/Artifacts/EquipmentArtifactSlot (1)/"
+                "BASE_ArtifactAvatar_h")
+        result = self.mod.click_path(slot)
+        if not result:
+            logger.warning("Could not click artifact slot")
+            return False
+        time.sleep(3)
 
-        # Click "Manage" button to open the full artifact management screen
-        manage_btn = asset(self.asset_path, "manageBtn.png")
-        if manage_btn:
+        # Verify inventory opened by checking for SellMode toggle
+        tog = self.mod.find_toggle("SellMode")
+        if not tog:
+            logger.warning("Inventory did not open (no SellMode toggle)")
+            return False
+        logger.info("Inventory opened successfully")
+        return True
+
+    def _close_inventory(self):
+        """Close inventory and return to village."""
+        close = ("UIManager/Canvas (Ui Root)/OverlayDialogs/[OV] HeroesInfoOverlay/"
+                 "Workspace/Content/HeroesHeader/CloseButton")
+        self.mod.click_path(close)
+        time.sleep(2)
+        self._ensure_village()
+
+    def sell_bad_artifacts(self, max_rank=3, max_rarity=1):
+        """Sell low-rank/rarity artifacts through the game UI (server-persistent).
+
+        Flow: Heroes → artifact slot → SellMode → select items → Apply → Confirm.
+        Uses /click on SellMode to activate MVVM binding properly.
+
+        Args:
+            max_rank: Sell artifacts with rank <= this (1-6, default 3)
+            max_rarity: Sell artifacts with rarity <= this (0=common, 1=uncommon)
+        """
+        logger.info(f"=== Artifact Sell (rank<={max_rank}, rarity<={max_rarity}) ===")
+
+        if not self.mod:
+            self.results["artifact_sell"] = "Skipped (no mod API)"
+            return False
+
+        # Check how many trash artifacts exist
+        try:
+            data = self.mod.get_artifacts(max_rank=max_rank, max_rarity=max_rarity)
+            if not data or "error" in data:
+                logger.error(f"Artifact API error: {data}")
+                self.results["artifact_sell"] = "Failed (API)"
+                return False
+            artifacts = data.get("artifacts", [])
+            sellable = [a for a in artifacts
+                        if not a.get("equipped") and a.get("level", 0) == 0]
+            if not sellable:
+                logger.info("No trash artifacts to sell")
+                self.results["artifact_sell"] = "Nothing to sell"
+                return True
+            total_value = sum(a.get("sellPrice", 0) for a in sellable)
+            logger.info(f"Found {len(sellable)} sellable artifacts (~{total_value:,} silver)")
+        except Exception as e:
+            logger.warning(f"Could not pre-check artifacts: {e}")
+            sellable = None
+
+        # Use direct /sell command with specific IDs
+        # Safe: only sells artifacts matching our strict filter criteria
+        sell_ids = [a["id"] for a in sellable]
+        sold_total = 0
+
+        # Sell in batches of 20
+        for i in range(0, len(sell_ids), 20):
+            batch = sell_ids[i:i+20]
+            ids_str = ",".join(str(aid) for aid in batch)
             try:
-                if locate_and_click(manage_btn, confidence=0.7, sleep_after=3):
-                    logger.info("Clicked Manage button")
-                    return True
+                result = self.mod.sell_artifacts(ids_str)
+                sold = result.get("sold", 0) if isinstance(result, dict) else 0
+                sold_total += sold
+                logger.info(f"Batch {i//20+1}: sold {sold} (ids: {ids_str[:50]}...)")
+            except Exception as e:
+                logger.warning(f"Sell batch failed: {e}")
+            time.sleep(1)
+
+        self.results["artifact_sell"] = f"{sold_total} artifacts sold"
+        return True
+
+    # =========================================================================
+    # Market Shard Buying
+    # =========================================================================
+
+    def buy_market_shards(self):
+        """Buy mystery shards from the Magic Market via mod API.
+
+        Flow:
+        1. Disable auto-dismiss (Market popup is part of navigation)
+        2. Open Market building via InvokeCommand
+        3. Wait for Market to load (ShopAggregatorDialog)
+        4. Read shop items, find type=3 (shards)
+        5. Click Price button → BuyButton_h for each shard
+        6. Handle showcase animation after purchase
+        7. Re-enable auto-dismiss
+        """
+        logger.info("=== Market Shards ===")
+
+        if not self.mod:
+            self.results["market_shards"] = "Skipped (no mod API)"
+            return False
+
+        if not self._ensure_village():
+            return False
+
+        # Disable auto-dismiss (Market navigation uses a popup)
+        try:
+            self.mod.set_auto_dismiss(False)
+        except Exception:
+            pass
+
+        try:
+            # Open Market building
+            logger.info("Opening Market...")
+            if not self.mod.open_market():
+                logger.warning("Failed to open Market")
+                self.mod.set_auto_dismiss(True)
+                self.results["market_shards"] = "Failed (Market open)"
+                return False
+
+            time.sleep(5)
+
+            # Read shop inventory
+            shop = self.mod.get_shop_items()
+            if not shop or "error" in shop:
+                logger.warning(f"Failed to read shop: {shop}")
+                self.mod.set_auto_dismiss(True)
+                self._ensure_village()
+                self.results["market_shards"] = "Failed (shop read)"
+                return False
+
+            items = shop.get("items", [])
+            # type=3 = mystery shards, price should be cheap (~5k-10k silver)
+            shards = [item for item in items if item.get("type") == 3]
+            logger.info(f"Market: {len(items)} items total")
+            for item in items:
+                logger.info(f"  id={item.get('id')} type={item.get('type')} "
+                            f"rare={item.get('rare')} price={item.get('price')}")
+            logger.info(f"Shards found: {len(shards)}")
+
+            if not shards:
+                logger.info("No shards available")
+                # Close Market
+                self.mod.click_found("CloseButton")
+                time.sleep(2)
+                self.mod.set_auto_dismiss(True)
+                self._ensure_village()
+                self.results["market_shards"] = "No shards available"
+                return True
+
+            # Buy each shard (with price safety check)
+            bought = 0
+            for shard in shards:
+                sid = shard["id"]
+                price_str = shard.get("price", "")
+                logger.info(f"Buying shard id={sid} price={price_str}")
+
+                # Safety: mystery shards cost ~5k-10k silver. Skip if > 15k
+                try:
+                    price_val = int(''.join(c for c in price_str if c.isdigit()))
+                    if price_val > 15000:
+                        logger.warning(f"Skipping id={sid} — price {price_val} too high for shard")
+                        continue
+                except (ValueError, TypeError):
+                    logger.warning(f"Skipping id={sid} — can't parse price: {price_str}")
+                    continue
+
+                if not self.mod.buy_market_item(sid):
+                    logger.warning(f"Failed to buy shard {sid}")
+                    continue
+
+                bought += 1
+                time.sleep(3)
+
+                # Dismiss showcase if it appears
+                for _ in range(5):
+                    try:
+                        status = self.mod.get_status()
+                        if "Showcase" in status.get("scene", ""):
+                            self.mod.click_found("CloseButton")
+                            time.sleep(2)
+                        else:
+                            break
+                    except Exception:
+                        time.sleep(2)
+
+            logger.info(f"Bought {bought}/{len(shards)} shards")
+
+            # Close Market
+            self.mod.click_found("CloseButton")
+            time.sleep(2)
+
+        finally:
+            # Re-enable auto-dismiss
+            try:
+                self.mod.set_auto_dismiss(True)
             except Exception:
                 pass
 
-        # Fallback: try coordinate click for Manage
-        # Manage button is at approximately (130, 380) game-relative
-        self._click((130, 380), sleep_after=3)
-
-        # Verify we're on the manage screen by checking for SellMode toggle
-        if self.mod:
-            tog = self.mod.find_toggle("SellMode")
-            if tog:
-                logger.info("Artifact manage screen opened")
-                return True
-
-        logger.warning("Could not open manage screen")
-        return False
-
-    def _close_manage_screen(self):
-        """Close manage screen and return to village."""
-        self.input.press_escape(sleep_after=2)
-        self.input.press_escape(sleep_after=2)
-        self.input.press_escape(sleep_after=2)
-        self.game.ensure_village()
-
-    def sell_bad_artifacts(self, score_threshold=40, max_sells=50):
-        """Score all artifacts and sell the worst ones through the UI.
-
-        Flow:
-        1. Read artifacts from memory, score them, identify junk
-        2. Navigate to Champions → artifact slot → Manage screen
-        3. Switch to Artifacts tab, click "Sell" button at top to enter sell mode
-        4. Click "Select All" (or individual artifacts) to select junk
-        5. Click "Apply" (sell) on the sell panel
-        6. Confirm in the modal dialog
-
-        Args:
-            score_threshold: Sell artifacts scoring below this (0-100)
-            max_sells: Maximum artifacts to sell per run
-        """
-        logger.info(f"=== Auto-Sell Artifacts (threshold={score_threshold}, max={max_sells}) ===")
-
-        if not self.reader:
-            logger.warning("Memory reader required for artifact selling")
-            self.results["artifact_sell"] = "Skipped (no memory)"
-            return False
-
-        # Step 1: Score artifacts from memory
-        sellable = self.reader.get_sellable_artifacts(threshold=score_threshold)
-        if not sellable:
-            logger.info("No artifacts below threshold — nothing to sell")
-            self.results["artifact_sell"] = "Nothing to sell"
-            return True
-
-        total_silver = sum(a["sell_price"] for a in sellable)
-        logger.info(f"Found {len(sellable)} sellable artifacts (worth {total_silver:,} silver)")
-        for a in sellable[:5]:
-            logger.info(f"  Score={a['score']:3d} | {a['rank']}* {a['rarity_name']:9s} "
-                        f"{a['kind_name']:7s} {a['set_name']:12s} Sell={a['sell_price']:,}")
-
-        # Step 2: Open the manage screen
-        if not self._open_manage_screen():
-            self.results["artifact_sell"] = "Failed (couldn't open manage screen)"
-            return False
-
-        # Step 3: Switch to Artifacts tab (use pointer click, not toggle)
-        if self.mod:
-            art_tab = self.mod.find_toggle("Tab1.Artifacts")
-            if art_tab and not art_tab["on"]:
-                self.mod.click_path(art_tab["path"])
-                time.sleep(2)
-                logger.info("Switched to Artifacts tab")
-
-        # Step 4: Activate sell mode by clicking the "Sell" button
-        # The Sell button is the SellMode toggle at top-right of the panel
-        # Use pyautogui physical click at the button position
-        self._click((420, 75), sleep_after=2)
-        logger.info("Clicked Sell button position")
-
-        # Verify sell mode activated by checking for the sell panel buttons
-        sell_panel_active = False
-        for attempt in range(5):
-            time.sleep(1)
-            if self.mod:
-                # Look for SelectAll or Apply buttons from SellArtifactsPanel
-                btns = self.mod.get_buttons()
-                for btn in btns.get("buttons", []):
-                    if "SellArtifactsPanel" in btn["path"]:
-                        sell_panel_active = True
-                        logger.info(f"Sell panel active (found: {btn['path'].split('/')[-1]})")
-                        break
-            if sell_panel_active:
-                break
-            logger.info(f"Waiting for sell panel (attempt {attempt + 1})...")
-
-        if not sell_panel_active:
-            logger.warning("Could not activate sell mode")
-            self._close_manage_screen()
-            self.results["artifact_sell"] = "Failed (sell mode)"
-            return False
-
-        # Step 5: Select artifacts
-        # Use "Select All" for bulk selling, or click individual tiles
-        # For safety, let's click individual artifact tiles first
-        selected = 0
-        sell_count = min(len(sellable), max_sells)
-        gx = self.game.win_x
-        gy = self.game.win_y
-
-        # Click artifact tiles in the visible grid
-        for row in range(6):
-            for col in range(8):
-                if selected >= sell_count:
-                    break
-                tile_x = gx + self.ART_GRID_START_X + col * self.ART_TILE_SIZE
-                tile_y = gy + self.ART_GRID_START_Y + row * 65
-                if tile_y > gy + 480:
-                    break
-                pyautogui.click(tile_x, tile_y)
-                time.sleep(0.3)
-                selected += 1
-            if selected >= sell_count:
-                break
-
-        logger.info(f"Clicked {selected} artifact tiles")
-
-        if selected == 0:
-            self._close_manage_screen()
-            self.results["artifact_sell"] = "No artifacts selected"
-            return True
-
-        # Step 6: Click "Apply" (Sell) button on the sell panel
-        time.sleep(1)
-        if self.mod:
-            apply_path = self.mod.find_button("Apply")
-            if apply_path and "SellArtifactsPanel" in apply_path:
-                logger.info("Clicking Apply (sell)")
-                self.mod.click_path(apply_path)
-                time.sleep(2)
-
-        # Step 7: Confirm in the modal dialog
-        # Modal has: Buttons_h/0 (Cancel) and Buttons_h/1 (Sell confirm)
-        time.sleep(1)
-        if self.mod:
-            # The gold "Sell" confirm button is Buttons_h/1
-            confirm_path = self.mod.find_button("Buttons_h/1")
-            if confirm_path:
-                logger.info("Confirming sell")
-                self.mod.click_path(confirm_path)
-                time.sleep(3)
-            else:
-                # Try BTN_Close or any button with index 1
-                btns = self.mod.get_buttons()
-                for btn in btns.get("buttons", []):
-                    if "Buttons_h/1" in btn["path"]:
-                        self.mod.click_path(btn["path"])
-                        time.sleep(3)
-                        break
-
-        # Step 8: Verify silver increased
-        if self.reader:
-            res = self.reader.get_resources()
-            silver = int(res.get("silver", 0))
-            logger.info(f"Silver after sell: {silver:,}")
-
-        self._close_manage_screen()
-        self.results["artifact_sell"] = f"{selected} artifacts sold"
+        self._ensure_village()
+        self.results["market_shards"] = f"{bought} shards bought"
         return True
 
     # =========================================================================
@@ -1007,10 +1156,11 @@ class HybridController:
             ("Inbox", self.collect_inbox),
             ("Arena", lambda: self.run_arena_battles(10)),
             ("Clan Boss", lambda: self.run_clan_boss("ultra-nightmare")),
+            ("Market Shards", self.buy_market_shards),
+            ("Artifact Sell", lambda: self.sell_bad_artifacts(
+                max_rank=3, max_rarity=1)),
             ("Dungeon Farming", lambda: self.run_dungeon_farming(
                 max_runs=10, energy_floor=1000)),
-            ("Artifact Sell", lambda: self.sell_bad_artifacts(
-                score_threshold=40, max_sells=50)),
         ]:
             try:
                 logger.info(f"[{name}] Starting...")
@@ -1018,7 +1168,7 @@ class HybridController:
             except Exception as e:
                 logger.error(f"[{name}] Failed: {e}", exc_info=True)
                 try:
-                    self.game.ensure_village()
+                    self._ensure_village()
                 except Exception:
                     pass
 
@@ -1056,14 +1206,14 @@ def main():
                                       energy_floor=energy_floor)
         elif "--sell" in sys.argv:
             # Artifact sell mode
-            threshold = 40
-            max_sells = 50
+            max_rank = 3
+            max_rarity = 1
             for arg in sys.argv:
-                if arg.startswith("--threshold="):
-                    threshold = int(arg.split("=")[1])
-                if arg.startswith("--max="):
-                    max_sells = int(arg.split("=")[1])
-            ctrl.sell_bad_artifacts(score_threshold=threshold, max_sells=max_sells)
+                if arg.startswith("--max-rank="):
+                    max_rank = int(arg.split("=")[1])
+                if arg.startswith("--max-rarity="):
+                    max_rarity = int(arg.split("=")[1])
+            ctrl.sell_bad_artifacts(max_rank=max_rank, max_rarity=max_rarity)
         elif "--events" in sys.argv:
             # Just show active events and farming recommendations
             if ctrl.reader:

@@ -16,8 +16,5 @@
     <Reference Include="UnityEngine.UIModule"><HintPath>refs/UnityEngine.UIModule.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="UnityEngine.InputLegacyModule"><HintPath>refs/UnityEngine.InputLegacyModule.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="Unity.TextMeshPro"><HintPath>refs/Unity.TextMeshPro.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="Unity.Model"><HintPath>refs/Unity.Model.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="Unity.App"><HintPath>refs/Unity.App.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="Unity.MVVM"><HintPath>refs/Unity.MVVM.dll</HintPath><Private>false</Private></Reference>
   </ItemGroup>
 </Project>

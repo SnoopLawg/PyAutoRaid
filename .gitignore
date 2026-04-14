@@ -8,3 +8,25 @@ __pycache__/
 dist/
 build/
 *.spec
+
+# Game data (large, account-specific)
+heroes_*.json
+all_artifacts.json
+equipped_art_ids.json
+account_data.json
+hero_computed_stats.json
+skills_db.json
+skills_*.json
+hero_profiles_*.json
+battle_logs_*.json
+
+# Temp debug/deploy scripts
+_*.py
+tools/debug_*.py
+tools/test_*.py
+tools/dump.cs
+skills_audit*.json
+skills_data*.json
+
+# Gear plan iterations
+myth_eater_gear*.txt

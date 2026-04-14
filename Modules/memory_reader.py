@@ -5,8 +5,11 @@ Reads game state directly from process memory via IL2CPP pointer chains.
 Provides instant battle detection, resource checking, arena opponent
 evaluation, hero roster access, and screen/view identification.
 
-All offsets are from Il2CppDumper v6.7.46 output for:
-  Raid v11.30.0 | metadata v31 | Unity 6000.0.60
+Offset resolution (priority order):
+  1. MelonLoader mod API (/offsets) — auto-detects singleton pointers
+     and field offsets at runtime. Immune to game version updates.
+  2. Hardcoded RVAs + offsets — fallback for when mod is unavailable.
+     These are from Il2CppDumper output and need manual update per version.
 
 Architecture:
   GameAssembly.dll contains IL2CPP compiled game code.
@@ -15,7 +18,7 @@ Architecture:
     - AppViewModel (UI state: routing, current view/screen)
   Both are accessed via SingleInstance<T>._instance static field.
 
-Pointer chain to reach singletons:
+Pointer chain to reach singletons (fallback only):
   GA_BASE + TypeInfo_RVA -> klass ptr
     -> +0xC8 (generic class info)
     -> +0x08 (specialized klass)
@@ -31,9 +34,11 @@ Usage:
     reader.detach()
 """
 
+import json
 import logging
 import struct
 import time
+import urllib.request
 
 import pymem
 import pymem.process
@@ -67,8 +72,6 @@ UW_ACCOUNT = 0x20    # AccountWrapper
 UW_HEROES = 0x28     # HeroesWrapper
 UW_ARENA = 0xB0      # ArenaWrapper
 UW_BATTLE = 0x158    # BattleWrapper
-UW_SOLO_EVENTS = 0x130   # SoloEventsWrapper
-UW_TOURNAMENTS = 0x140   # TournamentsWrapper
 
 # AccountWrapperReadOnly -> UserAccount
 ACCTWRAP_DATA = 0x20
@@ -94,10 +97,73 @@ HERO_EMPOWER = 0x30     # int (empowerment level)
 HERO_LOCKED = 0x34      # bool
 HERO_INSTORAGE = 0x35   # bool
 
+# Hero extended fields
+HERO_SKILLS = 0x60      # List<Skill>
+HERO_MASTERY = 0x68     # HeroMasteryData
+HERO_DBLASCEND = 0x70   # HeroDoubleAscendData
+HERO_POWER = 0x78       # Nullable<double> Power
+
+# Skill fields
+SKILL_TYPEID = 0x1C     # int TypeId
+SKILL_LEVEL = 0x20      # int Level
+
+# HeroMasteryData fields
+MASTERY_LIST = 0x20     # List<int> Masteries
+
+# HeroDoubleAscendData fields
+DBLASCEND_GRADE = 0x10      # DoubleAscendGrade enum
+DBLASCEND_BLESSINGID = 0x14 # Nullable<BlessingTypeId>
+
 # HeroType fields (via Hero._type pointer)
 HEROTYPE_NAME = 0x18    # SharedLTextKey -> .DefaultValue (+0x18) = champion name
-HEROTYPE_FRACTION = 0x38  # HeroFraction enum
-HEROTYPE_RARITY = 0x3C  # HeroRarity enum
+HEROTYPE_FRACTION = 0x3C  # HeroFraction enum (verified live)
+HEROTYPE_RARITY = 0x40   # HeroRarity enum (verified live)
+HEROTYPE_LEADERSKILLS = 0x48  # List<LeaderSkill>
+HEROTYPE_FORMS = 0x88   # HeroForm[] (verified via live probing)
+
+# LeaderSkill fields
+LS_STATKIND = 0x10      # StatKindId
+LS_ISABSOLUTE = 0x14    # bool
+LS_AMOUNT = 0x18        # Fixed
+LS_AREA = 0x20          # Nullable<AreaTypeId>
+
+# HeroForm fields (from HeroType.Forms array)
+HEROFORM_ELEMENT = 0x10     # Element enum
+HEROFORM_ROLE = 0x14        # HeroRole enum
+HEROFORM_BASESTATS = 0x18   # BattleStats (inline object ptr)
+
+# BattleStats field offsets (all Fixed type = long with 32 fractional bits)
+BS_HEALTH = 0x10
+BS_ATTACK = 0x18
+BS_DEFENCE = 0x20
+BS_SPEED = 0x28
+BS_RESISTANCE = 0x30
+BS_ACCURACY = 0x38
+BS_CRITCHANCE = 0x40
+BS_CRITDAMAGE = 0x48
+BS_CRITHEAL = 0x50
+BS_IGNOREDEF = 0x58
+
+# ArtifactBonus fields
+ARTBONUS_KINDID = 0x10      # StatKindId enum
+ARTBONUS_VALUE = 0x18       # BonusValue ptr
+ARTBONUS_POWERUP = 0x20     # Fixed _powerUpValue
+ARTBONUS_LEVEL = 0x38       # int _level
+
+# BonusValue fields
+BONUSVAL_ISABSOLUTE = 0x10  # bool (true=flat, false=%)
+BONUSVAL_VALUE = 0x18       # Fixed
+
+# EquipmentWrapper -> UserArtifactData
+EQUIPWRAP_ARTDATA = 0x60    # UserArtifactData
+ARTDATA_ARTIFACTS = 0x28    # List<Artifact> (all artifacts)
+ARTDATA_BYHERO = 0x30       # Dictionary<int, HeroArtifactData>
+HEROARTDATA_BYKIND = 0x10   # Dictionary<ArtifactKindId, int>
+
+# Capitol (Great Hall)
+UW_CAPITOL = 0xC8           # CapitolWrapper
+CAPITOLWRAP_VILLAGEDATA = 0x18  # UpdatableVillageData (inherits UserVillageData)
+VILLAGEDATA_BONUSES = 0x30  # Dictionary<Element, Dictionary<StatKindId, int>>
 
 # Artifact fields
 ART_ID = 0x10           # int
@@ -109,20 +175,6 @@ ART_RARITY = 0x48       # ItemRarity enum (common-legendary)
 ART_PRIMARY = 0x50      # ArtifactBonus ptr (primary stat)
 ART_SECONDARIES = 0x58  # List<ArtifactBonus> (substats)
 ART_SET = 0x68          # ArtifactSetKindId enum
-
-# ArtifactBonus fields
-BONUS_STAT_KIND = 0x10  # StatKindId enum
-BONUS_VALUE = 0x18      # BonusValue (inline: isAbsolute at +0x10, Fixed _value at +0x18)
-BONUS_VALUE_IS_ABS = 0x18  # bool _isAbsolute (relative to ArtifactBonus)
-BONUS_VALUE_VAL = 0x20     # Fixed _value (8 bytes, relative to ArtifactBonus)
-BONUS_LEVEL = 0x38      # int _level (number of upgrade rolls into this substat)
-
-# ArtifactStorageResolver — static singleton for artifact storage
-# Chain: TypeInfo → static_fields → _implementation → _cachedArtifacts → _artifacts dict
-ARTIFACT_RESOLVER_TYPEINFO_RVA = 0x4DE5890
-ARTRESOLVER_IMPL = 0x00          # _implementation (ExternalArtifactsStorage)
-EXTERNAL_CACHED = 0x10           # _cachedArtifacts (CachedArtifacts)
-CACHED_ARTIFACTS_DICT = 0x18     # _artifacts (Dictionary<int, Artifact>)
 
 # ArenaWrapperReadOnly -> UserArenaData
 ARENAWRAP_DATA = 0x40
@@ -140,31 +192,6 @@ TEAM_POWER = 0x10       # int CombatPower
 
 # BattleStateNotifier
 BATTLE_STATE = 0x28     # BattleProcessingState enum
-
-# SoloEventsWrapperReadOnly -> GlobalEventsWrapper -> UpdatableGlobalEventsData
-SEW_GLOBAL_EVENTS = 0x58    # GlobalEventsWrapper (from SoloEventsWrapperReadOnly)
-GEW_DATA = 0x20             # UpdatableGlobalEventsData (from GlobalEventsWrapperReadOnly)
-GEDATA_EVENTS = 0x18        # List<GlobalEvent> (from GlobalEventsDataForUser base)
-GEDATA_SOLO = 0x20          # ICollection<GlobalEvent> _soloEvents
-GEDATA_TOURNAMENTS = 0x28   # ICollection<GlobalEvent> _tournaments
-
-# GlobalEvent fields
-GE_ID = 0x10                # int Id
-GE_GBOID = 0x14             # int GboId
-GE_DATE_COND = 0x28         # GlobalRatingDateCondition
-GE_QUEST_DATA = 0x30        # GlobalEventQuestData
-GE_IS_FULL = 0x40           # bool IsFull
-
-# GlobalRatingDateCondition (DateTime is 8 bytes, Nullable<DateTime> has bool+padding before)
-DATECON_TEASER_START = 0x10  # Nullable<DateTime> TeaserStart
-DATECON_START = 0x20         # Nullable<DateTime> Start
-DATECON_END = 0x30           # Nullable<DateTime> End
-DATECON_PRIZE_DEADLINE = 0x40  # Nullable<DateTime> TakePrizeDeadline
-
-# GlobalEventQuestData -> Quest -> Name
-GEQDATA_QUEST = 0x10         # Quest
-QUEST_NAME = 0x58            # SharedLTextKey -> .DefaultValue (+0x18)
-QUEST_COMPLETIONS = 0x88     # List<QuestCompletion> (progress entries for the quest)
 
 
 # =============================================================================
@@ -219,85 +246,57 @@ RESOURCE_NAMES = {
     RES_AUTO_TICKET: "auto_tickets",
 }
 
-# GlobalEventAction (what activities earn event points)
-GEA_HERO_LEVELUP = 1
-GEA_HERO_RANKUP = 2
-GEA_HERO_ASCEND = 3
-GEA_HERO_SKILLLEVELUP = 4
-GEA_HERO_SUMMON = 5
-GEA_HERO_FUSE = 6
-GEA_ARTIFACT_COLLECT = 21
-GEA_ARTIFACT_UPGRADE = 22
-GEA_SHARDS_OPEN = 31
-GEA_BATTLE_STORY = 50
-GEA_BATTLE_DUNGEON = 51
-GEA_BATTLE_ARENA = 52
-GEA_BATTLE_DUNGEON_REWARD = 53
-GEA_BATTLE_ARENA_3X3 = 54
-GEA_BATTLE_DUNGEON_TURN = 55
+# Fixed-point conversion: Fixed uses 32 fractional bits, so value = raw_long / 2^32
+FIXED_SCALE = 4294967296.0  # 2^32
 
-# GlobalEventStateId
-EVENT_CREATED = 1
-EVENT_TEASER = 2
-EVENT_RUNNING = 3
-EVENT_REWARDING = 4
-EVENT_FINISHED = 5
-
-# RegionTypeId (dungeons we care about for farming)
-REGION_DRAGON = 206       # DragonsLair
-REGION_ICE_GOLEM = 207    # IceGolemCave
-REGION_FIRE_KNIGHT = 208  # FireGolemCave (Fire Knight)
-REGION_SPIDER = 209       # SpiderCave
-REGION_MINOTAUR = 210     # MinotaurCave
-
-REGION_NAMES = {
-    206: "Dragon", 207: "Ice Golem", 208: "Fire Knight",
-    209: "Spider", 210: "Minotaur",
-    201: "Void Keep", 202: "Spirit Keep", 203: "Magic Keep",
-    204: "Force Keep", 205: "Arcane Keep",
-}
-
-# StatKindId
-STAT_HP = 1
-STAT_ATK = 2
-STAT_DEF = 3
-STAT_SPD = 4
-STAT_RES = 5
-STAT_ACC = 6
-STAT_CRIT_RATE = 7
-STAT_CRIT_DMG = 8
+# StatKindId enum
+STAT_HEALTH = 1
+STAT_ATTACK = 2
+STAT_DEFENCE = 3
+STAT_SPEED = 4
+STAT_RESISTANCE = 5
+STAT_ACCURACY = 6
+STAT_CRITCHANCE = 7
+STAT_CRITDAMAGE = 8
+STAT_CRITHEAL = 9
+STAT_IGNOREDEF = 10
 
 STAT_NAMES = {
-    1: "HP", 2: "ATK", 3: "DEF", 4: "SPD",
-    5: "RES", 6: "ACC", 7: "C.Rate", 8: "C.Dmg",
+    STAT_HEALTH: "HP", STAT_ATTACK: "ATK", STAT_DEFENCE: "DEF",
+    STAT_SPEED: "SPD", STAT_RESISTANCE: "RES", STAT_ACCURACY: "ACC",
+    STAT_CRITCHANCE: "CR%", STAT_CRITDAMAGE: "CD%",
+    STAT_CRITHEAL: "C.HEAL", STAT_IGNOREDEF: "IGN.DEF",
 }
 
-# ArtifactSetKindId
+# Element (affinity) enum
+ELEMENT_MAGIC = 0    # Blue / Magic
+ELEMENT_FORCE = 1    # Red / Force
+ELEMENT_SPIRIT = 2   # Green / Spirit
+ELEMENT_VOID = 3     # Purple / Void
+
+ELEMENT_NAMES = {0: "Magic", 1: "Force", 2: "Spirit", 3: "Void"}
+
+# HeroRole enum
+ROLE_NAMES = {0: "Attack", 1: "Defense", 2: "HP", 3: "Support"}
+
+# ArtifactSetKindId enum (key sets for CB)
 SET_NAMES = {
-    0: "None", 1: "HP", 2: "ATK", 3: "DEF", 4: "Speed",
-    5: "C.Rate", 6: "C.Dmg", 7: "ACC", 8: "RES",
-    9: "Lifesteal", 10: "Savage", 11: "Sleep", 12: "BlockHeal",
-    13: "Frost", 14: "Stamina", 15: "Heal", 16: "BlockDebuff",
-    17: "Shield", 18: "Relentless", 19: "IgnoreDef", 20: "DecMaxHP",
-    21: "Stun", 22: "Toxic", 23: "Provoke", 24: "Counterattack",
-    25: "Retaliation", 26: "AoeDmgDec", 27: "Reflex", 28: "CritHeal",
-    29: "Cruel", 30: "Immortal", 31: "Fury", 32: "Perception",
-    33: "Resilience", 34: "Swiftparry", 35: "Untouchable",
-    36: "Deflection", 37: "Stalwart", 38: "Guardian", 39: "Lethal",
-    40: "Bolster", 41: "Frenzy", 42: "Frostbite",
+    0: "None", 1: "HP", 2: "ATK", 3: "DEF", 4: "Speed", 5: "CritRate",
+    6: "CritDmg", 7: "ACC", 8: "RES", 9: "Lifesteal",
+    10: "Savage", 11: "Sleep", 12: "BlockHeal", 13: "Freeze",
+    14: "Stamina", 15: "Heal", 16: "BlockDebuff", 17: "Shield",
+    18: "Relentless", 19: "IgnoreDEF", 20: "DecMaxHP", 21: "Stun",
+    22: "Toxic", 23: "Provoke", 24: "Counterattack", 25: "CounterCrit",
+    26: "AoEDmgReduce", 27: "CooldownReduce", 28: "CritHeal",
+    29: "SavageFury", 30: "Regeneration", 31: "ShieldATK", 32: "ShieldCR",
+    33: "ShieldHP", 34: "ShieldSPD", 35: "Unkillable",
+    36: "ReflexBlock", 37: "StalwartHP", 38: "AccSPD", 39: "LethCrit",
+    40: "ResBlockDebuff", 41: "AtkCR", 42: "FreezeResist", 43: "CritLifesteal",
+    44: "StoneguardHP", 45: "ResDEF", 46: "CritIgnoreDEF", 47: "SwiftParry",
+    48: "StoneskinHPResDef", 49: "CritDmgSPD", 50: "SPDIgnoreDef",
+    51: "GuardianHP2", 52: "DefAoEReduce", 53: "SPDCooldown",
+    54: "CritDmgHPScale", 55: "StaminaSPDAcc", 56: "CritDmgIgnoreDefCD",
 }
-
-# ArtifactKindId
-KIND_NAMES = {
-    1: "Helmet", 2: "Chest", 3: "Gloves", 4: "Boots",
-    5: "Weapon", 6: "Shield", 7: "Ring", 8: "Cloak", 9: "Banner",
-}
-
-# "Bottom row" pieces — gloves/chest/boots have variable primary stats
-BOTTOM_ROW_KINDS = {2, 3, 4}  # Chest, Gloves, Boots
-
-# Desirable sets for keeping
-GOOD_SETS = {4, 9, 10, 29, 31, 19, 32, 34, 35}  # Speed, Lifesteal, Savage, Cruel, Fury, IgnoreDef, Perception, Swiftparry, Untouchable
 
 RARITY_NAMES = {1: "Common", 2: "Uncommon", 3: "Rare", 4: "Epic", 5: "Legendary", 6: "Mythical"}
 FACTION_NAMES = {
@@ -327,30 +326,17 @@ VIEW_HERO_SELECT_CB = 1072
 VIEW_BATTLE_MODE_SELECT = 1022
 VIEW_CB_SCREEN = 1071
 
-VIEW_DUNGEONS_MAP = 1027
-VIEW_DUNGEONS_HUD = 1028
-VIEW_DUNGEON_DIALOG = 1029
-VIEW_HERO_SELECT_DUNGEON = 1008
-VIEW_AUTO_BATTLE_SETTINGS = 2089
-VIEW_AUTO_BATTLE_HEROES = 2090
-VIEW_MULTI_RUN_INFO = 1130
-
 VIEW_NAMES = {
     0: "None",
-    1008: "HeroSelectDungeon", 1011: "HeroSelectArena",
-    1012: "BattleLoading", 1013: "BattleFinishStory",
-    1014: "BattleFinishArena", 1015: "BattleHUD",
-    1022: "BattleModeSelect", 1025: "RegionDialog",
-    1027: "DungeonsMap", 1028: "DungeonsHUD",
-    1029: "DungeonDialog",
+    1011: "HeroSelectArena", 1012: "BattleLoading",
+    1013: "BattleFinishStory", 1014: "BattleFinishArena",
+    1015: "BattleHUD", 1022: "BattleModeSelect",
     1032: "Village", 1033: "VillageHUD",
     1034: "GemMine", 1038: "Shop",
     1042: "Inbox", 1049: "Quests",
     1051: "Arena", 1063: "BattleFinishDungeon",
     1071: "ClanBoss", 1072: "HeroSelectCB",
-    1100: "BattleFinishCB", 1130: "MultiRunInfo",
-    1143: "AllianceActivityHUD",
-    2089: "AutoBattleSettings", 2090: "AutoBattleHeroes",
+    1100: "BattleFinishCB", 1143: "AllianceActivityHUD",
 }
 
 
@@ -399,9 +385,37 @@ class MemoryReader:
 
     # --- Attach / Detach ---
 
+    def _fetch_mod_offsets(self):
+        """Try to get singleton pointers from the MelonLoader mod API.
+        Returns True if singletons were resolved via mod, False otherwise.
+        """
+        try:
+            resp = urllib.request.urlopen("http://localhost:6790/offsets", timeout=5)
+            data = json.loads(resp.read().decode())
+            types = data.get("types", {})
+
+            am = types.get("AppModel", {}).get("instance")
+            avm = types.get("AppViewModel", {}).get("instance")
+
+            if am and avm:
+                self._app_model = int(am, 16)
+                self._avm = int(avm, 16)
+                # Cache UserWrapper pointer
+                self._uw = self._ptr(self._app_model + APPMODEL_USER_WRAPPER)
+                logger.info(
+                    f"Mod API resolved singletons: "
+                    f"AppModel={am}, AppViewModel={avm}"
+                )
+                return True
+            logger.debug("Mod API responded but singletons not available")
+        except Exception as e:
+            logger.debug(f"Mod API offsets unavailable: {e}")
+        return False
+
     def attach(self, max_retries=5, retry_delay=10):
         """Attach to Raid.exe and resolve game singletons.
-        Retries if the game isn't fully loaded yet (common after VM boot).
+        Tries mod API first for version-independent offset resolution,
+        falls back to hardcoded TypeInfo RVAs if mod is unavailable.
         """
         for attempt in range(max_retries):
             try:
@@ -413,9 +427,16 @@ class MemoryReader:
                     self.ga_base = ga.lpBaseOfDll
                     logger.info(f"Attached to Raid.exe (PID {self.pm.process_id})")
 
+                # Try mod API first (auto-detects offsets for any game version)
+                if self._fetch_mod_offsets():
+                    logger.info(f"AppModel @ {hex(self._app_model)} (via mod API)")
+                    return True
+
+                # Fallback: hardcoded RVA chain (version-specific)
+                logger.warning("Falling back to hardcoded RVAs (may be stale)")
                 self._resolve_app_model()
                 self._resolve_app_view_model()
-                logger.info(f"AppModel @ {hex(self._app_model)}")
+                logger.info(f"AppModel @ {hex(self._app_model)} (via RVA chain)")
                 return True
             except pymem.exception.ProcessNotFound:
                 logger.error("Raid.exe not found")
@@ -444,6 +465,51 @@ class MemoryReader:
             self._avm = 0
 
     # --- Low-level pointer helpers ---
+
+    def _read_fixed(self, addr):
+        """Read a Fixed value (64-bit fixed-point with 32 fractional bits)."""
+        try:
+            raw = struct.unpack('<q', self.pm.read_bytes(addr, 8))[0]
+            return raw / FIXED_SCALE
+        except Exception:
+            return 0.0
+
+    def _read_battle_stats(self, bs_ptr):
+        """Read a BattleStats object into a dict. All fields are Fixed type.
+        Note: CR/CD/C.HEAL/IGN.DEF are stored as whole percentages (e.g. 15.0 = 15%).
+        """
+        if not bs_ptr:
+            return {}
+        return {
+            "HP": self._read_fixed(bs_ptr + BS_HEALTH),
+            "ATK": self._read_fixed(bs_ptr + BS_ATTACK),
+            "DEF": self._read_fixed(bs_ptr + BS_DEFENCE),
+            "SPD": self._read_fixed(bs_ptr + BS_SPEED),
+            "RES": self._read_fixed(bs_ptr + BS_RESISTANCE),
+            "ACC": self._read_fixed(bs_ptr + BS_ACCURACY),
+            "CR%": self._read_fixed(bs_ptr + BS_CRITCHANCE),
+            "CD%": self._read_fixed(bs_ptr + BS_CRITDAMAGE),
+            "C.HEAL": self._read_fixed(bs_ptr + BS_CRITHEAL),
+            "IGN.DEF": self._read_fixed(bs_ptr + BS_IGNOREDEF),
+        }
+        # CR/CD values: 15.0 means 15%, 63.0 means 63% — they are whole numbers
+
+    def _read_list_ints(self, list_ptr, max_items=200):
+        """Read a C# List<int> and return int values."""
+        if not list_ptr:
+            return []
+        items_arr = self._ptr(list_ptr + 0x10)  # _items array
+        size = self.pm.read_int(list_ptr + 0x18)  # _size
+        if not items_arr or size <= 0:
+            return []
+        result = []
+        for i in range(min(size, max_items)):
+            try:
+                val = self.pm.read_int(items_arr + ARRAY_HEADER + i * 4)
+                result.append(val)
+            except Exception:
+                continue
+        return result
 
     def _ptr(self, addr):
         """Read a 64-bit pointer. Returns 0 if null or invalid."""
@@ -725,147 +791,368 @@ class MemoryReader:
                 continue
         return heroes
 
-    # =========================================================================
-    # Artifacts
-    # =========================================================================
+    def _read_hero_base_stats(self, hero_ptr):
+        """Read base stats from Hero._type -> HeroType.Forms[0].BaseStats."""
+        hero_type = self._ptr(hero_ptr + HERO_TYPE_PTR)
+        if not hero_type:
+            return {}
+        forms_arr = self._ptr(hero_type + HEROTYPE_FORMS)
+        if not forms_arr:
+            return {}
+        # Forms is a C# array — read first element (default form)
+        form_ptr = self._ptr(forms_arr + ARRAY_HEADER)
+        if not form_ptr:
+            return {}
+        # BaseStats is an object pointer inside HeroForm
+        bs_ptr = self._ptr(form_ptr + HEROFORM_BASESTATS)
+        stats = self._read_battle_stats(bs_ptr)
+        # Also read element and role from the form
+        try:
+            stats["element"] = self.pm.read_int(form_ptr + HEROFORM_ELEMENT)
+            stats["element_name"] = ELEMENT_NAMES.get(stats["element"], "?")
+            stats["role"] = self.pm.read_int(form_ptr + HEROFORM_ROLE)
+            stats["role_name"] = ROLE_NAMES.get(stats["role"], "?")
+        except Exception:
+            pass
+        return stats
 
-    def _resolve_artifact_dict(self):
-        """Resolve the artifact dictionary via ArtifactStorageResolver static singleton.
-        Chain: TypeInfo → static_fields → _implementation → _cachedArtifacts → _artifacts
-        """
-        ti = self._ptr(self.ga_base + ARTIFACT_RESOLVER_TYPEINFO_RVA)
-        if not ti:
-            return None
-        sf = self._ptr(ti + 0xB8)  # static_fields
-        if not sf:
-            return None
-        impl = self._ptr(sf + ARTRESOLVER_IMPL)
-        if not impl:
-            return None
-        cached = self._ptr(impl + EXTERNAL_CACHED)
-        if not cached:
-            return None
-        return self._ptr(cached + CACHED_ARTIFACTS_DICT)
+    def _read_hero_skills(self, hero_ptr):
+        """Read skill levels from Hero.Skills -> List<Skill>."""
+        skill_list = self._ptr(hero_ptr + HERO_SKILLS)
+        skill_ptrs = self._read_list_ptrs(skill_list, max_items=20)
+        skills = []
+        for ptr in skill_ptrs:
+            try:
+                skills.append({
+                    "type_id": self.pm.read_int(ptr + SKILL_TYPEID),
+                    "level": self.pm.read_int(ptr + SKILL_LEVEL),
+                })
+            except Exception:
+                continue
+        return skills
 
-    def _read_artifact_bonus(self, bonus_ptr):
-        """Read an ArtifactBonus (primary or substat).
-        Returns {"stat": int, "stat_name": str, "is_flat": bool, "value": float, "rolls": int}.
-        """
-        if not bonus_ptr:
-            return None
-        stat_kind = self.pm.read_int(bonus_ptr + BONUS_STAT_KIND)
-        is_abs = self.pm.read_bytes(bonus_ptr + BONUS_VALUE_IS_ABS, 1)[0] != 0
-        # Fixed value is 8 bytes at offset 0x20 from bonus ptr
-        raw = struct.unpack('<q', self.pm.read_bytes(bonus_ptr + BONUS_VALUE_VAL, 8))[0]
-        # Fixed-point: divide by appropriate scale. Common scales are 100 or 10000.
-        # For percentage stats, raw is already the percentage * some factor.
-        # Flat stats (is_abs=True): value is the flat amount
-        # Percentage stats (is_abs=False): value is percentage (e.g. 5 = 5%)
-        level = self.pm.read_int(bonus_ptr + BONUS_LEVEL)
-        return {
-            "stat": stat_kind,
-            "stat_name": STAT_NAMES.get(stat_kind, f"?{stat_kind}"),
-            "is_flat": is_abs,
-            "value": raw,
-            "rolls": level,
-        }
-
-    def get_artifacts(self, with_substats=False):
-        """Read all artifacts from the ArtifactStorageResolver cache.
-        Set with_substats=True to include primary and secondary stat details.
-        """
-        art_dict = self._resolve_artifact_dict()
-        if not art_dict:
-            logger.warning("Could not resolve artifact storage")
+    def _read_hero_masteries(self, hero_ptr):
+        """Read mastery IDs from Hero.MasteryData.Masteries -> List<int>."""
+        mastery_data = self._ptr(hero_ptr + HERO_MASTERY)
+        if not mastery_data:
             return []
+        return self._read_list_ints(self._ptr(mastery_data + MASTERY_LIST))
 
-        count = self.pm.read_int(art_dict + DICT_COUNT)
-        if count <= 0:
+    def _read_hero_blessing(self, hero_ptr):
+        """Read blessing from Hero.DoubleAscendData."""
+        da = self._ptr(hero_ptr + HERO_DBLASCEND)
+        if not da:
+            return None
+        try:
+            # Nullable<BlessingTypeId> — check hasValue first
+            has_value = self.pm.read_bytes(da + DBLASCEND_BLESSINGID + 4, 1)[0]
+            if has_value:
+                return self.pm.read_int(da + DBLASCEND_BLESSINGID)
+            return None
+        except Exception:
+            return None
+
+    def _read_hero_leader_skill(self, hero_ptr):
+        """Read leader skills from HeroType.LeaderSkills."""
+        hero_type = self._ptr(hero_ptr + HERO_TYPE_PTR)
+        if not hero_type:
             return []
+        ls_list = self._ptr(hero_type + HEROTYPE_LEADERSKILLS)
+        ls_ptrs = self._read_list_ptrs(ls_list, max_items=5)
+        skills = []
+        for ptr in ls_ptrs:
+            try:
+                ls = {
+                    "stat": STAT_NAMES.get(
+                        self.pm.read_int(ptr + LS_STATKIND), "?"
+                    ),
+                    "stat_id": self.pm.read_int(ptr + LS_STATKIND),
+                    "is_absolute": self.pm.read_bytes(ptr + LS_ISABSOLUTE, 1)[0] != 0,
+                    "amount": self._read_fixed(ptr + LS_AMOUNT),
+                }
+                # Read area (Nullable<AreaTypeId>)
+                try:
+                    area_val = self.pm.read_int(ptr + LS_AREA)
+                    has_area = self.pm.read_bytes(ptr + LS_AREA + 4, 1)[0]
+                    ls["area"] = area_val if has_area else None
+                except Exception:
+                    ls["area"] = None
+                skills.append(ls)
+            except Exception:
+                continue
+        return skills
 
-        entries = self._read_dict_int_obj(art_dict, max_items=min(count, 5000))
-        artifacts = []
+    def get_heroes_full(self):
+        """Read all heroes with full details: stats, skills, masteries, blessing."""
+        heroes_wrap = self._ptr(self._uw + UW_HEROES)
+        hero_data = self._ptr(heroes_wrap + HEROESWRAP_DATA)
+        hero_dict = self._ptr(hero_data + HERODATA_HEROBYID)
+        entries = self._read_dict_int_obj(hero_dict)
+        heroes = []
         for _, ptr in entries:
             try:
-                a = {
-                    "id": self.pm.read_int(ptr + ART_ID),
-                    "level": self.pm.read_int(ptr + ART_LEVEL),
-                    "rank": self.pm.read_int(ptr + ART_RANK),
-                    "rarity": self.pm.read_int(ptr + ART_RARITY),
-                    "set": self.pm.read_int(ptr + ART_SET),
-                    "kind": self.pm.read_int(ptr + ART_KIND),
-                    "sell_price": self.pm.read_int(ptr + ART_SELL_PRICE),
+                h = {
+                    "id": self.pm.read_int(ptr + HERO_ID),
+                    "type_id": self.pm.read_int(ptr + HERO_TYPEID),
+                    "grade": self.pm.read_int(ptr + HERO_GRADE),
+                    "level": self.pm.read_int(ptr + HERO_LEVEL),
+                    "empower": self.pm.read_int(ptr + HERO_EMPOWER),
+                    "locked": self.pm.read_bytes(ptr + HERO_LOCKED, 1)[0] != 0,
+                    "in_storage": self.pm.read_bytes(ptr + HERO_INSTORAGE, 1)[0] != 0,
                 }
-                if not (0 <= a["level"] <= 16 and 1 <= a["rank"] <= 6):
+                if not (1 <= h["grade"] <= 6 and 1 <= h["level"] <= 60):
                     continue
-                a["rarity_name"] = RARITY_NAMES.get(a["rarity"], "?")
-                a["set_name"] = SET_NAMES.get(a["set"], f"?{a['set']}")
-                a["kind_name"] = KIND_NAMES.get(a["kind"], f"?{a['kind']}")
+                h["name"] = self._read_hero_name(ptr)
+                h["faction"], h["rarity"] = self._read_hero_type_info(ptr)
+                h["base_stats"] = self._read_hero_base_stats(ptr)
+                h["skills"] = self._read_hero_skills(ptr)
+                h["masteries"] = self._read_hero_masteries(ptr)
+                h["blessing_id"] = self._read_hero_blessing(ptr)
+                h["leader_skills"] = self._read_hero_leader_skill(ptr)
+                heroes.append(h)
+            except Exception:
+                continue
+        return heroes
 
-                if with_substats:
-                    # Primary bonus
-                    pri = self._ptr(ptr + ART_PRIMARY)
-                    a["primary"] = self._read_artifact_bonus(pri)
+    # =========================================================================
+    # Artifacts (detailed)
+    # =========================================================================
 
-                    # Secondary bonuses (substats)
-                    secs = self._ptr(ptr + ART_SECONDARIES)
-                    a["substats"] = []
-                    if secs:
-                        sec_ptrs = self._read_list_ptrs(secs, max_items=4)
-                        for sp in sec_ptrs:
-                            bonus = self._read_artifact_bonus(sp)
-                            if bonus:
-                                a["substats"].append(bonus)
+    def _read_artifact_bonus(self, bonus_ptr):
+        """Read an ArtifactBonus (primary stat or substat)."""
+        if not bonus_ptr:
+            return None
+        try:
+            kind_id = self.pm.read_int(bonus_ptr + ARTBONUS_KINDID)
+            level = self.pm.read_int(bonus_ptr + ARTBONUS_LEVEL)
+            # Read BonusValue (contains isAbsolute flag and value)
+            bv_ptr = self._ptr(bonus_ptr + ARTBONUS_VALUE)
+            if bv_ptr:
+                is_absolute = self.pm.read_bytes(bv_ptr + BONUSVAL_ISABSOLUTE, 1)[0] != 0
+                value = self._read_fixed(bv_ptr + BONUSVAL_VALUE)
+            else:
+                is_absolute = True
+                value = 0.0
+            return {
+                "stat": STAT_NAMES.get(kind_id, f"?{kind_id}"),
+                "stat_id": kind_id,
+                "value": value,
+                "is_flat": is_absolute,
+                "level": level,
+            }
+        except Exception:
+            return None
 
-                artifacts.append(a)
+    def _read_artifact_full(self, art_ptr):
+        """Read full artifact details including primary and substats."""
+        if not art_ptr:
+            return None
+        try:
+            art = {
+                "id": self.pm.read_int(art_ptr + ART_ID),
+                "level": self.pm.read_int(art_ptr + ART_LEVEL),
+                "kind": self.pm.read_int(art_ptr + ART_KIND),
+                "rank": self.pm.read_int(art_ptr + ART_RANK),
+                "rarity": self.pm.read_int(art_ptr + ART_RARITY),
+                "rarity_name": RARITY_NAMES.get(
+                    self.pm.read_int(art_ptr + ART_RARITY), "?"
+                ),
+                "set_id": self.pm.read_int(art_ptr + ART_SET),
+                "set_name": SET_NAMES.get(
+                    self.pm.read_int(art_ptr + ART_SET), "?"
+                ),
+            }
+            if not (0 <= art["level"] <= 16 and 1 <= art["rank"] <= 6):
+                return None
+
+            # Primary bonus
+            primary_ptr = self._ptr(art_ptr + ART_PRIMARY)
+            art["primary"] = self._read_artifact_bonus(primary_ptr)
+
+            # Secondary bonuses (substats)
+            subs_list = self._ptr(art_ptr + ART_SECONDARIES)
+            sub_ptrs = self._read_list_ptrs(subs_list, max_items=4)
+            art["substats"] = []
+            for sp in sub_ptrs:
+                bonus = self._read_artifact_bonus(sp)
+                if bonus:
+                    art["substats"].append(bonus)
+
+            return art
+        except Exception:
+            return None
+
+    def _build_artifact_id_lookup(self):
+        """Build a dict of artifact_id -> artifact_ptr from the equipment wrapper.
+        Uses the probing approach from get_artifacts since the master list
+        (UserArtifactData.Artifacts) can be empty in some game states.
+        """
+        equip_wrap = self._ptr(self._uw + 0x30)
+        if not equip_wrap:
+            return {}
+        # Probe for the artifact dictionary (same approach as get_artifacts)
+        for data_off in [0x60, 0x88, 0x90, 0x80, 0x78]:
+            art_data = self._ptr(equip_wrap + data_off)
+            if not art_data:
+                continue
+            for dict_off in [0x18, 0x10, 0x20]:
+                art_dict = self._ptr(art_data + dict_off)
+                if not art_dict:
+                    continue
+                try:
+                    count = self.pm.read_int(art_dict + DICT_COUNT)
+                    if count < 10 or count > 5000:
+                        continue
+                    entries = self._read_dict_int_obj(art_dict, max_items=min(count, 2000))
+                    if not entries:
+                        continue
+                    # Validate first entry looks like an artifact
+                    _, test_ptr = entries[0]
+                    test_level = self.pm.read_int(test_ptr + ART_LEVEL)
+                    test_rank = self.pm.read_int(test_ptr + ART_RANK)
+                    if not (0 <= test_level <= 16 and 1 <= test_rank <= 6):
+                        continue
+                    # Build ID lookup
+                    lookup = {}
+                    for _, ptr in entries:
+                        try:
+                            aid = self.pm.read_int(ptr + ART_ID)
+                            lookup[aid] = ptr
+                        except Exception:
+                            continue
+                    logger.info(f"Built artifact lookup: {len(lookup)} artifacts")
+                    return lookup
+                except Exception:
+                    continue
+        return {}
+
+    def get_hero_artifacts(self, hero_id, art_lookup=None):
+        """Get all artifacts equipped on a specific hero.
+        Returns dict of {slot_kind: artifact_dict}.
+        Pass art_lookup from _build_artifact_id_lookup() to avoid rebuilding.
+        """
+        equip_wrap = self._ptr(self._uw + 0x30)
+        if not equip_wrap:
+            return {}
+        art_data = self._ptr(equip_wrap + EQUIPWRAP_ARTDATA)
+        if not art_data:
+            return {}
+
+        # Get hero's artifact slot mapping
+        by_hero = self._ptr(art_data + ARTDATA_BYHERO)
+        hero_entries = self._read_dict_int_obj(by_hero)
+
+        hero_art_data = None
+        for key, ptr in hero_entries:
+            if key == hero_id:
+                hero_art_data = ptr
+                break
+        if not hero_art_data:
+            return {}
+
+        # Read ArtifactIdByKind: Dictionary<ArtifactKindId, int>
+        by_kind = self._ptr(hero_art_data + HEROARTDATA_BYKIND)
+        if not by_kind:
+            return {}
+
+        entries_arr = self._ptr(by_kind + DICT_ENTRIES)
+        count = self.pm.read_int(by_kind + DICT_COUNT)
+        if not entries_arr or count <= 0:
+            return {}
+
+        ENTRY_SIZE_INT_INT = 16
+        slot_to_art_id = {}
+        for i in range(min(count, 20)):
+            addr = entries_arr + ARRAY_HEADER + i * ENTRY_SIZE_INT_INT
+            try:
+                if self.pm.read_int(addr) < 0:
+                    continue
+                kind = self.pm.read_int(addr + 8)
+                art_id = self.pm.read_int(addr + 12)
+                slot_to_art_id[kind] = art_id
             except Exception:
                 continue
 
-        logger.info(f"Read {len(artifacts)} artifacts")
-        return artifacts
+        if not slot_to_art_id:
+            return {}
 
-    def score_artifact(self, art):
-        """Score an artifact 0-100 for quality.
-        Higher = better, should keep. Lower = sell candidate.
+        # Build or use cached artifact lookup
+        if art_lookup is None:
+            art_lookup = self._build_artifact_id_lookup()
 
-        Scoring:
-          - Base: rank(1-6) * 8 + rarity(1-6) * 5  (max 78)
-          - Speed substat bonus: +15 per speed sub
-          - Good set bonus: +5
-          - Flat stat penalty on bottom row: -20
-          - Level bonus: +level (0-16)
-        """
-        score = art["rank"] * 8 + art["rarity"] * 5 + art["level"]
+        ARTIFACT_KINDS = {
+            1: "Weapon", 2: "Helmet", 3: "Shield",
+            4: "Gauntlets", 5: "Chestplate", 6: "Boots",
+            7: "Ring", 8: "Amulet", 9: "Banner",
+        }
 
-        # Good set bonus
-        if art["set"] in GOOD_SETS:
-            score += 5
+        result = {}
+        for kind, art_id in slot_to_art_id.items():
+            art_ptr = art_lookup.get(art_id)
+            if art_ptr:
+                art = self._read_artifact_full(art_ptr)
+                if art:
+                    art["slot"] = ARTIFACT_KINDS.get(kind, f"Slot{kind}")
+                    result[kind] = art
+        return result
 
-        # Substat analysis (requires with_substats=True)
-        if "substats" in art:
-            for sub in art["substats"]:
-                if sub["stat"] == STAT_SPD:
-                    score += 15  # Speed is king
-                if sub["is_flat"] and art["kind"] in BOTTOM_ROW_KINDS:
-                    score -= 10  # Flat stats on bottom row = bad
+    # =========================================================================
+    # Artifacts (legacy simple reader)
+    # =========================================================================
 
-        return min(100, max(0, score))
-
-    def get_sellable_artifacts(self, threshold=40):
-        """Get artifacts scoring below threshold — candidates for selling.
-        Excludes leveled artifacts (level > 0) and locked heroes' gear.
-        """
-        arts = self.get_artifacts(with_substats=True)
-        sellable = []
-        for a in arts:
-            if a["level"] > 0:
-                continue  # Don't sell leveled gear
-            score = self.score_artifact(a)
-            a["score"] = score
-            if score < threshold:
-                sellable.append(a)
-        sellable.sort(key=lambda x: x["score"])
-        return sellable
+    def get_artifacts(self):
+        """Read all artifacts with set, rank, rarity, level, and sell price."""
+        equip_wrap = self._ptr(self._uw + 0x30)  # UW_ARTIFACTS
+        if not equip_wrap:
+            return []
+        # EquipmentWrapperReadOnly stores artifact data similarly to heroes
+        # Search for the artifact dictionary in the wrapper
+        for data_off in [0x88, 0x90, 0x80, 0x78]:
+            art_data = self._ptr(equip_wrap + data_off)
+            if not art_data:
+                continue
+            # Look for ArtifactById dictionary at common offsets
+            for dict_off in [0x18, 0x10, 0x20]:
+                art_dict = self._ptr(art_data + dict_off)
+                if not art_dict:
+                    continue
+                try:
+                    count = self.pm.read_int(art_dict + DICT_COUNT)
+                    if count < 10 or count > 5000:
+                        continue
+                    entries = self._read_dict_int_obj(art_dict, max_items=min(count, 2000))
+                    if not entries:
+                        continue
+                    # Validate first entry looks like an artifact
+                    _, test_ptr = entries[0]
+                    test_level = self.pm.read_int(test_ptr + ART_LEVEL)
+                    test_rank = self.pm.read_int(test_ptr + ART_RANK)
+                    if not (0 <= test_level <= 16 and 1 <= test_rank <= 6):
+                        continue
+                    # Found it — read all artifacts
+                    artifacts = []
+                    for _, ptr in entries:
+                        try:
+                            a = {
+                                "id": self.pm.read_int(ptr + ART_ID),
+                                "level": self.pm.read_int(ptr + ART_LEVEL),
+                                "rank": self.pm.read_int(ptr + ART_RANK),
+                                "rarity": self.pm.read_int(ptr + ART_RARITY),
+                                "set": self.pm.read_int(ptr + ART_SET),
+                                "kind": self.pm.read_int(ptr + ART_KIND),
+                                "sell_price": self.pm.read_int(ptr + ART_SELL_PRICE),
+                            }
+                            if 0 <= a["level"] <= 16 and 1 <= a["rank"] <= 6:
+                                a["rarity_name"] = RARITY_NAMES.get(a["rarity"], "?")
+                                artifacts.append(a)
+                        except Exception:
+                            continue
+                    logger.info(f"Read {len(artifacts)} artifacts (from offset 0x{data_off:X}/0x{dict_off:X})")
+                    return artifacts
+                except Exception:
+                    continue
+        logger.warning("Could not find artifact dictionary")
+        return []
 
     # =========================================================================
     # Arena
@@ -913,212 +1200,6 @@ class MemoryReader:
         arena_wrap = self._ptr(self._uw + UW_ARENA)
         arena_data = self._ptr(arena_wrap + ARENAWRAP_DATA)
         return self.pm.read_longlong(arena_data + ARENA_POINTS) if arena_data else 0
-
-    # =========================================================================
-    # Events & Tournaments
-    # =========================================================================
-
-    def _read_datetime(self, addr):
-        """Read a C# DateTime (8 bytes, ticks since 0001-01-01).
-        Returns a Python datetime or None."""
-        try:
-            from datetime import datetime, timedelta, timezone
-            ticks = self.pm.read_ulonglong(addr)
-            if ticks == 0:
-                return None
-            # C# ticks: 100-nanosecond intervals since 0001-01-01
-            # Python: seconds since 1970-01-01
-            epoch_ticks = 621355968000000000  # ticks from 0001-01-01 to 1970-01-01
-            seconds = (ticks - epoch_ticks) / 10_000_000
-            return datetime.fromtimestamp(seconds, tz=timezone.utc)
-        except Exception:
-            return None
-
-    def _read_nullable_datetime(self, addr):
-        """Read a Nullable<DateTime>. Layout: bool hasValue (1 byte),
-        padding to 8-byte boundary, then DateTime value (8 bytes).
-        The Nullable<DateTime> at the given offset is already the struct start."""
-        try:
-            # Nullable<DateTime> in IL2CPP: stored as 16 bytes total
-            # Offset +0x00: DateTime value (8 bytes)
-            # Offset +0x08: bool hasValue (in some layouts)
-            # But C# Nullable<T> in memory: hasValue first, then value
-            # For reference types the layout may differ — try reading the DateTime directly
-            # and validate the year is reasonable
-            dt = self._read_datetime(addr)
-            if dt and 2020 < dt.year < 2030:
-                return dt
-            # Try offset +8
-            dt = self._read_datetime(addr + 8)
-            if dt and 2020 < dt.year < 2030:
-                return dt
-            return None
-        except Exception:
-            return None
-
-    def _read_event_name(self, event_ptr):
-        """Read event name from GlobalEvent -> QuestData -> Quest -> Name."""
-        quest_data = self._ptr(event_ptr + GE_QUEST_DATA)
-        if not quest_data:
-            return ""
-        quest = self._ptr(quest_data + GEQDATA_QUEST)
-        if not quest:
-            return ""
-        name_key = self._ptr(quest + QUEST_NAME)  # SharedLTextKey
-        if not name_key:
-            return ""
-        name_str = self._ptr(name_key + 0x18)  # .DefaultValue
-        return self._read_il2cpp_string(name_str)
-
-    def _get_global_events_data(self):
-        """Navigate to UpdatableGlobalEventsData from UserWrapper.
-        Chain: UW -> SoloEventsWrapper -> _globalEvents -> _data
-        """
-        solo_wrap = self._ptr(self._uw + UW_SOLO_EVENTS)
-        if not solo_wrap:
-            return None
-        global_events = self._ptr(solo_wrap + SEW_GLOBAL_EVENTS)
-        if not global_events:
-            return None
-        return self._ptr(global_events + GEW_DATA)
-
-    def _read_event_list(self, collection_ptr):
-        """Read events from an ICollection<GlobalEvent> (typically a List)."""
-        if not collection_ptr:
-            return []
-        # ICollection backed by List — read as list
-        ptrs = self._read_list_ptrs(collection_ptr)
-        events = []
-        for ptr in ptrs:
-            try:
-                event_id = self.pm.read_int(ptr + GE_ID)
-                if event_id <= 0 or event_id > 100000:
-                    continue
-
-                # Read date condition
-                date_cond = self._ptr(ptr + GE_DATE_COND)
-                start_time = None
-                end_time = None
-                if date_cond:
-                    start_time = self._read_nullable_datetime(date_cond + DATECON_START)
-                    end_time = self._read_nullable_datetime(date_cond + DATECON_END)
-
-                name = self._read_event_name(ptr)
-
-                events.append({
-                    "id": event_id,
-                    "name": name,
-                    "start": start_time,
-                    "end": end_time,
-                    "is_full": self.pm.read_bytes(ptr + GE_IS_FULL, 1)[0] != 0,
-                })
-            except Exception:
-                continue
-        return events
-
-    def get_active_events(self):
-        """Read all active solo events and tournaments.
-        Returns {"solo_events": [...], "tournaments": [...]}.
-        Each event has: id, name, start, end, is_full, active (bool).
-        """
-        from datetime import datetime, timezone
-
-        ge_data = self._get_global_events_data()
-        if not ge_data:
-            logger.warning("Could not read global events data")
-            return {"solo_events": [], "tournaments": []}
-
-        now = datetime.now(timezone.utc)
-
-        def annotate(events):
-            for e in events:
-                s, end = e.get("start"), e.get("end")
-                e["active"] = (s is not None and end is not None
-                               and s <= now <= end)
-                if s:
-                    e["start"] = s.isoformat()
-                if end:
-                    e["end"] = end.isoformat()
-                    e["hours_left"] = max(0, (end - now).total_seconds() / 3600)
-            return events
-
-        solo_ptr = self._ptr(ge_data + GEDATA_SOLO)
-        tourn_ptr = self._ptr(ge_data + GEDATA_TOURNAMENTS)
-
-        solo = annotate(self._read_event_list(solo_ptr))
-        tournaments = annotate(self._read_event_list(tourn_ptr))
-
-        # Fallback: try the base class Events list (0x18) which has all events
-        if not solo and not tournaments:
-            all_ptr = self._ptr(ge_data + GEDATA_EVENTS)
-            all_events = annotate(self._read_event_list(all_ptr))
-            if all_events:
-                logger.info(f"Read {len(all_events)} events from base Events list")
-                return {"solo_events": all_events, "tournaments": []}
-
-        logger.info(f"Events: {len(solo)} solo, {len(tournaments)} tournaments")
-        return {"solo_events": solo, "tournaments": tournaments}
-
-    def get_running_events(self):
-        """Get only currently active (running) events."""
-        data = self.get_active_events()
-        running_solo = [e for e in data["solo_events"] if e.get("active")]
-        running_tourn = [e for e in data["tournaments"] if e.get("active")]
-        return {"solo_events": running_solo, "tournaments": running_tourn}
-
-    def should_farm_dungeons(self):
-        """Check if any active event rewards dungeon battles.
-        Returns True if a 'Dungeon Divers' style event or dungeon tournament
-        is currently running, meaning dungeon farming would double-dip.
-        """
-        running = self.get_running_events()
-        dungeon_keywords = ["dungeon", "dragon", "spider", "fire knight",
-                            "ice golem", "keeps", "divers"]
-        for event in running["solo_events"] + running["tournaments"]:
-            name = event.get("name", "").lower()
-            if any(kw in name for kw in dungeon_keywords):
-                return True
-        return False
-
-    def should_farm_arena(self):
-        """Check if any active event rewards arena battles."""
-        running = self.get_running_events()
-        arena_keywords = ["arena", "gladiator"]
-        for event in running["solo_events"] + running["tournaments"]:
-            name = event.get("name", "").lower()
-            if any(kw in name for kw in arena_keywords):
-                return True
-        return False
-
-    def should_upgrade_artifacts(self):
-        """Check if any active event rewards artifact upgrades."""
-        running = self.get_running_events()
-        artifact_keywords = ["artifact", "enhancement", "forge", "gear"]
-        for event in running["solo_events"] + running["tournaments"]:
-            name = event.get("name", "").lower()
-            if any(kw in name for kw in artifact_keywords):
-                return True
-        return False
-
-    def should_summon_champions(self):
-        """Check if any active event rewards summoning."""
-        running = self.get_running_events()
-        summon_keywords = ["summon", "invocation", "champion chase"]
-        for event in running["solo_events"] + running["tournaments"]:
-            name = event.get("name", "").lower()
-            if any(kw in name for kw in summon_keywords):
-                return True
-        return False
-
-    def should_level_champions(self):
-        """Check if any active event rewards champion training."""
-        running = self.get_running_events()
-        training_keywords = ["training", "champion chase", "level up"]
-        for event in running["solo_events"] + running["tournaments"]:
-            name = event.get("name", "").lower()
-            if any(kw in name for kw in training_keywords):
-                return True
-        return False
 
     # =========================================================================
     # View / Screen Detection
@@ -1171,6 +1252,28 @@ class MemoryReader:
     # =========================================================================
     # Snapshot
     # =========================================================================
+
+    def get_active_events(self):
+        """Return active solo events and tournaments.
+        TODO: Read from game memory once event data offsets are mapped.
+        """
+        return {"solo_events": [], "tournaments": []}
+
+    def get_running_events(self):
+        """Return currently running events for dungeon/farming optimization.
+        TODO: Read from game memory once event data offsets are mapped.
+        """
+        return {"solo_events": [], "tournaments": []}
+
+    def should_farm_dungeons(self):
+        """Check if dungeon farming is worthwhile (enough energy, relevant events).
+        TODO: Implement energy threshold and event-based logic.
+        """
+        try:
+            res = self.get_resources()
+            return res.get("energy", 0) >= 1000
+        except Exception:
+            return False
 
     def get_snapshot(self):
         """Full account snapshot for logging / before-after comparison."""
