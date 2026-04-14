@@ -207,6 +207,7 @@ class SimChampion:
     turns_taken: int = 0
     damage: DamageTracker = field(default_factory=DamageTracker)
     opening: List[str] = field(default_factory=list)
+    skill_priority: List[str] = field(default_factory=list)  # AI preset: ["A3","A2","A1"] = prefer A3
 
     # Mastery flags
     has_wm: bool = False
@@ -1174,14 +1175,24 @@ class CBSimulator:
             return
 
         # Select skill
-        chosen = champ.skills[0]  # A1
+        chosen = champ.skills[0]  # A1 fallback
         if champ.opening:
             forced = champ.opening.pop(0)
             for sk in champ.skills:
                 if sk.name == forced:
                     chosen = sk
                     break
+        elif champ.skill_priority:
+            # AI preset: use skills in priority order (first ready wins)
+            for prio_name in champ.skill_priority:
+                for sk in champ.skills:
+                    if sk.name == prio_name and (sk.base_cd == 0 or sk.current_cd == 0):
+                        chosen = sk
+                        break
+                if chosen.name == prio_name:
+                    break
         else:
+            # Default: highest CD skill first (A3 > A2 > A1)
             for sk in reversed(champ.skills):
                 if sk.base_cd > 0 and sk.current_cd == 0:
                     chosen = sk
@@ -1723,6 +1734,98 @@ def build_sim_champion(name: str, stats: dict, position: int,
 
 
 # =============================================================================
+# Tune Runner — simulate any DWJ tune with damage
+# =============================================================================
+def run_tune(tune_id: str, hero_names: List[str], cb_element: int = 4,
+             force_affinity: bool = True, verbose: bool = False,
+             use_current_gear: bool = True) -> dict:
+    """Run a DWJ speed tune with the full damage sim.
+
+    Args:
+        tune_id: tune identifier from tune_library (e.g., "myth_eater")
+        hero_names: list of 5 hero names to assign to slots
+        cb_element: 1=Magic, 2=Force, 3=Spirit, 4=Void
+        force_affinity: True for post-defeat CB (FA damage caps)
+        use_current_gear: True to use hero's equipped gear
+    """
+    from tune_library import get_tune, assign_heroes_to_tune
+    from cb_optimizer import calc_stats
+    from auto_profile import get_leader_skills
+
+    base = Path(__file__).parent.parent
+    with open(base / "heroes_6star.json") as f:
+        heroes_data = json.load(f)
+    with open(base / "account_data.json") as f:
+        account = json.load(f)
+
+    tune = get_tune(tune_id)
+    if not tune:
+        return {"error": f"Tune '{tune_id}' not found"}
+
+    # Assign heroes to slots
+    assignments = assign_heroes_to_tune(hero_names, tune)
+    if not assignments:
+        return {"error": f"Cannot assign {hero_names} to tune '{tune_id}'"}
+
+    # Build sim champions with tune-specific speeds, openings, and priorities
+    hero_by_name = {}
+    for h in heroes_data["heroes"]:
+        name = h.get("name", "")
+        if name and name not in hero_by_name:
+            hero_by_name[name] = h
+
+    leader_skills = get_leader_skills()
+    leader_aura = leader_skills.get(hero_names[0])
+
+    sim_champs = []
+    for i, (hero_name, slot) in enumerate(assignments):
+        hero = hero_by_name.get(hero_name)
+        if not hero:
+            return {"error": f"Hero '{hero_name}' not found"}
+
+        if use_current_gear:
+            hero_arts = hero.get("artifacts", [])
+        else:
+            hero_arts = []
+
+        stats = calc_stats(hero, hero_arts, account)
+        if leader_aura:
+            stats = apply_leader_aura(stats, leader_aura)
+
+        # Override speed to tune's target (midpoint of range)
+        target_spd = (slot.speed_range[0] + slot.speed_range[1]) / 2
+        stats[SPD] = target_spd
+
+        element = hero.get("element", 4)
+        champ = build_sim_champion(
+            hero_name, stats, i,
+            opening=list(slot.opening),
+            element=element,
+        )
+        # Set AI preset skill priority from tune
+        if slot.skill_priority:
+            champ.skill_priority = list(slot.skill_priority)
+
+        sim_champs.append(champ)
+
+    sim = CBSimulator(
+        sim_champs,
+        cb_element=cb_element,
+        cb_speed=tune.cb_speed,
+        deterministic=True,
+        verbose=verbose,
+        force_affinity=force_affinity,
+    )
+    result = sim.run(max_cb_turns=50)
+
+    result["tune"] = tune.name
+    result["tune_id"] = tune.tune_id
+    result["assignments"] = [(name, slot.role, slot.speed_range) for name, slot in assignments]
+
+    return result
+
+
+# =============================================================================
 # CLI
 # =============================================================================
 def _validate_against_real(sim_result: dict, real_log_path: str):
@@ -1809,6 +1912,8 @@ def main():
     import argparse
     parser = argparse.ArgumentParser(description="CB Turn-by-Turn Simulator")
     parser.add_argument("--team", help="Comma-separated hero names")
+    parser.add_argument("--tune", help="DWJ tune ID (e.g., myth_eater, budget_uk, batman_forever)")
+    parser.add_argument("--list-tunes", action="store_true", help="List available DWJ tunes")
     parser.add_argument("--verbose", "-v", action="store_true")
     parser.add_argument("--monte-carlo", type=int, default=0,
                         help="Run N Monte Carlo simulations")
@@ -1831,6 +1936,53 @@ def main():
 
     import sys
     sys.path.insert(0, str(Path(__file__).parent))
+
+    # Handle --list-tunes
+    if args.list_tunes:
+        from tune_library import list_tunes
+        print("=== Available DWJ Tunes ===")
+        for t in list_tunes():
+            print(f"  {t.tune_id:25s} {t.name:30s} {t.performance:12s} {t.difficulty}")
+            for i, slot in enumerate(t.slots):
+                req = f" ({slot.required_hero})" if slot.required_hero else ""
+                print(f"    Slot {i+1}: {slot.role:20s} SPD={slot.speed_range}{req}")
+            print()
+        return
+
+    # Handle --tune mode
+    if args.tune:
+        team_names = [n.strip() for n in args.team.split(",")] if args.team else None
+        if not team_names:
+            print("ERROR: --tune requires --team")
+            return
+        result = run_tune(
+            args.tune, team_names,
+            cb_element=cb_element,
+            force_affinity=not args.no_force_affinity,
+            verbose=args.verbose,
+            use_current_gear=args.use_current_gear,
+        )
+        if "error" in result:
+            print(f"ERROR: {result['error']}")
+            return
+
+        print(f"=== Tune: {result.get('tune', '?')} ===")
+        print(f"Team assignments:")
+        for name, role, spd_range in result.get("assignments", []):
+            print(f"  {name:20s} → {role:20s} SPD={spd_range}")
+        print(f"\nTotal damage: {result['total']/1e6:.2f}M over {result['cb_turns']} CB turns")
+        print(f"Valid tune: {'YES' if result['valid'] else 'NO (' + str(len(result['errors'])) + ' gaps)'}")
+        print(f"\n{'Hero':20s} {'Total':>10s} {'Direct':>10s} {'Poison':>10s} {'Burn':>10s} {'WM/GS':>10s} {'Pass':>10s}")
+        for h in result["heroes"]:
+            print(f"{h['name']:20s} {h['total']:>10,.0f} {h['direct']:>10,.0f} "
+                  f"{h['poison']:>10,.0f} {h['hp_burn']:>10,.0f} {h['wm_gs']:>10,.0f} "
+                  f"{h['passive']:>10,.0f}")
+        if result["errors"]:
+            print(f"\nTune errors ({len(result['errors'])}):")
+            for e in result["errors"][:10]:
+                print(f"  {e}")
+        return
+
     from cb_optimizer import calc_stats, PROFILES, optimal_artifacts_for_hero
 
     base = Path(__file__).parent.parent
