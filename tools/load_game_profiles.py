@@ -194,6 +194,20 @@ def load_profiles():
                             mult = float(m.group(1))
                             stat = 'HP'
                             break
+                        # Speed-scaling: "ATK*(0.45*SPD/100)" or "ATK*(1.5+SPD/100)"
+                        # Approximate as ATK-based with estimated multiplier
+                        m = re.match(r'^ATK\*\(([\d.]+)\*SPD/100\)', f)
+                        if m:
+                            # At ~200 SPD: mult = coeff * 200/100 = coeff * 2
+                            mult = float(m.group(1)) * 2.0
+                            stat = 'ATK'
+                            break
+                        m = re.match(r'^ATK\*\(([\d.]+)\+SPD/100\)', f)
+                        if m:
+                            # At ~200 SPD: mult = base + 200/100 = base + 2
+                            mult = float(m.group(1)) + 2.0
+                            stat = 'ATK'
+                            break
 
             # For multi-damage skills, sum multipliers
             dmg_effects = [e for e in sk.get('effects', []) if e.get('tag') == 'damage']
