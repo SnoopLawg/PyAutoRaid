@@ -175,6 +175,7 @@ class SimSkill:
     team_tm_fill: float = 0.0  # fraction of TM bar to fill for all allies (e.g., 0.30 = 30%)
     self_tm_fill: float = 0.0  # fraction of TM bar to fill for self on use (e.g., Ninja A1: 0.15)
     grants_extra_turn: bool = False  # kind=4007: immediately get another turn after use
+    ignore_def: float = 0.0   # fraction of DEF to ignore (Ninja A3: 0.5, OB A2: 0.3)
 
 
 # =============================================================================
@@ -333,7 +334,7 @@ _OLD_SKILL_EFFECTS = {  # DEAD CODE — kept for reference only
         # A2 also places Inc SPD on allies — BREAKS speed tunes!
         # WARNING: Teodor does NOT have Poison Sensitivity (web research was wrong)
         "A3": [_eff("extend_debuffs_poison_burn", turns=1),  # kind 5008: extend poisons+burns
-               _eff("activate_poisons"),                      # kind 9002: instant poison ticks
+               _eff("activate_dots"),                         # kind 9002: trigger all DoT debuffs (poisons + HP burns)
                _eff("debuff", debuff="poison_5pct", duration=2, chance=0.5)],  # also places 1 poison
     },
     "Corvis the Corruptor": {
@@ -745,6 +746,8 @@ class CBSimulator:
         self.force_affinity = force_affinity
         self.log = []
         self.errors = []
+        self.turn_snapshots = []  # Per-CB-turn damage/debuff snapshots for calibration
+        self._placement_debt = {}  # Fractional debuff placement accumulator per champion
 
         # Detect if this is an Unkillable tune (any champion places UK on team)
         self.is_uk_tune = any(
@@ -1097,8 +1100,22 @@ class CBSimulator:
                         target.is_dead = True
                         target.death_turn = self.cb_turn
 
+        # Record per-CB-turn snapshot for calibration
+        cumul_dmg = sum(c.damage.total for c in self.champions)
+        poi_count = self.debuff_bar.count("poison_5pct")
+        self.turn_snapshots.append({
+            "cb_turn": self.cb_turn,
+            "cumulative_damage": cumul_dmg,
+            "poison_count": poi_count,
+            "hp_burn_active": self.debuff_bar.has("hp_burn"),
+            "def_down_active": self.debuff_bar.has("def_down"),
+            "weaken_active": self.debuff_bar.has("weaken"),
+            "dec_atk_active": self.debuff_bar.has("dec_atk"),
+            "debuff_bar_size": len(self.debuff_bar),
+            "attack": attack,
+        })
+
         if self.verbose:
-            poi_count = self.debuff_bar.count("poison_5pct")
             self.log.append(
                 f"  T{self.cb_turn:>3} CB {attack:5s} "
                 f"[{len(self.debuff_bar)}/10: {self.debuff_bar.summary()}]"
@@ -1286,11 +1303,20 @@ class CBSimulator:
         if champ.has_flawless_exec:
             effective_cd += 20
 
+        # Inc C.DMG buff (Fahrakin A3, Cardiel A3, Ma'Shalled A2: +30% CD)
+        if champ.has_buff("inc_cd_30"):
+            effective_cd += 30
+
         # Ninja passive: +combo_cd_pct per combo counter
         if champ.combo_cd_pct > 0:
             effective_cd += champ.combo_cd_pct * 100 * champ.combo_counter
 
-        crit_mult = 1 + (champ.stats.get(CR, 15) / 100) * (effective_cd / 100)
+        effective_cr = champ.stats.get(CR, 15)
+        # Inc C.RATE buff (Fahrakin A3, Cardiel A3: +30% CR)
+        if champ.has_buff("inc_cr_30"):
+            effective_cr = min(100, effective_cr + 30)
+
+        crit_mult = 1 + (effective_cr / 100) * (effective_cd / 100)
 
         # DEF reduction (game: DamageReductionByDefence)
         # Phase 4: IgnoreDefenceModifierProcessing — Savage, Helmsmasher modify DEF
@@ -1302,6 +1328,10 @@ class CBSimulator:
         effective_def = cb_def
         if champ.stats.get("has_savage"):
             effective_def *= 0.75  # Ignore 25% DEF
+
+        # Per-skill ignore DEF (Ninja A3: 50%, OB A2: 30%)
+        if skill.ignore_def > 0:
+            effective_def *= (1.0 - skill.ignore_def)
 
         # Helmsmasher: ignore additional DEF (50% chance × 50% ignore = avg 25% → ~12.5% avg)
         # Simplified as average: ignore 12.5% of remaining DEF
@@ -1321,30 +1351,25 @@ class CBSimulator:
 
     # ----- WM/GS -----
     def _roll_wm_gs(self, champ: SimChampion, hit_count: int) -> float:
-        wk = 1.25 if self.debuff_bar.has("weaken") else 1.0
-        # WM/GS bonus damage is affected by both Weaken and DEF Down
-        dd = 1.0
-        if self.debuff_bar.has("def_down"):
-            # DEF Down reduces CB DEF to 40%, changing the damage multiplier
-            dd = max(0.05, 1 - UNM_DEF * 0.4 / (UNM_DEF * 0.4 + 2220)) / \
-                 max(0.05, 1 - UNM_DEF / (UNM_DEF + 2220))
-        mult = wk * dd
-
+        # WM/GS procs deal flat damage (% of boss max HP), capped at 75K on UNM.
+        # They are NOT multiplied by DEF Down or Weaken — the cap is absolute.
+        # Previous code incorrectly applied DEF Down + Weaken multipliers here,
+        # causing ~2x overestimation of WM/GS damage.
         if self.deterministic:
             if champ.has_gs:
-                return hit_count * GS_PROC_RATE * GS_DMG * mult
+                return hit_count * GS_PROC_RATE * GS_DMG
             elif champ.has_wm:
-                return WM_PROC_RATE * WM_DMG * mult
+                return WM_PROC_RATE * WM_DMG
             return 0
         else:
             dmg = 0
             if champ.has_gs:
                 for _ in range(hit_count):
                     if self.rng.random() < GS_PROC_RATE:
-                        dmg += GS_DMG * mult
+                        dmg += GS_DMG
             elif champ.has_wm:
                 if self.rng.random() < WM_PROC_RATE:
-                    dmg += WM_DMG * mult
+                    dmg += WM_DMG
             return dmg
 
     # ----- Effect Application -----
@@ -1421,17 +1446,56 @@ class CBSimulator:
                 self.debuff_bar.slots = [s for s in self.debuff_bar.slots
                                           if s.debuff_type != "poison_5pct"]
 
+            elif eff.effect_type == "activate_hp_burns":
+                # Ninja A2 / Sicia A2: instantly trigger all HP Burn debuffs (1 tick each)
+                for slot in list(self.debuff_bar.slots):
+                    if slot.debuff_type == "hp_burn":
+                        dmg = self._cap_fa(HP_BURN_DMG, kind="dot")
+                        for c in self.champions:
+                            if c.name == slot.source:
+                                c.damage.hp_burn += dmg
+                                break
+
             elif eff.effect_type == "activate_poisons":
-                # Teodor A3: instantly activate all poisons (trigger 1 tick each)
+                # Venomage A1: activate up to N poisons (trigger 1 tick each)
                 psens = 1.25 if self.debuff_bar.has("poison_sensitivity") else 1.0
-                for slot in self.debuff_bar.slots:
-                    if slot.debuff_type == "poison_5pct":
-                        dmg = POISON_5PCT_DMG * psens
-                        # Attribute to original poison source
+                max_count = eff.params.get("max_count", 99)
+                activated = 0
+                for slot in list(self.debuff_bar.slots):
+                    if slot.debuff_type == "poison_5pct" and activated < max_count:
+                        dmg = self._cap_fa(POISON_5PCT_DMG * psens, kind="dot")
                         for c in self.champions:
                             if c.name == slot.source:
                                 c.damage.poison += dmg
                                 break
+                        activated += 1
+
+            elif eff.effect_type == "activate_dots":
+                # Teodor A3: instantly trigger ALL DoT debuffs (poisons + HP burns, 1 tick each)
+                psens = 1.25 if self.debuff_bar.has("poison_sensitivity") else 1.0
+                for slot in list(self.debuff_bar.slots):
+                    if slot.debuff_type == "poison_5pct":
+                        dmg = self._cap_fa(POISON_5PCT_DMG * psens, kind="dot")
+                        for c in self.champions:
+                            if c.name == slot.source:
+                                c.damage.poison += dmg
+                                break
+                    elif slot.debuff_type == "hp_burn":
+                        dmg = self._cap_fa(HP_BURN_DMG, kind="dot")
+                        for c in self.champions:
+                            if c.name == slot.source:
+                                c.damage.hp_burn += dmg
+                                break
+
+            elif eff.effect_type == "extend_debuffs_hp_burn":
+                # Sicia A1: extend only HP Burn debuffs by N turns, per hit
+                turns = eff.params.get("turns", 1)
+                per_hit = eff.params.get("per_hit", False)
+                reps = skill.hit_count if per_hit else 1
+                for _ in range(reps):
+                    for slot in self.debuff_bar.slots:
+                        if slot.debuff_type == "hp_burn":
+                            slot.remaining += turns
 
             elif eff.effect_type == "extend_debuffs_poison_burn":
                 # Teodor A3: extend only poison and HP burn debuffs by N turns
@@ -1451,8 +1515,17 @@ class CBSimulator:
         if self.debuff_bar.is_full():
             return False
         if self.deterministic:
-            if effective_chance >= 0.3:  # threshold for deterministic placement
+            # Fractional accumulator: track debt per (champion, debuff_type).
+            # >= 50% chance: place on first attempt (more likely than not).
+            # < 50% chance: accumulate until debt >= 1.0 (models weak-hit scenarios).
+            if effective_chance >= 0.5:
                 return self.debuff_bar.add(debuff_type, duration, champ.name)
+            key = (champ.name, debuff_type)
+            self._placement_debt[key] = self._placement_debt.get(key, 0.0) + effective_chance
+            if self._placement_debt[key] >= 1.0:
+                self._placement_debt[key] -= 1.0
+                return self.debuff_bar.add(debuff_type, duration, champ.name)
+            return False
         else:
             if self.rng.random() < effective_chance:
                 return self.debuff_bar.add(debuff_type, duration, champ.name)
@@ -1481,11 +1554,45 @@ class CBSimulator:
         return {
             "total": total,
             "cb_turns": self.cb_turn,
+            "cb_element": self.cb_element,
             "heroes": heroes,
             "errors": self.errors,
             "valid": len(self.errors) == 0,
             "log": self.log,
+            "turn_snapshots": self.turn_snapshots,
         }
+
+
+# =============================================================================
+# Leader Skill Aura
+# =============================================================================
+def apply_leader_aura(stats: dict, leader_skill: dict) -> dict:
+    """Apply a leader skill aura bonus to a hero's stats dict.
+
+    leader_skill: {stat: int (1-8), amount: float, absolute: bool, area: int}
+    area: 0=all battles, 4=clan boss (both apply in CB)
+
+    Returns a new stats dict with the aura applied.
+    """
+    if not leader_skill:
+        return stats
+    area = leader_skill.get("area", 0)
+    if area not in (0, 4):  # only "all battles" and "clan boss" apply
+        return stats
+
+    stat_id = leader_skill.get("stat", 0)
+    amount = leader_skill.get("amount", 0)
+    absolute = leader_skill.get("absolute", False)
+
+    stats = dict(stats)  # shallow copy
+    if absolute:
+        # Flat bonus (e.g., +45 ACC)
+        stats[stat_id] = stats.get(stat_id, 0) + amount
+    else:
+        # Percentage bonus (e.g., +33% HP) — applied to base stat
+        # For HP/ATK/DEF: multiply current total (approximate since we don't have base separately)
+        stats[stat_id] = stats.get(stat_id, 0) * (1 + amount / 100)
+    return stats
 
 
 # =============================================================================
@@ -1514,6 +1621,7 @@ def build_sim_champion(name: str, stats: dict, position: int,
             team_tm_fill=sd.get("team_tm_fill", 0.0),
             self_tm_fill=sd.get("self_tm_fill", 0.0),
             grants_extra_turn=sd.get("grants_extra_turn", False),
+            ignore_def=sd.get("ignore_def", 0.0),
         )
         skills.append(sim_sk)
 
@@ -1679,7 +1787,13 @@ def main():
                         help="Path to real battle log JSON; after sim, compare against actual run.")
     parser.add_argument("--max-cb-turns", type=int, default=50,
                         help="Cap simulation at N CB turns (boss actions). Default 50.")
+    parser.add_argument("--cb-element", type=str, default="void",
+                        choices=["magic", "force", "spirit", "void"],
+                        help="CB affinity element (default: void). Set to today's affinity for accuracy.")
     args = parser.parse_args()
+
+    ELEMENT_MAP = {"magic": 1, "force": 2, "spirit": 3, "void": 4}
+    cb_element = ELEMENT_MAP[args.cb_element]
 
     import sys
     sys.path.insert(0, str(Path(__file__).parent))
@@ -1703,6 +1817,7 @@ def main():
 
     print(f"=== CB Turn-by-Turn Simulator ===")
     print(f"Team: {', '.join(team_names)}")
+    print(f"CB Element: {args.cb_element} (id={cb_element})")
 
     # Resolve heroes
     hero_by_name = {}
@@ -1782,6 +1897,7 @@ def main():
             for seed in range(args.monte_carlo):
                 sim = CBSimulator(deepcopy(sim_champs), deterministic=False,
                                   rng_seed=seed, verbose=False,
+                                  cb_element=cb_element,
                                   force_affinity=not args.no_force_affinity)
                 result = sim.run(max_cb_turns=args.max_cb_turns)
                 totals.append(result["total"])
@@ -1791,6 +1907,7 @@ def main():
             print(f"  Average: {avg/1e6:.1f}M  Range: {lo/1e6:.1f}M - {hi/1e6:.1f}M")
         else:
             sim = CBSimulator(sim_champs, deterministic=True, verbose=args.verbose,
+                              cb_element=cb_element,
                               force_affinity=not args.no_force_affinity)
             result = sim.run(max_cb_turns=args.max_cb_turns)
 
@@ -1873,6 +1990,7 @@ def main():
         for seed in range(args.monte_carlo):
             sim = CBSimulator(deepcopy(sim_champs), deterministic=False,
                               rng_seed=seed, verbose=False,
+                              cb_element=cb_element,
                               force_affinity=not args.no_force_affinity)
             result = sim.run()
             totals.append(result["total"])
@@ -1882,6 +2000,7 @@ def main():
         print(f"  Average: {avg/1e6:.1f}M  Range: {lo/1e6:.1f}M - {hi/1e6:.1f}M")
     else:
         sim = CBSimulator(sim_champs, deterministic=True, verbose=args.verbose,
+                          cb_element=cb_element,
                           force_affinity=not args.no_force_affinity)
         result = sim.run()
 

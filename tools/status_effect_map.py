@@ -80,7 +80,7 @@ ALLY_BUFFS = {
     "counterattack", "block_damage", "block_debuffs", "unkillable",
     "atk_up", "atk_up_25", "inc_def", "inc_def_30", "inc_spd", "inc_spd_15",
     "cont_heal", "cont_heal_15", "ally_protect", "ally_protect_25",
-    "strengthen", "strengthen_15", "shield", "inc_cr_30",
+    "strengthen", "strengthen_15", "shield", "inc_cr_30", "inc_cd_30",
 }
 
 def decode_status_effect(type_id: int) -> dict:

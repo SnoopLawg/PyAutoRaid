@@ -53,6 +53,16 @@ namespace RaidAutomation
         [DllImport("GameAssembly")]
         static extern uint il2cpp_field_get_offset(IntPtr field);
         [DllImport("GameAssembly")]
+        static extern IntPtr il2cpp_domain_get();
+        [DllImport("GameAssembly")]
+        static extern IntPtr il2cpp_domain_get_assemblies(IntPtr domain, ref uint size);
+        [DllImport("GameAssembly")]
+        static extern IntPtr il2cpp_assembly_get_image(IntPtr assembly);
+        [DllImport("GameAssembly")]
+        static extern IntPtr il2cpp_class_from_name(IntPtr image, IntPtr namespaze, IntPtr name);
+        [DllImport("GameAssembly")]
+        static extern IntPtr il2cpp_image_get_name(IntPtr image);
+        [DllImport("GameAssembly")]
         static extern void il2cpp_field_get_value(IntPtr obj, IntPtr field, IntPtr value);
         [DllImport("GameAssembly")]
         static extern IntPtr il2cpp_type_get_name(IntPtr type);
@@ -385,6 +395,7 @@ namespace RaidAutomation
                     "/remove-preset" => RunOnMainThread(() => RemovePreset(QP(query, "id")), 30000),
                     "/save-preset" => RunOnMainThread(() => SavePreset(QP(query, "name"), QP(query, "heroes"), QP(query, "type")), 30000),
                     "/update-preset" => RunOnMainThread(() => UpdatePreset(QP(query, "id"), QP(query, "priorities")), 30000),
+                    "/skill-texts" => RunOnMainThread(() => GetSkillTexts(QP(query, "hero_id"), QP(query, "min_grade")), 60000),
                     "/mastery-data" => RunOnMainThread(() => GetMasteryData(QP(query, "hero_id"))),
                     "/open-mastery" => RunOnMainThread(() => OpenMastery(QP(query, "hero_id"), QP(query, "mastery_id")), 30000),
                     "/reset-masteries" => RunOnMainThread(() => ResetMasteries(QP(query, "hero_id")), 30000),
@@ -1900,6 +1911,86 @@ namespace RaidAutomation
         }
 
         // =====================================================
+        // API: /skill-texts — dump skill names + descriptions (localized text)
+        // Lightweight endpoint focused on resolving localization keys.
+        // =====================================================
+
+        private string GetSkillTexts(string heroIdStr, string minGradeStr = "")
+        {
+            var sb = new StringBuilder(32768);
+            var uw = GetUserWrapper();
+            if (uw == null) return "{\"error\":\"Not logged in\"}";
+
+            int heroId = 0;
+            int.TryParse(heroIdStr ?? "", out heroId);
+            int minGrade = 0;  // default: all heroes
+            if (!string.IsNullOrEmpty(minGradeStr)) int.TryParse(minGradeStr, out minGrade);
+
+            var heroes = Prop(uw, "Heroes");
+            var heroData = Prop(heroes, "HeroData");
+            var heroDict = Prop(heroData, "HeroById");
+            if (heroDict == null) return "{\"error\":\"HeroById null\"}";
+
+            sb.Append("{\"skills\":[");
+            int count = 0;
+
+            foreach (var hero in DictValues(heroDict))
+            {
+                int id = IntProp(hero, "Id");
+                if (heroId > 0 && id != heroId) continue;
+                int grade = IntProp(hero, "Grade");
+                if (heroId == 0 && grade < minGrade) continue;
+
+                var skills = Prop(hero, "Skills");
+                if (skills == null) continue;
+
+                foreach (var skill in ListItems(skills))
+                {
+                    int skillTypeId = IntProp(skill, "TypeId");
+                    if (skillTypeId == 0) continue;
+
+                    if (count > 0) sb.Append(",");
+                    sb.Append("{\"hero_id\":" + id + ",\"skill_type_id\":" + skillTypeId);
+
+                    try
+                    {
+                        var skillType = Prop(skill, "Type");
+                        if (skillType != null)
+                        {
+                            bool isDefault = false;
+                            try { isDefault = (bool)Prop(skillType, "IsDefault"); } catch { }
+                            if (isDefault) sb.Append(",\"is_a1\":true");
+
+                            int cd = IntProp(skillType, "Cooldown");
+                            if (cd > 0) sb.Append(",\"cooldown\":" + cd);
+
+                            // Name and Description — resolve via ResolveLocalizedText()
+                            foreach (var (propName, jsonKey) in new[] { ("Name", "name"), ("Description", "desc") })
+                            {
+                                try
+                                {
+                                    var textObj = Prop(skillType, propName);
+                                    if (textObj == null) continue;
+                                    string val = ResolveLocalizedText(textObj);
+                                    if (!string.IsNullOrEmpty(val) && val.Length > 3 && !val.StartsWith("l10n:"))
+                                        sb.Append(",\"" + jsonKey + "\":\"" + Esc(val) + "\"");
+                                }
+                                catch { }
+                            }
+                        }
+                    }
+                    catch { }
+
+                    sb.Append("}");
+                    count++;
+                }
+            }
+
+            sb.Append("],\"count\":" + count + ",\"loc_debug\":\"" + Esc(_locDbg) + "\"}");
+            return sb.ToString();
+        }
+
+        // =====================================================
         // API: /skill-data — read skill types with multipliers/effects
         // =====================================================
 
@@ -1947,14 +2038,18 @@ namespace RaidAutomation
                         var skillType = Prop(skill, "Type");
                         if (skillType != null)
                         {
-                            // Name
-                            var nameObj = Prop(skillType, "Name");
-                            if (nameObj != null)
+                            // Name and Description — resolve via ResolveLocalizedText()
+                            foreach (var (propName, jsonField) in new[] { ("Name", "name"), ("Description", "desc") })
                             {
-                                string sname = null;
-                                try { sname = Prop(nameObj, "LocalizedValue")?.ToString(); } catch { }
-                                if (!string.IsNullOrEmpty(sname) && !sname.Contains("SharedLTextKey"))
-                                    sb.Append(",\"name\":\"" + Esc(sname) + "\"");
+                                try
+                                {
+                                    var textObj = Prop(skillType, propName);
+                                    if (textObj == null) continue;
+                                    string val = ResolveLocalizedText(textObj);
+                                    if (!string.IsNullOrEmpty(val) && val.Length > 3 && !val.StartsWith("l10n:"))
+                                        sb.Append(",\"" + jsonField + "\":\"" + Esc(val) + "\"");
+                                }
+                                catch { }
                             }
 
                             int cd = IntProp(skillType, "Cooldown");
@@ -6671,6 +6766,105 @@ namespace RaidAutomation
                 if (pn == "Object" || pn == "Il2CppObjectBase" || string.IsNullOrEmpty(pn)) break;
             }
             return IntPtr.Zero;
+        }
+
+        // Cached IL2CPP method pointer for SharedLTextKeyExtension.get_LocalizedValue
+        private IntPtr _localizedValueMethod = IntPtr.Zero;
+        private bool _localizedValueSearched = false;
+
+        // Debug info from last localization attempt
+        private string _locDbg = "";
+
+        /// <summary>
+        /// Resolve a SharedLTextKey object to its localized string via raw IL2CPP.
+        /// Finds SharedLTextKeyExtension class, calls get_LocalizedValue(key) static method.
+        /// </summary>
+        private string ResolveLocalizedText(object textKeyProxy)
+        {
+            if (textKeyProxy == null) return null;
+
+            IntPtr textKeyPtr = IntPtr.Zero;
+            try
+            {
+                var ptrProp = textKeyProxy.GetType().GetProperty("Pointer");
+                if (ptrProp != null) textKeyPtr = (IntPtr)ptrProp.GetValue(textKeyProxy);
+            }
+            catch { }
+            if (textKeyPtr == IntPtr.Zero) { _locDbg = "no_ptr"; return null; }
+
+            if (!_localizedValueSearched)
+            {
+                _localizedValueSearched = true;
+                var dbg = new System.Text.StringBuilder();
+                try
+                {
+                    IntPtr domain = il2cpp_domain_get();
+                    uint asmCount = 0;
+                    IntPtr asmsPtr = il2cpp_domain_get_assemblies(domain, ref asmCount);
+                    dbg.Append($"asm={asmCount};");
+
+                    for (uint i = 0; i < asmCount; i++)
+                    {
+                        IntPtr asmI = Marshal.ReadIntPtr(asmsPtr, (int)(i * (uint)IntPtr.Size));
+                        IntPtr image = il2cpp_assembly_get_image(asmI);
+                        if (image == IntPtr.Zero) continue;
+
+                        IntPtr ns = Marshal.StringToHGlobalAnsi("Client.Model.Common.Localization");
+                        IntPtr cn = Marshal.StringToHGlobalAnsi("SharedLTextKeyExtension");
+                        IntPtr klass = il2cpp_class_from_name(image, ns, cn);
+                        Marshal.FreeHGlobal(ns); Marshal.FreeHGlobal(cn);
+
+                        if (klass != IntPtr.Zero)
+                        {
+                            string imgN = Marshal.PtrToStringAnsi(il2cpp_image_get_name(image)) ?? "?";
+                            dbg.Append($"cls_in={imgN};");
+                            // Enumerate methods
+                            IntPtr mIter = IntPtr.Zero; IntPtr m;
+                            while ((m = il2cpp_class_get_methods(klass, ref mIter)) != IntPtr.Zero)
+                            {
+                                string mn = Marshal.PtrToStringAnsi(il2cpp_method_get_name(m));
+                                uint pc = il2cpp_method_get_param_count(m);
+                                dbg.Append($"{mn}/{pc};");
+                                // The extension method is GetLocalizedOrDefault (2 params: key + defaultValue)
+                                // or (3 params: key + defaultValue + args). Use the 2-param version.
+                                if (mn == "GetLocalizedOrDefault" && pc == 2)
+                                    _localizedValueMethod = m;
+                                else if (mn == "get_LocalizedValue" && pc == 1 && _localizedValueMethod == IntPtr.Zero)
+                                    _localizedValueMethod = m;
+                                else if (mn == "LocalizedValue" && pc == 1 && _localizedValueMethod == IntPtr.Zero)
+                                    _localizedValueMethod = m;
+                            }
+                            if (_localizedValueMethod != IntPtr.Zero) dbg.Append("FOUND;");
+                            break;
+                        }
+                    }
+                    if (_localizedValueMethod == IntPtr.Zero) dbg.Append("NOT_FOUND;");
+                }
+                catch (Exception ex) { dbg.Append($"ex:{ex.Message};"); }
+                _locDbg = dbg.ToString();
+            }
+
+            if (_localizedValueMethod == IntPtr.Zero) return null;
+
+            try
+            {
+                // GetLocalizedOrDefault(SharedLTextKey key, string defaultValue)
+                // Args array: [textKeyPtr, il2cpp_string("")]
+                IntPtr defaultStr = Il2CppInterop.Runtime.IL2CPP.ManagedStringToIl2Cpp("");
+                IntPtr argBuf = Marshal.AllocHGlobal(IntPtr.Size * 2);
+                Marshal.WriteIntPtr(argBuf, 0, textKeyPtr);
+                Marshal.WriteIntPtr(argBuf, IntPtr.Size, defaultStr);
+                IntPtr exc = IntPtr.Zero;
+                IntPtr result = il2cpp_runtime_invoke(_localizedValueMethod, IntPtr.Zero, argBuf, ref exc);
+                Marshal.FreeHGlobal(argBuf);
+
+                if (exc != IntPtr.Zero) { _locDbg += "exc;"; return null; }
+                if (result == IntPtr.Zero) { _locDbg += "null_result;"; return null; }
+
+                return Il2CppInterop.Runtime.IL2CPP.Il2CppStringToManaged(result);
+            }
+            catch (Exception ex) { _locDbg += $"call:{ex.Message};"; }
+            return null;
         }
 
         /// <summary>

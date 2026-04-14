@@ -45,14 +45,22 @@ SE_TO_SIM = {
     360: "block_revive",
     10: "stun",
     20: "freeze",
+    241: "inc_cr_30",
+    261: "inc_cd_30",
+    280: "shield",
+    300: "revive_on_death",
+    160: "inc_spd_15",
+    70: "heal_reduction",
+    71: "heal_reduction_50",
+    481: "perfect_veil",
 }
 
 # Which SE types are team buffs (applied to allies) vs debuffs (applied to enemies)
 BUFF_SES = {
     "counterattack", "block_damage", "block_debuffs", "ally_protect",
     "ally_protect_25", "unkillable", "atk_up", "atk_up_25", "inc_def",
-    "inc_def_30", "inc_spd", "cont_heal_75", "cont_heal_15", "strengthen",
-    "strengthen_15",
+    "inc_def_30", "inc_spd", "inc_spd_15", "cont_heal_75", "cont_heal_15", "strengthen",
+    "strengthen_15", "inc_cr_30", "inc_cd_30", "shield", "revive_on_death",
 }
 
 # SE types that go on the CB debuff bar
@@ -60,7 +68,7 @@ DEBUFF_SES = {
     "poison_5pct", "poison_2pct", "hp_burn", "def_down", "def_down_30",
     "dec_atk", "dec_atk_25", "weaken", "weaken_15", "poison_sensitivity",
     "poison_sensitivity_50", "leech", "dec_spd", "block_revive",
-    "stun", "freeze",
+    "stun", "freeze", "heal_reduction", "heal_reduction_50",
 }
 
 
@@ -117,6 +125,14 @@ def load_profiles():
             [s for s in skills if s.get('type') == 'active'],
             key=lambda s: s.get('cooldown', 99)
         )
+        # If more than 2 actives, prefer ones with damage effects over utility-only
+        if len(active_skills) > 2:
+            def has_damage(sk):
+                return any(e.get('kind') == 6000 or e.get('tag') == 'damage' for e in sk.get('effects', []))
+            dmg_skills = [s for s in active_skills if has_damage(s)]
+            nodmg_skills = [s for s in active_skills if not has_damage(s)]
+            # Take up to 2 damage skills (sorted by CD), then fill with non-damage
+            active_skills = (dmg_skills[:2] + nodmg_skills)[:3]
         passive_skills = [s for s in skills if s.get('type') == 'passive']
 
         # Assign labels: A1, A2, A3
@@ -140,9 +156,44 @@ def load_profiles():
                 booked_cd = 0
 
             # Extract damage info
-            mult = sk.get('mult', 0)
-            stat = sk.get('stat', 'ATK')
-            hits = sk.get('hits', 1)
+            mult = sk.get('mult', 0) or 0
+            stat = sk.get('stat', 'ATK') or 'ATK'
+            hits = sk.get('hits', 1) or 1
+
+            # If mult is 0/None, try to parse from damage effect formulas
+            if mult == 0:
+                for eff in sk.get('effects', []):
+                    if eff.get('kind') == 6000 or eff.get('tag') == 'damage':
+                        f = eff.get('formula', '')
+                        if not f:
+                            continue
+                        # Parse various formula patterns:
+                        #   "3.9*ATK" -> mult=3.9, stat=ATK
+                        #   "DEF*1.5" -> mult=1.5, stat=DEF
+                        #   "ATK" -> mult=1.0, stat=ATK
+                        #   "0.2*HP" -> mult=0.2, stat=HP
+                        #   "DEF*6" -> mult=6, stat=DEF
+                        m = re.match(r'^([\d.]+)\*(ATK|DEF|HP)', f)
+                        if m:
+                            mult = float(m.group(1))
+                            stat = m.group(2)
+                            break
+                        m = re.match(r'^(ATK|DEF|HP)\*([\d.]+)', f)
+                        if m:
+                            stat = m.group(1)
+                            mult = float(m.group(2))
+                            break
+                        m = re.match(r'^(ATK|DEF|HP)$', f)
+                        if m:
+                            mult = 1.0
+                            stat = m.group(1)
+                            break
+                        # HP-scaling: "0.2*HP" or "HP*0.2"
+                        m = re.match(r'^([\d.]+)\*HP', f)
+                        if m:
+                            mult = float(m.group(1))
+                            stat = 'HP'
+                            break
 
             # For multi-damage skills, sum multipliers
             dmg_effects = [e for e in sk.get('effects', []) if e.get('tag') == 'damage']
@@ -233,18 +284,58 @@ def load_profiles():
                 elif kind == 4007:
                     grants_extra_turn = True
 
+                # HP Burn spread/activation (kind=5002) — exact mechanic unclear.
+                # Used by 44 heroes. NOT necessarily "place HP Burn" — may be
+                # "spread existing burn" or "activate burn damage". Needs real
+                # game testing per hero before enabling. Skipped for now.
+                # elif kind == 5002:
+                #     effects_list.append(_eff("debuff", debuff="hp_burn", duration=2, chance=1.0))
+
                 # Extend debuffs (kind=5008)
+                # Per skill descriptions:
+                #   Sicia A1 (57701): extends [HP Burn] only, per hit
+                #   Teodor A3 (36003): extends [Poison] and [HP Burn]
+                #   Others: extends all debuffs
                 elif kind == 5008:
                     per_hit = (actual_hits > 1)
-                    effects_list.append(_eff("extend_debuffs", turns=1, per_hit=per_hit))
+                    # Determine which debuffs to extend based on skill context
+                    skill_id = sk.get('id', 0)
+                    if skill_id == 57701:  # Sicia A1: only HP Burn
+                        effects_list.append(_eff("extend_debuffs_hp_burn", turns=1, per_hit=per_hit))
+                    elif skill_id == 36003:  # Teodor A3: poison + HP burn
+                        effects_list.append(_eff("extend_debuffs_poison_burn", turns=1, per_hit=per_hit))
+                    else:
+                        effects_list.append(_eff("extend_debuffs", turns=1, per_hit=per_hit))
 
                 # Extend buffs (kind=4011)
                 elif kind == 4011:
                     effects_list.append(_eff("extend_buffs", turns=1))
 
-                # Activate poisons (kind=9002)
+                # Activate DoTs (kind=9002) — mechanic varies by hero/skill.
+                # Verified from in-game skill descriptions:
+                #   Ninja A2 (62002): "instantly activate any [HP Burn] debuffs" vs Bosses
+                #   Sicia A2 (57702): "instantly activates one tick of [HP Burn] debuffs"
+                #   Teodor A3 (36003): "instantly activates one tick of all [Poison] and [HP Burn]"
+                #   Venomage A1 (62801): "activating up to two [Poison] debuffs"
+                #   Artak A2 (78602): activates HP Burns
                 elif kind == 9002:
-                    effects_list.append(_eff("activate_poisons"))
+                    skill_id = sk.get('id', 0)
+                    # Ninja A2 (62002): "will instantly activate any [HP Burn] debuffs"
+                    #   Description says once per skill use, not per hit. The game data
+                    #   has 3x kind=9002 (one per hit) but the effect triggers once.
+                    #   Only add on first occurrence to avoid triple-counting.
+                    already_has = any(e.get('effect_type') == 'activate_hp_burns' for e in effects_list)
+                    if skill_id == 62002 and not already_has:  # Ninja A2
+                        effects_list.append(_eff("activate_hp_burns"))
+                    elif skill_id == 57702:  # Sicia A2: activate HP Burns (1 tick)
+                        effects_list.append(_eff("activate_hp_burns"))
+                    elif skill_id == 78602:  # Artak A2: activate HP Burns
+                        effects_list.append(_eff("activate_hp_burns"))
+                    elif skill_id == 36003:  # Teodor A3: activate all DoTs (poison + burn)
+                        effects_list.append(_eff("activate_dots"))
+                    elif skill_id == 62801:  # Venomage A1: activate up to 2 Poisons per hit
+                        effects_list.append(_eff("activate_poisons", max_count=2))
+                    # Other heroes with 9002: skip (unknown mechanic)
 
                 # Detonate poisons (kind=5018)
                 elif kind == 5018:
@@ -281,6 +372,80 @@ def load_profiles():
 
             hero_sd[label] = sd_entry
             hero_eff[label] = effects_list
+
+        # =====================================================================
+        # Per-hero fixes from verified skill descriptions.
+        # These correct effects that the generic parser can't extract from
+        # the game's effect kind/formula encoding.
+        # Source: skill_descriptions.json (game-localized text via mod API)
+        # =====================================================================
+
+        # Ninja A3 (62003): vs Boss, ignores 50% DEF + reduces A2 CD by 1
+        if name == "Ninja" and "A3" in hero_sd:
+            hero_sd["A3"]["ignore_def"] = 0.5
+
+        # OB A2 (33002): ignores 30% DEF when under debuffs (kind=7001 already captured)
+        # (already handled by generic kind=7001 parser — no fix needed)
+
+        # Venus A3 (35003): places HP Burn (was incorrectly getting extra_turn from A3 data)
+        # The game data for Venus has skill 35005 as A3 which is wrong; real A3 is 35003
+        if name == "Venus" and "A3" in hero_sd:
+            hero_sd["A3"]["grants_extra_turn"] = False
+            if not any(e.get('params', {}).get('debuff') == 'hp_burn' for e in hero_eff.get("A3", [])):
+                hero_eff.setdefault("A3", []).append(_eff("debuff", debuff="hp_burn", duration=2, chance=1.0))
+
+        # Fahrakin A3 (56603): places Inc CR 30% + Inc CD 30% on allies BEFORE ally attack
+        if name == "Fahrakin the Fat" and "A3" in hero_sd:
+            buffs = hero_sd["A3"].get("team_buffs", [])
+            if not any(b[0] == "inc_cr_30" for b in buffs if isinstance(b, tuple)):
+                hero_sd["A3"]["team_buffs"] = [("inc_cr_30", 3), ("inc_cd_30", 3)] + buffs
+
+        # Cardiel A3 (57603): places Inc CR 30% + Inc CD 30% on allies BEFORE ally attack
+        if name == "Cardiel" and "A3" in hero_sd:
+            buffs = hero_sd["A3"].get("team_buffs", [])
+            if not any(b[0] == "inc_cr_30" for b in buffs if isinstance(b, tuple)):
+                hero_sd["A3"]["team_buffs"] = [("inc_cr_30", 2), ("inc_cd_30", 2)] + buffs
+
+        # Teodor A2 (36002): places Poison Sensitivity (already captured via kind=5000+type=500)
+        # Verify it's there:
+        if name == "Teodor the Savant" and "A2" in hero_eff:
+            has_psens = any(e.get('params', {}).get('debuff') == 'poison_sensitivity' for e in hero_eff["A2"])
+            if not has_psens:
+                hero_eff["A2"].append(_eff("debuff", debuff="poison_sensitivity", duration=2, chance=1.0))
+
+        # Ma'Shalled A2 (9304): Inc SPD + Inc CD buffs on team
+        if name == "Ma'Shalled" and "A2" in hero_sd:
+            buffs = hero_sd["A2"].get("team_buffs", [])
+            if not any(b[0] == "inc_cd_30" for b in buffs if isinstance(b, tuple)):
+                buffs.append(("inc_cd_30", 2))
+                hero_sd["A2"]["team_buffs"] = buffs
+
+        # Ma'Shalled A2: also places True Fear + Leech on enemies
+        if name == "Ma'Shalled" and "A2" in hero_eff:
+            has_leech = any(e.get('params', {}).get('debuff') == 'leech' for e in hero_eff["A2"])
+            if not has_leech:
+                hero_eff["A2"].append(_eff("debuff", debuff="leech", duration=2, chance=1.0))
+
+        # Venomage A3 (62803): places Heal Reduction (type=70) — enables passive dmg reduction
+        if name == "Venomage" and "A3" in hero_eff:
+            has_hr = any(e.get('params', {}).get('debuff') == 'heal_reduction' for e in hero_eff["A3"])
+            if not has_hr:
+                hero_eff["A3"].append(_eff("debuff", debuff="heal_reduction", duration=3, chance=1.0))
+
+        # Sepulcher Sentinel A2 (38802): Inc DEF 60% + Block Debuffs on team
+        if name == "Sepulcher Sentinel" and "A2" in hero_sd:
+            buffs = hero_sd["A2"].get("team_buffs", [])
+            if not any(b[0].startswith("inc_def") for b in buffs if isinstance(b, tuple)):
+                hero_sd["A2"]["team_buffs"] = [("inc_def", 2), ("block_debuffs", 2)] + buffs
+
+        # Drexthar Passive: HP Burn when attacked (passive debuff on attacker)
+        # Already detected by passive processor via kind=5000+type=470
+
+        # Artak A1 (78601): extends HP Burn duration (like Sicia A1)
+        if name == "Artak" and "A1" in hero_eff:
+            has_extend = any('extend' in e.get('effect_type', '') for e in hero_eff["A1"])
+            if not has_extend:
+                hero_eff["A1"].append(_eff("extend_debuffs_hp_burn", turns=1, per_hit=True))
 
         if hero_sd:
             skill_data[name] = hero_sd
