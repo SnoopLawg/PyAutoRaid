@@ -3826,7 +3826,38 @@ namespace RaidAutomation
                 }
                 else if (!inBattle && _battleActive)
                 {
-                    // Battle just ended
+                    // Battle just ended — capture final hero state from the last
+                    // known processor before the scene transitions.
+                    if (_activeBattleProcessor != null && Instance != null)
+                    {
+                        try
+                        {
+                            IntPtr procPtr3 = IntPtr.Zero;
+                            var t3 = _activeBattleProcessor.GetType();
+                            while (t3 != null)
+                            {
+                                var p3 = t3.GetProperty("Pointer", BindingFlags.Public | BindingFlags.Instance);
+                                if (p3 != null) { procPtr3 = (IntPtr)p3.GetValue(_activeBattleProcessor); break; }
+                                t3 = t3.BaseType;
+                            }
+                            if (procPtr3 != IntPtr.Zero)
+                            {
+                                string finalHeroes = Instance.ReadBattleHeroesIL2CPP(procPtr3);
+                                if (finalHeroes != null)
+                                {
+                                    lock (_battleLog)
+                                    {
+                                        if (_battleLog.Count < 2000)
+                                            _battleLog.Add("{\"poll\":" + _pollCount +
+                                                ",\"turn\":" + _battleCommandCount +
+                                                ",\"scene\":\"final\"," + finalHeroes + "}");
+                                    }
+                                }
+                            }
+                        }
+                        catch { /* hero data may be torn down — ignore */ }
+                    }
+
                     _battleActive = false;
                     lock (_battleLog)
                     {
@@ -4345,7 +4376,49 @@ namespace RaidAutomation
 
         public static void BattleHook_ProcessEndBattle(object __instance)
         {
-            try { _battleActive = false; } catch { }
+            try
+            {
+                // Capture final hero snapshot before battle state is torn down.
+                // This catches damage from the last 2-3 turns that the poll loop
+                // often misses (enrage kills happen between polls).
+                if (_battleActive && _activeBattleProcessor != null && Instance != null)
+                {
+                    IntPtr procPtr = IntPtr.Zero;
+                    try
+                    {
+                        var t = _activeBattleProcessor.GetType();
+                        while (t != null)
+                        {
+                            var p = t.GetProperty("Pointer",
+                                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+                            if (p != null) { procPtr = (IntPtr)p.GetValue(_activeBattleProcessor); break; }
+                            t = t.BaseType;
+                        }
+                    }
+                    catch { }
+
+                    if (procPtr != IntPtr.Zero)
+                    {
+                        string heroData = Instance.ReadBattleHeroesIL2CPP(procPtr);
+                        if (heroData != null)
+                        {
+                            lock (_battleLog)
+                            {
+                                if (_battleLog.Count < 2000)
+                                {
+                                    _battleLog.Add("{\"poll\":" + _pollCount + ",\"turn\":" +
+                                        _battleCommandCount + ",\"scene\":\"final\"," + heroData + "}");
+                                    _battleLog.Add("{\"event\":\"battle_end\",\"turns\":" +
+                                        _battleCommandCount + ",\"polls\":" + _pollCount + "}");
+                                }
+                            }
+                        }
+                    }
+                }
+
+                _battleActive = false;
+            }
+            catch { _battleActive = false; }
         }
 
         public static void BattleHook_ProcessStartRound(object __instance)
