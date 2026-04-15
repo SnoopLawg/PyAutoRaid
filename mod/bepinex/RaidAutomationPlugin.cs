@@ -395,6 +395,7 @@ namespace RaidAutomation
                     "/remove-preset" => RunOnMainThread(() => RemovePreset(QP(query, "id")), 30000),
                     "/save-preset" => RunOnMainThread(() => SavePreset(QP(query, "name"), QP(query, "heroes"), QP(query, "type")), 30000),
                     "/update-preset" => RunOnMainThread(() => UpdatePreset(QP(query, "id"), QP(query, "priorities")), 30000),
+                    "/set-preset-team" => RunOnMainThread(() => SetPresetTeam(QP(query, "id"), QP(query, "heroes")), 30000),
                     "/skill-texts" => RunOnMainThread(() => GetSkillTexts(QP(query, "hero_id"), QP(query, "min_grade")), 60000),
                     "/mastery-data" => RunOnMainThread(() => GetMasteryData(QP(query, "hero_id"))),
                     "/open-mastery" => RunOnMainThread(() => OpenMastery(QP(query, "hero_id"), QP(query, "mastery_id")), 30000),
@@ -3211,9 +3212,10 @@ namespace RaidAutomation
             }
         }
 
-        // save-preset params: name, heroes (comma-sep IDs), type (1=PvE),
-        //   priorities (JSON: {"heroId":{"skillId":priority,...},...})
-        //   delays (JSON: {"heroId":skillId,...}) — StarterSkillId per hero
+        // save-preset: Clone existing preset, replace heroes, set priorities.
+        // params: name, heroes (comma-sep instance IDs), type (1=PvE)
+        //   priorities: heroId:skillId=pri,skillId=pri;heroId:... (optional)
+        //   pri: 0=Default, 1=First, 2=Second, 3=Third, 4=NotUsed
         private string SavePreset(string nameStr, string heroIdsStr, string typeStr)
         {
             if (string.IsNullOrEmpty(heroIdsStr))
@@ -3309,22 +3311,26 @@ namespace RaidAutomation
                 var dictT = GetIl2CppDictType(typeof(int), sptEnum);
                 sb.Append(",\"dictType\":\"" + (dictT != null ? dictT.FullName : "null") + "\"");
 
-                // Get List<SkillPrioritiesSetup> type from the field
+                // Get IL2CPP List<SkillPrioritiesSetup> from the CLONED preset
+                // (don't create new — Activator gives managed list, not IL2CPP list)
                 var spsField = presetT.GetField("SkillPrioritiesSetups",
                     BindingFlags.Public | BindingFlags.Instance);
-                Type setupListT = null;
+                object setupList = null;
                 if (spsField != null)
-                    setupListT = spsField.FieldType;
-
-                // Fallback: construct the list type
-                if (setupListT == null)
+                    setupList = spsField.GetValue(preset);
+                if (setupList == null)
                 {
-                    var listT = FindType("System.Collections.Generic.List`1") ?? typeof(List<>);
-                    setupListT = listT.MakeGenericType(setupT);
+                    var getSetups = presetT.GetMethod("get_SkillPrioritiesSetups");
+                    if (getSetups != null) setupList = getSetups.Invoke(preset, null);
                 }
+                if (setupList == null) return "{\"error\":\"cloned preset has null SkillPrioritiesSetups\"}";
+
+                Type setupListT = setupList.GetType();
                 sb.Append(",\"listType\":\"" + setupListT.FullName + "\"");
 
-                var setupList = Activator.CreateInstance(setupListT);
+                // Clear the cloned list and add fresh entries
+                var clearList = setupListT.GetMethod("Clear");
+                if (clearList != null) clearList.Invoke(setupList, null);
                 var addSetup = setupListT.GetMethod("Add");
 
                 // Get the SkillPrioritiesSetup(heroId, dict, presetType) constructor
@@ -6939,6 +6945,210 @@ namespace RaidAutomation
             catch (Exception ex) { _locDbg += $"call:{ex.Message};"; }
             return null;
         }
+
+        /// <summary>
+        /// Replace the heroes in an existing preset by swapping HeroId on each
+        /// SkillPrioritiesSetup entry and rebuilding skill priorities from the
+        /// new hero's actual skills. Works entirely with existing IL2CPP objects
+        /// (no new list allocation).
+        ///
+        /// Usage: /set-preset-team?id=1&heroes=15120,18607,18086,4736,13575
+        /// Heroes are comma-separated instance IDs, in slot order (1-5).
+        /// </summary>
+        private string SetPresetTeam(string idStr, string heroIdsStr)
+        {
+            if (string.IsNullOrEmpty(idStr) || string.IsNullOrEmpty(heroIdsStr))
+                return "{\"error\":\"id and heroes required\"}";
+
+            int targetId;
+            if (!int.TryParse(idStr, out targetId)) return "{\"error\":\"invalid id\"}";
+
+            var newHeroIds = new List<int>();
+            foreach (var s in heroIdsStr.Split(','))
+                if (int.TryParse(s.Trim(), out int hid) && hid > 0)
+                    newHeroIds.Add(hid);
+            if (newHeroIds.Count == 0) return "{\"error\":\"no valid hero IDs\"}";
+
+            var sptEnum = FindType("SharedModel.Meta.Heroes.SkillPriorityType");
+            var presetT = FindType("SharedModel.Meta.Heroes.HeroesAiPreset");
+            if (sptEnum == null || presetT == null) return "{\"error\":\"types not found\"}";
+
+            try
+            {
+                var uw = GetUserWrapper();
+                var heroDict = Prop(Prop(Prop(uw, "Heroes"), "HeroData"), "HeroById");
+
+                // Find the target preset
+                object presetList = Prop(Prop(Prop(uw, "Heroes"), "HeroData"), "HeroesAiPresets");
+                if (presetList == null) presetList = Prop(Prop(uw, "Heroes"), "HeroesAiPresets");
+                if (presetList == null) return "{\"error\":\"no presets\"}";
+
+                object targetPreset = null;
+                foreach (var p in ListItems(presetList))
+                {
+                    if (IntProp(p, "Id") == targetId) { targetPreset = p; break; }
+                }
+                if (targetPreset == null) return "{\"error\":\"preset not found\"}";
+
+                // Get the SkillPrioritiesSetups list
+                object setups = null;
+                var spsField = presetT.GetField("SkillPrioritiesSetups", BindingFlags.Public | BindingFlags.Instance);
+                if (spsField != null) setups = spsField.GetValue(targetPreset);
+                if (setups == null) { var g = presetT.GetMethod("get_SkillPrioritiesSetups"); if (g != null) setups = g.Invoke(targetPreset, null); }
+                if (setups == null) return "{\"error\":\"setups null\"}";
+
+                // Get list count and indexer
+                int setupCount = 0;
+                try { setupCount = (int)setups.GetType().GetProperty("Count").GetValue(setups); } catch {}
+
+                var sb = new StringBuilder("{\"ok\":true,\"slots\":[");
+
+                // For each slot, update the HeroId and rebuild PriorityBySkillId
+                int slotIdx = 0;
+                var getItem = setups.GetType().GetProperty("Item");
+
+                foreach (var setup in ListItems(setups))
+                {
+                    if (slotIdx >= newHeroIds.Count) break;
+                    int newHeroId = newHeroIds[slotIdx];
+
+                    // Set HeroId
+                    try
+                    {
+                        var setHero = setup.GetType().GetMethod("set_HeroId");
+                        if (setHero != null) setHero.Invoke(setup, new object[] { newHeroId });
+                        else SetFieldOrProp(setup.GetType(), setup, "HeroId", newHeroId);
+                    }
+                    catch {}
+
+                    // Get new hero's skill type IDs
+                    var skillIds = new List<int>();
+                    try
+                    {
+                        object hero = null;
+                        var ck = heroDict.GetType().GetMethod("ContainsKey");
+                        if (ck != null && (bool)ck.Invoke(heroDict, new object[] { newHeroId }))
+                            hero = heroDict.GetType().GetProperty("Item")?.GetValue(heroDict, new object[] { newHeroId });
+                        if (hero != null)
+                        {
+                            var skills = Prop(hero, "Skills");
+                            if (skills != null)
+                            {
+                                int cnt = (int)skills.GetType().GetProperty("Count").GetValue(skills);
+                                var gi = skills.GetType().GetProperty("Item");
+                                for (int i = 0; i < cnt; i++)
+                                {
+                                    var skill = gi?.GetValue(skills, new object[] { i });
+                                    if (skill != null)
+                                    {
+                                        var tid = Prop(skill, "TypeId");
+                                        if (tid != null) skillIds.Add((int)tid);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    catch {}
+
+                    // Rebuild PriorityBySkillId dict: clear old entries, add new hero's skills
+                    try
+                    {
+                        object priDict = null;
+                        var pf = setup.GetType().GetField("PriorityBySkillId", BindingFlags.Public | BindingFlags.Instance);
+                        if (pf != null) priDict = pf.GetValue(setup);
+                        if (priDict == null) { var g = setup.GetType().GetMethod("get_PriorityBySkillId"); if (g != null) priDict = g.Invoke(setup, null); }
+
+                        if (priDict != null)
+                        {
+                            // Clear existing entries
+                            var clearM = priDict.GetType().GetMethod("Clear");
+                            if (clearM != null) clearM.Invoke(priDict, null);
+
+                            // Add new hero's skills with Default priority
+                            var addM = priDict.GetType().GetMethod("Add");
+                            foreach (int sid in skillIds)
+                            {
+                                try { addM.Invoke(priDict, new object[] { sid, Enum.ToObject(sptEnum, 0) }); } catch {}
+                            }
+                        }
+
+                        // Also rebuild each Sequence's PriorityBySkillId
+                        object seqs = null;
+                        var sf = setup.GetType().GetField("Sequences", BindingFlags.Public | BindingFlags.Instance);
+                        if (sf != null) seqs = sf.GetValue(setup);
+                        if (seqs == null) { var g = setup.GetType().GetMethod("get_Sequences"); if (g != null) seqs = g.Invoke(setup, null); }
+                        if (seqs != null)
+                        {
+                            bool firstSeq = true;
+                            foreach (var seq in ListItems(seqs))
+                            {
+                                object seqDict = null;
+                                var sqf = seq.GetType().GetField("PriorityBySkillId", BindingFlags.Public | BindingFlags.Instance);
+                                if (sqf != null) seqDict = sqf.GetValue(seq);
+                                if (seqDict == null) { var g = seq.GetType().GetMethod("get_PriorityBySkillId"); if (g != null) seqDict = g.Invoke(seq, null); }
+                                if (seqDict != null)
+                                {
+                                    var clrSeq = seqDict.GetType().GetMethod("Clear");
+                                    if (clrSeq != null) clrSeq.Invoke(seqDict, null);
+                                    var addSeq = seqDict.GetType().GetMethod("Add");
+                                    foreach (int sid in skillIds)
+                                    {
+                                        try { addSeq.Invoke(seqDict, new object[] { sid, Enum.ToObject(sptEnum, 0) }); } catch {}
+                                    }
+                                }
+
+                                // Clear StarterSkillTypeIds on non-first sequences
+                                if (!firstSeq)
+                                {
+                                    try
+                                    {
+                                        var ssi = seq.GetType().GetField("StarterSkillTypeIds", BindingFlags.Public | BindingFlags.Instance);
+                                        if (ssi != null)
+                                        {
+                                            object starterList = ssi.GetValue(seq);
+                                            if (starterList != null)
+                                            {
+                                                var clrStarter = starterList.GetType().GetMethod("Clear");
+                                                if (clrStarter != null) clrStarter.Invoke(starterList, null);
+                                            }
+                                        }
+                                    }
+                                    catch {}
+                                }
+                                firstSeq = false;
+                            }
+                        }
+                    }
+                    catch {}
+
+                    if (slotIdx > 0) sb.Append(",");
+                    sb.Append("{\"slot\":" + slotIdx + ",\"hero\":" + newHeroId + ",\"skills\":[" + string.Join(",", skillIds) + "]}");
+                    slotIdx++;
+                }
+
+                // Save the modified preset
+                var cmdType = FindType("Client.Model.Gameplay.Heroes.Commands.SaveAiPresetCmd");
+                if (cmdType != null)
+                {
+                    var ctor = cmdType.GetConstructor(new[] { presetT });
+                    if (ctor != null)
+                    {
+                        var cmd = ctor.Invoke(new object[] { targetPreset });
+                        InvokeExecute(cmd);
+                        sb.Append("],\"saved\":true}");
+                    }
+                    else sb.Append("],\"saved\":false,\"reason\":\"no ctor\"}");
+                }
+                else sb.Append("],\"saved\":false,\"reason\":\"no cmd type\"}");
+
+                return sb.ToString();
+            }
+            catch (Exception ex)
+            {
+                return "{\"error\":\"" + Esc(ex.Message) + "\"}";
+            }
+        }
+
 
         /// <summary>
         /// Navigate from a battle access object down to the BattleProcessor.
