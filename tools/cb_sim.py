@@ -743,7 +743,7 @@ class CBSimulator:
     def __init__(self, champions: List[SimChampion], cb_speed: float = 190,
                  cb_element: int = 4, deterministic: bool = True,
                  rng_seed: int = None, verbose: bool = False,
-                 model_survival: bool = True, force_affinity: bool = True):
+                 model_survival: bool = True, force_affinity: bool = False):
         self.champions = champions
         self.cb_speed = cb_speed
         self.cb_element = cb_element  # 1=Magic, 2=Force, 3=Spirit, 4=Void
@@ -1064,15 +1064,23 @@ class CBSimulator:
                 if not c.is_dead and c.has_passive_extra_turns:
                     c.tm += TM_THRESHOLD
 
-            # Geomancer passive (only if alive)
+            # Geomancer passive: deflects 15% of incoming AoE damage back to
+            # enemies under his HP Burn. 30% chance of 3% target MAX HP bonus.
+            # Scales with Gathering Fury (CB hits harder → more deflect damage).
             for c in self.champions:
                 if c.is_geomancer and not c.is_dead:
-                    geo_data = SKILLS.get("Geomancer", {}).get("passive", {})
-                    flat = geo_data.get("flat_dmg_per_cb_turn", 200_000)
-                    gs_procs = geo_data.get("gs_procs_per_cb_turn", 1.0)
-                    wk = 1.25 if self.debuff_bar.has("weaken") else 1.0
-                    c.damage.passive += self._cap_fa(flat * wk, kind="passive")
-                    c.damage.wm_gs += self._cap_fa(gs_procs * GS_DMG * wk, kind="wm_gs")
+                    has_geo_burn = self.debuff_bar.has("hp_burn")
+                    if has_geo_burn:
+                        # Deflect: 15% of AoE damage to team × 5 heroes = total AoE pool
+                        # Base CB AoE ~ 10K per hero. With fury: * fury_mult * dec_atk
+                        base_aoe_per_hero = CB_ATK * CB_AOE_MULT * 0.15  # 15% of CB damage
+                        # Roughly: 5 heroes × base_aoe reflected
+                        deflect_dmg = base_aoe_per_hero * 5 * fury_mult * dec_atk_mult
+                        # 30% chance of 3% MAX HP bonus per deflect hit (per hero hit)
+                        # UNM CB effective HP for procs = ~1.5M (per phase)
+                        bonus_dmg = 0.30 * 75_000  # 30% × 75K (GS-equivalent cap)
+                        total_passive = deflect_dmg + bonus_dmg
+                        c.damage.passive += total_passive
 
         elif attack == "stun":
             # Game data: fromTargetsWithSkillOnCDSelectWithMaxStamina
