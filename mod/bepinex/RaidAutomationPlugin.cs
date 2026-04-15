@@ -3506,7 +3506,31 @@ namespace RaidAutomation
 
                 sb.Append("]");
 
-                // Execute SaveAiPresetCmd
+                // Add the new preset to the local HeroesAiPresets list in memory
+                // (the game normally does this when the server responds)
+                bool addedToList = false;
+                try
+                {
+                    var uw2 = GetUserWrapper();
+                    object presetListObj = Prop(Prop(Prop(uw2, "Heroes"), "HeroData"), "HeroesAiPresets");
+                    if (presetListObj == null) presetListObj = Prop(Prop(uw2, "Heroes"), "HeroesAiPresets");
+                    if (presetListObj != null)
+                    {
+                        var addM = presetListObj.GetType().GetMethod("Add");
+                        if (addM != null)
+                        {
+                            addM.Invoke(presetListObj, new object[] { preset });
+                            addedToList = true;
+                        }
+                    }
+                }
+                catch (Exception addEx)
+                {
+                    sb.Append(",\"addError\":\"" + Esc(addEx.Message) + "\"");
+                }
+                sb.Append(",\"addedToList\":" + (addedToList ? "true" : "false"));
+
+                // Execute SaveAiPresetCmd to persist to server
                 var cmdType = FindType("Client.Model.Gameplay.Heroes.Commands.SaveAiPresetCmd");
                 if (cmdType == null) return "{\"error\":\"SaveAiPresetCmd not found\"}";
 
@@ -7670,6 +7694,36 @@ namespace RaidAutomation
 
         private void InvokeExecute(object gameCmd)
         {
+            // Try to enqueue through the game's CmdQueue first (proper server round-trip).
+            // Falls back to direct Execute() if queue not available.
+            try
+            {
+                var appModelType = FindType("Client.Model.AppModel");
+                if (appModelType != null)
+                {
+                    var instProp = appModelType.GetProperty("Instance", BindingFlags.Public | BindingFlags.Static);
+                    if (instProp != null)
+                    {
+                        object appModel = instProp.GetValue(null);
+                        if (appModel != null)
+                        {
+                            object cmdQueue = Prop(appModel, "CmdQueue");
+                            if (cmdQueue != null)
+                            {
+                                var enqueueM = cmdQueue.GetType().GetMethod("Enqueue");
+                                if (enqueueM != null)
+                                {
+                                    enqueueM.Invoke(cmdQueue, new object[] { gameCmd });
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch { }
+
+            // Fallback: direct Execute()
             var t = gameCmd.GetType();
             while (t != null)
             {
