@@ -3295,12 +3295,48 @@ namespace RaidAutomation
 
                 sb.Append("\"strategy\":\"" + strategy + "\"");
 
-                // Set fields directly — HeroesAiPreset has PUBLIC FIELDS, not properties
-                // The IL2CPP interop types have both: fields (from IL2CPP) and sometimes
-                // generated property wrappers. Try field first, then property setter.
+                // Set fields — try both field and property setter, also try IL2CPP
+                // raw field write for the Id (which must be 0 for "create new").
                 SetFieldOrProp(presetT, preset, "Name", presetName);
                 SetFieldOrProp(presetT, preset, "NameIsNotDefault", true);
-                SetFieldOrProp(presetT, preset, "Id", 0); // Server assigns the real ID
+
+                // Force Id to 0 — try multiple approaches since IL2CPP cloned
+                // objects may have the original Id baked into native memory.
+                bool idSet = false;
+                // Approach 1: property setter
+                try {
+                    var setId = presetT.GetMethod("set_Id");
+                    if (setId != null) { setId.Invoke(preset, new object[] { 0 }); idSet = true; }
+                } catch {}
+                // Approach 2: field
+                if (!idSet) {
+                    try {
+                        var idField = presetT.GetField("Id", BindingFlags.Public | BindingFlags.Instance);
+                        if (idField != null) { idField.SetValue(preset, 0); idSet = true; }
+                    } catch {}
+                }
+                // Approach 3: IL2CPP raw write via Pointer offset
+                if (!idSet) {
+                    try {
+                        var ptrProp = presetT.GetProperty("Pointer");
+                        if (ptrProp != null) {
+                            IntPtr ptr = (IntPtr)ptrProp.GetValue(preset);
+                            if (ptr != IntPtr.Zero) {
+                                // Id is typically the first int field after the IL2CPP header
+                                // Write 0 at common offsets
+                                foreach (var off in new[] { 0x10, 0x18, 0x20 }) {
+                                    int cur = Marshal.ReadInt32(ptr + off);
+                                    if (cur == 1) { // Found the cloned Id=1
+                                        Marshal.WriteInt32(ptr + off, 0);
+                                        idSet = true;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    } catch {}
+                }
+                sb.Append(",\"idSet\":" + (idSet ? "true" : "false"));
 
                 // Build the SkillPrioritiesSetups list using the game's own constructors.
                 // SkillPrioritiesSetup has a ctor(int heroId, Dict<int,SPT> skills, PresetType)
