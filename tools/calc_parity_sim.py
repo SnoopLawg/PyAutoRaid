@@ -295,6 +295,39 @@ def _apply_extra_turn(targets: list[Actor]) -> None:
         t.has_extra_turn = True
 
 
+# Buff effect names that CANNOT be extended by extend_buff (per DWJ er.extend_buff)
+_NON_EXTENDABLE_BUFF_NAMES = {"unkillable", "block_dmg", "taunt", "revive"}
+
+
+def _apply_extend_buff(targets: list[Actor]) -> None:
+    """DWJ's er.extend_buff: bump duration by +1 for each buff-type effect
+    on each target, excluding unkillable/block_dmg/taunt/revive.
+
+    In the scheduler-only subset of effects we track (speed-buff,
+    speed-debuff), only speed-buff is a "buff" and not in the exclusion
+    list. Still support the full rule for future compatibility.
+    """
+    for t in targets:
+        for e in t.effects:
+            # Debuffs aren't extended.
+            if e.name.endswith("-debuff") or "debuff" in e.name.split("-") or "debuff" in e.name.split("_"):
+                continue
+            if e.name in _NON_EXTENDABLE_BUFF_NAMES:
+                continue
+            e.duration += 1
+
+
+def _apply_reduce_buff(targets: list[Actor], amount: int = 1) -> None:
+    """Dual of extend_buff: decrement buff durations."""
+    for t in targets:
+        for e in t.effects:
+            if e.name.endswith("-debuff") or "debuff" in e.name.split("-"):
+                continue
+            if e.name in _NON_EXTENDABLE_BUFF_NAMES:
+                continue
+            e.duration -= amount
+
+
 def _apply_ally_atk(targets: list[Actor], actors: list[Actor], depth: int = 0) -> None:
     """Trigger each target ally's A1 skill effects without modifying their
     turn state (no TM reset, no CD tick, no CD set on A1).
@@ -383,10 +416,13 @@ def apply_skill_effects(actor: Actor, skill_alias: str, actors: list[Actor], cas
             elif buff == "allyatk":
                 # amount = how many allies attack. DWJ takes first `amount`
                 # targets (resolved by 'allies') and triggers each to cast A1.
-                # Cap targets by amount.
                 n_attackers = int(amount) if amount else 0
                 if n_attackers > 0:
                     _apply_ally_atk(targets[:n_attackers], actors, depth=_allyatk_depth)
+            elif buff == "extend_buff":
+                _apply_extend_buff(targets)
+            elif buff == "reduce_buff":
+                _apply_reduce_buff(targets, amount=int(amount) if amount else 1)
             # Other buffs (unkillable, block_dmg, shield, etc.) don't affect scheduling
             continue
 
