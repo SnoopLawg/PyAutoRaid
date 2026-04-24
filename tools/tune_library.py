@@ -64,33 +64,107 @@ def _register(tune):
 
 
 # --- Myth Eater (#30) ---
+# Source of truth: https://deadwoodjedi.com/speed-tunes/myth-eater/
+# Corrected 2026-04-23 after comparing to live DWJ tune page + calculator:
+#   - Maneater opens A1 then A3 (NOT A3 only — previous value broke the sync)
+#   - Ninja slot (4:3) band is 224-230 TRUE SPD (NOT 204-207)
+#   - 1:1 DPS slot is 179 exactly (NOT 177-180 band)
+#   - Slow DPS slot 160-169 (widened from 159-162)
+#   - Maneater A3 at Level 3 (fully booked) = CD 5 (base 7, -1 at lvl 2, -1
+#     at lvl 3). In-game screenshot confirms: "Lvl.2 Cooldown -1, Lvl.3 -1".
+#     The tune's 3-BT Maneater A3 cycle IS achievable with this hero.
+#   - Ninja is weak on Force CB — sub out for a 178-SPD DPS on Force days.
 _register(TuneDefinition(
     name="Myth Eater",
     tune_id="myth_eater",
     tune_type="unkillable",
-    difficulty="moderate",
+    difficulty="hard",
+    performance="2_key_unm",
+    affinities="all_except_force",
+    slots=[
+        TuneSlot(role="fast_uk", speed_range=(286, 286), required_hero="Maneater",
+                 opening=["A1", "A3"],
+                 skill_priority=["A3", "A2", "A1"],
+                 notes="Open A1 then A3 on Round 1. Priorities afterwards: A3 > A2 > A1."),
+        TuneSlot(role="block_damage", speed_range=(171, 171), required_hero="Demytha",
+                 opening=["A1", "A2", "A3"],
+                 skill_priority=["A3", "A2", "A1"]),
+        TuneSlot(role="dps_4to3", speed_range=(224, 230), needs_acc=True,
+                 skill_priority=["A3", "A2", "A1"],
+                 notes="4:3 DPS slot. Ninja ideal (TM fill + HP Burn). "
+                       "Ninja: set A3 as 1st priority, A2 as 2nd. "
+                       "Sub out on FORCE affinity — replace with 178-SPD DPS."),
+        TuneSlot(role="dps_1to1", speed_range=(179, 179), needs_acc=True,
+                 skill_priority=["A3", "A2", "A1"],
+                 notes="1:1 DPS slot at exactly 179 SPD"),
+        TuneSlot(role="dps_slow", speed_range=(160, 169), needs_acc=True,
+                 skill_priority=["A3", "A2", "A1"],
+                 notes="Slow DPS slot, 160-169 range"),
+    ],
+    notes="Unkillable via Maneater A3 + Block Damage via Demytha A3. "
+          "UNM tune syncs on CB turn 6; NM on CB turn 9. "
+          "Speeds are TRUE SPD (exclude Speed Auras, include Area Bonuses). "
+          "Recommended blessings: 1 Brimstone, 1 Cruelty, rest Phantom Touch. "
+          "Masteries: stick to Warmaster + Offense (NOT Relentless, Cycle of Magic, "
+          "or Lasting Gifts — they break timing). "
+          "On FORCE CB: sub Ninja out for a 178-SPD DPS of non-weak affinity."
+))
+
+# --- Myth Eater Ninja variant ---
+# Verified from DWJ calculator 2026-04-23 via the "Ninja UNM" link on
+# deadwoodjedi.com/speed-tunes/myth-eater/ (calculator URL hash
+# 6737fa4be0ec51c5065a433d3f23b7616d9ca430). This is the alternative
+# Myth Eater tune for use WITH Ninja — Ninja's A2 passive TM boost lets
+# him run at SPD 205 (not the standard 224-230 range). All other slot
+# speeds differ slightly too: Venomage 160 (was 160-169), priorities
+# on Ninja are A3(1)/A2(2)/A1(default). Works on all affinities
+# INCLUDING Force (unlike the non-Ninja standard variant). This is the
+# tune actually used by the user's current team.
+_register(TuneDefinition(
+    name="Myth Eater (Ninja variant)",
+    tune_id="myth_eater_ninja",
+    tune_type="unkillable",
+    difficulty="hard",
     performance="2_key_unm",
     affinities="all",
     slots=[
-        TuneSlot(role="fast_uk", speed_range=(286, 290), required_hero="Maneater",
-                 opening=["A3"],
-                 skill_priority=["A3", "A2", "A1"]),
-        TuneSlot(role="block_damage", speed_range=(171, 174), required_hero="Demytha",
-                 opening=["A1", "A2", "A3"],
-                 skill_priority=["A3", "A2", "A1"]),
-        TuneSlot(role="dps_4to3", speed_range=(204, 207), needs_acc=True,
-                 skill_priority=["A3", "A2", "A1"],
-                 notes="4:3 DPS slot — Ninja ideal (TM fill + HP Burn)"),
-        TuneSlot(role="dps_1to1", speed_range=(177, 180), needs_acc=True,
-                 skill_priority=["A3", "A2", "A1"],
-                 notes="1:1 DPS slot"),
-        TuneSlot(role="dps_slow", speed_range=(159, 162), needs_acc=True,
-                 skill_priority=["A3", "A2", "A1"],
-                 notes="Slowest DPS slot"),
+        # All slots use DWJ-delay convention (see memory feedback_raid_preset_delays.md):
+        # opener = [A1] (single-skill opener always). Priorities below map
+        # DWJ delays: skill with delay=0 = priority 1st, delay=1 = priority 2nd,
+        # delay=2 = priority 3rd. A2 lands wherever A3's delay leaves room.
+        TuneSlot(role="fast_uk", speed_range=(288, 288), required_hero="Maneater",
+                 opening=["A1"],
+                 skill_priority=["A2", "A3", "A1"],
+                 notes="A2 delay=0 (1st), A3 delay=1 (2nd), A1 default. "
+                       "A2 CD=3/4, A3 CD=5 after books."),
+        TuneSlot(role="block_damage", speed_range=(172, 172), required_hero="Demytha",
+                 opening=["A1"],
+                 skill_priority=["A2", "A3", "A1"],
+                 notes="A2 delay=0 (1st — Unkillable), A3 delay=2 (2nd — BlockDmg), "
+                       "A1 default. A2 CD=3, A3 CD=3."),
+        TuneSlot(role="ninja_tm_boost", speed_range=(205, 205), required_hero="Ninja",
+                 opening=["A1"],
+                 skill_priority=["A2", "A3", "A1"],
+                 notes="Ninja's A2 passive TM fill lets him run at 205 not 224. "
+                       "A2 delay=0 (1st), A3 delay=1 (2nd), A1 default. "
+                       "A2 CD=3, A3 CD=4 after books."),
+        TuneSlot(role="dps_1to1", speed_range=(178, 178), needs_acc=True,
+                 opening=["A1"],
+                 skill_priority=["A2", "A3", "A1"],
+                 notes="1:1 slot at 178 SPD (Geomancer typical). "
+                       "No delays — A2 1st, A3 2nd, A1 default."),
+        TuneSlot(role="dps_slow", speed_range=(160, 160), needs_acc=True,
+                 opening=["A1"],
+                 skill_priority=["A2", "A3", "A1"],
+                 notes="Slow DPS at 160 SPD (Venomage typical). "
+                       "No delays — A2 1st, A3 2nd, A1 default."),
     ],
-    notes="2x UK coverage via Maneater A3 + Demytha A3 Block Damage. "
-          "Sync on CB turn 6. All 3 DPS are 1:1 ratio."
+    notes="Myth Eater with Ninja. Ninja's self-TM-fill (A2 passive) "
+          "substitutes for higher raw SPD, letting him run at 205. "
+          "Works on all affinities including Force. 2 key UNM. "
+          "Sync: UNM on CB turn 6, NM on turn 9."
 ))
+
 
 # --- Budget Unkillable (#10) ---
 _register(TuneDefinition(

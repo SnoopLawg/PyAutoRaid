@@ -1,0 +1,32 @@
+{
+  "Maneater": {
+    "inferred_spd": 292.3,
+    "samples": 78,
+    "min_ratio": 1.429,
+    "max_ratio": 1.615
+  },
+  "Demytha": {
+    "inferred_spd": 175.4,
+    "samples": 89,
+    "min_ratio": 0.857,
+    "max_ratio": 0.923
+  },
+  "Ninja": {
+    "inferred_spd": 204.6,
+    "samples": 86,
+    "min_ratio": 1.0,
+    "max_ratio": 2.231
+  },
+  "Geomancer": {
+    "inferred_spd": 175.4,
+    "samples": 89,
+    "min_ratio": 0.857,
+    "max_ratio": 1.0
+  },
+  "Venomage": {
+    "inferred_spd": 160.8,
+    "samples": 90,
+    "min_ratio": 0.786,
+    "max_ratio": 0.923
+  }
+}

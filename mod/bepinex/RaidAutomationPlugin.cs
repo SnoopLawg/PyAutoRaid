@@ -74,6 +74,13 @@ namespace RaidAutomation
         // Live battle state captured via Harmony hooks on ProcessStartTurn
         internal static object _activeBattleProcessor;
         internal static readonly List<string> _battleLog = new();
+        // Preserved snapshot of the most recently completed battle. Served from
+        // /battle-log when no battle is active, so cb_daily can fetch the last
+        // run even after the game transitions back to the CB screen (which
+        // re-fires ProcessStartBattle and wipes _battleLog).
+        internal static readonly List<string> _completedBattleLog = new();
+        internal static int _completedTurnCount = 0;
+        internal static int _completedPollCount = 0;
         internal static int _battleCommandCount;   // incremented per Harmony turn hook
         internal static int _pollCount;             // incremented per Update() poll during battle
         internal static bool _battleActive;
@@ -165,7 +172,7 @@ namespace RaidAutomation
                 var procType = FindTypeStatic("SharedModel.Battle.Core.BattleProcessor");
                 if (procType != null)
                 {
-                    foreach (var hookName in new[] { "ProcessStartTurn", "ProcessEndTurn", "ProcessStartBattle", "ProcessEndBattle", "ProcessStartRound", "ProcessEndRound", "ApplySkillCommand" })
+                    foreach (var hookName in new[] { "ProcessStartTurn", "ProcessEndTurn", "ProcessStartBattle", "ProcessEndBattle", "ProcessStartRound", "ProcessEndRound", "ApplySkillCommand", "ApplyCommand", "ProcessBeforeStartTurn" })
                     {
                         var method = procType.GetMethod(hookName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
                         if (method == null)
@@ -176,7 +183,7 @@ namespace RaidAutomation
                             {
                                 if (mm.Name == hookName)
                                 {
-                                    int want = (hookName == "ApplySkillCommand" || hookName == "ProcessEndTurn" || hookName == "ProcessStartTurn") ? -1 : 0;
+                                    int want = (hookName == "ApplySkillCommand" || hookName == "ApplyCommand" || hookName == "ProcessEndTurn" || hookName == "ProcessStartTurn") ? -1 : 0;
                                     if (want == -1 || mm.GetParameters().Length == want) { method = mm; break; }
                                 }
                             }
@@ -191,15 +198,96 @@ namespace RaidAutomation
                                 {
                                     harmony.Patch(method, postfix: postfix);
                                     Logger.LogInfo("Harmony: patched " + hookName);
+                                    int argc = method.GetParameters().Length;
+                                    lock (_hookPatchLog) { _hookPatchLog.Add(hookName + ":patched(argc=" + argc + ")"); }
                                 }
                                 else
                                 {
                                     Logger.LogWarning("Postfix method BattleHook_" + hookName + " not found");
+                                    lock (_hookPatchLog) { _hookPatchLog.Add(hookName + ":no_postfix_method"); }
                                 }
                             }
-                            catch (Exception pex) { Logger.LogWarning(hookName + " patch: " + pex.Message); }
+                            catch (Exception pex) { Logger.LogWarning(hookName + " patch: " + pex.Message); lock (_hookPatchLog) { _hookPatchLog.Add(hookName + ":patch_error:" + pex.Message); } }
+                        }
+                        else
+                        {
+                            lock (_hookPatchLog) { _hookPatchLog.Add(hookName + ":method_not_found"); }
                         }
                     }
+                }
+
+                // Hook MakeNodesFromUnapplyResultSystem.Execute — ECS system
+                // that fires whenever an applied effect is unapplied (expired,
+                // cleansed, removed). Each Execute iterates the _unapplyEffectResults
+                // group containing UnappliedEffectResult records.
+                try
+                {
+                    var unapplyType = FindTypeStatic("ECS.BattleSystems.MakeNodesFromUnapplyResultSystem");
+                    if (unapplyType != null)
+                    {
+                        var execM = unapplyType.GetMethod("Execute", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                        if (execM != null)
+                        {
+                            var prefix = new HarmonyMethod(typeof(RaidAutomationPlugin)
+                                .GetMethod("BattleHook_UnapplyExecute", BindingFlags.Static | BindingFlags.Public));
+                            if (prefix.method != null)
+                            {
+                                // Use PREFIX — postfix sees emptied group since Execute drains it
+                                harmony.Patch(execM, prefix: prefix);
+                                lock (_hookPatchLog) { _hookPatchLog.Add("UnapplyExecute:patched_prefix"); }
+                            }
+                        }
+                        else { lock (_hookPatchLog) { _hookPatchLog.Add("UnapplyExecute:no_Execute"); } }
+                    }
+                    else { lock (_hookPatchLog) { _hookPatchLog.Add("UnapplyExecute:type_not_found"); } }
+                }
+                catch (Exception ex) { lock (_hookPatchLog) { _hookPatchLog.Add("UnapplyExecute:err:" + ex.Message); } }
+
+                // Hook AppliedEffect.set_TurnLeft — catches EVERY duration assignment
+                // including natural tick-down (extend processors only cover explicit changes)
+                try
+                {
+                    var aeType = FindTypeStatic("SharedModel.Battle.Core.Skill.AppliedEffect");
+                    if (aeType != null)
+                    {
+                        var setM = aeType.GetMethod("set_TurnLeft", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                        if (setM != null)
+                        {
+                            var postfix = new HarmonyMethod(typeof(RaidAutomationPlugin)
+                                .GetMethod("BattleHook_TurnLeftSet", BindingFlags.Static | BindingFlags.Public));
+                            if (postfix.method != null)
+                            {
+                                harmony.Patch(setM, postfix: postfix);
+                                lock (_hookPatchLog) { _hookPatchLog.Add("TurnLeftSet:patched"); }
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex) { lock (_hookPatchLog) { _hookPatchLog.Add("TurnLeftSet:err:" + ex.Message); } }
+
+                // Re-process the processor list
+                foreach (var (typeName, hookSuffix) in new[] {
+                    ("SharedModel.Battle.Core.Skill.EffectProcessing.Processors.DamageProcessor", "DamageChange"),
+                    ("SharedModel.Battle.Core.Skill.EffectProcessing.Processors.ApplyStatusEffectProcessor", "ApplyStatus"),
+                    ("SharedModel.Battle.Core.Skill.EffectProcessing.Processors.RemoveStatusEffectsProcessor", "RemoveStatus"),
+                    ("SharedModel.Battle.Core.Skill.EffectProcessing.Processors.ChangeAppliedEffectDurationProcessor", "DurationChange"),
+                })
+                {
+                    try
+                    {
+                        var t = FindTypeStatic(typeName);
+                        if (t == null) { lock (_hookPatchLog) { _hookPatchLog.Add(hookSuffix + ":type_not_found"); } continue; }
+                        var procM = t.GetMethod("Process", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                        if (procM == null) { lock (_hookPatchLog) { _hookPatchLog.Add(hookSuffix + ":no_Process"); } continue; }
+                        var postfix = new HarmonyMethod(typeof(RaidAutomationPlugin)
+                            .GetMethod("BattleHook_" + hookSuffix, BindingFlags.Static | BindingFlags.Public));
+                        if (postfix.method == null) { lock (_hookPatchLog) { _hookPatchLog.Add(hookSuffix + ":no_postfix_method"); } continue; }
+                        harmony.Patch(procM, postfix: postfix);
+                        int argc = procM.GetParameters().Length;
+                        lock (_hookPatchLog) { _hookPatchLog.Add(hookSuffix + ":patched(argc=" + argc + ")"); }
+                        Logger.LogInfo("Harmony: patched " + hookSuffix);
+                    }
+                    catch (Exception ex) { lock (_hookPatchLog) { _hookPatchLog.Add(hookSuffix + ":err:" + ex.Message); } }
                 }
 
                 Logger.LogInfo("Harmony initialized");
@@ -347,7 +435,8 @@ namespace RaidAutomation
                 try
                 {
                     _listener = new HttpListener();
-                    _listener.Prefixes.Add("http://+:" + PORT + "/");
+                    // Loopback only - doesn't require URL ACL / admin elevation.
+                    _listener.Prefixes.Add("http://localhost:" + PORT + "/");
                     _listener.Start();
                     Logger.LogInfo("HTTP listener started on port " + PORT);
                     while (_running)
@@ -382,6 +471,8 @@ namespace RaidAutomation
                     "/dismiss" => RunOnMainThread(() => DismissOverlays()),
                     "/account" => RunOnMainThread(() => GetAccountData()),
                     "/skill-data" => RunOnMainThread(() => GetSkillData(QP(query, "hero_id"), QP(query, "min_grade")), 30000),
+                    "/enemy-skills" => RunOnMainThread(() => GetEnemySkills(QP(query, "type_id")), 30000),
+                    "/hook-diag" => GetHookDiag(),
                     "/hero-computed-stats" => RunOnMainThread(() => GetHeroComputedStats(QP(query, "min_grade")), 60000),
                     "/all-artifacts" => RunOnMainThread(() => GetAllArtifacts(QP(query, "offset"), QP(query, "limit")), 60000),
                     "/types" => RunOnMainThread(() => SearchTypes(QP(query, "q"))),
@@ -394,7 +485,8 @@ namespace RaidAutomation
                     "/presets" => RunOnMainThread(() => GetPresets(), 30000),
                     "/remove-preset" => RunOnMainThread(() => RemovePreset(QP(query, "id")), 30000),
                     "/save-preset" => RunOnMainThread(() => SavePreset(QP(query, "name"), QP(query, "heroes"), QP(query, "type")), 30000),
-                    "/update-preset" => RunOnMainThread(() => UpdatePreset(QP(query, "id"), QP(query, "priorities")), 30000),
+                    "/update-preset" => RunOnMainThread(() => UpdatePreset(QP(query, "id"), QP(query, "priorities"), QP(query, "starters")), 30000),
+                    "/preset-schema" => RunOnMainThread(() => PresetSchema(QP(query, "id")), 15000),
                     "/set-preset-team" => RunOnMainThread(() => SetPresetTeam(QP(query, "id"), QP(query, "heroes")), 30000),
                     "/skill-texts" => RunOnMainThread(() => GetSkillTexts(QP(query, "hero_id"), QP(query, "min_grade")), 60000),
                     "/mastery-data" => RunOnMainThread(() => GetMasteryData(QP(query, "hero_id"))),
@@ -402,9 +494,13 @@ namespace RaidAutomation
                     "/reset-masteries" => RunOnMainThread(() => ResetMasteries(QP(query, "hero_id")), 30000),
                     "/battle-state" => RunOnMainThread(() => GetBattleState(), 15000),
                     "/battle-log" => GetBattleLogFull(QP(query, "clear") == "1"),
+                    "/tick-log" => GetTickLog(QP(query, "clear") == "1"),
                     "/navigate" => RunOnMainThread(() => NavigateTo(QP(query, "target"))),
                     "/context-call" => RunOnMainThread(() => CallOnViewContext(QP(query, "path"), QP(query, "method"), QP(query, "arg"))),
                     "/resources" => RunOnMainThread(() => GetResources()),
+                    "/all-resources" => RunOnMainThread(() => GetAllResources()),
+                    "/shards" => RunOnMainThread(() => GetShards(QP(query, "debug") == "1")),
+                    "/explore-uw" => RunOnMainThread(() => ExploreUserWrapper(QP(query, "path"))),
                     "/view-contexts" => RunOnMainThread(() => GetViewContexts(QP(query, "path"))),
                     "/invoke-context" => RunOnMainThread(() => InvokeOnContext(QP(query, "type"), QP(query, "method"))),
                     _ => "{\"endpoints\":[\"/status\",\"/all-heroes\",\"/battle-state\",\"/navigate?target=cb\",\"/context-call?path=X&method=Y\",\"/invoke-context?type=X&method=Y\",\"/resources\",\"/view-contexts\",\"/mastery-data?hero_id=X\",\"/open-mastery?hero_id=X&mastery_id=Y\",\"/reset-masteries?hero_id=X\"]}"
@@ -611,9 +707,15 @@ namespace RaidAutomation
             int level = IntProp(hero, "Level");
             int empower = IntProp(hero, "EmpowerLevel");
 
+            bool locked = false, inStorage = false;
+            try { var p = hero.GetType().GetProperty("Locked"); if (p != null) locked = (bool)p.GetValue(hero); } catch { }
+            try { var p = hero.GetType().GetProperty("InStorage"); if (p != null) inStorage = (bool)p.GetValue(hero); } catch { }
+
             sb.Append("{\"id\":" + id + ",\"type_id\":" + typeId +
                       ",\"grade\":" + grade + ",\"level\":" + level +
-                      ",\"empower\":" + empower);
+                      ",\"empower\":" + empower +
+                      ",\"locked\":" + (locked ? "true" : "false") +
+                      ",\"in_storage\":" + (inStorage ? "true" : "false"));
 
             // HeroType — name, fraction, rarity, element, role
             object heroType = null;
@@ -2182,6 +2284,157 @@ namespace RaidAutomation
         }
 
         // =====================================================
+        // API: /enemy-skills?type_id=X — dump any HeroType's skills
+        // with full effect details. Reads StaticData.HeroData.HeroTypeById
+        // so it works for bosses and enemies (not just user-owned heroes).
+        // =====================================================
+        private string GetEnemySkills(string typeIdStr)
+        {
+            if (string.IsNullOrEmpty(typeIdStr)) return "{\"error\":\"type_id required\"}";
+            if (!int.TryParse(typeIdStr, out int typeId)) return "{\"error\":\"type_id must be int\"}";
+            var sb = new StringBuilder(8192);
+            var appModel = GetAppModel();
+            if (appModel == null) return "{\"error\":\"AppModel null\"}";
+
+            object heroType = null;
+            try
+            {
+                var staticData = Prop(appModel, "StaticData");
+                var heroData = Prop(staticData, "HeroData");
+                var htDict = Prop(heroData, "HeroTypeById");
+                if (htDict != null)
+                {
+                    var containsKey = htDict.GetType().GetMethod("ContainsKey");
+                    if (containsKey != null && (bool)containsKey.Invoke(htDict, new object[] { typeId }))
+                    {
+                        var itemProp = htDict.GetType().GetProperty("Item");
+                        heroType = itemProp?.GetValue(htDict, new object[] { typeId });
+                    }
+                }
+            }
+            catch (Exception ex) { return "{\"error\":\"" + Esc(ex.Message) + "\"}"; }
+
+            if (heroType == null) return "{\"error\":\"type_id " + typeId + " not found\"}";
+
+            sb.Append("{\"type_id\":" + typeId);
+            try
+            {
+                var nameObj = Prop(heroType, "Name");
+                string nm = null;
+                if (nameObj != null)
+                {
+                    try { nm = Prop(nameObj, "LocalizedValue")?.ToString(); } catch { }
+                    if (string.IsNullOrEmpty(nm) || nm.Contains("SharedLTextKey"))
+                        try { nm = Prop(nameObj, "Key")?.ToString(); } catch { }
+                }
+                if (!string.IsNullOrEmpty(nm)) sb.Append(",\"name\":\"" + Esc(nm) + "\"");
+            }
+            catch { }
+
+            sb.Append(",\"skills\":[");
+            int si = 0;
+            try
+            {
+                // Use AllSkillTypes on HeroType — HeroForm only has SkillTypeIds (ints)
+                var skills = Prop(heroType, "AllSkillTypes");
+                if (skills != null)
+                {
+                    {
+                        foreach (var skillType in ListItems(skills))
+                        {
+                            if (si > 0) sb.Append(",");
+                            sb.Append("{");
+
+                            int stTypeId = IntProp(skillType, "Id");
+                            if (stTypeId == 0) stTypeId = IntProp(skillType, "TypeId");
+                            sb.Append("\"skill_type_id\":" + stTypeId);
+
+                            try
+                            {
+                                foreach (var (propName, jsonField) in new[] { ("Name", "name"), ("Description", "desc") })
+                                {
+                                    var textObj = Prop(skillType, propName);
+                                    if (textObj == null) continue;
+                                    string val = ResolveLocalizedText(textObj);
+                                    if (!string.IsNullOrEmpty(val) && val.Length > 3 && !val.StartsWith("l10n:"))
+                                        sb.Append(",\"" + jsonField + "\":\"" + Esc(val) + "\"");
+                                }
+                            }
+                            catch { }
+
+                            int cd = IntProp(skillType, "Cooldown");
+                            if (cd > 0) sb.Append(",\"cooldown\":" + cd);
+
+                            var effects = Prop(skillType, "Effects");
+                            if (effects != null)
+                            {
+                                sb.Append(",\"effects\":[");
+                                int ei = 0;
+                                foreach (var eff in ListItems(effects))
+                                {
+                                    if (ei > 0) sb.Append(",");
+                                    sb.Append("{");
+                                    int kindId = IntProp(eff, "KindId");
+                                    sb.Append("\"kind\":" + kindId);
+                                    int effCount = IntProp(eff, "Count");
+                                    if (effCount > 0) sb.Append(",\"count\":" + effCount);
+                                    try
+                                    {
+                                        var chance = Prop(eff, "Chance");
+                                        if (chance != null)
+                                        {
+                                            double ch = ReadFixed(chance);
+                                            if (ch > 0) sb.Append(",\"chance\":" + FixedToJson(ch * 100));
+                                        }
+                                    } catch { }
+                                    try
+                                    {
+                                        var formula = Prop(eff, "MultiplierFormula");
+                                        if (formula != null)
+                                        {
+                                            string f = formula.ToString();
+                                            if (!string.IsNullOrEmpty(f)) sb.Append(",\"formula\":\"" + Esc(f) + "\"");
+                                        }
+                                    } catch { }
+                                    try
+                                    {
+                                        var applyParams = Prop(eff, "ApplyStatusEffectParams");
+                                        if (applyParams != null)
+                                        {
+                                            var infos = Prop(applyParams, "StatusEffectInfos");
+                                            if (infos != null)
+                                            {
+                                                sb.Append(",\"status_effects\":[");
+                                                int sei = 0;
+                                                foreach (var info in ListItems(infos))
+                                                {
+                                                    if (sei > 0) sb.Append(",");
+                                                    int seType = IntProp(info, "TypeId");
+                                                    int seDur = IntProp(info, "Duration");
+                                                    sb.Append("{\"type\":" + seType + ",\"duration\":" + seDur + "}");
+                                                    sei++;
+                                                }
+                                                sb.Append("]");
+                                            }
+                                        }
+                                    } catch { }
+                                    sb.Append("}");
+                                    ei++;
+                                }
+                                sb.Append("]");
+                            }
+                            sb.Append("}");
+                            si++;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex) { sb.Append("],\"_err\":\"" + Esc(ex.Message) + "\""); sb.Append("}"); return sb.ToString(); }
+            sb.Append("]}");
+            return sb.ToString();
+        }
+
+        // =====================================================
         // API: /all-artifacts — every artifact in the account
         // =====================================================
 
@@ -3554,19 +3807,131 @@ namespace RaidAutomation
         }
 
         /// <summary>
+        /// One-shot schema dump — lists every field + property on the first
+        /// SkillPrioritiesSetup and Sequence inside the given preset, plus
+        /// the current value for each (numeric/bool/string). Used to discover
+        /// "Delay" or other unpublished fields Raid's in-game UI might expose.
+        /// </summary>
+        private string PresetSchema(string idStr)
+        {
+            if (!int.TryParse(idStr ?? "", out int targetId)) return "{\"error\":\"bad id\"}";
+            try
+            {
+                var uw = GetUserWrapper();
+                var heroes = Prop(uw, "Heroes");
+                var heroData = Prop(heroes, "HeroData");
+                object presetList = Prop(heroData, "HeroesAiPresets") ?? Prop(heroes, "HeroesAiPresets");
+                if (presetList == null) return "{\"error\":\"no presets\"}";
+                object target = null;
+                foreach (var p in ListItems(presetList))
+                {
+                    if (IntProp(p, "Id") == targetId) { target = p; break; }
+                }
+                if (target == null) return "{\"error\":\"preset not found\"}";
+
+                var sb = new StringBuilder();
+                sb.Append("{\"preset_fields\":[");
+                var pt = target.GetType();
+                bool first = true;
+                foreach (var f in pt.GetFields(BindingFlags.Public | BindingFlags.Instance))
+                {
+                    if (!first) sb.Append(","); first = false;
+                    sb.Append("{\"name\":\"" + Esc(f.Name) + "\",\"type\":\"" + Esc(f.FieldType.Name) + "\"}");
+                }
+                foreach (var p in pt.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+                {
+                    if (!first) sb.Append(","); first = false;
+                    sb.Append("{\"name\":\"" + Esc(p.Name) + "\",\"type\":\"" + Esc(p.PropertyType.Name) + "\",\"is_prop\":true}");
+                }
+                sb.Append("]");
+
+                // Dig into first setup + first sequence
+                var setups = Prop(target, "SkillPrioritiesSetups");
+                object firstSetup = null;
+                if (setups != null)
+                {
+                    foreach (var s in ListItems(setups)) { firstSetup = s; break; }
+                }
+                if (firstSetup != null)
+                {
+                    sb.Append(",\"setup_fields\":[");
+                    first = true;
+                    var st = firstSetup.GetType();
+                    foreach (var f in st.GetFields(BindingFlags.Public | BindingFlags.Instance))
+                    {
+                        if (!first) sb.Append(","); first = false;
+                        sb.Append("{\"name\":\"" + Esc(f.Name) + "\",\"type\":\"" + Esc(f.FieldType.Name) + "\"}");
+                    }
+                    foreach (var p in st.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+                    {
+                        if (!first) sb.Append(","); first = false;
+                        sb.Append("{\"name\":\"" + Esc(p.Name) + "\",\"type\":\"" + Esc(p.PropertyType.Name) + "\",\"is_prop\":true}");
+                    }
+                    sb.Append("]");
+
+                    var seqs = Prop(firstSetup, "Sequences");
+                    object firstSeq = null;
+                    if (seqs != null)
+                    {
+                        foreach (var s in ListItems(seqs)) { firstSeq = s; break; }
+                    }
+                    if (firstSeq != null)
+                    {
+                        sb.Append(",\"sequence_fields\":[");
+                        first = true;
+                        var qt = firstSeq.GetType();
+                        foreach (var f in qt.GetFields(BindingFlags.Public | BindingFlags.Instance))
+                        {
+                            if (!first) sb.Append(","); first = false;
+                            sb.Append("{\"name\":\"" + Esc(f.Name) + "\",\"type\":\"" + Esc(f.FieldType.Name) + "\"}");
+                        }
+                        foreach (var p in qt.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+                        {
+                            if (!first) sb.Append(","); first = false;
+                            sb.Append("{\"name\":\"" + Esc(p.Name) + "\",\"type\":\"" + Esc(p.PropertyType.Name) + "\",\"is_prop\":true}");
+                        }
+                        sb.Append("]");
+                    }
+                }
+                sb.Append("}");
+                return sb.ToString();
+            }
+            catch (Exception ex) { return "{\"error\":\"" + Esc(ex.Message) + "\"}"; }
+        }
+
         /// Update an existing preset's skill priorities by cloning, modifying, and saving.
         /// This avoids IL2CPP type mismatch by reusing the game's own objects.
         /// priorities format: heroId:skillId=pri,skillId=pri;heroId:skillId=pri,...
         /// pri: 0=Default, 1=First, 2=Second, 3=Third, 4=NotUsed
         /// Example: /update-preset?id=1&priorities=15120:10703=3;18607:65102=2,65103=3;2643:62003=3
         /// </summary>
-        private string UpdatePreset(string idStr, string prioritiesStr)
+        private string UpdatePreset(string idStr, string prioritiesStr, string startersStr = null)
         {
             if (string.IsNullOrEmpty(idStr))
                 return "{\"error\":\"id required\"}";
             int targetId;
             if (!int.TryParse(idStr, out targetId))
                 return "{\"error\":\"invalid id\"}";
+
+            // starters format: heroId:skillId,skillId,skillId;heroId:skillId;...
+            // Each hero's list becomes Sequence[0].StarterSkillIds (Round 1).
+            // Pass an empty list (heroId:) to clear the opener.
+            var starters = new Dictionary<int, List<int>>();
+            if (!string.IsNullOrEmpty(startersStr))
+            {
+                foreach (var heroBlock in startersStr.Split(';'))
+                {
+                    var parts = heroBlock.Split(':');
+                    if (parts.Length != 2) continue;
+                    if (!int.TryParse(parts[0].Trim(), out int heroId)) continue;
+                    var list = new List<int>();
+                    foreach (var sk in parts[1].Split(','))
+                    {
+                        if (int.TryParse(sk.Trim(), out int sid)) list.Add(sid);
+                    }
+                    starters[heroId] = list;
+                }
+            }
 
             var presetT = FindType("SharedModel.Meta.Heroes.HeroesAiPreset");
             var sptEnum = FindType("SharedModel.Meta.Heroes.SkillPriorityType");
@@ -3726,10 +4091,66 @@ namespace RaidAutomation
                 if (origSetups == null) return "{\"error\":\"original SkillPrioritiesSetups is null\"}";
 
                 // Apply changes to the ORIGINAL preset in memory
+                var dbg = new StringBuilder();
+                dbg.Append(",\"debug_setups\":[");
+                bool dbgFirst = true;
+                int applied = 0;
+                int startersApplied = 0;
                 foreach (var setup in ListItems(origSetups))
                 {
                     int heroId = IntProp(setup, "HeroId");
-                    if (!changes.ContainsKey(heroId)) continue;
+                    bool needsPri = changes.ContainsKey(heroId);
+                    bool needsStarter = starters.ContainsKey(heroId);
+                    if (!dbgFirst) dbg.Append(",");
+                    dbgFirst = false;
+                    dbg.Append("{\"hid\":" + heroId + ",\"pri\":" + (needsPri ? "true" : "false") + ",\"starters\":" + (needsStarter ? "true" : "false") + "}");
+
+                    // Apply StarterSkillIds to each Sequence (Round 1 is [0]).
+                    // We only touch Round 1's opener by convention; other rounds
+                    // keep their existing starters unless explicitly addressed.
+                    if (needsStarter)
+                    {
+                        try
+                        {
+                            var seqsForStarter = Prop(setup, "Sequences");
+                            if (seqsForStarter == null)
+                            {
+                                var sf = setup.GetType().GetField("Sequences", BindingFlags.Public | BindingFlags.Instance);
+                                if (sf != null) seqsForStarter = sf.GetValue(setup);
+                            }
+                            if (seqsForStarter != null)
+                            {
+                                int rIdx = 0;
+                                foreach (var seq in ListItems(seqsForStarter))
+                                {
+                                    if (rIdx != 0) { rIdx++; continue; }  // Round 1 only
+                                    rIdx++;
+                                    var listField = seq.GetType().GetField("StarterSkillIds", BindingFlags.Public | BindingFlags.Instance);
+                                    object listObj = null;
+                                    if (listField != null) listObj = listField.GetValue(seq);
+                                    if (listObj == null)
+                                    {
+                                        var getList = seq.GetType().GetMethod("get_StarterSkillIds");
+                                        if (getList != null) listObj = getList.Invoke(seq, null);
+                                    }
+                                    if (listObj != null)
+                                    {
+                                        // Clear + add each new starter via List.Clear() and List.Add(int).
+                                        var t = listObj.GetType();
+                                        t.GetMethod("Clear")?.Invoke(listObj, null);
+                                        var add = t.GetMethod("Add");
+                                        foreach (var sid in starters[heroId])
+                                            add?.Invoke(listObj, new object[] { sid });
+                                        startersApplied++;
+                                    }
+                                }
+                            }
+                        }
+                        catch (Exception ex) { Logger.LogWarning("PRESET starters: " + ex.Message); }
+                    }
+
+                    if (!needsPri) continue;
+                    applied++;
                     var heroChanges = changes[heroId];
 
                     // Update top-level PriorityBySkillId
@@ -3774,6 +4195,7 @@ namespace RaidAutomation
                     }
                 }
 
+                dbg.Append("]");
                 // Now save the ORIGINAL (modified) preset via SaveAiPresetCmd
                 var cmdType = FindType("Client.Model.Gameplay.Heroes.Commands.SaveAiPresetCmd");
                 if (cmdType == null) return "{\"error\":\"SaveAiPresetCmd not found\"}";
@@ -3783,7 +4205,11 @@ namespace RaidAutomation
                 var cmd = ctor.Invoke(new object[] { targetPreset });
                 InvokeExecute(cmd);
 
-                sb.Append("]}");
+                sb.Append("]");
+                sb.Append(",\"applied\":" + applied);
+                sb.Append(",\"starters_applied\":" + startersApplied);
+                sb.Append(dbg.ToString());
+                sb.Append("}");
                 return sb.ToString();
             }
             catch (TargetInvocationException tex)
@@ -3916,7 +4342,7 @@ namespace RaidAutomation
                                         if (_battleLog.Count < 2000)
                                             _battleLog.Add("{\"poll\":" + _pollCount +
                                                 ",\"turn\":" + _battleCommandCount +
-                                                ",\"scene\":\"final\"," + finalHeroes + "}");
+                                                ",\"scene\":\"final\",\"heroes\":" + finalHeroes + "}");
                                     }
                                 }
                             }
@@ -4409,6 +4835,8 @@ namespace RaidAutomation
 
         public static void BattleHook_ProcessStartBattle(object __instance)
         {
+            if (++_hookDiag_StartBattle <= 3)
+                BepInEx.Logging.Logger.CreateLogSource("CBHookDiag").LogInfo("ProcessStartBattle fired (count=" + _hookDiag_StartBattle + ") instance_type=" + (__instance == null ? "null" : __instance.GetType().FullName));
             try
             {
                 _battleActive = true;
@@ -4436,6 +4864,7 @@ namespace RaidAutomation
                     _battleLog.Clear();
                     _battleLog.Add("{\"event\":\"battle_start\"}");
                 }
+                lock (_tickLog) { _tickLog.Clear(); }
             }
             catch { }
         }
@@ -4473,13 +4902,23 @@ namespace RaidAutomation
                                 if (_battleLog.Count < 2000)
                                 {
                                     _battleLog.Add("{\"poll\":" + _pollCount + ",\"turn\":" +
-                                        _battleCommandCount + ",\"scene\":\"final\"," + heroData + "}");
+                                        _battleCommandCount + ",\"scene\":\"final\",\"heroes\":" + heroData + "}");
                                     _battleLog.Add("{\"event\":\"battle_end\",\"turns\":" +
                                         _battleCommandCount + ",\"polls\":" + _pollCount + "}");
                                 }
                             }
                         }
                     }
+                }
+
+                // Snapshot the completed battle so /battle-log can serve it
+                // even after ProcessStartBattle fires again (which wipes _battleLog).
+                lock (_battleLog)
+                {
+                    _completedBattleLog.Clear();
+                    _completedBattleLog.AddRange(_battleLog);
+                    _completedTurnCount = _battleCommandCount;
+                    _completedPollCount = _pollCount;
                 }
 
                 _battleActive = false;
@@ -4524,8 +4963,400 @@ namespace RaidAutomation
         /// Fires when any hero (player or enemy) executes a skill.
         /// The single argument is the SkillCommand (contains caster, target, skill id).
         /// </summary>
+        private static int _hookDiag_ApplyCommand = 0;
+        private static int _hookDiag_DamageChange = 0;
+        private static int _hookDiag_ApplyStatus = 0;
+        private static int _hookDiag_RemoveStatus = 0;
+        private static int _hookDiag_DurationChange = 0;
+        internal static readonly Dictionary<string, int> _applyCmdClasses = new();
+
+        // Best-effort dump of an Il2Cpp/wrapper object's fields via reflection.
+        // Used for processor event logging where we don't know exact param types.
+        private static string DumpEventArgs(object[] args)
+        {
+            var sb = new StringBuilder();
+            sb.Append("[");
+            for (int i = 0; i < args.Length; i++)
+            {
+                if (i > 0) sb.Append(",");
+                var a = args[i];
+                if (a == null) { sb.Append("null"); continue; }
+                string tname = a.GetType().Name;
+                sb.Append("{\"i\":" + i + ",\"type\":\"" + Esc(tname) + "\"");
+                // Extract common fields. BattleHero objects → extract their Id.
+                // Numerics (Fixed, int, bool) → extract the value.
+                // Nested contexts (DamageContext, ApplyContext) → depth-1 recurse into key fields.
+                ExtractFieldsInto(sb, a, new[] {
+                    "Producer", "Target", "InitialTarget",
+                    "Amount", "Damage", "DamageAmount", "Value", "Health",
+                    "StatusEffectTypeId", "TypeId", "Duration",
+                    "IsCritical", "IsCrit", "CritChance",
+                    "Chance", "Count", "SkillTypeId",
+                    "Accuracy", "Resistance", "BaseAccuracy",
+                    "IsGuaranteedBlocked", "ApplyResult", "ApplyFailReason",
+                    "AppliedEffect",
+                    "IsBlocked", "IsEvaded", "IsNullified", "WasRedirected",
+                    "HitType", "GlanceReason", "ElementRelation",
+                    "CalculatedDamage", "DealtDamage", "TargetHealthAfterDamage",
+                    "AbsorbedByBlockDamage", "DefenceModifier",
+                    "CriticalHitChance", "GlancingHitChance", "CrushingHitChance",
+                });
+                // Depth-1 recurse into known sub-contexts
+                foreach (var sub in new[] { "DamageContext", "ApplyContext", "HealContext", "ChangeStaminaContext" })
+                {
+                    object subCtx = null;
+                    try { subCtx = Prop(a, sub); } catch { }
+                    if (subCtx == null) continue;
+                    sb.Append(",\"" + sub + "\":{\"_type\":\"" + Esc(subCtx.GetType().Name) + "\"");
+                    ExtractFieldsInto(sb, subCtx, new[] {
+                        "HitType", "IsBlocked", "IsCritical",
+                        "CalculatedDamage", "DealtDamage", "TargetHealthAfterDamage",
+                        "AbsorbedByBlockDamage", "DefenceModifier",
+                        "CriticalHitChance", "GlancingHitChance", "CrushingHitChance",
+                        "ElementRelation", "GlanceReason", "MultiplierValuePositive",
+                        "Accuracy", "Resistance", "BaseAccuracy", "ApplyResult",
+                        "ApplyFailReason", "IsGuaranteedBlocked",
+                        "StatusEffectContext", "AppliedEffect",
+                        "Amount",
+                    });
+                    sb.Append("}");
+                }
+                sb.Append("}");
+            }
+            sb.Append("]");
+            return sb.ToString();
+        }
+
+        // Extract a flat list of field names from an object into the given
+        // StringBuilder (each as JSON ",\"name\":value"). Handles BattleHero
+        // objects (extract .Id), Fixed-point numerics (unbox via .RawValue),
+        // primitives and enums.
+        private static void ExtractFieldsInto(StringBuilder sb, object obj, string[] fields)
+        {
+            if (obj == null) return;
+            foreach (var fieldName in fields)
+            {
+                try
+                {
+                    var v = Prop(obj, fieldName);
+                    if (v == null) continue;
+                    // BattleHero → use Id
+                    if (fieldName == "Producer" || fieldName == "Target" || fieldName == "InitialTarget")
+                    {
+                        try { var hid = Prop(v, "Id"); if (hid != null) { sb.Append(",\"" + fieldName + "\":" + Convert.ToInt32(hid)); continue; } }
+                        catch { }
+                    }
+                    // Boolean / numeric primitives
+                    if (v is int || v is long || v is short || v is byte) { sb.Append(",\"" + fieldName + "\":" + v); continue; }
+                    if (v is bool bv) { sb.Append(",\"" + fieldName + "\":" + (bv ? "true" : "false")); continue; }
+                    // Fixed-point (game's Fixed type has .RawValue — 32.32)
+                    try
+                    {
+                        var raw = Prop(v, "RawValue");
+                        if (raw != null)
+                        {
+                            long rawL = Convert.ToInt64(raw);
+                            sb.Append(",\"" + fieldName + "\":" + (rawL >> 32));
+                            continue;
+                        }
+                    }
+                    catch { }
+                    // DamageResult — has Amount or similar
+                    try
+                    {
+                        var amt = Prop(v, "Amount");
+                        if (amt != null)
+                        {
+                            try { var raw2 = Prop(amt, "RawValue"); if (raw2 != null) { long rl = Convert.ToInt64(raw2); sb.Append(",\"" + fieldName + "\":" + (rl >> 32)); continue; } } catch { }
+                            try { double d2 = Convert.ToDouble(amt); sb.Append(",\"" + fieldName + "\":" + d2); continue; } catch { }
+                        }
+                    }
+                    catch { }
+                    try
+                    {
+                        double dv = Convert.ToDouble(v);
+                        sb.Append(",\"" + fieldName + "\":" + dv);
+                        continue;
+                    }
+                    catch { }
+                    // String / enum
+                    var s = v.ToString();
+                    if (s != null && s.Length < 60) sb.Append(",\"" + fieldName + "\":\"" + Esc(s) + "\"");
+                }
+                catch { }
+            }
+        }
+
+        public static void BattleHook_DamageChange(object __instance, object[] __args)
+        {
+            _hookDiag_DamageChange++;
+            try
+            {
+                string entry = "{\"kind\":\"damage\",\"tick\":" + _battleCommandCount + ",\"args\":" + DumpEventArgs(__args ?? new object[0]) + "}";
+                lock (_tickLog) { if (_tickLog.Count < 3000) _tickLog.Add(entry); }
+            }
+            catch { }
+        }
+
+        public static void BattleHook_ApplyStatus(object __instance, object[] __args)
+        {
+            _hookDiag_ApplyStatus++;
+            try
+            {
+                string entry = "{\"kind\":\"apply_status\",\"tick\":" + _battleCommandCount + ",\"args\":" + DumpEventArgs(__args ?? new object[0]) + "}";
+                lock (_tickLog) { if (_tickLog.Count < 3000) _tickLog.Add(entry); }
+            }
+            catch { }
+        }
+
+        public static void BattleHook_RemoveStatus(object __instance, object[] __args)
+        {
+            _hookDiag_RemoveStatus++;
+            try
+            {
+                string entry = "{\"kind\":\"remove_status\",\"tick\":" + _battleCommandCount + ",\"args\":" + DumpEventArgs(__args ?? new object[0]) + "}";
+                lock (_tickLog) { if (_tickLog.Count < 3000) _tickLog.Add(entry); }
+            }
+            catch { }
+        }
+
+        public static void BattleHook_DurationChange(object __instance, object[] __args)
+        {
+            _hookDiag_DurationChange++;
+            try
+            {
+                string entry = "{\"kind\":\"duration_change\",\"tick\":" + _battleCommandCount + ",\"args\":" + DumpEventArgs(__args ?? new object[0]) + "}";
+                lock (_tickLog) { if (_tickLog.Count < 3000) _tickLog.Add(entry); }
+            }
+            catch { }
+        }
+
+        private static int _hookDiag_TurnLeftSet = 0;
+        private static int _hookDiag_BeforeStartTurn = 0;
+        private static int _hookDiag_UnapplyExecute = 0;
+
+        // Fires when the ECS system runs its unapply-result group.
+        // __instance holds _unapplyEffectResults group, which we iterate.
+        public static void BattleHook_UnapplyExecute(object __instance)
+        {
+            _hookDiag_UnapplyExecute++;
+            try
+            {
+                // Iterate _unapplyEffectResults group (IGroup<Entity>). Each entity has
+                // an UnappliedEffectResult component. Walk members + dump fields.
+                var group = Prop(__instance, "_unapplyEffectResults");
+                if (group == null) return;
+                int count = IntProp(group, "Count");
+                // Only log when count > 0 — most Execute fires have empty group
+                if (count == 0) return;
+                // Log that we found something (always tracks even if iteration fails)
+                int fireNum = _hookDiag_UnapplyExecute;
+                var sb = new StringBuilder();
+                sb.Append("{\"kind\":\"unapply\",\"tick\":" + _battleCommandCount + ",\"count\":" + count + ",\"items\":[");
+                try
+                {
+                    var entities = Prop(group, "GetEntities") ?? Prop(group, "Entities") ?? Prop(group, "entities") ?? group;
+                    var enm = entities.GetType().GetMethod("GetEnumerator");
+                    if (enm != null)
+                    {
+                        var en = enm.Invoke(entities, null);
+                        var mn = en.GetType().GetMethod("MoveNext");
+                        var cur = en.GetType().GetProperty("Current");
+                        int i = 0;
+                        while ((bool)mn.Invoke(en, null) && i < 10)
+                        {
+                            var entity = cur.GetValue(en);
+                            // Entity has UnappliedEffectResult component — reflect for Effect/Target/Cause
+                            if (i > 0) sb.Append(",");
+                            // Try to extract result directly from entity
+                            var eff = Prop(entity, "Effect") ?? Prop(entity, "effect");
+                            var tgt = Prop(entity, "Target") ?? Prop(entity, "target");
+                            var cause = Prop(entity, "Cause") ?? Prop(entity, "cause");
+                            int tgtId = 0, effType = 0;
+                            if (tgt != null) tgtId = IntProp(tgt, "Id");
+                            if (eff != null) effType = IntProp(eff, "EffectTypeId");
+                            sb.Append("{\"target\":" + tgtId + ",\"effect_type\":" + effType + ",\"cause\":\"" + Esc(cause?.ToString() ?? "?") + "\"}");
+                            i++;
+                        }
+                    }
+                }
+                catch { }
+                sb.Append("]}");
+                lock (_tickLog) { if (_tickLog.Count < 3000) _tickLog.Add(sb.ToString()); }
+            }
+            catch { }
+        }
+
+        // ProcessBeforeStartTurn fires right before a hero takes their turn.
+        // This is where durations typically tick down for effects on that hero.
+        // We dump the pre-turn state of their effects so Python can diff vs
+        // next poll to detect naturally expired effects.
+        public static void BattleHook_ProcessBeforeStartTurn(object __instance)
+        {
+            _hookDiag_BeforeStartTurn++;
+            try
+            {
+                // Dump all heroes' effects — but only if we can find the ActiveHero
+                // from state.CurrentHero or similar. Simpler: just snapshot all.
+                var sb = new StringBuilder();
+                sb.Append("{\"kind\":\"before_start_turn\",\"tick\":" + _battleCommandCount + ",\"effects\":[");
+                int n = 0;
+                try
+                {
+                    var state = Prop(__instance, "State");
+                    foreach (var teamGetter in new[] { "PlayerTeam", "EnemyTeam" })
+                    {
+                        var team = Prop(state, teamGetter);
+                        if (team == null) continue;
+                        object heroes = Prop(team, "HeroesWithGuardian") ?? Prop(team, "Heroes");
+                        if (heroes == null) continue;
+                        // Use Count + indexer
+                        int count = IntProp(heroes, "Count");
+                        for (int i = 0; i < count && i < 10; i++)
+                        {
+                            object hero = null;
+                            try
+                            {
+                                var idxer = heroes.GetType().GetProperty("Item");
+                                if (idxer != null) hero = idxer.GetValue(heroes, new object[] { i });
+                            }
+                            catch { }
+                            if (hero == null) continue;
+                            int hid = IntProp(hero, "Id");
+                            // AppliedEffectsByHeroes: Dict<BattleHero, List<AppliedEffect>>
+                            var aeByH = Prop(hero, "AppliedEffectsByHeroes");
+                            if (aeByH == null) continue;
+                            // Dict.Values
+                            var values = Prop(aeByH, "Values");
+                            if (values == null) continue;
+                            // Iterate values (each is a List<AppliedEffect>)
+                            try
+                            {
+                                var enumer = values.GetType().GetMethod("GetEnumerator");
+                                if (enumer == null) continue;
+                                var en = enumer.Invoke(values, null);
+                                var moveNext = en.GetType().GetMethod("MoveNext");
+                                var current = en.GetType().GetProperty("Current");
+                                while ((bool)moveNext.Invoke(en, null))
+                                {
+                                    var list = current.GetValue(en);
+                                    if (list == null) continue;
+                                    int lc = IntProp(list, "Count");
+                                    var idxr = list.GetType().GetProperty("Item");
+                                    for (int k = 0; k < lc && k < 20; k++)
+                                    {
+                                        var eff = idxr?.GetValue(list, new object[] { k });
+                                        if (eff == null) continue;
+                                        int etype = IntProp(eff, "EffectTypeId");
+                                        int tLeft = IntProp(eff, "TurnLeft");
+                                        int pid = IntProp(eff, "ProducerId");
+                                        if (n > 0) sb.Append(",");
+                                        sb.Append("{\"h\":" + hid + ",\"t\":" + etype + ",\"tl\":" + tLeft + ",\"pid\":" + pid + "}");
+                                        n++;
+                                    }
+                                }
+                            }
+                            catch { }
+                        }
+                    }
+                }
+                catch { }
+                sb.Append("]}");
+                lock (_tickLog) { if (_tickLog.Count < 3000) _tickLog.Add(sb.ToString()); }
+            }
+            catch { }
+        }
+        // __instance = the AppliedEffect being modified; __0 = the new TurnLeft value
+        public static void BattleHook_TurnLeftSet(object __instance, int __0)
+        {
+            _hookDiag_TurnLeftSet++;
+            try
+            {
+                int producerId = IntProp(__instance, "ProducerId");
+                int effectType = IntProp(__instance, "EffectTypeId");
+                int lifetime = IntProp(__instance, "Lifetime");
+                int skillTypeId = IntProp(__instance, "SkillTypeId");
+                string entry = "{\"kind\":\"turn_left_set\",\"tick\":" + _battleCommandCount
+                              + ",\"producer_id\":" + producerId
+                              + ",\"effect_type\":" + effectType
+                              + ",\"new_turn_left\":" + __0
+                              + ",\"lifetime\":" + lifetime
+                              + ",\"skill_type_id\":" + skillTypeId + "}";
+                lock (_tickLog) { if (_tickLog.Count < 3000) _tickLog.Add(entry); }
+            }
+            catch { }
+        }
+
+        public static void BattleHook_ApplyCommand(object __instance, object __0)
+        {
+            _hookDiag_ApplyCommand++;
+            // ApplyCommand is the generic dispatcher. Track class name of each
+            // command that comes through so we can identify SkillCommand variants.
+            try
+            {
+                if (__0 == null) return;
+                IntPtr cmdPtr = IntPtr.Zero;
+                if (__0 is Il2CppSystem.Object il2obj) cmdPtr = il2obj.Pointer;
+                if (cmdPtr == IntPtr.Zero) return;
+                IntPtr cls = il2cpp_object_get_class(cmdPtr);
+                string cmdClassName = Marshal.PtrToStringAnsi(il2cpp_class_get_name(cls)) ?? "?";
+                lock (_applyCmdClasses)
+                {
+                    _applyCmdClasses[cmdClassName] = _applyCmdClasses.GetValueOrDefault(cmdClassName, 0) + 1;
+                }
+                // Always attempt extraction — IL2CPP returns the static type
+                // (BattleCommand) not the runtime subclass, so we can't filter
+                // on name. The extractor itself gracefully produces a 0-filled
+                // cast entry if the command isn't actually a skill.
+                BattleHook_ApplySkillCommand(__instance, __0);
+            }
+            catch { }
+        }
+
         public static void BattleHook_ApplySkillCommand(object __instance, object __0)
         {
+            if (++_hookDiag_ApplySkill <= 5 || _hookDiag_ApplySkill % 50 == 0)
+                BepInEx.Logging.Logger.CreateLogSource("CBHookDiag").LogInfo("ApplySkillCommand fired (count=" + _hookDiag_ApplySkill + ")");
+
+            // Clean cast event for tick log: {kind:"cast", producer_id, target_id, skill_type_id, source, tick}
+            // SkillCommand schema (from /props on SharedModel.Battle.Core.Commands.SkillCommand):
+            //   - SkillTypeId (Int32)
+            //   - Producer (BattleTarget { HeroId, PlayerId })
+            //   - Target (BattleTarget)
+            //   - Source (SkillCommandSource enum)
+            // Use C# reflection via Prop/IntProp — works on Il2Cpp wrapper types
+            // where raw FindIL2CPPMethodStatic lookups fail.
+            try
+            {
+                int bcType = IntProp(__0, "Type");
+                object sc = Prop(__0, "SkillCommand");
+                if (sc == null)
+                {
+                    string d = "{\"kind\":\"diag_cmd\",\"tick\":" + _battleCommandCount + ",\"bc_type\":" + bcType + ",\"err\":\"sc_null\"}";
+                    lock (_tickLog) { if (_tickLog.Count < 3000) _tickLog.Add(d); }
+                    return;
+                }
+                int skillId = IntProp(sc, "SkillTypeId");
+                int source = IntProp(sc, "Source");
+                int prodId = 0, tgtId = 0;
+                object prod = Prop(sc, "Producer");
+                object tgt = Prop(sc, "Target");
+                if (prod != null) prodId = IntProp(prod, "HeroId");
+                if (tgt != null) tgtId = IntProp(tgt, "HeroId");
+                string entry = "{\"kind\":\"cast\",\"tick\":" + _battleCommandCount
+                              + ",\"bc_type\":" + bcType
+                              + ",\"producer_id\":" + prodId
+                              + ",\"target_id\":" + tgtId
+                              + ",\"skill_type_id\":" + skillId
+                              + ",\"source\":" + source + "}";
+                lock (_tickLog) { if (_tickLog.Count < 3000) _tickLog.Add(entry); }
+            }
+            catch (Exception ex)
+            {
+                string d = "{\"kind\":\"diag_cmd\",\"tick\":" + _battleCommandCount + ",\"err\":\"" + Esc(ex.Message) + "\"}";
+                lock (_tickLog) { if (_tickLog.Count < 3000) _tickLog.Add(d); }
+            }
+
             try
             {
                 if (__0 == null) return;
@@ -4607,10 +5438,332 @@ namespace RaidAutomation
             catch { }
         }
 
+        private static int _hookDiag_StartTurn = 0;
+        private static int _hookDiag_StartBattle = 0;
+        private static int _hookDiag_ApplySkill = 0;
+        // Patch outcomes: which hook names attached, which failed, with reasons
+        internal static readonly List<string> _hookPatchLog = new();
+
+        private string GetHookDiag()
+        {
+            var sb = new StringBuilder();
+            sb.Append("{\"fires\":{\"StartBattle\":" + _hookDiag_StartBattle
+                     + ",\"StartTurn\":" + _hookDiag_StartTurn
+                     + ",\"ApplySkill\":" + _hookDiag_ApplySkill
+                     + ",\"ApplyCommand\":" + _hookDiag_ApplyCommand
+                     + ",\"DamageChange\":" + _hookDiag_DamageChange
+                     + ",\"ApplyStatus\":" + _hookDiag_ApplyStatus
+                     + ",\"RemoveStatus\":" + _hookDiag_RemoveStatus
+                     + ",\"DurationChange\":" + _hookDiag_DurationChange
+                     + ",\"TurnLeftSet\":" + _hookDiag_TurnLeftSet
+                     + ",\"BeforeStartTurn\":" + _hookDiag_BeforeStartTurn
+                     + ",\"UnapplyExecute\":" + _hookDiag_UnapplyExecute + "}");
+            sb.Append(",\"cmd_classes\":{");
+            lock (_applyCmdClasses)
+            {
+                int i = 0;
+                foreach (var kv in _applyCmdClasses)
+                {
+                    if (i > 0) sb.Append(",");
+                    sb.Append("\"" + Esc(kv.Key) + "\":" + kv.Value);
+                    i++;
+                }
+            }
+            sb.Append("}");
+            sb.Append(",\"patches\":[");
+            lock (_hookPatchLog)
+            {
+                for (int i = 0; i < _hookPatchLog.Count; i++)
+                {
+                    if (i > 0) sb.Append(",");
+                    sb.Append("\"" + Esc(_hookPatchLog[i]) + "\"");
+                }
+            }
+            sb.Append("]}");
+            return sb.ToString();
+        }
+
+        // Per-tick TM log, populated inside BattleHook_ProcessStartTurn. Each
+        // entry is one turn-start event with TM + turn_n for every unit at
+        // that exact moment — ground truth for sim calibration. Kept small
+        // (just ids, tm, turn_n — no skills, stats, effects).
+        internal static readonly List<string> _tickLog = new();
+
         public static void BattleHook_ProcessStartTurn(object __instance)
         {
             _activeBattleProcessor = __instance;
             _battleCommandCount++;
+            if (++_hookDiag_StartTurn <= 5 || _hookDiag_StartTurn % 20 == 0)
+                BepInEx.Logging.Logger.CreateLogSource("CBHookDiag").LogInfo("ProcessStartTurn fired (count=" + _hookDiag_StartTurn + ")");
+
+            // Capture per-tick TM + turn_n snapshot of all units. Wrapped in
+            // try/catch so hook failures never crash the game; the fallback
+            // is the simpler log entry below.
+            try
+            {
+                IntPtr procPtrTM = IntPtr.Zero;
+                if (__instance is Il2CppSystem.Object ilo) procPtrTM = ilo.Pointer;
+                if (procPtrTM != IntPtr.Zero)
+                {
+                    // Teams live on processor.State, NOT processor.Context (the working
+                    // ReadBattleHeroesIL2CPP path uses get_State — mirror it here).
+                    IntPtr stateObj = IntPtr.Zero;
+                    IntPtr getState = FindIL2CPPMethodStatic(il2cpp_object_get_class(procPtrTM), "get_State", 0);
+                    if (getState != IntPtr.Zero) { IntPtr eS = IntPtr.Zero; stateObj = il2cpp_runtime_invoke(getState, procPtrTM, IntPtr.Zero, ref eS); }
+                    if (stateObj != IntPtr.Zero)
+                    {
+                        var sbtl = new StringBuilder();
+                        sbtl.Append("{\"tick\":" + _battleCommandCount + ",\"units\":[");
+                        int uidx = 0;
+                        foreach (var teamGetter in new[] { "get_PlayerTeam", "get_EnemyTeam" })
+                        {
+                            IntPtr getTeam = FindIL2CPPMethodStatic(il2cpp_object_get_class(stateObj), teamGetter, 0);
+                            if (getTeam == IntPtr.Zero) continue;
+                            IntPtr e2 = IntPtr.Zero;
+                            IntPtr team = il2cpp_runtime_invoke(getTeam, stateObj, IntPtr.Zero, ref e2);
+                            if (team == IntPtr.Zero) continue;
+                            IntPtr getH = FindIL2CPPMethodStatic(il2cpp_object_get_class(team), "get_HeroesWithGuardian", 0);
+                            if (getH == IntPtr.Zero) getH = FindIL2CPPMethodStatic(il2cpp_object_get_class(team), "get_Heroes", 0);
+                            if (getH == IntPtr.Zero) continue;
+                            IntPtr e3 = IntPtr.Zero;
+                            IntPtr heroesColl = il2cpp_runtime_invoke(getH, team, IntPtr.Zero, ref e3);
+                            if (heroesColl == IntPtr.Zero) continue;
+                            // Iterate via get_Count + get_Item
+                            IntPtr hClass = il2cpp_object_get_class(heroesColl);
+                            IntPtr getCount = FindIL2CPPMethodStatic(hClass, "get_Count", 0);
+                            IntPtr getItem = FindIL2CPPMethodStatic(hClass, "get_Item", 1);
+                            if (getCount == IntPtr.Zero || getItem == IntPtr.Zero) continue;
+                            IntPtr e4 = IntPtr.Zero;
+                            IntPtr countRes = il2cpp_runtime_invoke(getCount, heroesColl, IntPtr.Zero, ref e4);
+                            if (countRes == IntPtr.Zero) continue;
+                            int count = Marshal.ReadInt32(countRes + 0x10);
+                            string side = teamGetter == "get_PlayerTeam" ? "p" : "e";
+                            for (int i = 0; i < count && i < 10; i++)
+                            {
+                                IntPtr intBuf = Marshal.AllocHGlobal(4); Marshal.WriteInt32(intBuf, i);
+                                IntPtr argsArr = Marshal.AllocHGlobal(IntPtr.Size); Marshal.WriteIntPtr(argsArr, intBuf);
+                                IntPtr e5 = IntPtr.Zero;
+                                IntPtr heroObj = il2cpp_runtime_invoke(getItem, heroesColl, argsArr, ref e5);
+                                Marshal.FreeHGlobal(intBuf); Marshal.FreeHGlobal(argsArr);
+                                if (heroObj == IntPtr.Zero) continue;
+                                IntPtr hc = il2cpp_object_get_class(heroObj);
+                                int id = 0, turnN = 0;
+                                long tmRaw = 0;
+                                IntPtr getId = FindIL2CPPMethodStatic(hc, "get_Id", 0);
+                                if (getId != IntPtr.Zero) { IntPtr e6 = IntPtr.Zero; IntPtr r = il2cpp_runtime_invoke(getId, heroObj, IntPtr.Zero, ref e6); if (r != IntPtr.Zero) id = Marshal.ReadInt32(r + 0x10); }
+                                // Stamina (TM) at offset 0x58+ via get_Stamina — returns Fixed (32.32)
+                                IntPtr getStam = FindIL2CPPMethodStatic(hc, "get_Stamina", 0);
+                                if (getStam != IntPtr.Zero) { IntPtr e7 = IntPtr.Zero; IntPtr r = il2cpp_runtime_invoke(getStam, heroObj, IntPtr.Zero, ref e7); if (r != IntPtr.Zero) tmRaw = Marshal.ReadInt64(r + 0x10); }
+                                // TurnCount @ 0xE8
+                                turnN = Marshal.ReadInt32(heroObj + 0xE8);
+                                long tmDisplay = tmRaw >> 32;  // 32.32 fixed → display
+                                if (uidx > 0) sbtl.Append(",");
+                                sbtl.Append("{\"s\":\"" + side + "\",\"id\":" + id + ",\"tm\":" + tmDisplay + ",\"tn\":" + turnN);
+                                // IL2CPP raw dict iteration for AppliedEffectsByHeroes
+                                try
+                                {
+                                    IntPtr getAeByH = FindIL2CPPMethodStatic(hc, "get_AppliedEffectsByHeroes", 0);
+                                    sbtl.Append(",\"get_ae_found\":" + (getAeByH != IntPtr.Zero ? 1 : 0));
+                                    if (getAeByH != IntPtr.Zero)
+                                    {
+                                        IntPtr eAe = IntPtr.Zero;
+                                        IntPtr dictPtr = il2cpp_runtime_invoke(getAeByH, heroObj, IntPtr.Zero, ref eAe);
+                                        if (dictPtr != IntPtr.Zero)
+                                        {
+                                            IntPtr dictCls = il2cpp_object_get_class(dictPtr);
+                                            // Get Values collection
+                                            IntPtr getVals = FindIL2CPPMethodStatic(dictCls, "get_Values", 0);
+                                            if (getVals != IntPtr.Zero)
+                                            {
+                                                IntPtr eV = IntPtr.Zero;
+                                                IntPtr valsColl = il2cpp_runtime_invoke(getVals, dictPtr, IntPtr.Zero, ref eV);
+                                                if (valsColl != IntPtr.Zero)
+                                                {
+                                                    IntPtr valsCls = il2cpp_object_get_class(valsColl);
+                                                    IntPtr valsEnum = FindIL2CPPMethodStatic(valsCls, "GetEnumerator", 0);
+                                                    if (valsEnum != IntPtr.Zero)
+                                                    {
+                                                        IntPtr eE = IntPtr.Zero;
+                                                        IntPtr enumObj = il2cpp_runtime_invoke(valsEnum, valsColl, IntPtr.Zero, ref eE);
+                                                        if (enumObj != IntPtr.Zero)
+                                                        {
+                                                            IntPtr enumCls = il2cpp_object_get_class(enumObj);
+                                                            IntPtr moveNext = FindIL2CPPMethodStatic(enumCls, "MoveNext", 0);
+                                                            IntPtr getCur = FindIL2CPPMethodStatic(enumCls, "get_Current", 0);
+                                                            sbtl.Append(",\"effs\":[");
+                                                            int ne = 0;
+                                                            while (moveNext != IntPtr.Zero && getCur != IntPtr.Zero && ne < 30)
+                                                            {
+                                                                IntPtr eM = IntPtr.Zero;
+                                                                IntPtr mnRes = il2cpp_runtime_invoke(moveNext, enumObj, IntPtr.Zero, ref eM);
+                                                                if (mnRes == IntPtr.Zero || Marshal.ReadByte(mnRes + 0x10) == 0) break;
+                                                                IntPtr eC = IntPtr.Zero;
+                                                                IntPtr listObj = il2cpp_runtime_invoke(getCur, enumObj, IntPtr.Zero, ref eC);
+                                                                if (listObj == IntPtr.Zero) continue;
+                                                                IntPtr listCls = il2cpp_object_get_class(listObj);
+                                                                IntPtr lGetCount = FindIL2CPPMethodStatic(listCls, "get_Count", 0);
+                                                                IntPtr lGetItem = FindIL2CPPMethodStatic(listCls, "get_Item", 1);
+                                                                if (lGetCount == IntPtr.Zero || lGetItem == IntPtr.Zero) continue;
+                                                                IntPtr eL = IntPtr.Zero;
+                                                                IntPtr lcRes = il2cpp_runtime_invoke(lGetCount, listObj, IntPtr.Zero, ref eL);
+                                                                if (lcRes == IntPtr.Zero) continue;
+                                                                int lc = Marshal.ReadInt32(lcRes + 0x10);
+                                                                for (int k = 0; k < lc && ne < 30; k++)
+                                                                {
+                                                                    IntPtr iBuf = Marshal.AllocHGlobal(4); Marshal.WriteInt32(iBuf, k);
+                                                                    IntPtr args = Marshal.AllocHGlobal(IntPtr.Size); Marshal.WriteIntPtr(args, iBuf);
+                                                                    IntPtr eI = IntPtr.Zero;
+                                                                    IntPtr eff = il2cpp_runtime_invoke(lGetItem, listObj, args, ref eI);
+                                                                    Marshal.FreeHGlobal(iBuf); Marshal.FreeHGlobal(args);
+                                                                    if (eff == IntPtr.Zero) continue;
+                                                                    IntPtr effCls = il2cpp_object_get_class(eff);
+                                                                    int etype = 0, tleft = 0, pid = 0;
+                                                                    IntPtr gET = FindIL2CPPMethodStatic(effCls, "get_EffectTypeId", 0);
+                                                                    if (gET != IntPtr.Zero) { IntPtr eET = IntPtr.Zero; IntPtr r = il2cpp_runtime_invoke(gET, eff, IntPtr.Zero, ref eET); if (r != IntPtr.Zero) etype = Marshal.ReadInt32(r + 0x10); }
+                                                                    IntPtr gTL = FindIL2CPPMethodStatic(effCls, "get_TurnLeft", 0);
+                                                                    if (gTL != IntPtr.Zero) { IntPtr eTL = IntPtr.Zero; IntPtr r = il2cpp_runtime_invoke(gTL, eff, IntPtr.Zero, ref eTL); if (r != IntPtr.Zero) tleft = Marshal.ReadInt32(r + 0x10); }
+                                                                    IntPtr gPID = FindIL2CPPMethodStatic(effCls, "get_ProducerId", 0);
+                                                                    if (gPID != IntPtr.Zero) { IntPtr ePID = IntPtr.Zero; IntPtr r = il2cpp_runtime_invoke(gPID, eff, IntPtr.Zero, ref ePID); if (r != IntPtr.Zero) pid = Marshal.ReadInt32(r + 0x10); }
+                                                                    if (ne > 0) sbtl.Append(",");
+                                                                    sbtl.Append("{\"t\":" + etype + ",\"tl\":" + tleft + ",\"p\":" + pid + "}");
+                                                                    ne++;
+                                                                }
+                                                            }
+                                                            sbtl.Append("]");
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                catch { }
+                                sbtl.Append("}");
+                                uidx++;
+                            }
+                        }
+                        sbtl.Append("]}");
+                        lock (_tickLog)
+                        {
+                            if (_tickLog.Count < 3000)
+                                _tickLog.Add(sbtl.ToString());
+                        }
+                    }
+                }
+            }
+            catch { }
+
+            // Dump every hero's state booleans (HeroState) + active effect IDs
+            // (StatImpactByEffects.EffectIds) via C# reflection. Much more reliable
+            // than iterating AppliedEffectsByHeroes which failed silently.
+            // Python diffs consecutive snapshots to detect expiry/removal precisely.
+            try
+            {
+                var sbe = new StringBuilder();
+                sbe.Append("{\"kind\":\"effects_snapshot\",\"tick\":" + _battleCommandCount + ",\"heroes\":[");
+                int nH = 0;
+                var stateE = Prop(__instance, "State");
+                if (stateE != null)
+                {
+                    foreach (var teamGetter in new[] { "PlayerTeam", "EnemyTeam" })
+                    {
+                        var team = Prop(stateE, teamGetter);
+                        if (team == null) continue;
+                        var heroes = Prop(team, "HeroesWithGuardian") ?? Prop(team, "Heroes");
+                        if (heroes == null) continue;
+                        int count = IntProp(heroes, "Count");
+                        var idxer = heroes.GetType().GetProperty("Item");
+                        for (int i = 0; i < count && i < 10; i++)
+                        {
+                            object hero = null;
+                            try { hero = idxer?.GetValue(heroes, new object[] { i }); } catch { }
+                            if (hero == null) continue;
+                            int hid = IntProp(hero, "Id");
+                            // Core state booleans (from HeroState)
+                            var hs = Prop(hero, "_heroState") ?? Prop(hero, "State");
+                            if (nH > 0) sbe.Append(",");
+                            sbe.Append("{\"h\":" + hid);
+                            if (hs != null)
+                            {
+                                foreach (var bk in new[] { "IsStunned", "IsFrozen", "IsSleep", "IsProvoked",
+                                    "IsInvincible", "IsBlockDebuff", "IsBlockHeal", "IsDead",
+                                    "IsStrongInvisible", "IsWeakInvisible", "IsBurning",
+                                    "IsUnderPoisonCloud", "IsTaunt" })
+                                {
+                                    try
+                                    {
+                                        var v = Prop(hs, bk);
+                                        if (v is bool bv && bv) sbe.Append(",\"" + bk + "\":true");
+                                    }
+                                    catch { }
+                                }
+                            }
+                            // Try multiple paths to find applied-effects list
+                            object aeByH = Prop(hero, "AppliedEffectsByHeroes");
+                            if (aeByH == null)
+                            {
+                                // Fall back to backing field via direct reflection
+                                try
+                                {
+                                    var f = hero.GetType().GetField("_AppliedEffectsByHeroes_k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic);
+                                    if (f != null) aeByH = f.GetValue(hero);
+                                }
+                                catch { }
+                            }
+                            int dictCount = aeByH != null ? IntProp(aeByH, "Count") : -1;
+                            sbe.Append(",\"ae_dict_count\":" + dictCount);
+                            if (aeByH != null && dictCount > 0)
+                            {
+                                sbe.Append(",\"effs\":[");
+                                int ne = 0;
+                                try
+                                {
+                                    foreach (var list in DictValues(aeByH))
+                                    {
+                                        if (list == null) continue;
+                                        foreach (var eff in ListItems(list))
+                                        {
+                                            int et = IntProp(eff, "EffectTypeId");
+                                            int tl = IntProp(eff, "TurnLeft");
+                                            int pid = IntProp(eff, "ProducerId");
+                                            int eid = IntProp(eff, "Id");
+                                            if (ne > 0) sbe.Append(",");
+                                            sbe.Append("{\"id\":" + eid + ",\"t\":" + et + ",\"tl\":" + tl + ",\"pid\":" + pid + "}");
+                                            ne++;
+                                            if (ne >= 30) break;
+                                        }
+                                        if (ne >= 30) break;
+                                    }
+                                }
+                                catch { }
+                                sbe.Append("]");
+                            }
+                            // Also dump _appliedStatModifications — this is a List<AppliedStatModification>
+                            // which at least gives us stat-modifying effects (DefDown, Weaken, etc.)
+                            try
+                            {
+                                var asmField = hero.GetType().GetField("_appliedStatModifications", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+                                if (asmField != null)
+                                {
+                                    var asm = asmField.GetValue(hero);
+                                    if (asm != null)
+                                    {
+                                        int asmCount = IntProp(asm, "Count");
+                                        sbe.Append(",\"asm_count\":" + asmCount);
+                                    }
+                                }
+                            }
+                            catch { }
+                            sbe.Append("}");
+                            nH++;
+                        }
+                    }
+                }
+                sbe.Append("]}");
+                lock (_tickLog) { if (_tickLog.Count < 3000) _tickLog.Add(sbe.ToString()); }
+            }
+            catch { }
+
             try
             {
                 // Get pointer
@@ -4679,19 +5832,53 @@ namespace RaidAutomation
         private static string GetBattleLogFull(bool clear)
         {
             var sb = new StringBuilder(8192);
-            sb.Append("{\"active\":" + (_battleActive ? "true" : "false"));
-            sb.Append(",\"turns\":" + _battleCommandCount);
-            sb.Append(",\"polls\":" + _pollCount);
-            sb.Append(",\"log\":[");
+            // If no battle is currently active but we have a snapshot from the
+            // most recently completed battle, serve that. Otherwise serve the
+            // current (active or empty) log.
+            List<string> source;
+            int turns, polls;
             lock (_battleLog)
             {
-                for (int i = 0; i < _battleLog.Count; i++)
+                if (!_battleActive && _completedBattleLog.Count > 0)
+                {
+                    source = _completedBattleLog;
+                    turns = _completedTurnCount;
+                    polls = _completedPollCount;
+                }
+                else
+                {
+                    source = _battleLog;
+                    turns = _battleCommandCount;
+                    polls = _pollCount;
+                }
+                sb.Append("{\"active\":" + (_battleActive ? "true" : "false"));
+                sb.Append(",\"turns\":" + turns);
+                sb.Append(",\"polls\":" + polls);
+                sb.Append(",\"log\":[");
+                for (int i = 0; i < source.Count; i++)
                 {
                     if (i > 0) sb.Append(",");
-                    sb.Append(_battleLog[i]);
+                    sb.Append(source[i]);
                 }
-                sb.Append("],\"count\":" + _battleLog.Count + "}");
-                if (clear) _battleLog.Clear();
+                sb.Append("],\"count\":" + source.Count + "}");
+                if (clear) { _battleLog.Clear(); _completedBattleLog.Clear(); }
+            }
+            return sb.ToString();
+        }
+
+        private string GetTickLog(bool clear)
+        {
+            var sb = new StringBuilder(8192);
+            sb.Append("{\"ticks\":[");
+            lock (_tickLog)
+            {
+                for (int i = 0; i < _tickLog.Count; i++)
+                {
+                    if (i > 0) sb.Append(",");
+                    sb.Append(_tickLog[i]);
+                }
+                sb.Append("],\"count\":" + _tickLog.Count + "}");
+                if (clear) _tickLog.Clear();
             }
             return sb.ToString();
         }
@@ -5240,6 +6427,48 @@ namespace RaidAutomation
             return added;
         }
 
+        // BaseTypeId -> Element (1=Magic, 2=Force, 3=Spirit, 4=Void). Populated
+        // lazily on first battle poll per type id; zero cost thereafter.
+        private static readonly Dictionary<int, int> _typeIdToElement = new();
+
+        private int GetElementForTypeId(int typeId)
+        {
+            if (typeId <= 0) return 0;
+            lock (_typeIdToElement)
+            {
+                if (_typeIdToElement.TryGetValue(typeId, out int cached)) return cached;
+            }
+            int element = 0;
+            try
+            {
+                var appModel = GetAppModel();
+                var staticData = Prop(appModel, "StaticData");
+                var heroData = Prop(staticData, "HeroData");
+                var htDict = Prop(heroData, "HeroTypeById");
+                if (htDict != null)
+                {
+                    var containsKey = htDict.GetType().GetMethod("ContainsKey");
+                    if (containsKey != null && (bool)containsKey.Invoke(htDict, new object[] { typeId }))
+                    {
+                        var itemProp = htDict.GetType().GetProperty("Item");
+                        var heroType = itemProp?.GetValue(htDict, new object[] { typeId });
+                        var forms = Prop(heroType, "Forms");
+                        if (forms != null)
+                        {
+                            foreach (var form in ListItems(forms))
+                            {
+                                element = IntProp(form, "Element");
+                                if (element > 0) break;
+                            }
+                        }
+                    }
+                }
+            }
+            catch { }
+            lock (_typeIdToElement) { _typeIdToElement[typeId] = element; }
+            return element;
+        }
+
         // Status flags on BattleHero that we serialize as a string-array "st":[...]
         // Ordered roughly by frequency; only emit flags that are TRUE.
         // NOTE on naming:
@@ -5285,6 +6514,27 @@ namespace RaidAutomation
             // Identity: Id (battle hero id), BaseTypeId (matches static HeroType.Id)
             AppendIntGetter(sb, heroClass, heroObj, "get_Id", "id");
             AppendIntGetter(sb, heroClass, heroObj, "get_BaseTypeId", "type_id");
+
+            // Element (1=Magic, 2=Force, 3=Spirit, 4=Void). Cached by BaseTypeId
+            // for zero-cost lookup on subsequent polls; first hit goes through
+            // StaticData.HeroData.HeroTypeById -> Forms[0].Element.
+            try
+            {
+                int btid = 0;
+                IntPtr gbt = FindIL2CPPMethod(heroClass, "get_BaseTypeId", 0);
+                if (gbt != IntPtr.Zero)
+                {
+                    IntPtr exc = IntPtr.Zero;
+                    IntPtr res = il2cpp_runtime_invoke(gbt, heroObj, IntPtr.Zero, ref exc);
+                    if (res != IntPtr.Zero) btid = Marshal.ReadInt32(res + 0x10);
+                }
+                if (btid > 0)
+                {
+                    int element = GetElementForTypeId(btid);
+                    if (element > 0) sb.Append(",\"element\":" + element);
+                }
+            }
+            catch { }
 
             // HP: MaxHealth - DestroyedHealth = current; HealthPerc is %*100 (Fixed)
             AppendFixedGetter(sb, heroClass, heroObj, "get_MaxHealth", "hp_max");
@@ -8334,6 +9584,245 @@ namespace RaidAutomation
 
             sb.Append("}");
             return sb.ToString();
+        }
+
+        // =====================================================
+        // API: /all-resources — dump every named numeric property on Resources
+        // =====================================================
+
+        private string GetAllResources()
+        {
+            var uw = GetUserWrapper();
+            if (uw == null) return "{\"error\":\"not logged in\"}";
+            var account = Prop(uw, "Account");
+            var accountData = Prop(account, "AccountData") ?? Prop(account, "Data");
+            var resources = Prop(accountData, "Resources");
+            if (resources == null) return "{\"error\":\"Resources not found\"}";
+            var sb = new StringBuilder(4096);
+            sb.Append("{");
+            int n = 0;
+            foreach (var p in resources.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public))
+            {
+                if (p.PropertyType != typeof(double)) continue;
+                try
+                {
+                    var v = p.GetValue(resources);
+                    if (v == null) continue;
+                    double d = Convert.ToDouble(v);
+                    if (n > 0) sb.Append(",");
+                    sb.Append("\"").Append(Esc(p.Name)).Append("\":");
+                    if (d == Math.Floor(d) && Math.Abs(d) < 1e15)
+                        sb.Append(((long)d).ToString());
+                    else
+                        sb.Append(d.ToString("F2"));
+                    n++;
+                }
+                catch { }
+            }
+            sb.Append("}");
+            return sb.ToString();
+        }
+
+        // =====================================================
+        // API: /explore-uw — list UserWrapper properties (debug)
+        // =====================================================
+
+        private string ExploreUserWrapper(string path)
+        {
+            var uw = GetUserWrapper();
+            if (uw == null) return "{\"error\":\"not logged in\"}";
+            object target = uw;
+            if (!string.IsNullOrEmpty(path))
+            {
+                foreach (var seg in path.Split('.'))
+                {
+                    var next = Prop(target, seg);
+                    if (next == null) return "{\"error\":\"no property " + Esc(seg) + " on " + Esc(target.GetType().FullName) + "\"}";
+                    target = next;
+                }
+            }
+            var sb = new StringBuilder(2048);
+            sb.Append("{\"path\":\"uw").Append(string.IsNullOrEmpty(path) ? "" : "." + path)
+              .Append("\",\"type\":\"").Append(Esc(target.GetType().FullName)).Append("\",\"props\":[");
+            int i = 0;
+            foreach (var p in target.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
+            {
+                string valType = "?";
+                string sample = null;
+                try
+                {
+                    var v = p.GetValue(target);
+                    if (v != null)
+                    {
+                        valType = v.GetType().FullName;
+                        // Include a short sample for scalars / small values
+                        var s = v.ToString();
+                        if (s != null && s.Length < 60 && !s.Contains("Il2Cpp") && !s.Contains("System."))
+                            sample = s;
+                    }
+                }
+                catch (Exception ex) { valType = "err:" + ex.GetType().Name; }
+                if (i++ > 0) sb.Append(",");
+                sb.Append("{\"name\":\"").Append(Esc(p.Name))
+                  .Append("\",\"declared\":\"").Append(Esc(p.PropertyType.FullName))
+                  .Append("\",\"actual\":\"").Append(Esc(valType)).Append("\"");
+                if (sample != null) sb.Append(",\"sample\":\"").Append(Esc(sample)).Append("\"");
+                sb.Append("}");
+            }
+            sb.Append("]}");
+            return sb.ToString();
+        }
+
+        // =====================================================
+        // API: /shards — find and dump the player's summon shards
+        // =====================================================
+
+        // Raid's ShardType enum -> canonical output key the dashboard uses.
+        // The game renamed "Primal" to "Mythical" internally; keep both mapped.
+        private static readonly Dictionary<string, string> ShardKeyByEnum = new Dictionary<string, string>
+        {
+            { "Mystery",  "mystery"  },
+            { "Ancient",  "ancient"  },
+            { "Void",     "void"     },
+            { "Sacred",   "sacred"   },
+            { "Mythical", "primal"   },
+            { "Primal",   "primal"   },
+        };
+
+        private string GetShards(bool debug)
+        {
+            var uw = GetUserWrapper();
+            if (uw == null) return "{\"error\":\"not logged in\"}";
+
+            // Raid path: UserWrapper -> Shards -> ShardData -> Shards (List<Shard>)
+            var shardWrapper = Prop(uw, "Shards");
+            if (shardWrapper == null) return "{\"error\":\"UserWrapper.Shards missing\"}";
+            var shardData = Prop(shardWrapper, "ShardData");
+            if (shardData == null) return "{\"error\":\"ShardWrapper.ShardData missing\"}";
+            var list = Prop(shardData, "Shards");
+            if (list == null) return "{\"error\":\"UserShardData.Shards missing\"}";
+
+            var sb = new StringBuilder(2048);
+            sb.Append("{");
+            if (debug)
+            {
+                sb.Append("\"list_type\":\"").Append(Esc(list.GetType().FullName)).Append("\",");
+                sb.Append("\"list_size\":").Append(IntProp(list, "_size")).Append(",");
+                sb.Append("\"items\":[");
+                try
+                {
+                    int sz = IntProp(list, "_size");
+                    var items = Prop(list, "_items");
+                    if (items != null)
+                    {
+                        var arrT = items.GetType();
+                        var getItem = arrT.GetMethod("get_Item");
+                        for (int i = 0; i < sz; i++)
+                        {
+                            object shard = null;
+                            try { shard = getItem?.Invoke(items, new object[] { i }); } catch { }
+                            if (i > 0) sb.Append(",");
+                            if (shard == null) { sb.Append("null"); continue; }
+                            sb.Append("{\"type\":\"").Append(Esc(shard.GetType().FullName)).Append("\",\"props\":{");
+                            int pi = 0;
+                            foreach (var p in shard.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public))
+                            {
+                                try
+                                {
+                                    var v = p.GetValue(shard);
+                                    var s = v == null ? "null" : v.ToString();
+                                    if (s != null && s.Length < 50)
+                                    {
+                                        if (pi++ > 0) sb.Append(",");
+                                        sb.Append("\"").Append(Esc(p.Name)).Append("\":\"").Append(Esc(s)).Append("\"");
+                                    }
+                                } catch { }
+                            }
+                            sb.Append("}}");
+                        }
+                    }
+                }
+                catch (Exception ex) { sb.Append("{\"err\":\"").Append(Esc(ex.Message)).Append("\"}"); }
+                sb.Append("],");
+            }
+            sb.Append("\"shards\":{");
+            int found = 0;
+            // Seed the output with 0 for every known shard so the UI always
+            // shows the full set (empty shards aren't present in the list).
+            var counts = new Dictionary<string, int>();
+            foreach (var k in ShardKeyByEnum.Values) counts[k] = 0;
+
+            try
+            {
+                var listType = list.GetType();
+                // _items is the raw backing array; _size is element count
+                var items = Prop(list, "_items");
+                int size = IntProp(list, "_size");
+                if (items == null || size <= 0)
+                {
+                    // Fall back to GetEnumerator iteration
+                    var getEnum = listType.GetMethod("GetEnumerator");
+                    if (getEnum != null)
+                    {
+                        var en = getEnum.Invoke(list, null);
+                        var enT = en.GetType();
+                        var mn = enT.GetMethod("MoveNext");
+                        var cur = enT.GetProperty("Current");
+                        while ((bool)mn.Invoke(en, null))
+                        {
+                            var shard = cur.GetValue(en);
+                            if (shard == null) continue;
+                            TallyShard(shard, counts);
+                        }
+                    }
+                }
+                else
+                {
+                    // Il2CppReferenceArray<T>: indexer takes int, or use .Length
+                    var arrT = items.GetType();
+                    var indexer = arrT.GetProperty("Item") ?? arrT.GetProperty("_items");
+                    for (int i = 0; i < size; i++)
+                    {
+                        object shard = null;
+                        try { shard = indexer.GetValue(items, new object[] { i }); }
+                        catch
+                        {
+                            // Some Il2CppReferenceArray variants expose array via reflection
+                            var method = arrT.GetMethod("get_Item");
+                            if (method != null) shard = method.Invoke(items, new object[] { i });
+                        }
+                        if (shard != null) TallyShard(shard, counts);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                sb.Append("\"iter_error\":\"").Append(Esc(ex.Message)).Append("\",");
+            }
+
+            foreach (var kv in counts)
+            {
+                if (found > 0) sb.Append(",");
+                sb.Append("\"").Append(Esc(kv.Key)).Append("\":").Append(kv.Value);
+                found++;
+            }
+            sb.Append("}}");
+            return sb.ToString();
+        }
+
+        private void TallyShard(object shard, Dictionary<string, int> counts)
+        {
+            // TypeId is a ShardType enum — its ToString() yields "Mystery" / "Ancient" / ...
+            var tid = Prop(shard, "TypeId");
+            var cnt = Prop(shard, "Count") ?? Prop(shard, "Quantity") ?? Prop(shard, "Amount");
+            if (tid == null || cnt == null) return;
+            int count;
+            if (!int.TryParse(cnt.ToString(), out count)) return;
+            string key;
+            if (!ShardKeyByEnum.TryGetValue(tid.ToString(), out key))
+                key = tid.ToString().ToLowerInvariant();
+            if (!counts.ContainsKey(key)) counts[key] = 0;
+            counts[key] += count;
         }
 
         // =====================================================

@@ -125,28 +125,74 @@ def start_battle():
 
 
 def poll_battle():
-    """Poll battle until complete. Returns final boss damage and turn count."""
+    """Poll until the battle is truly over.
+
+    Previous version bailed as soon as /battle-state returned an error, which
+    trips during scene transitions (post-battle result screen) while the real
+    battle is still running. We now hold the loop open until we see any of:
+      - `/status` reports a scene OTHER than Dungeon_Clan (result screen gone)
+      - battle-log contains a `battle_end` event
+      - `/battle-state` returns active=False AND heroes list is empty
+
+    Transient `/battle-state` errors are tolerated (logged, not fatal).
+    """
     print("\nPolling battle progress...")
     prev_turn = 0
     final_dmg = 0
     final_turn = 0
+    transient_err_streak = 0
+    no_progress_polls = 0
+    MAX_TRANSIENT = 10
 
     for i in range(MAX_POLLS):
         bs = mod_get("/battle-state")
         if "error" in bs:
-            print(f"  Battle ended at poll {i}")
-            break
+            transient_err_streak += 1
+            if transient_err_streak >= MAX_TRANSIENT:
+                # Likely real end — confirm by checking scene
+                st = mod_get("/status")
+                scene = (st or {}).get("scene", "")
+                if scene != "Dungeon_Clan":
+                    print(f"  Scene changed to {scene!r} — battle ended at poll {i}")
+                    break
+                # Scene still CB: just a glitch, keep polling
+                transient_err_streak = 0
+            time.sleep(POLL_INTERVAL)
+            continue
+        transient_err_streak = 0
 
-        for h in bs.get("heroes", []):
-            if h.get("side") == "enemy":
-                turn = h.get("turn_n", 0)
-                dmg = h.get("dmg_taken", 0)
-                if turn > prev_turn:
-                    print(f"  Turn {turn:>2d}: {dmg:>12,}")
-                    prev_turn = turn
-                final_dmg = max(final_dmg, dmg)
-                final_turn = max(final_turn, turn)
+        active = bs.get("active")
+        heroes = bs.get("heroes", [])
+        boss = next((h for h in heroes if h.get("side") == "enemy"), None)
+        if boss is not None:
+            turn = boss.get("turn_n", 0) or 0
+            dmg = boss.get("dmg_taken", 0) or 0
+            if turn > prev_turn:
+                print(f"  Turn {turn:>2d}: {dmg:>12,}")
+                prev_turn = turn
+                no_progress_polls = 0
+            else:
+                no_progress_polls += 1
+            final_dmg = max(final_dmg, dmg)
+            final_turn = max(final_turn, turn)
+
+        # Real end detection
+        if active is False and (not heroes or all(h.get("side") == "player" and "dead" in (h.get("st") or []) for h in heroes)):
+            # Confirm via scene
+            st = mod_get("/status")
+            scene = (st or {}).get("scene", "")
+            if scene != "Dungeon_Clan":
+                print(f"  Battle ended at poll {i} (scene={scene}, active=False)")
                 break
+
+        # Stall watchdog — 120 polls with no turn progress AND scene has left CB
+        if no_progress_polls >= 120:
+            st = mod_get("/status")
+            scene = (st or {}).get("scene", "")
+            if scene != "Dungeon_Clan":
+                print(f"  Stall + scene exit ({scene}) — assuming battle ended at poll {i}")
+                break
+            # Keep polling otherwise
 
         time.sleep(POLL_INTERVAL)
     else:
@@ -156,13 +202,29 @@ def poll_battle():
 
 
 def save_battle_log(filename=None):
-    """Fetch and save the battle log from the mod."""
-    time.sleep(3)
-    r = mod_get("/battle-log", timeout=30)
-    if "error" in r:
-        print(f"Failed to fetch battle log: {r['error']}")
-        return None
+    """Fetch and save the battle log from the mod.
 
+    Retries up to 5 times with 2s delay, keeping the largest log seen.
+    The mod's in-memory log gets wiped when ProcessStartBattle fires for
+    the post-battle result screen; we try to catch the moment before
+    that wipe. Early-exit bug mitigation: never save a truncated log.
+    """
+    best = None
+    for attempt in range(5):
+        time.sleep(2)
+        r = mod_get("/battle-log", timeout=30)
+        if "error" in r:
+            print(f"  [attempt {attempt+1}] battle-log fetch error: {r['error']}")
+            continue
+        entries = r.get("log", [])
+        if best is None or len(entries) > len(best.get("log", [])):
+            best = r
+        # Accept if we see `battle_end` event OR final snapshot + plenty of entries
+        has_end = any(e.get("event") == "battle_end" for e in entries if isinstance(e, dict))
+        has_final = any(e.get("scene") == "final" for e in entries if isinstance(e, dict))
+        if has_end and has_final and len(entries) > 50:
+            break
+    r = best or {}
     entries = r.get("log", [])
     print(f"\nBattle log: {len(entries)} entries")
 
