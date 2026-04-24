@@ -217,19 +217,25 @@ def _resolve_targets(effect: dict, actor: Actor, actors: list[Actor]) -> list[Ac
 
 
 def _check_condition(condition: dict | None, targets: list[Actor]) -> bool:
-    """Evaluate the effect's `condition`. Supported checks:
-    - {"check_target": "isBoss"} — at least one target is the boss
-    - {"check_target": "!isBoss"} — no target is the boss
+    """Evaluate the effect's `condition` per DWJ's ei router logic.
+
+    DWJ's rule:
+        fires if condition is undefined OR condition.check_target === "isBoss"
+
+    In a boss-only sim the boss is the sole hostile, so "isBoss" is always
+    true and "!isBoss" is always false. Unknown conditions default to NOT
+    firing (stricter than my first pass) to match DWJ's strict routing.
     """
     if not condition:
         return True
     ct = condition.get("check_target")
     if ct == "isBoss":
-        return any(t.is_boss for t in targets)
+        return True
     if ct == "!isBoss":
-        return not any(t.is_boss for t in targets)
-    # Unknown condition → default to passing; effect still fires for unsupported conditions
-    return True
+        return False
+    # Other condition types (affinity check, check_enemy, buff_added, check_buff)
+    # we don't model yet — default to NOT firing so we don't over-apply
+    return False
 
 
 def _apply_tm_up(targets: list[Actor], amount: float) -> None:
@@ -327,6 +333,10 @@ def apply_skill_effects(actor: Actor, skill_alias: str, actors: list[Actor]) -> 
             continue
 
         if eff_id == "add_debuff":
+            # DWJ's ei.add_debuff only fires when actor is the clanboss.
+            # Player-champion debuff effects are NO-OPs in the sim.
+            if not actor.is_boss:
+                continue
             if debuff == "tm_down":
                 _apply_tm_down(targets, amount)
             elif debuff == "speeddown" or debuff == "speed":
@@ -335,11 +345,14 @@ def apply_skill_effects(actor: Actor, skill_alias: str, actors: list[Actor]) -> 
             continue
 
 
-def simulate(variant: DwjVariant, max_turns: int = 1000, max_boss_turns: int = 50, apply_effects: bool = True) -> list[TurnRecord]:
+def simulate(variant: DwjVariant, max_turns: int = 1000, max_boss_turns: int = 50, apply_effects: bool = True, trace: bool = False) -> list[TurnRecord]:
     dwj = load_all()
     actors = [prepare_champion(s, dwj.champion(s.name)) for s in variant.slots]
     actors.append(make_clanboss(variant.boss_speed, variant.boss_affinity))
     turns: list[TurnRecord] = []
+
+    def _tm_snapshot():
+        return "  ".join(f"{a.name[:4]}={a.turn_meter:5.1f}" for a in actors)
 
     while count_boss_turns(turns) < max_boss_turns and len(turns) < max_turns:
         # Find next actor
@@ -347,18 +360,28 @@ def simulate(variant: DwjVariant, max_turns: int = 1000, max_boss_turns: int = 5
         if actor is not None:
             actor.has_extra_turn = False
         else:
-            # Tick TM until someone hits 100
+            # DWJ uses `do...while` — ALWAYS tick at least once, even if some
+            # actor already has TM >= 100 from a previous turn's excess. This
+            # matters because when multiple actors queue past 100, DWJ burns
+            # one tick per turn-selection; skipping it (my earlier `while`)
+            # causes the "fastest" hero to accumulate extra TM across turns
+            # and desyncs cast order.
             safety = 0
-            while all(a.turn_meter < 100 for a in actors):
+            while True:
                 for a in actors:
                     inc = 7.0 * effective_speed(a, variant.speed_aura) / 100.0
                     a.turn_meter = round(a.turn_meter + inc, 12)
                 safety += 1
+                if any(a.turn_meter >= 100 for a in actors):
+                    break
                 if safety > 10000:
                     raise RuntimeError("TM tick loop failed to terminate")
             # Pick fastest (first with max TM)
             max_tm = max(a.turn_meter for a in actors)
             actor = next(a for a in actors if a.turn_meter == max_tm)
+            if trace:
+                tm_str = "  ".join(f"{a.name[:4]}={a.turn_meter:6.2f}" for a in actors)
+                print(f"  [tick] TMs: {tm_str}  → winner {actor.name}")
 
         # Decrement turn-start effects, remove expired
         for e in actor.effects:
@@ -379,6 +402,9 @@ def simulate(variant: DwjVariant, max_turns: int = 1000, max_boss_turns: int = 5
                 f"No castable skill for {actor.name} — configs={actor.skill_configs}"
             )
 
+        if trace:
+            print(f"         cast: {actor.name} {skill.alias}")
+
         # Record turn
         boss_tn = count_boss_turns(turns) + (0 if not actor.is_boss and len(turns) > 0 else (1 if actor.is_boss else 0))
         turn_number = len(turns) + 1
@@ -396,8 +422,8 @@ def simulate(variant: DwjVariant, max_turns: int = 1000, max_boss_turns: int = 5
             c.delay = max(0, c.delay - 1)
             c.current_cooldown = max(0, c.current_cooldown - 1)
 
-        # Apply skill effects that affect scheduling
-        if apply_effects and not actor.is_boss:
+        # Apply skill effects that affect scheduling (both player and boss can trigger)
+        if apply_effects:
             apply_skill_effects(actor, skill.alias, actors)
 
         # Decrement turn-end effects, remove expired
@@ -422,6 +448,7 @@ def main():
     ap.add_argument("--slug", help="DWJ tune slug (e.g. 'myth-eater')")
     ap.add_argument("--variant", help="variant name (e.g. 'Ninja UNM')")
     ap.add_argument("--turns", type=int, default=25, help="max CB turns to simulate")
+    ap.add_argument("--trace", action="store_true", help="print TM state each action")
     args = ap.parse_args()
 
     dwj = load_all()
@@ -444,7 +471,7 @@ def main():
         print(f"  slot{s.index} {s.name:<18} SPD={s.total_speed}  base={s.base_speed}  LoS={s.has_lore_of_steel}  {cfg}")
     print()
 
-    turns = simulate(variant, max_boss_turns=args.turns)
+    turns = simulate(variant, max_boss_turns=args.turns, trace=args.trace)
     print(format_turns(turns))
     print()
     print(f"total turns: {len(turns)}  boss turns: {count_boss_turns(turns)}")

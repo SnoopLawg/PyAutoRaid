@@ -1,8 +1,6 @@
 # DeadwoodJedi calculator algorithm (reverse-engineered)
 
-Sourced from minified JS chunk `/_next/static/chunks/824-25a04abfc26efff9.js` (April 2026).
-
-This doc is the spec we match against in `tools/calc_parity_sim.py`.
+Sourced from minified JS chunk `/_next/static/chunks/824-25a04abfc26efff9.js` (April 2026). Complete extraction in `probe/extracted/`.
 
 ## Main simulation loop — `ek(config, champions)`
 
@@ -23,7 +21,7 @@ until count_boss_turns(turns) >= 50 or len(turns) >= 1000:
                     a.turn_meter + 7 * effective_speed(a) / 100,
                     12 decimal places
                 )
-        actor = max(actors, key=turn_meter)
+        actor = max(actors, key=turn_meter)  # ties broken by actor array index (earliest wins)
 
     # Decrement turn-start effects, remove expired
     for e in actor.effects:
@@ -33,49 +31,87 @@ until count_boss_turns(turns) >= 50 or len(turns) >= 1000:
     actor.turn_meter = 0
 
     # Pick skill: HIGHEST priority NUMBER with cd=0 AND delay=0
-    # (sort DESC by priority, find first castable)
     skills_by_pri_desc = sorted(actor.skillConfigs, key=lambda c: -c.priority)
     skill = first c in skills_by_pri_desc where c.current_cooldown == 0 and c.delay == 0
-    if skill is None: raise "no castable skill"
 
-    record turn {turn_number, actor, skill, ...}
+    record turn
 
     skill.current_cooldown = skill.cooldown
     for c in actor.skillConfigs: c.delay = max(0, c.delay - 1)
     for c in actor.skillConfigs: c.current_cooldown = max(0, c.current_cooldown - 1)
 
-    # Apply effects (el function)
-    apply_skill_effects(actor, skill, all_actors, turn)
+    # Apply effects via el() → see below
+    el(actor, skill, all_actors, isRetaliation=false, turn_record)
 
     # Decrement turn-end effects, remove expired
-    for e in actor.effects:
-        if e.reduceDurationAt == "turn-end": e.duration -= 1
-    actor.effects = [e for e in actor.effects if e.duration > 0]
 ```
 
-## Priority convention (important — opposite of Raid's in-game UI)
+## Priority convention (opposite of in-game UI)
 
-**In DWJ calc, higher priority NUMBER = fires FIRST.** The skills are sorted descending by priority and the first with `cd=0 AND delay=0` is cast.
+**In DWJ calc, higher priority NUMBER = fires FIRST.** The skills are sorted descending by priority; the first with `cd=0 AND delay=0` is cast.
 
-- Maneater skillConfigs: A1 p1 d0 cd0, A2 p2 d0 cd3, A3 p3 d1 cd5
-- Turn 1: A3 has priority 3 (highest) but delay=1 → skip. A2 priority 2, cd=0, delay=0 → cast. A2 now on cd=3.
-- Turn 2: A3 priority 3, cd=0, delay=0 (decremented) → cast. A3 now on cd=5.
-- Turn 3: A3 cd=4, A2 cd=2, A1 priority 1 cd=0 delay=0 → cast A1.
-- ...
+(Contrast Raid's in-game preset UI where priority 1 = highest rank.)
 
-(Contrast Raid's in-game preset UI where priority 1 is the HIGHEST rank — DWJ's calc is inverted.)
+## Effect dispatcher chain `el` → `ei` → `er`/`ea`
+
+```
+el(actor, skill, all_actors, isRetaliation, turn_record):
+    Run start_of_turn passive on actor (if not retaliation)
+    Run current skill via es()
+    Run end_of_turn passive on actor
+    Run `always` passives on every actor
+    If actor is hostile: trigger `when_attacked` passives on hostile side
+    Hardcoded leader-aura tm_up: Foli (+50% to self on A4 cd 3),
+                                  Supreme Galek (extra_turn on A4 cd 4)
+```
+
+`es(skill, context)` iterates `skill.effect[]` and routes each entry via `ei`:
+
+```
+ei = {
+    add_debuff: effect => {
+        # ONLY fires if actor.id === "champion-cb" (i.e. CB is the caster).
+        # PLAYER CHAMPION DEBUFF EFFECTS ARE NO-OPS in DWJ's sim.
+        # This is because DWJ's sim only models scheduling, not DoT damage.
+        handler = ea[effect.debuff]
+        targets = effect.enemy == "all" ? all_hostiles : [hostiles[0]]
+        if handler AND no condition AND actor is clanboss: handler(...)
+    },
+    add_buff: effect => {
+        handler = er[effect.buff]
+        targets by effect.champions:
+            "allies" = friendlies + self
+            "self" = [actor]
+            "notself" = friendlies only
+            "single" = [friendlies[0]]
+            "highest_tm" = [friendly with highest TM]
+        if handler AND (no condition OR condition.check_target === "isBoss"):
+            handler(...)
+        else if condition is an array of sub-conditions:
+            iterate each; handle check_enemy, check_target affinity, buff_added, check_buff
+    }
+}
+```
+
+### Key implication
+
+**`condition: {check_target: "isBoss"}` always fires** in DWJ's sim because the boss is the only hostile. We don't need to check whether any specific target is the boss — the effect just fires.
+
+**`condition: {check_target: "!isBoss"}` NEVER fires** in DWJ's sim — only-boss hostile means "!isBoss" is always false.
+
+This is why my earlier condition check was too strict; self-buffs like Ninja A1's +15% TM (conditioned on attacking boss) weren't firing.
 
 ## Effective speed — `eh(actor, aura=0, buff_mod=0, stat_mod=0)`
 
 ```
-true_speed = (total_speed - base_speed - round(base*bonus) - (LoS? round(base*bonus*0.15):0)
-              + base_speed + base*bonus + (LoS? base*bonus*0.15:0)
-              + aura/100 * base_speed
-              + stat_mod)
+l = ep[speed_bonus]   # lookup: 0->0; 5->perception; 12->speed_set; etc.
+true_speed = r - i - round(i*l) - (LoS? round(i*l*0.15):0)
+             + i + i*l + (LoS? i*l*0.15:0)
+             + aura/100 * base_speed + stat_mod_speed
 effective_speed = true_speed * (1 + buff_mod)
 ```
 
-The rounded/unrounded cancellation reconstructs the pre-rounding (true) speed. Net result equals `total_speed + aura_bonus + stat_mod`, buff-multiplied.
+The rounded/unrounded cancellation reconstructs the pre-rounding "true" speed, so net = `total_speed + aura/100*base + stat_mod` times buff multiplier.
 
 ## Speed buff/debuff modifier — `em(actor)`
 
@@ -83,41 +119,148 @@ The rounded/unrounded cancellation reconstructs the pre-rounding (true) speed. N
 t = 1
 if actor has "speed-buff" effect: t *= 1 + effect.amount   # amount is decimal fraction
 if actor has "speed-debuff" effect: t -= effect.amount
-return t - 1  # offset from 1.0
+return t - 1
 ```
 
-So net buff: +30% SPD = `em` returns 0.30 → effective_speed *= 1.30.
+## Effect amount computation — `V(actor, effect, amount)`
 
-## TM tick granularity
+```
+V(e, t, n) = {
+    a = e.skills.find(x => x.passive?.trigger === "add_buff")
+    r = a?.effect.find(x => x.buff === t.buff)
+    return a && r ? n * (1 + r.amount/100) : n
+}
+```
 
-7 * speed / 100 per tick. All actors tick simultaneously; first to ≥100 acts. Round TMs to 12 decimal places to avoid float drift.
+If the actor has a passive `add_buff` trigger that matches the current buff type, multiply amount by that passive's amount+100. Otherwise return amount unchanged.
 
-## Extra turn
+Used by `tm_up` handler to scale the amount (e.g. a passive enhancing TM fills).
 
-`actor.has_extra_turn = True` → that actor acts next without needing to tick TM. After the turn, `has_extra_turn` is cleared. Used for skills like "Grants an Extra Turn".
+## Buff-adder — `G(all, target, caster, new_effect, turn)`
 
-## Clanboss skills (all variants)
+```
+G(all, target, caster, new_effect, turn):
+    existing_idx = target.effects.findIndex(e => e.name === new_effect.name)
+    if existing_idx === -1 OR new_effect.isSingular === false:
+        if target.effects.length < 10:
+            target.effects.push(new_effect)
+            q(all, target, new_effect, caster, turn)
+    else:
+        existing = target.effects[existing_idx]
+        if new_effect.amount > existing.amount:
+            target.effects.splice(existing_idx, 1)
+            target.effects.push(new_effect)
+            q(...)
+        elif new_effect.amount === existing.amount AND existing.duration < new_effect.duration:
+            existing.isAddedThisTurn = new_effect.isAddedThisTurn
+            existing.duration = max(existing.duration, new_effect.duration)
+            q(...)
+```
 
-- A1 "Crushing Force" (STUN): CD 0, effect `{id: "add_debuff", turns:1, enemy:"single", debuff:"stun"}`
-- A2 (AOE2): CD 3, effect varies by affinity (void/spirit/force/magic/arcane)
-- A3 (AOE1): CD 3, effect varies by affinity
+**Max 10 effects per target.** Singular effects replace lower-amount / extend-duration.
 
-Priority: A1=1, A2=2, A3=3 (same sort DESC convention → A3 fires first when ready).
+## Post-buff hook — `q(all, target, new_effect, caster, turn)`
 
-## Champion skill preparation — `ey(champ)`
+```
+q(all, target, new_effect, caster, turn):
+    # Valkyrie auto-TM on any buff placement
+    v = hostile_of(all, target).find(x => x.name === "Valkyrie")
+    if v: v.turn_meter += 10
 
-- `turn_meter = 0`
-- `has_extra_turn = false`
-- `effects = []`
-- `skillConfigs.filter(c => c.id === "A1" || c.cooldown > 0)` — drops A4 passive (CD 0) but keeps A1
-- `stat_modifiers`: zeroed struct (speed=10 for "Genzin" special case)
+    # Razelvarg self-speed-buff SPD stacking
+    r = all.find(x => x.name === "Razelvarg")
+    if r AND new_effect.name === "speed-buff" AND caster === r AND r.stat_modifiers.speed < 100:
+        r.stat_modifiers.speed += 5
 
-## What's still unknown
+    # Track speed-buff count on turn record
+    if new_effect.name === "speed-buff" AND !target is champion:
+        turn.processed_effects.speedbuff += 1
+```
 
-- `el(actor, skill, actors, isRetaliation, turn)` — full effects dispatcher. Handles `add_buff`, `add_debuff`, `tm_up`, `reduce_cd`, `extend_buff`, `destroy_buff`, passive triggers (`start_of_turn`, `end_of_turn`, `always`), condition evaluation (`check_target`, `isBoss`, counter comparisons). Large block in the same JS chunk starting at `el=(e,t,n,a,r)=>`. Port separately.
-- `ep[speed_bonus]` — lookup table for `speed_bonus` index → multiplier. Used in `eh`. Not yet extracted.
+**Scheduler-affecting hardcoded champion reactions**:
+- **Valkyrie** passive: +10 TM whenever ANY ally gets a buff placed
+- **Razelvarg** passive: +5 SPD when he gives himself a speed buff (stacks to 100 max)
 
-## Port notes
+## Clanboss factory — `e_(config)`
 
-- `tools/calc_parity_sim.py` will implement the main loop and skill-pick logic. Effects dispatcher is deferred; sim records cast-order ground truth without applying effects (still captures priorities, CDs, delays correctly).
-- To validate: load a DWJ calc variant's `pageProps.champions` + `clanboss` + `speed_aura`, run sim, compare to Chrome-rendered turn list. 95%+ match expected before effects are modeled.
+- Name: "Clanboss", id: "champion-cb"
+- Speed: `config.clanboss.speed || 190`
+- Base speed: 0 (no lore of steel / aura applies)
+- Skills:
+  - A1 "Crushing Force" (STUN): cd 0, effect `{add_debuff turns:1 enemy:single debuff:stun}`
+  - A2 (AOE2): cd 3. Affinity-dependent:
+    - void: "Dark Nova" with empty effect list
+    - spirit: another name with effect
+  - A3 (AOE1): cd 3. Also affinity-dependent:
+    - void: `{add_debuff turns:2 enemy:all amount:2.5 debuff:poison}`
+    - spirit: `{add_buff turns:2 champions:self amount:25 buff:atkup}`
+- skillConfigs: A1 p1 d0 cd0, A2 p2 d0 cd3, A3 p3 d0 cd3
+
+## Champion preparation — `ey(champ)`
+
+- turn_meter = 0, has_extra_turn = false, effects = []
+- skillConfigs = original.filter(c => c.id === "A1" OR c.cooldown > 0)  # drops A4 passive w/ cd 0
+- stat_modifiers zeroed; `speed: 10` for Genzin specifically
+
+## Er handler table (30+ effect types)
+
+Scheduler-affecting:
+- **tm_up**: `target.turn_meter += V(actor, effect, amount)`
+- **reduce_cd**: per skillConfig with `cd_not_resettable` flag check; if amount===-1 clear all, else subtract amount (or only on `reduce_cd: skill_name` match)
+- **reset_cd**: set all skillConfigs.current_cooldown = 0
+- **extra_turn**: set target.has_extra_turn = true
+- **speedup**: G(all, target, actor, {name:"speed-buff", amount:n/100, duration:turns, reduceDurationAt:"turn-end", isSingular:true})
+
+Non-scheduler (we skip for parity purposes):
+- atkup, defup, accup, resup, crit_rate_up, crit_dmg_up, continuous_heal, shield, strengthen, stoneskin, fortify, unkillable, block_dmg, block_debuff, taunt, counter_atk, allyatk, allyprotect, reflect, magma_shield, poison_cloud, pveil, intercept, rod (ring of destruction), shatter, str, remove_debuff, reduce_debuff, extend_buff
+
+## Ea handler table (debuffs, clanboss-only)
+
+add_debuff handlers fire ONLY when actor.id === "champion-cb". Each filters targets with `x.id !== "champion-cb"` (exclude boss) and checks `!et(target)` (not immune). Handlers: acc_down, resdown, atkdown, defdown, hpburn, poison, poison_sensitivity, stun, freeze, sleep, block_buffs, block_cooldown_skills, provoke, true_fear, fear, weaken, decrease_attack, decrease_speed, etc.
+
+## Speed-bonus table — `ep[speed_bonus]`
+
+```
+ep = {
+    0: 0,
+    5: ef.perception,
+    10: 2*ef.perception,
+    12: ef.speed_set,
+    15: 3*ef.perception,
+    17: ef.speed_set + ef.perception,
+    18: ef.swift_parry,
+    22: ef.speed_set + 2*ef.perception,
+    24: 2*ef.speed_set,
+    36: 3*ef.speed_set,
+    48: ef.righteous,
+    ...
+}
+```
+
+Used when the user provides "speed_bonus" as an index. For calc_tunes slots with `speed_bonus: 0`, `ep[0] = 0` so no bonus. For other speed_bonus values it sums set-bonus multipliers. `ef` holds per-set multipliers (from CDN `/api/cb/speed_bonuses`).
+
+## Condition parsing — nested cases
+
+The `ei.add_buff` handler supports condition AS AN ARRAY:
+```js
+if (condition not undefined AND condition is array) {
+    condition.forEach(c => {
+        if (c.check_enemy && hostile.effects.has(c.check_enemy)) handler(...)
+        if (c.check_target === affinity string) handler(...)
+        if (c.type === "buff_added" && c.target === "enemy") handler(...)
+        if (c.type === "check_buff" && c.target === "self" && actor.effects.has(c.buff)) handler(...)
+    })
+}
+```
+
+Unknown conditions default to "don't fire", not "fire". This is stricter than my first port.
+
+## Port notes (what Python needs to do)
+
+1. **Turn scheduler**: as described, tick TMs until one hits 100, pick max (first tie-break).
+2. **Skill select**: DESC priority, first with cd=0 AND delay=0.
+3. **Effect routing**:
+   - `add_buff`: target via `champions` enum; apply if no condition OR condition.check_target === "isBoss" (never try the non-existent "!isBoss" path).
+   - `add_debuff`: SKIP if actor isn't clanboss. Target via `enemy` enum; filter out boss from targets; filter immune actors.
+4. **Scheduler-affecting effect handlers**: tm_up, reduce_cd, reset_cd, extra_turn, speedup, speeddown. Non-scheduler effects are no-ops in scheduling sim.
+5. **Hardcoded reactions**: Valkyrie +10 TM on any buff place, Razelvarg +5 SPD on self speed-buff (cap 100). Passive triggers (start_of_turn, end_of_turn, always, when_attacked) for future expansion.

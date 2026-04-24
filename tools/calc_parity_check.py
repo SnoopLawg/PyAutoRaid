@@ -30,38 +30,39 @@ SKILL_ALIASES = ("A1", "A2", "A3", "A4", "STUN", "AOE1", "AOE2")
 
 
 def parse_dwj_text(text: str, hero_names: list[str]) -> list[tuple[str, str]]:
-    """Split DWJ raw text into (actor_name, skill_alias) tuples.
+    """Scan DWJ raw text for (hero)(skill_alias) pairs.
 
-    Strategy: find each Turn label, split by Turn N markers, then within each
-    block greedily match hero_names + alias.
+    Strategy:
+    - Strip whitespace from text + hero names.
+    - Turn labels like "Turn0" / "Turn11" appear between blocks — we DON'T
+      split on them (greedy regex over "Turn01" would eat the leading "1"
+      of "1:1 DPS 1"). Instead we scan position-by-position for either
+      a hero token OR skip "TurnN" tokens in place.
     """
-    # Normalize whitespace
     text = re.sub(r"\s+", "", text)
-    # Split on "Turn\d+" (those are boss-turn boundaries)
-    blocks = re.split(r"Turn\d+", text)
+    hero_stripped = {re.sub(r"\s+", "", h): h for h in hero_names + ["Clanboss"]}
     out = []
-    for blk in blocks:
-        if not blk:
+    pos = 0
+    while pos < len(text):
+        # Skip "TurnN" labels that appear AFTER Clanboss skill (2 digits max, max CB turn ~50)
+        m = re.match(r"Turn\d{1,2}(?=[A-Z]|$)", text[pos:])
+        if m:
+            pos += m.end()
             continue
-        # Within each block, find alternating (hero)(skill) pairs
-        pos = 0
-        while pos < len(blk):
-            matched = False
-            # Try each known hero name (longest-first to avoid prefix issues)
-            for hero in sorted(hero_names + ["Clanboss"], key=len, reverse=True):
-                if blk[pos:pos + len(hero)] == hero:
-                    pos += len(hero)
-                    # Next should be a skill alias — try longest first
-                    for alias in sorted(SKILL_ALIASES, key=len, reverse=True):
-                        if blk[pos:pos + len(alias)] == alias:
-                            out.append((hero, alias))
-                            pos += len(alias)
-                            matched = True
-                            break
-                    if matched:
+        matched = False
+        for hero_norm in sorted(hero_stripped.keys(), key=len, reverse=True):
+            if text[pos:pos + len(hero_norm)] == hero_norm:
+                after = pos + len(hero_norm)
+                for alias in sorted(SKILL_ALIASES, key=len, reverse=True):
+                    if text[after:after + len(alias)] == alias:
+                        out.append((hero_stripped[hero_norm], alias))
+                        pos = after + len(alias)
+                        matched = True
                         break
-            if not matched:
-                pos += 1
+                if matched:
+                    break
+        if not matched:
+            pos += 1
     return out
 
 
