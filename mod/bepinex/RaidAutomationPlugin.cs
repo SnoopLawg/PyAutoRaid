@@ -5016,9 +5016,43 @@ namespace RaidAutomation
                         "ElementRelation", "GlanceReason", "MultiplierValuePositive",
                         "Accuracy", "Resistance", "BaseAccuracy", "ApplyResult",
                         "ApplyFailReason", "IsGuaranteedBlocked",
-                        "StatusEffectContext", "AppliedEffect",
                         "Amount",
                     });
+                    // For ApplyContext: also pull the nested AppliedEffect details
+                    // (EffectTypeId, TurnLeft, ProducerId, SkillTypeId, Lifetime)
+                    if (sub == "ApplyContext")
+                    {
+                        try
+                        {
+                            // AppliedEffect is a direct field (no property accessor), use GetField
+                            object applied = null;
+                            try
+                            {
+                                var f = subCtx.GetType().GetField("AppliedEffect",
+                                    BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic);
+                                if (f != null) applied = f.GetValue(subCtx);
+                            }
+                            catch { }
+                            if (applied == null) applied = Prop(subCtx, "AppliedEffect");
+                            if (applied != null)
+                            {
+                                sb.Append(",\"applied_effect\":{");
+                                bool first = true;
+                                foreach (var af in new[] { "Id", "EffectTypeId", "TurnLeft", "Lifetime", "ProducerId", "SkillTypeId", "ApplyTurn" })
+                                {
+                                    try
+                                    {
+                                        int v = IntProp(applied, af);
+                                        if (!first) sb.Append(",");
+                                        sb.Append("\"" + af + "\":" + v);
+                                        first = false;
+                                    } catch { }
+                                }
+                                sb.Append("}");
+                            }
+                        }
+                        catch { }
+                    }
                     sb.Append("}");
                 }
                 sb.Append("}");
@@ -5098,12 +5132,97 @@ namespace RaidAutomation
             catch { }
         }
 
+        // Extract AppliedEffect fields from an EffectContext via raw IL2CPP memory reads.
+        // Layout (from Il2CppDumper): EffectContext.ApplyContext@0xB0, ApplyContext.AppliedEffect@0x40,
+        // AppliedEffect.{Id@0x10, ProducerId@0x14, SkillTypeId@0x28, EffectTypeId@0x38,
+        //               ApplyTurn@0x40, Lifetime@0x44, TurnLeft@0x48}
+        private static string ExtractAppliedEffectFromCx(object[] __args)
+        {
+            try
+            {
+                if (__args == null || __args.Length == 0 || __args[0] == null) return "";
+                if (!(__args[0] is Il2CppSystem.Object il2Obj)) return "";
+                IntPtr cx = il2Obj.Pointer;
+                if ((long)cx < 0x10000) return "";
+                IntPtr applyCtx = Marshal.ReadIntPtr(cx + 0xB0);
+                if ((long)applyCtx < 0x10000) return "";
+                // StatusEffectContext @ ApplyContext+0x38 with StatusEffectTypeIdToApply@+0x18
+                //                       EffectTurnsModifier (Nullable<int>) @ +0x10 (HasValue@0x10, Value@0x14)
+                int setype = -1;
+                int turnModHas = 0, turnModVal = 0;
+                IntPtr sec = Marshal.ReadIntPtr(applyCtx + 0x38);
+                if ((long)sec > 0x10000)
+                {
+                    turnModHas = Marshal.ReadInt32(sec + 0x14);
+                    turnModVal = Marshal.ReadInt32(sec + 0x10);
+                    setype = Marshal.ReadInt32(sec + 0x18);
+                }
+                // Producer/target BattleHero refs from ApplyContext: 0x58 / 0x60
+                // BattleHero: TypeId@0x18, Id@0x1C
+                int producerId = -1, targetId = -1, producerType = -1, targetType = -1;
+                try
+                {
+                    IntPtr prod = Marshal.ReadIntPtr(applyCtx + 0x58);
+                    if ((long)prod > 0x10000)
+                    {
+                        producerType = Marshal.ReadInt32(prod + 0x18);
+                        producerId = Marshal.ReadInt32(prod + 0x1C);
+                    }
+                    IntPtr tgt = Marshal.ReadIntPtr(applyCtx + 0x60);
+                    if ((long)tgt > 0x10000)
+                    {
+                        targetType = Marshal.ReadInt32(tgt + 0x18);
+                        targetId = Marshal.ReadInt32(tgt + 0x1C);
+                    }
+                }
+                catch { }
+                long accMod = Marshal.ReadInt64(applyCtx + 0x20);
+                long resMod = Marshal.ReadInt64(applyCtx + 0x28);
+                byte applyResHas = Marshal.ReadByte(applyCtx + 0x30);
+                byte applyResVal = Marshal.ReadByte(applyCtx + 0x31);
+                int failReason = Marshal.ReadInt32(applyCtx + 0x34);
+
+                IntPtr ae = Marshal.ReadIntPtr(applyCtx + 0x40);
+                string aeJson;
+                if ((long)ae < 0x10000)
+                {
+                    aeJson = "null";
+                }
+                else
+                {
+                    int id = Marshal.ReadInt32(ae + 0x10);
+                    int pid = Marshal.ReadInt32(ae + 0x14);
+                    int skillTypeId = Marshal.ReadInt32(ae + 0x28);
+                    int effectTypeId = Marshal.ReadInt32(ae + 0x38);
+                    int applyTurn = Marshal.ReadInt32(ae + 0x40);
+                    int lifetime = Marshal.ReadInt32(ae + 0x44);
+                    int turnLeft = Marshal.ReadInt32(ae + 0x48);
+                    aeJson = "{\"id\":" + id + ",\"p\":" + pid + ",\"s\":" + skillTypeId
+                        + ",\"e\":" + effectTypeId + ",\"at\":" + applyTurn + ",\"l\":" + lifetime
+                        + ",\"tl\":" + turnLeft + "}";
+                }
+                return ",\"ae\":" + aeJson
+                    + ",\"setype\":" + setype
+                    + ",\"tmodH\":" + turnModHas + ",\"tmodV\":" + turnModVal
+                    + ",\"acc_mod\":" + accMod + ",\"res_mod\":" + resMod
+                    + ",\"res_has\":" + applyResHas + ",\"res_val\":" + applyResVal
+                    + ",\"fail\":" + failReason
+                    + ",\"prod\":" + producerId + ",\"prodT\":" + producerType
+                    + ",\"tgt\":" + targetId + ",\"tgtT\":" + targetType;
+            }
+            catch (Exception ex)
+            {
+                return ",\"ae_err\":\"" + ex.GetType().Name + "\"";
+            }
+        }
+
         public static void BattleHook_ApplyStatus(object __instance, object[] __args)
         {
             _hookDiag_ApplyStatus++;
             try
             {
-                string entry = "{\"kind\":\"apply_status\",\"tick\":" + _battleCommandCount + ",\"args\":" + DumpEventArgs(__args ?? new object[0]) + "}";
+                string ae = ExtractAppliedEffectFromCx(__args);
+                string entry = "{\"kind\":\"apply_status\",\"tick\":" + _battleCommandCount + ae + ",\"args\":" + DumpEventArgs(__args ?? new object[0]) + "}";
                 lock (_tickLog) { if (_tickLog.Count < 3000) _tickLog.Add(entry); }
             }
             catch { }
@@ -5114,7 +5233,8 @@ namespace RaidAutomation
             _hookDiag_RemoveStatus++;
             try
             {
-                string entry = "{\"kind\":\"remove_status\",\"tick\":" + _battleCommandCount + ",\"args\":" + DumpEventArgs(__args ?? new object[0]) + "}";
+                string ae = ExtractAppliedEffectFromCx(__args);
+                string entry = "{\"kind\":\"remove_status\",\"tick\":" + _battleCommandCount + ae + ",\"args\":" + DumpEventArgs(__args ?? new object[0]) + "}";
                 lock (_tickLog) { if (_tickLog.Count < 3000) _tickLog.Add(entry); }
             }
             catch { }
@@ -5125,7 +5245,8 @@ namespace RaidAutomation
             _hookDiag_DurationChange++;
             try
             {
-                string entry = "{\"kind\":\"duration_change\",\"tick\":" + _battleCommandCount + ",\"args\":" + DumpEventArgs(__args ?? new object[0]) + "}";
+                string ae = ExtractAppliedEffectFromCx(__args);
+                string entry = "{\"kind\":\"duration_change\",\"tick\":" + _battleCommandCount + ae + ",\"args\":" + DumpEventArgs(__args ?? new object[0]) + "}";
                 lock (_tickLog) { if (_tickLog.Count < 3000) _tickLog.Add(entry); }
             }
             catch { }
@@ -5617,56 +5738,49 @@ namespace RaidAutomation
                                             sbtl.Append("]");
                                         }
                                     }
-                                    IntPtr dictPtr = Marshal.ReadIntPtr(heroObj + 0x108);
-                                    if ((long)dictPtr > 0x10000)
+                                    // Read applied effects from HeroState.AppliedEffects (List<AppliedEffect>)
+                                    //   BattleHero._heroState @ 0xC0
+                                    //   HeroState.AppliedEffects @ 0x38, AppliedBuffs @ 0x58, AppliedDebuffs @ 0x60
+                                    //   List<T>: _items@0x10, _size@0x18; Array header 0x20, items at +0x20
+                                    //   AppliedEffect: Id@0x10 ProducerId@0x14 SkillTypeId@0x28 EffectTypeId@0x38
+                                    //     ApplyTurn@0x40 Lifetime@0x44 TurnLeft@0x48
+                                    IntPtr hstate = Marshal.ReadIntPtr(heroObj + 0xC0);
+                                    if ((long)hstate > 0x10000)
                                     {
-                                        sbtl.Append(",\"ae_dict\":1");
-                                        // Probe offsets to find _count (int32). Valid counts for effects dict
-                                        // are small positive ints (0-50).
-                                        int _count = Marshal.ReadInt32(dictPtr + 0x20);
-                                        IntPtr _entries = Marshal.ReadIntPtr(dictPtr + 0x18);
-                                        sbtl.Append(",\"dc\":" + _count
-                                            + ",\"v18\":" + Marshal.ReadInt32(dictPtr + 0x18)
-                                            + ",\"v1C\":" + Marshal.ReadInt32(dictPtr + 0x1C)
-                                            + ",\"v28\":" + Marshal.ReadInt32(dictPtr + 0x28)
-                                            + ",\"v30\":" + Marshal.ReadInt32(dictPtr + 0x30)
-                                            + ",\"v38\":" + Marshal.ReadInt32(dictPtr + 0x38)
-                                            + ",\"v40\":" + Marshal.ReadInt32(dictPtr + 0x40));
-                                        if (_count > 0 && _count < 100 && (long)_entries > 0x10000)
+                                        sbtl.Append(",\"hs\":1");
+                                        foreach (var (fname, offL) in new[] {
+                                            ("ae", 0x38), ("bf", 0x58), ("db", 0x60)
+                                        })
                                         {
-                                            sbtl.Append(",\"effs\":[");
-                                            int ne = 0;
-                                            IntPtr entriesBase = _entries + 0x20;
-                                            for (int ei = 0; ei < _count && ei < 50; ei++)
+                                            IntPtr listObj = Marshal.ReadIntPtr(hstate + offL);
+                                            if ((long)listObj <= 0x10000) continue;
+                                            int listSize = Marshal.ReadInt32(listObj + 0x18);
+                                            if (listSize <= 0 || listSize > 100) { sbtl.Append(",\"" + fname + "_n\":" + listSize); continue; }
+                                            IntPtr listItems = Marshal.ReadIntPtr(listObj + 0x10);
+                                            if ((long)listItems <= 0x10000) continue;
+                                            sbtl.Append(",\"" + fname + "\":[");
+                                            IntPtr itemsBase = listItems + 0x20;
+                                            for (int li = 0; li < listSize && li < 50; li++)
                                             {
-                                                IntPtr entry = entriesBase + (ei * 24);
-                                                int hashCode = Marshal.ReadInt32(entry + 0x0);
-                                                if (hashCode < 0) continue;
-                                                int key = Marshal.ReadInt32(entry + 0x8);
-                                                IntPtr listObj = Marshal.ReadIntPtr(entry + 0x10);
-                                                if ((long)listObj <= 0x10000) continue;
-                                                IntPtr listItemsArr = Marshal.ReadIntPtr(listObj + 0x10);
-                                                int listSize = Marshal.ReadInt32(listObj + 0x18);
-                                                if ((long)listItemsArr <= 0x10000 || listSize <= 0 || listSize > 50) continue;
-                                                IntPtr itemsBase = listItemsArr + 0x20;
-                                                for (int li = 0; li < listSize && ne < 50; li++)
-                                                {
-                                                    IntPtr eff = Marshal.ReadIntPtr(itemsBase + (li * 8));
-                                                    if ((long)eff <= 0x10000) continue;
-                                                    int pid = Marshal.ReadInt32(eff + 0x14);
-                                                    int etype = Marshal.ReadInt32(eff + 0x38);
-                                                    int tleft = Marshal.ReadInt32(eff + 0x48);
-                                                    if (ne > 0) sbtl.Append(",");
-                                                    sbtl.Append("{\"t\":" + etype + ",\"tl\":" + tleft + ",\"p\":" + pid + ",\"k\":" + key + "}");
-                                                    ne++;
-                                                }
+                                                IntPtr eff = Marshal.ReadIntPtr(itemsBase + (li * 8));
+                                                if ((long)eff <= 0x10000) continue;
+                                                int effId = Marshal.ReadInt32(eff + 0x10);
+                                                int pid = Marshal.ReadInt32(eff + 0x14);
+                                                int stid = Marshal.ReadInt32(eff + 0x28);
+                                                int etype = Marshal.ReadInt32(eff + 0x38);
+                                                int aTurn = Marshal.ReadInt32(eff + 0x40);
+                                                int life = Marshal.ReadInt32(eff + 0x44);
+                                                int tleft = Marshal.ReadInt32(eff + 0x48);
+                                                if (li > 0) sbtl.Append(",");
+                                                sbtl.Append("{\"id\":" + effId + ",\"t\":" + etype + ",\"tl\":" + tleft
+                                                    + ",\"l\":" + life + ",\"at\":" + aTurn + ",\"p\":" + pid + ",\"s\":" + stid + "}");
                                             }
                                             sbtl.Append("]");
                                         }
                                     }
                                     else
                                     {
-                                        sbtl.Append(",\"ae_dict\":0");
+                                        sbtl.Append(",\"hs\":0");
                                     }
                                 }
                                 catch (Exception exAe) { sbtl.Append(",\"ae_err\":\"" + Esc(exAe.Message) + "\""); }

@@ -65,6 +65,9 @@ STATUS_EFFECT_MAP = {
     711: ("inc_res_50", False, True),
     720: ("dec_res_25", True, False),
     721: ("dec_res_50", True, False),
+    # Internal / boss mechanics (StatusEffectTypeId enum names)
+    340: ("damage_counter", False, False),  # Dragon 20 boss self-counter
+    740: ("fire_mark", False, False),       # HP Burn interaction marker
 }
 
 # Sim-relevant debuffs (placed on CB debuff bar)
