@@ -34,12 +34,39 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 HH_DIR = PROJECT_ROOT / "data" / "hh" / "parsed"
 DWJ_DIR = PROJECT_ROOT / "data" / "dwj" / "parsed"
 
-# User's confirmed or fusable CB champions (from memory/user_cb_roster.md)
-USER_ROSTER = [
-    "Cardiel", "Maneater", "Demytha", "Ninja", "Geomancer", "Venomage",
-    "Gnut",
-]
+# User's roster is auto-derived from heroes_all.json (mod API dump).
+# Override via USER_FUSABLE for champions they don't own but can fuse.
+HEROES_ALL_PATH = PROJECT_ROOT / "heroes_all.json"
 USER_FUSABLE = ["Lady Mikage"]
+
+
+def _norm(s: str) -> str:
+    import re as _re
+    return _re.sub(r"[^a-z0-9]", "", (s or "").lower())
+
+
+def _load_user_roster() -> dict[str, dict]:
+    """Return {normalized_name: hero_dict} for owned heroes at max grade."""
+    if not HEROES_ALL_PATH.exists():
+        return {}
+    data = load_json(HEROES_ALL_PATH)
+    heroes = data.get("heroes", []) if isinstance(data, dict) else []
+    by_name = {}
+    for h in heroes:
+        nm = h.get("name") or ""
+        key = _norm(nm)
+        if not key:
+            continue
+        prev = by_name.get(key)
+        if not prev:
+            by_name[key] = h
+            continue
+        # keep highest (grade, level, empower)
+        cur_rank = (h.get("grade", 0), h.get("level", 0), h.get("empower", 0))
+        prev_rank = (prev.get("grade", 0), prev.get("level", 0), prev.get("empower", 0))
+        if cur_rank > prev_rank:
+            by_name[key] = h
+    return by_name
 
 
 def load_json(path: Path):
@@ -133,35 +160,70 @@ def print_hh_cb_posts():
             print(f"    {p.get('link')}")
 
 
-def print_roster_snapshot():
+def print_roster_snapshot(min_cb: float = 4.0):
+    """Build from heroes_all.json — show every owned hero with CB >= min_cb,
+    plus any fusable additions."""
     champs = load_json(HH_DIR / "champions.json")
     tl = load_json(HH_DIR / "tierlist.json")
-    ratings_by_name = {r["name"]: r for r in tl}
+    champs_by_norm = {_norm(c["name"]): c for c in champs}
+    ratings_by_norm = {_norm(r["name"]): r for r in tl}
+    owned = _load_user_roster()
 
-    def show(name: str, label: str):
-        c = next((x for x in champs if x["name"] == name), None)
-        r = ratings_by_name.get(name)
+    def show(hero_entry: dict | None, name: str, label: str):
+        key = _norm(name)
+        c = champs_by_norm.get(key)
+        r = ratings_by_norm.get(key)
         if not c:
-            print(f"\n  {name}: not in HH data"); return
+            # try partial
+            for nkey, rec in champs_by_norm.items():
+                if key in nkey or nkey in key:
+                    c = rec; r = ratings_by_norm.get(nkey); break
+        if not c:
+            print(f"\n  [{label}] {name}: not in HH data"); return
         cb = (r or {}).get("clan_boss", "?")
         overall = (r or {}).get("overall_user", "?")
         bl = c.get("blessings") or {}
         masteries = c.get("masteries") or {}
         mast_pve = masteries.get("pve") if isinstance(masteries, dict) else None
-        print(f"\n  [{label}] {name}  ({c.get('rarity')} {c.get('affinity')}  faction={c.get('faction')})")
-        print(f"    CB rating: {cb}   overall: {overall}")
+        grade = (hero_entry or {}).get("grade", "?")
+        empower = (hero_entry or {}).get("empower", 0)
+        grade_str = f"{grade}*" + (f"+{empower}" if empower else "")
+        print(f"\n  [{label} {grade_str}] {c['name']}  ({c.get('rarity')} {c.get('affinity')}  faction={c.get('faction')})")
+        print(f"    CB: {cb}   overall: {overall}")
         print(f"    PvE sets:   {c.get('pve_sets')}")
         print(f"    PvE stats:  {c.get('pve_stats')}")
         print(f"    Blessings:  pve_low={bl.get('blessing_pve_low')}  pve_high={bl.get('blessing_pve_high')}  alt={bl.get('blessing_pve_alternate')}")
         if mast_pve:
-            preview = str(mast_pve)[:200]
-            print(f"    Masteries PvE: {preview}...")
+            preview = str(mast_pve)[:160]
+            print(f"    Masteries PvE (truncated): {preview}...")
 
-    print("=== User roster — HH CB snapshot ===")
-    for name in USER_ROSTER:
-        show(name, "OWNED")
+    # Gather owned heroes with CB >= min_cb
+    rows = []
+    for key, hero in owned.items():
+        r = ratings_by_norm.get(key)
+        if not r:
+            # partial match
+            for nkey, rec in ratings_by_norm.items():
+                if key in nkey or nkey in key:
+                    r = rec; break
+        if not r:
+            continue
+        try:
+            cb = float(r.get("clan_boss") or 0)
+        except (TypeError, ValueError):
+            cb = 0
+        if cb < min_cb:
+            continue
+        rows.append((cb, r.get("overall_user", 0) or 0, hero, r.get("name")))
+
+    rows.sort(key=lambda x: (-x[0], -x[1], x[3]))
+    print(f"=== Owned CB-viable roster (CB >= {min_cb}, {len(rows)} heroes) ===")
+    for cb, ovr, hero, hh_name in rows:
+        show(hero, hh_name, "OWNED")
+
+    print("\n\n=== Fusable (not yet owned, user can obtain) ===")
     for name in USER_FUSABLE:
-        show(name, "FUSABLE")
+        show(None, name, "FUSABLE")
 
 
 def main():
