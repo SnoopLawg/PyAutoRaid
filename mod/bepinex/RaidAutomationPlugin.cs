@@ -5559,85 +5559,118 @@ namespace RaidAutomation
                                 long tmDisplay = tmRaw >> 32;  // 32.32 fixed → display
                                 if (uidx > 0) sbtl.Append(",");
                                 sbtl.Append("{\"s\":\"" + side + "\",\"id\":" + id + ",\"tm\":" + tmDisplay + ",\"tn\":" + turnN);
-                                // IL2CPP raw dict iteration for AppliedEffectsByHeroes
+                                // Read AppliedEffectsByHeroes dict pointer directly from field offset 0x108
+                                // (getter is inlined by IL2CPP AOT — field offset found via Il2CppDumper against GameAssembly.dll).
+                                // Dict is Dictionary<int, List<AppliedEffect>>; iterate via get_Values on raw pointer.
                                 try
                                 {
-                                    IntPtr getAeByH = FindIL2CPPMethodStatic(hc, "get_AppliedEffectsByHeroes", 0);
-                                    sbtl.Append(",\"get_ae_found\":" + (getAeByH != IntPtr.Zero ? 1 : 0));
-                                    if (getAeByH != IntPtr.Zero)
+                                    // Walk Dictionary<int, List<AppliedEffect>> via pure memory reads.
+                                    // Struct layouts extracted from Il2CppDumper output (il2cpp.h):
+                                    //   Dictionary fields: _buckets@0x10, _entries@0x18, _count@0x20
+                                    //   Entry: hashCode(4) next(4) key_int(4) pad(4) value_ptr(8) = 24 bytes
+                                    //   Array header: 0x20 bytes, items start at +0x20
+                                    //   List<T>: _items@0x10, _size@0x18
+                                    //   AppliedEffect: Id@0x10 ProducerId@0x14 SkillTypeId@0x28 EffectTypeId@0x38 TurnLeft@0x48
+                                    // Batch lookups across multiple runtime-populated collections on BattleHero.
+                                    // Offsets confirmed via Il2CppDumper output (dump.cs) against GameAssembly.dll.
+                                    //   _appliedStatModifications @ 0xB0 (List<StatModification>) — stat buffs/debuffs
+                                    //   AbsorbedDamageByEffectKindId @ 0x68 (Dictionary<int, Fixed>) — active shield/absorb
+                                    //   AppliedEffectsByHeroes @ 0x108 (Dictionary, serialization-only, stays null)
+                                    //   PhaseEffects @ 0xF0, Challenges @ 0xE0, PassiveBonuses @ 0x110
+
+                                    // AbsorbedDamageByEffectKindId: dict count gives us active shield/block count
+                                    try
                                     {
-                                        IntPtr eAe = IntPtr.Zero;
-                                        IntPtr dictPtr = il2cpp_runtime_invoke(getAeByH, heroObj, IntPtr.Zero, ref eAe);
-                                        if (dictPtr != IntPtr.Zero)
+                                        IntPtr absDict = Marshal.ReadIntPtr(heroObj + 0x68);
+                                        if ((long)absDict > 0x10000)
                                         {
-                                            IntPtr dictCls = il2cpp_object_get_class(dictPtr);
-                                            // Get Values collection
-                                            IntPtr getVals = FindIL2CPPMethodStatic(dictCls, "get_Values", 0);
-                                            if (getVals != IntPtr.Zero)
+                                            int absCount = Marshal.ReadInt32(absDict + 0x20);
+                                            if (absCount > 0 && absCount < 20)
+                                                sbtl.Append(",\"abs\":" + absCount);
+                                        }
+                                    } catch { }
+
+                                    IntPtr smList = Marshal.ReadIntPtr(heroObj + 0xB0);
+                                    if ((long)smList > 0x10000)
+                                    {
+                                        IntPtr smItems = Marshal.ReadIntPtr(smList + 0x10);
+                                        int smSize = Marshal.ReadInt32(smList + 0x18);
+                                        sbtl.Append(",\"sm\":" + smSize);
+                                        if ((long)smItems > 0x10000 && smSize > 0 && smSize < 100)
+                                        {
+                                            sbtl.Append(",\"smods\":[");
+                                            IntPtr smBase = smItems + 0x20;
+                                            for (int sIdx = 0; sIdx < smSize && sIdx < 50; sIdx++)
                                             {
-                                                IntPtr eV = IntPtr.Zero;
-                                                IntPtr valsColl = il2cpp_runtime_invoke(getVals, dictPtr, IntPtr.Zero, ref eV);
-                                                if (valsColl != IntPtr.Zero)
-                                                {
-                                                    IntPtr valsCls = il2cpp_object_get_class(valsColl);
-                                                    IntPtr valsEnum = FindIL2CPPMethodStatic(valsCls, "GetEnumerator", 0);
-                                                    if (valsEnum != IntPtr.Zero)
-                                                    {
-                                                        IntPtr eE = IntPtr.Zero;
-                                                        IntPtr enumObj = il2cpp_runtime_invoke(valsEnum, valsColl, IntPtr.Zero, ref eE);
-                                                        if (enumObj != IntPtr.Zero)
-                                                        {
-                                                            IntPtr enumCls = il2cpp_object_get_class(enumObj);
-                                                            IntPtr moveNext = FindIL2CPPMethodStatic(enumCls, "MoveNext", 0);
-                                                            IntPtr getCur = FindIL2CPPMethodStatic(enumCls, "get_Current", 0);
-                                                            sbtl.Append(",\"effs\":[");
-                                                            int ne = 0;
-                                                            while (moveNext != IntPtr.Zero && getCur != IntPtr.Zero && ne < 30)
-                                                            {
-                                                                IntPtr eM = IntPtr.Zero;
-                                                                IntPtr mnRes = il2cpp_runtime_invoke(moveNext, enumObj, IntPtr.Zero, ref eM);
-                                                                if (mnRes == IntPtr.Zero || Marshal.ReadByte(mnRes + 0x10) == 0) break;
-                                                                IntPtr eC = IntPtr.Zero;
-                                                                IntPtr listObj = il2cpp_runtime_invoke(getCur, enumObj, IntPtr.Zero, ref eC);
-                                                                if (listObj == IntPtr.Zero) continue;
-                                                                IntPtr listCls = il2cpp_object_get_class(listObj);
-                                                                IntPtr lGetCount = FindIL2CPPMethodStatic(listCls, "get_Count", 0);
-                                                                IntPtr lGetItem = FindIL2CPPMethodStatic(listCls, "get_Item", 1);
-                                                                if (lGetCount == IntPtr.Zero || lGetItem == IntPtr.Zero) continue;
-                                                                IntPtr eL = IntPtr.Zero;
-                                                                IntPtr lcRes = il2cpp_runtime_invoke(lGetCount, listObj, IntPtr.Zero, ref eL);
-                                                                if (lcRes == IntPtr.Zero) continue;
-                                                                int lc = Marshal.ReadInt32(lcRes + 0x10);
-                                                                for (int k = 0; k < lc && ne < 30; k++)
-                                                                {
-                                                                    IntPtr iBuf = Marshal.AllocHGlobal(4); Marshal.WriteInt32(iBuf, k);
-                                                                    IntPtr args = Marshal.AllocHGlobal(IntPtr.Size); Marshal.WriteIntPtr(args, iBuf);
-                                                                    IntPtr eI = IntPtr.Zero;
-                                                                    IntPtr eff = il2cpp_runtime_invoke(lGetItem, listObj, args, ref eI);
-                                                                    Marshal.FreeHGlobal(iBuf); Marshal.FreeHGlobal(args);
-                                                                    if (eff == IntPtr.Zero) continue;
-                                                                    IntPtr effCls = il2cpp_object_get_class(eff);
-                                                                    int etype = 0, tleft = 0, pid = 0;
-                                                                    IntPtr gET = FindIL2CPPMethodStatic(effCls, "get_EffectTypeId", 0);
-                                                                    if (gET != IntPtr.Zero) { IntPtr eET = IntPtr.Zero; IntPtr r = il2cpp_runtime_invoke(gET, eff, IntPtr.Zero, ref eET); if (r != IntPtr.Zero) etype = Marshal.ReadInt32(r + 0x10); }
-                                                                    IntPtr gTL = FindIL2CPPMethodStatic(effCls, "get_TurnLeft", 0);
-                                                                    if (gTL != IntPtr.Zero) { IntPtr eTL = IntPtr.Zero; IntPtr r = il2cpp_runtime_invoke(gTL, eff, IntPtr.Zero, ref eTL); if (r != IntPtr.Zero) tleft = Marshal.ReadInt32(r + 0x10); }
-                                                                    IntPtr gPID = FindIL2CPPMethodStatic(effCls, "get_ProducerId", 0);
-                                                                    if (gPID != IntPtr.Zero) { IntPtr ePID = IntPtr.Zero; IntPtr r = il2cpp_runtime_invoke(gPID, eff, IntPtr.Zero, ref ePID); if (r != IntPtr.Zero) pid = Marshal.ReadInt32(r + 0x10); }
-                                                                    if (ne > 0) sbtl.Append(",");
-                                                                    sbtl.Append("{\"t\":" + etype + ",\"tl\":" + tleft + ",\"p\":" + pid + "}");
-                                                                    ne++;
-                                                                }
-                                                            }
-                                                            sbtl.Append("]");
-                                                        }
-                                                    }
-                                                }
+                                                IntPtr sm = Marshal.ReadIntPtr(smBase + (sIdx * 8));
+                                                if ((long)sm <= 0x10000) continue;
+                                                IntPtr fromHero = Marshal.ReadIntPtr(sm + 0x10);
+                                                int fromHeroId = 0;
+                                                if ((long)fromHero > 0x10000) fromHeroId = Marshal.ReadInt32(fromHero + 0x1C);
+                                                int statKind = Marshal.ReadInt32(sm + 0x18);
+                                                int modType = Marshal.ReadInt32(sm + 0x1C);
+                                                long valRaw = Marshal.ReadInt64(sm + 0x20);
+                                                long valDisp = valRaw >> 32;
+                                                if (sIdx > 0) sbtl.Append(",");
+                                                sbtl.Append("{\"from\":" + fromHeroId + ",\"st\":" + statKind + ",\"ty\":" + modType + ",\"v\":" + valDisp + "}");
                                             }
+                                            sbtl.Append("]");
                                         }
                                     }
+                                    IntPtr dictPtr = Marshal.ReadIntPtr(heroObj + 0x108);
+                                    if ((long)dictPtr > 0x10000)
+                                    {
+                                        sbtl.Append(",\"ae_dict\":1");
+                                        // Probe offsets to find _count (int32). Valid counts for effects dict
+                                        // are small positive ints (0-50).
+                                        int _count = Marshal.ReadInt32(dictPtr + 0x20);
+                                        IntPtr _entries = Marshal.ReadIntPtr(dictPtr + 0x18);
+                                        sbtl.Append(",\"dc\":" + _count
+                                            + ",\"v18\":" + Marshal.ReadInt32(dictPtr + 0x18)
+                                            + ",\"v1C\":" + Marshal.ReadInt32(dictPtr + 0x1C)
+                                            + ",\"v28\":" + Marshal.ReadInt32(dictPtr + 0x28)
+                                            + ",\"v30\":" + Marshal.ReadInt32(dictPtr + 0x30)
+                                            + ",\"v38\":" + Marshal.ReadInt32(dictPtr + 0x38)
+                                            + ",\"v40\":" + Marshal.ReadInt32(dictPtr + 0x40));
+                                        if (_count > 0 && _count < 100 && (long)_entries > 0x10000)
+                                        {
+                                            sbtl.Append(",\"effs\":[");
+                                            int ne = 0;
+                                            IntPtr entriesBase = _entries + 0x20;
+                                            for (int ei = 0; ei < _count && ei < 50; ei++)
+                                            {
+                                                IntPtr entry = entriesBase + (ei * 24);
+                                                int hashCode = Marshal.ReadInt32(entry + 0x0);
+                                                if (hashCode < 0) continue;
+                                                int key = Marshal.ReadInt32(entry + 0x8);
+                                                IntPtr listObj = Marshal.ReadIntPtr(entry + 0x10);
+                                                if ((long)listObj <= 0x10000) continue;
+                                                IntPtr listItemsArr = Marshal.ReadIntPtr(listObj + 0x10);
+                                                int listSize = Marshal.ReadInt32(listObj + 0x18);
+                                                if ((long)listItemsArr <= 0x10000 || listSize <= 0 || listSize > 50) continue;
+                                                IntPtr itemsBase = listItemsArr + 0x20;
+                                                for (int li = 0; li < listSize && ne < 50; li++)
+                                                {
+                                                    IntPtr eff = Marshal.ReadIntPtr(itemsBase + (li * 8));
+                                                    if ((long)eff <= 0x10000) continue;
+                                                    int pid = Marshal.ReadInt32(eff + 0x14);
+                                                    int etype = Marshal.ReadInt32(eff + 0x38);
+                                                    int tleft = Marshal.ReadInt32(eff + 0x48);
+                                                    if (ne > 0) sbtl.Append(",");
+                                                    sbtl.Append("{\"t\":" + etype + ",\"tl\":" + tleft + ",\"p\":" + pid + ",\"k\":" + key + "}");
+                                                    ne++;
+                                                }
+                                            }
+                                            sbtl.Append("]");
+                                        }
+                                    }
+                                    else
+                                    {
+                                        sbtl.Append(",\"ae_dict\":0");
+                                    }
                                 }
-                                catch { }
+                                catch (Exception exAe) { sbtl.Append(",\"ae_err\":\"" + Esc(exAe.Message) + "\""); }
+
                                 sbtl.Append("}");
                                 uidx++;
                             }
