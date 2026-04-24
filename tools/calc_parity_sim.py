@@ -256,11 +256,14 @@ def _check_condition(condition: dict | None, targets: list[Actor]) -> bool:
 
 
 def _apply_tm_up(targets: list[Actor], amount: float) -> None:
+    # DWJ does not clamp TM at 100 on buff application — actors can go past
+    # 100 and the excess carries into the next tick selection.
     for t in targets:
-        t.turn_meter = min(100.0, t.turn_meter + amount)
+        t.turn_meter = t.turn_meter + amount
 
 
 def _apply_tm_down(targets: list[Actor], amount: float) -> None:
+    # Clamp at 0 (can't go negative).
     for t in targets:
         t.turn_meter = max(0.0, t.turn_meter - amount)
 
@@ -292,6 +295,28 @@ def _apply_extra_turn(targets: list[Actor]) -> None:
         t.has_extra_turn = True
 
 
+def _apply_ally_atk(targets: list[Actor], actors: list[Actor], depth: int = 0) -> None:
+    """Trigger each target ally's A1 skill effects without modifying their
+    turn state (no TM reset, no CD tick, no CD set on A1).
+
+    Ports DWJ's er.allyatk handler:
+        t.forEach(ally => el(ally, ally.A1_config, all_actors, true, turn))
+
+    The el() call in DWJ applies skill effects + passive triggers but does
+    NOT run the turn-scheduling bookkeeping (that's in ek's main loop).
+
+    We cap recursion at depth=3 to guard against infinite allyatk chains
+    (e.g. if A1 has an allyatk effect — doesn't happen in our data but be
+    safe).
+    """
+    if depth >= 3:
+        return
+    for ally in targets:
+        # Apply ally's A1 effects. Pass caster_skill_alias="A1" so if any
+        # sub-effect tries to reduce_cd, A1 (which has cd=0 anyway) is excluded.
+        apply_skill_effects(ally, "A1", actors, caster_skill_alias="A1", _allyatk_depth=depth + 1)
+
+
 def _apply_speed_buff(targets: list[Actor], amount_pct: float, duration: int, is_debuff: bool = False) -> None:
     name = "speed-debuff" if is_debuff else "speed-buff"
     for t in targets:
@@ -305,7 +330,7 @@ def _apply_speed_buff(targets: list[Actor], amount_pct: float, duration: int, is
         ))
 
 
-def apply_skill_effects(actor: Actor, skill_alias: str, actors: list[Actor], caster_skill_alias: str | None = None) -> None:
+def apply_skill_effects(actor: Actor, skill_alias: str, actors: list[Actor], caster_skill_alias: str | None = None, _allyatk_depth: int = 0) -> None:
     """Apply the skill's effect list. Only handles effects that affect scheduling.
 
     This is a subset of DWJ's el()/er table — just enough to reproduce turn
@@ -355,6 +380,13 @@ def apply_skill_effects(actor: Actor, skill_alias: str, actors: list[Actor], cas
                 _apply_extra_turn(targets)
             elif buff == "reset_cd":
                 _apply_reset_cd(targets)
+            elif buff == "allyatk":
+                # amount = how many allies attack. DWJ takes first `amount`
+                # targets (resolved by 'allies') and triggers each to cast A1.
+                # Cap targets by amount.
+                n_attackers = int(amount) if amount else 0
+                if n_attackers > 0:
+                    _apply_ally_atk(targets[:n_attackers], actors, depth=_allyatk_depth)
             # Other buffs (unkillable, block_dmg, shield, etc.) don't affect scheduling
             continue
 
@@ -429,7 +461,8 @@ def simulate(variant: DwjVariant, max_turns: int = 1000, max_boss_turns: int = 5
             )
 
         if trace:
-            print(f"         cast: {actor.name} {skill.alias}")
+            cd_str = " ".join(f"{c.alias}cd{c.current_cooldown}" for c in actor.skill_configs if c.alias != "A4")
+            print(f"         cast: {actor.name} {skill.alias}  [{cd_str}]")
 
         # Record turn
         boss_tn = count_boss_turns(turns) + (0 if not actor.is_boss and len(turns) > 0 else (1 if actor.is_boss else 0))
@@ -451,6 +484,9 @@ def simulate(variant: DwjVariant, max_turns: int = 1000, max_boss_turns: int = 5
         # Apply skill effects that affect scheduling (both player and boss can trigger)
         if apply_effects:
             apply_skill_effects(actor, skill.alias, actors, caster_skill_alias=skill.alias)
+            if trace and skill.alias in ("A2", "A3"):  # after-effect state for key skills
+                tm_str = "  ".join(f"{a.name[:4]}={a.turn_meter:6.2f}" for a in actors)
+                print(f"    after-eff: {tm_str}")
 
         # Decrement turn-end effects, remove expired
         for e in actor.effects:
