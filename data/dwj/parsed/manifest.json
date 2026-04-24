@@ -1,0 +1,1262 @@
+{
+  "https://deadwoodjedi.com/creator_events-sitemap.xml": {
+    "content_hash": "9a70b132ed1f0128547e2a348f3594155b45dc7cad3277fa5f19bd63bb9e91bd",
+    "etag": "W/\"16343e2cea5875522dc00cb64b9af397\"",
+    "fetched_at": "2026-04-24T17:40:43Z",
+    "last_modified": "Fri, 24 Apr 2026 17:40:43 GMT",
+    "raw_path": "sitemaps\\creator_events-sitemap.xml",
+    "size": 1742,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/memberpressgroup-sitemap.xml": {
+    "content_hash": "ae079b2557512a89a98f21197c607af2ee47f6d65b9b1edff09c7c420e1127b4",
+    "etag": "W/\"a18ad6b25942ba29b88894fb6ce222b7\"",
+    "fetched_at": "2026-04-24T17:40:42Z",
+    "last_modified": "Fri, 24 Apr 2026 17:40:42 GMT",
+    "raw_path": "sitemaps\\memberpressgroup-sitemap.xml",
+    "size": 1025,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/page-sitemap.xml": {
+    "content_hash": "fe3e957c6b0cedef99b9ab3d2cef5d9a8e100a8b89c814f0c0747c0d310f9cfd",
+    "etag": "W/\"2b12-65038350e1187\"",
+    "fetched_at": "2026-04-24T17:40:38Z",
+    "last_modified": "Fri, 24 Apr 2026 17:36:38 GMT",
+    "raw_path": "sitemaps\\page-sitemap.xml",
+    "size": 11026,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/post-sitemap.xml": {
+    "content_hash": "3d8fa756cfa284b4f9423e922d57198013d425c3d0b9318acd2eddc49a65bbfd",
+    "etag": "W/\"12569-6503836f5fc7d\"",
+    "fetched_at": "2026-04-24T17:40:37Z",
+    "last_modified": "Fri, 24 Apr 2026 17:37:10 GMT",
+    "raw_path": "sitemaps\\post-sitemap.xml",
+    "size": 75113,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/product-sitemap.xml": {
+    "content_hash": "689bae5cba93018dc88e60287e179d01d4276b67996b08ba4d8272a5ea858319",
+    "etag": "W/\"910eee5501b5e986b132e5b810b29c13\"",
+    "fetched_at": "2026-04-24T17:40:39Z",
+    "last_modified": "Fri, 24 Apr 2026 17:40:39 GMT",
+    "raw_path": "sitemaps\\product-sitemap.xml",
+    "size": 5453,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/product_cat-sitemap.xml": {
+    "content_hash": "60a060199d9afd42e3117ef3f504657091bfba5628111906456a2ad42127741d",
+    "etag": "W/\"9020a6a67491d620fcec84b5cf339e78\"",
+    "fetched_at": "2026-04-24T17:40:40Z",
+    "last_modified": "Fri, 24 Apr 2026 17:40:40 GMT",
+    "raw_path": "sitemaps\\product_cat-sitemap.xml",
+    "size": 1154,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/sitemap_index.xml": {
+    "content_hash": "e1b2dd0a84c46c20eaef5a832c3784c1b7eaae5d69b6d0d6077800ba807705e0",
+    "etag": "W/\"5c5-65037980239e4\"",
+    "fetched_at": "2026-04-24T17:40:36Z",
+    "last_modified": "Fri, 24 Apr 2026 16:52:43 GMT",
+    "raw_path": "sitemaps\\sitemap_index.xml",
+    "size": 1477,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/1-1-ratio/": {
+    "content_hash": "0d45fcfc21968ab9619d0cf35be1e7b56c5b198e438d923f3db4b152388f05b8",
+    "etag": "W/\"2cdf7-65036a91cb71c\"",
+    "fetched_at": "2026-04-24T17:41:11Z",
+    "last_modified": "Fri, 24 Apr 2026 15:45:55 GMT",
+    "raw_path": "speed-tunes\\1-1-ratio.html",
+    "size": 183799,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/2-1-ratio/": {
+    "content_hash": "8a1fd7ec23a39bd6aaa8c95e0d032bb4f90efd54aaef29a6a6f64232002f9975",
+    "etag": "W/\"2d3d7-65036a966a117\"",
+    "fetched_at": "2026-04-24T17:41:12Z",
+    "last_modified": "Fri, 24 Apr 2026 15:46:00 GMT",
+    "raw_path": "speed-tunes\\2-1-ratio.html",
+    "size": 185303,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/3-2-ratio/": {
+    "content_hash": "d21dcbc7f2543b10277a70c46b49238eda3496a8d019710f79ddb5a565a896c0",
+    "etag": "W/\"e121990bfea37d5e4eb2d76b25a5ab13\"",
+    "fetched_at": "2026-04-24T17:41:13Z",
+    "last_modified": "Fri, 24 Apr 2026 17:41:13 GMT",
+    "raw_path": "speed-tunes\\3-2-ratio.html",
+    "size": 175719,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/31-ratio/": {
+    "content_hash": "aa399f7c68cc94a5db884728d004af4dda43b3fe7b1c6281c3a42297d74b8a88",
+    "etag": "W/\"2da3f-65037cb09e631\"",
+    "fetched_at": "2026-04-24T17:41:14Z",
+    "last_modified": "Fri, 24 Apr 2026 17:07:00 GMT",
+    "raw_path": "speed-tunes\\31-ratio.html",
+    "size": 186943,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/32-team-with-speed-booster/": {
+    "content_hash": "62898fd5232de690cbecfba4c6eb58992e86e1cbf4e06406f93a641697cdf3bd",
+    "etag": "W/\"35194-65036e448815d\"",
+    "fetched_at": "2026-04-24T17:41:16Z",
+    "last_modified": "Fri, 24 Apr 2026 16:02:28 GMT",
+    "raw_path": "speed-tunes\\32-team-with-speed-booster.html",
+    "size": 217492,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/4-3-ratio/": {
+    "content_hash": "8b9837f22c61ccc04da018ffdeec4bb3665981e34de0e027bca593adf35b6730",
+    "etag": "W/\"2d40d-65037cbd256fc\"",
+    "fetched_at": "2026-04-24T17:41:17Z",
+    "last_modified": "Fri, 24 Apr 2026 17:07:13 GMT",
+    "raw_path": "speed-tunes\\4-3-ratio.html",
+    "size": 185357,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/affinity-friendly-valkyrie-with-two-43-champs/": {
+    "content_hash": "34ef16ce7b5a5ac2b499ec579439d7cb4e8109c50b27b0129700464c3671a5d1",
+    "etag": "W/\"38669-65037edf0d35d\"",
+    "fetched_at": "2026-04-24T17:41:20Z",
+    "last_modified": "Fri, 24 Apr 2026 17:16:45 GMT",
+    "raw_path": "speed-tunes\\affinity-friendly-valkyrie-with-two-43-champs.html",
+    "size": 231017,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/affinity-friendly-valkyrie/": {
+    "content_hash": "055baa279e4349ed461a713c1b87ade4e0364ac6ff4ecb133c4c3014603774a7",
+    "etag": "W/\"368a6-65037ed1c5c6e\"",
+    "fetched_at": "2026-04-24T17:41:18Z",
+    "last_modified": "Fri, 24 Apr 2026 17:16:31 GMT",
+    "raw_path": "speed-tunes\\affinity-friendly-valkyrie.html",
+    "size": 223398,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/archmage-hellmut/": {
+    "content_hash": "7ea91903a3ed82a8790d895a505dfdbdfe56d1732b071f6921aa11c3446022d1",
+    "etag": "W/\"2b9bb-65036dd59c6af\"",
+    "fetched_at": "2026-04-24T17:41:21Z",
+    "last_modified": "Fri, 24 Apr 2026 16:00:32 GMT",
+    "raw_path": "speed-tunes\\archmage-hellmut.html",
+    "size": 178619,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/basic/": {
+    "content_hash": "2e4f535753f6fd869523c8c4bee559af7aec9b72a1671735c9a729e4e4e139aa",
+    "etag": "W/\"36dff-65037a820f569\"",
+    "fetched_at": "2026-04-24T17:41:23Z",
+    "last_modified": "Fri, 24 Apr 2026 16:57:14 GMT",
+    "raw_path": "speed-tunes\\basic.html",
+    "size": 224767,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/bateater/": {
+    "content_hash": "7430b2654ed5bdc0f0219df4f04f8eddee3ad440d301af744b99c778782a005e",
+    "etag": "W/\"3820e-65036cc3a929f\"",
+    "fetched_at": "2026-04-24T17:41:24Z",
+    "last_modified": "Fri, 24 Apr 2026 15:55:45 GMT",
+    "raw_path": "speed-tunes\\bateater.html",
+    "size": 229902,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/batman-forever/": {
+    "content_hash": "bb50892670c2e3490fa5f873c2aa2a6d3fc30036f68115cf6a87d26b6b70ae4c",
+    "etag": "W/\"3843d-6503729edf385\"",
+    "fetched_at": "2026-04-24T17:41:27Z",
+    "last_modified": "Fri, 24 Apr 2026 16:21:57 GMT",
+    "raw_path": "speed-tunes\\batman-forever.html",
+    "size": 230461,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/batman/": {
+    "content_hash": "0f277ebbfb6e1df78bca3ca322b96ad47bdad25b91c556048155ef64da987bae",
+    "etag": "W/\"36430-65037fa5a0760\"",
+    "fetched_at": "2026-04-24T17:41:26Z",
+    "last_modified": "Fri, 24 Apr 2026 17:20:13 GMT",
+    "raw_path": "speed-tunes\\batman.html",
+    "size": 222256,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/batmansaladeater/": {
+    "content_hash": "b162286b71795895d042163d6333c53224a2d85f1aa36e4381695a8b816f7723",
+    "etag": "W/\"36faa-65037adb82e20\"",
+    "fetched_at": "2026-04-24T17:41:29Z",
+    "last_modified": "Fri, 24 Apr 2026 16:58:48 GMT",
+    "raw_path": "speed-tunes\\batmansaladeater.html",
+    "size": 225194,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/budget-heartkeeper-unkillable/": {
+    "content_hash": "7a9ee1cd158a4caff9f534fb4f1074642c314b7bab53b14e8e005991ea4e40fa",
+    "etag": "W/\"3974e-650377f7f0b39\"",
+    "fetched_at": "2026-04-24T17:41:30Z",
+    "last_modified": "Fri, 24 Apr 2026 16:45:52 GMT",
+    "raw_path": "speed-tunes\\budget-heartkeeper-unkillable.html",
+    "size": 235342,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/budget-maneater-unkillable-extra-turn/": {
+    "content_hash": "e1ff5ab3e0dd837e82974dfd396b3c1e2fd22fb503f4bcbaddc72642f872691b",
+    "etag": "W/\"37e77-65037462eb80c\"",
+    "fetched_at": "2026-04-24T17:41:34Z",
+    "last_modified": "Fri, 24 Apr 2026 16:29:51 GMT",
+    "raw_path": "speed-tunes\\budget-maneater-unkillable-extra-turn.html",
+    "size": 228983,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/budget-maneater-unkillable-ninja/": {
+    "content_hash": "4e66dcf70060eec1d1d80ab84193f43ff9ffe0af97fdfd75beb905ed1e79ca35",
+    "etag": "W/\"37ae2-65037ac115382\"",
+    "fetched_at": "2026-04-24T17:41:35Z",
+    "last_modified": "Fri, 24 Apr 2026 16:58:20 GMT",
+    "raw_path": "speed-tunes\\budget-maneater-unkillable-ninja.html",
+    "size": 228066,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/budget-maneater-unkillable/": {
+    "content_hash": "9fd8ee8cf630b5af854d06fb9665a1d0d95f2c34671a9659279981402192ae16",
+    "etag": "W/\"37aba-65036d7e1be6b\"",
+    "fetched_at": "2026-04-24T17:41:32Z",
+    "last_modified": "Fri, 24 Apr 2026 15:59:00 GMT",
+    "raw_path": "speed-tunes\\budget-maneater-unkillable.html",
+    "size": 228026,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/budget-myth-heir/": {
+    "content_hash": "1124cfdd121a60bc792e5e9f3ccf6d7052393e1e85b03b0772be429dff820112",
+    "etag": "W/\"37b36-650377b80c29a\"",
+    "fetched_at": "2026-04-24T17:41:37Z",
+    "last_modified": "Fri, 24 Apr 2026 16:44:45 GMT",
+    "raw_path": "speed-tunes\\budget-myth-heir.html",
+    "size": 228150,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/cateater/": {
+    "content_hash": "b4a94c57c9faa85b612f5ae8f25d39acb1a6775580a0abd9dc077d3f3984d22a",
+    "etag": "W/\"37ea6-65037c1d64b82\"",
+    "fetched_at": "2026-04-24T17:41:38Z",
+    "last_modified": "Fri, 24 Apr 2026 17:04:25 GMT",
+    "raw_path": "speed-tunes\\cateater.html",
+    "size": 229030,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/deacon-armstrong/": {
+    "content_hash": "d7c32218f5d9e18cc6c5ff00c8b82e7c9ba8ccf3fa6c483bd5bf69af3ff40775",
+    "etag": "W/\"2d623-65037b60b6afb\"",
+    "fetched_at": "2026-04-24T17:41:39Z",
+    "last_modified": "Fri, 24 Apr 2026 17:01:07 GMT",
+    "raw_path": "speed-tunes\\deacon-armstrong.html",
+    "size": 185891,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/deacon-forever/": {
+    "content_hash": "787bb90b749e837bd05fb5fa2705a488805d70485865e609ff8d0ffe0de85075",
+    "etag": "W/\"36492-65036a5481e74\"",
+    "fetched_at": "2026-04-24T17:41:42Z",
+    "last_modified": "Fri, 24 Apr 2026 15:44:51 GMT",
+    "raw_path": "speed-tunes\\deacon-forever.html",
+    "size": 222354,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/deaconeater/": {
+    "content_hash": "508b27d99e3814ccd5ad2d14dc73fa9a55392df52d015804ea4587e4826b399a",
+    "etag": "W/\"36667-65037eeb7bd88\"",
+    "fetched_at": "2026-04-24T17:41:43Z",
+    "last_modified": "Fri, 24 Apr 2026 17:16:58 GMT",
+    "raw_path": "speed-tunes\\deaconeater.html",
+    "size": 222823,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/demytha/": {
+    "content_hash": "880b5d06fbc8ef15dd08a89e752c904b84e714f1c939dc3a26a59adb24c8e9a2",
+    "etag": "W/\"31acb-65037867288b3\"",
+    "fetched_at": "2026-04-24T17:41:44Z",
+    "last_modified": "Fri, 24 Apr 2026 16:47:49 GMT",
+    "raw_path": "speed-tunes\\demytha.html",
+    "size": 203467,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/double-counter-attack/": {
+    "content_hash": "ff1280212054901176af757172eea235e9bec43c2e63274c9110b0c9aa6c08cd",
+    "etag": "W/\"3763e-65037ebdf28d7\"",
+    "fetched_at": "2026-04-24T17:41:46Z",
+    "last_modified": "Fri, 24 Apr 2026 17:16:10 GMT",
+    "raw_path": "speed-tunes\\double-counter-attack.html",
+    "size": 226878,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/double-demytha/": {
+    "content_hash": "2c7bd7747652abbeaf5b64bb11d4a4b732557b2f86345aae32b87952f133086c",
+    "etag": "W/\"35ff2-6503782f2f5c4\"",
+    "fetched_at": "2026-04-24T17:41:47Z",
+    "last_modified": "Fri, 24 Apr 2026 16:46:50 GMT",
+    "raw_path": "speed-tunes\\double-demytha.html",
+    "size": 221170,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/double-warcaster-v2/": {
+    "content_hash": "603c57e6c50ac0a58e6d36b5322c45e98eaf42c76bb7303c5d686ef3c36a2fe9",
+    "etag": "W/\"367b7-65036b84d590f\"",
+    "fetched_at": "2026-04-24T17:41:51Z",
+    "last_modified": "Fri, 24 Apr 2026 15:50:10 GMT",
+    "raw_path": "speed-tunes\\double-warcaster-v2.html",
+    "size": 223159,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/double-warcaster/": {
+    "content_hash": "12b174418ce143899cc27305f14014e5ab856d5a63de025b114c837e933f232b",
+    "etag": "W/\"358c8-65037f69c233a\"",
+    "fetched_at": "2026-04-24T17:41:49Z",
+    "last_modified": "Fri, 24 Apr 2026 17:19:11 GMT",
+    "raw_path": "speed-tunes\\double-warcaster.html",
+    "size": 219336,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/drokgul-unkillable/": {
+    "content_hash": "8ec4158ea441bb90c52323c23638a6d9c129b7031867b77ae6d023e2bc8b97bc",
+    "etag": "W/\"358be-65037f60810c3\"",
+    "fetched_at": "2026-04-24T17:41:52Z",
+    "last_modified": "Fri, 24 Apr 2026 17:19:01 GMT",
+    "raw_path": "speed-tunes\\drokgul-unkillable.html",
+    "size": 219326,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/easy-double-maneater/": {
+    "content_hash": "fa101c80b6ef99b3b6d01c78d34e930760e1df12dc12901652bb3cc5bce72bb1",
+    "etag": "W/\"379df-65036bce7a35f\"",
+    "fetched_at": "2026-04-24T17:41:54Z",
+    "last_modified": "Fri, 24 Apr 2026 15:51:28 GMT",
+    "raw_path": "speed-tunes\\easy-double-maneater.html",
+    "size": 227807,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/endless-speed/": {
+    "content_hash": "6570fa0230a9aa43ffd4db55f73537f224c5d41d4b7220265664d62f4bfb0fa8",
+    "etag": "W/\"36ff5-65037f7871fd2\"",
+    "fetched_at": "2026-04-24T17:41:56Z",
+    "last_modified": "Fri, 24 Apr 2026 17:19:26 GMT",
+    "raw_path": "speed-tunes\\endless-speed.html",
+    "size": 225269,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/fanatic-white-whale/": {
+    "content_hash": "19982d7e2329d9c24313641738cb6b2c91478dcff8552b9ab9e82285b4cd9269",
+    "etag": "W/\"3597d-650382f478b60\"",
+    "fetched_at": "2026-04-24T17:41:57Z",
+    "last_modified": "Fri, 24 Apr 2026 17:35:01 GMT",
+    "raw_path": "speed-tunes\\fanatic-white-whale.html",
+    "size": 219517,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/fast-double-maneater/": {
+    "content_hash": "837f6ab21f7b7c11c6fc93612853cc210b33ec8e5cbb5f0ec67862321d8fe1ac",
+    "etag": "W/\"370eb-65036bc0f34d0\"",
+    "fetched_at": "2026-04-24T17:41:59Z",
+    "last_modified": "Fri, 24 Apr 2026 15:51:13 GMT",
+    "raw_path": "speed-tunes\\fast-double-maneater.html",
+    "size": 225515,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/fast-hellcat-unkillable/": {
+    "content_hash": "860eec5110da8cad3aa46137a3ad6f462d70ec81b5e478481b84983a9a6af99e",
+    "etag": "W/\"37289-650383c9fe279\"",
+    "fetched_at": "2026-04-24T17:42:00Z",
+    "last_modified": "Fri, 24 Apr 2026 17:38:45 GMT",
+    "raw_path": "speed-tunes\\fast-hellcat-unkillable.html",
+    "size": 225929,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/fast-single-43-champ/": {
+    "content_hash": "4fb26bee21b304b0c32595cff70535013094c6267ecbd3d37533c8ba9765b4c2",
+    "etag": "W/\"3817d-65036ea2a01c8\"",
+    "fetched_at": "2026-04-24T17:42:02Z",
+    "last_modified": "Fri, 24 Apr 2026 16:04:07 GMT",
+    "raw_path": "speed-tunes\\fast-single-43-champ.html",
+    "size": 229757,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/fast-tower-skullcrusher-unkillable-copy/": {
+    "content_hash": "cee90af510354b808e42b8d66ff2fd887921071f32cc2f75260dc2181d76798c",
+    "etag": "W/\"37866-65037cf8e6661\"",
+    "fetched_at": "2026-04-24T17:42:04Z",
+    "last_modified": "Fri, 24 Apr 2026 17:08:15 GMT",
+    "raw_path": "speed-tunes\\fast-tower-skullcrusher-unkillable-copy.html",
+    "size": 227430,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/fast-tower-skullcrusher-w-43/": {
+    "content_hash": "f6276fd88068050691c46b82671633eb95a874d5d49d4e2bcf08e625bc1c4a1c",
+    "etag": "W/\"67ded6348250f678ff1fd0fba820b6ee\"",
+    "fetched_at": "2026-04-24T17:42:06Z",
+    "last_modified": "Fri, 24 Apr 2026 17:42:06 GMT",
+    "raw_path": "speed-tunes\\fast-tower-skullcrusher-w-43.html",
+    "size": 225244,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/get-nekh-rekt/": {
+    "content_hash": "a51de9ef109db4b5231d62762a5b040021d00f5a3df6cc82343a92ff048c19a3",
+    "etag": "W/\"36e3d-65037f1963dda\"",
+    "fetched_at": "2026-04-24T17:42:08Z",
+    "last_modified": "Fri, 24 Apr 2026 17:17:46 GMT",
+    "raw_path": "speed-tunes\\get-nekh-rekt.html",
+    "size": 224829,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/heart-eater/": {
+    "content_hash": "981f59a62bad6db7825412c5bc36dc604af73c8362bccc11c732531b55f874e9",
+    "etag": "W/\"3719c-65037ab6563a2\"",
+    "fetched_at": "2026-04-24T17:42:09Z",
+    "last_modified": "Fri, 24 Apr 2026 16:58:09 GMT",
+    "raw_path": "speed-tunes\\heart-eater.html",
+    "size": 225692,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/heaven-and-hell/": {
+    "content_hash": "332385e56b49eadfd943bba971a8079786e9fe86132c2b204f0287734e7c787a",
+    "etag": "W/\"370f8-650378173b7d4\"",
+    "fetched_at": "2026-04-24T17:42:11Z",
+    "last_modified": "Fri, 24 Apr 2026 16:46:25 GMT",
+    "raw_path": "speed-tunes\\heaven-and-hell.html",
+    "size": 225528,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/heiress-3x-43-champs/": {
+    "content_hash": "6f3c11ac2de690489b58bf4846c94573846da8347e258d652d1c46f8de7e3c89",
+    "etag": "W/\"c4c419cacd23ed1fddcf9b8f688fda2c\"",
+    "fetched_at": "2026-04-24T17:42:16Z",
+    "last_modified": "Fri, 24 Apr 2026 17:42:15 GMT",
+    "raw_path": "speed-tunes\\heiress-3x-43-champs.html",
+    "size": 222038,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/heiress/": {
+    "content_hash": "3a764ea268ff565ea9ebbe19671795344e164cf4a576e028ebe40f74da7234ed",
+    "etag": "W/\"c65a9a1fa3026033f550cb2938a26efe\"",
+    "fetched_at": "2026-04-24T17:42:13Z",
+    "last_modified": "Fri, 24 Apr 2026 17:42:13 GMT",
+    "raw_path": "speed-tunes\\heiress.html",
+    "size": 186210,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/helicath/": {
+    "content_hash": "e9a8c29878975ab12567a98da20dc1d8ca6025a4aa3e3396f5a19b21c2e8750d",
+    "etag": "W/\"2cd0f-65036d38344ae\"",
+    "fetched_at": "2026-04-24T17:42:17Z",
+    "last_modified": "Fri, 24 Apr 2026 15:57:47 GMT",
+    "raw_path": "speed-tunes\\helicath.html",
+    "size": 183567,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/hellbateater/": {
+    "content_hash": "d63e4cf51db67c82e72a4d7d22951bbbc12fad076e515601830446926887df24",
+    "etag": "W/\"352ae-65037ad385f30\"",
+    "fetched_at": "2026-04-24T17:42:18Z",
+    "last_modified": "Fri, 24 Apr 2026 16:58:39 GMT",
+    "raw_path": "speed-tunes\\hellbateater.html",
+    "size": 217774,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/high-khatun/": {
+    "content_hash": "68554d7dbd003839168b66655b2930e13fc9ffc0ed14380065bdd42f5ed5d4aa",
+    "etag": "W/\"2cc32-65037b7b5721a\"",
+    "fetched_at": "2026-04-24T17:42:19Z",
+    "last_modified": "Fri, 24 Apr 2026 17:01:35 GMT",
+    "raw_path": "speed-tunes\\high-khatun.html",
+    "size": 183346,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/high-myth-man/": {
+    "content_hash": "4333bd1b6cf5fa540eef4bf4f766bb33da4a06cbf034ebbdd54a9555fe4fef9f",
+    "etag": "W/\"36600-650377cce9037\"",
+    "fetched_at": "2026-04-24T17:42:21Z",
+    "last_modified": "Fri, 24 Apr 2026 16:45:07 GMT",
+    "raw_path": "speed-tunes\\high-myth-man.html",
+    "size": 222720,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/jintoro/": {
+    "content_hash": "31ced50c9692c111fd8bfd514df571b320c273c8823e7a9ade1ba959d235c467",
+    "etag": "W/\"156db3f37f25c30975a38814b63e9732\"",
+    "fetched_at": "2026-04-24T17:42:23Z",
+    "last_modified": "Fri, 24 Apr 2026 17:42:22 GMT",
+    "raw_path": "speed-tunes\\jintoro.html",
+    "size": 176882,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/krisk-43-slow-tune/": {
+    "content_hash": "869525e21c30918658747ad2aef11ad1e180a55ed4960a903e738094ab05d7ac",
+    "etag": "W/\"3702a-6503741fa2cbf\"",
+    "fetched_at": "2026-04-24T17:42:24Z",
+    "last_modified": "Fri, 24 Apr 2026 16:28:40 GMT",
+    "raw_path": "speed-tunes\\krisk-43-slow-tune.html",
+    "size": 225322,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/krisk-slow-tune/": {
+    "content_hash": "dc898ca966f20d015543cad962a37b9b966d0142c140ac74a6faaa5d56ed73b6",
+    "etag": "W/\"36e29-65037ebc3348d\"",
+    "fetched_at": "2026-04-24T17:42:26Z",
+    "last_modified": "Fri, 24 Apr 2026 17:16:09 GMT",
+    "raw_path": "speed-tunes\\krisk-slow-tune.html",
+    "size": 224809,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/krisk-the-ageless/": {
+    "content_hash": "19888df0109aded2cab6bc0a3afddba3efad32c0711d692addcaf79d75268ea9",
+    "etag": "W/\"2c957-6503746aa02b9\"",
+    "fetched_at": "2026-04-24T17:42:27Z",
+    "last_modified": "Fri, 24 Apr 2026 16:29:59 GMT",
+    "raw_path": "speed-tunes\\krisk-the-ageless.html",
+    "size": 182615,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/lydia-the-deathsiren/": {
+    "content_hash": "44ad168a6f225a66633e49594b0d5fca6ff2d48eb6b1fe5bed80de4053b20916",
+    "etag": "W/\"75e204174e6d418cb5b7ce56f78c047b\"",
+    "fetched_at": "2026-04-24T17:42:28Z",
+    "last_modified": "Fri, 24 Apr 2026 17:42:28 GMT",
+    "raw_path": "speed-tunes\\lydia-the-deathsiren.html",
+    "size": 181247,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/man-salad/": {
+    "content_hash": "533a923b62f6f0269d881edb63944fba2ca17607fb7736cc31017af21307367b",
+    "etag": "W/\"3852a-65037f4664707\"",
+    "fetched_at": "2026-04-24T17:42:30Z",
+    "last_modified": "Fri, 24 Apr 2026 17:18:34 GMT",
+    "raw_path": "speed-tunes\\man-salad.html",
+    "size": 230698,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/man-seeks-god/": {
+    "content_hash": "f639244bb4afebb3dd29d21f700ef7c4472de094170898daf15abb79dfc57007",
+    "etag": "W/\"38249-65036bf555883\"",
+    "fetched_at": "2026-04-24T17:42:32Z",
+    "last_modified": "Fri, 24 Apr 2026 15:52:08 GMT",
+    "raw_path": "speed-tunes\\man-seeks-god.html",
+    "size": 229961,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/maneater/": {
+    "content_hash": "c826f5abdcd8ecee45d9e6aa5e76ab39bfc8ee8af809bf83ec1235dc6cd57277",
+    "etag": "W/\"2d0d6-65037aae9f9b4\"",
+    "fetched_at": "2026-04-24T17:42:33Z",
+    "last_modified": "Fri, 24 Apr 2026 16:58:01 GMT",
+    "raw_path": "speed-tunes\\maneater.html",
+    "size": 184534,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/manseeknia/": {
+    "content_hash": "f1b87e7d9dcc31990923bbe8e2b1f0ff9f7ca2c237df929282273d68e15fb336",
+    "etag": "W/\"36b8c-65037eae5f39a\"",
+    "fetched_at": "2026-04-24T17:42:34Z",
+    "last_modified": "Fri, 24 Apr 2026 17:15:54 GMT",
+    "raw_path": "speed-tunes\\manseeknia.html",
+    "size": 224140,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/mantower-fast/": {
+    "content_hash": "81f3e9474b92eb528fda04b24d441578445794b09483f68b99f8f6d31a121cfd",
+    "etag": "W/\"364da-65037e626bc14\"",
+    "fetched_at": "2026-04-24T17:42:36Z",
+    "last_modified": "Fri, 24 Apr 2026 17:14:34 GMT",
+    "raw_path": "speed-tunes\\mantower-fast.html",
+    "size": 222426,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/mantower-slow/": {
+    "content_hash": "8016c0c5bf0f723a14b4a44e05f02e988be17033c07146f22d3160a7781a0cb9",
+    "etag": "W/\"34c85-65037eb446f3e\"",
+    "fetched_at": "2026-04-24T17:42:37Z",
+    "last_modified": "Fri, 24 Apr 2026 17:16:00 GMT",
+    "raw_path": "speed-tunes\\mantower-slow.html",
+    "size": 216197,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/mashalled-white-whale/": {
+    "content_hash": "0c97801f014ef58ea5e1f706b041d27055f8513cb9277ba0d833a63d91edf035",
+    "etag": "W/\"386d9-65036d850b4d3\"",
+    "fetched_at": "2026-04-24T17:42:40Z",
+    "last_modified": "Fri, 24 Apr 2026 15:59:07 GMT",
+    "raw_path": "speed-tunes\\mashalled-white-whale.html",
+    "size": 231129,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/mashalled/": {
+    "content_hash": "72c8f2de07c1881ed613db1343930b162aabb9594d2627449ca51c54d469fa69",
+    "etag": "W/\"2d2cc-65037b88729e9\"",
+    "fetched_at": "2026-04-24T17:42:38Z",
+    "last_modified": "Fri, 24 Apr 2026 17:01:49 GMT",
+    "raw_path": "speed-tunes\\mashalled.html",
+    "size": 185036,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/mummyman/": {
+    "content_hash": "7fcd039f9309a7c5112b80f2e6ed0a6e822c45ea03d1c890d535efed91dfb5ae",
+    "etag": "W/\"36f62-650377de80f21\"",
+    "fetched_at": "2026-04-24T17:42:41Z",
+    "last_modified": "Fri, 24 Apr 2026 16:45:26 GMT",
+    "raw_path": "speed-tunes\\mummyman.html",
+    "size": 225122,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/myth-buster/": {
+    "content_hash": "a9cbfe2978cf204118378b0d71a846310486bdbdaa09c9f75d03c244df43bcd3",
+    "etag": "W/\"371e9-650372a99a4e4\"",
+    "fetched_at": "2026-04-24T17:42:43Z",
+    "last_modified": "Fri, 24 Apr 2026 16:22:08 GMT",
+    "raw_path": "speed-tunes\\myth-buster.html",
+    "size": 225769,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/myth-deacon/": {
+    "content_hash": "05a1fdb43c9c7c8fc0ced7f967e3e1b99dc61093e1a293ca6a2d301db6003014",
+    "etag": "W/\"37a5f-650378611bb4f\"",
+    "fetched_at": "2026-04-24T17:42:44Z",
+    "last_modified": "Fri, 24 Apr 2026 16:47:42 GMT",
+    "raw_path": "speed-tunes\\myth-deacon.html",
+    "size": 227935,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/myth-eater/": {
+    "content_hash": "7225793eb39b5bb0f572e44699213e69ce25737db3c347747e5f095dc27341c5",
+    "etag": "W/\"36b54-65037798186db\"",
+    "fetched_at": "2026-04-24T17:42:46Z",
+    "last_modified": "Fri, 24 Apr 2026 16:44:12 GMT",
+    "raw_path": "speed-tunes\\myth-eater.html",
+    "size": 224084,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/myth-fu/": {
+    "content_hash": "6aba876b7cff2dba3216b85a97851cb9a8187a32e572714728c54c0cd17e6035",
+    "etag": "W/\"38141-65036d897918e\"",
+    "fetched_at": "2026-04-24T17:42:47Z",
+    "last_modified": "Fri, 24 Apr 2026 15:59:12 GMT",
+    "raw_path": "speed-tunes\\myth-fu.html",
+    "size": 229697,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/myth-hare/": {
+    "content_hash": "81efa33ad2736f85360b6eb75f4674d1c4a0965475fa03dc1ec1499896da5a97",
+    "etag": "W/\"38d61-6503779a913ea\"",
+    "fetched_at": "2026-04-24T17:42:49Z",
+    "last_modified": "Fri, 24 Apr 2026 16:44:14 GMT",
+    "raw_path": "speed-tunes\\myth-hare.html",
+    "size": 232801,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/myth-heir-salad/": {
+    "content_hash": "434bc74b1e3ee3acac8876c482c8ead7b641750b36a9397598a93a27c96406f9",
+    "etag": "W/\"36c72-650377efc1f68\"",
+    "fetched_at": "2026-04-24T17:42:52Z",
+    "last_modified": "Fri, 24 Apr 2026 16:45:44 GMT",
+    "raw_path": "speed-tunes\\myth-heir-salad.html",
+    "size": 224370,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/myth-heir-with-double-deacon/": {
+    "content_hash": "a92d19976973d6696a7f1d954f8cfe6c0925b3cb4844c5de4600a01742b9840d",
+    "etag": "W/\"34c39-65037296cad95\"",
+    "fetched_at": "2026-04-24T17:42:54Z",
+    "last_modified": "Fri, 24 Apr 2026 16:21:48 GMT",
+    "raw_path": "speed-tunes\\myth-heir-with-double-deacon.html",
+    "size": 216121,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/myth-heir-with-no-seeker/": {
+    "content_hash": "19b0e108d43a9d8b643e8e3ec00f89914750d9c210ecc3d028e3ce30c91a5c94",
+    "etag": "W/\"36a50-650377bf0a364\"",
+    "fetched_at": "2026-04-24T17:42:56Z",
+    "last_modified": "Fri, 24 Apr 2026 16:44:53 GMT",
+    "raw_path": "speed-tunes\\myth-heir-with-no-seeker.html",
+    "size": 223824,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/myth-heir/": {
+    "content_hash": "c0719621498f7fb0977803456fde7999b533f2ccba1cd3f38a27067f80255a66",
+    "etag": "W/\"3839d-65036d536350f\"",
+    "fetched_at": "2026-04-24T17:42:51Z",
+    "last_modified": "Fri, 24 Apr 2026 15:58:15 GMT",
+    "raw_path": "speed-tunes\\myth-heir.html",
+    "size": 230301,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/myth-rue-elva/": {
+    "content_hash": "ffe45df8b191eebe2c09b494ab032f8727b9f93fea76a11186f9f780310b3103",
+    "etag": "W/\"35b5d-650377f38cabf\"",
+    "fetched_at": "2026-04-24T17:42:57Z",
+    "last_modified": "Fri, 24 Apr 2026 16:45:48 GMT",
+    "raw_path": "speed-tunes\\myth-rue-elva.html",
+    "size": 219997,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/myth-salad/": {
+    "content_hash": "560108a9a7b78452717c13a5dc1f894b2824920f27d8b0ca75972d8066d27350",
+    "etag": "W/\"34ac3-65037244e7d73\"",
+    "fetched_at": "2026-04-24T17:42:59Z",
+    "last_modified": "Fri, 24 Apr 2026 16:20:22 GMT",
+    "raw_path": "speed-tunes\\myth-salad.html",
+    "size": 215747,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/myth-seeker/": {
+    "content_hash": "3772a59a6f67f4fc0fc99e12fad4da8ea3af7e355fa23c72fab061b97194605b",
+    "etag": "W/\"359d9-650377c8ddd9f\"",
+    "fetched_at": "2026-04-24T17:43:00Z",
+    "last_modified": "Fri, 24 Apr 2026 16:45:03 GMT",
+    "raw_path": "speed-tunes\\myth-seeker.html",
+    "size": 219609,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/myth-tower/": {
+    "content_hash": "0095eb3022cfac61cff1cb727edb30af11d75ed92ebd6f5b97fc3ed71fa9d6af",
+    "etag": "W/\"3802f-6503785cea755\"",
+    "fetched_at": "2026-04-24T17:43:02Z",
+    "last_modified": "Fri, 24 Apr 2026 16:47:38 GMT",
+    "raw_path": "speed-tunes\\myth-tower.html",
+    "size": 229423,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/ninja-cateater/": {
+    "content_hash": "20dd60ee34067fc3555891a48ecb1969c5077caeedaa526b553d85da0df11e6d",
+    "etag": "W/\"38548-65036d53db6f1\"",
+    "fetched_at": "2026-04-24T17:43:05Z",
+    "last_modified": "Fri, 24 Apr 2026 15:58:16 GMT",
+    "raw_path": "speed-tunes\\ninja-cateater.html",
+    "size": 230728,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/ninja-hellcat-unkillable/": {
+    "content_hash": "a9be18566c7224ef67eee84cde77be4553bfea4e6e2639e820fb707fab0a1b2a",
+    "etag": "W/\"3810e-6503796157c8b\"",
+    "fetched_at": "2026-04-24T17:43:06Z",
+    "last_modified": "Fri, 24 Apr 2026 16:52:11 GMT",
+    "raw_path": "speed-tunes\\ninja-hellcat-unkillable.html",
+    "size": 229646,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/ninja/": {
+    "content_hash": "87ecda955acc84cf58785d848583c514e6a8d8433b6e67bbf43a3e77d3d809ac",
+    "etag": "W/\"2d564-65036e09981c1\"",
+    "fetched_at": "2026-04-24T17:43:03Z",
+    "last_modified": "Fri, 24 Apr 2026 16:01:26 GMT",
+    "raw_path": "speed-tunes\\ninja.html",
+    "size": 185700,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/ninjahelicath-v2/": {
+    "content_hash": "e378047aa39cba739e5c0a6f9e24a8917fc714c3d691da32ae653034ba27b57d",
+    "etag": "W/\"377f1-65037c75b53f1\"",
+    "fetched_at": "2026-04-24T17:43:08Z",
+    "last_modified": "Fri, 24 Apr 2026 17:05:58 GMT",
+    "raw_path": "speed-tunes\\ninjahelicath-v2.html",
+    "size": 227313,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/old-budget-maneater-unkillable/": {
+    "content_hash": "1efef4e4030f65cd2f8aaddce78fdecce9fd18cfd5950911beb10ce21aa4e500",
+    "etag": "W/\"3875b-65036bc4ba1a6\"",
+    "fetched_at": "2026-04-24T17:43:09Z",
+    "last_modified": "Fri, 24 Apr 2026 15:51:17 GMT",
+    "raw_path": "speed-tunes\\old-budget-maneater-unkillable.html",
+    "size": 231259,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/one-hellmut-of-a-team/": {
+    "content_hash": "e510feb39022dca7aebc8874206bc48a79b0e8f2a4de08592ddc5e097cb2a858",
+    "etag": "W/\"adc905e434ce4ab4f48728e354618768\"",
+    "fetched_at": "2026-04-24T17:43:11Z",
+    "last_modified": "Fri, 24 Apr 2026 17:43:11 GMT",
+    "raw_path": "speed-tunes\\one-hellmut-of-a-team.html",
+    "size": 217738,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/pain-eater/": {
+    "content_hash": "efe95c0d857dc39863378a1c63d054896dd400aa7b8eb13ed01fe7f54af2a980",
+    "etag": "W/\"366b7-65036bbbdc8f2\"",
+    "fetched_at": "2026-04-24T17:43:13Z",
+    "last_modified": "Fri, 24 Apr 2026 15:51:08 GMT",
+    "raw_path": "speed-tunes\\pain-eater.html",
+    "size": 222903,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/pavos-krisk-and-lydia/": {
+    "content_hash": "780fcfe09745179364e9f555ff9a20438c5238d9e27d476425051b04e3730017",
+    "etag": "W/\"378d8-65037f386d394\"",
+    "fetched_at": "2026-04-24T17:43:15Z",
+    "last_modified": "Fri, 24 Apr 2026 17:18:19 GMT",
+    "raw_path": "speed-tunes\\pavos-krisk-and-lydia.html",
+    "size": 227544,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/rabbateater/": {
+    "content_hash": "95fe79693cc94bf7a581bff7f69535ea261413b2c4c50f4ab8019ab564deeaf9",
+    "etag": "W/\"38ab0-65036b00a8767\"",
+    "fetched_at": "2026-04-24T17:43:17Z",
+    "last_modified": "Fri, 24 Apr 2026 15:47:52 GMT",
+    "raw_path": "speed-tunes\\rabbateater.html",
+    "size": 232112,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/razzle-dazzle-counter-attack/": {
+    "content_hash": "3af529838f33536ed86d3c2cd22193c33a8437b6d07b5c683ca420e5a7ca6afd",
+    "etag": "W/\"379fc-65037273a3c66\"",
+    "fetched_at": "2026-04-24T17:43:19Z",
+    "last_modified": "Fri, 24 Apr 2026 16:21:11 GMT",
+    "raw_path": "speed-tunes\\razzle-dazzle-counter-attack.html",
+    "size": 227836,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/razzle-dazzle-survival/": {
+    "content_hash": "9348f5bd027ceeefef9bde773c8573871b4401f52787aa7996a069d1f14fd8a3",
+    "etag": "W/\"fc4acd2f5ca7ccb69ef9d6f7d528bd3a\"",
+    "fetched_at": "2026-04-24T17:43:21Z",
+    "last_modified": "Fri, 24 Apr 2026 17:43:21 GMT",
+    "raw_path": "speed-tunes\\razzle-dazzle-survival.html",
+    "size": 233380,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/razzle-dazzle-unkillable/": {
+    "content_hash": "c3ba2574379318fb515ad6d4b979ab9952227b8bbd136972b904002e6456c8fa",
+    "etag": "W/\"38fbc-65037db9390e0\"",
+    "fetched_at": "2026-04-24T17:43:22Z",
+    "last_modified": "Fri, 24 Apr 2026 17:11:37 GMT",
+    "raw_path": "speed-tunes\\razzle-dazzle-unkillable.html",
+    "size": 233404,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/roschard-the-tower/": {
+    "content_hash": "394cd91acf404a3b57564b0e647c3bdf1ea52ecb00144809a2c3378c5a14c289",
+    "etag": "W/\"2d714-65037b923a8a3\"",
+    "fetched_at": "2026-04-24T17:43:23Z",
+    "last_modified": "Fri, 24 Apr 2026 17:01:59 GMT",
+    "raw_path": "speed-tunes\\roschard-the-tower.html",
+    "size": 186132,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/santa-and-warcaster/": {
+    "content_hash": "fa9b81ec50c1b54a2ef25d97b0c3377dd4162be117ef1c486f60dd6a3d4c229a",
+    "etag": "W/\"35a80-65037f6da8412\"",
+    "fetched_at": "2026-04-24T17:43:25Z",
+    "last_modified": "Fri, 24 Apr 2026 17:19:15 GMT",
+    "raw_path": "speed-tunes\\santa-and-warcaster.html",
+    "size": 219776,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/santa-unkillable-43-stun-target/": {
+    "content_hash": "95202d2d1cddc7043d0218f30e8b2f5211a791d36b241ccdbd33d9fee14fbbcb",
+    "etag": "W/\"6bd85619f237ceb929efe6ce58aa9778\"",
+    "fetched_at": "2026-04-24T17:43:30Z",
+    "last_modified": "Fri, 24 Apr 2026 17:43:30 GMT",
+    "raw_path": "speed-tunes\\santa-unkillable-43-stun-target.html",
+    "size": 226440,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/santa-unkillable/": {
+    "content_hash": "d91532fe0d6627866c19284faffb22b174b5583cc6c51fdfd05a7e341be9f4c3",
+    "etag": "W/\"0476671ba431a6bb1397b3d281dfdd8f\"",
+    "fetched_at": "2026-04-24T17:43:28Z",
+    "last_modified": "Fri, 24 Apr 2026 17:43:28 GMT",
+    "raw_path": "speed-tunes\\santa-unkillable.html",
+    "size": 220766,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/santas-ho-ho-ho-mies/": {
+    "content_hash": "ea0049dfd6c4533d9aebb577732281ac17349cb0107cb6bd24132007a471f1da",
+    "etag": "W/\"9bad592b5fcb4c5ba2eb69f218d85ff2\"",
+    "fetched_at": "2026-04-24T17:43:32Z",
+    "last_modified": "Fri, 24 Apr 2026 17:43:32 GMT",
+    "raw_path": "speed-tunes\\santas-ho-ho-ho-mies.html",
+    "size": 220706,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/seeker/": {
+    "content_hash": "7b5e2b57c79707bcfdb3012caf7b3c3fc3865127fbc2c56c6e7dd6b01a9c77d1",
+    "etag": "W/\"786228543bcc810305d17218f5f6da60\"",
+    "fetched_at": "2026-04-24T17:43:34Z",
+    "last_modified": "Fri, 24 Apr 2026 17:43:34 GMT",
+    "raw_path": "speed-tunes\\seeker.html",
+    "size": 186334,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/single-43-advanced/": {
+    "content_hash": "19f26e08af6f157571467c6520b0e663a1abe8e8c2a925541474055fa001b49f",
+    "etag": "W/\"3893c-65037f9954fb7\"",
+    "fetched_at": "2026-04-24T17:43:36Z",
+    "last_modified": "Fri, 24 Apr 2026 17:20:00 GMT",
+    "raw_path": "speed-tunes\\single-43-advanced.html",
+    "size": 231740,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/single-43-champ/": {
+    "content_hash": "b624b6e889e73b8c63d6f7da3da84be2a41bf4119993b324e73be16e008655e7",
+    "etag": "W/\"1e051b3712d446301a573f2b24613291\"",
+    "fetched_at": "2026-04-24T17:43:38Z",
+    "last_modified": "Fri, 24 Apr 2026 17:43:38 GMT",
+    "raw_path": "speed-tunes\\single-43-champ.html",
+    "size": 229673,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/sir-nicholas/": {
+    "content_hash": "b8b8f2e1cf6c751c0ae78d20cce7d3b982516b56027814afb6aab0db1970d017",
+    "etag": "W/\"2d67e-65037ba08b999\"",
+    "fetched_at": "2026-04-24T17:43:39Z",
+    "last_modified": "Fri, 24 Apr 2026 17:02:14 GMT",
+    "raw_path": "speed-tunes\\sir-nicholas.html",
+    "size": 185982,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/slow-beating-trunkheart/": {
+    "content_hash": "a44329e8d41f7f76649980aec039f7105e94f4f0d3da50621b7b7d77a4ed2e41",
+    "etag": "W/\"3ace2-650377d44e944\"",
+    "fetched_at": "2026-04-24T17:43:40Z",
+    "last_modified": "Fri, 24 Apr 2026 16:45:15 GMT",
+    "raw_path": "speed-tunes\\slow-beating-trunkheart.html",
+    "size": 240866,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/slow-hellcat-unkillable/": {
+    "content_hash": "03a2d76895575692efeacbfe2e8f1ff85d364d2ed18ffad6e29a298e8f0e5d67",
+    "etag": "W/\"37bc6-6503785eb0900\"",
+    "fetched_at": "2026-04-24T17:43:42Z",
+    "last_modified": "Fri, 24 Apr 2026 16:47:40 GMT",
+    "raw_path": "speed-tunes\\slow-hellcat-unkillable.html",
+    "size": 228294,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/slow-tower-skullcrusher-unkillable/": {
+    "content_hash": "58a3027343924976343155de563f981e84463f89121a3dfdf0cdea3fac1453df",
+    "etag": "W/\"3812b-65037e7ddd2f8\"",
+    "fetched_at": "2026-04-24T17:43:43Z",
+    "last_modified": "Fri, 24 Apr 2026 17:15:03 GMT",
+    "raw_path": "speed-tunes\\slow-tower-skullcrusher-unkillable.html",
+    "size": 229675,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/slow-tuned-man-tower-unkillable/": {
+    "content_hash": "f74ed556120743c572176a1a39e96ddc0f3e4c68162aba52959031e3f77002ef",
+    "etag": "W/\"73056633bba08c8c99c0687c67fc2dc2\"",
+    "fetched_at": "2026-04-24T17:43:46Z",
+    "last_modified": "Fri, 24 Apr 2026 17:43:45 GMT",
+    "raw_path": "speed-tunes\\slow-tuned-man-tower-unkillable.html",
+    "size": 229127,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/slow-tunes/": {
+    "content_hash": "9af08e4f44d226c12e566d3660355b0ee2486087387a37c2fd1d0fa0700c3dbd",
+    "etag": "W/\"33761e08fb6f24f0bed6d37ff49762d0\"",
+    "fetched_at": "2026-04-24T17:43:47Z",
+    "last_modified": "Fri, 24 Apr 2026 17:43:47 GMT",
+    "raw_path": "speed-tunes\\slow-tunes.html",
+    "size": 180422,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/super-charged-hellcat/": {
+    "content_hash": "15540b31647b62bc884f968cc1c9a30e664e480e03f5000fb45eb55a011e30ff",
+    "etag": "W/\"38435-650383befcc18\"",
+    "fetched_at": "2026-04-24T17:43:49Z",
+    "last_modified": "Fri, 24 Apr 2026 17:38:34 GMT",
+    "raw_path": "speed-tunes\\super-charged-hellcat.html",
+    "size": 230453,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/the-dark-knight-aka-warcrusher/": {
+    "content_hash": "b6ed4eb1ec15b5842b4ed3e64ed41b58d07fea5d393ce589807b27a653bbd39c",
+    "etag": "W/\"378ac-65037f0053d04\"",
+    "fetched_at": "2026-04-24T17:43:50Z",
+    "last_modified": "Fri, 24 Apr 2026 17:17:20 GMT",
+    "raw_path": "speed-tunes\\the-dark-knight-aka-warcrusher.html",
+    "size": 227500,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/the-two-towers/": {
+    "content_hash": "cfbce972d745fe926a96d36b7207a59ef78cdcf0fb148d706cb652445c39971e",
+    "etag": "W/\"bc65752dff9035acb70f76b23d7229c1\"",
+    "fetched_at": "2026-04-24T17:43:53Z",
+    "last_modified": "Fri, 24 Apr 2026 17:43:53 GMT",
+    "raw_path": "speed-tunes\\the-two-towers.html",
+    "size": 220644,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/three-43-champs-alternate/": {
+    "content_hash": "dd22dba33b41d87c4aaa05a85ceffb48304c28432f833848856bd2c1272cf10c",
+    "etag": "W/\"35a04b4cad7e13e1262bfe9e522ed273\"",
+    "fetched_at": "2026-04-24T17:43:57Z",
+    "last_modified": "Fri, 24 Apr 2026 17:43:57 GMT",
+    "raw_path": "speed-tunes\\three-43-champs-alternate.html",
+    "size": 228175,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/three-43-champs/": {
+    "content_hash": "c2158bb98e3b2b09da3484f593669872045f36d2ac995e34da3fd017ca3189ff",
+    "etag": "W/\"a131ab490f6e8c55b86662c326ffa9b4\"",
+    "fetched_at": "2026-04-24T17:43:55Z",
+    "last_modified": "Fri, 24 Apr 2026 17:43:55 GMT",
+    "raw_path": "speed-tunes\\three-43-champs.html",
+    "size": 230027,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/tower-and-valkyrie-unkillable-with-43-champ/": {
+    "content_hash": "0e5c45cfddd388b499ce88b63b2d656fc61ec05ecfb5f1c10506132f108a4e25",
+    "etag": "W/\"b7e3152bb16d0bb5ce56d4edae46f5ef\"",
+    "fetched_at": "2026-04-24T17:44:00Z",
+    "last_modified": "Fri, 24 Apr 2026 17:44:00 GMT",
+    "raw_path": "speed-tunes\\tower-and-valkyrie-unkillable-with-43-champ.html",
+    "size": 222504,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/tower-and-warcaster-with-43-champ/": {
+    "content_hash": "e038a372afb2b27cb32946b72f134b721a7d27a88160155cdc5869f1bea3483c",
+    "etag": "W/\"34eb2-65037fa2059ab\"",
+    "fetched_at": "2026-04-24T17:44:01Z",
+    "last_modified": "Fri, 24 Apr 2026 17:20:10 GMT",
+    "raw_path": "speed-tunes\\tower-and-warcaster-with-43-champ.html",
+    "size": 216754,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/tuhanarak-and-lydia/": {
+    "content_hash": "0f20546cf9eb8b7041626f67cdbfcc36a0b4a690ca2784f412855d00400a405d",
+    "etag": "W/\"34e4d-65037d06780d2\"",
+    "fetched_at": "2026-04-24T17:44:03Z",
+    "last_modified": "Fri, 24 Apr 2026 17:08:30 GMT",
+    "raw_path": "speed-tunes\\tuhanarak-and-lydia.html",
+    "size": 216653,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/turvold-double-maneater-unkillable/": {
+    "content_hash": "804b93afc0ac40f5f9e3fe3b67f9c58c0fd025af735d4231549d8d8497a3faa1",
+    "etag": "W/\"7d581ef329c9a6c0e98437efcac52d28\"",
+    "fetched_at": "2026-04-24T17:44:07Z",
+    "last_modified": "Fri, 24 Apr 2026 17:44:07 GMT",
+    "raw_path": "speed-tunes\\turvold-double-maneater-unkillable.html",
+    "size": 219685,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/turvold/": {
+    "content_hash": "1c9d42a70eddad80b854229457cfa6a248fd685e7aa921f1984a9ae4807e12aa",
+    "etag": "W/\"2a8dd-65037ba5274b4\"",
+    "fetched_at": "2026-04-24T17:44:04Z",
+    "last_modified": "Fri, 24 Apr 2026 17:02:19 GMT",
+    "raw_path": "speed-tunes\\turvold.html",
+    "size": 174301,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/two-43-champs-alternate/": {
+    "content_hash": "28d662ee4cde6ed320cc95835eca37613bae0eda2cc958029f5b1da390a08cc0",
+    "etag": "W/\"be1f987df81eaa9dfaec173dbaf867a7\"",
+    "fetched_at": "2026-04-24T17:44:11Z",
+    "last_modified": "Fri, 24 Apr 2026 17:44:11 GMT",
+    "raw_path": "speed-tunes\\two-43-champs-alternate.html",
+    "size": 227738,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/two-43-champs-with-cleanser/": {
+    "content_hash": "43c842561d5f89cad0b09d4cbea12cb0b321a1eaff9e449ad6314e5b8ce272e0",
+    "etag": "W/\"3731c-65037f9284d4e\"",
+    "fetched_at": "2026-04-24T17:44:13Z",
+    "last_modified": "Fri, 24 Apr 2026 17:19:53 GMT",
+    "raw_path": "speed-tunes\\two-43-champs-with-cleanser.html",
+    "size": 226076,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/two-43-champs/": {
+    "content_hash": "2f027196f9a496425593968aa36c3aec81b8663a511407345c13d45c97ee0e08",
+    "etag": "W/\"368c4-65037fbbd1285\"",
+    "fetched_at": "2026-04-24T17:44:09Z",
+    "last_modified": "Fri, 24 Apr 2026 17:20:37 GMT",
+    "raw_path": "speed-tunes\\two-43-champs.html",
+    "size": 223428,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/ultimate-budget-unkillable/": {
+    "content_hash": "988c3eac0c46c6fbf07dc3e9dcf47346209ca2abed4e2141fa0e9fd31a29f9d1",
+    "etag": "W/\"35f09-650377ab8fdb0\"",
+    "fetched_at": "2026-04-24T17:44:14Z",
+    "last_modified": "Fri, 24 Apr 2026 16:44:32 GMT",
+    "raw_path": "speed-tunes\\ultimate-budget-unkillable.html",
+    "size": 220937,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/ultimate-kyoku-team/": {
+    "content_hash": "371af762cab2966b5e14b71e716ccd6572d29e505af1a8d490b570e65c57874f",
+    "etag": "W/\"366f3-65037f2cda50e\"",
+    "fetched_at": "2026-04-24T17:44:16Z",
+    "last_modified": "Fri, 24 Apr 2026 17:18:07 GMT",
+    "raw_path": "speed-tunes\\ultimate-kyoku-team.html",
+    "size": 222963,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/ultimate-myth-heir-2-seekers/": {
+    "content_hash": "41c2852a005811e73e0860032bf13b26e61f320aa61271d3331351803070cc1c",
+    "etag": "W/\"37a21-65037847abf36\"",
+    "fetched_at": "2026-04-24T17:44:17Z",
+    "last_modified": "Fri, 24 Apr 2026 16:47:16 GMT",
+    "raw_path": "speed-tunes\\ultimate-myth-heir-2-seekers.html",
+    "size": 227873,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/ultimate-myth-heir-with-31-dps-ninja-works/": {
+    "content_hash": "bcbb39773aab03b5adb710ce9f6452d66594c4d785f802d1f9f777365cdfbe42",
+    "etag": "W/\"38184-650377c222357\"",
+    "fetched_at": "2026-04-24T17:44:19Z",
+    "last_modified": "Fri, 24 Apr 2026 16:44:56 GMT",
+    "raw_path": "speed-tunes\\ultimate-myth-heir-with-31-dps-ninja-works.html",
+    "size": 229764,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/un-kreelable/": {
+    "content_hash": "89c679874faa8a098ed7ffc1067c65f8656e390f60b948a7d1b1529e6de6a78d",
+    "etag": "W/\"5344aacf4335e3e1a218681e430d1c9e\"",
+    "fetched_at": "2026-04-24T17:44:21Z",
+    "last_modified": "Fri, 24 Apr 2026 17:44:21 GMT",
+    "raw_path": "speed-tunes\\un-kreelable.html",
+    "size": 233684,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/unkillable-speed-tunes/": {
+    "content_hash": "22d6a263cbb623e8c3b3bd7469461aeb3cbcef13e7ca0c90ff22ba5c3d495fa1",
+    "etag": "W/\"6adb0a66e3c62490297e179cb7baf1e9\"",
+    "fetched_at": "2026-04-24T17:44:23Z",
+    "last_modified": "Fri, 24 Apr 2026 17:44:23 GMT",
+    "raw_path": "speed-tunes\\unkillable-speed-tunes.html",
+    "size": 184938,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/valkyrie/": {
+    "content_hash": "e88213c4b9ec8980904e1345d758bd2d833108f7591a9137e55f2fb660760746",
+    "etag": "W/\"2c643-65037ba96924e\"",
+    "fetched_at": "2026-04-24T17:44:24Z",
+    "last_modified": "Fri, 24 Apr 2026 17:02:24 GMT",
+    "raw_path": "speed-tunes\\valkyrie.html",
+    "size": 181827,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/vergis-magic/": {
+    "content_hash": "f327bdf44e06ad52f63d05fe86fc411f2a8e0d83181b51b7f9ca7b757139c8ef",
+    "etag": "W/\"373c9-650378d302138\"",
+    "fetched_at": "2026-04-24T17:44:27Z",
+    "last_modified": "Fri, 24 Apr 2026 16:49:42 GMT",
+    "raw_path": "speed-tunes\\vergis-magic.html",
+    "size": 226249,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/vergis/": {
+    "content_hash": "45366ba370ed643022fbe0e1cff36fb0e50e4bc162a6535205c7e6db8215194f",
+    "etag": "W/\"2d48cca62c813a06593453a4bf8e28cc\"",
+    "fetched_at": "2026-04-24T17:44:25Z",
+    "last_modified": "Fri, 24 Apr 2026 17:44:25 GMT",
+    "raw_path": "speed-tunes\\vergis.html",
+    "size": 174087,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/warmbat/": {
+    "content_hash": "1301326ae6bcce964ad2bbf2dcb54690f21966e0657069e85cea25417f2a4d6c",
+    "etag": "W/\"37e3a-65037c1354886\"",
+    "fetched_at": "2026-04-24T17:44:29Z",
+    "last_modified": "Fri, 24 Apr 2026 17:04:15 GMT",
+    "raw_path": "speed-tunes\\warmbat.html",
+    "size": 228922,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/wartower/": {
+    "content_hash": "0d581ab0cd276486d5e513b4cdb4589c09c0547a0551ab1133c28dfd713b1c50",
+    "etag": "W/\"f24b3fd3c890da6a9aaf24d0b3f0f88e\"",
+    "fetched_at": "2026-04-24T17:44:31Z",
+    "last_modified": "Fri, 24 Apr 2026 17:44:31 GMT",
+    "raw_path": "speed-tunes\\wartower.html",
+    "size": 226746,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/what-in-the-hellmut/": {
+    "content_hash": "4f806a6c61664bbc131e5e2f1e94642d15da3997abdec6d9265625021a95d59f",
+    "etag": "W/\"369d5-65037e53eccbd\"",
+    "fetched_at": "2026-04-24T17:44:33Z",
+    "last_modified": "Fri, 24 Apr 2026 17:14:19 GMT",
+    "raw_path": "speed-tunes\\what-in-the-hellmut.html",
+    "size": 223701,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/white-myth-caster/": {
+    "content_hash": "706e5e271309d3a753625563a216a6bc9f1b53c64d2cd4c9f46d1958dbe242c4",
+    "etag": "W/\"ff2ff296663725d51d23006cf70156f8\"",
+    "fetched_at": "2026-04-24T17:44:35Z",
+    "last_modified": "Fri, 24 Apr 2026 17:44:35 GMT",
+    "raw_path": "speed-tunes\\white-myth-caster.html",
+    "size": 224992,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/white-whale-lydia/": {
+    "content_hash": "ef47d213a96dd5a36856ced3e55da1b76f91d15de119c592878ce54fe1c766ac",
+    "etag": "W/\"beb8d68d868615a22ecd67d383244ca3\"",
+    "fetched_at": "2026-04-24T17:44:39Z",
+    "last_modified": "Fri, 24 Apr 2026 17:44:39 GMT",
+    "raw_path": "speed-tunes\\white-whale-lydia.html",
+    "size": 219590,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/white-whale-nm-only/": {
+    "content_hash": "3b546a1801c8570744106e674f416cd82ea2fae1cf4ea303d4ff2554d38c9a82",
+    "etag": "W/\"39629f79e6c9609e13e4b9801612dd2a\"",
+    "fetched_at": "2026-04-24T17:44:41Z",
+    "last_modified": "Fri, 24 Apr 2026 17:44:41 GMT",
+    "raw_path": "speed-tunes\\white-whale-nm-only.html",
+    "size": 217245,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/speed-tune/white-whale/": {
+    "content_hash": "6111992a6a5792f6c7116b60360a8c2e6dc4001c4a97c6dcb4d0c233e84dcd39",
+    "etag": "W/\"38522-65037f4b9c626\"",
+    "fetched_at": "2026-04-24T17:44:36Z",
+    "last_modified": "Fri, 24 Apr 2026 17:18:39 GMT",
+    "raw_path": "speed-tunes\\white-whale.html",
+    "size": 230690,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/wp-json/dwj-api/v1/tier-list": {
+    "content_hash": "ef025ba14986f91cae5c653c81e507caf29c0da29eddc2d8da1e43a03d43c5ff",
+    "etag": "",
+    "fetched_at": "2026-04-24T17:40:47Z",
+    "last_modified": "",
+    "raw_path": "api\\dwj-api-v1-tier_list.json",
+    "size": 8467,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/wp-json/dwj-api/v1/tunes": {
+    "content_hash": "30fba2e56e97714d74249a315ddd26e807b8713c007720b8a6d205b3c94145f6",
+    "etag": "",
+    "fetched_at": "2026-04-24T17:40:45Z",
+    "last_modified": "",
+    "raw_path": "api\\dwj-api-v1-tunes.json",
+    "size": 650390,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/wp-json/wp/v2/pages?per_page=100&page=1&_embed=1": {
+    "content_hash": "b1a633a6e2b1b88ca8a507d8f65dc5504bdae2b9b19fe3a011c459fd4396bb06",
+    "etag": "",
+    "fetched_at": "2026-04-24T17:41:10Z",
+    "last_modified": "",
+    "raw_path": "pages\\page-01.json",
+    "size": 1506995,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/wp-json/wp/v2/posts?per_page=100&page=1&_embed=1": {
+    "content_hash": "022ec19dc1655bf83f66c6e06f26df51710235dce249101cebaf1d08da059a75",
+    "etag": "",
+    "fetched_at": "2026-04-24T17:40:57Z",
+    "last_modified": "",
+    "raw_path": "posts\\page-01.json",
+    "size": 3872128,
+    "status": 200
+  },
+  "https://deadwoodjedi.com/wp-json/wp/v2/posts?per_page=100&page=2&_embed=1": {
+    "content_hash": "20f78dc2167903b18fd08a278907cc0ba8f8b1a46c339beb2f2d0b81b76e0180",
+    "etag": "",
+    "fetched_at": "2026-04-24T17:41:05Z",
+    "last_modified": "",
+    "raw_path": "posts\\page-02.json",
+    "size": 1979097,
+    "status": 200
+  }
+}

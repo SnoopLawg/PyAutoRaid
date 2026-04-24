@@ -30,3 +30,7 @@ skills_data*.json
 
 # Gear plan iterations
 myth_eater_gear*.txt
+
+# DWJ scrape - raw archival (gitignored; parsed JSON is committed)
+data/dwj/raw/
+probe/

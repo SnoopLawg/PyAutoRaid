@@ -1,0 +1,602 @@
+[
+  {
+    "id": 6523,
+    "name": "Santa's Ho-Ho-Ho-mies",
+    "url": "https://deadwoodjedi.com/speed-tunes/santas-ho-ho-ho-mies/",
+    "tier": null,
+    "raw": {
+      "id": 6523,
+      "Url": "https://deadwoodjedi.com/speed-tunes/santas-ho-ho-ho-mies/",
+      "Name": "Santa's Ho-Ho-Ho-mies",
+      "Type": "Unkillable",
+      "Difficulty": "Moderate",
+      "Key Capability": "1 Key UNM",
+      "Affinity": "All Affinities"
+    }
+  },
+  {
+    "id": 6415,
+    "name": "MummyMan",
+    "url": "https://deadwoodjedi.com/speed-tunes/mummyman/",
+    "tier": null,
+    "raw": {
+      "id": 6415,
+      "Url": "https://deadwoodjedi.com/speed-tunes/mummyman/",
+      "Name": "MummyMan",
+      "Type": "Unkillable",
+      "Difficulty": "Moderate",
+      "Key Capability": "2 Key UNM",
+      "Affinity": "All Affinities"
+    }
+  },
+  {
+    "id": 6315,
+    "name": "Myth Salad",
+    "url": "https://deadwoodjedi.com/speed-tunes/myth-salad/",
+    "tier": null,
+    "raw": {
+      "id": 6315,
+      "Url": "https://deadwoodjedi.com/speed-tunes/myth-salad/",
+      "Name": "Myth Salad",
+      "Type": "Unkillable",
+      "Difficulty": "Hard",
+      "Key Capability": "2 Key UNM",
+      "Affinity": "All Affinities"
+    }
+  },
+  {
+    "id": 6313,
+    "name": "Myth Heir with Double Deacon",
+    "url": "https://deadwoodjedi.com/speed-tunes/myth-heir-with-double-deacon/",
+    "tier": null,
+    "raw": {
+      "id": 6313,
+      "Url": "https://deadwoodjedi.com/speed-tunes/myth-heir-with-double-deacon/",
+      "Name": "Myth Heir with Double Deacon",
+      "Type": "Unkillable",
+      "Difficulty": "Hard",
+      "Key Capability": "2 Key UNM",
+      "Affinity": "All Affinities"
+    }
+  },
+  {
+    "id": 5549,
+    "name": "Budget HeartKeeper Unkillable",
+    "url": "https://deadwoodjedi.com/speed-tunes/budget-heartkeeper-unkillable/",
+    "tier": null,
+    "raw": {
+      "id": 5549,
+      "Url": "https://deadwoodjedi.com/speed-tunes/budget-heartkeeper-unkillable/",
+      "Name": "Budget HeartKeeper Unkillable",
+      "Type": "Unkillable",
+      "Difficulty": "Extreme",
+      "Key Capability": "2 Key UNM",
+      "Affinity": "All Affinities"
+    }
+  },
+  {
+    "id": 5526,
+    "name": "Slow Beating Trunkheart",
+    "url": "https://deadwoodjedi.com/speed-tunes/slow-beating-trunkheart/",
+    "tier": null,
+    "raw": {
+      "id": 5526,
+      "Url": "https://deadwoodjedi.com/speed-tunes/slow-beating-trunkheart/",
+      "Name": "Slow Beating Trunkheart",
+      "Type": "Unkillable",
+      "Difficulty": "Easy",
+      "Key Capability": "2 Key UNM",
+      "Affinity": "All Affinities"
+    }
+  },
+  {
+    "id": 5524,
+    "name": "Heart Eater",
+    "url": "https://deadwoodjedi.com/speed-tunes/heart-eater/",
+    "tier": null,
+    "raw": {
+      "id": 5524,
+      "Url": "https://deadwoodjedi.com/speed-tunes/heart-eater/",
+      "Name": "Heart Eater",
+      "Type": "Unkillable",
+      "Difficulty": "Moderate",
+      "Key Capability": "2 Key UNM",
+      "Affinity": "All Affinities"
+    }
+  },
+  {
+    "id": 5389,
+    "name": "White-Myth-Caster",
+    "url": "https://deadwoodjedi.com/speed-tunes/white-myth-caster/",
+    "tier": null,
+    "raw": {
+      "id": 5389,
+      "Url": "https://deadwoodjedi.com/speed-tunes/white-myth-caster/",
+      "Name": "White-Myth-Caster",
+      "Type": "Unkillable",
+      "Difficulty": "Moderate",
+      "Key Capability": "2 Key UNM",
+      "Affinity": "All Affinities"
+    }
+  },
+  {
+    "id": 5370,
+    "name": "ManSeekNia",
+    "url": "https://deadwoodjedi.com/speed-tunes/manseeknia/",
+    "tier": null,
+    "raw": {
+      "id": 5370,
+      "Url": "https://deadwoodjedi.com/speed-tunes/manseeknia/",
+      "Name": "ManSeekNia",
+      "Type": "Unkillable",
+      "Difficulty": "Easy",
+      "Key Capability": "2 Key UNM",
+      "Affinity": "All Affinities"
+    }
+  },
+  {
+    "id": 5368,
+    "name": "Myth Hare",
+    "url": "https://deadwoodjedi.com/speed-tunes/myth-hare/",
+    "tier": null,
+    "raw": {
+      "id": 5368,
+      "Url": "https://deadwoodjedi.com/speed-tunes/myth-hare/",
+      "Name": "Myth Hare",
+      "Type": "Unkillable",
+      "Difficulty": "Hard",
+      "Key Capability": "1 Key UNM",
+      "Affinity": "All Affinities"
+    }
+  },
+  {
+    "id": 5179,
+    "name": "Razzle Dazzle Unkillable",
+    "url": "https://deadwoodjedi.com/speed-tunes/razzle-dazzle-unkillable/",
+    "tier": null,
+    "raw": {
+      "id": 5179,
+      "Url": "https://deadwoodjedi.com/speed-tunes/razzle-dazzle-unkillable/",
+      "Name": "Razzle Dazzle Unkillable",
+      "Type": "Unkillable",
+      "Difficulty": "Moderate",
+      "Key Capability": "1 Key UNM",
+      "Affinity": "All Affinities"
+    }
+  },
+  {
+    "id": 5178,
+    "name": "Razzle Dazzle Counter-Attack",
+    "url": "https://deadwoodjedi.com/speed-tunes/razzle-dazzle-counter-attack/",
+    "tier": null,
+    "raw": {
+      "id": 5178,
+      "Url": "https://deadwoodjedi.com/speed-tunes/razzle-dazzle-counter-attack/",
+      "Name": "Razzle Dazzle Counter-Attack",
+      "Type": "Traditional",
+      "Difficulty": "Moderate",
+      "Key Capability": "1 Key UNM",
+      "Affinity": "All Affinities"
+    }
+  },
+  {
+    "id": 5151,
+    "name": "Razzle Dazzle Survival",
+    "url": "https://deadwoodjedi.com/speed-tunes/razzle-dazzle-survival/",
+    "tier": null,
+    "raw": {
+      "id": 5151,
+      "Url": "https://deadwoodjedi.com/speed-tunes/razzle-dazzle-survival/",
+      "Name": "Razzle Dazzle Survival",
+      "Type": "Traditional",
+      "Difficulty": "Moderate",
+      "Key Capability": "1 Key UNM",
+      "Affinity": "All Affinities"
+    }
+  },
+  {
+    "id": 5147,
+    "name": "RabBatEater",
+    "url": "https://deadwoodjedi.com/speed-tunes/rabbateater/",
+    "tier": null,
+    "raw": {
+      "id": 5147,
+      "Url": "https://deadwoodjedi.com/speed-tunes/rabbateater/",
+      "Name": "RabBatEater",
+      "Type": "Unkillable",
+      "Difficulty": "Moderate",
+      "Key Capability": "1 Key UNM",
+      "Affinity": "All Affinities"
+    }
+  },
+  {
+    "id": 3983,
+    "name": "Vergis Magic",
+    "url": "https://deadwoodjedi.com/speed-tunes/vergis-magic/",
+    "tier": null,
+    "raw": {
+      "id": 3983,
+      "Url": "https://deadwoodjedi.com/speed-tunes/vergis-magic/",
+      "Name": "Vergis Magic",
+      "Type": "Traditional",
+      "Difficulty": "Easy",
+      "Key Capability": "3 Key UNM",
+      "Affinity": "All Affinities"
+    }
+  },
+  {
+    "id": 3715,
+    "name": "Myth Rue-Elva",
+    "url": "https://deadwoodjedi.com/speed-tunes/myth-rue-elva/",
+    "tier": null,
+    "raw": {
+      "id": 3715,
+      "Url": "https://deadwoodjedi.com/speed-tunes/myth-rue-elva/",
+      "Name": "Myth Rue-Elva",
+      "Type": "Unkillable",
+      "Difficulty": "Hard",
+      "Key Capability": "1 Key UNM",
+      "Affinity": "All Affinities"
+    }
+  },
+  {
+    "id": 3681,
+    "name": "Budget Myth Heir",
+    "url": "https://deadwoodjedi.com/speed-tunes/budget-myth-heir/",
+    "tier": null,
+    "raw": {
+      "id": 3681,
+      "Url": "https://deadwoodjedi.com/speed-tunes/budget-myth-heir/",
+      "Name": "Budget Myth Heir",
+      "Type": "Unkillable",
+      "Difficulty": "Easy",
+      "Key Capability": "3 Key UNM",
+      "Affinity": "All Affinities"
+    }
+  },
+  {
+    "id": 3585,
+    "name": "Double Warcaster v2",
+    "url": "https://deadwoodjedi.com/speed-tunes/double-warcaster-v2/",
+    "tier": null,
+    "raw": {
+      "id": 3585,
+      "Url": "https://deadwoodjedi.com/speed-tunes/double-warcaster-v2/",
+      "Name": "Double Warcaster v2",
+      "Type": "Unkillable",
+      "Difficulty": "Moderate",
+      "Key Capability": "2 Key UNM",
+      "Affinity": "All Affinities"
+    }
+  },
+  {
+    "id": 3562,
+    "name": "NinjaHelicath v2",
+    "url": "https://deadwoodjedi.com/speed-tunes/ninjahelicath-v2/",
+    "tier": null,
+    "raw": {
+      "id": 3562,
+      "Url": "https://deadwoodjedi.com/speed-tunes/ninjahelicath-v2/",
+      "Name": "NinjaHelicath v2",
+      "Type": "Unkillable",
+      "Difficulty": "Moderate",
+      "Key Capability": "2 Key UNM",
+      "Affinity": "All Affinities"
+    }
+  },
+  {
+    "id": 3271,
+    "name": "Budget Maneater Unkillable – Ninja",
+    "url": "https://deadwoodjedi.com/speed-tunes/budget-maneater-unkillable-ninja/",
+    "tier": null,
+    "raw": {
+      "id": 3271,
+      "Url": "https://deadwoodjedi.com/speed-tunes/budget-maneater-unkillable-ninja/",
+      "Name": "Budget Maneater Unkillable – Ninja",
+      "Type": "Unkillable",
+      "Difficulty": "Moderate",
+      "Key Capability": "2 Key UNM",
+      "Affinity": "All Affinities"
+    }
+  },
+  {
+    "id": 3262,
+    "name": "Affinity Friendly Valkyrie with two 4:3 Champs",
+    "url": "https://deadwoodjedi.com/speed-tunes/affinity-friendly-valkyrie-with-two-43-champs/",
+    "tier": null,
+    "raw": {
+      "id": 3262,
+      "Url": "https://deadwoodjedi.com/speed-tunes/affinity-friendly-valkyrie-with-two-43-champs/",
+      "Name": "Affinity Friendly Valkyrie with two 4:3 Champs",
+      "Type": "Traditional",
+      "Difficulty": "Moderate",
+      "Key Capability": "2 Key UNM",
+      "Affinity": "All Affinities"
+    }
+  },
+  {
+    "id": 3258,
+    "name": "Ninja CatEater",
+    "url": "https://deadwoodjedi.com/speed-tunes/ninja-cateater/",
+    "tier": null,
+    "raw": {
+      "id": 3258,
+      "Url": "https://deadwoodjedi.com/speed-tunes/ninja-cateater/",
+      "Name": "Ninja CatEater",
+      "Type": "Unkillable",
+      "Difficulty": "Moderate",
+      "Key Capability": "2 Key UNM",
+      "Affinity": "All Affinities"
+    }
+  },
+  {
+    "id": 3245,
+    "name": "WarMBat",
+    "url": "https://deadwoodjedi.com/speed-tunes/warmbat/",
+    "tier": null,
+    "raw": {
+      "id": 3245,
+      "Url": "https://deadwoodjedi.com/speed-tunes/warmbat/",
+      "Name": "WarMBat",
+      "Type": "Unkillable",
+      "Difficulty": "Moderate",
+      "Key Capability": "2 Key UNM",
+      "Affinity": "All Affinities"
+    }
+  },
+  {
+    "id": 3230,
+    "name": "CatEater",
+    "url": "https://deadwoodjedi.com/speed-tunes/cateater/",
+    "tier": null,
+    "raw": {
+      "id": 3230,
+      "Url": "https://deadwoodjedi.com/speed-tunes/cateater/",
+      "Name": "CatEater",
+      "Type": "Unkillable",
+      "Difficulty": "Moderate",
+      "Key Capability": "2 Key UNM",
+      "Affinity": "All Affinities"
+    }
+  },
+  {
+    "id": 3228,
+    "name": "Deacon Forever",
+    "url": "https://deadwoodjedi.com/speed-tunes/deacon-forever/",
+    "tier": null,
+    "raw": {
+      "id": 3228,
+      "Url": "https://deadwoodjedi.com/speed-tunes/deacon-forever/",
+      "Name": "Deacon Forever",
+      "Type": "Unkillable",
+      "Difficulty": "Expert",
+      "Key Capability": "1 Key UNM",
+      "Affinity": "All Affinities"
+    }
+  },
+  {
+    "id": 3217,
+    "name": "Ninja Hellcat Unkillable",
+    "url": "https://deadwoodjedi.com/speed-tunes/ninja-hellcat-unkillable/",
+    "tier": null,
+    "raw": {
+      "id": 3217,
+      "Url": "https://deadwoodjedi.com/speed-tunes/ninja-hellcat-unkillable/",
+      "Name": "Ninja Hellcat Unkillable",
+      "Type": "Unkillable",
+      "Difficulty": "Moderate",
+      "Key Capability": "2 Key UNM",
+      "Affinity": "All Affinities"
+    }
+  },
+  {
+    "id": 3171,
+    "name": "Slow Hellcat Unkillable",
+    "url": "https://deadwoodjedi.com/speed-tunes/slow-hellcat-unkillable/",
+    "tier": null,
+    "raw": {
+      "id": 3171,
+      "Url": "https://deadwoodjedi.com/speed-tunes/slow-hellcat-unkillable/",
+      "Name": "Slow Hellcat Unkillable",
+      "Type": "Unkillable",
+      "Difficulty": "Easy",
+      "Key Capability": "2 Key UNM",
+      "Affinity": "All Affinities"
+    }
+  },
+  {
+    "id": 3170,
+    "name": "Super Charged Hellcat",
+    "url": "https://deadwoodjedi.com/speed-tunes/super-charged-hellcat/",
+    "tier": null,
+    "raw": {
+      "id": 3170,
+      "Url": "https://deadwoodjedi.com/speed-tunes/super-charged-hellcat/",
+      "Name": "Super Charged Hellcat",
+      "Type": "Unkillable",
+      "Difficulty": "Moderate",
+      "Key Capability": "2 Key UNM",
+      "Affinity": "All Affinities"
+    }
+  },
+  {
+    "id": 3169,
+    "name": "Fast Tower Skullcrusher Unkillable",
+    "url": "https://deadwoodjedi.com/speed-tunes/fast-tower-skullcrusher-unkillable-copy/",
+    "tier": null,
+    "raw": {
+      "id": 3169,
+      "Url": "https://deadwoodjedi.com/speed-tunes/fast-tower-skullcrusher-unkillable-copy/",
+      "Name": "Fast Tower Skullcrusher Unkillable",
+      "Type": "Unkillable",
+      "Difficulty": "Moderate",
+      "Key Capability": "3 Key UNM",
+      "Affinity": "All Affinities"
+    }
+  },
+  {
+    "id": 2785,
+    "name": "Three 4:3 Champs Alternate",
+    "url": "https://deadwoodjedi.com/speed-tunes/three-43-champs-alternate/",
+    "tier": null,
+    "raw": {
+      "id": 2785,
+      "Url": "https://deadwoodjedi.com/speed-tunes/three-43-champs-alternate/",
+      "Name": "Three 4:3 Champs Alternate",
+      "Type": "Traditional",
+      "Difficulty": "Easy",
+      "Key Capability": "3 Key UNM",
+      "Affinity": "Void Only"
+    }
+  },
+  {
+    "id": 2270,
+    "name": "Batman Forever",
+    "url": "https://deadwoodjedi.com/speed-tunes/batman-forever/",
+    "tier": null,
+    "raw": {
+      "id": 2270,
+      "Url": "https://deadwoodjedi.com/speed-tunes/batman-forever/",
+      "Name": "Batman Forever",
+      "Type": "Unkillable",
+      "Difficulty": "Hard",
+      "Key Capability": "1 Key UNM",
+      "Affinity": "All Affinities"
+    }
+  },
+  {
+    "id": 2638,
+    "name": "Man Seeks God",
+    "url": "https://deadwoodjedi.com/speed-tunes/man-seeks-god/",
+    "tier": null,
+    "raw": {
+      "id": 2638,
+      "Url": "https://deadwoodjedi.com/speed-tunes/man-seeks-god/",
+      "Name": "Man Seeks God",
+      "Type": "Unkillable",
+      "Difficulty": "Extreme",
+      "Key Capability": "1 Key UNM",
+      "Affinity": "All Affinities"
+    }
+  },
+  {
+    "id": 2637,
+    "name": "Myth Buster",
+    "url": "https://deadwoodjedi.com/speed-tunes/myth-buster/",
+    "tier": null,
+    "raw": {
+      "id": 2637,
+      "Url": "https://deadwoodjedi.com/speed-tunes/myth-buster/",
+      "Name": "Myth Buster",
+      "Type": "Unkillable",
+      "Difficulty": "Expert",
+      "Key Capability": "1 Key UNM",
+      "Affinity": "All Affinities"
+    }
+  },
+  {
+    "id": 2636,
+    "name": "Double Demytha",
+    "url": "https://deadwoodjedi.com/speed-tunes/double-demytha/",
+    "tier": null,
+    "raw": {
+      "id": 2636,
+      "Url": "https://deadwoodjedi.com/speed-tunes/double-demytha/",
+      "Name": "Double Demytha",
+      "Type": "Unkillable",
+      "Difficulty": "Easy",
+      "Key Capability": "2 Key UNM",
+      "Affinity": "All Affinities"
+    }
+  },
+  {
+    "id": 2634,
+    "name": "High Myth Man",
+    "url": "https://deadwoodjedi.com/speed-tunes/high-myth-man/",
+    "tier": null,
+    "raw": {
+      "id": 2634,
+      "Url": "https://deadwoodjedi.com/speed-tunes/high-myth-man/",
+      "Name": "High Myth Man",
+      "Type": "Traditional",
+      "Difficulty": "Easy",
+      "Key Capability": "2 Key UNM",
+      "Affinity": "All Affinities"
+    }
+  },
+  {
+    "id": 2632,
+    "name": "Myth Eater",
+    "url": "https://deadwoodjedi.com/speed-tunes/myth-eater/",
+    "tier": null,
+    "raw": {
+      "id": 2632,
+      "Url": "https://deadwoodjedi.com/speed-tunes/myth-eater/",
+      "Name": "Myth Eater",
+      "Type": "Unkillable",
+      "Difficulty": "Hard",
+      "Key Capability": "2 Key UNM",
+      "Affinity": "All Affinities"
+    }
+  },
+  {
+    "id": 2631,
+    "name": "Myth Heir Salad",
+    "url": "https://deadwoodjedi.com/speed-tunes/myth-heir-salad/",
+    "tier": null,
+    "raw": {
+      "id": 2631,
+      "Url": "https://deadwoodjedi.com/speed-tunes/myth-heir-salad/",
+      "Name": "Myth Heir Salad",
+      "Type": "Unkillable",
+      "Difficulty": "Hard",
+      "Key Capability": "1 Key UNM",
+      "Affinity": "All Affinities"
+    }
+  },
+  {
+    "id": 2630,
+    "name": "Myth Heir Alternate",
+    "url": "https://deadwoodjedi.com/speed-tunes/myth-heir-with-no-seeker/",
+    "tier": null,
+    "raw": {
+      "id": 2630,
+      "Url": "https://deadwoodjedi.com/speed-tunes/myth-heir-with-no-seeker/",
+      "Name": "Myth Heir Alternate",
+      "Type": "Unkillable",
+      "Difficulty": "Hard",
+      "Key Capability": "1 Key UNM",
+      "Affinity": "All Affinities"
+    }
+  },
+  {
+    "id": 2628,
+    "name": "Tuhanarak and Lydia",
+    "url": "https://deadwoodjedi.com/speed-tunes/tuhanarak-and-lydia/",
+    "tier": null,
+    "raw": {
+      "id": 2628,
+      "Url": "https://deadwoodjedi.com/speed-tunes/tuhanarak-and-lydia/",
+      "Name": "Tuhanarak and Lydia",
+      "Type": "Traditional",
+      "Difficulty": "Expert",
+      "Key Capability": "2 Key UNM",
+      "Affinity": "All Affinities"
+    }
+  },
+  {
+    "id": 2627,
+    "name": "White Whale Lydia",
+    "url": "https://deadwoodjedi.com/speed-tunes/white-whale-lydia/",
+    "tier": null,
+    "raw": {
+      "id": 2627,
+      "Url": "https://deadwoodjedi.com/speed-tunes/white-whale-lydia/",
+      "Name": "White Whale Lydia",
+      "Type": "Traditional",
+      "Difficulty": "Moderate",
+      "Key Capability": "1 Key UNM",
+      "Affinity": "All Affinities"
+    }
+  }
+]
