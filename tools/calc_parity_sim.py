@@ -194,25 +194,42 @@ def count_boss_turns(turns: list[TurnRecord]) -> int:
 
 
 def _resolve_targets(effect: dict, actor: Actor, actors: list[Actor]) -> list[Actor]:
-    """Map effect's 'champions' / 'enemy' to the list of targets."""
+    """Map effect's 'champions' / 'enemy' to the list of targets.
+
+    Per DWJ's ei.add_buff router:
+        allies    = friendlies + self (same side as actor)
+        self      = [actor]
+        notself   = friendlies excluding self
+        single    = [friendlies[0]] — first OTHER ally (exclude caster)
+        highest_tm = [friendly with highest TM]
+        all       = all actors (used rarely)
+
+    Per DWJ's ei.add_debuff router:
+        enemy:all    = all hostiles
+        enemy:single = [hostiles[0]]
+    """
     champ = effect.get("champions")
     enemy = effect.get("enemy")
+    friendlies = [a for a in actors if a is not actor and a.is_boss == actor.is_boss]
+    hostiles = [a for a in actors if a.is_boss != actor.is_boss]
     if champ == "self":
         return [actor]
     if champ == "allies":
-        return [a for a in actors if not a.is_boss and not actor.is_boss and a is not actor] + ([actor] if not actor.is_boss else [])
+        return friendlies + [actor]
+    if champ == "notself":
+        return friendlies
+    if champ == "single":
+        return friendlies[:1]
+    if champ == "highest_tm":
+        if not friendlies:
+            return []
+        return [max(friendlies, key=lambda x: x.turn_meter)]
     if champ == "all":
         return list(actors)
-    if champ == "single":
-        # single friendly (or self). Without a real target picker, just self.
-        return [actor]
     if enemy == "all":
-        return [a for a in actors if a.is_boss != actor.is_boss]
+        return hostiles
     if enemy == "single":
-        # pick first hostile
-        return next(
-            ([a] for a in actors if a.is_boss != actor.is_boss), []
-        )
+        return hostiles[:1]
     return []
 
 
@@ -334,6 +351,10 @@ def apply_skill_effects(actor: Actor, skill_alias: str, actors: list[Actor], cas
                 _apply_speed_buff(targets, amount, turns, is_debuff=False)
             elif buff == "reduce_cd":
                 _apply_reduce_cd(targets, amount, caster_skill_alias=caster_skill_alias)
+            elif buff == "extra_turn":
+                _apply_extra_turn(targets)
+            elif buff == "reset_cd":
+                _apply_reset_cd(targets)
             # Other buffs (unkillable, block_dmg, shield, etc.) don't affect scheduling
             continue
 
