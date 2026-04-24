@@ -79,6 +79,22 @@ Key mechanics:
 | 7001 | ignore DEF | Ninja A3 (50%), OB A2 (30%), per desc |
 | 4006 | ally attack | Fahrakin A3, Cardiel A3 (with Inc CR/CD buffs) |
 
+## DWJ Calculator Parity
+
+`tools/calc_parity_sim.py` is a separate, **100%-matching** Python port of
+DeadwoodJedi's calc scheduler (turn-meter ticks, priority/CD/delay picking,
+buff/debuff effect dispatcher). Verified action-for-action on 4 diverse
+variants (Myth Eater Ninja, Myth Eater std UNM, Batman Forever, Endless
+Speed). Spec lives in `docs/dwj/calc_algorithm.md`; data lives in
+`data/dwj/parsed/` (103 tunes + 246 calc variants + 859 champion configs)
+and `data/hh/parsed/` (1013 HellHades champion ratings).
+
+Use `tools/cb.py` for everything DWJ-parity: `potential` (roster vs tunes),
+`sim` (turn-by-turn cast timeline), `parity` (diff sim vs live DWJ text),
+`inspect` (browse scraped data), `gaps` (HH cross-reference). The dashboard
+(port 6791) renders the same data in `potential teams` + `cast timeline`
+panels.
+
 ### How to Start CB Battle (mod API only)
 ```
 curl /navigate?target=cb
@@ -92,7 +108,6 @@ curl /context-call?path=...AllianceBossHeroesSelectionDialog&method=StartBattle
 |------|---------|
 | `tools/cb_run.py` | One-command CB battle runner (start → poll → log → calibrate) |
 | `tools/cb_daily.py` | Cron-ready daily CB (runs all keys, stores to DB) |
-| `tools/deploy_mod.sh` | One-command mod build + deploy to VM |
 | `tools/refresh_all.py` | Full pipeline: fetch → rebuild DB → verify profiles → calibrate |
 | `tools/cb_sim.py` | Turn-by-turn damage simulator with DWJ tune support |
 | `tools/tune_library.py` | DWJ speed tune definitions (Myth Eater, Budget UK, Batman Forever, etc.) |
@@ -104,6 +119,15 @@ curl /context-call?path=...AllianceBossHeroesSelectionDialog&method=StartBattle
 | `tools/cb_gap_analysis.py` | Hero gap analysis (roster + pull priority) |
 | `tools/db_init.py` | SQLite database builder (pyautoraid.db) |
 | `tools/refresh_data.py` | Fetch heroes/artifacts/skills from mod API |
+| `tools/cb.py` | Unified CLI for DWJ-parity work (potential / sim / parity / inspect / gaps) |
+| `tools/calc_parity_sim.py` | DWJ-parity turn scheduler (100% match, 4/4 variants tested) |
+| `tools/comp_finder.py` | Score 103 DWJ tunes against owned roster (runnable / N-away) |
+| `tools/dwj_inspect.py` | Browse scraped DWJ tunes, variants, champions |
+| `tools/calc_parity_check.py` | Diff sim cast order vs live DWJ rendered text |
+| `tools/hh_vs_dwj.py` | HellHades cross-reference (gap finder, roster snapshot) |
+| `tools/scrape_dwj.py` / `scrape_dwj_calc.py` | DWJ WordPress + calculator scrapers |
+| `tools/scrape_hellhades.py` | HH WordPress scraper (champions + tierlist + posts) |
+| `tools/dashboard_server.py` | HTTP dashboard server (port 6791) |
 
 ## Data Files
 
@@ -118,6 +142,12 @@ curl /context-call?path=...AllianceBossHeroesSelectionDialog&method=StartBattle
 | `account_data.json` | Great Hall, Arena, Clan level |
 | `pyautoraid.db` | SQLite with all data unified |
 | `battle_logs_cb_*.json` | Per-turn battle telemetry |
+| `data/dwj/parsed/tunes.json` | 103 DWJ tunes with slot configs |
+| `data/dwj/parsed/calc_tunes.json` | 246 calculator variants (hash-keyed) |
+| `data/dwj/parsed/calc_champions.json` | 859 champion configs (skills + effects) |
+| `data/hh/parsed/champions.json` | 1013 HellHades champion metadata + sets |
+| `data/hh/parsed/tierlist.json` | 1013 HH tier ratings (CB / overall / etc.) |
+| `docs/dwj/calc_algorithm.md` | Reverse-engineered DWJ scheduler spec |
 
 ## Reference IDs
 
@@ -131,18 +161,9 @@ curl /context-call?path=...AllianceBossHeroesSelectionDialog&method=StartBattle
 
 HTTP API on port 6790. Key endpoints: `/status`, `/all-heroes`, `/all-artifacts`, `/skill-data`, `/skill-texts`, `/navigate`, `/context-call`, `/battle-state`, `/battle-log`, `/equip`, `/presets`, `/buttons`, `/click`.
 
-Build & deploy: `./tools/deploy_mod.sh` (or manually: serve source → `C:\dotnet\dotnet.exe build` → copy DLL → relaunch Raid).
+Build & deploy: see Quick Commands above (dotnet build → kill Raid.exe → copy DLL).
 
 **NEVER kill PlariumPlay** — breaks session. Only kill `Raid.exe` for redeploys.
-
-## VM
-
-| Property | Value |
-|----------|-------|
-| Host | mothership2, QEMU/KVM, 4 vCPUs, 4GB RAM |
-| Ports | 3389 (RDP), 5900 (VNC), 5985 (WinRM `snoop`/`raid`), 6790 (mod) |
-| Schedule | 6:50 AM boot, 7/13/19 CB runs, 10 PM shutdown |
-| Scripts | `/home/snoop/vms/win10-raid/` (start-vm.sh, stop-vm.sh) |
 
 ## Key Rules
 
