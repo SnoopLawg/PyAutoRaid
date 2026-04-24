@@ -462,7 +462,8 @@ def simulate(variant: DwjVariant, max_turns: int = 1000, max_boss_turns: int = 5
 
         if trace:
             cd_str = " ".join(f"{c.alias}cd{c.current_cooldown}" for c in actor.skill_configs if c.alias != "A4")
-            print(f"         cast: {actor.name} {skill.alias}  [{cd_str}]")
+            eff_str = ",".join(f"{e.name}={e.amount:.2f}d{e.duration}" for e in actor.effects) if actor.effects else ""
+            print(f"         cast: {actor.name} {skill.alias}  [{cd_str}]  effects=[{eff_str}]")
 
         # Record turn
         boss_tn = count_boss_turns(turns) + (0 if not actor.is_boss and len(turns) > 0 else (1 if actor.is_boss else 0))
@@ -481,17 +482,24 @@ def simulate(variant: DwjVariant, max_turns: int = 1000, max_boss_turns: int = 5
             c.delay = max(0, c.delay - 1)
             c.current_cooldown = max(0, c.current_cooldown - 1)
 
-        # Apply skill effects that affect scheduling (both player and boss can trigger)
-        if apply_effects:
-            apply_skill_effects(actor, skill.alias, actors, caster_skill_alias=skill.alias)
-            if trace and skill.alias in ("A2", "A3"):  # after-effect state for key skills
-                tm_str = "  ".join(f"{a.name[:4]}={a.turn_meter:6.2f}" for a in actors)
-                print(f"    after-eff: {tm_str}")
-
-        # Decrement turn-end effects, remove expired
+        # Decrement turn-end effect durations BEFORE applying new effects.
+        # DWJ's ek loop does: turn-end decrement → el(apply effects) → filter.
+        # This means effects freshly added by this turn's el call keep their
+        # full duration and won't decrement on the same turn — crucial for
+        # self-buffs like Apothecary's speed-up (duration 2 stays 2 during
+        # the casting turn, only decrements on the next actor's turn).
         for e in actor.effects:
             if e.reduceDurationAt == "turn-end":
                 e.duration -= 1
+
+        # Apply skill effects that affect scheduling (both player and boss can trigger)
+        if apply_effects:
+            apply_skill_effects(actor, skill.alias, actors, caster_skill_alias=skill.alias)
+            if trace and skill.alias in ("A2", "A3"):
+                tm_str = "  ".join(f"{a.name[:4]}={a.turn_meter:6.2f}" for a in actors)
+                print(f"    after-eff: {tm_str}")
+
+        # Filter expired effects AFTER both decrement and effect application.
         actor.effects = [e for e in actor.effects if e.duration > 0]
 
     return turns
