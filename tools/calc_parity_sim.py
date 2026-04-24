@@ -248,11 +248,16 @@ def _apply_tm_down(targets: list[Actor], amount: float) -> None:
         t.turn_meter = max(0.0, t.turn_meter - amount)
 
 
-def _apply_reduce_cd(targets: list[Actor], amount: float, named: str | None = None) -> None:
+def _apply_reduce_cd(targets: list[Actor], amount: float, named: str | None = None, caster_skill_alias: str | None = None) -> None:
+    """Reduce cooldowns on targets. DWJ excludes the skill that was just
+    cast (so e.g. Ninja A3's "reduce_cd self" doesn't instantly undo its
+    own cooldown)."""
     for t in targets:
         for c in t.skill_configs:
             if named and c.alias != named:
                 continue
+            if caster_skill_alias and c.alias == caster_skill_alias:
+                continue  # don't reduce the just-cast skill
             if amount == -1:
                 c.current_cooldown = 0
             else:
@@ -283,7 +288,7 @@ def _apply_speed_buff(targets: list[Actor], amount_pct: float, duration: int, is
         ))
 
 
-def apply_skill_effects(actor: Actor, skill_alias: str, actors: list[Actor]) -> None:
+def apply_skill_effects(actor: Actor, skill_alias: str, actors: list[Actor], caster_skill_alias: str | None = None) -> None:
     """Apply the skill's effect list. Only handles effects that affect scheduling.
 
     This is a subset of DWJ's el()/er table — just enough to reproduce turn
@@ -306,7 +311,7 @@ def apply_skill_effects(actor: Actor, skill_alias: str, actors: list[Actor]) -> 
 
         # Direct id effects
         if eff_id == "reduce_cd":
-            _apply_reduce_cd(targets, amount, named=e.get("reduce_cd") if isinstance(e.get("reduce_cd"), str) else None)
+            _apply_reduce_cd(targets, amount, named=e.get("reduce_cd") if isinstance(e.get("reduce_cd"), str) else None, caster_skill_alias=caster_skill_alias)
             continue
         if eff_id == "reset_cd":
             _apply_reset_cd(targets)
@@ -328,7 +333,7 @@ def apply_skill_effects(actor: Actor, skill_alias: str, actors: list[Actor]) -> 
             elif buff == "speedup" or buff == "speed":
                 _apply_speed_buff(targets, amount, turns, is_debuff=False)
             elif buff == "reduce_cd":
-                _apply_reduce_cd(targets, amount)
+                _apply_reduce_cd(targets, amount, caster_skill_alias=caster_skill_alias)
             # Other buffs (unkillable, block_dmg, shield, etc.) don't affect scheduling
             continue
 
@@ -424,7 +429,7 @@ def simulate(variant: DwjVariant, max_turns: int = 1000, max_boss_turns: int = 5
 
         # Apply skill effects that affect scheduling (both player and boss can trigger)
         if apply_effects:
-            apply_skill_effects(actor, skill.alias, actors)
+            apply_skill_effects(actor, skill.alias, actors, caster_skill_alias=skill.alias)
 
         # Decrement turn-end effects, remove expired
         for e in actor.effects:
