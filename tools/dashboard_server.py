@@ -1547,16 +1547,52 @@ def _damage_floor_for_key(key_cap: str | None, affinity: str | None) -> int:
     return base
 
 
+# Cache calc-parity sim results by variant hash so build_potential_teams
+# doesn't re-run the scheduler 8 times per dashboard poll.
+_parity_survival_cache: dict[str, dict] = {}
+
+
+def _parity_survival(variant_hash: str | None, dwj_loader) -> dict | None:
+    """Run calc_parity_sim against `variant_hash` for the full 50 boss turns
+    and return {"boss_turns": int, "actions": int, "survived": bool}, or None
+    if the variant or sim is unavailable. Cached.
+    """
+    if not variant_hash:
+        return None
+    if variant_hash in _parity_survival_cache:
+        return _parity_survival_cache[variant_hash]
+    try:
+        sys.path.insert(0, str(ROOT / "tools"))
+        import calc_parity_sim as cps
+        variant = dwj_loader().variants_by_hash.get(variant_hash)
+        if variant is None:
+            _parity_survival_cache[variant_hash] = None
+            return None
+        turns = cps.simulate(variant, max_boss_turns=50)
+        boss_tn = cps.count_boss_turns(turns)
+        result = {
+            "boss_turns": boss_tn,
+            "actions": len(turns),
+            "survived": boss_tn >= 50,
+        }
+        _parity_survival_cache[variant_hash] = result
+        return result
+    except Exception:
+        _parity_survival_cache[variant_hash] = None
+        return None
+
+
 def build_potential_teams(max_count: int = 12):
     """Score all DWJ tunes against user's owned roster and return the top.
 
     Uses tools/comp_finder.py's logic (roster from heroes_all.json, tunes from
-    data/dwj/parsed/tunes.json). Returns a list that matches the dashboard's
-    potential_teams schema so the JSX panel can render it directly.
+    data/dwj/parsed/tunes.json) and runs calc_parity_sim per tune to surface
+    sim-backed survival as a confidence signal (100%-match against DWJ calc).
     """
     try:
         sys.path.insert(0, str(ROOT / "tools"))
         import comp_finder as cf
+        from dwj_tunes import load_all as load_dwj_all
     except Exception as e:
         return {"error": f"comp_finder import failed: {e}"}
 
@@ -1566,6 +1602,13 @@ def build_potential_teams(max_count: int = 12):
         hh = cf.load_hh_ratings()
     except Exception as e:
         return {"error": f"dwj/hh data load failed: {e}"}
+
+    # Cache the DWJ dataset across all tunes in this call.
+    _dwj_cached = {"d": None}
+    def _dwj():
+        if _dwj_cached["d"] is None:
+            _dwj_cached["d"] = load_dwj_all()
+        return _dwj_cached["d"]
 
     evaluated = [cf.evaluate_tune(t, roster) for t in tunes]
     ranked = cf.rank_tunes(evaluated, hh)
@@ -1605,6 +1648,19 @@ def build_potential_teams(max_count: int = 12):
                 "hash": c.get("hash"),
                 "url": c.get("url"),
             })
+        # Pick the UNM variant hash (preferred) or first variant for parity sim.
+        unm_link = next((c for c in calc_links if "ultra" in (c.get("name") or "").lower() or "unm" in (c.get("name") or "").lower()), None)
+        sim_hash = (unm_link or (calc_links[0] if calc_links else {})).get("hash")
+        parity = _parity_survival(sim_hash, _dwj) if missing == 0 else None
+        # Fold sim survival into confidence: a roster-fit comp that the parity
+        # sim says dies before turn 50 should NOT read as high-confidence.
+        if parity:
+            if parity.get("survived"):
+                conf = max(conf, 0.95)         # sim-validated 50T survival
+            else:
+                # Scale by how far it got
+                bt = parity.get("boss_turns") or 0
+                conf = min(conf, 0.3 + (bt / 50) * 0.5)
         note_bits = []
         if ev.get("missing_heroes"):
             note_bits.append("need " + ", ".join(ev["missing_heroes"]))
@@ -1644,6 +1700,8 @@ def build_potential_teams(max_count: int = 12):
             "dwj_url": t.get("url"),
             "calculator_links": calc_links,
             "slots": slot_details,
+            "parity_sim": parity,            # {boss_turns, actions, survived} or None
+            "sim_hash": sim_hash,            # variant hash the parity sim ran against
         })
         if len(out) >= max_count:
             break

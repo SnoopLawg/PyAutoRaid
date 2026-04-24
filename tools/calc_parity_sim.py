@@ -35,42 +35,14 @@ from typing import Optional
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from dwj_tunes import load_all, DwjVariant, DwjSkillEffect, DwjChampion
-
-
-@dataclass
-class SkillConfig:
-    alias: str
-    id: str
-    priority: int
-    delay: int
-    cooldown: int
-    current_cooldown: int = 0
-
-
-@dataclass
-class Effect:
-    name: str
-    amount: float = 0.0
-    duration: int = 1
-    reduceDurationAt: str = "turn-end"
-    isAddedThisTurn: bool = False
-
-
-@dataclass
-class Actor:
-    name: str
-    is_boss: bool
-    total_speed: int
-    base_speed: int
-    speed_bonus: int
-    has_lore_of_steel: bool
-    skill_configs: list[SkillConfig]
-    # skill_effects[alias] = list of DwjSkillEffect dicts from calc_champions
-    skill_effects: dict[str, list] = field(default_factory=dict)
-    turn_meter: float = 0.0
-    has_extra_turn: bool = False
-    effects: list[Effect] = field(default_factory=list)
-    stat_mod_speed: float = 0.0
+# Shared turn scheduler (parity-validated). Re-export the dataclasses so
+# existing call sites keep working.
+from cb_scheduler import (
+    Actor, SkillConfig, Effect,
+    speed_buff_modifier, effective_speed,
+    pick_next_actor, pick_skill, consume_turn_start,
+    advance_after_cast, drop_expired_effects,
+)
 
 
 @dataclass
@@ -92,30 +64,7 @@ def speed_bonus_table(idx: int) -> float:
     return 0.0  # placeholder; see docs/dwj/calc_algorithm.md
 
 
-def speed_buff_modifier(actor: Actor) -> float:
-    """DWJ's em(actor): return (1 + buff_amount - debuff_amount) - 1 = net offset."""
-    t = 1.0
-    for e in actor.effects:
-        if e.name == "speed-buff":
-            t *= 1 + e.amount
-        elif e.name == "speed-debuff":
-            t -= e.amount
-    return t - 1.0
-
-
-def effective_speed(actor: Actor, aura: float) -> float:
-    """DWJ's eh(actor, aura, buff_mod, stat_mod).
-
-    The rounded/unrounded cancellation in DWJ's eh reconstructs pre-rounding
-    'true' speed. Net: total_speed + aura_bonus + stat_mod, * (1 + buff_mod).
-    """
-    base = actor.base_speed
-    aura_used = 0.0 if actor.is_boss else aura
-    buff_mod = speed_buff_modifier(actor)
-    # Net formula (see docs/dwj/calc_algorithm.md); speed_bonus table
-    # cancels in rounded/unrounded pair so we just use total_speed as ground truth.
-    true_speed = actor.total_speed + (aura_used / 100.0) * base + actor.stat_mod_speed
-    return true_speed * (1.0 + buff_mod)
+# speed_buff_modifier and effective_speed are imported from cb_scheduler.
 
 
 def make_clanboss(boss_speed: int, affinity: str) -> Actor:
@@ -445,57 +394,26 @@ def apply_skill_effects(actor: Actor, skill_alias: str, actors: list[Actor], cas
 
 
 def simulate(variant: DwjVariant, max_turns: int = 1000, max_boss_turns: int = 50, apply_effects: bool = True, trace: bool = False) -> list[TurnRecord]:
+    """Run DWJ-parity simulation. Returns a list of TurnRecord (cast order).
+
+    The scheduling primitives (TM ticks, skill pick, cooldown advance) live
+    in `cb_scheduler` and are shared with cb_sim. This function only adds
+    DWJ-specific input prep + the per-cast effect dispatcher.
+    """
     dwj = load_all()
     actors = [prepare_champion(s, dwj.champion(s.name)) for s in variant.slots]
     actors.append(make_clanboss(variant.boss_speed, variant.boss_affinity))
     turns: list[TurnRecord] = []
 
-    def _tm_snapshot():
-        return "  ".join(f"{a.name[:4]}={a.turn_meter:5.1f}" for a in actors)
-
     while count_boss_turns(turns) < max_boss_turns and len(turns) < max_turns:
-        # Find next actor
-        actor = next((a for a in actors if a.has_extra_turn), None)
-        if actor is not None:
-            actor.has_extra_turn = False
-        else:
-            # DWJ uses `do...while` — ALWAYS tick at least once, even if some
-            # actor already has TM >= 100 from a previous turn's excess. This
-            # matters because when multiple actors queue past 100, DWJ burns
-            # one tick per turn-selection; skipping it (my earlier `while`)
-            # causes the "fastest" hero to accumulate extra TM across turns
-            # and desyncs cast order.
-            safety = 0
-            while True:
-                for a in actors:
-                    inc = 7.0 * effective_speed(a, variant.speed_aura) / 100.0
-                    a.turn_meter = round(a.turn_meter + inc, 12)
-                safety += 1
-                if any(a.turn_meter >= 100 for a in actors):
-                    break
-                if safety > 10000:
-                    raise RuntimeError("TM tick loop failed to terminate")
-            # Pick fastest (first with max TM)
-            max_tm = max(a.turn_meter for a in actors)
-            actor = next(a for a in actors if a.turn_meter == max_tm)
-            if trace:
-                tm_str = "  ".join(f"{a.name[:4]}={a.turn_meter:6.2f}" for a in actors)
-                print(f"  [tick] TMs: {tm_str}  → winner {actor.name}")
+        actor = pick_next_actor(actors, variant.speed_aura)
+        if trace:
+            tm_str = "  ".join(f"{a.name[:4]}={a.turn_meter:6.2f}" for a in actors)
+            print(f"  [tick] TMs: {tm_str}  → winner {actor.name}")
 
-        # Decrement turn-start effects, remove expired
-        for e in actor.effects:
-            if e.reduceDurationAt == "turn-start":
-                e.duration -= 1
-        actor.effects = [e for e in actor.effects if e.duration > 0]
+        consume_turn_start(actor)
 
-        actor.turn_meter = 0.0
-
-        # Pick skill: highest priority number with cd=0 AND delay=0
-        sorted_cfg = sorted(actor.skill_configs, key=lambda c: -c.priority)
-        skill = next(
-            (c for c in sorted_cfg if c.current_cooldown == 0 and c.delay == 0),
-            None,
-        )
+        skill = pick_skill(actor)
         if skill is None:
             raise RuntimeError(
                 f"No castable skill for {actor.name} — configs={actor.skill_configs}"
@@ -506,42 +424,24 @@ def simulate(variant: DwjVariant, max_turns: int = 1000, max_boss_turns: int = 5
             eff_str = ",".join(f"{e.name}={e.amount:.2f}d{e.duration}" for e in actor.effects) if actor.effects else ""
             print(f"         cast: {actor.name} {skill.alias}  [{cd_str}]  effects=[{eff_str}]")
 
-        # Record turn
         boss_tn = count_boss_turns(turns) + (0 if not actor.is_boss and len(turns) > 0 else (1 if actor.is_boss else 0))
-        turn_number = len(turns) + 1
         turns.append(TurnRecord(
-            turn_number=turn_number,
+            turn_number=len(turns) + 1,
             boss_turn_number=boss_tn,
             actor_name=actor.name,
             skill_alias=skill.alias,
             skill_id=skill.id,
         ))
 
-        # Apply cast cooldown + decrement all delays/cds
-        skill.current_cooldown = skill.cooldown
-        for c in actor.skill_configs:
-            c.delay = max(0, c.delay - 1)
-            c.current_cooldown = max(0, c.current_cooldown - 1)
+        advance_after_cast(actor, skill)
 
-        # Decrement turn-end effect durations BEFORE applying new effects.
-        # DWJ's ek loop does: turn-end decrement → el(apply effects) → filter.
-        # This means effects freshly added by this turn's el call keep their
-        # full duration and won't decrement on the same turn — crucial for
-        # self-buffs like Apothecary's speed-up (duration 2 stays 2 during
-        # the casting turn, only decrements on the next actor's turn).
-        for e in actor.effects:
-            if e.reduceDurationAt == "turn-end":
-                e.duration -= 1
-
-        # Apply skill effects that affect scheduling (both player and boss can trigger)
         if apply_effects:
             apply_skill_effects(actor, skill.alias, actors, caster_skill_alias=skill.alias)
             if trace and skill.alias in ("A2", "A3"):
                 tm_str = "  ".join(f"{a.name[:4]}={a.turn_meter:6.2f}" for a in actors)
                 print(f"    after-eff: {tm_str}")
 
-        # Filter expired effects AFTER both decrement and effect application.
-        actor.effects = [e for e in actor.effects if e.duration > 0]
+        drop_expired_effects(actor)
 
     return turns
 
