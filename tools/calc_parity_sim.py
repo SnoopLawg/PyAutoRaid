@@ -233,25 +233,30 @@ def _resolve_targets(effect: dict, actor: Actor, actors: list[Actor]) -> list[Ac
     return []
 
 
-def _check_condition(condition: dict | None, targets: list[Actor]) -> bool:
+def _check_condition(condition, targets: list[Actor]) -> bool:
     """Evaluate the effect's `condition` per DWJ's ei router logic.
 
     DWJ's rule:
         fires if condition is undefined OR condition.check_target === "isBoss"
-
-    In a boss-only sim the boss is the sole hostile, so "isBoss" is always
-    true and "!isBoss" is always false. Unknown conditions default to NOT
-    firing (stricter than my first pass) to match DWJ's strict routing.
+        for dict conditions. For LIST conditions the default handler does NOT
+        fire — only specific sub-condition handlers in ei.add_buff (check_enemy
+        death, check_target affinity match, buff_added, check_buff) that we
+        don't model. Default to NOT firing in that case.
     """
     if not condition:
         return True
+    if isinstance(condition, list):
+        # DWJ's ei.add_buff falls through to sub-condition handlers here; we
+        # don't model them yet, so don't apply the effect by default.
+        return False
+    if not isinstance(condition, dict):
+        return False
     ct = condition.get("check_target")
     if ct == "isBoss":
         return True
     if ct == "!isBoss":
         return False
-    # Other condition types (affinity check, check_enemy, buff_added, check_buff)
-    # we don't model yet — default to NOT firing so we don't over-apply
+    # Other condition types we don't model yet — default to NOT firing.
     return False
 
 
