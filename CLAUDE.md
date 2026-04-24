@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-PyAutoRaid automates Raid: Shadow Legends via a BepInEx mod HTTP API (port 6790) running on a Windows 10 VM. Primary focus: CB optimization with a turn-by-turn damage simulator calibrated to -7% of real battle data.
+PyAutoRaid automates Raid: Shadow Legends via a BepInEx mod HTTP API (port 6790) running on the local Windows PC (no VM). Primary focus: CB optimization with a turn-by-turn damage simulator calibrated to -7% of real battle data.
 
 **NEVER use UI/screen automation.** All game actions go through the mod API context-calls.
 
@@ -15,8 +15,11 @@ python3 tools/cb_run.py --calibrate --cb-element void
 # Daily CB automation (cron-ready, runs all keys)
 python3 tools/cb_daily.py --wait --cb-element force
 
-# Deploy mod to VM (one command)
-./tools/deploy_mod.sh
+# Rebuild + redeploy mod (local)
+"/c/Program Files/dotnet/dotnet" build -c Release mod/bepinex
+taskkill //F //IM Raid.exe   # PlariumPlay stays up
+cp mod/bepinex/bin/Release/net6.0/RaidAutomationPlugin.dll \
+   "C:/Users/logan/AppData/Local/PlariumPlay/StandAloneApps/raid/build/BepInEx/plugins/RaidAutomationPlugin.dll"
 
 # Full data refresh + rebuild
 python3 tools/refresh_all.py --calibrate        # from live mod
@@ -31,7 +34,22 @@ python3 tools/cb_gap_analysis.py
 python3 tools/global_gear_solver.py --team "ME,Demytha,Ninja,Geo,Venomage"
 python3 tools/auto_profile.py --hero Venus
 python3 tools/desc_profiler.py --compare
+
+# DWJ-parity work (unified entry: tools/cb.py)
+python3 tools/cb.py potential --runnable                  # DWJ tunes you can run today
+python3 tools/cb.py potential --missing 1                 # 1 hero away
+python3 tools/cb.py sim --slug myth-eater --turns 25      # DWJ-parity scheduler
+python3 tools/cb.py sim --hash <variant_hash> --trace     # per-action TM dump
+python3 tools/cb.py inspect list                          # 103 scraped tune slugs
+python3 tools/cb.py inspect tune myth-eater               # variants + slot configs
+python3 tools/cb.py inspect champion Ninja                # skills + effects
+python3 tools/cb.py parity --hash <h> --text-file dwj.txt # diff sim vs live DWJ
+python3 tools/cb.py gaps --roster-only                    # HH cross-reference
 ```
+
+`tools/cb.py` thin-dispatches into `comp_finder`, `calc_parity_sim`,
+`calc_parity_check`, `dwj_inspect`, `hh_vs_dwj`. The dashboard's
+`potential teams` + `cast timeline` panels (port 6791) read the same data.
 
 ## CB Sim Accuracy
 
