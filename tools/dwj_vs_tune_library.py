@@ -83,38 +83,77 @@ def pick_canonical_variant(tune: DwjTune, tl_def: TuneDefinition | None = None) 
     return best
 
 
-def compare_slot(idx: int, tl_slot, dwj_slot) -> list[str]:
-    """Compare only the fields where a disagreement is meaningful.
+def _name_key(s: str) -> str:
+    """Normalize hero names for matching — lowercase, strip punctuation/whitespace."""
+    return re.sub(r"[^a-z0-9]", "", (s or "").lower())
 
-    DWJ's calc doesn't encode in-game priority rank or opener — priority in the
-    calc_tunes JSON is just a slot label (A1=1, A2=2, A3=3) and delay is an
-    observed/simulated schedule offset. So we don't compare those. We DO compare
-    speed ranges, required hero, and the per-skill delay pattern to surface
-    drift that would actually cause the tune to break.
+
+def _match_hand_slot_to_dwj(tl_slot, dwj_variant) -> tuple[int, object] | tuple[None, None]:
+    """Find the DWJ slot whose hero name matches tl_slot.required_hero.
+
+    Returns (dwj_index_1based, dwj_slot) or (None, None) if no match.
+    Falls back to SPD-range overlap if hero name is unspecified/generic.
+    """
+    if tl_slot.required_hero:
+        tl_key = _name_key(tl_slot.required_hero)
+        for i, ds in enumerate(dwj_variant.slots):
+            if _name_key(ds.name) == tl_key:
+                return i + 1, ds
+            # Partial match (e.g. tune_library 'Demytha' vs DWJ 'Demytha (UNM)')
+            if tl_key and (tl_key in _name_key(ds.name) or _name_key(ds.name) in tl_key):
+                return i + 1, ds
+    # Generic DPS / no required hero: match by SPD range
+    if tl_slot.speed_range:
+        lo, hi = tl_slot.speed_range
+        for i, ds in enumerate(dwj_variant.slots):
+            if ds.total_speed and lo <= ds.total_speed <= hi:
+                return i + 1, ds
+    return None, None
+
+
+def compare_tune_by_hero(tl_def: TuneDefinition, dwj_variant) -> list[str]:
+    """Compare tune_library slots to DWJ slots matching by hero identity.
+
+    Surfaces only meaningful drift: missing hero in DWJ, SPD out of range,
+    or tune_library heroes that no longer appear in DWJ's canonical set.
+    Advisory delay info is emitted alongside matched slots.
     """
     issues = []
-    # Speed range: DWJ's total_speed must fall inside tune_library's range
-    if tl_slot.speed_range and dwj_slot.total_speed:
-        tl_min, tl_max = tl_slot.speed_range
-        dwj_spd = dwj_slot.total_speed
-        if not (tl_min <= dwj_spd <= tl_max):
+    used_dwj = set()
+    for i, tl_slot in enumerate(tl_def.slots):
+        idx, ds = _match_hand_slot_to_dwj(tl_slot, dwj_variant)
+        if ds is None:
+            hero = tl_slot.required_hero or f"slot{i+1} (any)"
             issues.append(
-                f"    slot{idx} SPD: tune_library {tl_min}-{tl_max}, DWJ {dwj_spd}"
+                f"    tune_library slot{i+1} '{hero}' SPD "
+                f"{tl_slot.speed_range[0]}-{tl_slot.speed_range[1]}: no DWJ slot"
             )
-    # required_hero
-    tl_hero = (tl_slot.required_hero or "").lower()
-    dwj_hero = (dwj_slot.name or "").lower()
-    if tl_hero and dwj_hero and tl_hero not in dwj_hero and dwj_hero not in tl_hero:
+            continue
+        used_dwj.add(idx)
+        dwj_spd = ds.total_speed or 0
+        lo, hi = tl_slot.speed_range or (0, 0)
+        in_range = lo <= dwj_spd <= hi if lo else True
+        matched_hero = f"{tl_slot.required_hero} -> {ds.name}" if tl_slot.required_hero else f"SPD-match {ds.name}"
+        status = "OK" if in_range else "SPD OFF"
+        delay_a2 = next((c.delay for c in ds.skill_configs if c.alias == "A2"), 0)
+        delay_a3 = next((c.delay for c in ds.skill_configs if c.alias == "A3"), 0)
+        delays = []
+        if delay_a2:
+            delays.append(f"A2 d{delay_a2}")
+        if delay_a3:
+            delays.append(f"A3 d{delay_a3}")
+        suffix = f"  [{', '.join(delays)}]" if delays else ""
         issues.append(
-            f"    slot{idx} hero: tune_library '{tl_slot.required_hero}', DWJ '{dwj_slot.name}'"
+            f"    slot{i+1} tl[{lo}-{hi}] = DWJ slot{idx}[{dwj_spd}] {matched_hero} — {status}{suffix}"
         )
-    # Per-skill delay pattern: the A3 delay in particular matters for UK/BD sync
-    dwj_delays = {c.alias: c.delay for c in dwj_slot.skill_configs}
-    for alias in ("A2", "A3"):
-        delay = dwj_delays.get(alias, 0)
-        if delay:
-            # Not a diff per se — informational so the human sees DWJ's delay at a glance
-            issues.append(f"    slot{idx} {alias} DWJ delay={delay}")
+    # DWJ heroes tune_library didn't claim
+    missing = [
+        (i + 1, ds.name, ds.total_speed)
+        for i, ds in enumerate(dwj_variant.slots)
+        if i + 1 not in used_dwj
+    ]
+    for i, name, spd in missing:
+        issues.append(f"    DWJ slot{i} '{name}' SPD {spd}: not present in tune_library")
     return issues
 
 
@@ -132,12 +171,7 @@ def compare_tune(tl_def: TuneDefinition, dwj) -> list[str]:
         issues.append(
             f"    cb_speed: tune_library {tl_def.cb_speed}, DWJ {variant.boss_speed}"
         )
-    # Per slot
-    for i, tl_slot in enumerate(tl_def.slots):
-        if i >= len(variant.slots):
-            issues.append(f"    slot{i+1}: no DWJ slot (tune has fewer heroes)")
-            continue
-        issues.extend(compare_slot(i + 1, tl_slot, variant.slots[i]))
+    issues.extend(compare_tune_by_hero(tl_def, variant))
     return issues
 
 
@@ -153,21 +187,18 @@ def main():
         hand = {k: v for k, v in hand.items() if k == args.only}
 
     print(f"=== Comparing {len(hand)} hand-maintained tunes vs DWJ scrape ===\n")
-    anything = False
     for tune_id, tl_def in sorted(hand.items()):
         issues = compare_tune(tl_def, dwj)
-        # Only print if there's a real issue beyond the "matched" header
-        has_issue = any(not line.startswith("  matched") for line in issues)
-        if not has_issue:
-            # still print the match header so user sees it was checked
-            print(f"OK: {tune_id} ({tl_def.name})")
-            continue
-        anything = True
+        real_drift = [
+            line for line in issues
+            if "SPD OFF" in line or "no DWJ slot" in line or "NO DWJ MATCH" in line
+            or "not present in tune_library" in line or "cb_speed:" in line
+        ]
         print(f"\n--- {tune_id} ({tl_def.name}) ---")
+        if not real_drift:
+            print("  [clean]")
         for line in issues:
             print(line)
-    if not anything:
-        print("\nNo drift detected.")
 
 
 if __name__ == "__main__":
