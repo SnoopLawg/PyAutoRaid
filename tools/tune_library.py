@@ -135,19 +135,22 @@ _register(TuneDefinition(
         TuneSlot(role="fast_uk", speed_range=(288, 288), required_hero="Maneater",
                  opening=["A1"],
                  skill_priority=["A2", "A3", "A1"],
-                 notes="A2 delay=0 (1st), A3 delay=1 (2nd), A1 default. "
-                       "A2 CD=3/4, A3 CD=5 after books."),
+                 notes="Maneater A3 = Unkillable. A2 delay=0 (1st), A3 delay=1 (2nd), "
+                       "A1 default. A2 CD=3/4, A3 CD=5 after books."),
         TuneSlot(role="block_damage", speed_range=(172, 172), required_hero="Demytha",
                  opening=["A1"],
                  skill_priority=["A2", "A3", "A1"],
-                 notes="A2 delay=0 (1st — Unkillable), A3 delay=2 (2nd — BlockDmg), "
-                       "A1 default. A2 CD=3, A3 CD=3."),
+                 notes="Demytha A3 = Block Damage ONLY (not Unkillable — that's Maneater). "
+                       "A2 delay=0 (1st), A3 delay=2 (2nd — BlockDmg), A1 default. "
+                       "A2 CD=3, A3 CD=3."),
         TuneSlot(role="ninja_tm_boost", speed_range=(205, 205), required_hero="Ninja",
-                 opening=["A1"],
-                 skill_priority=["A2", "A3", "A1"],
-                 notes="Ninja's A2 passive TM fill lets him run at 205 not 224. "
-                       "A2 delay=0 (1st), A3 delay=1 (2nd), A1 default. "
-                       "A2 CD=3, A3 CD=4 after books."),
+                 opening=["A2"],
+                 skill_priority=["A3", "A2", "A1"],
+                 notes="Ninja opener is A2, NOT A1 — his A2 passive TM fill on turn 1 "
+                       "is what makes the whole team sync at 205 SPD (verified 2026-04-24, "
+                       "45.5M Force UNM damage vs 11.3M with A1 opener). "
+                       "A3=pri1 (delay 1, fires turn 2 post-A2-opener), A2=pri2, A1 default. "
+                       "A3 CD=4 after books."),
         TuneSlot(role="dps_1to1", speed_range=(178, 178), needs_acc=True,
                  opening=["A1"],
                  skill_priority=["A2", "A3", "A1"],
