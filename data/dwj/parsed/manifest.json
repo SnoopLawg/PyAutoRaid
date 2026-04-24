@@ -1258,5 +1258,2246 @@
     "raw_path": "posts\\page-02.json",
     "size": 1979097,
     "status": 200
+  },
+  "https://deadwoodjedi.info/cb/0042dac2ec21fa00d0c5ff70f490c50b799aecaa": {
+    "content_hash": "a22c54c8b454ea9c31a4cf6c6793e4c6e3c5835091daff43fb059653d8624635",
+    "etag": "W/\"nfne9b84bi127wy\"",
+    "fetched_at": "2026-04-24T17:54:05Z",
+    "last_modified": "",
+    "raw_path": "calc\\0042dac2ec21fa00d0c5ff70f490c50b799aecaa.html",
+    "size": 1783186,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/0077642b0d3939cf3686ee1251fabfe69cc86c28": {
+    "content_hash": "f922733f374f52d3f6007b5c15c5adb5f3f5dce83c24691353e62325b5b3a127",
+    "etag": "W/\"wqnks0sg5l128z7\"",
+    "fetched_at": "2026-04-24T17:52:51Z",
+    "last_modified": "",
+    "raw_path": "calc\\0077642b0d3939cf3686ee1251fabfe69cc86c28.html",
+    "size": 1784563,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/01c8dd4a79c8c872f8abf7043bcf37c30c886295": {
+    "content_hash": "15f04c64a26af83e0e78868cb25d64dae7681b52078dc4a19e2cbb91a0b9dbd6",
+    "etag": "W/\"voz3r09rnd128gq\"",
+    "fetched_at": "2026-04-24T17:54:02Z",
+    "last_modified": "",
+    "raw_path": "calc\\01c8dd4a79c8c872f8abf7043bcf37c30c886295.html",
+    "size": 1783898,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/03408360584312518396d45756be5c21b9ac788a": {
+    "content_hash": "8affdbbed10940c34241556876786a23623a254070f833fcd94166ea7388efeb",
+    "etag": "W/\"qo7pcu2r7j12c0b\"",
+    "fetched_at": "2026-04-24T17:55:13Z",
+    "last_modified": "",
+    "raw_path": "calc\\03408360584312518396d45756be5c21b9ac788a.html",
+    "size": 1788491,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/03d1c072e03ee9cf2713aea771528761a9374c18": {
+    "content_hash": "bf6644ee2749f3d09e9b62e5aa3af2c063b0f656eb129f8b2b88bd42579d6893",
+    "etag": "W/\"avk6gnjyjy127rw\"",
+    "fetched_at": "2026-04-24T17:50:52Z",
+    "last_modified": "",
+    "raw_path": "calc\\03d1c072e03ee9cf2713aea771528761a9374c18.html",
+    "size": 1783004,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/04f2c63b4388aac74de2bebeed1a1ae40a61c21e": {
+    "content_hash": "24d124ea0b25afc35821246177cddb4740999c322a79e9a6c61004bcb64bfc46",
+    "etag": "W/\"blgcgmi3oz1279y\"",
+    "fetched_at": "2026-04-24T17:55:11Z",
+    "last_modified": "",
+    "raw_path": "calc\\04f2c63b4388aac74de2bebeed1a1ae40a61c21e.html",
+    "size": 1782358,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/04fed3aecc759bf00c14507d0555f069a533141b": {
+    "content_hash": "fc7bbe446bf6940ee0b0b5003eee5701ba65284c323c791a499af1a59ea3de44",
+    "etag": "W/\"147rlv7ez8u127ge\"",
+    "fetched_at": "2026-04-24T17:55:03Z",
+    "last_modified": "",
+    "raw_path": "calc\\04fed3aecc759bf00c14507d0555f069a533141b.html",
+    "size": 1782590,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/05269bee89aaf48e149c26b1d326768404852e3e": {
+    "content_hash": "20a45086089072cffba91a8ce42889e573ea0805d57254bb9c36a692fb5cd5a5",
+    "etag": "W/\"elfl30gudw128k4\"",
+    "fetched_at": "2026-04-24T17:54:07Z",
+    "last_modified": "",
+    "raw_path": "calc\\05269bee89aaf48e149c26b1d326768404852e3e.html",
+    "size": 1784020,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/072a385d7b9996f0414b558ad5f0357ac16f70ba": {
+    "content_hash": "c608b53411e299958e620e3d140377d0151644c56e9a440ad26d69d25e66b913",
+    "etag": "W/\"144cvwsi16a1290q\"",
+    "fetched_at": "2026-04-24T17:54:36Z",
+    "last_modified": "",
+    "raw_path": "calc\\072a385d7b9996f0414b558ad5f0357ac16f70ba.html",
+    "size": 1784618,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/077469e5a0ca95ce9d5e96b0918f2cac6d361f83": {
+    "content_hash": "9e083af21b8882cf4f3590ed178dc109d9f8eed91a0cab5fd2f649f7c6e5b1ca",
+    "etag": "W/\"lhbbmhypuh125v3\"",
+    "fetched_at": "2026-04-24T17:52:59Z",
+    "last_modified": "",
+    "raw_path": "calc\\077469e5a0ca95ce9d5e96b0918f2cac6d361f83.html",
+    "size": 1780527,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/079fca47e3415d6670f632041881c3eb33850ff0": {
+    "content_hash": "bc34ba517468d1b7754c63f706001fd628b66e4573d41c40436ce439d0982ee4",
+    "etag": "W/\"pbotm75zli128fj\"",
+    "fetched_at": "2026-04-24T17:52:24Z",
+    "last_modified": "",
+    "raw_path": "calc\\079fca47e3415d6670f632041881c3eb33850ff0.html",
+    "size": 1783855,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/07ae9b667056cc05487f385974e1a741f051d15d": {
+    "content_hash": "a0daebae8b364d69d46e9f216d076dcbb83dd60c7e7253e9b57b482017ad4239",
+    "etag": "W/\"ufxz5vjrl1128wt\"",
+    "fetched_at": "2026-04-24T17:54:37Z",
+    "last_modified": "",
+    "raw_path": "calc\\07ae9b667056cc05487f385974e1a741f051d15d.html",
+    "size": 1784477,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/09a9c132c54f9664fb62befac914cd7d3f8c855c": {
+    "content_hash": "30903a914baaeb3ec44198ef8cf9b13bd9772b6df2f6e69abf4f934bbd60b31f",
+    "etag": "W/\"1vc27kiihi124nv\"",
+    "fetched_at": "2026-04-24T17:53:14Z",
+    "last_modified": "",
+    "raw_path": "calc\\09a9c132c54f9664fb62befac914cd7d3f8c855c.html",
+    "size": 1778971,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/0a78700d959fe911aa258d4d502b5984a4339c13": {
+    "content_hash": "af5abdfbef62efa5dcdc92770abf0ae09d77fbb93b26e8d84271a4f894eaff01",
+    "etag": "W/\"65gj0z5fwq1279c\"",
+    "fetched_at": "2026-04-24T17:54:12Z",
+    "last_modified": "",
+    "raw_path": "calc\\0a78700d959fe911aa258d4d502b5984a4339c13.html",
+    "size": 1782336,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/0a827e81607318bcb3a4c2eaefce669612710609": {
+    "content_hash": "f49596a048644bf1fb08ca3a86df007eb6cfc2ac53037c91c848df52c5c0fdcd",
+    "etag": "W/\"v4o6wzqywa127ei\"",
+    "fetched_at": "2026-04-24T17:53:16Z",
+    "last_modified": "",
+    "raw_path": "calc\\0a827e81607318bcb3a4c2eaefce669612710609.html",
+    "size": 1782522,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/0c366ec2117f07f5126ab82310dfe3fbbf3d4dae": {
+    "content_hash": "0376f574b2c853b6c643d08eba32adb975d72d4677e525d93ea7c58c80e4389f",
+    "etag": "W/\"fnogzwbuji127g8\"",
+    "fetched_at": "2026-04-24T17:55:04Z",
+    "last_modified": "",
+    "raw_path": "calc\\0c366ec2117f07f5126ab82310dfe3fbbf3d4dae.html",
+    "size": 1782584,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/0d67724a7c9ceb63866ac51fc49f77c1276412d6": {
+    "content_hash": "9462c1333fc6585f6c5dd4f60b38832eeb11543e9eccf9eb9475ed30842e9a7a",
+    "etag": "W/\"y47ejm8e93128i9\"",
+    "fetched_at": "2026-04-24T17:52:08Z",
+    "last_modified": "",
+    "raw_path": "calc\\0d67724a7c9ceb63866ac51fc49f77c1276412d6.html",
+    "size": 1783953,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/0e44a9876b288b3d26f8306d70658cf5df13ba92": {
+    "content_hash": "7a20ba4f0babbc41e02c9ac098b5e8447fe8e7bea1f707fc0dba43334b60052e",
+    "etag": "W/\"31k3fcg77o12an5\"",
+    "fetched_at": "2026-04-24T17:52:30Z",
+    "last_modified": "",
+    "raw_path": "calc\\0e44a9876b288b3d26f8306d70658cf5df13ba92.html",
+    "size": 1786721,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/0edcb93efa4603c85ecf1afab034abb6d8adb766": {
+    "content_hash": "31ad86ecc241e14d001ad5dc8c810cdacaaf7db04b4b3b4ea0fb23f2a2b07e59",
+    "etag": "W/\"kla37sv9a5128on\"",
+    "fetched_at": "2026-04-24T17:52:03Z",
+    "last_modified": "",
+    "raw_path": "calc\\0edcb93efa4603c85ecf1afab034abb6d8adb766.html",
+    "size": 1784183,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/10c82b61cd1c2b5467a8839cf166985297e1721b": {
+    "content_hash": "b0c7fedba6c07367067bc434c416c910cddbefb433745dd9645f2bcf603007e7",
+    "etag": "W/\"8hhacn57581285d\"",
+    "fetched_at": "2026-04-24T17:54:31Z",
+    "last_modified": "",
+    "raw_path": "calc\\10c82b61cd1c2b5467a8839cf166985297e1721b.html",
+    "size": 1783489,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/110d12db5f3a1e2da209b0ae032202e27797d310": {
+    "content_hash": "3c88ad582642e1c10e54ea67bf210e985f43da3cdbfbc0d71657172d16463417",
+    "etag": "W/\"gdurl2y4p4127zq\"",
+    "fetched_at": "2026-04-24T17:52:57Z",
+    "last_modified": "",
+    "raw_path": "calc\\110d12db5f3a1e2da209b0ae032202e27797d310.html",
+    "size": 1783286,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/13dc320a523c65953af4e58698a8ead13ea64a0a": {
+    "content_hash": "e37c9ce32275a356b33ef8f4a07772e643b6ab8884de54b2df53823af290dccf",
+    "etag": "W/\"aqia96061e128hh\"",
+    "fetched_at": "2026-04-24T17:54:13Z",
+    "last_modified": "",
+    "raw_path": "calc\\13dc320a523c65953af4e58698a8ead13ea64a0a.html",
+    "size": 1783925,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/15582482b4d7479547c5f0834643c88328fec894": {
+    "content_hash": "0d413d69ffa4a3577f0f43aa6eb3b2fa665330e587ffa227c812e06a777dffaa",
+    "etag": "W/\"gxdzaaaglv128nc\"",
+    "fetched_at": "2026-04-24T17:52:28Z",
+    "last_modified": "",
+    "raw_path": "calc\\15582482b4d7479547c5f0834643c88328fec894.html",
+    "size": 1784136,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/177a6c04d04f2b1370b053251e0f7b9b768ae80e": {
+    "content_hash": "7a7d656fdb229429f16e5e1bee4bb422d3ce4accec5169a1400929fcd1f572f9",
+    "etag": "W/\"l7ocjafyri127hi\"",
+    "fetched_at": "2026-04-24T17:52:53Z",
+    "last_modified": "",
+    "raw_path": "calc\\177a6c04d04f2b1370b053251e0f7b9b768ae80e.html",
+    "size": 1782630,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/18cc0a1ea9cbb6f47edcec035b957f6c71a4b226": {
+    "content_hash": "5d27a317243bb07e904c739c86a9f6e5269c8b9d86395cf5a4c071c7b14af1bb",
+    "etag": "W/\"7mwc8ied9q127a7\"",
+    "fetched_at": "2026-04-24T17:53:25Z",
+    "last_modified": "",
+    "raw_path": "calc\\18cc0a1ea9cbb6f47edcec035b957f6c71a4b226.html",
+    "size": 1782367,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/19e930cdfeb448aa8745eab71dfa777819ba7fb2": {
+    "content_hash": "c5319026155f0a9809e47a5ada1d8ddcfd74618f83299f278ffc54100b599287",
+    "etag": "W/\"34f9mtp0k612761\"",
+    "fetched_at": "2026-04-24T17:54:16Z",
+    "last_modified": "",
+    "raw_path": "calc\\19e930cdfeb448aa8745eab71dfa777819ba7fb2.html",
+    "size": 1782217,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/1c3a26dc7e595e1187bf038b581f909e541e43b0": {
+    "content_hash": "41c6c9fe1c80fd9c0748710c83e72c83b0bcfb36038bbfd32d65fda60752539c",
+    "etag": "W/\"drzk3ab4gj127wz\"",
+    "fetched_at": "2026-04-24T17:52:40Z",
+    "last_modified": "",
+    "raw_path": "calc\\1c3a26dc7e595e1187bf038b581f909e541e43b0.html",
+    "size": 1783187,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/1d0372c5ad89f6474446e04b022c6f5870143435": {
+    "content_hash": "74af607ab8afe5dfe2331255123022a69f3b8225f6158bc5ba4c7bcb7ea9d426",
+    "etag": "W/\"2qlk7qo91i127lw\"",
+    "fetched_at": "2026-04-24T17:52:21Z",
+    "last_modified": "",
+    "raw_path": "calc\\1d0372c5ad89f6474446e04b022c6f5870143435.html",
+    "size": 1782788,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/1eb015250b468ac01d5b3fd8daba9db0188287ff": {
+    "content_hash": "298f05b932712ee0bfd81fb7e2e072ad1a48c96016c049259892837c6fcf38ad",
+    "etag": "W/\"7dmo4tdcij1275y\"",
+    "fetched_at": "2026-04-24T17:54:17Z",
+    "last_modified": "",
+    "raw_path": "calc\\1eb015250b468ac01d5b3fd8daba9db0188287ff.html",
+    "size": 1782214,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/1f72b172e8d4189adc976e1193ee19d102c8d8f9": {
+    "content_hash": "283aa34d2e25ef63be3a54b78e46261b0e5c4af32d05980c3f71a3de7473817e",
+    "etag": "W/\"7fdd6952caabadd5a57a6d0b5371b350\"",
+    "fetched_at": "2026-04-24T17:52:12Z",
+    "last_modified": "",
+    "raw_path": "calc\\1f72b172e8d4189adc976e1193ee19d102c8d8f9.html",
+    "size": 4037,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/1ff251bcbfa5b0b44e170a2bc4dc744923bf72d3": {
+    "content_hash": "c87a6915bafd858286ab42ccb8ad2181d6a21bb1563eb8219e9c78505701a6e3",
+    "etag": "W/\"14hqj7cefp3127mw\"",
+    "fetched_at": "2026-04-24T17:53:51Z",
+    "last_modified": "",
+    "raw_path": "calc\\1ff251bcbfa5b0b44e170a2bc4dc744923bf72d3.html",
+    "size": 1782824,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/204fddb17a57c22b5a60ac5affaa4a7fda4dfb7f": {
+    "content_hash": "f01c16820479894deed89795d1829d12a7db2082b8726fd5ace54ffa62ee21e2",
+    "etag": "W/\"14izg2plcvm125ux\"",
+    "fetched_at": "2026-04-24T17:53:00Z",
+    "last_modified": "",
+    "raw_path": "calc\\204fddb17a57c22b5a60ac5affaa4a7fda4dfb7f.html",
+    "size": 1780521,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/21390f8806705da0c3108351b287e2433d7a8b72": {
+    "content_hash": "70b03a85f9ecf363ed62089205a50f092cad3026a9ed8df51584a8eddbb51936",
+    "etag": "W/\"q0e7r92uzb1291s\"",
+    "fetched_at": "2026-04-24T17:53:05Z",
+    "last_modified": "",
+    "raw_path": "calc\\21390f8806705da0c3108351b287e2433d7a8b72.html",
+    "size": 1784656,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/216c5e9c807ba87d3bdc36addb8759cba69f6227": {
+    "content_hash": "7761d98b61625d87b56bee04a5007a4e2450921ef68b93c2f296624f21784e4c",
+    "etag": "W/\"n5ae17au7l1277f\"",
+    "fetched_at": "2026-04-24T17:52:36Z",
+    "last_modified": "",
+    "raw_path": "calc\\216c5e9c807ba87d3bdc36addb8759cba69f6227.html",
+    "size": 1782267,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/2261777999bbf766e5a6ce3045d0e74854497b29": {
+    "content_hash": "48b75b8859494a2e838a45e8c0fc078acd3f21c79620923c1904386771fef6e3",
+    "etag": "W/\"sjvk84uyrt122im\"",
+    "fetched_at": "2026-04-24T17:52:20Z",
+    "last_modified": "",
+    "raw_path": "calc\\2261777999bbf766e5a6ce3045d0e74854497b29.html",
+    "size": 1776190,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/23006bbd78e2aabcb0ba8c76b2f70d5dc022f239": {
+    "content_hash": "c529901a885119881fc004cca8eb960bfefa65f426edb719005236a75f717aab",
+    "etag": "W/\"qj7a5x8fw1129b3\"",
+    "fetched_at": "2026-04-24T17:53:35Z",
+    "last_modified": "",
+    "raw_path": "calc\\23006bbd78e2aabcb0ba8c76b2f70d5dc022f239.html",
+    "size": 1784991,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/23934ade338ccc2546c0341e868c0a575d4d998f": {
+    "content_hash": "02823694a12793bc02ef81f9c3bfbfd53949f03af7b955f6bd513e8a4215499f",
+    "etag": "W/\"poeohza7zs128m0\"",
+    "fetched_at": "2026-04-24T17:53:55Z",
+    "last_modified": "",
+    "raw_path": "calc\\23934ade338ccc2546c0341e868c0a575d4d998f.html",
+    "size": 1784088,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/242361d7075fa0896077aca3e502018f7144c1f6": {
+    "content_hash": "1c5cd38d7ae61aa112a71ddc1a7e80267a097eb620a2f4f1f1a38e7d82d9ca79",
+    "etag": "W/\"6llzn80w0q12byg\"",
+    "fetched_at": "2026-04-24T17:53:58Z",
+    "last_modified": "",
+    "raw_path": "calc\\242361d7075fa0896077aca3e502018f7144c1f6.html",
+    "size": 1788424,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/25ad6569b894c1b1f5969514be168291e1655d0d": {
+    "content_hash": "7cdb4ab54cf5919c3eb117214bc20218f3aa351a94bf370703f0266d59661d8f",
+    "etag": "W/\"q81tqhj62m128ga\"",
+    "fetched_at": "2026-04-24T17:54:34Z",
+    "last_modified": "",
+    "raw_path": "calc\\25ad6569b894c1b1f5969514be168291e1655d0d.html",
+    "size": 1783882,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/25d297df0d13217aa0b1c3617a1826bd6dda8901": {
+    "content_hash": "812404ce24abfa3b5337b9bc5d11c1dd4ba383def35aa0115ad8c8b9bb3c762c",
+    "etag": "W/\"ldcy8y4o9v1267o\"",
+    "fetched_at": "2026-04-24T17:53:28Z",
+    "last_modified": "",
+    "raw_path": "calc\\25d297df0d13217aa0b1c3617a1826bd6dda8901.html",
+    "size": 1780980,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/263af4850292c62750d6e184d1842cb5dd7512ac": {
+    "content_hash": "79b209991ea15c15583bd50dfc2133dd08da93e1560b16c5ba3437266b8fb174",
+    "etag": "W/\"8uc8ldaij9128of\"",
+    "fetched_at": "2026-04-24T17:53:34Z",
+    "last_modified": "",
+    "raw_path": "calc\\263af4850292c62750d6e184d1842cb5dd7512ac.html",
+    "size": 1784175,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/28a93dc12bcb7003d6852998504fb2a9e5968187": {
+    "content_hash": "808306037ff6065dfd383d322603c4dcdd0c564d4a6d964f56126c791a9d3b77",
+    "etag": "W/\"evbmumt4l4121r3\"",
+    "fetched_at": "2026-04-24T17:54:27Z",
+    "last_modified": "",
+    "raw_path": "calc\\28a93dc12bcb7003d6852998504fb2a9e5968187.html",
+    "size": 1775199,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/2b2f2e4286d93a438e6fcd769e04917401436adc": {
+    "content_hash": "3deb773801c71717be0ca3bf6c2956708b14d95b60bdb10915415a740c7b55ec",
+    "etag": "W/\"zk472x090d12889\"",
+    "fetched_at": "2026-04-24T17:55:09Z",
+    "last_modified": "",
+    "raw_path": "calc\\2b2f2e4286d93a438e6fcd769e04917401436adc.html",
+    "size": 1783593,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/2b4b678fbc28651f0d562d2118d65a0901a9f08e": {
+    "content_hash": "a183fba945069e032c18f4de25c8a56f4d0f50c371e775200f2354f1d2590ea9",
+    "etag": "W/\"1048ftff11k128a2\"",
+    "fetched_at": "2026-04-24T17:53:56Z",
+    "last_modified": "",
+    "raw_path": "calc\\2b4b678fbc28651f0d562d2118d65a0901a9f08e.html",
+    "size": 1783658,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/2c9ac1f7469b935626fa1f7365c0c68633e28aa5": {
+    "content_hash": "3ac3c5373ab096b7bf848ea71d62df01ce6106e988e3302d85e15b60009ed94d",
+    "etag": "W/\"jsiudconeh1286l\"",
+    "fetched_at": "2026-04-24T17:53:42Z",
+    "last_modified": "",
+    "raw_path": "calc\\2c9ac1f7469b935626fa1f7365c0c68633e28aa5.html",
+    "size": 1783533,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/2d6246da1734a47c033e0c553ae0c7dd3cdac8e5": {
+    "content_hash": "7b056ef1454099a8d14533561b5850f0e04cf9994a0e778fb5ca83e8b9f811ca",
+    "etag": "W/\"14yd4grujbw127mo\"",
+    "fetched_at": "2026-04-24T17:54:44Z",
+    "last_modified": "",
+    "raw_path": "calc\\2d6246da1734a47c033e0c553ae0c7dd3cdac8e5.html",
+    "size": 1782816,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/2e85cbf25febd4aba294f7527ccd78e72eff8523": {
+    "content_hash": "fc3f0ac03cce53037919b3b30d365c30acfa04bdfd0fb0259644c890331caa9e",
+    "etag": "W/\"gnzqptq5xo1268m\"",
+    "fetched_at": "2026-04-24T17:52:39Z",
+    "last_modified": "",
+    "raw_path": "calc\\2e85cbf25febd4aba294f7527ccd78e72eff8523.html",
+    "size": 1781014,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/2f23b2e2f2a2d6db95c3abf3c84ef7366c30a4b1": {
+    "content_hash": "e8f2267abcb2e4cf738c30a0890a5e7eeb2667a7921e915cc3556c580641d0a5",
+    "etag": "W/\"xi54irvorq12c05\"",
+    "fetched_at": "2026-04-24T17:55:14Z",
+    "last_modified": "",
+    "raw_path": "calc\\2f23b2e2f2a2d6db95c3abf3c84ef7366c30a4b1.html",
+    "size": 1788485,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/2f6f248c3066f2584e92f74e57b3807019b730c1": {
+    "content_hash": "a36efa2f4b890391376917662a65d41b849e6690012286b2d0266417e259579b",
+    "etag": "W/\"12sd7ppp66b121r3\"",
+    "fetched_at": "2026-04-24T17:54:26Z",
+    "last_modified": "",
+    "raw_path": "calc\\2f6f248c3066f2584e92f74e57b3807019b730c1.html",
+    "size": 1775199,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/3029e50c14eb2150f398fc750dcb8790263052ac": {
+    "content_hash": "7eb305a4493b62ffac0cfed142c5334610615e43991d5fac9d77bdf13b2276c3",
+    "etag": "W/\"r2ai5mjcqn1267i\"",
+    "fetched_at": "2026-04-24T17:53:29Z",
+    "last_modified": "",
+    "raw_path": "calc\\3029e50c14eb2150f398fc750dcb8790263052ac.html",
+    "size": 1780974,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/30661bd8facab4c7f54b25f22458b9c62a90b38f": {
+    "content_hash": "77a315dede4284520ae3147f3ae33d21ff5a2a60ef4076ab591a43fabcc6866c",
+    "etag": "W/\"67nsheolsr127j9\"",
+    "fetched_at": "2026-04-24T17:53:32Z",
+    "last_modified": "",
+    "raw_path": "calc\\30661bd8facab4c7f54b25f22458b9c62a90b38f.html",
+    "size": 1782693,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/30f83442aeafbb3be7e60e04041f078d2bc9bc47": {
+    "content_hash": "50bed2e946b8e9e87c38c45e006ee796357ad0d28e83745c7acd4ac9baa52be4",
+    "etag": "W/\"ubclsbswbt12chv\"",
+    "fetched_at": "2026-04-24T17:52:38Z",
+    "last_modified": "",
+    "raw_path": "calc\\30f83442aeafbb3be7e60e04041f078d2bc9bc47.html",
+    "size": 1789123,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/316d86d42910e12b5d3cd094657970e4e6003818": {
+    "content_hash": "f7edf7bb82653eef617a2d2307be3f518934b4e4846783883242c78325321253",
+    "etag": "W/\"hkqvfxmaue127ws\"",
+    "fetched_at": "2026-04-24T17:54:05Z",
+    "last_modified": "",
+    "raw_path": "calc\\316d86d42910e12b5d3cd094657970e4e6003818.html",
+    "size": 1783180,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/33fc6049fc93ad446530116fb552c64fbb7bd1a4": {
+    "content_hash": "5642172afea5b5f1e625cd7b55f54d96182cee2c0bb2a5218019c8aeb05f0a53",
+    "etag": "W/\"rualxgkkrm127x3\"",
+    "fetched_at": "2026-04-24T17:54:40Z",
+    "last_modified": "",
+    "raw_path": "calc\\33fc6049fc93ad446530116fb552c64fbb7bd1a4.html",
+    "size": 1783191,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/34f8a7766af615aebef2e06844daa753539a827a": {
+    "content_hash": "5f50d61201a7a23196c9949da2bcf9231f3e9388d17387d4592b31a8cce829fc",
+    "etag": "W/\"kmk1r74mp41275q\"",
+    "fetched_at": "2026-04-24T17:52:50Z",
+    "last_modified": "",
+    "raw_path": "calc\\34f8a7766af615aebef2e06844daa753539a827a.html",
+    "size": 1782206,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/35619889f9592ac0c2344fa13c7e43b53392f439": {
+    "content_hash": "b952c2913979e7f75ae13c86d831dff6eb4fb2cbb0320dd2afd224de5fb403c3",
+    "etag": "W/\"7oorwrsdkw1285r\"",
+    "fetched_at": "2026-04-24T17:50:47Z",
+    "last_modified": "",
+    "raw_path": "calc\\35619889f9592ac0c2344fa13c7e43b53392f439.html",
+    "size": 1783503,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/39a28fa75794646859c366d91ee422f039cf01b4": {
+    "content_hash": "49d878c2f85fcaf5cfb8b93f65ff854e325b4f71e3c56d23212859d448620883",
+    "etag": "W/\"5i3bfwuj7p128d5\"",
+    "fetched_at": "2026-04-24T17:52:13Z",
+    "last_modified": "",
+    "raw_path": "calc\\39a28fa75794646859c366d91ee422f039cf01b4.html",
+    "size": 1783769,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/3bb6dd081626474f82211d0a890741bc95ee15f1": {
+    "content_hash": "f37d20eb4349336386afefe33d0e7c65925eb243e88db89f8b80702e2d5a74d0",
+    "etag": "W/\"od3ecsqt8z127g5\"",
+    "fetched_at": "2026-04-24T17:53:19Z",
+    "last_modified": "",
+    "raw_path": "calc\\3bb6dd081626474f82211d0a890741bc95ee15f1.html",
+    "size": 1782581,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/3d18fa083a9377a58607a3e7d22790354bd9d3da": {
+    "content_hash": "82ca80a89a92bdfa1c9ddc718d67cfd4942734d73faea6b1055a940c3a9ed68f",
+    "etag": "W/\"4h2h0zfaf8127o3\"",
+    "fetched_at": "2026-04-24T17:55:11Z",
+    "last_modified": "",
+    "raw_path": "calc\\3d18fa083a9377a58607a3e7d22790354bd9d3da.html",
+    "size": 1782867,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/3eff31f3eb8eedc10e0c6ce48903e1cee505409b": {
+    "content_hash": "919bf7552f36b2446214221acbacbf60aede0e4d4fb1fb144d264b81c6729ff3",
+    "etag": "W/\"8w4tiz9a1n128ok\"",
+    "fetched_at": "2026-04-24T17:52:03Z",
+    "last_modified": "",
+    "raw_path": "calc\\3eff31f3eb8eedc10e0c6ce48903e1cee505409b.html",
+    "size": 1784180,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/401f571c8e5ac270013f08f5bb922b291a143fc9": {
+    "content_hash": "fa61a7601aeab94ebdedc480eef51612b2c97deeb286018a588dc50f92d5ca31",
+    "etag": "W/\"12oj93u3nvf127rm\"",
+    "fetched_at": "2026-04-24T17:53:10Z",
+    "last_modified": "",
+    "raw_path": "calc\\401f571c8e5ac270013f08f5bb922b291a143fc9.html",
+    "size": 1782994,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/41257f31c4c8f18e321f264455c7ac512aa79e53": {
+    "content_hash": "4e8a3401da74fac310a44e1236b090c2ed35653dfd6e2867456c24e8cc2613c6",
+    "etag": "W/\"12efn4pbfsg128ii\"",
+    "fetched_at": "2026-04-24T17:52:06Z",
+    "last_modified": "",
+    "raw_path": "calc\\41257f31c4c8f18e321f264455c7ac512aa79e53.html",
+    "size": 1783962,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/419bde2d213089ea1fd0f046481e4c4533409c67": {
+    "content_hash": "b93d7332713abbd455c0dccc38bf54679d0c06b64701dd844d15235a653c1d50",
+    "etag": "W/\"8bggm8uu5m1268i\"",
+    "fetched_at": "2026-04-24T17:53:27Z",
+    "last_modified": "",
+    "raw_path": "calc\\419bde2d213089ea1fd0f046481e4c4533409c67.html",
+    "size": 1781010,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/42c04ad9d81bc08a0554ff2bba4bb33d395ae73d": {
+    "content_hash": "44963c32728c8d55a78912f44963eecbe5a5d6f4cde557c442eff33af50122d8",
+    "etag": "W/\"assyseysj3129dd\"",
+    "fetched_at": "2026-04-24T17:54:38Z",
+    "last_modified": "",
+    "raw_path": "calc\\42c04ad9d81bc08a0554ff2bba4bb33d395ae73d.html",
+    "size": 1785073,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/42d082ab9ed5f1e0ac230cb08b9ce7148847b9f6": {
+    "content_hash": "a20a743f26f963a5b6c1c42f8f749d45fe8427fe29e8f2c60d69bcfd23a672a6",
+    "etag": "W/\"13s1r0wn14h126a2\"",
+    "fetched_at": "2026-04-24T17:52:14Z",
+    "last_modified": "",
+    "raw_path": "calc\\42d082ab9ed5f1e0ac230cb08b9ce7148847b9f6.html",
+    "size": 1781066,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/43086f1d5ebb13e6e4d1022b1ffa44cad2f6f27b": {
+    "content_hash": "27ebabce360d671bb20b338895bf8b9f8267b655766d384bbafee3424d230fc4",
+    "etag": "W/\"776uj9ktgj1285l\"",
+    "fetched_at": "2026-04-24T17:50:49Z",
+    "last_modified": "",
+    "raw_path": "calc\\43086f1d5ebb13e6e4d1022b1ffa44cad2f6f27b.html",
+    "size": 1783497,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/43cd9dd141e732d62db54d875f46d9495b50611e": {
+    "content_hash": "b3184ce5bdeb7dbb49ddc47d6a215d8262ae43fd28fd817261f1fe63db6663dd",
+    "etag": "W/\"ytpn4ei3m6128g4\"",
+    "fetched_at": "2026-04-24T17:54:35Z",
+    "last_modified": "",
+    "raw_path": "calc\\43cd9dd141e732d62db54d875f46d9495b50611e.html",
+    "size": 1783876,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/44122f0c51070f3672124698dd4dbf03642790ae": {
+    "content_hash": "9659a382800c68f8d91a3a3aecac6c8689dc1811a10c0e280ef7705863126d58",
+    "etag": "W/\"13e6uq8xotr1284m\"",
+    "fetched_at": "2026-04-24T17:53:37Z",
+    "last_modified": "",
+    "raw_path": "calc\\44122f0c51070f3672124698dd4dbf03642790ae.html",
+    "size": 1783462,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/44b25c8fe31c724984d6a48db922cb068cdbc059": {
+    "content_hash": "acf96444ff21311a5484296701d745d9223ac2d894d89fe0651eddcbb319200c",
+    "etag": "W/\"mlljcib67s127yy\"",
+    "fetched_at": "2026-04-24T17:52:22Z",
+    "last_modified": "",
+    "raw_path": "calc\\44b25c8fe31c724984d6a48db922cb068cdbc059.html",
+    "size": 1783258,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/44e5e748161ef8ac917676f622f1fb62e90b0260": {
+    "content_hash": "4bb45f16e537979d77a94746f7e256e3ab1a4275bcdee0805f9f687f154fc551",
+    "etag": "W/\"oxtxun64vj1280f\"",
+    "fetched_at": "2026-04-24T17:54:09Z",
+    "last_modified": "",
+    "raw_path": "calc\\44e5e748161ef8ac917676f622f1fb62e90b0260.html",
+    "size": 1783311,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/460bc5bf05f1119e2ebbe09a6d36119e22555fa1": {
+    "content_hash": "f0630e8cd1d61918798fdacabb1a0570c574ab31df8692a092bfa28d76c511b1",
+    "etag": "W/\"a1vnjh4j5x128mz\"",
+    "fetched_at": "2026-04-24T17:52:52Z",
+    "last_modified": "",
+    "raw_path": "calc\\460bc5bf05f1119e2ebbe09a6d36119e22555fa1.html",
+    "size": 1784123,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/4626587fbeeee97bc80bbf357e98ed20aedd409e": {
+    "content_hash": "bb5a049e6d44a0acfa1bbd83d44b920236aafabb7f334c44407d88af59d511ec",
+    "etag": "W/\"16jqb2ei3y51280c\"",
+    "fetched_at": "2026-04-24T17:54:19Z",
+    "last_modified": "",
+    "raw_path": "calc\\4626587fbeeee97bc80bbf357e98ed20aedd409e.html",
+    "size": 1783308,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/4657f8748b45e09b10ba2743bc9a6396a9c4e0a9": {
+    "content_hash": "c2c47c13ef35c680ff5910c25ba1470bf2a63eb10e721c265f0c6cbd30d6d1e9",
+    "etag": "W/\"77lclgazlk12865\"",
+    "fetched_at": "2026-04-24T17:52:47Z",
+    "last_modified": "",
+    "raw_path": "calc\\4657f8748b45e09b10ba2743bc9a6396a9c4e0a9.html",
+    "size": 1783517,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/466d53e6f01935379f55da212ec91f5884e76089": {
+    "content_hash": "0bcbe58423e1e0c64b89d400f7903f6b801ef872b9f72180fbe65054d288535c",
+    "etag": "W/\"16nriguhqkm127xk\"",
+    "fetched_at": "2026-04-24T17:54:18Z",
+    "last_modified": "",
+    "raw_path": "calc\\466d53e6f01935379f55da212ec91f5884e76089.html",
+    "size": 1783208,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/482e7d72486978ebef707f26369598ef972bf04b": {
+    "content_hash": "c8f643c119bac77c604cacdfdd79e72858e9442d388239eb9accdb7e18cc7f6f",
+    "etag": "W/\"xi4bl68ixj127g3\"",
+    "fetched_at": "2026-04-24T17:53:17Z",
+    "last_modified": "",
+    "raw_path": "calc\\482e7d72486978ebef707f26369598ef972bf04b.html",
+    "size": 1782579,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/4a64fe8bed59c4d1fe3d8f47426da5be8d7ade1a": {
+    "content_hash": "cbfd7464f59e050eacc878a24aff7eea70e99db65a018e0ac1483980e53edd36",
+    "etag": "W/\"day2udop6k12a8k\"",
+    "fetched_at": "2026-04-24T17:54:24Z",
+    "last_modified": "",
+    "raw_path": "calc\\4a64fe8bed59c4d1fe3d8f47426da5be8d7ade1a.html",
+    "size": 1786196,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/4c1c2de9b691b7696366c12f81be5bfdd36614a1": {
+    "content_hash": "98310d35029564259262f797120886cd42662d6513c9dd97659a14f3e0780f8d",
+    "etag": "W/\"l27ao3szmy127qe\"",
+    "fetched_at": "2026-04-24T17:54:50Z",
+    "last_modified": "",
+    "raw_path": "calc\\4c1c2de9b691b7696366c12f81be5bfdd36614a1.html",
+    "size": 1782950,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/4c80e5054b1cc7837725aa30017e1315bf6433f0": {
+    "content_hash": "c4f0567c903a2b57e779f5afa773f804e7f94fc048528656dc907b7e121617a5",
+    "etag": "W/\"k29nfayun2127o9\"",
+    "fetched_at": "2026-04-24T17:55:10Z",
+    "last_modified": "",
+    "raw_path": "calc\\4c80e5054b1cc7837725aa30017e1315bf6433f0.html",
+    "size": 1782873,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/4ca67f87025a9f5e93aacc88161c76a6d6aa9003": {
+    "content_hash": "533662bb9cb146c35b1fd863b7b7dde2bcb0d9e78d9a8de9014d8b59c28d71c4",
+    "etag": "W/\"6jmz3vbo8q1286j\"",
+    "fetched_at": "2026-04-24T17:54:00Z",
+    "last_modified": "",
+    "raw_path": "calc\\4ca67f87025a9f5e93aacc88161c76a6d6aa9003.html",
+    "size": 1783531,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/4da28843062c74ab717696789771dcb08ace7de2": {
+    "content_hash": "283aa34d2e25ef63be3a54b78e46261b0e5c4af32d05980c3f71a3de7473817e",
+    "etag": "W/\"7fdd6952caabadd5a57a6d0b5371b350\"",
+    "fetched_at": "2026-04-24T17:54:29Z",
+    "last_modified": "",
+    "raw_path": "calc\\4da28843062c74ab717696789771dcb08ace7de2.html",
+    "size": 4037,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/4dcd692011df1f0c53578537dae4221446c7fd37": {
+    "content_hash": "b56015e1ed12cd693e6ed1647e2df274d367450e66796eeeaf230005d08b78a7",
+    "etag": "W/\"92lwmibxh5127yb\"",
+    "fetched_at": "2026-04-24T17:54:50Z",
+    "last_modified": "",
+    "raw_path": "calc\\4dcd692011df1f0c53578537dae4221446c7fd37.html",
+    "size": 1783235,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/4e2a74291eb55911a8bc4e4281b1bccd002af0b2": {
+    "content_hash": "588bcb6e64d4ab78326e14773b70db4de8f64a8365975141103f9d60ffb65cba",
+    "etag": "W/\"u61zttw3xx126ux\"",
+    "fetched_at": "2026-04-24T17:52:44Z",
+    "last_modified": "",
+    "raw_path": "calc\\4e2a74291eb55911a8bc4e4281b1bccd002af0b2.html",
+    "size": 1781817,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/4ed187c510d87a11500840b7b93dd9c2346ec531": {
+    "content_hash": "79e2346abb87fcc463d7f359e1c0c08ec70dcb4a1404971caa4ae2fceac82b3b",
+    "etag": "W/\"12q5fy48rmv128d5\"",
+    "fetched_at": "2026-04-24T17:52:12Z",
+    "last_modified": "",
+    "raw_path": "calc\\4ed187c510d87a11500840b7b93dd9c2346ec531.html",
+    "size": 1783769,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/4f61b7c8e75ee6b3b973a519d4cdedab4b4f1b40": {
+    "content_hash": "03cb24747fc0eddaceb6a6d2e46d24d00f6accff16441fb9a596c48c99455c53",
+    "etag": "W/\"2801ezedx9128gb\"",
+    "fetched_at": "2026-04-24T17:53:33Z",
+    "last_modified": "",
+    "raw_path": "calc\\4f61b7c8e75ee6b3b973a519d4cdedab4b4f1b40.html",
+    "size": 1783883,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/4f6703e42f032be14c5fad57f636e0a6fc5dfce2": {
+    "content_hash": "595369c2776cc20519d8581a2594d7f2ffd369b6a4cfdd43ced0d431e2c2cb5b",
+    "etag": "W/\"a084s675n2128mz\"",
+    "fetched_at": "2026-04-24T17:53:47Z",
+    "last_modified": "",
+    "raw_path": "calc\\4f6703e42f032be14c5fad57f636e0a6fc5dfce2.html",
+    "size": 1784123,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/50dcdb1d3f9d4ea6fe89499f42929ecd31ce6793": {
+    "content_hash": "4f562b53610050c6e40c511fbf6ab20e07f3afda1f1c8dede990d82006d9fddd",
+    "etag": "W/\"11nt1ajyzs112664\"",
+    "fetched_at": "2026-04-24T17:53:12Z",
+    "last_modified": "",
+    "raw_path": "calc\\50dcdb1d3f9d4ea6fe89499f42929ecd31ce6793.html",
+    "size": 1780924,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/514dc9498952ac2690ba8a23eadb25a9b707e9c7": {
+    "content_hash": "3abadad6799e2eeafd8083a4d9300e0b655d9f8cf4b60e29fb17acaa61488ced",
+    "etag": "W/\"xq8flngx6n128c3\"",
+    "fetched_at": "2026-04-24T17:50:21Z",
+    "last_modified": "",
+    "raw_path": "calc\\514dc9498952ac2690ba8a23eadb25a9b707e9c7.html",
+    "size": 1783731,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/5258c436ddd51c1f0432a42595307f6f2cb7de27": {
+    "content_hash": "56bd0c1b29a28b222cf1cdc3212a65dbdcbe0261f1b8f925a503a8a9b0e4894d",
+    "etag": "W/\"u32lzxlh6s127ui\"",
+    "fetched_at": "2026-04-24T17:50:47Z",
+    "last_modified": "",
+    "raw_path": "calc\\5258c436ddd51c1f0432a42595307f6f2cb7de27.html",
+    "size": 1783098,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/5349717266c622f0bcdf232109ad59990f897cfa": {
+    "content_hash": "b742dca5857e78374354de3974e6feac22224932173a8997f5ad4f9516c997ce",
+    "etag": "W/\"ztva5ufe5c1280c\"",
+    "fetched_at": "2026-04-24T17:54:20Z",
+    "last_modified": "",
+    "raw_path": "calc\\5349717266c622f0bcdf232109ad59990f897cfa.html",
+    "size": 1783308,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/540b957cf4d06628f3e31e15b37ad45b0aea3900": {
+    "content_hash": "1d7fd5796b7244dcf1284e21416183ac3703b5e852ce351f8ebac0444652cbab",
+    "etag": "W/\"6jc5z9deg412a8q\"",
+    "fetched_at": "2026-04-24T17:54:23Z",
+    "last_modified": "",
+    "raw_path": "calc\\540b957cf4d06628f3e31e15b37ad45b0aea3900.html",
+    "size": 1786202,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/54ce0886e194cb3a591a86932c56f596e0602851": {
+    "content_hash": "8d439736e440fa0404c514502d871f2f9fbffd4e98c531a637496952588ea2c8",
+    "etag": "W/\"za4yxou47s127el\"",
+    "fetched_at": "2026-04-24T17:53:15Z",
+    "last_modified": "",
+    "raw_path": "calc\\54ce0886e194cb3a591a86932c56f596e0602851.html",
+    "size": 1782525,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/55f338ec8f3b8d14a59e838a4cb319faf2481e4c": {
+    "content_hash": "b54256d5830875b0bc4c151ad3120d8f8db58948e2b78975b264f36294432261",
+    "etag": "W/\"bx9qjk2039127qz\"",
+    "fetched_at": "2026-04-24T17:54:45Z",
+    "last_modified": "",
+    "raw_path": "calc\\55f338ec8f3b8d14a59e838a4cb319faf2481e4c.html",
+    "size": 1782971,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/56915015b3b53798d1cb71fff65cccbc1fafcdff": {
+    "content_hash": "ab68de42373dd0d9d87924b831509043da26ae5ffd6218a9bffd3a7b4f6adc9f",
+    "etag": "W/\"13ciqp62nyv126kk\"",
+    "fetched_at": "2026-04-24T17:53:24Z",
+    "last_modified": "",
+    "raw_path": "calc\\56915015b3b53798d1cb71fff65cccbc1fafcdff.html",
+    "size": 1781444,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/56bfc386cd83c1ef03f6201edec45bac35b78213": {
+    "content_hash": "19d536466eda5b886a222a0ccde4743375202908e42ac73e9b411dc67da04c94",
+    "etag": "W/\"ld9uned0wb128ox\"",
+    "fetched_at": "2026-04-24T17:52:25Z",
+    "last_modified": "",
+    "raw_path": "calc\\56bfc386cd83c1ef03f6201edec45bac35b78213.html",
+    "size": 1784193,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/59461c92bca9774c90923b3c48e8d65495f13447": {
+    "content_hash": "8590729991275ec81424720c60e4fcbe4c8e14bbb4eb12679eb5036c60b1e1b6",
+    "etag": "W/\"xwp53qczf6128ic\"",
+    "fetched_at": "2026-04-24T17:52:07Z",
+    "last_modified": "",
+    "raw_path": "calc\\59461c92bca9774c90923b3c48e8d65495f13447.html",
+    "size": 1783956,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/595b05942cf8f23a4b26e3cf4f63430d74be73b6": {
+    "content_hash": "5856024993daf0cb7d0ea4b480321bb255a26e65ed65efbf430d7a83783a287f",
+    "etag": "W/\"3r29pzwj6h12846\"",
+    "fetched_at": "2026-04-24T17:53:48Z",
+    "last_modified": "",
+    "raw_path": "calc\\595b05942cf8f23a4b26e3cf4f63430d74be73b6.html",
+    "size": 1783446,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/5aeb4ccbef5636012859506b98cad7834b476dd3": {
+    "content_hash": "bd1044c15ab922e52ef307ebe9e6082d48ffda5a1b2fa85348ac2a6b498d8044",
+    "etag": "W/\"k03k3yfvzc128om\"",
+    "fetched_at": "2026-04-24T17:52:45Z",
+    "last_modified": "",
+    "raw_path": "calc\\5aeb4ccbef5636012859506b98cad7834b476dd3.html",
+    "size": 1784182,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/5bc9b35ff5f4c3ce26348482a95a5b7430ed41b9": {
+    "content_hash": "78603a2da472dfe8f0494870b2d6b1364ccddfc42dec5e40c80a29644bef1299",
+    "etag": "W/\"j1cj07edty128lz\"",
+    "fetched_at": "2026-04-24T17:52:05Z",
+    "last_modified": "",
+    "raw_path": "calc\\5bc9b35ff5f4c3ce26348482a95a5b7430ed41b9.html",
+    "size": 1784087,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/5be7eb69ef462c836a744cca0954b352d939f237": {
+    "content_hash": "849c316246955328307dc21e8f023756934db8d544e10a10a7a1c9d8095eef2f",
+    "etag": "W/\"14ttz6sslyl128gi\"",
+    "fetched_at": "2026-04-24T17:54:03Z",
+    "last_modified": "",
+    "raw_path": "calc\\5be7eb69ef462c836a744cca0954b352d939f237.html",
+    "size": 1783890,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/60afff2cef8f61be441169ec420af7775968f80d": {
+    "content_hash": "bf49db6232e1d92b432f363354393dd61cf45ff4f68766940fbc63bf5c70b7f7",
+    "etag": "W/\"12p1melqa7p127kk\"",
+    "fetched_at": "2026-04-24T17:54:46Z",
+    "last_modified": "",
+    "raw_path": "calc\\60afff2cef8f61be441169ec420af7775968f80d.html",
+    "size": 1782740,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/60c31cf57d58bc0810693bcc6b28c9d9e36f2f67": {
+    "content_hash": "644f738ca33612d2e5b8dd2e70026b6792273e559aa609a005a47bfb13466f82",
+    "etag": "W/\"1q7o0928ry1285t\"",
+    "fetched_at": "2026-04-24T17:50:48Z",
+    "last_modified": "",
+    "raw_path": "calc\\60c31cf57d58bc0810693bcc6b28c9d9e36f2f67.html",
+    "size": 1783505,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/62705c08084bac68cdaf3f706b56cf0f44ec2ec1": {
+    "content_hash": "807a42562aa6341d8885b312055a73de03fef5869e05de653670e028c99ecbd9",
+    "etag": "W/\"lx1gu676dh1285z\"",
+    "fetched_at": "2026-04-24T17:52:48Z",
+    "last_modified": "",
+    "raw_path": "calc\\62705c08084bac68cdaf3f706b56cf0f44ec2ec1.html",
+    "size": 1783511,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/62f0430ea311f5cd232619a9c2499d43af046924": {
+    "content_hash": "a6a728fdaf40d15210961d37208141b05351665f3176e9936b004f5069a7e2b7",
+    "etag": "W/\"txbs5yrd751280b\"",
+    "fetched_at": "2026-04-24T17:52:56Z",
+    "last_modified": "",
+    "raw_path": "calc\\62f0430ea311f5cd232619a9c2499d43af046924.html",
+    "size": 1783307,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/637aea3438628523b82fc7935f8db8a9d98f10bd": {
+    "content_hash": "27fb3c0daccfbc6d63afa114833f45cdea6a39c35cc46bef29fc3db0d2d3a269",
+    "etag": "W/\"6lkmsuuq3m128ot\"",
+    "fetched_at": "2026-04-24T17:52:02Z",
+    "last_modified": "",
+    "raw_path": "calc\\637aea3438628523b82fc7935f8db8a9d98f10bd.html",
+    "size": 1784189,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/6579c6f69c5847a247ded6f06fd42c59d360e4b7": {
+    "content_hash": "b32bfed6637e408d85eb4d4b05b67533f1e3a223111206aa6dd227028bfa0908",
+    "etag": "W/\"s0g73jb534128bs\"",
+    "fetched_at": "2026-04-24T17:53:53Z",
+    "last_modified": "",
+    "raw_path": "calc\\6579c6f69c5847a247ded6f06fd42c59d360e4b7.html",
+    "size": 1783720,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/657c590d00dafc8cb52d0aceeefbdbdd8f2d490e": {
+    "content_hash": "e1a4c291e8b8c9a8ed2874c7003e7742cae423a6e5997957723d0c20ef19401c",
+    "etag": "W/\"wjr837r52a128ne\"",
+    "fetched_at": "2026-04-24T17:55:05Z",
+    "last_modified": "",
+    "raw_path": "calc\\657c590d00dafc8cb52d0aceeefbdbdd8f2d490e.html",
+    "size": 1784138,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/6737fa4be0ec51c5065a433d3f23b7616d9ca430": {
+    "content_hash": "c0b9935167c1a922b7194e5efd551cf8c13299f11d2e9c1b8ba5fb89c4e85cdd",
+    "etag": "W/\"svxi7it8ai1263q\"",
+    "fetched_at": "2026-04-24T17:52:42Z",
+    "last_modified": "",
+    "raw_path": "calc\\6737fa4be0ec51c5065a433d3f23b7616d9ca430.html",
+    "size": 1780838,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/6785fbc66a0b57f4b914154cc6c45024dca400e2": {
+    "content_hash": "0b0d071071bcf9582e401e7b7df9ad968b3474aa2675a1da81f4b028bfe0a25e",
+    "etag": "W/\"ptd8moinxl1278h\"",
+    "fetched_at": "2026-04-24T17:52:10Z",
+    "last_modified": "",
+    "raw_path": "calc\\6785fbc66a0b57f4b914154cc6c45024dca400e2.html",
+    "size": 1782305,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/68cffdddb76cb5def422ac39763ab261f1426c7b": {
+    "content_hash": "85394bea395e62b2f21559b028a84eff01177b8b451c25e92f9410ede9a27bd6",
+    "etag": "W/\"4zo167zkmz127lu\"",
+    "fetched_at": "2026-04-24T17:54:52Z",
+    "last_modified": "",
+    "raw_path": "calc\\68cffdddb76cb5def422ac39763ab261f1426c7b.html",
+    "size": 1782786,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/6a3a537af806229336c2d50955bcb484eee06c63": {
+    "content_hash": "ffe69f83c03d0e07cee1a8dc58e4333de0f69c653ac02920e4f271556a70f698",
+    "etag": "W/\"56gdkep5kq128or\"",
+    "fetched_at": "2026-04-24T17:52:27Z",
+    "last_modified": "",
+    "raw_path": "calc\\6a3a537af806229336c2d50955bcb484eee06c63.html",
+    "size": 1784187,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/6a67d0d8b6abf6e3a886d47adcaba3686dff297d": {
+    "content_hash": "4c38ece7881d42cb47c443902492ad347bebd23aa87a29ae79087a8a715a77a5",
+    "etag": "W/\"y3zqyt3wpm127pp\"",
+    "fetched_at": "2026-04-24T17:52:33Z",
+    "last_modified": "",
+    "raw_path": "calc\\6a67d0d8b6abf6e3a886d47adcaba3686dff297d.html",
+    "size": 1782925,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/6a89c1db693eff826ed3d5caa0ece2d2bc2cfce0": {
+    "content_hash": "452d2e28e5774c96b83019ef82c68b5056adf7eb33cba4c24b07c9df32af0762",
+    "etag": "W/\"qq5dud7esb12840\"",
+    "fetched_at": "2026-04-24T17:53:49Z",
+    "last_modified": "",
+    "raw_path": "calc\\6a89c1db693eff826ed3d5caa0ece2d2bc2cfce0.html",
+    "size": 1783440,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/6ab012951c83794fec2c68bb4966191cd291aa54": {
+    "content_hash": "8310ad7c8af708210cc19f058d84e1e7079dad44231f7412534563150e1bd880",
+    "etag": "W/\"2grgia2u5m1276s\"",
+    "fetched_at": "2026-04-24T17:54:11Z",
+    "last_modified": "",
+    "raw_path": "calc\\6ab012951c83794fec2c68bb4966191cd291aa54.html",
+    "size": 1782244,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/6af320c65b2fe28f8dfc963c60d85352241c0490": {
+    "content_hash": "6ba8196e076800826a0a36d9f6a23d89e51e4132cf3aab7fb312e221af58b997",
+    "etag": "W/\"av44n3ygeu127m2\"",
+    "fetched_at": "2026-04-24T17:52:21Z",
+    "last_modified": "",
+    "raw_path": "calc\\6af320c65b2fe28f8dfc963c60d85352241c0490.html",
+    "size": 1782794,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/6b5a2e213096042ed8edb80b552f1363085a005a": {
+    "content_hash": "0d47dcb436532b0b7658a7bb4bbd6def145a96880fea1fdd4d1055b0dece2d23",
+    "etag": "W/\"80o1kh1ohb128go\"",
+    "fetched_at": "2026-04-24T17:54:01Z",
+    "last_modified": "",
+    "raw_path": "calc\\6b5a2e213096042ed8edb80b552f1363085a005a.html",
+    "size": 1783896,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/6d245eb01682779bdeee64eea8af933eaa434bfb": {
+    "content_hash": "3bcbbb3102b632d6458b1b7b9c2c48166e62296bd0204cccfd5f188eccc5e3b5",
+    "etag": "W/\"2min4u30641263k\"",
+    "fetched_at": "2026-04-24T17:52:43Z",
+    "last_modified": "",
+    "raw_path": "calc\\6d245eb01682779bdeee64eea8af933eaa434bfb.html",
+    "size": 1780832,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/6d65a3abaf33b5cd3aa38683ef91d0cff6119b35": {
+    "content_hash": "f251c54cda2c4e806f3c765166da5ac819c60a1256d597c1ea318ea4001ecdf4",
+    "etag": "W/\"59p9a71ncg127l6\"",
+    "fetched_at": "2026-04-24T17:52:35Z",
+    "last_modified": "",
+    "raw_path": "calc\\6d65a3abaf33b5cd3aa38683ef91d0cff6119b35.html",
+    "size": 1782762,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/6fd0f0010ee8f2203630cdae6917c5ada57bdcff": {
+    "content_hash": "b3ce5c90a45a347986ff4a4ae65bd2588a1efc8062f5d08693e040c6f5d11d0b",
+    "etag": "W/\"249a3nv8w12764\"",
+    "fetched_at": "2026-04-24T17:52:58Z",
+    "last_modified": "",
+    "raw_path": "calc\\6fd0f0010ee8f2203630cdae6917c5ada57bdcff.html",
+    "size": 1782220,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/712d62033410c1d407eb41dab283a56f17beda60": {
+    "content_hash": "992e22313680c887c39dc46b9f54933974d796b295d93bbca36ab6737e6a5b33",
+    "etag": "W/\"9u0o7cg7jj1280c\"",
+    "fetched_at": "2026-04-24T17:54:22Z",
+    "last_modified": "",
+    "raw_path": "calc\\712d62033410c1d407eb41dab283a56f17beda60.html",
+    "size": 1783308,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/728ccd8c0ba2a6fc5b1fd292fe4fda3d9b9d3152": {
+    "content_hash": "a8e5072c4db28a10db079caa03501d2f7af22783a2e8d5bd9ede86fc83f0f7ea",
+    "etag": "W/\"14fqtzlqn5e128m5\"",
+    "fetched_at": "2026-04-24T17:52:04Z",
+    "last_modified": "",
+    "raw_path": "calc\\728ccd8c0ba2a6fc5b1fd292fe4fda3d9b9d3152.html",
+    "size": 1784093,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/76c40d1c06a32336ede474f464cea9b6680590ca": {
+    "content_hash": "67f707192b048f66ad7a6bd83937753f12fc018cb3eb27aa8bb730586189f6f5",
+    "etag": "W/\"hsg7i6fe78127hg\"",
+    "fetched_at": "2026-04-24T17:53:39Z",
+    "last_modified": "",
+    "raw_path": "calc\\76c40d1c06a32336ede474f464cea9b6680590ca.html",
+    "size": 1782628,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/79d0820a9850dd722a9accead3e4a2943936c855": {
+    "content_hash": "8f2175a114bce47e9082f2b35f4bced8e0c581d18eafb3ee10acfd3997ed4dc0",
+    "etag": "W/\"437jzljrfu1289i\"",
+    "fetched_at": "2026-04-24T17:55:00Z",
+    "last_modified": "",
+    "raw_path": "calc\\79d0820a9850dd722a9accead3e4a2943936c855.html",
+    "size": 1783638,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/7bed76326b532072ec8e3fa5c3681c4bc8770eed": {
+    "content_hash": "d26ca499c1339a3ffdb52535217854450c1690eeba41d048a1316f6eb8fff048",
+    "etag": "W/\"bthywenrmt1282b\"",
+    "fetched_at": "2026-04-24T17:54:54Z",
+    "last_modified": "",
+    "raw_path": "calc\\7bed76326b532072ec8e3fa5c3681c4bc8770eed.html",
+    "size": 1783379,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/7bf0e5b0f0352a99a38758a62ad62e3d0468c21c": {
+    "content_hash": "f32e1d823d36ede4598538a7451e811482431acd6bc4516f78b736e548de7122",
+    "etag": "W/\"13or9t1yf91128z4\"",
+    "fetched_at": "2026-04-24T17:52:30Z",
+    "last_modified": "",
+    "raw_path": "calc\\7bf0e5b0f0352a99a38758a62ad62e3d0468c21c.html",
+    "size": 1784560,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/7c3e6c5c98de2d7ef29804556ed3d8bc46d3989a": {
+    "content_hash": "7f146518b526fb68e281e331d148e3d319e40f5dbcd9767c2b3767c1480e8da4",
+    "etag": "W/\"7nomgxpo6q128v3\"",
+    "fetched_at": "2026-04-24T17:54:28Z",
+    "last_modified": "",
+    "raw_path": "calc\\7c3e6c5c98de2d7ef29804556ed3d8bc46d3989a.html",
+    "size": 1784415,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/7dca1b040f5b6bf47c5efb386f9f47e5f3d2c66e": {
+    "content_hash": "c8beb0232688d4c1ce8dda12ee29b441ad3e064791396c33cb067b993c92b389",
+    "etag": "W/\"1ohzl0q48g128li\"",
+    "fetched_at": "2026-04-24T17:54:25Z",
+    "last_modified": "",
+    "raw_path": "calc\\7dca1b040f5b6bf47c5efb386f9f47e5f3d2c66e.html",
+    "size": 1784070,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/7ea55e3d56a9410d435e2dc91cad0d2a16e15e13": {
+    "content_hash": "283aa34d2e25ef63be3a54b78e46261b0e5c4af32d05980c3f71a3de7473817e",
+    "etag": "W/\"7fdd6952caabadd5a57a6d0b5371b350\"",
+    "fetched_at": "2026-04-24T17:54:39Z",
+    "last_modified": "",
+    "raw_path": "calc\\7ea55e3d56a9410d435e2dc91cad0d2a16e15e13.html",
+    "size": 4037,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/7eec74e20021f1e52810c9a47d2efc70b3acf455": {
+    "content_hash": "624a0840a188181d3dfbb1aa7c5a6a30cc94dd3d2ec684acf5db3a9a5961fabf",
+    "etag": "W/\"1zredp10y3127q6\"",
+    "fetched_at": "2026-04-24T17:53:23Z",
+    "last_modified": "",
+    "raw_path": "calc\\7eec74e20021f1e52810c9a47d2efc70b3acf455.html",
+    "size": 1782942,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/7f3b4656ace5242b5d39d79c0d80c9c78ad1eaa6": {
+    "content_hash": "3d2d279af2c174d2944279af2893a91ff261c767fcb5d225be19127047749c80",
+    "etag": "W/\"gxng3m1oy1128bu\"",
+    "fetched_at": "2026-04-24T17:50:23Z",
+    "last_modified": "",
+    "raw_path": "calc\\7f3b4656ace5242b5d39d79c0d80c9c78ad1eaa6.html",
+    "size": 1783722,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/7f7b5f5f31323cc8f0988be373aa67a0656bbb8d": {
+    "content_hash": "738c14687c68462534713ad844d19f27ca7275cae8d4c8d3478883ac5a15709f",
+    "etag": "W/\"iqyuxb9n7127r4\"",
+    "fetched_at": "2026-04-24T17:55:01Z",
+    "last_modified": "",
+    "raw_path": "calc\\7f7b5f5f31323cc8f0988be373aa67a0656bbb8d.html",
+    "size": 1782976,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/7f7c754cb88dbfa83a9fead7557e84e9dbdd4093": {
+    "content_hash": "75a140f7828bff25bc2c9dd75d54b0c4d1a037e474ee99f04431f272b371ac66",
+    "etag": "W/\"qxy66lf6l5127yh\"",
+    "fetched_at": "2026-04-24T17:54:49Z",
+    "last_modified": "",
+    "raw_path": "calc\\7f7c754cb88dbfa83a9fead7557e84e9dbdd4093.html",
+    "size": 1783241,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/7f823ca5b1672254185c3abb0d59a40fd32825da": {
+    "content_hash": "2d1ac60297ef3ebc983fc94da5a3996f433426e32c1a5fcbb3d0535acbac9d61",
+    "etag": "W/\"11hkxkq0fpv127iq\"",
+    "fetched_at": "2026-04-24T17:53:21Z",
+    "last_modified": "",
+    "raw_path": "calc\\7f823ca5b1672254185c3abb0d59a40fd32825da.html",
+    "size": 1782674,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/80d3c21744b7f4c5b67ce1dca10b321101f429c9": {
+    "content_hash": "d301eb2302cb0806900cc5f70157c1189bf460434fb2e03ac0367af0471af966",
+    "etag": "W/\"jrkw86bb2z127mm\"",
+    "fetched_at": "2026-04-24T17:54:41Z",
+    "last_modified": "",
+    "raw_path": "calc\\80d3c21744b7f4c5b67ce1dca10b321101f429c9.html",
+    "size": 1782814,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/818476b217fdeb8534c8da68b62a508361c1ee39": {
+    "content_hash": "6b4952a30ea6b85c3af8093aac0b55d52c5208ef03c6fb7ef3809704522f562e",
+    "etag": "W/\"335cc479wo1286p\"",
+    "fetched_at": "2026-04-24T17:54:00Z",
+    "last_modified": "",
+    "raw_path": "calc\\818476b217fdeb8534c8da68b62a508361c1ee39.html",
+    "size": 1783537,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/81b380c556719cec96dcda3a20d3ddd249b3e049": {
+    "content_hash": "bb1f2b61db098771ccbab232aad68487c32dbbfd2db4546165cb4aaaa1a226bc",
+    "etag": "W/\"gzzrdj6s6b127ly\"",
+    "fetched_at": "2026-04-24T17:54:58Z",
+    "last_modified": "",
+    "raw_path": "calc\\81b380c556719cec96dcda3a20d3ddd249b3e049.html",
+    "size": 1782790,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/848284479222d6109769da0a362ec014d22f2a82": {
+    "content_hash": "c497b5dde3a6ff1b35a2d05cf73ff323f7f3c3feb4685bc1da7a6e13dad4bcee",
+    "etag": "W/\"12fosxykod6127r4\"",
+    "fetched_at": "2026-04-24T17:55:01Z",
+    "last_modified": "",
+    "raw_path": "calc\\848284479222d6109769da0a362ec014d22f2a82.html",
+    "size": 1782976,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/8636f29eebee09aa608a41a8075acd635816974c": {
+    "content_hash": "8611d9a849885fd1262db05daf12c84aabfba9a6d791eb7e95a027a277da824e",
+    "etag": "W/\"job17ij5d7128bp\"",
+    "fetched_at": "2026-04-24T17:53:54Z",
+    "last_modified": "",
+    "raw_path": "calc\\8636f29eebee09aa608a41a8075acd635816974c.html",
+    "size": 1783717,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/879ab400b21ff8f94885b453df13a94da3fdf4d1": {
+    "content_hash": "1da1de8bfe36b8b24ff125a4ca2bfa273f37ae6b2f5db73c177e861e3ffad6c0",
+    "etag": "W/\"xp86y48waj127xh\"",
+    "fetched_at": "2026-04-24T17:52:18Z",
+    "last_modified": "",
+    "raw_path": "calc\\879ab400b21ff8f94885b453df13a94da3fdf4d1.html",
+    "size": 1783205,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/87daf5d8451981954d4817cc01755dc2533c8eed": {
+    "content_hash": "429b7d2f94485692bd916d50135a4360c23b9425f1e32f787ecfedd6ea63a536",
+    "etag": "W/\"qxhdh9oujb12aqx\"",
+    "fetched_at": "2026-04-24T17:53:59Z",
+    "last_modified": "",
+    "raw_path": "calc\\87daf5d8451981954d4817cc01755dc2533c8eed.html",
+    "size": 1786857,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/884908faa6fb6b7f4336ecb9276466c5d10cb104": {
+    "content_hash": "67cec3b7d957e0a28af3409cb5ec662aa99bf014ffcac1633c2921f043a802aa",
+    "etag": "W/\"5a5w4qbsqw127eu\"",
+    "fetched_at": "2026-04-24T17:53:15Z",
+    "last_modified": "",
+    "raw_path": "calc\\884908faa6fb6b7f4336ecb9276466c5d10cb104.html",
+    "size": 1782534,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/8a876815d3a8728550232879129e3212891de5de": {
+    "content_hash": "d99592c0ce7431d5e583efb5251e7cc51f069211be069283dbf7c4166accf81a",
+    "etag": "W/\"xoy3v11m8e127p9\"",
+    "fetched_at": "2026-04-24T17:50:52Z",
+    "last_modified": "",
+    "raw_path": "calc\\8a876815d3a8728550232879129e3212891de5de.html",
+    "size": 1782909,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/8bfd57406c4f7d054b422e6b612a3061053eaa11": {
+    "content_hash": "66b2009cc7d6bae8a3fa057696cffde056fa85417ddfd8e990b3cb21b1504b13",
+    "etag": "W/\"nrum5dg8p21283x\"",
+    "fetched_at": "2026-04-24T17:53:49Z",
+    "last_modified": "",
+    "raw_path": "calc\\8bfd57406c4f7d054b422e6b612a3061053eaa11.html",
+    "size": 1783437,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/8c5f5f8172c765eba96b0869d0358958b322f31e": {
+    "content_hash": "cbfc2eca9ce37a735fee9658d1a1ae9618eec42ef8eb058f13c6f51a02f09108",
+    "etag": "W/\"ejy876vn9m12822\"",
+    "fetched_at": "2026-04-24T17:54:55Z",
+    "last_modified": "",
+    "raw_path": "calc\\8c5f5f8172c765eba96b0869d0358958b322f31e.html",
+    "size": 1783370,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/8e4b183b6a4991f09456096eb2268b9d36c068be": {
+    "content_hash": "0b51feb814feeee197f870b18d738563c65b86539ae66a8b1d9474fd8b3e4fe4",
+    "etag": "W/\"zj21ywjuge128rr\"",
+    "fetched_at": "2026-04-24T17:54:32Z",
+    "last_modified": "",
+    "raw_path": "calc\\8e4b183b6a4991f09456096eb2268b9d36c068be.html",
+    "size": 1784295,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/8f2256aa43898895eec5c969c58e13dc9c1235bc": {
+    "content_hash": "fe965819cb5fc795b85cf700b868b82b0889dfc13c273aa4cfcaca3d4197e7af",
+    "etag": "W/\"s30wlpl8hh129e1\"",
+    "fetched_at": "2026-04-24T17:53:04Z",
+    "last_modified": "",
+    "raw_path": "calc\\8f2256aa43898895eec5c969c58e13dc9c1235bc.html",
+    "size": 1785097,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/9374fb7b373e99a0d4c64addd421f788978a8059": {
+    "content_hash": "3445be0063ad0f339d4deb32535457ffc1beda3043ea0413434b313e18112f7d",
+    "etag": "W/\"11e9oest6f0128fd\"",
+    "fetched_at": "2026-04-24T17:52:25Z",
+    "last_modified": "",
+    "raw_path": "calc\\9374fb7b373e99a0d4c64addd421f788978a8059.html",
+    "size": 1783849,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/9375138946e17b4d91145f6ae3e305047d6d9ba4": {
+    "content_hash": "96f1247aa6633411a36a69e801256b5af6d187f43c3b9ed80262ebdbf18020b7",
+    "etag": "W/\"tqlq5dphhd128rl\"",
+    "fetched_at": "2026-04-24T17:54:33Z",
+    "last_modified": "",
+    "raw_path": "calc\\9375138946e17b4d91145f6ae3e305047d6d9ba4.html",
+    "size": 1784289,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/96dc4f547b2ed717d00fffa45e841b32b11fb670": {
+    "content_hash": "e0794b09d32bfb6b6ac3db42a7c51f7e1f46d56e744ed82dabcf826291dcb8f4",
+    "etag": "W/\"mz34lkz14n1265y\"",
+    "fetched_at": "2026-04-24T17:53:13Z",
+    "last_modified": "",
+    "raw_path": "calc\\96dc4f547b2ed717d00fffa45e841b32b11fb670.html",
+    "size": 1780918,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/988b1194b604ec816ecfa69d67052a7e4ac1a921": {
+    "content_hash": "418ca7f1cbc9fa00310c96dbbc8841da03e14991b6d65a775923b3858237348c",
+    "etag": "W/\"ae4xw5n1kl12921\"",
+    "fetched_at": "2026-04-24T17:53:07Z",
+    "last_modified": "",
+    "raw_path": "calc\\988b1194b604ec816ecfa69d67052a7e4ac1a921.html",
+    "size": 1784665,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/99b21955d885b6d81c7c9bde85ec3a31a64bf4d2": {
+    "content_hash": "160f586eb6e718f00fee7076e80dbdef8f4aa355206484bb34c0a8e5967fbcc3",
+    "etag": "W/\"g0zkoc5q9v1285j\"",
+    "fetched_at": "2026-04-24T17:54:30Z",
+    "last_modified": "",
+    "raw_path": "calc\\99b21955d885b6d81c7c9bde85ec3a31a64bf4d2.html",
+    "size": 1783495,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/9b5a1446160f31ae2a63d6aea3fa3202b811318a": {
+    "content_hash": "249dc9e46c565c68252325c04e319b5ab210d4d2892d06f59bc2f19c90fb84c4",
+    "etag": "W/\"js47a6w54t128yd\"",
+    "fetched_at": "2026-04-24T17:53:09Z",
+    "last_modified": "",
+    "raw_path": "calc\\9b5a1446160f31ae2a63d6aea3fa3202b811318a.html",
+    "size": 1784533,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/9b98f20934c00a7299f1c7b85dd5058104454718": {
+    "content_hash": "64ed56929b564d162a49e9ee2c64f9c9c23706998755b8ee1b5103ee4593d16f",
+    "etag": "W/\"nnzeecv5rl122ix\"",
+    "fetched_at": "2026-04-24T17:52:19Z",
+    "last_modified": "",
+    "raw_path": "calc\\9b98f20934c00a7299f1c7b85dd5058104454718.html",
+    "size": 1776201,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/9b992c17c2804892d6493ccb69f2e33736eedca8": {
+    "content_hash": "13ddf66aaf1db77a42808cc8b9d7098f24a8ce37f183a24b7672360d52834f71",
+    "etag": "W/\"eucfux7z54127pm\"",
+    "fetched_at": "2026-04-24T17:52:34Z",
+    "last_modified": "",
+    "raw_path": "calc\\9b992c17c2804892d6493ccb69f2e33736eedca8.html",
+    "size": 1782922,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/9cd660fda73fdae82f34ec9ad93d0eec9903dbc0": {
+    "content_hash": "1cfa28f13c2ca39fadb0e4a8a3059aed90ec67051a4341a18aabe33e88e2c79c",
+    "etag": "W/\"syhk529f5y127vi\"",
+    "fetched_at": "2026-04-24T17:50:53Z",
+    "last_modified": "",
+    "raw_path": "calc\\9cd660fda73fdae82f34ec9ad93d0eec9903dbc0.html",
+    "size": 1783134,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/9d9c3d32755672fc95ca8580c0dd0a27f651c2c5": {
+    "content_hash": "cc2853fcbc228732c6d3aa0a063b6c8a9263c451b8de789f16fcae78bafb30d4",
+    "etag": "W/\"mgei5lor0w127pw\"",
+    "fetched_at": "2026-04-24T17:52:32Z",
+    "last_modified": "",
+    "raw_path": "calc\\9d9c3d32755672fc95ca8580c0dd0a27f651c2c5.html",
+    "size": 1782932,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/9dbbc2b22c9ffe8be78d47dae49e676038edb160": {
+    "content_hash": "cb9c0dcb17a66cb6c407dd6d475b806b7b0f796035e7664197e231844445d48d",
+    "etag": "W/\"q5ov6nyy0w129ea\"",
+    "fetched_at": "2026-04-24T17:53:02Z",
+    "last_modified": "",
+    "raw_path": "calc\\9dbbc2b22c9ffe8be78d47dae49e676038edb160.html",
+    "size": 1785106,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/9f59bf39a2dca1bd9fd46108b89cbf6b00f011de": {
+    "content_hash": "1eea41f3e3bb9dea7f4b076c28b5f22646a6bf19b49914e60b32adbd0c6dcde8",
+    "etag": "W/\"55r8cuscde123sl\"",
+    "fetched_at": "2026-04-24T17:52:41Z",
+    "last_modified": "",
+    "raw_path": "calc\\9f59bf39a2dca1bd9fd46108b89cbf6b00f011de.html",
+    "size": 1777845,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/9f877ac4013f566270c2184d8fb0412eaabb51e9": {
+    "content_hash": "4049ff92598c50cd72a4cade9ee6085944afe28784ac60da6ef0532e4a987d26",
+    "etag": "W/\"rkahw82p3m12806\"",
+    "fetched_at": "2026-04-24T17:54:10Z",
+    "last_modified": "",
+    "raw_path": "calc\\9f877ac4013f566270c2184d8fb0412eaabb51e9.html",
+    "size": 1783302,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/New-Budget-Maneater---3-Bosses-only-1-Comp": {
+    "content_hash": "283aa34d2e25ef63be3a54b78e46261b0e5c4af32d05980c3f71a3de7473817e",
+    "etag": "W/\"7fdd6952caabadd5a57a6d0b5371b350\"",
+    "fetched_at": "2026-04-24T17:53:10Z",
+    "last_modified": "",
+    "raw_path": "calc\\New-Budget-Maneater---3-Bosses-only-1-Comp.html",
+    "size": 4037,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/None": {
+    "content_hash": "283aa34d2e25ef63be3a54b78e46261b0e5c4af32d05980c3f71a3de7473817e",
+    "etag": "W/\"7fdd6952caabadd5a57a6d0b5371b350\"",
+    "fetched_at": "2026-04-24T17:50:44Z",
+    "last_modified": "",
+    "raw_path": "calc\\None.html",
+    "size": 4037,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/Ultimate-Budget-Unkillable": {
+    "content_hash": "283aa34d2e25ef63be3a54b78e46261b0e5c4af32d05980c3f71a3de7473817e",
+    "etag": "W/\"7fdd6952caabadd5a57a6d0b5371b350\"",
+    "fetched_at": "2026-04-24T17:53:11Z",
+    "last_modified": "",
+    "raw_path": "calc\\Ultimate-Budget-Unkillable.html",
+    "size": 4037,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/a13f12722f41ea60a25346fb3d7cec1dc0467a4f": {
+    "content_hash": "be1a7e74e6e91870385f361315841e9e4f8eb92bfb763abad129174ce6f1a64b",
+    "etag": "W/\"fr3hucc95v127ul\"",
+    "fetched_at": "2026-04-24T17:50:46Z",
+    "last_modified": "",
+    "raw_path": "calc\\a13f12722f41ea60a25346fb3d7cec1dc0467a4f.html",
+    "size": 1783101,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/a30f7401e09f4d7eee773aa5f1bd65194377cbc5": {
+    "content_hash": "581d0754f4baf843aff4ef734e82cd984f559d3648c73b02522ac3f8bbed5a44",
+    "etag": "W/\"14kaqdjgk0x129r5\"",
+    "fetched_at": "2026-04-24T17:55:07Z",
+    "last_modified": "",
+    "raw_path": "calc\\a30f7401e09f4d7eee773aa5f1bd65194377cbc5.html",
+    "size": 1785569,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/a3950567d4e0b047a63e2cbdda43f0ed487aa574": {
+    "content_hash": "283aa34d2e25ef63be3a54b78e46261b0e5c4af32d05980c3f71a3de7473817e",
+    "etag": "W/\"7fdd6952caabadd5a57a6d0b5371b350\"",
+    "fetched_at": "2026-04-24T17:54:08Z",
+    "last_modified": "",
+    "raw_path": "calc\\a3950567d4e0b047a63e2cbdda43f0ed487aa574.html",
+    "size": 4037,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/a4b559b61648ecb047c589d856c3999fe43adc24": {
+    "content_hash": "be940ef5704585ba52582448735cbe2de835822a51d421e5a03e5deb046f7867",
+    "etag": "W/\"4ccftc2m87128ul\"",
+    "fetched_at": "2026-04-24T17:54:08Z",
+    "last_modified": "",
+    "raw_path": "calc\\a4b559b61648ecb047c589d856c3999fe43adc24.html",
+    "size": 1784397,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/a628290e7f3045303e4a41e6ce00de715133d9a8": {
+    "content_hash": "bd8951e04c7bb8ae7f76ea8312da2f1273c40722a48df70d0c4ec9f7d522edb7",
+    "etag": "W/\"3c4gksoqq2127q8\"",
+    "fetched_at": "2026-04-24T17:54:51Z",
+    "last_modified": "",
+    "raw_path": "calc\\a628290e7f3045303e4a41e6ce00de715133d9a8.html",
+    "size": 1782944,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/a66f2f9dd30d2f6d864e049063b2ed53b2af6ce0": {
+    "content_hash": "9ac342a2614d6e03ddaf407aff1547f738eb873f2df7375a58a33c870a7955ca",
+    "etag": "W/\"15s37gilk3h127h9\"",
+    "fetched_at": "2026-04-24T17:53:29Z",
+    "last_modified": "",
+    "raw_path": "calc\\a66f2f9dd30d2f6d864e049063b2ed53b2af6ce0.html",
+    "size": 1782621,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/a866933e937b43252a7b09748341faf05d608509": {
+    "content_hash": "de4ae2b5ffa78e70819ffea2be35ae206750fa43303c1c8f260d4f6ade5bfa5c",
+    "etag": "W/\"q0b3hhuckl1277l\"",
+    "fetched_at": "2026-04-24T17:52:36Z",
+    "last_modified": "",
+    "raw_path": "calc\\a866933e937b43252a7b09748341faf05d608509.html",
+    "size": 1782273,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/a89aee551b5f70221ec4d5e53e5a332b90629d3c": {
+    "content_hash": "a2036f4b63442ca6877799d4d879a19ede24df69fe10072d296a2eb944072aae",
+    "etag": "W/\"lui94h0wqn1291m\"",
+    "fetched_at": "2026-04-24T17:53:06Z",
+    "last_modified": "",
+    "raw_path": "calc\\a89aee551b5f70221ec4d5e53e5a332b90629d3c.html",
+    "size": 1784650,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/a9151dd0a58b6102bcc5fc9f387f8d54f11c117b": {
+    "content_hash": "553ae7ab6c1ce3561da72bf256ed409922d9f01fd8a83eb5d10ef13b97acffed",
+    "etag": "W/\"4iz7oj7nx2127fu\"",
+    "fetched_at": "2026-04-24T17:53:19Z",
+    "last_modified": "",
+    "raw_path": "calc\\a9151dd0a58b6102bcc5fc9f387f8d54f11c117b.html",
+    "size": 1782570,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/a94676f8b2f53346fc64b87b9f0a74ca4828f4f8": {
+    "content_hash": "a18d8bca769683e2a4688265c9936e79a29b76aeea673ba6ac7daa17ec407364",
+    "etag": "W/\"995n56fnqh127xq\"",
+    "fetched_at": "2026-04-24T17:54:18Z",
+    "last_modified": "",
+    "raw_path": "calc\\a94676f8b2f53346fc64b87b9f0a74ca4828f4f8.html",
+    "size": 1783214,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/a9b29b1867165467e611647e2bf2c2180dcc298d": {
+    "content_hash": "ec444729f92a16dfdec8839092045b1f18c0573d409ef38c0ccb5781127f88fc",
+    "etag": "W/\"zlp05dhsqo128c3\"",
+    "fetched_at": "2026-04-24T17:52:45Z",
+    "last_modified": "",
+    "raw_path": "calc\\a9b29b1867165467e611647e2bf2c2180dcc298d.html",
+    "size": 1783731,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/a9ea87426644c3076aa194d2df30d68af1769eea": {
+    "content_hash": "c04efef556f7aba8bb5be602a6a6c5cfcfac80c637116b7a1ab1259f81249d1a",
+    "etag": "W/\"5zlfapzk8i1285i\"",
+    "fetched_at": "2026-04-24T17:50:50Z",
+    "last_modified": "",
+    "raw_path": "calc\\a9ea87426644c3076aa194d2df30d68af1769eea.html",
+    "size": 1783494,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/aa6428723d8657aef0192993ee43487338f29257": {
+    "content_hash": "8882ae9041393198186f48d6f8fd11556ec51e738cc24addf9979657967bd0b7",
+    "etag": "W/\"q3pqssawnp127xk\"",
+    "fetched_at": "2026-04-24T17:52:17Z",
+    "last_modified": "",
+    "raw_path": "calc\\aa6428723d8657aef0192993ee43487338f29257.html",
+    "size": 1783208,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/ab1f7f2553d1fcbefc7865e10afac0702a91724e": {
+    "content_hash": "8a1645a5643cf52db8d17931b7cc1f0e0b5d7690f36871610e497a5f39d960fa",
+    "etag": "W/\"iaagwdiiny129b9\"",
+    "fetched_at": "2026-04-24T17:53:34Z",
+    "last_modified": "",
+    "raw_path": "calc\\ab1f7f2553d1fcbefc7865e10afac0702a91724e.html",
+    "size": 1784997,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/ad8f54090a757cc97ba53799ac1bd551ff134b70": {
+    "content_hash": "42bb73703e8b6ea7ebd140d9f1edc2ba3f7764820c1749ccbc098eba4fa0ebbe",
+    "etag": "W/\"9sbxdjqftf123se\"",
+    "fetched_at": "2026-04-24T17:52:41Z",
+    "last_modified": "",
+    "raw_path": "calc\\ad8f54090a757cc97ba53799ac1bd551ff134b70.html",
+    "size": 1777838,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/adedb4b2d5e6cf65dcf480be597f218795ab0f27": {
+    "content_hash": "3491521ed8e31048a93af6df06e7cea2c1fec8f5c11e949d2cb34044b0305ccb",
+    "etag": "W/\"c7jhlhkcjr1274q\"",
+    "fetched_at": "2026-04-24T17:53:43Z",
+    "last_modified": "",
+    "raw_path": "calc\\adedb4b2d5e6cf65dcf480be597f218795ab0f27.html",
+    "size": 1782170,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/af832892d9603b71e7258f87b39875bf0fed2fc5": {
+    "content_hash": "4a739591aa1657f7e664a1bc9d4ef0645b1357d232179acc96a8a6988f94aacb",
+    "etag": "W/\"4ern49spfl12911\"",
+    "fetched_at": "2026-04-24T17:53:54Z",
+    "last_modified": "",
+    "raw_path": "calc\\af832892d9603b71e7258f87b39875bf0fed2fc5.html",
+    "size": 1784629,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/af9786de88f64dd590c0880b1c403e5a6eb5591c": {
+    "content_hash": "80f450fb117e7e1eb31221571c6d37dd5fe1d2e66a8f3b199c748e3fae4c3e12",
+    "etag": "W/\"axez4l746128y5\"",
+    "fetched_at": "2026-04-24T17:53:44Z",
+    "last_modified": "",
+    "raw_path": "calc\\af9786de88f64dd590c0880b1c403e5a6eb5591c.html",
+    "size": 1784525,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/afcf42b22ea88a1550099ff8d44e63ab28d04ba5": {
+    "content_hash": "e587ba98515163b4800b2dcf3be426e167d52879e55479c594bcb6fb0c798356",
+    "etag": "W/\"xluwmvicyy128ho\"",
+    "fetched_at": "2026-04-24T17:54:14Z",
+    "last_modified": "",
+    "raw_path": "calc\\afcf42b22ea88a1550099ff8d44e63ab28d04ba5.html",
+    "size": 1783932,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/b197553ac2940e7e8584d532372304c53a3346a4": {
+    "content_hash": "26da861fff39f0a99015f739c52be50f7ab3c2a39f5eb47c08cdbe31dfec9cd6",
+    "etag": "W/\"48unh720uv128n8\"",
+    "fetched_at": "2026-04-24T17:55:06Z",
+    "last_modified": "",
+    "raw_path": "calc\\b197553ac2940e7e8584d532372304c53a3346a4.html",
+    "size": 1784132,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/b24777bb67f98284b220ae5e04ab1dd0113ffba6": {
+    "content_hash": "ca9b59b004540f8ea431206b716760f60afbff5e00256d5da630e8ba70e01f68",
+    "etag": "W/\"wr59t9tkpx12731\"",
+    "fetched_at": "2026-04-24T17:52:53Z",
+    "last_modified": "",
+    "raw_path": "calc\\b24777bb67f98284b220ae5e04ab1dd0113ffba6.html",
+    "size": 1782109,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/b467e0c12a04fdf8e2f9b3f5f04559e3bf700df6": {
+    "content_hash": "a925275c05bcc713580047c99e31664d82bb3742e3e6233249ad00cd0ce55b59",
+    "etag": "W/\"mjihmzyhi7127xc\"",
+    "fetched_at": "2026-04-24T17:54:40Z",
+    "last_modified": "",
+    "raw_path": "calc\\b467e0c12a04fdf8e2f9b3f5f04559e3bf700df6.html",
+    "size": 1783200,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/b5f9fb612cd1b18a5765708781efea5893d95694": {
+    "content_hash": "e2bd199afa5596dec4aa5919972d638e8bb967328528fd1184ee83c190028624",
+    "etag": "W/\"5hhvib95je12763\"",
+    "fetched_at": "2026-04-24T17:52:54Z",
+    "last_modified": "",
+    "raw_path": "calc\\b5f9fb612cd1b18a5765708781efea5893d95694.html",
+    "size": 1782219,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/b8d1b23a4fa72bbd313959ce06821b4a7e379322": {
+    "content_hash": "a7a81f51347773df85acd4e12751fac63cc3b44f18c4031b16a674ee39760ad5",
+    "etag": "W/\"xlu9oml34l128hi\"",
+    "fetched_at": "2026-04-24T17:54:15Z",
+    "last_modified": "",
+    "raw_path": "calc\\b8d1b23a4fa72bbd313959ce06821b4a7e379322.html",
+    "size": 1783926,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/ba3a416c1f8b22bc28b23a6ec7a6833280699ca2": {
+    "content_hash": "1070117633003938e04f70ad7af7b16e99776b7c31b3dc393107b355a1a5e8ce",
+    "etag": "W/\"ecvul6m5b0127w4\"",
+    "fetched_at": "2026-04-24T17:52:58Z",
+    "last_modified": "",
+    "raw_path": "calc\\ba3a416c1f8b22bc28b23a6ec7a6833280699ca2.html",
+    "size": 1783156,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/bb094379c54691bf36a742ef9767e4d43ab11740": {
+    "content_hash": "534b3bedcd266f8aa3f28119c6d221f38a71150ad8abcae9056a3bfc58887480",
+    "etag": "W/\"a4o1fu96901280c\"",
+    "fetched_at": "2026-04-24T17:54:21Z",
+    "last_modified": "",
+    "raw_path": "calc\\bb094379c54691bf36a742ef9767e4d43ab11740.html",
+    "size": 1783308,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/bbda83fa38dfdffb644cd40a34743654f924c0ee": {
+    "content_hash": "41b17687ba92db8ead302107d71cdbad260a93bcaaf615306a31e6f92ec15111",
+    "etag": "W/\"t7fz0hz5u71284m\"",
+    "fetched_at": "2026-04-24T17:53:36Z",
+    "last_modified": "",
+    "raw_path": "calc\\bbda83fa38dfdffb644cd40a34743654f924c0ee.html",
+    "size": 1783462,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/bbe8308821d0c30dfdfb4d590be33e5978e4fdc3": {
+    "content_hash": "41b723913d083cc646f3cc15de68b0df5dbf098510b2fecb288bf7d8b9acf08a",
+    "etag": "W/\"swa8ukczfk127h3\"",
+    "fetched_at": "2026-04-24T17:53:30Z",
+    "last_modified": "",
+    "raw_path": "calc\\bbe8308821d0c30dfdfb4d590be33e5978e4fdc3.html",
+    "size": 1782615,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/bbed71ea1b61d74266740df90e1e558316666901": {
+    "content_hash": "9a828840921de4518ae1ae96153705db79609dd65a10391e9108d3101382d796",
+    "etag": "W/\"qu96uacywa1278f\"",
+    "fetched_at": "2026-04-24T17:52:11Z",
+    "last_modified": "",
+    "raw_path": "calc\\bbed71ea1b61d74266740df90e1e558316666901.html",
+    "size": 1782303,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/bd5b7c8195ff0b6345ebf4bed0d801d721724812": {
+    "content_hash": "807c9ed4b17cf4c0ab7bc023d5fa1f4c91e1a0ba7955865b94d311a313fbaf37",
+    "etag": "W/\"3vmvmwvozg127r4\"",
+    "fetched_at": "2026-04-24T17:55:02Z",
+    "last_modified": "",
+    "raw_path": "calc\\bd5b7c8195ff0b6345ebf4bed0d801d721724812.html",
+    "size": 1782976,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/bd7be56a2558e205cf09716a604bc00181d7fea1": {
+    "content_hash": "5d05f9afd891c9e9ac6bba872ac82ff4e4d8ed12271d87a2f0935081a92dd68e",
+    "etag": "W/\"3cb1j9fqj31290q\"",
+    "fetched_at": "2026-04-24T17:54:14Z",
+    "last_modified": "",
+    "raw_path": "calc\\bd7be56a2558e205cf09716a604bc00181d7fea1.html",
+    "size": 1784618,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/bd95b5fa121fe9ee6c5721b028c5c1ecdddbe0b7": {
+    "content_hash": "98aa8e3b5770b932104b691227794b4f34ca14358a91f963c58cf03fab00bc76",
+    "etag": "W/\"l6i0tgt5x41284k\"",
+    "fetched_at": "2026-04-24T17:53:45Z",
+    "last_modified": "",
+    "raw_path": "calc\\bd95b5fa121fe9ee6c5721b028c5c1ecdddbe0b7.html",
+    "size": 1783460,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/c0c91f3760f37c014a337065af556dce6a3e9e23": {
+    "content_hash": "f8d434280dd6a681af6bab4aabd38d38b7b8240cffc4045105668d98797447c5",
+    "etag": "W/\"cfi0m0avyz128by\"",
+    "fetched_at": "2026-04-24T17:53:52Z",
+    "last_modified": "",
+    "raw_path": "calc\\c0c91f3760f37c014a337065af556dce6a3e9e23.html",
+    "size": 1783726,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/c116b53a82355abfc42d378b9e13de14a7862a89": {
+    "content_hash": "dcb535310c7ab346d0209f274db6ed4ead44ab7346267f425ef0d57c4783813f",
+    "etag": "W/\"jfcs8uttl1127qc\"",
+    "fetched_at": "2026-04-24T17:53:22Z",
+    "last_modified": "",
+    "raw_path": "calc\\c116b53a82355abfc42d378b9e13de14a7862a89.html",
+    "size": 1782948,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/c1d123ab9456e5dd0c2b7c04535b3a5280c6803f": {
+    "content_hash": "8c95a17f9bcc695234dc72ee0b2c627a3dc32c38c14990177226124bd50d02be",
+    "etag": "W/\"fffytoovtl1285w\"",
+    "fetched_at": "2026-04-24T17:52:49Z",
+    "last_modified": "",
+    "raw_path": "calc\\c1d123ab9456e5dd0c2b7c04535b3a5280c6803f.html",
+    "size": 1783508,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/c1da452b3d87b6e51f5ad0804c72311f8037891b": {
+    "content_hash": "2f0fb672225471c8c52039b3a98c45a158433e8acd7f05a42ef81f69f0432682",
+    "etag": "W/\"k8728jgo0f1289w\"",
+    "fetched_at": "2026-04-24T17:53:57Z",
+    "last_modified": "",
+    "raw_path": "calc\\c1da452b3d87b6e51f5ad0804c72311f8037891b.html",
+    "size": 1783652,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/c277124ccf77aec43a503e3c2c92a67205fa709f": {
+    "content_hash": "4ca7b382399df770395e6ba449970a21f5fa76c2b7152e7611efec7f60ef0874",
+    "etag": "W/\"xsft1nhy3z127pw\"",
+    "fetched_at": "2026-04-24T17:54:57Z",
+    "last_modified": "",
+    "raw_path": "calc\\c277124ccf77aec43a503e3c2c92a67205fa709f.html",
+    "size": 1782932,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/c2d54ba5ef8bcfe60f1969d1f4289ae45e62d505": {
+    "content_hash": "bd67f57323e79c3eb96dbc48fdd886175cef1da6946af4ebcd323d85d4171cd0",
+    "etag": "W/\"h3p0a43ya0128b6\"",
+    "fetched_at": "2026-04-24T17:52:15Z",
+    "last_modified": "",
+    "raw_path": "calc\\c2d54ba5ef8bcfe60f1969d1f4289ae45e62d505.html",
+    "size": 1783698,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/c5edd9ee6aa5ce6b21ae9a6a8fbfc1fce2bf6be6": {
+    "content_hash": "4eba085daa89b0ec5dade91b391a29f195648a30913a960cfeaf4a83b6df0af3",
+    "etag": "W/\"1hdxr3e1xa128om\"",
+    "fetched_at": "2026-04-24T17:52:46Z",
+    "last_modified": "",
+    "raw_path": "calc\\c5edd9ee6aa5ce6b21ae9a6a8fbfc1fce2bf6be6.html",
+    "size": 1784182,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/c6bd51f133d5a35b9d9159b39918dda133aaef30": {
+    "content_hash": "0d56e5c88b07118c08f2fe11c9b53eabd6b80139037c5d5b6cedf6c4bfdb81c5",
+    "etag": "W/\"db9iylchn71280h\"",
+    "fetched_at": "2026-04-24T17:52:55Z",
+    "last_modified": "",
+    "raw_path": "calc\\c6bd51f133d5a35b9d9159b39918dda133aaef30.html",
+    "size": 1783313,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/c7063bc84441ee3cf72cabe35b8733fd25b49c78": {
+    "content_hash": "a9e2f6669cced974700513ee1d91299528f0f7f13f1272351a6dba738774be9e",
+    "etag": "W/\"iuk801w3t81286r\"",
+    "fetched_at": "2026-04-24T17:53:41Z",
+    "last_modified": "",
+    "raw_path": "calc\\c7063bc84441ee3cf72cabe35b8733fd25b49c78.html",
+    "size": 1783539,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/c7cc9bb8528953680d736712d3cab9f5cabbd5f4": {
+    "content_hash": "64188cfe5aa0e4582bd7310b49a2a58b3602ce2c960c1ff1980ab9fe76cb3023",
+    "etag": "W/\"137b3cdv35o128ox\"",
+    "fetched_at": "2026-04-24T17:52:26Z",
+    "last_modified": "",
+    "raw_path": "calc\\c7cc9bb8528953680d736712d3cab9f5cabbd5f4.html",
+    "size": 1784193,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/c983fbe8d0be46af46b189a3bf9c11b01ae6396d": {
+    "content_hash": "d62efc35f620cd0c2919cabfd558a8b5fc869d183cb15417a892bfe37bc2054a",
+    "etag": "W/\"sdqv38uc0z1279s\"",
+    "fetched_at": "2026-04-24T17:55:12Z",
+    "last_modified": "",
+    "raw_path": "calc\\c983fbe8d0be46af46b189a3bf9c11b01ae6396d.html",
+    "size": 1782352,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/ca08a1b2d4bb8baa5bfb2d6606887f3af72743b4": {
+    "content_hash": "2f6e303357d784a4c540423b453345ef7723413720bfe3ab2464aa8aea0a673b",
+    "etag": "W/\"hnx0em1710121xo\"",
+    "fetched_at": "2026-04-24T17:54:28Z",
+    "last_modified": "",
+    "raw_path": "calc\\ca08a1b2d4bb8baa5bfb2d6606887f3af72743b4.html",
+    "size": 1775436,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/cb0e028ef1dfdefc2e344dbd969e012b277993b1": {
+    "content_hash": "0666ffc8a7fd36ee2c5a918b701cacd925f446b6dee0c40993dca3c279f95eec",
+    "etag": "W/\"menqi3yae8127md\"",
+    "fetched_at": "2026-04-24T17:54:43Z",
+    "last_modified": "",
+    "raw_path": "calc\\cb0e028ef1dfdefc2e344dbd969e012b277993b1.html",
+    "size": 1782805,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/cc8341c4d47d57a38ed2662da3dbbad833677e4b": {
+    "content_hash": "bfe5cf8634173e3b2bae347aa29850d3319acc971b38edf737d9c32ebe5f18bd",
+    "etag": "W/\"5k19rezeob1278o\"",
+    "fetched_at": "2026-04-24T17:52:08Z",
+    "last_modified": "",
+    "raw_path": "calc\\cc8341c4d47d57a38ed2662da3dbbad833677e4b.html",
+    "size": 1782312,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/cedcbfac8f3fa949111d3b06843b788c7dbeab59": {
+    "content_hash": "21782c4fe9c9b7a46ae01ad7e1bc8cd939f57b84924a5440098be158adb6489a",
+    "etag": "W/\"15aps4y76ya129n1\"",
+    "fetched_at": "2026-04-24T17:54:36Z",
+    "last_modified": "",
+    "raw_path": "calc\\cedcbfac8f3fa949111d3b06843b788c7dbeab59.html",
+    "size": 1785421,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/cef1c57c23979cd019c3326145d0730f7c6ac347": {
+    "content_hash": "7f4976ccf0a068bd022bc3eabbfa5e05f1ccccbe6cfa0bff4c7b8863f1375d2f",
+    "etag": "W/\"ot95xnfpw6128h3\"",
+    "fetched_at": "2026-04-24T17:54:56Z",
+    "last_modified": "",
+    "raw_path": "calc\\cef1c57c23979cd019c3326145d0730f7c6ac347.html",
+    "size": 1783911,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/cf28362d06c7ff110f9751e801ec344983edb6e1": {
+    "content_hash": "b6a85100a251888f8fc0ff47f2015006c65e2a8becf1934cbfff60d7aa22d8cf",
+    "etag": "W/\"yz16gbjw0h128bc\"",
+    "fetched_at": "2026-04-24T17:52:15Z",
+    "last_modified": "",
+    "raw_path": "calc\\cf28362d06c7ff110f9751e801ec344983edb6e1.html",
+    "size": 1783704,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/d18dd04def03874b1db7c1e994173e23e54e432a": {
+    "content_hash": "7996ebb6117cbd37fcc86553bc7f3a81751187b6ffbefe5d162b7d711f2fafe8",
+    "etag": "W/\"xlvp87qisp127yy\"",
+    "fetched_at": "2026-04-24T17:52:23Z",
+    "last_modified": "",
+    "raw_path": "calc\\d18dd04def03874b1db7c1e994173e23e54e432a.html",
+    "size": 1783258,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/d3cb87dbab59152ca8f725eacb68389079bc16a3": {
+    "content_hash": "ff9055eb68dd96411b1850db15b6c3c21a119f7f26b1e6975b082a309e85dc02",
+    "etag": "W/\"8a6ddr1jqn129t4\"",
+    "fetched_at": "2026-04-24T17:53:08Z",
+    "last_modified": "",
+    "raw_path": "calc\\d3cb87dbab59152ca8f725eacb68389079bc16a3.html",
+    "size": 1785640,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/d3edeec70427190fdf16fd1a8f2a39e22a603cd5": {
+    "content_hash": "97db07045a6c3935196a81ebd65ee797eff558cc0b342d1a218a172b64d2544a",
+    "etag": "W/\"12d2bdfoaos127ur\"",
+    "fetched_at": "2026-04-24T17:50:45Z",
+    "last_modified": "",
+    "raw_path": "calc\\d3edeec70427190fdf16fd1a8f2a39e22a603cd5.html",
+    "size": 1783107,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/d6ddb1c511dcb86d17d1395a7ea65685b36a543c": {
+    "content_hash": "1d6d23777c38a2acf3791b4ac76d80eb8b5919d2fa596409453ff4370b94ae26",
+    "etag": "W/\"s45cigt8zm128kd\"",
+    "fetched_at": "2026-04-24T17:54:06Z",
+    "last_modified": "",
+    "raw_path": "calc\\d6ddb1c511dcb86d17d1395a7ea65685b36a543c.html",
+    "size": 1784029,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/d7c74e2629b8eda47925b37b26389ee27a43105e": {
+    "content_hash": "a1abbd75096d59e971f2e566f97cc961efd53fe6164fa2d12c02abff96ef0ab0",
+    "etag": "W/\"izsdrxh6ph127s2\"",
+    "fetched_at": "2026-04-24T17:50:51Z",
+    "last_modified": "",
+    "raw_path": "calc\\d7c74e2629b8eda47925b37b26389ee27a43105e.html",
+    "size": 1783010,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/d93799441bc6a15f07b49491617242e50f57154d": {
+    "content_hash": "5c12a97a334aa0ac117372cb914159aa42b6075543644e8f530be90f30f8dc91",
+    "etag": "W/\"y6syua75vn128bx\"",
+    "fetched_at": "2026-04-24T17:50:22Z",
+    "last_modified": "",
+    "raw_path": "calc\\d93799441bc6a15f07b49491617242e50f57154d.html",
+    "size": 1783725,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/dab136e18875c8fda6b035c262f8e93f301e1088": {
+    "content_hash": "d01d3bcaef832b283c8eed5c17e1756b77c39f8c7000dd782d1f95ee92fdd5b5",
+    "etag": "W/\"5h4or301vi127e4\"",
+    "fetched_at": "2026-04-24T17:53:38Z",
+    "last_modified": "",
+    "raw_path": "calc\\dab136e18875c8fda6b035c262f8e93f301e1088.html",
+    "size": 1782508,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/dd934c84f1d114e63d153686858c359deee3be20": {
+    "content_hash": "e5ab9e3166bc6e89194b3474d8ca80fb006db2ccadc7370103fd2b8e3065e9eb",
+    "etag": "W/\"1iopw8hpg2128yy\"",
+    "fetched_at": "2026-04-24T17:52:31Z",
+    "last_modified": "",
+    "raw_path": "calc\\dd934c84f1d114e63d153686858c359deee3be20.html",
+    "size": 1784554,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/ddd572a7b01343a8839a06bdde41da9dc9bd084d": {
+    "content_hash": "c3e8339ef7caef49ce42249c225b08616a0ac49cf84e382dc9c274189c0ef54b",
+    "etag": "W/\"kaworvolg3128hc\"",
+    "fetched_at": "2026-04-24T17:54:56Z",
+    "last_modified": "",
+    "raw_path": "calc\\ddd572a7b01343a8839a06bdde41da9dc9bd084d.html",
+    "size": 1783920,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/deb47acbaba9109d3f50bb8279f3dcffba631a35": {
+    "content_hash": "51767208d44c656555fae13f3eaf2407b708431bfbfc2e43993dcb573e89b557",
+    "etag": "W/\"ojww7khxh11289r\"",
+    "fetched_at": "2026-04-24T17:54:59Z",
+    "last_modified": "",
+    "raw_path": "calc\\deb47acbaba9109d3f50bb8279f3dcffba631a35.html",
+    "size": 1783647,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/deef19472a49947551ed709e070d4d555429739b": {
+    "content_hash": "cf1a337242069d6e5746363ca930e4712d853e21f8db7a8513c51cfc951c37bd",
+    "etag": "W/\"rzsf17ayre129e4\"",
+    "fetched_at": "2026-04-24T17:53:03Z",
+    "last_modified": "",
+    "raw_path": "calc\\deef19472a49947551ed709e070d4d555429739b.html",
+    "size": 1785100,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/e4143c2c32d87ede848b04b7fe74fe6e457bbf03": {
+    "content_hash": "9707fc2523d5ead9ecfab7cbee7634c77c52c68740a0e7422b28c2f53eda789d",
+    "etag": "W/\"ho2a8gfltg1288f\"",
+    "fetched_at": "2026-04-24T17:54:47Z",
+    "last_modified": "",
+    "raw_path": "calc\\e4143c2c32d87ede848b04b7fe74fe6e457bbf03.html",
+    "size": 1783599,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/e44c5e6bdfbac3c921f29fbeb1a0b0bae94a76c1": {
+    "content_hash": "1b9d44af80b52c185860ec40e07850012e2bf685c6ae84de86de2168ef269568",
+    "etag": "W/\"qb6gvw1hme127a1\"",
+    "fetched_at": "2026-04-24T17:53:25Z",
+    "last_modified": "",
+    "raw_path": "calc\\e44c5e6bdfbac3c921f29fbeb1a0b0bae94a76c1.html",
+    "size": 1782361,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/e45fe7b976359f36d229b89f33cca06fc8f11473": {
+    "content_hash": "899c7dd66bd835364b118c7328bb80abe68d423c6c5130458b7516d8794b790e",
+    "etag": "W/\"d8ed6k88j6127xq\"",
+    "fetched_at": "2026-04-24T17:52:16Z",
+    "last_modified": "",
+    "raw_path": "calc\\e45fe7b976359f36d229b89f33cca06fc8f11473.html",
+    "size": 1783214,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/e57042e0f0842133342b7261540aff1cd32bd14f": {
+    "content_hash": "e1f735657ab21050a02e37cde4ac4881b62fd4ad66d804870f86fe1bbd70de45",
+    "etag": "W/\"17ozy6i8mti127n5\"",
+    "fetched_at": "2026-04-24T17:53:50Z",
+    "last_modified": "",
+    "raw_path": "calc\\e57042e0f0842133342b7261540aff1cd32bd14f.html",
+    "size": 1782833,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/e591c24f542e80935f5c7a702f90cccfcaa06818": {
+    "content_hash": "826ced26fb66d0d1ab5f31aa7f13acda3ef2e22d36dd189107dcdbfa1be0e791",
+    "etag": "W/\"b0ykyuhzr8128y5\"",
+    "fetched_at": "2026-04-24T17:53:44Z",
+    "last_modified": "",
+    "raw_path": "calc\\e591c24f542e80935f5c7a702f90cccfcaa06818.html",
+    "size": 1784525,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/e81abc33bfe641b2ef5348a6925710c1ee1081b9": {
+    "content_hash": "ec55e83a7fd61c15fbcec1a297790f8181fa8f18feece238292ca5571cfbd2f5",
+    "etag": "W/\"11mf9bg7gm912889\"",
+    "fetched_at": "2026-04-24T17:54:48Z",
+    "last_modified": "",
+    "raw_path": "calc\\e81abc33bfe641b2ef5348a6925710c1ee1081b9.html",
+    "size": 1783593,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/e86c246e6946fd5eda897fd02e173e2525464273": {
+    "content_hash": "b896e3e9517ffde33759f33466d12de476fbc0a70f8eae6e5012fd6e3944832c",
+    "etag": "W/\"uiq9ib3kq2129k7\"",
+    "fetched_at": "2026-04-24T17:53:06Z",
+    "last_modified": "",
+    "raw_path": "calc\\e86c246e6946fd5eda897fd02e173e2525464273.html",
+    "size": 1785319,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/eafb0c01d9a5266eadac54167f3542a415cba8d3": {
+    "content_hash": "c5b592121deb4d3b43a0f5edb8731e2264598aa635babe1c543f3346f1967a7e",
+    "etag": "W/\"11v0d2o1di8127va\"",
+    "fetched_at": "2026-04-24T17:53:40Z",
+    "last_modified": "",
+    "raw_path": "calc\\eafb0c01d9a5266eadac54167f3542a415cba8d3.html",
+    "size": 1783126,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/eb97d9e3de7a99ecfe85e0ce069ea2f855fb098a": {
+    "content_hash": "b4f6efd119004849916ecebab916e2163bf92a38534838524d99dde5ecdd6fbe",
+    "etag": "W/\"12heap4l8e3127eq\"",
+    "fetched_at": "2026-04-24T17:53:40Z",
+    "last_modified": "",
+    "raw_path": "calc\\eb97d9e3de7a99ecfe85e0ce069ea2f855fb098a.html",
+    "size": 1782530,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/ebfe3bb2e7cd31ec2a73eb231a896dd128e86af1": {
+    "content_hash": "651917b346782693d2419bd29d66b5cf089bf625a83613d2e8c27452376ab54c",
+    "etag": "W/\"zak8hh630r127ot\"",
+    "fetched_at": "2026-04-24T17:53:01Z",
+    "last_modified": "",
+    "raw_path": "calc\\ebfe3bb2e7cd31ec2a73eb231a896dd128e86af1.html",
+    "size": 1782893,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/ede3d57fdba2d44b13e4205f5554b6be2588176b": {
+    "content_hash": "f16e98d6389090987bb0b8db7224248307e2241f7baf8a4acfe838c6550423b7",
+    "etag": "W/\"fhg12vb8vy1286a\"",
+    "fetched_at": "2026-04-24T17:55:08Z",
+    "last_modified": "",
+    "raw_path": "calc\\ede3d57fdba2d44b13e4205f5554b6be2588176b.html",
+    "size": 1783522,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/ee5bb55af3243b9f73b33c2c413299a3ba86d27e": {
+    "content_hash": "9bd0a02c7f11a839484489c76967b38f8a8db116888b990aaadde9d3cf0fdf93",
+    "etag": "W/\"wo5s2jsyos12aoe\"",
+    "fetched_at": "2026-04-24T17:52:37Z",
+    "last_modified": "",
+    "raw_path": "calc\\ee5bb55af3243b9f73b33c2c413299a3ba86d27e.html",
+    "size": 1786766,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/f087e582c82d09abc1ecf750a8c303068587f516": {
+    "content_hash": "b49d33a067db382a30ff75d731bbfaa6a19712b37fab3225010848f061c77b5c",
+    "etag": "W/\"gpo85a4gi71285x\"",
+    "fetched_at": "2026-04-24T17:54:32Z",
+    "last_modified": "",
+    "raw_path": "calc\\f087e582c82d09abc1ecf750a8c303068587f516.html",
+    "size": 1783509,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/f0b549018970a698ee49b9e531140fd6fd3bb2cf": {
+    "content_hash": "eacb93fa167e621fc1527c768818005163a35a49c5cfce4de80fc9e6198e8a6f",
+    "etag": "W/\"10tap2hiv971283m\"",
+    "fetched_at": "2026-04-24T17:54:53Z",
+    "last_modified": "",
+    "raw_path": "calc\\f0b549018970a698ee49b9e531140fd6fd3bb2cf.html",
+    "size": 1783426,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/f1d4437070f7fb2a71fa12992a386bca49a76d3c": {
+    "content_hash": "b1b76dd9584fca9278dd94f1c80ff30f253da6a7d06c70d1581554fca7e2b7b1",
+    "etag": "W/\"o24709erj9127iw\"",
+    "fetched_at": "2026-04-24T17:53:20Z",
+    "last_modified": "",
+    "raw_path": "calc\\f1d4437070f7fb2a71fa12992a386bca49a76d3c.html",
+    "size": 1782680,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/f2269b824d31aaae7cd30b5cd3ba34e6081595d9": {
+    "content_hash": "714a542a99c3602b5330a58e2f3a1155b0fae3f3e9d1a8ba718c4990390557b6",
+    "etag": "W/\"p52cn9xaqn1268i\"",
+    "fetched_at": "2026-04-24T17:53:26Z",
+    "last_modified": "",
+    "raw_path": "calc\\f2269b824d31aaae7cd30b5cd3ba34e6081595d9.html",
+    "size": 1781010,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/f40413bdbf12799bb22e6181521c5ed12a35d886": {
+    "content_hash": "941dc1866d1dbf419c6fa7a2417efbad6cd1041283ea2032fe81c309a216366a",
+    "etag": "W/\"g1xydgf6gn128gk\"",
+    "fetched_at": "2026-04-24T17:54:04Z",
+    "last_modified": "",
+    "raw_path": "calc\\f40413bdbf12799bb22e6181521c5ed12a35d886.html",
+    "size": 1783892,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/f55a62bcb879a5f4b0db383c7f72391995d3b6d4": {
+    "content_hash": "4cd7d17839ec0180c181202328c6d3d753a882be53c10ed27a852cf98230d781",
+    "etag": "W/\"uj16ed9eh5128zg\"",
+    "fetched_at": "2026-04-24T17:53:46Z",
+    "last_modified": "",
+    "raw_path": "calc\\f55a62bcb879a5f4b0db383c7f72391995d3b6d4.html",
+    "size": 1784572,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/f56d65920ee9abe03d5c66e69716c682852e19bb": {
+    "content_hash": "5e19bbc1f6e1ab1483f7d0242159ac46b0fb6406768f1bc432977eb05174628d",
+    "etag": "W/\"6xa2qq40s2127mg\"",
+    "fetched_at": "2026-04-24T17:54:42Z",
+    "last_modified": "",
+    "raw_path": "calc\\f56d65920ee9abe03d5c66e69716c682852e19bb.html",
+    "size": 1782808,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/f5c32c9f574490fdb3e8077c9796502a51b697bc": {
+    "content_hash": "df394e1f70fb229b657ea18b0ad7b7dfff384402852999e86b1290b5667fe690",
+    "etag": "W/\"vx9k0r56na127fx\"",
+    "fetched_at": "2026-04-24T17:53:18Z",
+    "last_modified": "",
+    "raw_path": "calc\\f5c32c9f574490fdb3e8077c9796502a51b697bc.html",
+    "size": 1782573,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/f79d3d331b8f05030354f157aa6558d474e186db": {
+    "content_hash": "4b7f525834c4294868bb54e062b87f828cf4baca71a449f7a58207a3b54b6fc4",
+    "etag": "W/\"9yl3qc85tt129ev\"",
+    "fetched_at": "2026-04-24T17:52:29Z",
+    "last_modified": "",
+    "raw_path": "calc\\f79d3d331b8f05030354f157aa6558d474e186db.html",
+    "size": 1785127,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/f8002f7095e8565e2305acef640756960d8c9842": {
+    "content_hash": "52af8156789c76de12650633c64eb5c5530e952852729212447894169ca7d762",
+    "etag": "W/\"g8ahw35adv128lo\"",
+    "fetched_at": "2026-04-24T17:54:24Z",
+    "last_modified": "",
+    "raw_path": "calc\\f8002f7095e8565e2305acef640756960d8c9842.html",
+    "size": 1784076,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/f8d80f251edf984f75726fc4ebd5e679564e1abe": {
+    "content_hash": "814d017020528b68c8f07488561225c10e0692cd97cd38dac4dfa8a5ef1c0592",
+    "etag": "W/\"4c8x7las4p12867\"",
+    "fetched_at": "2026-04-24T17:52:50Z",
+    "last_modified": "",
+    "raw_path": "calc\\f8d80f251edf984f75726fc4ebd5e679564e1abe.html",
+    "size": 1783519,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/fc569ad20a199fe90123119a49ab2a7ce10989b1": {
+    "content_hash": "ad521b74b705a8b4711b4149831b748b70b51c1f5616cea21cc977ad73956d91",
+    "etag": "W/\"1889epnvu4x1286j\"",
+    "fetched_at": "2026-04-24T17:55:07Z",
+    "last_modified": "",
+    "raw_path": "calc\\fc569ad20a199fe90123119a49ab2a7ce10989b1.html",
+    "size": 1783531,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/fc7a77280f4da78383152b44a30041ce2c364447": {
+    "content_hash": "e20119b6da2518bd5a59cbf43ef9f94b8d540c3695f9cf007cb5db927e548f4f",
+    "etag": "W/\"p4wkpmba27127ji\"",
+    "fetched_at": "2026-04-24T17:53:31Z",
+    "last_modified": "",
+    "raw_path": "calc\\fc7a77280f4da78383152b44a30041ce2c364447.html",
+    "size": 1782702,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/fd2303e5a6883465244d8d938b212cfad40a8954": {
+    "content_hash": "60160958846b8f5ba50b13d871cf1d70025680098dc031712c978d1eb6dfce8a",
+    "etag": "W/\"u507kyil7x127on\"",
+    "fetched_at": "2026-04-24T17:53:02Z",
+    "last_modified": "",
+    "raw_path": "calc\\fd2303e5a6883465244d8d938b212cfad40a8954.html",
+    "size": 1782887,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/fff95080d53fd0adba35c3b67b8cdd02b2b8e1ea": {
+    "content_hash": "be2b615c2067308aa1c08c34621cb2dec1df4f6e851093c49a9f689b81518259",
+    "etag": "W/\"samebr6hcv127kb\"",
+    "fetched_at": "2026-04-24T17:54:46Z",
+    "last_modified": "",
+    "raw_path": "calc\\fff95080d53fd0adba35c3b67b8cdd02b2b8e1ea.html",
+    "size": 1782731,
+    "status": 200
+  },
+  "https://deadwoodjedi.info/cb/none": {
+    "content_hash": "283aa34d2e25ef63be3a54b78e46261b0e5c4af32d05980c3f71a3de7473817e",
+    "etag": "W/\"7fdd6952caabadd5a57a6d0b5371b350\"",
+    "fetched_at": "2026-04-24T17:52:09Z",
+    "last_modified": "",
+    "raw_path": "calc\\none.html",
+    "size": 4037,
+    "status": 200
   }
 }
