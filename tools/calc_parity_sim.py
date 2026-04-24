@@ -34,7 +34,7 @@ from pathlib import Path
 from typing import Optional
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from dwj_tunes import load_all, DwjVariant
+from dwj_tunes import load_all, DwjVariant, DwjSkillEffect, DwjChampion
 
 
 @dataclass
@@ -65,6 +65,8 @@ class Actor:
     speed_bonus: int
     has_lore_of_steel: bool
     skill_configs: list[SkillConfig]
+    # skill_effects[alias] = list of DwjSkillEffect dicts from calc_champions
+    skill_effects: dict[str, list] = field(default_factory=dict)
     turn_meter: float = 0.0
     has_extra_turn: bool = False
     effects: list[Effect] = field(default_factory=list)
@@ -134,9 +136,13 @@ def make_clanboss(boss_speed: int, affinity: str) -> Actor:
     )
 
 
-def prepare_champion(slot) -> Actor:
+def prepare_champion(slot, champion: DwjChampion | None = None) -> Actor:
     """DWJ's ey(champ). Filter skillConfigs to only A1 or cooldown>0 skills
-    (drops A4 passive). Everything else initialized fresh."""
+    (drops A4 passive). Everything else initialized fresh.
+
+    `champion` (optional) supplies the hero's skill definitions from
+    calc_champions.json so effects can be applied.
+    """
     filtered = []
     for c in slot.skill_configs:
         if c.alias == "A1" or c.cooldown > 0:
@@ -145,6 +151,23 @@ def prepare_champion(slot) -> Actor:
                 priority=c.priority, delay=c.delay, cooldown=c.cooldown,
                 current_cooldown=0,
             ))
+    # Build skill_effects map {alias: [effect_dicts]} from calc_champions
+    skill_effects: dict[str, list] = {}
+    if champion is not None:
+        for sk in champion.skills:
+            effects = []
+            for e in sk.effects:
+                effects.append({
+                    "id": e.id,
+                    "amount": e.amount,
+                    "turns": e.turns,
+                    "champions": e.champions,
+                    "enemy": e.enemy,
+                    "buff": e.buff,
+                    "debuff": e.debuff,
+                    "condition": e.condition,
+                })
+            skill_effects[sk.alias] = effects
     # Special case: Genzin gets stat_mod speed=10 per DWJ source
     stat_mod = 10.0 if slot.name == "Genzin" else 0.0
     return Actor(
@@ -155,6 +178,7 @@ def prepare_champion(slot) -> Actor:
         speed_bonus=slot.speed_bonus or 0,
         has_lore_of_steel=bool(slot.has_lore_of_steel),
         skill_configs=filtered,
+        skill_effects=skill_effects,
         stat_mod_speed=stat_mod,
     )
 
@@ -163,8 +187,157 @@ def count_boss_turns(turns: list[TurnRecord]) -> int:
     return sum(1 for t in turns if t.actor_name == "Clanboss")
 
 
-def simulate(variant: DwjVariant, max_turns: int = 1000, max_boss_turns: int = 50) -> list[TurnRecord]:
-    actors = [prepare_champion(s) for s in variant.slots]
+# ------------------------ effect dispatcher ------------------------
+# Ports DWJ's `er` handler table from chunk 824-*.js. Focus on effects that
+# affect turn scheduling: tm_up, tm_down, reduce_cd, reset_cd, extra_turn,
+# speedup, speeddown. Other effects are no-ops for scheduling parity.
+
+
+def _resolve_targets(effect: dict, actor: Actor, actors: list[Actor]) -> list[Actor]:
+    """Map effect's 'champions' / 'enemy' to the list of targets."""
+    champ = effect.get("champions")
+    enemy = effect.get("enemy")
+    if champ == "self":
+        return [actor]
+    if champ == "allies":
+        return [a for a in actors if not a.is_boss and not actor.is_boss and a is not actor] + ([actor] if not actor.is_boss else [])
+    if champ == "all":
+        return list(actors)
+    if champ == "single":
+        # single friendly (or self). Without a real target picker, just self.
+        return [actor]
+    if enemy == "all":
+        return [a for a in actors if a.is_boss != actor.is_boss]
+    if enemy == "single":
+        # pick first hostile
+        return next(
+            ([a] for a in actors if a.is_boss != actor.is_boss), []
+        )
+    return []
+
+
+def _check_condition(condition: dict | None, targets: list[Actor]) -> bool:
+    """Evaluate the effect's `condition`. Supported checks:
+    - {"check_target": "isBoss"} — at least one target is the boss
+    - {"check_target": "!isBoss"} — no target is the boss
+    """
+    if not condition:
+        return True
+    ct = condition.get("check_target")
+    if ct == "isBoss":
+        return any(t.is_boss for t in targets)
+    if ct == "!isBoss":
+        return not any(t.is_boss for t in targets)
+    # Unknown condition → default to passing; effect still fires for unsupported conditions
+    return True
+
+
+def _apply_tm_up(targets: list[Actor], amount: float) -> None:
+    for t in targets:
+        t.turn_meter = min(100.0, t.turn_meter + amount)
+
+
+def _apply_tm_down(targets: list[Actor], amount: float) -> None:
+    for t in targets:
+        t.turn_meter = max(0.0, t.turn_meter - amount)
+
+
+def _apply_reduce_cd(targets: list[Actor], amount: float, named: str | None = None) -> None:
+    for t in targets:
+        for c in t.skill_configs:
+            if named and c.alias != named:
+                continue
+            if amount == -1:
+                c.current_cooldown = 0
+            else:
+                c.current_cooldown = max(0, c.current_cooldown - int(amount))
+
+
+def _apply_reset_cd(targets: list[Actor]) -> None:
+    for t in targets:
+        for c in t.skill_configs:
+            c.current_cooldown = 0
+
+
+def _apply_extra_turn(targets: list[Actor]) -> None:
+    for t in targets:
+        t.has_extra_turn = True
+
+
+def _apply_speed_buff(targets: list[Actor], amount_pct: float, duration: int, is_debuff: bool = False) -> None:
+    name = "speed-debuff" if is_debuff else "speed-buff"
+    for t in targets:
+        # isSingular: replace existing same-name effect
+        t.effects = [e for e in t.effects if e.name != name]
+        t.effects.append(Effect(
+            name=name,
+            amount=amount_pct / 100.0,
+            duration=duration,
+            reduceDurationAt="turn-end",
+        ))
+
+
+def apply_skill_effects(actor: Actor, skill_alias: str, actors: list[Actor]) -> None:
+    """Apply the skill's effect list. Only handles effects that affect scheduling.
+
+    This is a subset of DWJ's el()/er table — just enough to reproduce turn
+    order. Damage and stat-buff effects (atkup, defup, unkillable, shield,
+    block_dmg, continuous_heal, poison, hpburn, etc.) are skipped because
+    they don't alter cast order in DWJ's sim.
+    """
+    effects = actor.skill_effects.get(skill_alias, [])
+    for e in effects:
+        targets = _resolve_targets(e, actor, actors)
+        if not targets:
+            continue
+        if not _check_condition(e.get("condition"), targets):
+            continue
+        eff_id = e.get("id")
+        amount = e.get("amount") or 0
+        turns = e.get("turns") or 0
+        buff = e.get("buff")
+        debuff = e.get("debuff")
+
+        # Direct id effects
+        if eff_id == "reduce_cd":
+            _apply_reduce_cd(targets, amount, named=e.get("reduce_cd") if isinstance(e.get("reduce_cd"), str) else None)
+            continue
+        if eff_id == "reset_cd":
+            _apply_reset_cd(targets)
+            continue
+        if eff_id == "extra_turn":
+            _apply_extra_turn(targets)
+            continue
+        if eff_id == "tm_up":
+            _apply_tm_up(targets, amount)
+            continue
+        if eff_id == "tm_down":
+            _apply_tm_down(targets, amount)
+            continue
+
+        # add_buff with sub-type
+        if eff_id == "add_buff":
+            if buff == "tm_up":
+                _apply_tm_up(targets, amount)
+            elif buff == "speedup" or buff == "speed":
+                _apply_speed_buff(targets, amount, turns, is_debuff=False)
+            elif buff == "reduce_cd":
+                _apply_reduce_cd(targets, amount)
+            # Other buffs (unkillable, block_dmg, shield, etc.) don't affect scheduling
+            continue
+
+        if eff_id == "add_debuff":
+            if debuff == "tm_down":
+                _apply_tm_down(targets, amount)
+            elif debuff == "speeddown" or debuff == "speed":
+                _apply_speed_buff(targets, amount, turns, is_debuff=True)
+            # Other debuffs don't affect scheduling
+            continue
+
+
+def simulate(variant: DwjVariant, max_turns: int = 1000, max_boss_turns: int = 50, apply_effects: bool = True) -> list[TurnRecord]:
+    dwj = load_all()
+    actors = [prepare_champion(s, dwj.champion(s.name)) for s in variant.slots]
     actors.append(make_clanboss(variant.boss_speed, variant.boss_affinity))
     turns: list[TurnRecord] = []
 
@@ -223,7 +396,9 @@ def simulate(variant: DwjVariant, max_turns: int = 1000, max_boss_turns: int = 5
             c.delay = max(0, c.delay - 1)
             c.current_cooldown = max(0, c.current_cooldown - 1)
 
-        # Skill-effect application intentionally deferred
+        # Apply skill effects that affect scheduling
+        if apply_effects and not actor.is_boss:
+            apply_skill_effects(actor, skill.alias, actors)
 
         # Decrement turn-end effects, remove expired
         for e in actor.effects:
