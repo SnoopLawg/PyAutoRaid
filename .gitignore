@@ -34,3 +34,4 @@ myth_eater_gear*.txt
 # DWJ scrape - raw archival (gitignored; parsed JSON is committed)
 data/dwj/raw/
 probe/
+data/hh/raw/

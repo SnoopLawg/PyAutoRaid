@@ -1,0 +1,380 @@
+{
+  "https://hellhades.com/boss_guide-sitemap.xml": {
+    "content_hash": "9ee88887f012eaf488d0869022cfd8efbe7c1b621202f24937903e8bc6366d6f",
+    "etag": "",
+    "fetched_at": "2026-04-24T18:50:09Z",
+    "last_modified": "",
+    "raw_path": "sitemaps\\boss_guide-sitemap.xml",
+    "size": 6388,
+    "status": 200
+  },
+  "https://hellhades.com/champions-sitemap.xml": {
+    "content_hash": "619b00c8c74aae7a9d700a50ef132e9e451957c0a1d4c9d5c3ede873abfbc8ff",
+    "etag": "",
+    "fetched_at": "2026-04-24T18:50:07Z",
+    "last_modified": "",
+    "raw_path": "sitemaps\\champions-sitemap.xml",
+    "size": 257541,
+    "status": 200
+  },
+  "https://hellhades.com/champions-sitemap2.xml": {
+    "content_hash": "6fff83e07749688e6f2f65134ed15da4ed5d1b523533f22779fc4e2d73f77c04",
+    "etag": "",
+    "fetched_at": "2026-04-24T18:50:08Z",
+    "last_modified": "",
+    "raw_path": "sitemaps\\champions-sitemap2.xml",
+    "size": 4092,
+    "status": 200
+  },
+  "https://hellhades.com/page-sitemap.xml": {
+    "content_hash": "0fb9b26c9616f7b7a84927d52df15678cc53714676cb188e9a00d03b31d86a9e",
+    "etag": "",
+    "fetched_at": "2026-04-24T18:50:03Z",
+    "last_modified": "",
+    "raw_path": "sitemaps\\page-sitemap.xml",
+    "size": 420544,
+    "status": 200
+  },
+  "https://hellhades.com/post-sitemap.xml": {
+    "content_hash": "25b29126b971279b24af6524c897d23bc3711b1ba21ae4ede3612bcdbda0cffd",
+    "etag": "",
+    "fetched_at": "2026-04-24T18:49:52Z",
+    "last_modified": "",
+    "raw_path": "sitemaps\\post-sitemap.xml",
+    "size": 983906,
+    "status": 200
+  },
+  "https://hellhades.com/post-sitemap2.xml": {
+    "content_hash": "089bae6fc7e993ddab8bc31293d41a2081a9436e6e06dd18a46a2022bf72408f",
+    "etag": "",
+    "fetched_at": "2026-04-24T18:49:56Z",
+    "last_modified": "",
+    "raw_path": "sitemaps\\post-sitemap2.xml",
+    "size": 1120174,
+    "status": 200
+  },
+  "https://hellhades.com/post-sitemap3.xml": {
+    "content_hash": "8e68be1e31608d53b35c536b46932872a26947416e64267047fc7aa0471c3877",
+    "etag": "",
+    "fetched_at": "2026-04-24T18:50:00Z",
+    "last_modified": "",
+    "raw_path": "sitemaps\\post-sitemap3.xml",
+    "size": 901732,
+    "status": 200
+  },
+  "https://hellhades.com/sitemap_index.xml": {
+    "content_hash": "f9ba8d48cd6a03eaec65f28d7e28f83c18b2c7d8e136d5f71327439ed240c5ef",
+    "etag": "",
+    "fetched_at": "2026-04-24T18:49:49Z",
+    "last_modified": "",
+    "raw_path": "sitemaps\\sitemap_index.xml",
+    "size": 2738,
+    "status": 200
+  },
+  "https://hellhades.com/wp-json/hh-api/v1/champions/tierlist": {
+    "content_hash": "093018d02e9aad45477144407b553789e3bda8a73798774bf5e3b8967fc73ad5",
+    "etag": "",
+    "fetched_at": "2026-04-24T18:50:11Z",
+    "last_modified": "Fri, 24 Apr 2026 18:46:32 GMT",
+    "raw_path": "api\\hh-api-tierlist.json",
+    "size": 1001620,
+    "status": 200
+  },
+  "https://hellhades.com/wp-json/hh-api/v3/raid/export": {
+    "content_hash": "2d5eb525d07800dbfff5d51fcf73bd296e5d69ef7cd1bd5a11754ff7c2c10c7a",
+    "etag": "",
+    "fetched_at": "2026-04-24T18:50:10Z",
+    "last_modified": "Fri, 24 Apr 2026 18:46:42 GMT",
+    "raw_path": "api\\hh-api-raid_export.json",
+    "size": 5273498,
+    "status": 200
+  },
+  "https://hellhades.com/wp-json/wp/v2/pages?per_page=100&page=1": {
+    "content_hash": "70c46547e6670c5544b1d132b883a1ff26d0faec4f7bf2365af84fb597c5615f",
+    "etag": "",
+    "fetched_at": "2026-04-24T18:53:26Z",
+    "last_modified": "",
+    "raw_path": "pages\\page-01.json",
+    "size": 4175129,
+    "status": 200
+  },
+  "https://hellhades.com/wp-json/wp/v2/pages?per_page=100&page=2": {
+    "content_hash": "df74116c14368e315b959976e35a9a9bd2bb81d01d5f46dd791e43febd67c9ab",
+    "etag": "",
+    "fetched_at": "2026-04-24T18:53:37Z",
+    "last_modified": "",
+    "raw_path": "pages\\page-02.json",
+    "size": 5426919,
+    "status": 200
+  },
+  "https://hellhades.com/wp-json/wp/v2/pages?per_page=100&page=3": {
+    "content_hash": "444896ade6450a35b5212e538de5f01b3f9048f6b1de31bbec698e7405e2833c",
+    "etag": "",
+    "fetched_at": "2026-04-24T18:53:46Z",
+    "last_modified": "",
+    "raw_path": "pages\\page-03.json",
+    "size": 5269742,
+    "status": 200
+  },
+  "https://hellhades.com/wp-json/wp/v2/pages?per_page=100&page=4": {
+    "content_hash": "1eaff0478e5e99ffcc54d28dd78ffc559d9114e16e11f10b566ed29d62a474c2",
+    "etag": "",
+    "fetched_at": "2026-04-24T18:53:49Z",
+    "last_modified": "",
+    "raw_path": "pages\\page-04.json",
+    "size": 826523,
+    "status": 200
+  },
+  "https://hellhades.com/wp-json/wp/v2/posts?per_page=100&page=1": {
+    "content_hash": "8c7b6fd570d930bbca4847afa1bd69e676c5fde2a65e2740dcee51dc4fa4a0ce",
+    "etag": "",
+    "fetched_at": "2026-04-24T18:50:22Z",
+    "last_modified": "",
+    "raw_path": "posts\\page-01.json",
+    "size": 6123399,
+    "status": 200
+  },
+  "https://hellhades.com/wp-json/wp/v2/posts?per_page=100&page=10": {
+    "content_hash": "a1b052e1d4ac9e43a295d7f797c64ca6b1ef0aa4d98b89b1869a8f138e1ceded",
+    "etag": "",
+    "fetched_at": "2026-04-24T18:51:35Z",
+    "last_modified": "",
+    "raw_path": "posts\\page-10.json",
+    "size": 5881362,
+    "status": 200
+  },
+  "https://hellhades.com/wp-json/wp/v2/posts?per_page=100&page=11": {
+    "content_hash": "08c710f8a9896db08c63d5e1c3f8f8220bd72e4711767f5e9814e0364b92db73",
+    "etag": "",
+    "fetched_at": "2026-04-24T18:51:44Z",
+    "last_modified": "",
+    "raw_path": "posts\\page-11.json",
+    "size": 5539287,
+    "status": 200
+  },
+  "https://hellhades.com/wp-json/wp/v2/posts?per_page=100&page=12": {
+    "content_hash": "3f515aa6c980bc19deb16a4d8dcd9d7230616c0063a6f6b0689fd5eaeb2cf093",
+    "etag": "",
+    "fetched_at": "2026-04-24T18:51:50Z",
+    "last_modified": "",
+    "raw_path": "posts\\page-12.json",
+    "size": 3944293,
+    "status": 200
+  },
+  "https://hellhades.com/wp-json/wp/v2/posts?per_page=100&page=13": {
+    "content_hash": "0b884a771c45a600296fb00d95193c3662ca54622324350197c639bee3132c88",
+    "etag": "",
+    "fetched_at": "2026-04-24T18:51:57Z",
+    "last_modified": "",
+    "raw_path": "posts\\page-13.json",
+    "size": 3776634,
+    "status": 200
+  },
+  "https://hellhades.com/wp-json/wp/v2/posts?per_page=100&page=14": {
+    "content_hash": "526bcca52d9fd5640146266475a91d6b091fca256846b6730a0657ebf0d12b74",
+    "etag": "",
+    "fetched_at": "2026-04-24T18:52:03Z",
+    "last_modified": "",
+    "raw_path": "posts\\page-14.json",
+    "size": 3754872,
+    "status": 200
+  },
+  "https://hellhades.com/wp-json/wp/v2/posts?per_page=100&page=15": {
+    "content_hash": "60fefa2a76866c492c4abaab6c3efd7fc48fa79bece01006843e6e8b271f423a",
+    "etag": "",
+    "fetched_at": "2026-04-24T18:52:09Z",
+    "last_modified": "",
+    "raw_path": "posts\\page-15.json",
+    "size": 3701021,
+    "status": 200
+  },
+  "https://hellhades.com/wp-json/wp/v2/posts?per_page=100&page=16": {
+    "content_hash": "d8db45688b781b860868241868c93b66e89b90c81b9612e11727e7e82fa2760d",
+    "etag": "",
+    "fetched_at": "2026-04-24T18:52:15Z",
+    "last_modified": "",
+    "raw_path": "posts\\page-16.json",
+    "size": 3305308,
+    "status": 200
+  },
+  "https://hellhades.com/wp-json/wp/v2/posts?per_page=100&page=17": {
+    "content_hash": "8d42c96c5fb6f4b5d876fb4f9dbabf373efb17b40feb6ab3f00a2e11461ccb84",
+    "etag": "",
+    "fetched_at": "2026-04-24T18:52:21Z",
+    "last_modified": "",
+    "raw_path": "posts\\page-17.json",
+    "size": 3637228,
+    "status": 200
+  },
+  "https://hellhades.com/wp-json/wp/v2/posts?per_page=100&page=18": {
+    "content_hash": "2c52a38cb8640e5e68bc5cdc21b67388c9a6e34066f97c55b28b941625b0ff4e",
+    "etag": "",
+    "fetched_at": "2026-04-24T18:52:27Z",
+    "last_modified": "",
+    "raw_path": "posts\\page-18.json",
+    "size": 3704416,
+    "status": 200
+  },
+  "https://hellhades.com/wp-json/wp/v2/posts?per_page=100&page=19": {
+    "content_hash": "e842ae83f6de2423f7ec064c6d16aa2e16f45f3549049ed50cbbb7ce66b2b172",
+    "etag": "",
+    "fetched_at": "2026-04-24T18:52:33Z",
+    "last_modified": "",
+    "raw_path": "posts\\page-19.json",
+    "size": 3771566,
+    "status": 200
+  },
+  "https://hellhades.com/wp-json/wp/v2/posts?per_page=100&page=2": {
+    "content_hash": "7a9bcc149016c546f3955b5aecae590f9b49e457889f61dd734c8b69ce927695",
+    "etag": "",
+    "fetched_at": "2026-04-24T18:50:30Z",
+    "last_modified": "",
+    "raw_path": "posts\\page-02.json",
+    "size": 4921645,
+    "status": 200
+  },
+  "https://hellhades.com/wp-json/wp/v2/posts?per_page=100&page=20": {
+    "content_hash": "3ce04975faf29e4796ff36b63c81124ceb80714eb6adcc7af01b3c9a3777f8cd",
+    "etag": "",
+    "fetched_at": "2026-04-24T18:52:39Z",
+    "last_modified": "",
+    "raw_path": "posts\\page-20.json",
+    "size": 3096368,
+    "status": 200
+  },
+  "https://hellhades.com/wp-json/wp/v2/posts?per_page=100&page=21": {
+    "content_hash": "f06b034a904349d5e3820d9e9c563ecc8ed9ec48e1c5157304b2a68b438ff9ad",
+    "etag": "",
+    "fetched_at": "2026-04-24T18:52:44Z",
+    "last_modified": "",
+    "raw_path": "posts\\page-21.json",
+    "size": 2903568,
+    "status": 200
+  },
+  "https://hellhades.com/wp-json/wp/v2/posts?per_page=100&page=22": {
+    "content_hash": "bd8b9522e07ea295d3033b10203fd945e216fcc869df5eedc6c3bb5ebc7758cc",
+    "etag": "",
+    "fetched_at": "2026-04-24T18:52:49Z",
+    "last_modified": "",
+    "raw_path": "posts\\page-22.json",
+    "size": 3100494,
+    "status": 200
+  },
+  "https://hellhades.com/wp-json/wp/v2/posts?per_page=100&page=23": {
+    "content_hash": "fbcca9e5a105d2c2c76efdd2958ea28f75a0de6564e0f6e0ac4bfa26bd40ccc0",
+    "etag": "",
+    "fetched_at": "2026-04-24T18:52:54Z",
+    "last_modified": "",
+    "raw_path": "posts\\page-23.json",
+    "size": 2963918,
+    "status": 200
+  },
+  "https://hellhades.com/wp-json/wp/v2/posts?per_page=100&page=24": {
+    "content_hash": "24693c7eb495c74e34f38d2a69bc9d05034a779692c4f6a77f87f3dd5ac913d4",
+    "etag": "",
+    "fetched_at": "2026-04-24T18:52:59Z",
+    "last_modified": "",
+    "raw_path": "posts\\page-24.json",
+    "size": 3000914,
+    "status": 200
+  },
+  "https://hellhades.com/wp-json/wp/v2/posts?per_page=100&page=25": {
+    "content_hash": "84c58a22da60b8dce3b51e36f4c99a41ddb7c5686d33bda160988029cb15c754",
+    "etag": "",
+    "fetched_at": "2026-04-24T18:53:04Z",
+    "last_modified": "",
+    "raw_path": "posts\\page-25.json",
+    "size": 2868733,
+    "status": 200
+  },
+  "https://hellhades.com/wp-json/wp/v2/posts?per_page=100&page=26": {
+    "content_hash": "85a0a4e689dfb85f6673f5be46998b385159b1a606d680354c603e20b7694268",
+    "etag": "",
+    "fetched_at": "2026-04-24T18:53:09Z",
+    "last_modified": "",
+    "raw_path": "posts\\page-26.json",
+    "size": 2907610,
+    "status": 200
+  },
+  "https://hellhades.com/wp-json/wp/v2/posts?per_page=100&page=27": {
+    "content_hash": "be7909980e197b683cbf4cf6cb59472e5291b00065c1a6cf075c756805b3ea42",
+    "etag": "",
+    "fetched_at": "2026-04-24T18:53:14Z",
+    "last_modified": "",
+    "raw_path": "posts\\page-27.json",
+    "size": 2996239,
+    "status": 200
+  },
+  "https://hellhades.com/wp-json/wp/v2/posts?per_page=100&page=28": {
+    "content_hash": "cc29bdd6de167998283f6511a3a25e2b3b2be0053990af3a479a665644b00499",
+    "etag": "",
+    "fetched_at": "2026-04-24T18:53:19Z",
+    "last_modified": "",
+    "raw_path": "posts\\page-28.json",
+    "size": 3006690,
+    "status": 200
+  },
+  "https://hellhades.com/wp-json/wp/v2/posts?per_page=100&page=3": {
+    "content_hash": "1652f460e1b06d76ffd29ce158da8422dd95d067ef9a2aa81826cf7bbe41e550",
+    "etag": "",
+    "fetched_at": "2026-04-24T18:50:38Z",
+    "last_modified": "",
+    "raw_path": "posts\\page-03.json",
+    "size": 4762902,
+    "status": 200
+  },
+  "https://hellhades.com/wp-json/wp/v2/posts?per_page=100&page=4": {
+    "content_hash": "94ca73445df6b8898943f7ae1feb0a5fe597e855f6f4f88a6052a203cff4b3da",
+    "etag": "",
+    "fetched_at": "2026-04-24T18:50:45Z",
+    "last_modified": "",
+    "raw_path": "posts\\page-04.json",
+    "size": 4284434,
+    "status": 200
+  },
+  "https://hellhades.com/wp-json/wp/v2/posts?per_page=100&page=5": {
+    "content_hash": "8ec17c7c4ba9459fcf31940b75859356b82f5b3b71c65ccd8a83b6eb3e8acab6",
+    "etag": "",
+    "fetched_at": "2026-04-24T18:50:52Z",
+    "last_modified": "",
+    "raw_path": "posts\\page-05.json",
+    "size": 4733340,
+    "status": 200
+  },
+  "https://hellhades.com/wp-json/wp/v2/posts?per_page=100&page=6": {
+    "content_hash": "1339507eaecffecb73a7075b6ca5afbaaabcc48b124bb811d3bf9cc0f4330e5d",
+    "etag": "",
+    "fetched_at": "2026-04-24T18:51:01Z",
+    "last_modified": "",
+    "raw_path": "posts\\page-06.json",
+    "size": 5018212,
+    "status": 200
+  },
+  "https://hellhades.com/wp-json/wp/v2/posts?per_page=100&page=7": {
+    "content_hash": "745a1e106760da41af47ff62b3d00dc6119533734db16379bdc8a9b87206b465",
+    "etag": "",
+    "fetched_at": "2026-04-24T18:51:10Z",
+    "last_modified": "",
+    "raw_path": "posts\\page-07.json",
+    "size": 5862161,
+    "status": 200
+  },
+  "https://hellhades.com/wp-json/wp/v2/posts?per_page=100&page=8": {
+    "content_hash": "5fbb661217faa27464ea4c110738d7eb30edffe89895511c8a33eee090fa693d",
+    "etag": "",
+    "fetched_at": "2026-04-24T18:51:18Z",
+    "last_modified": "",
+    "raw_path": "posts\\page-08.json",
+    "size": 5339958,
+    "status": 200
+  },
+  "https://hellhades.com/wp-json/wp/v2/posts?per_page=100&page=9": {
+    "content_hash": "8be192e981cdd91d9fd54cf86258facd787768120cc6b3904449ba826e5a3f57",
+    "etag": "",
+    "fetched_at": "2026-04-24T18:51:27Z",
+    "last_modified": "",
+    "raw_path": "posts\\page-09.json",
+    "size": 5244756,
+    "status": 200
+  }
+}
