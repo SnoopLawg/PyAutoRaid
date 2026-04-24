@@ -893,15 +893,20 @@ class CBSimulator:
             if all(c.is_dead for c in self.champions) or enraged:
                 break
 
-            # Fill turn meters (DWJ: speed buff/debuff = ±30% of BASE speed)
+            # Fill turn meters. DWJ formula: effective = total_speed * (1 + buff_mod)
+            # where buff_mod = +0.30 for inc_spd, -0.30 for dec_spd, both stack
+            # multiplicatively. This matches cb_scheduler.effective_speed and is
+            # different from cb_sim's earlier "base * 0.30" approximation, which
+            # gave Maneater (98 base, 286 total) only +29 SPD instead of the +86
+            # DWJ awards. That gap was big enough to flip cast order under buffs.
             for c in self.champions:
                 if not c.is_dead:
-                    effective_spd = c.speed
-                    base = c.base_speed if c.base_speed > 0 else c.speed
+                    buff_mod = 0.0
                     if c.has_buff("inc_spd"):
-                        effective_spd += base * 0.30
+                        buff_mod += 0.30
                     if c.has_buff("dec_spd"):
-                        effective_spd -= base * 0.30
+                        buff_mod -= 0.30
+                    effective_spd = c.speed * (1.0 + buff_mod)
                     c.tm += effective_spd
             self.cb_tm += self.cb_speed
 
