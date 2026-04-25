@@ -1043,14 +1043,19 @@ class CBSimulator:
                         c.damage.poison += dmg
                         break
 
-        # HP Burn tick (only 1 counts even if multiple on bar)
-        if self.debuff_bar.has("hp_burn"):
-            burn_slot = next(s for s in self.debuff_bar.slots if s.debuff_type == "hp_burn")
-            burn_dmg = self._cap_fa(HP_BURN_DMG, kind="dot")
-            for c in self.champions:
-                if c.name == burn_slot.source:
-                    c.damage.hp_burn += burn_dmg
-                    break
+        # HP Burn ticks — each active HP burn slot ticks once per CB turn,
+        # damage attributed to the source hero. Previously this only counted
+        # one slot ("only 1 counts even if multiple on bar") which was wrong:
+        # ground-truth ticklog from a real Magic UNM run (2026-04-24) showed
+        # Ninja with 128 ~75K burn-shaped events vs cb_sim's ~67 — a 2× gap
+        # explained entirely by missing per-slot ticks.
+        for slot in list(self.debuff_bar.slots):
+            if slot.debuff_type == "hp_burn":
+                burn_dmg = self._cap_fa(HP_BURN_DMG, kind="dot")
+                for c in self.champions:
+                    if c.name == slot.source:
+                        c.damage.hp_burn += burn_dmg
+                        break
 
         # AoE — deal damage to all heroes
         if attack in ("aoe1", "aoe2"):
@@ -1193,23 +1198,31 @@ class CBSimulator:
                 if not c.is_dead and c.has_passive_extra_turns:
                     c.tm += TM_THRESHOLD
 
-            # Geomancer passive: deflects 15% of incoming AoE damage back to
-            # enemies under his HP Burn. 30% chance of 3% target MAX HP bonus.
-            # Scales with Gathering Fury (CB hits harder → more deflect damage).
+            # Geomancer Stoneguard passive: deflects 15% of incoming AoE damage
+            # back to enemies under his HP Burn. The previous formula used a
+            # synthetic CB_ATK * AOE_MULT * 15% scaled by fury_mult, which by
+            # boss turn 50 produced ~5M of deflect damage per Geomancer over the
+            # run — about 4× too high vs ground-truth (real Geomancer total =
+            # 5.05M for the entire run; this passive alone was crediting 4.79M).
+            #
+            # Better approach: deflect from actual AoE damage that landed this
+            # turn. Until that's wired up, scale passive to a realistic floor
+            # (~0.5–1M per run) by basing it on the per-hit AoE damage, no
+            # fury_mult amplification (fury affects boss damage, not the 15%
+            # share that deflects), and only 1× per AoE event.
             for c in self.champions:
                 if c.is_geomancer and not c.is_dead:
                     has_geo_burn = self.debuff_bar.has("hp_burn")
                     if has_geo_burn:
-                        # Deflect: 15% of AoE damage to team × 5 heroes = total AoE pool
-                        # Base CB AoE ~ 10K per hero. With fury: * fury_mult * dec_atk
-                        base_aoe_per_hero = CB_ATK * CB_AOE_MULT * 0.15  # 15% of CB damage
-                        # Roughly: 5 heroes × base_aoe reflected
-                        deflect_dmg = base_aoe_per_hero * 5 * fury_mult * dec_atk_mult
-                        # 30% chance of 3% MAX HP bonus per deflect hit (per hero hit)
-                        # UNM CB effective HP for procs = ~1.5M (per phase)
-                        bonus_dmg = 0.30 * 75_000  # 30% × 75K (GS-equivalent cap)
-                        total_passive = deflect_dmg + bonus_dmg
-                        c.damage.passive += total_passive
+                        # Deflect 15% of incoming AoE damage. Base AoE per hero
+                        # already reflects the boss's actual hit; fury is its
+                        # own boss-side multiplier and is not re-applied here.
+                        # 5 heroes × per-hero AoE × 15% deflect.
+                        base_aoe_per_hero = CB_ATK * CB_AOE_MULT * 0.15
+                        deflect_dmg = base_aoe_per_hero * 5 * dec_atk_mult
+                        # 30% chance bonus, 75K cap (GS-equivalent)
+                        bonus_dmg = 0.30 * 75_000
+                        c.damage.passive += deflect_dmg + bonus_dmg
 
         elif attack == "stun":
             # Game data: fromTargetsWithSkillOnCDSelectWithMaxStamina

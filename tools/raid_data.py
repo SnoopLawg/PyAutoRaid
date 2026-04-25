@@ -35,7 +35,11 @@ UNM_RES = 250
 # Verified debuff tick damage (from in-game damage meters / community testing):
 POISON_5PCT_DMG = 75_000      # 5% poison tick on UNM (~75K per tick)
 POISON_25PCT_DMG = 37_500     # 2.5% poison (Toxic set)
-HP_BURN_DMG = 100_000         # HP Burn tick on UNM (~100K per tick)
+HP_BURN_DMG = 75_000          # HP Burn tick on UNM — observed cap from
+                               # ground-truth tick-log (2026-04-24 Magic UNM):
+                               # 128 of Ninja's 237 boss hits clustered at
+                               # exactly 75K, matching the poison cap. The
+                               # previous 100K value was speculative.
 
 # Mastery procs (both cap at ~75K on UNM, same as a poison tick)
 WM_DMG = 75_000       # Warmaster (single proc per hit)
