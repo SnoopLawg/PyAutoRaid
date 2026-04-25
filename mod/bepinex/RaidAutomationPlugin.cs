@@ -5205,6 +5205,24 @@ namespace RaidAutomation
             catch { }
         }
 
+        // Walk obj.subProp.fieldName.RawValue and return the integer part of
+        // the Fixed-point value (>>32). Returns -1 if any link is null.
+        // Used to extract DamageResult fields exactly without fitting clusters.
+        private static long ReadFixedRaw(object obj, string subProp, string fieldName)
+        {
+            try
+            {
+                var sub = Prop(obj, subProp);
+                if (sub == null) return -1;
+                var val = Prop(sub, fieldName);
+                if (val == null) return -1;
+                var raw = Prop(val, "RawValue");
+                if (raw == null) return -1;
+                return Convert.ToInt64(raw) >> 32;
+            }
+            catch { return -1; }
+        }
+
         // Convert a managed wrapper object to its underlying IL2CPP IntPtr handle.
         // Most BepInEx Il2CppObjectBase derivatives have a `Pointer` property.
         private static IntPtr IL2CPPHandleOf(object o)
@@ -5225,9 +5243,15 @@ namespace RaidAutomation
                 // damage the game just applied. The generic DumpEventArgs path
                 // only catches managed properties; IL2CPP DamageResult exposes
                 // Amount as a field so we extract it explicitly here.
+                // Capture every field the game exposes so we can derive
+                // exact damage formulas from the data instead of guessing
+                // caps from cluster medians.
                 long calcAmt = -1, dealtAmt = -1;
+                long calcRaw = -1, dealtRaw = -1;       // pre-mitigation (MultiplierValuePositive)
+                long calcMitig = -1, dealtMitig = -1;   // calc/dealt damage absorbed by block/UK
                 int producerId = 0, targetId = 0;
                 int skillTypeId = 0;
+                int effectKind = 0;          // 6000=damage, 5000=poison, 5002=hp_burn, etc.
                 string hitType = null;
                 bool isCrit = false, isBlocked = false, isEvaded = false;
                 try
@@ -5244,37 +5268,22 @@ namespace RaidAutomation
                             try { isBlocked = (bool)Prop(dctx, "IsBlocked"); } catch { }
                             try { var ht = Prop(dctx, "HitType"); if (ht != null) hitType = ht.ToString(); } catch { }
                             try { var ic = Prop(dctx, "IsCritical"); if (ic != null) isCrit = (bool)ic; } catch { }
-                            // DamageResult.Amount → Fixed → RawValue
-                            try
-                            {
-                                var calc = Prop(dctx, "CalculatedDamage");
-                                if (calc != null)
-                                {
-                                    DumpDamageResultOnce(calc, "CalculatedDamage");
-                                    // DamageResult exposes ActualValue (Fixed) — extract via RawValue.
-                                    var amt = Prop(calc, "ActualValue");
-                                    if (amt != null)
-                                    {
-                                        var raw = Prop(amt, "RawValue");
-                                        if (raw != null) calcAmt = Convert.ToInt64(raw) >> 32;
-                                    }
-                                }
-                            }
-                            catch { }
-                            try
-                            {
-                                var dealt = Prop(dctx, "DealtDamage");
-                                if (dealt != null)
-                                {
-                                    var amt = Prop(dealt, "ActualValue");
-                                    if (amt != null)
-                                    {
-                                        var raw = Prop(amt, "RawValue");
-                                        if (raw != null) dealtAmt = Convert.ToInt64(raw) >> 32;
-                                    }
-                                }
-                            }
-                            catch { }
+                            // DamageResult fields (per schema dump 2026-04-24):
+                            //   ActualValue                = post-cap, post-mitigation damage applied
+                            //   ValuePositive              = same as ActualValue (alias)
+                            //   MultiplierValuePositive    = pre-cap, pre-mitigation raw damage
+                            //   _value / _multiplierValue  = backing fields for the above
+                            //   DamageAbsorbedByBlockAndUnkillable = portion absorbed
+                            // Capturing all of them lets us derive the exact cap/mitigation
+                            // formula instead of fitting clusters.
+                            calcAmt    = ReadFixedRaw(dctx, "CalculatedDamage", "ActualValue");
+                            calcRaw    = ReadFixedRaw(dctx, "CalculatedDamage", "MultiplierValuePositive");
+                            calcMitig  = ReadFixedRaw(dctx, "CalculatedDamage", "DamageAbsorbedByBlockAndUnkillable");
+                            dealtAmt   = ReadFixedRaw(dctx, "DealtDamage", "ActualValue");
+                            dealtRaw   = ReadFixedRaw(dctx, "DealtDamage", "MultiplierValuePositive");
+                            dealtMitig = ReadFixedRaw(dctx, "DealtDamage", "DamageAbsorbedByBlockAndUnkillable");
+                            // Trigger the schema dump on first hit (already wired).
+                            try { var calc = Prop(dctx, "CalculatedDamage"); if (calc != null) DumpDamageResultOnce(calc, "CalculatedDamage"); } catch { }
                         }
                         try
                         {
@@ -5282,7 +5291,14 @@ namespace RaidAutomation
                             if (actx != null)
                             {
                                 var applied = Prop(actx, "AppliedEffect");
-                                if (applied != null) skillTypeId = IntProp(applied, "SkillTypeId");
+                                if (applied != null)
+                                {
+                                    skillTypeId = IntProp(applied, "SkillTypeId");
+                                    // EffectKindId tells us if this is a 6000 (skill damage),
+                                    // 5000 (poison), 5002 (HP burn), 4017 (passive damage), etc.
+                                    // Lets us label every observed cluster precisely.
+                                    try { effectKind = IntProp(applied, "EffectKindId"); } catch { }
+                                }
                             }
                         }
                         catch { }
@@ -5294,14 +5310,18 @@ namespace RaidAutomation
                 sb.Append("{\"kind\":\"damage\",\"tick\":").Append(_battleCommandCount);
                 sb.Append(",\"producer\":").Append(producerId);
                 sb.Append(",\"target\":").Append(targetId);
-                if (calcAmt >= 0) sb.Append(",\"calc\":").Append(calcAmt);
-                if (dealtAmt >= 0) sb.Append(",\"dealt\":").Append(dealtAmt);
+                if (calcAmt   >= 0) sb.Append(",\"calc\":").Append(calcAmt);
+                if (calcRaw   >= 0) sb.Append(",\"calc_raw\":").Append(calcRaw);
+                if (calcMitig >= 0) sb.Append(",\"calc_absorbed\":").Append(calcMitig);
+                if (dealtAmt  >= 0) sb.Append(",\"dealt\":").Append(dealtAmt);
+                if (dealtRaw  >= 0) sb.Append(",\"dealt_raw\":").Append(dealtRaw);
+                if (dealtMitig>= 0) sb.Append(",\"dealt_absorbed\":").Append(dealtMitig);
                 if (skillTypeId != 0) sb.Append(",\"skill\":").Append(skillTypeId);
+                if (effectKind  != 0) sb.Append(",\"kind_id\":").Append(effectKind);
                 if (hitType != null && hitType.Length < 30) sb.Append(",\"hit\":\"").Append(Esc(hitType)).Append("\"");
                 if (isCrit) sb.Append(",\"crit\":true");
                 if (isBlocked) sb.Append(",\"blocked\":true");
                 if (isEvaded) sb.Append(",\"evaded\":true");
-                sb.Append(",\"args\":").Append(DumpEventArgs(__args ?? new object[0]));
                 sb.Append("}");
                 string entry = sb.ToString();
                 lock (_tickLog) { if (_tickLog.Count < 3000) _tickLog.Add(entry); }
