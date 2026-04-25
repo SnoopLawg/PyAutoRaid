@@ -878,68 +878,92 @@ class CBSimulator:
             per_hit_cap = FA_CAP_SMALL
         return min(raw_dmg, per_hit_cap * max(1, hits or 1))
 
+    def _eff_speed(self, c: SimChampion) -> float:
+        """Effective speed for TM ticking — DWJ-parity formula.
+
+        true_speed = total_speed; speed buff/debuff are multiplicative on
+        the total (matches cb_scheduler.effective_speed and the live calc).
+        """
+        buff_mod = 0.0
+        if c.has_buff("inc_spd"):
+            buff_mod += 0.30
+        if c.has_buff("dec_spd"):
+            buff_mod -= 0.30
+        return c.speed * (1.0 + buff_mod)
+
     def run(self, max_cb_turns: int = MAX_CB_TURNS) -> dict:
-        """Run full simulation. Set max_cb_turns=0 for unlimited (run until all dead)."""
+        """Run full simulation. Set max_cb_turns=0 for unlimited (run until all dead).
+
+        Scheduler is parity-aligned with DWJ's calc: do-while TM ticking (always
+        tick at least once before each actor selection), max-TM picks the next
+        actor, ties broken by team position (= actor list index). Per-tick TM
+        increment uses the parity formula (7 * effective_speed / 100, rescaled
+        to cb_sim's threshold of 1000 → 0.7 * effective_speed per tick).
+        """
         tick = 0
         effective_max = max_cb_turns if max_cb_turns > 0 else 999
         enraged = False
+        # Parity tick scale: parity uses 7%/threshold-100; cb_sim uses
+        # threshold-1000, so the equivalent rate is 70%/threshold-1000 = 0.7 * SPD.
+        TICK_RATE = 0.7
         while self.cb_turn < effective_max:
-            tick += 1
-            if tick > 100000:
-                self.errors.append("Exceeded 100K ticks")
-                break
-
-            # Check if all heroes are dead or enraged
             if all(c.is_dead for c in self.champions) or enraged:
                 break
 
-            # Fill turn meters. DWJ formula: effective = total_speed * (1 + buff_mod)
-            # where buff_mod = +0.30 for inc_spd, -0.30 for dec_spd, both stack
-            # multiplicatively. This matches cb_scheduler.effective_speed and is
-            # different from cb_sim's earlier "base * 0.30" approximation, which
-            # gave Maneater (98 base, 286 total) only +29 SPD instead of the +86
-            # DWJ awards. That gap was big enough to flip cast order under buffs.
-            for c in self.champions:
-                if not c.is_dead:
-                    buff_mod = 0.0
-                    if c.has_buff("inc_spd"):
-                        buff_mod += 0.30
-                    if c.has_buff("dec_spd"):
-                        buff_mod -= 0.30
-                    effective_spd = c.speed * (1.0 + buff_mod)
-                    c.tm += effective_spd
-            self.cb_tm += self.cb_speed
+            # Pick the next actor — extra-turn first, otherwise do-while tick + max-TM.
+            extra = next((c for c in self.champions
+                          if not c.is_dead and getattr(c, "has_extra_turn", False)),
+                         None)
+            if extra is not None:
+                extra.has_extra_turn = False
+                actor_kind = "champ"
+                actor = extra
+            else:
+                # do-while: ALWAYS tick at least once even if some actor already
+                # has TM >= threshold from a prior cast's overflow. Skipping this
+                # tick is what caused parity to fail at 9% match earlier — the
+                # excess TM accumulated across selections and flipped cast order.
+                safety = 0
+                while True:
+                    for c in self.champions:
+                        if not c.is_dead:
+                            c.tm += TICK_RATE * self._eff_speed(c)
+                    self.cb_tm += TICK_RATE * self.cb_speed
+                    safety += 1
+                    if any(c.tm >= TM_THRESHOLD for c in self.champions if not c.is_dead) \
+                            or self.cb_tm >= TM_THRESHOLD:
+                        break
+                    if safety > 100000:
+                        self.errors.append("TM tick loop runaway")
+                        return self._compile_result()
+                tick += safety
 
-            # Process all above threshold
-            while True:
-                ready = []
-                for c in self.champions:
-                    if c.tm >= TM_THRESHOLD and not c.is_dead:
-                        ready.append(("champ", c))
-                if self.cb_tm >= TM_THRESHOLD:
-                    ready.append(("cb", None))
-
-                if not ready:
+                # Pick the actor with the highest TM. Ties go to lowest team
+                # position (= earliest in self.champions, which mirrors DWJ's
+                # actor-array-index tiebreak).
+                live_champs = [c for c in self.champions if not c.is_dead]
+                top_champ = None
+                if live_champs:
+                    top_champ = max(live_champs,
+                                    key=lambda c: (c.tm, -c.position))
+                if self.cb_tm >= TM_THRESHOLD and (top_champ is None or self.cb_tm > top_champ.tm):
+                    actor_kind = "cb"
+                    actor = None
+                elif top_champ is not None and top_champ.tm >= TM_THRESHOLD:
+                    actor_kind = "champ"
+                    actor = top_champ
+                else:
+                    # Should not happen given the do-while above.
+                    self.errors.append("No ready actor after tick")
                     break
 
-                # DWJ tie-breaking: highest TM first, then lowest team position
-                # (game rule: position tiebreaks only, NO secondary speed sort).
-                ready.sort(key=lambda x: (
-                    -(x[1].tm if x[0] == "champ" else self.cb_tm),
-                    x[1].position if x[0] == "champ" else 99
-                ))
-
-                kind, actor = ready[0]
-                if kind == "cb":
-                    self._cb_turn(tick)
-                    # Turn 50 enrage: after this CB turn, no more champion actions.
-                    # Real game: CB ignores UK/BD and kills everyone. Only DoT ticks
-                    # on this final CB turn contribute damage (already processed above).
-                    if self.cb_turn >= ENRAGE_TURN:
-                        enraged = True
-                        break
-                else:
-                    self._champion_turn(actor, tick)
+            if actor_kind == "cb":
+                self._cb_turn(tick)
+                if self.cb_turn >= ENRAGE_TURN:
+                    enraged = True
+                    break
+            else:
+                self._champion_turn(actor, tick)
 
         return self._compile_result()
 
