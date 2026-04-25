@@ -5134,6 +5134,87 @@ namespace RaidAutomation
             }
         }
 
+        // Diagnostic dump of DamageResult class structure — fires once.
+        // We need this because Prop() (managed reflection) couldn't find
+        // an Amount field/property — IL2CPP types may expose data via runtime
+        // methods or distinct field names (m_Amount, _value, etc.).
+        private static int _damageResultDumped = 0;
+        private static void DumpDamageResultOnce(object damageResult, string label)
+        {
+            if (damageResult == null) return;
+            if (Interlocked.CompareExchange(ref _damageResultDumped, 1, 0) != 0) return;
+            try
+            {
+                var sb = new StringBuilder();
+                sb.Append("{\"diag\":\"damage_result_schema\",\"label\":\"").Append(Esc(label)).Append("\"");
+                var t = damageResult.GetType();
+                sb.Append(",\"type\":\"").Append(Esc(t.FullName ?? t.Name)).Append("\"");
+                // Managed properties
+                var props = t.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                sb.Append(",\"props\":[");
+                bool firstP = true;
+                foreach (var p in props)
+                {
+                    if (!firstP) sb.Append(","); firstP = false;
+                    sb.Append("{\"n\":\"").Append(Esc(p.Name)).Append("\",\"t\":\"").Append(Esc(p.PropertyType.Name)).Append("\"");
+                    try { var v = p.GetValue(damageResult); if (v != null) sb.Append(",\"v\":\"").Append(Esc(v.ToString() ?? "")).Append("\""); } catch { }
+                    sb.Append("}");
+                }
+                sb.Append("]");
+                // Managed fields
+                var fields = t.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                sb.Append(",\"fields\":[");
+                bool firstF = true;
+                foreach (var f in fields)
+                {
+                    if (!firstF) sb.Append(","); firstF = false;
+                    sb.Append("{\"n\":\"").Append(Esc(f.Name)).Append("\",\"t\":\"").Append(Esc(f.FieldType.Name)).Append("\"");
+                    try { var v = f.GetValue(damageResult); if (v != null) sb.Append(",\"v\":\"").Append(Esc(v.ToString() ?? "")).Append("\""); } catch { }
+                    sb.Append("}");
+                }
+                sb.Append("]");
+                // IL2CPP class methods (especially get_*)
+                try
+                {
+                    IntPtr klass = il2cpp_object_get_class(IL2CPPHandleOf(damageResult));
+                    if (klass != IntPtr.Zero)
+                    {
+                        sb.Append(",\"il2cpp_methods\":[");
+                        IntPtr iter = IntPtr.Zero;
+                        IntPtr m;
+                        bool firstM = true;
+                        int count = 0;
+                        while ((m = il2cpp_class_get_methods(klass, ref iter)) != IntPtr.Zero && count < 60)
+                        {
+                            string mn = Marshal.PtrToStringAnsi(il2cpp_method_get_name(m));
+                            int parc = (int)il2cpp_method_get_param_count(m);
+                            if (mn != null && (mn.StartsWith("get_") || mn == "ToString"))
+                            {
+                                if (!firstM) sb.Append(","); firstM = false;
+                                sb.Append("{\"n\":\"").Append(Esc(mn)).Append("\",\"argc\":").Append(parc).Append("}");
+                                count++;
+                            }
+                        }
+                        sb.Append("]");
+                    }
+                }
+                catch (Exception ex) { sb.Append(",\"il2cpp_err\":\"").Append(Esc(ex.Message)).Append("\""); }
+                sb.Append("}");
+                lock (_tickLog) { if (_tickLog.Count < 3000) _tickLog.Add(sb.ToString()); }
+            }
+            catch { }
+        }
+
+        // Convert a managed wrapper object to its underlying IL2CPP IntPtr handle.
+        // Most BepInEx Il2CppObjectBase derivatives have a `Pointer` property.
+        private static IntPtr IL2CPPHandleOf(object o)
+        {
+            if (o == null) return IntPtr.Zero;
+            try { var p = o.GetType().GetProperty("Pointer"); if (p != null) { var v = p.GetValue(o); if (v != null) return (IntPtr)v; } } catch { }
+            try { var f = o.GetType().GetField("m_Pointer", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance); if (f != null) { var v = f.GetValue(o); if (v != null) return (IntPtr)v; } } catch { }
+            return IntPtr.Zero;
+        }
+
         public static void BattleHook_DamageChange(object __instance, object[] __args)
         {
             _hookDiag_DamageChange++;
@@ -5169,7 +5250,9 @@ namespace RaidAutomation
                                 var calc = Prop(dctx, "CalculatedDamage");
                                 if (calc != null)
                                 {
-                                    var amt = Prop(calc, "Amount");
+                                    DumpDamageResultOnce(calc, "CalculatedDamage");
+                                    // DamageResult exposes ActualValue (Fixed) — extract via RawValue.
+                                    var amt = Prop(calc, "ActualValue");
                                     if (amt != null)
                                     {
                                         var raw = Prop(amt, "RawValue");
@@ -5183,7 +5266,7 @@ namespace RaidAutomation
                                 var dealt = Prop(dctx, "DealtDamage");
                                 if (dealt != null)
                                 {
-                                    var amt = Prop(dealt, "Amount");
+                                    var amt = Prop(dealt, "ActualValue");
                                     if (amt != null)
                                     {
                                         var raw = Prop(amt, "RawValue");
