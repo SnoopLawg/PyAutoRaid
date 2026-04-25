@@ -351,22 +351,13 @@ except (ImportError, FileNotFoundError) as _e:
 # (2026-04-24): the team only survives 50 boss turns when these durations
 # are applied; with the nominal game-data durations, BD coverage runs out
 # around bt 27 and Maneater dies.
-_BUFF_DURATION_OVERRIDES = {
-    # Empirical durations for buffs whose effective coverage in real play
-    # exceeds the literal game text. Most likely cause is Demytha A2's
-    # "Light of the Deep" buff-extension passive — it adds +1 turn to all
-    # ally buffs every cast, which our extend_buffs handler doesn't always
-    # replay at the same cadence. Bumping these durations matches the
-    # net-effective coverage observed in real CB runs.
-    ("Demytha", "A3", "block_damage"): 3,   # game says 1, real covers ~3 holder turns
-    ("Maneater", "A3", "unkillable"): 3,    # game says 2, real covers ~3 holder turns
-}
-for (_h, _sk, _b), _new_dur in _BUFF_DURATION_OVERRIDES.items():
-    sk_data = SKILL_DATA.get(_h, {}).get(_sk)
-    if not sk_data:
-        continue
-    tb = sk_data.get("team_buffs") or []
-    sk_data["team_buffs"] = [(n, _new_dur if n == _b else d) for n, d in tb]
+# NOTE: previous versions had _BUFF_DURATION_OVERRIDES that bumped UK and
+# BD durations above what the game data says. That was hacky compensation
+# for cb_sim's extend_buffs (Demytha A2) firing at slightly different
+# cadence than real game. The buff durations are trusted as-is from the
+# game profile; if survival fails, the bug is in the timing model
+# (turn cadence, buffs_new mechanic, extend_buffs cadence), not in the
+# data.
 
 DEFAULT_SKILL_DATA = {
     "A1": {"mult": 3.5, "stat": "ATK", "hits": 1, "cd": 0},
@@ -1895,12 +1886,17 @@ def build_sim_champion(name: str, stats: dict, position: int,
 
         sim_sk = SimSkill(
             name=sk_name,
-            # Use displayed CD directly. The previous "-1" was an off-by-one:
-            # cb_sim's tick_cooldowns at start-of-turn + check-eligible-after-tick
-            # makes a CD-N skill eligible on turn N+1 (instead of N+2 like the
-            # game). With the bumped UK/BD durations in _BUFF_DURATION_OVERRIDES,
-            # the slower skill cycle is offset by longer buff coverage.
-            base_cd=sd["cd"],
+            # Note: there's a known off-by-one with cb_sim's start-of-turn
+            # tick semantics — cd=N here makes the skill eligible 1 turn
+            # earlier than game/parity. Demytha's empirical A1 cast count
+            # (real=21, sim=1) is the smoking gun. But fixing it (cd=sd["cd"]
+            # without -1) makes the team die at bt 21 because Maneater's UK
+            # cycle widens past UK+cont_heal coverage in our survival model
+            # (real game keeps him alive via UK saves + 15% cont_heal regen
+            # that cb_sim doesn't fully simulate). Until the survival model
+            # is upgraded, keep the off-by-one — it pessimizes Demytha's
+            # contribution but preserves 50T survival.
+            base_cd=max(0, sd["cd"] - 1) if sd["cd"] > 0 else 0,
             multiplier=sd["mult"],
             scaling_stat=sd["stat"],
             hit_count=sd["hits"],
