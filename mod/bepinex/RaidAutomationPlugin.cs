@@ -9749,18 +9749,46 @@ namespace RaidAutomation
                     return "{\"error\":\"no active dialogs found and no path provided\"}";
             }
 
-            // Track found contexts for error reporting
+            // Track found contexts + their methods for error reporting.
+            // The methods list lets callers discover the right method name
+            // without trial-and-error or a separate "list-methods" endpoint.
             var foundContexts = new List<string>();
+            var contextMethods = new Dictionary<string, List<string>>();
 
             foreach (var root in roots)
             {
-                string result = SearchContextAndInvoke(root, methodName, arg, 6, foundContexts);
+                string result = SearchContextAndInvoke(root, methodName, arg, 6, foundContexts, contextMethods);
                 if (result != null) return result;
             }
 
             if (foundContexts.Count > 0)
-                return "{\"error\":\"method " + Esc(methodName) + " not found. Searched contexts: [" +
-                       string.Join(",", foundContexts.ConvertAll(c => "\"" + Esc(c) + "\"")) + "]\"}";
+            {
+                var sb = new StringBuilder();
+                sb.Append("{\"error\":\"method ").Append(Esc(methodName))
+                  .Append(" not found\",\"searched\":[");
+                bool first = true;
+                foreach (var c in foundContexts)
+                {
+                    if (!first) sb.Append(",");
+                    first = false;
+                    sb.Append("{\"context\":\"").Append(Esc(c)).Append("\"");
+                    if (contextMethods.TryGetValue(c, out var methods))
+                    {
+                        sb.Append(",\"methods\":[");
+                        bool firstM = true;
+                        foreach (var m in methods)
+                        {
+                            if (!firstM) sb.Append(",");
+                            firstM = false;
+                            sb.Append("\"").Append(Esc(m)).Append("\"");
+                        }
+                        sb.Append("]");
+                    }
+                    sb.Append("}");
+                }
+                sb.Append("]}");
+                return sb.ToString();
+            }
 
             return "{\"error\":\"no context with method " + Esc(methodName) + " found in hierarchy\"}";
         }
@@ -9771,7 +9799,7 @@ namespace RaidAutomation
         /// Standard C# reflection cannot see IL2CPP-defined properties on proxy types,
         /// so we use il2cpp_object_get_class + il2cpp_class_get_methods directly.
         /// </summary>
-        private string SearchContextAndInvoke(Transform root, string methodName, string arg, int maxDepth, List<string> foundContexts)
+        private string SearchContextAndInvoke(Transform root, string methodName, string arg, int maxDepth, List<string> foundContexts, Dictionary<string, List<string>> contextMethods = null)
         {
             var toScan = new Queue<KeyValuePair<Transform, int>>();
             toScan.Enqueue(new KeyValuePair<Transform, int>(root, 0));
@@ -9832,9 +9860,18 @@ namespace RaidAutomation
                             string fullCtxName = ctxNs + "." + ctxClassName;
                             if (foundContexts != null) foundContexts.Add(fullCtxName);
 
-                            // Find the target method on the context (walk hierarchy)
+                            // Find the target method on the context (walk hierarchy).
+                            // While iterating, also collect ALL method names if the
+                            // caller asked for them — costs nothing extra since we're
+                            // already walking the methods enumeration.
                             IntPtr targetMethod = IntPtr.Zero;
                             IntPtr ck = ctxClass;
+                            List<string> seenMethods = null;
+                            if (contextMethods != null && !contextMethods.ContainsKey(fullCtxName))
+                            {
+                                seenMethods = new List<string>();
+                                contextMethods[fullCtxName] = seenMethods;
+                            }
                             while (ck != IntPtr.Zero && targetMethod == IntPtr.Zero)
                             {
                                 IntPtr mi = IntPtr.Zero;
@@ -9842,6 +9879,8 @@ namespace RaidAutomation
                                 while ((m2 = il2cpp_class_get_methods(ck, ref mi)) != IntPtr.Zero)
                                 {
                                     string mn2 = Marshal.PtrToStringAnsi(il2cpp_method_get_name(m2));
+                                    if (seenMethods != null && mn2 != null && !mn2.StartsWith("get_") && !mn2.StartsWith("set_") && mn2 != ".ctor")
+                                        seenMethods.Add(mn2 + "/" + il2cpp_method_get_param_count(m2));
                                     if (mn2 == methodName)
                                     {
                                         uint pc = il2cpp_method_get_param_count(m2);
