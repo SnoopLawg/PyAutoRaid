@@ -9673,14 +9673,27 @@ namespace RaidAutomation
             }
             if (transType == null) return "{\"error\":\"WebViewInGameTransition type not found\"}";
 
-            var method = transType.GetMethod("OpenDungeonOfType",
+            // Try OpenDungeonsMapWithFocusOn first — focuses camera on a
+            // specific dungeon AND opens DungeonsDialog properly populated.
+            // Falls back to OpenDungeonOfType only if the focus variant
+            // isn't found. (OpenDungeonOfType has been observed to leave
+            // Raid in a half-rendered "ITEM DROPS over Keeps" state, so
+            // we prefer the focus variant.)
+            string usedMethodName = "OpenDungeonsMapWithFocusOn";
+            var method = transType.GetMethod(usedMethodName,
                 BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.FlattenHierarchy);
-            if (method == null) return "{\"error\":\"OpenDungeonOfType method not found\"}";
+            if (method == null)
+            {
+                usedMethodName = "OpenDungeonOfType";
+                method = transType.GetMethod(usedMethodName,
+                    BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.FlattenHierarchy);
+            }
+            if (method == null) return "{\"error\":\"neither OpenDungeonsMapWithFocusOn nor OpenDungeonOfType found\"}";
 
             // Inspect parameter type and convert int → enum if needed.
             var paras = method.GetParameters();
             if (paras.Length != 1)
-                return "{\"error\":\"OpenDungeonOfType expected 1 param, got " + paras.Length + "\"}";
+                return "{\"error\":\"" + Esc(usedMethodName) + " expected 1 param, got " + paras.Length + "\"}";
 
             object arg;
             try
@@ -9699,7 +9712,7 @@ namespace RaidAutomation
             {
                 method.Invoke(null, new[] { arg });
                 return "{\"opened\":\"" + Esc(typeArg) + "\",\"type_id\":" + typeId +
-                       ",\"method\":\"OpenDungeonOfType\"}";
+                       ",\"method\":\"" + Esc(usedMethodName) + "\"}";
             }
             catch (Exception ex)
             {
