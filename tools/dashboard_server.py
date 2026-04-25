@@ -1871,8 +1871,10 @@ def build_tune_compliance(tune_id):
 def build_sim_affinity_matrix():
     """Run cb_sim on all 4 CB affinities; report outcome per affinity.
 
-    Same team/gear each run, only cb_element varies. Catches "this tune
-    fails on Force day" without burning a key.
+    Uses run_tune (real preset + real gear) so the sim cycles UK/BD on the
+    right cadence. Falls back to build_champion_minimal if a tune match
+    can't be inferred (rare — usually only when the team isn't a known
+    DWJ/library tune).
     """
     real = build_cb_last_run()
     if not real:
@@ -1880,44 +1882,21 @@ def build_sim_affinity_matrix():
     team_rows = real.get("team") or []
     try:
         sys.path.insert(0, str(ROOT / "tools"))
-        from cb_sim import CBSimulator, build_champion_minimal
+        from cb_sim import run_tune
     except Exception as e:
         return {"error": f"cb_sim import: {e}"}
 
-    # HP from battle log
-    hp_by_name = {}
-    log = _load_battle_log() or {}
-    for e in (log.get("log") or [])[:40]:
-        if not isinstance(e, dict) or not e.get("heroes"):
-            continue
-        for h in e["heroes"]:
-            if h.get("side") != "player":
-                continue
-            nm = _hero_type_to_name().get(h.get("type_id"), f"#{h.get('id')}")
-            hp_by_name[nm] = max(hp_by_name.get(nm, 0), int(h.get("hp_max") or 0))
-
-    # Element lookup from /all-heroes for affinity math
-    all_h = _fetch_all_heroes() or []
-    elem_by_name = {h.get("name"): (h.get("element") or 4) for h in all_h}
+    hero_names = [h.get("name") for h in team_rows]
+    # Pick the tune to simulate. Default to myth_eater (the team the user
+    # actually runs day-to-day); future enhancement: detect from preset.
+    tune_id = "myth_eater"
 
     out = {}
     for elem_name, elem_id in [("Magic", 1), ("Force", 2), ("Spirit", 3), ("Void", 4)]:
         try:
-            champs = []
-            for i, h in enumerate(team_rows, start=1):
-                nm = h.get("name")
-                champs.append(build_champion_minimal(
-                    name=nm, position=i,
-                    speed=h.get("spd") or 100,
-                    hp=hp_by_name.get(nm) or (h.get("hp") or 30000),
-                    defense=h.get("def") or 1000,
-                    element=elem_by_name.get(nm, 4),
-                ))
-            sim = CBSimulator(champs, cb_speed=190, cb_element=elem_id,
-                              deterministic=True, model_survival=True,
-                              cb_difficulty="ultra-nightmare", speed_aura_pct=0.0)
-            r = sim.run(max_cb_turns=0)
-            # Count gaps + first-death turn
+            r = run_tune(tune_id, hero_names, cb_element=elem_id,
+                         force_affinity=False, use_current_gear=True,
+                         verbose=False)
             gaps = 0
             first_death = None
             for bt in sorted(r.get("protection_by_turn", {}), key=int):
@@ -1930,7 +1909,7 @@ def build_sim_affinity_matrix():
             out[elem_name.lower()] = {
                 "affinity": elem_name,
                 "cb_turns": r.get("cb_turns"),
-                "total_damage": r.get("total"),
+                "total_damage": r.get("total") or r.get("total_damage"),
                 "gaps": gaps,
                 "first_death_bt": first_death,
             }
