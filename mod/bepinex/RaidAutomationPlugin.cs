@@ -576,8 +576,21 @@ namespace RaidAutomation
         private static object Prop(object obj, string name)
         {
             if (obj == null) return null;
-            var p = obj.GetType().GetProperty(name);
-            return p?.GetValue(obj);
+            var t = obj.GetType();
+            // Try property first (standard managed access).
+            var p = t.GetProperty(name);
+            if (p != null)
+            {
+                try { return p.GetValue(obj); } catch { }
+            }
+            // Fallback to field — IL2CPP types like DamageResult expose Amount
+            // as a public field, not a property, so GetProperty alone misses it.
+            var f = t.GetField(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+            if (f != null)
+            {
+                try { return f.GetValue(obj); } catch { }
+            }
+            return null;
         }
 
         private static int IntProp(object obj, string name)
@@ -5126,7 +5139,88 @@ namespace RaidAutomation
             _hookDiag_DamageChange++;
             try
             {
-                string entry = "{\"kind\":\"damage\",\"tick\":" + _battleCommandCount + ",\"args\":" + DumpEventArgs(__args ?? new object[0]) + "}";
+                // Walk EffectContext.DamageContext.{CalculatedDamage,DealtDamage}
+                // and extract .Amount.RawValue — this is the ground-truth per-hit
+                // damage the game just applied. The generic DumpEventArgs path
+                // only catches managed properties; IL2CPP DamageResult exposes
+                // Amount as a field so we extract it explicitly here.
+                long calcAmt = -1, dealtAmt = -1;
+                int producerId = 0, targetId = 0;
+                int skillTypeId = 0;
+                string hitType = null;
+                bool isCrit = false, isBlocked = false, isEvaded = false;
+                try
+                {
+                    if (__args != null && __args.Length > 0 && __args[0] != null)
+                    {
+                        var eff = __args[0];
+                        try { var prod = Prop(eff, "Producer"); if (prod != null) producerId = IntProp(prod, "Id"); } catch { }
+                        try { var tgt = Prop(eff, "Target"); if (tgt != null) targetId = IntProp(tgt, "Id"); } catch { }
+                        try { isEvaded = (bool)Prop(eff, "IsEvaded"); } catch { }
+                        var dctx = Prop(eff, "DamageContext");
+                        if (dctx != null)
+                        {
+                            try { isBlocked = (bool)Prop(dctx, "IsBlocked"); } catch { }
+                            try { var ht = Prop(dctx, "HitType"); if (ht != null) hitType = ht.ToString(); } catch { }
+                            try { var ic = Prop(dctx, "IsCritical"); if (ic != null) isCrit = (bool)ic; } catch { }
+                            // DamageResult.Amount → Fixed → RawValue
+                            try
+                            {
+                                var calc = Prop(dctx, "CalculatedDamage");
+                                if (calc != null)
+                                {
+                                    var amt = Prop(calc, "Amount");
+                                    if (amt != null)
+                                    {
+                                        var raw = Prop(amt, "RawValue");
+                                        if (raw != null) calcAmt = Convert.ToInt64(raw) >> 32;
+                                    }
+                                }
+                            }
+                            catch { }
+                            try
+                            {
+                                var dealt = Prop(dctx, "DealtDamage");
+                                if (dealt != null)
+                                {
+                                    var amt = Prop(dealt, "Amount");
+                                    if (amt != null)
+                                    {
+                                        var raw = Prop(amt, "RawValue");
+                                        if (raw != null) dealtAmt = Convert.ToInt64(raw) >> 32;
+                                    }
+                                }
+                            }
+                            catch { }
+                        }
+                        try
+                        {
+                            var actx = Prop(eff, "ApplyContext");
+                            if (actx != null)
+                            {
+                                var applied = Prop(actx, "AppliedEffect");
+                                if (applied != null) skillTypeId = IntProp(applied, "SkillTypeId");
+                            }
+                        }
+                        catch { }
+                    }
+                }
+                catch { }
+
+                var sb = new StringBuilder();
+                sb.Append("{\"kind\":\"damage\",\"tick\":").Append(_battleCommandCount);
+                sb.Append(",\"producer\":").Append(producerId);
+                sb.Append(",\"target\":").Append(targetId);
+                if (calcAmt >= 0) sb.Append(",\"calc\":").Append(calcAmt);
+                if (dealtAmt >= 0) sb.Append(",\"dealt\":").Append(dealtAmt);
+                if (skillTypeId != 0) sb.Append(",\"skill\":").Append(skillTypeId);
+                if (hitType != null && hitType.Length < 30) sb.Append(",\"hit\":\"").Append(Esc(hitType)).Append("\"");
+                if (isCrit) sb.Append(",\"crit\":true");
+                if (isBlocked) sb.Append(",\"blocked\":true");
+                if (isEvaded) sb.Append(",\"evaded\":true");
+                sb.Append(",\"args\":").Append(DumpEventArgs(__args ?? new object[0]));
+                sb.Append("}");
+                string entry = sb.ToString();
                 lock (_tickLog) { if (_tickLog.Count < 3000) _tickLog.Add(entry); }
             }
             catch { }
