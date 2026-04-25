@@ -9872,15 +9872,10 @@ namespace RaidAutomation
                                 seenMethods = new List<string>();
                                 contextMethods[fullCtxName] = seenMethods;
                             }
-                            // If caller passed `arg`, prefer 1-arg variant of the method.
-                            // Otherwise prefer 0-arg variant.
-                            bool wantArg = !string.IsNullOrEmpty(arg);
-                            uint targetParamCount = 0;
                             while (ck != IntPtr.Zero && targetMethod == IntPtr.Zero)
                             {
                                 IntPtr mi = IntPtr.Zero;
                                 IntPtr m2;
-                                IntPtr fallback0Arg = IntPtr.Zero;
                                 while ((m2 = il2cpp_class_get_methods(ck, ref mi)) != IntPtr.Zero)
                                 {
                                     string mn2 = Marshal.PtrToStringAnsi(il2cpp_method_get_name(m2));
@@ -9889,21 +9884,13 @@ namespace RaidAutomation
                                     if (mn2 == methodName)
                                     {
                                         uint pc = il2cpp_method_get_param_count(m2);
-                                        if (wantArg && pc == 1)
+                                        if (pc == 0)
                                         {
-                                            targetMethod = m2; targetParamCount = 1;
+                                            targetMethod = m2;
                                             break;
                                         }
-                                        if (!wantArg && pc == 0)
-                                        {
-                                            targetMethod = m2; targetParamCount = 0;
-                                            break;
-                                        }
-                                        if (!wantArg && fallback0Arg == IntPtr.Zero && pc == 0) fallback0Arg = m2;
                                     }
                                 }
-                                if (targetMethod == IntPtr.Zero && fallback0Arg != IntPtr.Zero)
-                                { targetMethod = fallback0Arg; targetParamCount = 0; }
                                 ck = il2cpp_class_get_parent(ck);
                                 string pn = ck != IntPtr.Zero ? Marshal.PtrToStringAnsi(il2cpp_class_get_name(ck)) : "";
                                 if (pn == "Object" || pn == "Il2CppObjectBase") break;
@@ -9911,25 +9898,9 @@ namespace RaidAutomation
 
                             if (targetMethod == IntPtr.Zero) continue;
 
-                            // Invoke the method on the context. Pass an int arg if
-                            // the caller provided one and the method takes 1 param.
-                            // (Currently only int args are supported. Enums coerce
-                            // from int automatically at the IL2CPP layer.)
+                            // Invoke the method on the context
                             IntPtr exc2 = IntPtr.Zero;
-                            if (targetParamCount == 1 && wantArg)
-                            {
-                                int intVal;
-                                if (!int.TryParse(arg, out intVal))
-                                    return "{\"error\":\"arg must be int\",\"got\":\"" + Esc(arg) + "\"}";
-                                IntPtr argBuf = Marshal.AllocHGlobal(4); Marshal.WriteInt32(argBuf, intVal);
-                                IntPtr argArr = Marshal.AllocHGlobal(IntPtr.Size); Marshal.WriteIntPtr(argArr, argBuf);
-                                try { il2cpp_runtime_invoke(targetMethod, ctxObj, argArr, ref exc2); }
-                                finally { Marshal.FreeHGlobal(argBuf); Marshal.FreeHGlobal(argArr); }
-                            }
-                            else
-                            {
-                                il2cpp_runtime_invoke(targetMethod, ctxObj, IntPtr.Zero, ref exc2);
-                            }
+                            il2cpp_runtime_invoke(targetMethod, ctxObj, IntPtr.Zero, ref exc2);
 
                             if (exc2 != IntPtr.Zero)
                                 return "{\"error\":\"invoke exception\",\"context\":\"" + Esc(fullCtxName) +
