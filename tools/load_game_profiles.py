@@ -78,7 +78,15 @@ def _eff(effect_type, **params):
 
 
 def _get_book_cd_reductions(skills_db_path):
-    """Get cooldown reductions from skill books (level_bonuses type=3)."""
+    """Get cooldown reductions from skill books (level_bonuses type=3).
+
+    The mod's /skill-data endpoint returns the skill's BASE (unbooked) CD
+    along with a list of `level_bonuses`. Each type=3 bonus represents one
+    skill-book upgrade that subtracts 1 turn from the cooldown. For
+    Maneater's Ancient Blood:
+        cooldown: 7 (base)  + level_bonuses: [type3, type3]  → booked CD = 5
+    That 5 matches the in-game display with "Lvl.2 -1, Lvl.3 -1".
+    """
     reductions = {}  # {skill_type_id: total_cd_reduction}
     try:
         with open(skills_db_path) as f:
@@ -209,8 +217,13 @@ def load_profiles():
                             stat = 'ATK'
                             break
 
-            # For multi-damage skills, sum multipliers
-            dmg_effects = [e for e in sk.get('effects', []) if e.get('tag') == 'damage']
+            # For multi-damage skills, sum multipliers. Damage effects
+            # appear with EITHER tag='damage' OR kind=6000 in the game data;
+            # earlier this filter only matched tag, so multi-hit skills like
+            # Ninja A2 (3 separate kind=6000 entries each "2*ATK") were
+            # collapsed to hits=1 — costing ~5M of his real damage.
+            dmg_effects = [e for e in sk.get('effects', [])
+                           if e.get('tag') == 'damage' or e.get('kind') == 6000]
             extra_dmg = [e for e in sk.get('effects', []) if e.get('tag') == 'extra_damage']
 
             # Fix hit count: use max of count field on damage or number of damage effects
