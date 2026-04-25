@@ -496,6 +496,7 @@ namespace RaidAutomation
                     "/battle-log" => GetBattleLogFull(QP(query, "clear") == "1"),
                     "/tick-log" => GetTickLog(QP(query, "clear") == "1"),
                     "/navigate" => RunOnMainThread(() => NavigateTo(QP(query, "target"))),
+                    "/open-dungeon" => RunOnMainThread(() => OpenDungeon(QP(query, "type"))),
                     "/context-call" => RunOnMainThread(() => CallOnViewContext(QP(query, "path"), QP(query, "method"), QP(query, "arg"))),
                     "/resources" => RunOnMainThread(() => GetResources()),
                     "/all-resources" => RunOnMainThread(() => GetAllResources()),
@@ -9617,6 +9618,93 @@ namespace RaidAutomation
             {
                 string msg = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
                 return "{\"error\":\"" + Esc(msg) + "\",\"target\":\"" + Esc(target) + "\"}";
+            }
+        }
+
+        // /open-dungeon?type=<key|int>
+        // Calls WebViewInGameTransition.OpenDungeonOfType(DungeonTypeId).
+        // Aliases (by community-known IDs):
+        //   dragon=4, spider=5, fire_knight=6, ice_golem=7, minotaur=2,
+        //   magic_keep=8, force_keep=9, spirit_keep=10, void_keep=11
+        // Numbers can be passed directly; aliases are resolved by name.
+        // If the IDs are wrong on the user's game version, they can pass an
+        // int explicitly and we report which methods exist on the type.
+        private static readonly Dictionary<string, int> DUNGEON_TYPE_IDS = new(StringComparer.OrdinalIgnoreCase)
+        {
+            {"minotaur", 2},
+            {"dragon", 4},
+            {"spider", 5},
+            {"fire_knight", 6},
+            {"ice_golem", 7},
+            {"magic_keep", 8},
+            {"force_keep", 9},
+            {"spirit_keep", 10},
+            {"void_keep", 11},
+        };
+
+        private string OpenDungeon(string typeArg)
+        {
+            if (string.IsNullOrEmpty(typeArg))
+                return "{\"error\":\"type required. Aliases: " + string.Join(",", DUNGEON_TYPE_IDS.Keys) + " or pass an int\"}";
+
+            // Resolve int from alias or parse directly.
+            int typeId;
+            if (!DUNGEON_TYPE_IDS.TryGetValue(typeArg, out typeId))
+            {
+                if (!int.TryParse(typeArg, out typeId))
+                    return "{\"error\":\"unknown alias '" + Esc(typeArg) + "'. Known: " + string.Join(",", DUNGEON_TYPE_IDS.Keys) + "\"}";
+            }
+
+            // Locate WebViewInGameTransition
+            Type transType = FindType("Client.ViewModel.Contextes.GlobalEvents.InGameTransition.WebViewInGameTransition");
+            if (transType == null)
+            {
+                foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
+                {
+                    try
+                    {
+                        foreach (var t in asm.GetTypes())
+                        {
+                            if (t.Name == "WebViewInGameTransition") { transType = t; break; }
+                        }
+                    } catch { }
+                    if (transType != null) break;
+                }
+            }
+            if (transType == null) return "{\"error\":\"WebViewInGameTransition type not found\"}";
+
+            var method = transType.GetMethod("OpenDungeonOfType",
+                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.FlattenHierarchy);
+            if (method == null) return "{\"error\":\"OpenDungeonOfType method not found\"}";
+
+            // Inspect parameter type and convert int → enum if needed.
+            var paras = method.GetParameters();
+            if (paras.Length != 1)
+                return "{\"error\":\"OpenDungeonOfType expected 1 param, got " + paras.Length + "\"}";
+
+            object arg;
+            try
+            {
+                if (paras[0].ParameterType.IsEnum)
+                    arg = Enum.ToObject(paras[0].ParameterType, typeId);
+                else
+                    arg = Convert.ChangeType(typeId, paras[0].ParameterType);
+            }
+            catch (Exception ex)
+            {
+                return "{\"error\":\"arg conversion failed: " + Esc(ex.Message) + "\"}";
+            }
+
+            try
+            {
+                method.Invoke(null, new[] { arg });
+                return "{\"opened\":\"" + Esc(typeArg) + "\",\"type_id\":" + typeId +
+                       ",\"method\":\"OpenDungeonOfType\"}";
+            }
+            catch (Exception ex)
+            {
+                string msg = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+                return "{\"error\":\"" + Esc(msg) + "\",\"type\":\"" + Esc(typeArg) + "\",\"type_id\":" + typeId + "}";
             }
         }
 
