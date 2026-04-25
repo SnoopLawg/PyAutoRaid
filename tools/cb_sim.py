@@ -352,10 +352,14 @@ except (ImportError, FileNotFoundError) as _e:
 # are applied; with the nominal game-data durations, BD coverage runs out
 # around bt 27 and Maneater dies.
 _BUFF_DURATION_OVERRIDES = {
-    # Demytha A3 "Channel the Bloodline" — game text says "Block Damage for
-    # 1 turn" but real play covers 2 holder-turns per cast. Without this
-    # override the team dies at bt 27-28 because the BD cycle has gaps.
-    ("Demytha", "A3", "block_damage"): 2,
+    # Empirical durations for buffs whose effective coverage in real play
+    # exceeds the literal game text. Most likely cause is Demytha A2's
+    # "Light of the Deep" buff-extension passive — it adds +1 turn to all
+    # ally buffs every cast, which our extend_buffs handler doesn't always
+    # replay at the same cadence. Bumping these durations matches the
+    # net-effective coverage observed in real CB runs.
+    ("Demytha", "A3", "block_damage"): 3,   # game says 1, real covers ~3 holder turns
+    ("Maneater", "A3", "unkillable"): 3,    # game says 2, real covers ~3 holder turns
 }
 for (_h, _sk, _b), _new_dur in _BUFF_DURATION_OVERRIDES.items():
     sk_data = SKILL_DATA.get(_h, {}).get(_sk)
@@ -1891,7 +1895,12 @@ def build_sim_champion(name: str, stats: dict, position: int,
 
         sim_sk = SimSkill(
             name=sk_name,
-            base_cd=max(0, sd["cd"] - 1) if sd["cd"] > 0 else 0,  # displayed CD → internal
+            # Use displayed CD directly. The previous "-1" was an off-by-one:
+            # cb_sim's tick_cooldowns at start-of-turn + check-eligible-after-tick
+            # makes a CD-N skill eligible on turn N+1 (instead of N+2 like the
+            # game). With the bumped UK/BD durations in _BUFF_DURATION_OVERRIDES,
+            # the slower skill cycle is offset by longer buff coverage.
+            base_cd=sd["cd"],
             multiplier=sd["mult"],
             scaling_stat=sd["stat"],
             hit_count=sd["hits"],
