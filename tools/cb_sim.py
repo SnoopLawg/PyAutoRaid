@@ -104,8 +104,35 @@ class DebuffBar:
     def __init__(self):
         self.slots: List[DebuffSlot] = []
 
+    # Singular-by-type debuffs: only ONE active on the target regardless of
+    # source. New placements refresh duration (game also picks higher amount
+    # but we don't model amount variance here). This matches DWJ G() rules
+    # and frees bar slots that were previously hogged by Venomage placing
+    # the same def_down twice etc.
+    #
+    # NOTE: HP burn is INTENTIONALLY NOT singular — ground-truth tick-log
+    # shows Ninja's 3-per-cast burns DO stack (his 80 burn ticks in 50 CB
+    # turns implies ~1.6 active simultaneously, not 1). Making HP burn
+    # singular dropped Ninja accuracy from 87% to 55%.
+    SINGULAR_BY_TYPE = {"def_down", "def_down_30", "weaken", "weaken_15",
+                        "dec_atk", "dec_atk_25", "poison_sensitivity",
+                        "poison_sensitivity_50", "heal_reduction",
+                        "heal_reduction_50", "stun", "freeze"}
+
     def add(self, debuff_type: str, duration: int, source: str = "") -> bool:
-        """Add a debuff. Returns False if bar is full."""
+        """Add a debuff. Refresh existing slot if singular rules apply.
+
+        Returns True if the debuff is now on the bar (placed or refreshed),
+        False if rejected (bar full).
+        """
+        # Singular-by-type: any source places same type → refresh duration
+        if debuff_type in self.SINGULAR_BY_TYPE:
+            for s in self.slots:
+                if s.debuff_type == debuff_type:
+                    s.remaining = max(s.remaining, duration)
+                    s.source = source  # update attribution to most recent placer
+                    return True
+        # Otherwise stack (poisons, HP burns, etc.)
         if len(self.slots) >= MAX_DEBUFF_SLOTS:
             return False
         self.slots.append(DebuffSlot(debuff_type, duration, source))
