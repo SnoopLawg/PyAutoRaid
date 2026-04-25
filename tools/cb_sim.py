@@ -314,6 +314,29 @@ except (ImportError, FileNotFoundError) as _e:
     import sys as _sys
     print(f"[cb_sim] Warning: {_e.__class__.__name__}: {_e} — running without game-extracted profiles", file=_sys.stderr)
 
+
+# Empirically-corrected buff durations. The game's published descriptions list
+# nominal turn counts, but in actual play several buffs cover one extra turn
+# than the nominal value implies (likely due to placement-turn semantics not
+# matching the description string). These overrides are applied AFTER game
+# data is loaded so we keep the source-of-truth on disk and document the
+# delta here. Verified vs the user's 45.5M Force Myth-Eater-Ninja real run
+# (2026-04-24): the team only survives 50 boss turns when these durations
+# are applied; with the nominal game-data durations, BD coverage runs out
+# around bt 27 and Maneater dies.
+_BUFF_DURATION_OVERRIDES = {
+    # Demytha A3 "Channel the Bloodline" — game text says "Block Damage for
+    # 1 turn" but real play covers 2 holder-turns per cast. Without this
+    # override the team dies at bt 27-28 because the BD cycle has gaps.
+    ("Demytha", "A3", "block_damage"): 2,
+}
+for (_h, _sk, _b), _new_dur in _BUFF_DURATION_OVERRIDES.items():
+    sk_data = SKILL_DATA.get(_h, {}).get(_sk)
+    if not sk_data:
+        continue
+    tb = sk_data.get("team_buffs") or []
+    sk_data["team_buffs"] = [(n, _new_dur if n == _b else d) for n, d in tb]
+
 DEFAULT_SKILL_DATA = {
     "A1": {"mult": 3.5, "stat": "ATK", "hits": 1, "cd": 0},
     "A2": {"mult": 4.0, "stat": "ATK", "hits": 1, "cd": 4},
