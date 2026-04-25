@@ -32,29 +32,46 @@ UNM_SPD = 190
 UNM_DEF = 4878
 UNM_RES = 250
 
-# Verified debuff tick damage (from in-game damage meters / community testing):
-POISON_5PCT_DMG = 75_000      # 5% poison tick on UNM (~75K per tick).
-                               # NOTE: ground-truth tick-log shows real
-                               # Venomage poison ticks clustered at 50K, not
-                               # 75K — but lowering the per-tick cap made
-                               # Venomage even more under-predicted (60% vs
-                               # 71%) because the bottleneck is debuff-bar
-                               # congestion, not per-tick value: cb_sim only
-                               # places ~32 of his poisons vs ~80 in real
-                               # game (Ninja A2's 3 HP burns/cast fill the
-                               # 10-slot bar). Per-tick stays at 75K until
-                               # the bar fairness model is fixed.
-POISON_25PCT_DMG = 37_500     # 2.5% poison (Toxic set)
-HP_BURN_DMG = 75_000          # HP Burn tick on UNM — observed cap from
-                               # ground-truth tick-log (2026-04-24 Magic UNM):
-                               # 128 of Ninja's 237 boss hits clustered at
-                               # exactly 75K, matching the poison cap. The
-                               # previous 100K value was speculative.
-
-# Mastery procs (both cap at ~75K on UNM, same as a poison tick)
-WM_DMG = 75_000       # Warmaster (single proc per hit)
-GS_DMG = 75_000       # Giant Slayer (per proc, rolls per hit)
-PROC_RATE = 0.30      # 30% per hit
+# =============================================================================
+# Per-tick DoT caps — derived from ground-truth tick-log captures.
+# =============================================================================
+# These are the per-tick damage caps the game applies to DoT effects on
+# Clan Boss (the boss's massive HP would otherwise yield 60M per poison
+# tick at 5% of MAX HP). The values are loaded from
+# `data/observed_dot_caps.json` when available — that file is regenerated
+# by `tools/calibrate_dot_caps.py` from the most recent /tick-log capture.
+#
+# Last manual-fallback values are 2026-04-24 Magic UNM observations:
+#   poison 5%: 50K cap  (80 of Venomage's 185 hits clustered exactly here)
+#   hp burn:    75K cap  (128 of Ninja's 237 hits clustered exactly here)
+#   warmaster:  75K cap  (matches HP burn)
+#   giant slayer: 75K cap (matches HP burn)
+import json as _json
+from pathlib import Path as _Path
+def _load_observed_dot_caps():
+    """Load observed per-tick DoT caps from disk; falls back to manual values
+    if no calibration file exists yet."""
+    caps_path = _Path(__file__).parent.parent / "data" / "observed_dot_caps.json"
+    fallback = {
+        "poison_5pct": 50_000,
+        "poison_2_5pct": 25_000,
+        "hp_burn": 75_000,
+        "warmaster": 75_000,
+        "giant_slayer": 75_000,
+    }
+    try:
+        observed = _json.loads(caps_path.read_text())
+        # Merge — keep fallback for any missing keys
+        return {**fallback, **observed}
+    except (FileNotFoundError, ValueError):
+        return fallback
+_DOT_CAPS = _load_observed_dot_caps()
+POISON_5PCT_DMG  = _DOT_CAPS["poison_5pct"]
+POISON_25PCT_DMG = _DOT_CAPS["poison_2_5pct"]
+HP_BURN_DMG      = _DOT_CAPS["hp_burn"]
+WM_DMG           = _DOT_CAPS["warmaster"]
+GS_DMG           = _DOT_CAPS["giant_slayer"]
+PROC_RATE = 0.30      # 30% per hit (mastery proc rate)
 
 # Speed tune requirements
 BUDGET_UK_SPD = {
