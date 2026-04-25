@@ -165,7 +165,8 @@ def refresh_skills():
             else:
                 label = "Passive" if "Passive" not in existing else "Passive2"
             descs[hero_name][label] = {"name": sname, "desc": sdesc, "skill_type_id": sk.get("skill_type_id")}
-    json.dump(descs, open(ROOT / "skill_descriptions.json", "w"), indent=2, ensure_ascii=False)
+    with open(ROOT / "skill_descriptions.json", "w", encoding="utf-8") as fh:
+        json.dump(descs, fh, indent=2, ensure_ascii=False)
 
     hero_count = len(skills_db)
     skill_count = sum(len(v) for v in skills_db.values())
