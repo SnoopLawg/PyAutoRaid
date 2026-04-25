@@ -497,7 +497,6 @@ namespace RaidAutomation
                     "/tick-log" => GetTickLog(QP(query, "clear") == "1"),
                     "/navigate" => RunOnMainThread(() => NavigateTo(QP(query, "target"))),
                     "/open-dungeon" => RunOnMainThread(() => OpenDungeon(QP(query, "type"))),
-                    "/list-context-methods" => RunOnMainThread(() => ListContextMethods(QP(query, "path"))),
                     "/context-call" => RunOnMainThread(() => CallOnViewContext(QP(query, "path"), QP(query, "method"), QP(query, "arg"))),
                     "/resources" => RunOnMainThread(() => GetResources()),
                     "/all-resources" => RunOnMainThread(() => GetAllResources()),
@@ -9707,100 +9706,6 @@ namespace RaidAutomation
                 string msg = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
                 return "{\"error\":\"" + Esc(msg) + "\",\"type\":\"" + Esc(typeArg) + "\",\"type_id\":" + typeId + "}";
             }
-        }
-
-        // /list-context-methods?path=<dialog GameObject path>
-        // BFS the GameObject hierarchy, find any MonoBehaviour with get_Context,
-        // and emit every method (including parent classes) on the resulting
-        // context's IL2CPP class. Lets us discover what methods are callable
-        // via /context-call without trial-and-error.
-        private string ListContextMethods(string objPath)
-        {
-            if (string.IsNullOrEmpty(objPath))
-                return "{\"error\":\"path required\"}";
-            var go = GameObject.Find(objPath);
-            if (go == null) return "{\"error\":\"not found: " + Esc(objPath) + "\"}";
-
-            var sb = new StringBuilder();
-            sb.Append("{\"contexts\":[");
-            bool firstCtx = true;
-            var seen = new HashSet<string>();
-            var queue = new Queue<KeyValuePair<Transform, int>>();
-            queue.Enqueue(new KeyValuePair<Transform, int>(go.transform, 0));
-            while (queue.Count > 0)
-            {
-                var pair = queue.Dequeue();
-                var t = pair.Key; int depth = pair.Value;
-                var monos = t.gameObject.GetComponents<MonoBehaviour>();
-                foreach (var mono in monos)
-                {
-                    if (mono == null) continue;
-                    try
-                    {
-                        IntPtr monoPtr = mono.Pointer;
-                        if (monoPtr == IntPtr.Zero) continue;
-                        IntPtr monoClass = il2cpp_object_get_class(monoPtr);
-                        if (monoClass == IntPtr.Zero) continue;
-                        // Walk class hierarchy looking for get_Context
-                        IntPtr klass = monoClass;
-                        IntPtr getCtxMethod = IntPtr.Zero;
-                        while (klass != IntPtr.Zero && getCtxMethod == IntPtr.Zero)
-                        {
-                            IntPtr mIter = IntPtr.Zero; IntPtr m;
-                            while ((m = il2cpp_class_get_methods(klass, ref mIter)) != IntPtr.Zero)
-                            {
-                                string mn = Marshal.PtrToStringAnsi(il2cpp_method_get_name(m));
-                                if (mn == "get_Context" && il2cpp_method_get_param_count(m) == 0)
-                                { getCtxMethod = m; break; }
-                            }
-                            if (getCtxMethod == IntPtr.Zero) klass = il2cpp_class_get_parent(klass);
-                        }
-                        if (getCtxMethod == IntPtr.Zero) continue;
-                        IntPtr exc = IntPtr.Zero;
-                        IntPtr ctxObj = il2cpp_runtime_invoke(getCtxMethod, monoPtr, IntPtr.Zero, ref exc);
-                        if (exc != IntPtr.Zero || ctxObj == IntPtr.Zero) continue;
-                        IntPtr ctxClass = il2cpp_object_get_class(ctxObj);
-                        if (ctxClass == IntPtr.Zero) continue;
-                        string ctxName = Marshal.PtrToStringAnsi(il2cpp_class_get_name(ctxClass));
-                        string ctxNs = Marshal.PtrToStringAnsi(il2cpp_class_get_namespace(ctxClass));
-                        string fullCtx = ctxNs + "." + ctxName;
-                        if (!seen.Add(fullCtx)) continue;
-                        if (!firstCtx) sb.Append(",");
-                        firstCtx = false;
-                        sb.Append("{\"context\":\"").Append(Esc(fullCtx)).Append("\",\"methods\":[");
-                        bool firstM = true;
-                        IntPtr ck = ctxClass;
-                        var methodSeen = new HashSet<string>();
-                        while (ck != IntPtr.Zero)
-                        {
-                            string ckName = Marshal.PtrToStringAnsi(il2cpp_class_get_name(ck));
-                            if (ckName == "Object" || ckName == "Il2CppObjectBase") break;
-                            IntPtr mi = IntPtr.Zero; IntPtr m2;
-                            while ((m2 = il2cpp_class_get_methods(ck, ref mi)) != IntPtr.Zero)
-                            {
-                                string mn2 = Marshal.PtrToStringAnsi(il2cpp_method_get_name(m2));
-                                if (mn2 == null) continue;
-                                uint pc = il2cpp_method_get_param_count(m2);
-                                string sig = mn2 + "/" + pc;
-                                if (!methodSeen.Add(sig)) continue;
-                                if (!firstM) sb.Append(",");
-                                firstM = false;
-                                sb.Append("{\"n\":\"").Append(Esc(mn2)).Append("\",\"argc\":").Append(pc).Append("}");
-                            }
-                            ck = il2cpp_class_get_parent(ck);
-                        }
-                        sb.Append("]}");
-                    }
-                    catch { }
-                }
-                if (depth < 6)
-                {
-                    for (int i = 0; i < t.childCount; i++)
-                        queue.Enqueue(new KeyValuePair<Transform, int>(t.GetChild(i), depth + 1));
-                }
-            }
-            sb.Append("]}");
-            return sb.ToString();
         }
 
         // =====================================================
