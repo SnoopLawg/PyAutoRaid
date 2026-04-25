@@ -33,7 +33,17 @@ UNM_DEF = 4878
 UNM_RES = 250
 
 # Verified debuff tick damage (from in-game damage meters / community testing):
-POISON_5PCT_DMG = 75_000      # 5% poison tick on UNM (~75K per tick)
+POISON_5PCT_DMG = 75_000      # 5% poison tick on UNM (~75K per tick).
+                               # NOTE: ground-truth tick-log shows real
+                               # Venomage poison ticks clustered at 50K, not
+                               # 75K — but lowering the per-tick cap made
+                               # Venomage even more under-predicted (60% vs
+                               # 71%) because the bottleneck is debuff-bar
+                               # congestion, not per-tick value: cb_sim only
+                               # places ~32 of his poisons vs ~80 in real
+                               # game (Ninja A2's 3 HP burns/cast fill the
+                               # 10-slot bar). Per-tick stays at 75K until
+                               # the bar fairness model is fixed.
 POISON_25PCT_DMG = 37_500     # 2.5% poison (Toxic set)
 HP_BURN_DMG = 75_000          # HP Burn tick on UNM — observed cap from
                                # ground-truth tick-log (2026-04-24 Magic UNM):
