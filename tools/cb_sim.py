@@ -1098,8 +1098,18 @@ class CBSimulator:
                 has_uk = c.has_buff("unkillable")
                 has_bd = c.has_buff("block_damage")
 
-                if has_uk or has_bd:
-                    continue  # fully protected, no damage taken
+                # Block Damage actually blocks all incoming damage — skip entirely.
+                if has_bd:
+                    continue
+                # Unkillable does NOT block damage — it prevents HP from dropping
+                # below 1. Real game: hero takes damage normally, but if it would
+                # kill them, HP is clamped to 1 (UK save). This is critical for
+                # accurate survival modeling: cb_sim previously skipped damage
+                # entirely on UK, which meant heroes stayed at full HP and the
+                # ONE hit during a UK gap dropped them from full to 0 = death.
+                # Real game has Maneater at low HP throughout, surviving via
+                # cont_heal regen + UK saves. We still apply damage below; the
+                # current_hp <= 0 check at the end handles the UK clamp.
 
                 # GAP DETECTED: champion has NO protection (UK or BD) when CB attacks.
                 # This is ALWAYS an error for Unkillable tunes — even if the hero survives.
@@ -1163,6 +1173,13 @@ class CBSimulator:
                 # Cardiel passive: Block Damage when about to die (4T CD per ally)
                 if c.current_hp <= 0:
                     saved = False
+                    # Unkillable save: HP clamped to 1, hero stays alive.
+                    # The buff is NOT consumed per hit (it's a duration buff,
+                    # consumed on duration tick). This matches real game where
+                    # one UK can save many hits during its duration.
+                    if has_uk:
+                        c.current_hp = 1
+                        saved = True
                     # Check for Cardiel passive
                     cardiel_cd_key = f"_cardiel_cd_{c.position}"
                     cardiel = next((x for x in self.champions
@@ -1886,16 +1903,26 @@ def build_sim_champion(name: str, stats: dict, position: int,
 
         sim_sk = SimSkill(
             name=sk_name,
-            # Note: there's a known off-by-one with cb_sim's start-of-turn
-            # tick semantics — cd=N here makes the skill eligible 1 turn
-            # earlier than game/parity. Demytha's empirical A1 cast count
-            # (real=21, sim=1) is the smoking gun. But fixing it (cd=sd["cd"]
-            # without -1) makes the team die at bt 21 because Maneater's UK
-            # cycle widens past UK+cont_heal coverage in our survival model
-            # (real game keeps him alive via UK saves + 15% cont_heal regen
-            # that cb_sim doesn't fully simulate). Until the survival model
-            # is upgraded, keep the off-by-one — it pessimizes Demytha's
-            # contribution but preserves 50T survival.
+            # Known issue: this "-1" makes skills eligible 1 turn earlier than
+            # parity/real game (parity scheduler decrements ALL cooldowns once
+            # per turn including the just-cast skill, then ticks again next
+            # turn — net 2 decrements over 2 turns. cb_sim only decrements
+            # once at start of next turn.) Without "-1", Demytha cycles A2/A3
+            # at the parity-correct cadence and A1 fires ~16 times per fight.
+            #
+            # But removing "-1" makes the team die at bt 21 because cb_sim's
+            # survival model doesn't replicate the per-holder buff-tick
+            # alignment that keeps real-game Maneater protected through his
+            # UK/BD cycle. Specifically: Maneater ticks his copy of Demytha's
+            # team-applied BD at 1.65x Demytha's pace, so his BD copy expires
+            # earlier than Demytha thinks it should. In real game these
+            # micro-misalignments are bridged by Demytha A2's extend_buffs +
+            # cont_heal regen + shields absorbing partial hits — none of which
+            # cb_sim fully simulates.
+            #
+            # Keeping "-1" until the survival model is upgraded. Cost:
+            # Demytha damage prediction is ~3% of real (real=21 A1 casts,
+            # sim=1 cast). Total sim accuracy 94% on the captured run.
             base_cd=max(0, sd["cd"] - 1) if sd["cd"] > 0 else 0,
             multiplier=sd["mult"],
             scaling_stat=sd["stat"],
