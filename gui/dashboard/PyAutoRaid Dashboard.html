@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>PyAutoRaid — Control Dashboard</title>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+<div id="root"></div>
+
+<!-- Tweakable defaults -->
+<script>
+window.TWEAKS = /*EDITMODE-BEGIN*/{
+  "direction": "B",
+  "running": false
+}/*EDITMODE-END*/;
+</script>
+
+<script src="simulation.js"></script>
+
+<!-- Poll /api/state and overlay real fields onto the sim. Missing slices stay simulated. -->
+<script>
+(function() {
+  const POLL_MS = 1000;
+  function overlay(real) {
+    const s = window.PARSim.state;
+    if (real.layers) {
+      for (const k of ['mod','memory','screen']) {
+        if (real.layers[k]) Object.assign(s.layers[k], real.layers[k]);
+      }
+    }
+    if (real.account) {
+      for (const k of ['level','power','name','vault_rank']) {
+        if (real.account[k] != null) s.account[k] = real.account[k];
+      }
+    }
+    if (real.vm) {
+      for (const k of ['host','ip','cpu','ram','ramMax']) {
+        if (real.vm[k] != null) s.vm[k] = real.vm[k];
+      }
+    }
+    if (real.resources) {
+      for (const k of ['energy','silver','gems','arena_tokens','cb_keys',
+                       'mystery_shards','ancient_shards','void_shards','sacred_shards','primal_shards']) {
+        if (real.resources[k] != null) s.resources[k] = real.resources[k];
+      }
+      if (real.resources.keys) s.resources.keys = real.resources.keys;
+    }
+    if (Array.isArray(real.arena_opponents) && real.arena_opponents.length) {
+      s.arena_opponents = real.arena_opponents;
+    }
+    if (Array.isArray(real.heroes) && real.heroes.length) {
+      s.heroes = real.heroes;
+    }
+    if (Array.isArray(real.artifacts)) {
+      s.artifacts = real.artifacts;
+    }
+    if (Array.isArray(real.events)) {
+      // Real events list (may be empty); use it only if it has entries, else keep sim
+      if (real.events.length) s.events = real.events;
+    }
+    if (Array.isArray(real.history) && real.history.length >= 2) {
+      // Replace sim history only once we have >=2 real data points to draw a line
+      s.history = real.history;
+    }
+    if (real.cb) {
+      if (Array.isArray(real.cb.team) && real.cb.team.length) {
+        s.cb.team = real.cb.team;
+      }
+      if (real.cb.last_run) {
+        for (const k of ['turns_total','damage','damage_taken','damage_absorbed',
+                         'debuffs_applied','timeline','turn_log',
+                         'unkillable_triggers','counters_total','duration_s']) {
+          if (real.cb.last_run[k] != null) s.cb.last_run[k] = real.cb.last_run[k];
+        }
+      }
+      if (real.cb.damage_today != null) s.cb.damage_today = real.cb.damage_today;
+      if (Array.isArray(real.cb.history) && real.cb.history.length) s.cb.history = real.cb.history;
+      if (Array.isArray(real.cb.per_key_history)) s.cb.per_key_history = real.cb.per_key_history;
+      if (real.cb.boss) {
+        if (real.cb.boss.hp_max) s.cb.boss_hp = real.cb.boss.hp_max;
+        if (real.cb.boss.affinity) s.cb.affinity = real.cb.boss.affinity;
+      }
+      // Real DWJ-derived data — overlay only when present so page stays
+      // useful while a fresh poll is in flight.
+      if (Array.isArray(real.cb.potential_teams) && real.cb.potential_teams.length) {
+        s.cb.potential_teams = real.cb.potential_teams;
+      }
+      if (real.cb.calc_parity_sim) s.cb.calc_parity_sim = real.cb.calc_parity_sim;
+    }
+  }
+  async function poll() {
+    try {
+      const r = await fetch('/api/state', {cache: 'no-store'});
+      if (r.ok) overlay(await r.json());
+    } catch(e) { /* proxy down — keep sim */ }
+  }
+  setInterval(poll, POLL_MS);
+  poll();
+
+  // ---- Live task runner overlay ----
+  function overlayRun(run) {
+    const s = window.PARSim.state;
+    if (!run) return;
+    s.realMode = !!run.running;
+    s.running = !!run.running;
+    if (run.tasks && typeof run.tasks === 'object') {
+      for (const t of s.tasks) {
+        const rt = run.tasks[t.id];
+        if (!rt) continue;
+        t.status = rt.status || t.status;
+        if (rt.started_at && !rt.finished_at) {
+          t.ms = Math.max(0, (Date.now()/1000 - rt.started_at) * 1000);
+        } else if (rt.started_at && rt.finished_at) {
+          t.ms = (rt.finished_at - rt.started_at) * 1000;
+        }
+      }
+      if (run.current_task_id) {
+        const idx = s.tasks.findIndex(t => t.id === run.current_task_id);
+        if (idx >= 0) s.queueIdx = idx;
+      }
+    }
+  }
+  async function pollRun() {
+    try {
+      const r = await fetch('/api/run', {cache: 'no-store'});
+      if (r.ok) overlayRun(await r.json());
+    } catch(e) {}
+  }
+  setInterval(pollRun, 500);
+  pollRun();
+
+  // Override setRunning to route through the real runner when the proxy is up.
+  const _origSetRunning = window.PARSim.setRunning;
+  window.PARSim.setRunning = async function(val) {
+    if (val) {
+      const selected = window.PARSim.state.tasks.filter(t => t.selected).map(t => t.id);
+      if (!selected.length) return;
+      try {
+        const r = await fetch('/api/run', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({task_ids: selected}),
+        });
+        const d = await r.json().catch(() => ({}));
+        if (r.ok && d.ok) {
+          // Reset local task state; overlay will populate from server
+          window.PARSim.state.tasks.forEach(t => {
+            if (selected.includes(t.id)) { t.status = 'pending'; t.ms = 0; }
+          });
+          window.PARSim.state.realMode = true;
+          window.PARSim.state.running = true;
+          pollRun();
+          return;
+        }
+        // Proxy rejected (e.g. already running) — fall back to sim
+        console.warn('real run rejected, using sim:', d);
+      } catch (e) {
+        console.warn('proxy unreachable, using sim:', e);
+      }
+      _origSetRunning.call(window.PARSim, true);
+    } else {
+      try { await fetch('/api/run', {method: 'DELETE'}); } catch (e) {}
+      _origSetRunning.call(window.PARSim, false);
+    }
+  };
+})();
+</script>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="shared.jsx"></script>
+<script type="text/babel" src="direction_b.jsx"></script>
+<script type="text/babel" src="direction_b_pages.jsx"></script>
+
+<script type="text/babel">
+function App() {
+  const [tweaksOn, setTweaksOn] = React.useState(false);
+  const s = useSim();
+
+  // Apply initial TWEAKS.running
+  const bootedRunning = React.useRef(false);
+  React.useEffect(() => {
+    if (!bootedRunning.current) {
+      bootedRunning.current = true;
+      if (window.TWEAKS.running) window.PARSim.setRunning(true);
+    }
+  }, []);
+
+  // Tweaks protocol
+  React.useEffect(() => {
+    function onMsg(e) {
+      if (!e.data) return;
+      if (e.data.type === '__activate_edit_mode') setTweaksOn(true);
+      if (e.data.type === '__deactivate_edit_mode') setTweaksOn(false);
+    }
+    window.addEventListener('message', onMsg);
+    window.parent.postMessage({type:'__edit_mode_available'}, '*');
+    return () => window.removeEventListener('message', onMsg);
+  }, []);
+
+  function setRunningPersist(v) {
+    window.PARSim.setRunning(v);
+    window.parent.postMessage({type:'__edit_mode_set_keys', edits: {running: v}}, '*');
+  }
+
+  return (
+    <>
+      <div className="dash-frame">
+        <DirectionB/>
+      </div>
+
+      {tweaksOn && (
+        <div className="tweaks-panel" data-dir="B">
+          <h4>Tweaks</h4>
+          <div className="tweaks-row">
+            <span>Bot running</span>
+            <div className={`toggle ${s.running ? 'on' : ''}`} onClick={()=>setRunningPersist(!s.running)}/>
+          </div>
+          <div className="tweaks-row">
+            <span style={{fontSize: 11, color:'#999'}}>Reset queue</span>
+            <button className="btn" style={{height: 24, padding:'0 8px', fontSize: 11}} onClick={()=>window.PARSim.reset()}>Reset</button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

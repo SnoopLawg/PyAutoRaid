@@ -7,6 +7,7 @@ One entrypoint for the work that landed in:
 - calc_parity_check.py  -> diff sim output vs live DWJ rendered text
 - dwj_inspect.py        -> query the scraped DWJ dataset
 - hh_vs_dwj.py          -> HellHades cross-reference / gap analysis
+- dungeon_run.py        -> Village -> stage -> battle one-shot
 
 Examples:
     python3 tools/cb.py potential                          # all DWJ tunes ranked vs roster
@@ -30,6 +31,9 @@ Examples:
     python3 tools/cb.py gaps --roster-only
     python3 tools/cb.py gaps --missing-only
     python3 tools/cb.py gaps --posts-only
+
+    python3 tools/cb.py dungeon --dungeon dragon --stage 20 --start
+    python3 tools/cb.py dungeon --dungeon spider --stage 1 --no-start
 """
 
 from __future__ import annotations
@@ -40,7 +44,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 USAGE = (
-    "usage: cb.py {potential|sim|parity|inspect|gaps} [args...]\n"
+    "usage: cb.py {potential|sim|parity|inspect|gaps|dungeon} [args...]\n"
     "       cb.py --help          for full subcommand examples"
 )
 
@@ -71,6 +75,8 @@ def main() -> None:
         _delegate("dwj_inspect", rest)
     elif sub == "gaps":
         _delegate("hh_vs_dwj", rest)
+    elif sub == "dungeon":
+        _delegate("dungeon_run", rest)
     else:
         print(f"unknown subcommand: {sub}\n{USAGE}", file=sys.stderr)
         sys.exit(2)

@@ -51,8 +51,8 @@ logger = logging.getLogger(__name__)
 # =============================================================================
 
 # TypeInfo RVAs in GameAssembly.dll (from Il2CppDumper script.json)
-APPMODEL_TYPEINFO_RVA = 0x4DC1558
-APPVIEWMODEL_TYPEINFO_RVA = 0x4DC2A28
+APPMODEL_TYPEINFO_RVA = 0x4DEE858      # Il2CppDumper script.json 2026-04-19 (Unity 6000.0.60f1)
+APPVIEWMODEL_TYPEINFO_RVA = 0x4DEFD28
 
 # Pointer chain from TypeInfo to singleton instance
 # klass -> generic_class_info -> specialized_klass -> static_fields -> _instance

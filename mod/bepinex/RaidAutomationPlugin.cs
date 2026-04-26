@@ -43,6 +43,8 @@ namespace RaidAutomation
         [DllImport("GameAssembly")]
         static extern IntPtr il2cpp_runtime_invoke(IntPtr method, IntPtr obj, IntPtr args, ref IntPtr exc);
         [DllImport("GameAssembly")]
+        static extern IntPtr il2cpp_object_unbox(IntPtr obj);
+        [DllImport("GameAssembly")]
         static extern uint il2cpp_method_get_param_count(IntPtr method);
         [DllImport("GameAssembly")]
         static extern IntPtr il2cpp_class_get_fields(IntPtr klass, ref IntPtr iter);
@@ -496,7 +498,7 @@ namespace RaidAutomation
                     "/battle-log" => GetBattleLogFull(QP(query, "clear") == "1"),
                     "/tick-log" => GetTickLog(QP(query, "clear") == "1"),
                     "/navigate" => RunOnMainThread(() => NavigateTo(QP(query, "target"))),
-                    "/open-dungeon" => RunOnMainThread(() => OpenDungeon(QP(query, "type"))),
+                    "/open-dungeon" => RunOnMainThread(() => OpenDungeon(QP(query, "type"), QP(query, "method"))),
                     "/context-call" => RunOnMainThread(() => CallOnViewContext(QP(query, "path"), QP(query, "method"), QP(query, "arg"))),
                     "/resources" => RunOnMainThread(() => GetResources()),
                     "/all-resources" => RunOnMainThread(() => GetAllResources()),
@@ -504,6 +506,11 @@ namespace RaidAutomation
                     "/explore-uw" => RunOnMainThread(() => ExploreUserWrapper(QP(query, "path"))),
                     "/view-contexts" => RunOnMainThread(() => GetViewContexts(QP(query, "path"))),
                     "/invoke-context" => RunOnMainThread(() => InvokeOnContext(QP(query, "type"), QP(query, "method"))),
+                    "/list-static-methods" => ListStaticMethods(QP(query, "type"), QP(query, "filter")),
+                    "/list-active" => RunOnMainThread(() => ListActive(QP(query, "path"), QP(query, "depth"), QP(query, "filter"))),
+                    "/set-scroll" => RunOnMainThread(() => SetScroll(QP(query, "path"), QP(query, "v"), QP(query, "h"))),
+                    "/list-components" => RunOnMainThread(() => ListComponents(QP(query, "path"))),
+                    "/get-text" => RunOnMainThread(() => GetText(QP(query, "path"))),
                     _ => "{\"endpoints\":[\"/status\",\"/all-heroes\",\"/battle-state\",\"/navigate?target=cb\",\"/context-call?path=X&method=Y\",\"/invoke-context?type=X&method=Y\",\"/resources\",\"/view-contexts\",\"/mastery-data?hero_id=X\",\"/open-mastery?hero_id=X&mastery_id=Y\",\"/reset-masteries?hero_id=X\"]}"
                 };
             }
@@ -9622,27 +9629,27 @@ namespace RaidAutomation
         }
 
         // /open-dungeon?type=<key|int>
-        // Calls WebViewInGameTransition.OpenDungeonOfType(DungeonTypeId).
-        // Aliases (by community-known IDs):
-        //   dragon=4, spider=5, fire_knight=6, ice_golem=7, minotaur=2,
-        //   magic_keep=8, force_keep=9, spirit_keep=10, void_keep=11
+        // Calls WebViewInGameTransition.OpenDungeonOfType(RegionTypeId).
+        // RegionTypeId values verified from the game enum (2026-04-25):
+        //   void_keep=201, spirit_keep=202, magic_keep=203, force_keep=204,
+        //   arcane_keep=205, dragon=206, ice_golem=207, fire_knight=208,
+        //   spider=209, minotaur=210
         // Numbers can be passed directly; aliases are resolved by name.
-        // If the IDs are wrong on the user's game version, they can pass an
-        // int explicitly and we report which methods exist on the type.
         private static readonly Dictionary<string, int> DUNGEON_TYPE_IDS = new(StringComparer.OrdinalIgnoreCase)
         {
-            {"minotaur", 2},
-            {"dragon", 4},
-            {"spider", 5},
-            {"fire_knight", 6},
-            {"ice_golem", 7},
-            {"magic_keep", 8},
-            {"force_keep", 9},
-            {"spirit_keep", 10},
-            {"void_keep", 11},
+            {"void_keep", 201},
+            {"spirit_keep", 202},
+            {"magic_keep", 203},
+            {"force_keep", 204},
+            {"arcane_keep", 205},
+            {"dragon", 206},
+            {"ice_golem", 207},
+            {"fire_knight", 208},
+            {"spider", 209},
+            {"minotaur", 210},
         };
 
-        private string OpenDungeon(string typeArg)
+        private string OpenDungeon(string typeArg, string methodOverride)
         {
             if (string.IsNullOrEmpty(typeArg))
                 return "{\"error\":\"type required. Aliases: " + string.Join(",", DUNGEON_TYPE_IDS.Keys) + " or pass an int\"}";
@@ -9673,22 +9680,21 @@ namespace RaidAutomation
             }
             if (transType == null) return "{\"error\":\"WebViewInGameTransition type not found\"}";
 
-            // Try OpenDungeonsMapWithFocusOn first — focuses camera on a
-            // specific dungeon AND opens DungeonsDialog properly populated.
-            // Falls back to OpenDungeonOfType only if the focus variant
-            // isn't found. (OpenDungeonOfType has been observed to leave
-            // Raid in a half-rendered "ITEM DROPS over Keeps" state, so
-            // we prefer the focus variant.)
-            string usedMethodName = "OpenDungeonsMapWithFocusOn";
+            // OpenDungeonOfType opens the DungeonsDialog stage list directly
+            // (one-shot Village→stages). OpenDungeonsMapWithFocusOn opens
+            // the map view with the camera focused on the sector. Default
+            // to OpenDungeonOfType for full automation; pass method=focus
+            // for the camera-focus variant.
+            string usedMethodName;
+            if (string.Equals(methodOverride, "focus", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(methodOverride, "OpenDungeonsMapWithFocusOn", StringComparison.OrdinalIgnoreCase))
+                usedMethodName = "OpenDungeonsMapWithFocusOn";
+            else
+                usedMethodName = "OpenDungeonOfType";
+
             var method = transType.GetMethod(usedMethodName,
                 BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.FlattenHierarchy);
-            if (method == null)
-            {
-                usedMethodName = "OpenDungeonOfType";
-                method = transType.GetMethod(usedMethodName,
-                    BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.FlattenHierarchy);
-            }
-            if (method == null) return "{\"error\":\"neither OpenDungeonsMapWithFocusOn nor OpenDungeonOfType found\"}";
+            if (method == null) return "{\"error\":\"" + Esc(usedMethodName) + " not found on WebViewInGameTransition\"}";
 
             // Inspect parameter type and convert int → enum if needed.
             var paras = method.GetParameters();
@@ -9719,6 +9725,247 @@ namespace RaidAutomation
                 string msg = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
                 return "{\"error\":\"" + Esc(msg) + "\",\"type\":\"" + Esc(typeArg) + "\",\"type_id\":" + typeId + "}";
             }
+        }
+
+        // /list-static-methods?type=<typeName>&filter=<substring>
+        // Lists static methods on the given type. Type lookup uses the same
+        // FindType + assembly walk fallback as OpenDungeon. Optional filter
+        // narrows by case-insensitive substring match. Read-only — does not
+        // touch live MonoBehaviours, so cannot crash the game.
+        private string ListStaticMethods(string typeName, string filter)
+        {
+            if (string.IsNullOrEmpty(typeName))
+                return "{\"error\":\"type required\"}";
+
+            Type t = FindType(typeName);
+            if (t == null)
+            {
+                foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
+                {
+                    try
+                    {
+                        foreach (var ti in asm.GetTypes())
+                        {
+                            if (ti.Name == typeName || ti.FullName == typeName) { t = ti; break; }
+                        }
+                    } catch { }
+                    if (t != null) break;
+                }
+            }
+            if (t == null) return "{\"error\":\"type not found: " + Esc(typeName) + "\"}";
+
+            // Enum types: dump names + numeric values (much more useful than methods).
+            if (t.IsEnum)
+            {
+                var er = new List<string>();
+                try
+                {
+                    foreach (var name in Enum.GetNames(t))
+                    {
+                        if (!string.IsNullOrEmpty(filter) &&
+                            name.IndexOf(filter, StringComparison.OrdinalIgnoreCase) < 0)
+                            continue;
+                        var val = Enum.Parse(t, name);
+                        long iv = Convert.ToInt64(val);
+                        er.Add("{\"name\":\"" + Esc(name) + "\",\"value\":" + iv + "}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    return "{\"error\":\"enum dump failed: " + Esc(ex.Message) + "\"}";
+                }
+                return "{\"type\":\"" + Esc(t.FullName) + "\",\"is_enum\":true,\"count\":" +
+                       er.Count + ",\"values\":[" + string.Join(",", er) + "]}";
+            }
+
+            var rows = new List<string>();
+            foreach (var m in t.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.FlattenHierarchy))
+            {
+                if (!string.IsNullOrEmpty(filter) &&
+                    m.Name.IndexOf(filter, StringComparison.OrdinalIgnoreCase) < 0)
+                    continue;
+                var paras = m.GetParameters();
+                var sb = new StringBuilder();
+                sb.Append("{\"name\":\"").Append(Esc(m.Name)).Append("\",\"params\":[");
+                for (int i = 0; i < paras.Length; i++)
+                {
+                    if (i > 0) sb.Append(",");
+                    sb.Append("\"").Append(Esc(paras[i].ParameterType.Name)).Append("\"");
+                }
+                sb.Append("]}");
+                rows.Add(sb.ToString());
+            }
+            return "{\"type\":\"" + Esc(t.FullName) + "\",\"count\":" + rows.Count +
+                   ",\"methods\":[" + string.Join(",", rows) + "]}";
+        }
+
+        // /list-active?path=X[&depth=N&filter=substr]
+        // Walks GameObjects under path and returns active ones by name. Used
+        // for UI state inspection (e.g. is "VictoryHeader" active vs
+        // "DefeatHeader"). Default depth 4. Optional substring filter on
+        // GameObject name. Read-only.
+        private string ListActive(string path, string depthArg, string filter)
+        {
+            if (string.IsNullOrEmpty(path)) return "{\"error\":\"path required\"}";
+            int maxDepth = 4;
+            if (!string.IsNullOrEmpty(depthArg)) int.TryParse(depthArg, out maxDepth);
+
+            var go = GameObject.Find(path);
+            if (go == null) return "{\"error\":\"not found: " + Esc(path) + "\"}";
+
+            var rows = new List<string>();
+            int total = 0;
+            void Walk(Transform t, int d)
+            {
+                if (d > maxDepth) return;
+                if (!t.gameObject.activeSelf) return;
+                total++;
+                string name = t.gameObject.name;
+                if (string.IsNullOrEmpty(filter) ||
+                    name.IndexOf(filter, StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    rows.Add("{\"name\":\"" + Esc(name) + "\",\"depth\":" + d +
+                             ",\"path\":\"" + Esc(GetGameObjectPath(t)) + "\"}");
+                }
+                int n = t.childCount;
+                for (int i = 0; i < n && i < 60; i++) Walk(t.GetChild(i), d + 1);
+            }
+            Walk(go.transform, 0);
+            return "{\"root\":\"" + Esc(path) + "\",\"total_active\":" + total +
+                   ",\"matches\":[" + string.Join(",", rows) + "]}";
+        }
+
+        // /set-scroll?path=X[&v=0..1&h=0..1]
+        // Finds a Unity ScrollRect on the GameObject (or anywhere in its
+        // children) and sets verticalNormalizedPosition / horizontalNormalizedPosition.
+        // 0 = bottom/right, 1 = top/left. Used to scroll virtualized lists
+        // so that off-screen items render. Safe — pure Unity component access.
+        private string SetScroll(string path, string vArg, string hArg)
+        {
+            if (string.IsNullOrEmpty(path)) return "{\"error\":\"path required\"}";
+            var go = GameObject.Find(path);
+            if (go == null) return "{\"error\":\"not found: " + Esc(path) + "\"}";
+
+            var sr = go.GetComponent<UnityEngine.UI.ScrollRect>();
+            if (sr == null) sr = go.GetComponentInChildren<UnityEngine.UI.ScrollRect>(true);
+            if (sr == null) return "{\"error\":\"no ScrollRect under " + Esc(path) + "\"}";
+
+            float? v = null, h = null;
+            if (!string.IsNullOrEmpty(vArg) && float.TryParse(vArg, out var vf)) v = Mathf.Clamp01(vf);
+            if (!string.IsNullOrEmpty(hArg) && float.TryParse(hArg, out var hf)) h = Mathf.Clamp01(hf);
+            if (v.HasValue) sr.verticalNormalizedPosition = v.Value;
+            if (h.HasValue) sr.horizontalNormalizedPosition = h.Value;
+
+            return "{\"set\":true,\"v\":" + sr.verticalNormalizedPosition.ToString("0.000") +
+                   ",\"h\":" + sr.horizontalNormalizedPosition.ToString("0.000") + "}";
+        }
+
+        // /list-components?path=X[&hier=1] - dump component types. With
+        // hier=1, also shows the parent class chain for each component.
+        private string ListComponents(string path)
+        {
+            if (string.IsNullOrEmpty(path)) return "{\"error\":\"path required\"}";
+            var go = GameObject.Find(path);
+            if (go == null) return "{\"error\":\"not found: " + Esc(path) + "\"}";
+            var rows = new List<string>();
+            foreach (var c in go.GetComponents<Component>())
+            {
+                if (c == null) continue;
+                string name = "?";
+                var hierarchy = new List<string>();
+                try
+                {
+                    IntPtr ptr = c.Pointer;
+                    if (ptr != IntPtr.Zero)
+                    {
+                        IntPtr klass = il2cpp_object_get_class(ptr);
+                        IntPtr k = klass;
+                        while (k != IntPtr.Zero && hierarchy.Count < 10)
+                        {
+                            string cn = Marshal.PtrToStringAnsi(il2cpp_class_get_name(k));
+                            string ns = Marshal.PtrToStringAnsi(il2cpp_class_get_namespace(k));
+                            string full = string.IsNullOrEmpty(ns) ? cn : ns + "." + cn;
+                            hierarchy.Add(full);
+                            if (cn == "Object" || cn == "Il2CppObjectBase") break;
+                            k = il2cpp_class_get_parent(k);
+                        }
+                        if (hierarchy.Count > 0) name = hierarchy[0];
+                    }
+                }
+                catch { }
+                if (name == "?") name = c.GetType().FullName;
+                var hierJson = string.Join(",", hierarchy.ConvertAll(h => "\"" + Esc(h) + "\""));
+                rows.Add("{\"name\":\"" + Esc(name) + "\",\"hier\":[" + hierJson + "]}");
+            }
+            return "{\"path\":\"" + Esc(path) + "\",\"components\":[" +
+                   string.Join(",", rows) + "]}";
+        }
+
+        // /get-text?path=X - read TMP/Text component text from a GameObject
+        // and any active descendants. Returns concatenated text snippets so
+        // labels with nested structure (header + body) can be inspected.
+        private string GetText(string path)
+        {
+            if (string.IsNullOrEmpty(path)) return "{\"error\":\"path required\"}";
+            var go = GameObject.Find(path);
+            if (go == null) return "{\"error\":\"not found: " + Esc(path) + "\"}";
+            var rows = new List<string>();
+            void Walk(Transform t, int d)
+            {
+                if (d > 6) return;
+                if (!t.gameObject.activeSelf) return;
+                foreach (var c in t.gameObject.GetComponents<Component>())
+                {
+                    if (c == null) continue;
+                    string txt = null;
+                    string cn = null;
+                    try
+                    {
+                        // First, identify if this component is a Text-like type
+                        // by walking the IL2CPP class hierarchy.
+                        IntPtr ptr = c.Pointer;
+                        if (ptr == IntPtr.Zero) continue;
+                        IntPtr klass = il2cpp_object_get_class(ptr);
+                        bool isText = false;
+                        IntPtr k = klass;
+                        for (int hops = 0; k != IntPtr.Zero && hops < 12; hops++)
+                        {
+                            string kn = Marshal.PtrToStringAnsi(il2cpp_class_get_name(k));
+                            if (cn == null) cn = kn;
+                            if (kn == "Text" || kn == "TMP_Text" ||
+                                kn == "TextMeshProUGUI" || kn == "TextExtended")
+                            { isText = true; break; }
+                            k = il2cpp_class_get_parent(k);
+                        }
+                        if (!isText) continue;
+                        // Use the managed Il2CppSystem wrapper to read .text
+                        try
+                        {
+                            // Cast through Il2CppSystem.Object then to UI.Text
+                            var asText = c.TryCast<UnityEngine.UI.Text>();
+                            if (asText != null) txt = asText.text;
+                        }
+                        catch { }
+                    }
+                    catch { }
+                    if (!string.IsNullOrEmpty(txt))
+                        rows.Add("{\"name\":\"" + Esc(t.gameObject.name) +
+                                 "\",\"type\":\"" + Esc(cn ?? "") +
+                                 "\",\"text\":\"" + Esc(txt) + "\"}");
+                }
+                int n = t.childCount;
+                for (int i = 0; i < n && i < 30; i++) Walk(t.GetChild(i), d + 1);
+            }
+            Walk(go.transform, 0);
+            return "{\"path\":\"" + Esc(path) + "\",\"texts\":[" + string.Join(",", rows) + "]}";
+        }
+
+        private static string GetGameObjectPath(Transform t)
+        {
+            var parts = new List<string>();
+            var cur = t;
+            while (cur != null) { parts.Insert(0, cur.gameObject.name); cur = cur.parent; }
+            return string.Join("/", parts);
         }
 
         // =====================================================
@@ -9913,14 +10160,52 @@ namespace RaidAutomation
 
                             // Invoke the method on the context
                             IntPtr exc2 = IntPtr.Zero;
-                            il2cpp_runtime_invoke(targetMethod, ctxObj, IntPtr.Zero, ref exc2);
+                            IntPtr retObj = il2cpp_runtime_invoke(targetMethod, ctxObj, IntPtr.Zero, ref exc2);
 
                             if (exc2 != IntPtr.Zero)
                                 return "{\"error\":\"invoke exception\",\"context\":\"" + Esc(fullCtxName) +
                                        "\",\"method\":\"" + Esc(methodName) + "\"}";
 
+                            // Try to extract a primitive return value (bool/int/string).
+                            // IL2CPP value-type returns are boxed; we unbox via il2cpp_object_unbox.
+                            string retJson = "";
+                            try
+                            {
+                                if (retObj != IntPtr.Zero)
+                                {
+                                    IntPtr retClass = il2cpp_object_get_class(retObj);
+                                    string rcn = retClass != IntPtr.Zero ?
+                                        Marshal.PtrToStringAnsi(il2cpp_class_get_name(retClass)) : null;
+                                    if (rcn == "Boolean")
+                                    {
+                                        IntPtr unbox = il2cpp_object_unbox(retObj);
+                                        byte b = Marshal.ReadByte(unbox);
+                                        retJson = ",\"return\":" + (b != 0 ? "true" : "false");
+                                    }
+                                    else if (rcn == "Int32")
+                                    {
+                                        IntPtr unbox = il2cpp_object_unbox(retObj);
+                                        int iv = Marshal.ReadInt32(unbox);
+                                        retJson = ",\"return\":" + iv;
+                                    }
+                                    else if (rcn == "String")
+                                    {
+                                        // Use the managed string conversion via Il2CppToManagedString-equivalent.
+                                        // Easiest: use Il2CppSystem.String wrapper if available.
+                                        try
+                                        {
+                                            var wrapper = new Il2CppSystem.Object(retObj).Cast<Il2CppSystem.String>();
+                                            string s = wrapper;
+                                            retJson = ",\"return\":\"" + Esc(s ?? "") + "\"";
+                                        }
+                                        catch { }
+                                    }
+                                }
+                            }
+                            catch { }
+
                             return "{\"invoked\":\"" + Esc(methodName) + "\",\"on_context\":\"" + Esc(fullCtxName) +
-                                   "\",\"view_path\":\"" + Esc(GetPath(t)) + "\"}";
+                                   "\",\"view_path\":\"" + Esc(GetPath(t)) + "\"" + retJson + "}";
                         }
                         catch { }
                     }

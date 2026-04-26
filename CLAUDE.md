@@ -45,11 +45,13 @@ python3 tools/cb.py inspect tune myth-eater               # variants + slot conf
 python3 tools/cb.py inspect champion Ninja                # skills + effects
 python3 tools/cb.py parity --hash <h> --text-file dwj.txt # diff sim vs live DWJ
 python3 tools/cb.py gaps --roster-only                    # HH cross-reference
+python3 tools/cb.py dungeon --dungeon dragon --stage 20 --start  # Village->battle
 ```
 
 `tools/cb.py` thin-dispatches into `comp_finder`, `calc_parity_sim`,
-`calc_parity_check`, `dwj_inspect`, `hh_vs_dwj`. The dashboard's
-`potential teams` + `cast timeline` panels (port 6791) read the same data.
+`calc_parity_check`, `dwj_inspect`, `hh_vs_dwj`, `dungeon_run`. The
+dashboard's `potential teams` + `cast timeline` panels (port 6791)
+read the same data.
 
 ## CB Sim Accuracy
 

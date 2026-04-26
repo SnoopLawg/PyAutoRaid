@@ -2701,6 +2701,238 @@ def stop_run():
     return True, "stop requested (current task will finish)"
 
 
+# ---------- Dungeon loop runner (mod-API only) ----------
+# Exposes a long-running loop driven by tools/dungeon_run.run_loop, with
+# state polled by the React Dungeons tab.
+
+DUNGEON_VALID = {
+    "dragon", "spider", "fire_knight", "ice_golem", "minotaur",
+    "void_keep", "spirit_keep", "magic_keep", "force_keep", "arcane_keep",
+}
+
+_dungeon_state = {
+    "running": False,
+    "dungeon": None,
+    "stage": None,
+    "stop_condition": None,   # {"type": "runs", "n": N} or {"type": "capped"}
+    "completed": 0,
+    "failures": 0,
+    "target": None,           # int N for runs, None for capped
+    "started_at": None,
+    "finished_at": None,
+    "last_status": None,      # last per-run status string
+    "last_elapsed_s": None,
+    "energy_start": None,
+    "energy_now": None,
+    "silver_start": None,
+    "silver_now": None,
+    "result_reason": None,    # "capped" / "done" / "aborted" / err string
+    "stop_requested": False,
+    "team": [],               # list of player hero type_ids (read from /battle-state)
+}
+_dungeon_lock = threading.Lock()
+
+
+def _dungeon_read_team():
+    """Snapshot the active dungeon team's BaseTypeIds via /battle-state.
+    Returns list of int type_ids (5 elements expected) or None if a battle
+    isn't currently in progress / state is unavailable."""
+    try:
+        with urllib.request.urlopen(MOD_URL + "/battle-state", timeout=2) as resp:
+            r = json.loads(resp.read().decode()) or {}
+    except Exception:
+        return None
+    heroes = r.get("heroes")
+    if not isinstance(heroes, list):
+        return None
+    team = []
+    for h in heroes:
+        if (h or {}).get("side") != "player":
+            continue
+        tid = h.get("type_id")
+        if isinstance(tid, int) and tid > 0:
+            team.append(tid)
+    return team or None
+
+
+def _dungeon_resources():
+    """Snapshot energy + silver from the live mod /resources endpoint.
+    Returns (energy, silver) as ints, or (None, None) on failure."""
+    try:
+        with urllib.request.urlopen(MOD_URL + "/resources", timeout=2) as resp:
+            r = json.loads(resp.read().decode()) or {}
+    except Exception:
+        return None, None
+    e = r.get("energy")
+    s = r.get("silver")
+    try:
+        e = int(e) if e is not None else None
+        s = int(s) if s is not None else None
+    except (TypeError, ValueError):
+        e = e if isinstance(e, (int, float)) else None
+        s = s if isinstance(s, (int, float)) else None
+    return e, s
+
+
+def _dungeon_progress(kind, **kw):
+    """run_loop progress callback - mirror events into _dungeon_state."""
+    energy, silver = _dungeon_resources()
+    with _dungeon_lock:
+        if energy is not None:
+            _dungeon_state["energy_now"] = energy
+        if silver is not None:
+            _dungeon_state["silver_now"] = silver
+        if kind == "run_done":
+            _dungeon_state["last_status"] = kw.get("status")
+            _dungeon_state["last_elapsed_s"] = kw.get("elapsed_s")
+            if kw.get("status") == "victory":
+                _dungeon_state["completed"] += 1
+        elif kind == "end":
+            _dungeon_state["result_reason"] = kw.get("reason")
+
+
+def _dungeon_team_poller():
+    """Background thread: while a dungeon loop is running, poll /battle-state
+    a few seconds at a time and capture the player team's type_ids. We need
+    a separate poll because the team is only readable while a battle is
+    actively in progress, never at the iteration boundaries where
+    _dungeon_progress fires."""
+    while True:
+        with _dungeon_lock:
+            running = _dungeon_state["running"]
+            have_team = bool(_dungeon_state.get("team"))
+        if not running:
+            return
+        if not have_team:
+            team = _dungeon_read_team()
+            if team:
+                with _dungeon_lock:
+                    _dungeon_state["team"] = team
+        time.sleep(3 if not have_team else 15)
+
+
+def _dungeon_should_stop():
+    with _dungeon_lock:
+        return _dungeon_state["stop_requested"]
+
+
+def _dungeon_runner_thread(dungeon, stage, stop_condition):
+    # Lazy import to keep module load light when the dashboard runs
+    # without dungeon work in progress.
+    from tools import dungeon_run
+    energy_start, silver_start = _dungeon_resources()
+    with _dungeon_lock:
+        _dungeon_state["energy_start"] = energy_start
+        _dungeon_state["energy_now"] = energy_start
+        _dungeon_state["silver_start"] = silver_start
+        _dungeon_state["silver_now"] = silver_start
+
+    try:
+        # Resolve "max" stage to a concrete int up front so the dashboard
+        # can show it consistently.
+        if isinstance(stage, str) and stage.lower() == "max":
+            # Need to be on the right dungeon's DungeonsDialog first.
+            try:
+                if dungeon:
+                    dungeon_run.open_dungeon(dungeon)
+            except Exception:
+                pass
+            resolved = dungeon_run._resolve_max_stage()
+            if resolved is None:
+                with _dungeon_lock:
+                    _dungeon_state["result_reason"] = "no_stage_visible"
+                    _dungeon_state["running"] = False
+                    _dungeon_state["finished_at"] = time.time()
+                return
+            stage = resolved
+        with _dungeon_lock:
+            _dungeon_state["stage"] = stage
+
+        result = dungeon_run.run_loop(
+            dungeon=dungeon,
+            stage=int(stage),
+            stop_condition=stop_condition,
+            on_progress=_dungeon_progress,
+            should_stop=_dungeon_should_stop,
+        )
+        with _dungeon_lock:
+            _dungeon_state["result_reason"] = result.get("reason")
+            _dungeon_state["failures"] = result.get("failures", 0)
+    except Exception as ex:
+        logger.exception("dungeon runner crashed")
+        with _dungeon_lock:
+            _dungeon_state["result_reason"] = f"crashed: {ex}"
+    finally:
+        with _dungeon_lock:
+            _dungeon_state["running"] = False
+            _dungeon_state["finished_at"] = time.time()
+
+
+def start_dungeon_run(dungeon, stage, stop_condition):
+    if dungeon not in DUNGEON_VALID:
+        return False, f"unknown dungeon '{dungeon}'"
+    sc_type = (stop_condition or {}).get("type")
+    if sc_type not in ("runs", "capped"):
+        return False, f"unknown stop_condition type '{sc_type}'"
+    if sc_type == "runs":
+        try:
+            n = int(stop_condition.get("n", 0))
+        except (TypeError, ValueError):
+            return False, "stop_condition.n must be an int"
+        if n < 1:
+            return False, "stop_condition.n must be >= 1"
+        stop_condition = {"type": "runs", "n": n}
+    if sc_type == "capped" and dungeon != "minotaur":
+        return False, "capped stop condition is minotaur-only"
+    if not (isinstance(stage, int) or (isinstance(stage, str)
+                                       and (stage.lower() == "max"
+                                            or stage.isdigit()))):
+        return False, "stage must be 1-25 or 'max'"
+
+    with _dungeon_lock:
+        if _dungeon_state["running"]:
+            return False, "a dungeon loop is already running"
+        _dungeon_state.update({
+            "running": True,
+            "dungeon": dungeon,
+            "stage": stage if isinstance(stage, int) else stage,
+            "stop_condition": stop_condition,
+            "target": stop_condition.get("n") if sc_type == "runs" else None,
+            "completed": 0,
+            "failures": 0,
+            "started_at": time.time(),
+            "finished_at": None,
+            "last_status": None,
+            "last_elapsed_s": None,
+            "energy_start": None,
+            "energy_now": None,
+            "silver_start": None,
+            "silver_now": None,
+            "result_reason": None,
+            "stop_requested": False,
+            "team": [],
+        })
+    threading.Thread(target=_dungeon_runner_thread,
+                     args=(dungeon, stage, stop_condition),
+                     daemon=True, name="dungeon-loop").start()
+    threading.Thread(target=_dungeon_team_poller,
+                     daemon=True, name="dungeon-team-poller").start()
+    return True, "started"
+
+
+def stop_dungeon_run():
+    with _dungeon_lock:
+        if not _dungeon_state["running"]:
+            return False, "not running"
+        _dungeon_state["stop_requested"] = True
+    return True, "stop requested (current battle will finish)"
+
+
+def dungeon_run_state():
+    with _dungeon_lock:
+        return dict(_dungeon_state)
+
+
 # ---------- Windows Task Scheduler CRUD (scoped to \PyAutoRaid\) ----------
 
 TASK_FOLDER = r"\PyAutoRaid"
@@ -2861,6 +3093,9 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         if parsed.path == "/api/cb-reset-info":
             self._send_json(build_cb_reset_info())
             return
+        if parsed.path == "/api/dungeons/state":
+            self._send_json(dungeon_run_state())
+            return
         if parsed.path == "/api/sim-sweep":
             q = urllib.parse.parse_qs(parsed.query)
             try:
@@ -2903,6 +3138,15 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             _autorun_state["enabled"] = bool(body.get("enabled", True))
             return self._send_json({"ok": True, "enabled": _autorun_state["enabled"]})
 
+        if parsed.path == "/api/dungeons/start":
+            ok, msg = start_dungeon_run(
+                body.get("dungeon"),
+                body.get("stage"),
+                body.get("stop_condition") or {},
+            )
+            return self._send_json({"ok": ok, "message": msg},
+                                   status=200 if ok else 400)
+
         if parsed.path == "/api/preset/edit":
             # Raw priority+opener push for a single preset. Accepts:
             #   {"preset_id":1, "heroes":[{"hero_id":X, "opener":<sid|null>,
@@ -2923,6 +3167,10 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         if parsed.path == "/api/run":
             ok, msg = stop_run()
             return self._send_json({"ok": ok, "message": msg}, status=200 if ok else 400)
+        if parsed.path == "/api/dungeons/run":
+            ok, msg = stop_dungeon_run()
+            return self._send_json({"ok": ok, "message": msg},
+                                   status=200 if ok else 400)
         m = re.match(r"^/api/schedule/([A-Za-z0-9_\-]+)$", parsed.path)
         if not m:
             return self._send_json({"error": "not found"}, status=404)
