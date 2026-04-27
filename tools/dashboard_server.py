@@ -1629,9 +1629,12 @@ def build_potential_teams(max_count: int = 12):
         # Confidence: full-fill + no ascending = 1.0; penalize per gap
         conf = max(0.3, 1.0 - 0.15 * missing - 0.1 * ascending)
         heroes = [s.get("hero") or "?" for s in slots]
-        est_damage = _damage_floor_for_key(t.get("key_capability"), t.get("affinity"))
+        floor = _damage_floor_for_key(t.get("key_capability"), t.get("affinity"))
+        # Defer damage calc until we have the parity_sim result so we can
+        # scale by actual boss-turn survival (computed below).
+        est_damage = floor
         if missing:
-            est_damage = int(est_damage * (0.85 ** missing))  # softer estimate w/ gaps
+            est_damage = int(est_damage * (0.85 ** missing))
         # Tags
         tags = []
         if t.get("type"):
@@ -1652,15 +1655,32 @@ def build_potential_teams(max_count: int = 12):
         unm_link = next((c for c in calc_links if "ultra" in (c.get("name") or "").lower() or "unm" in (c.get("name") or "").lower()), None)
         sim_hash = (unm_link or (calc_links[0] if calc_links else {})).get("hash")
         parity = _parity_survival(sim_hash, _dwj) if missing == 0 else None
-        # Fold sim survival into confidence: a roster-fit comp that the parity
-        # sim says dies before turn 50 should NOT read as high-confidence.
+        # Fold sim survival into confidence AND damage estimate. A comp that
+        # only survives 30 boss turns can't deal 50T worth of damage, so the
+        # est_damage should reflect that — otherwise every tune at the same
+        # key_capability shows an identical number.
         if parity:
+            bt = parity.get("boss_turns") or 0
             if parity.get("survived"):
-                conf = max(conf, 0.95)         # sim-validated 50T survival
+                conf = max(conf, 0.95)
             else:
-                # Scale by how far it got
-                bt = parity.get("boss_turns") or 0
                 conf = min(conf, 0.3 + (bt / 50) * 0.5)
+            # Survival-scaled damage: the floor is the "you should hit X with
+            # this many keys" target; if the sim says you only get 30/50 boss
+            # turns, you'll only see ~60% of that.
+            if bt > 0:
+                surv_factor = min(1.0, bt / 50)
+                # Action density: tunes with more hero actions per 50T = more
+                # hits land = more damage. ~150-250 actions is the typical
+                # range; normalize so that 200 actions stays at the floor and
+                # higher/lower scales roughly linearly.
+                actions = parity.get("actions") or 0
+                # Square-root scaling so a tune with 2x actions ≠ 2x damage
+                # (diminishing returns at high speed). Anchored at 250 actions
+                # = 1.0x.
+                import math
+                action_factor = max(0.7, min(1.5, math.sqrt(actions / 250.0))) if actions else 1.0
+                est_damage = int(est_damage * surv_factor * action_factor)
         note_bits = []
         if ev.get("missing_heroes"):
             note_bits.append("need " + ", ".join(ev["missing_heroes"]))
@@ -1671,15 +1691,37 @@ def build_potential_teams(max_count: int = 12):
             # Use a trimmed description when there are no gaps
             note_bits.append(t["description"][:120] + ("…" if len(t["description"]) > 120 else ""))
         note = " · ".join(note_bits) or ""
-        # Slot details for drill-down panels
+        # Slot details. If the DWJ tune doesn't carry a min/max speed for a
+        # slot (some older tunes don't), fall back to the calc variant's
+        # total_speed for the matching champion so the UI shows a number
+        # instead of "—".
+        variant_speeds_by_index = {}
+        if sim_hash:
+            try:
+                v = _dwj().variants_by_hash.get(sim_hash)
+                if v:
+                    for cs in (getattr(v, "slots", None) or []):
+                        idx = getattr(cs, "index", None)
+                        sp = getattr(cs, "total_speed", None) or getattr(cs, "base_speed", None)
+                        if idx is not None and sp:
+                            variant_speeds_by_index[idx] = int(sp)
+            except Exception:
+                pass
         slot_details = []
         for s in slots:
+            min_s = s.get("min_spd")
+            max_s = s.get("max_spd")
+            if (min_s is None or max_s is None):
+                vs = variant_speeds_by_index.get(s.get("index"))
+                if vs is not None:
+                    min_s = min_s if min_s is not None else vs
+                    max_s = max_s if max_s is not None else vs
             slot_details.append({
                 "index": s.get("index"),
                 "hero": s.get("hero"),
                 "status": s.get("status"),
-                "min_spd": s.get("min_spd"),
-                "max_spd": s.get("max_spd"),
+                "min_spd": min_s,
+                "max_spd": max_s,
                 "roster_grade": s.get("roster_grade"),
             })
         out.append({
