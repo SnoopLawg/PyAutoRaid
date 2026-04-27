@@ -1551,6 +1551,45 @@ def _damage_floor_for_key(key_cap: str | None, affinity: str | None) -> int:
 # doesn't re-run the scheduler 8 times per dashboard poll.
 _parity_survival_cache: dict[str, dict] = {}
 
+# Cache real cb_sim damage results by team fingerprint so the dashboard
+# doesn't re-run the heavy damage simulator on every poll.
+_real_sim_damage_cache: dict[str, dict] = {}
+
+# Hero name to use when a tune slot is "generic" (e.g. "DPS" placeholder).
+# This is the user's primary CB DPS hero.
+_DEFAULT_DPS_HERO = "Ninja"
+
+
+def _real_sim_damage(team_names: list[str], cb_element_str: str | None = None) -> dict | None:
+    """Run cb_sim against a 5-hero team and return damage + boss_turns.
+
+    cb_element_str is one of 'magic'/'force'/'spirit'/'void'; defaults to void.
+    Returns {"total_damage": int, "boss_turns": int} or None if sim can't run
+    (heroes missing from 6-star roster, etc.). Cached.
+    """
+    if not team_names or len(team_names) != 5:
+        return None
+    cb_el = (cb_element_str or "void").lower()
+    cache_key = "|".join(team_names) + "::" + cb_el
+    if cache_key in _real_sim_damage_cache:
+        return _real_sim_damage_cache[cache_key]
+    try:
+        sys.path.insert(0, str(ROOT / "tools"))
+        from cb_calibrate import run_sim_for_team
+        element_map = {"magic": 1, "force": 2, "spirit": 3, "void": 4}
+        cb_el_int = element_map.get(cb_el, 4)
+        result = run_sim_for_team(team_names, cb_element=cb_el_int,
+                                  force_affinity=True, max_cb_turns=50,
+                                  use_current_gear=True)
+        out = {
+            "total_damage": int(result.get("total", 0) or 0),
+            "boss_turns": int(result.get("cb_turns", 0) or 0),
+        }
+    except Exception:
+        out = None
+    _real_sim_damage_cache[cache_key] = out
+    return out
+
 
 def _parity_survival(variant_hash: str | None, dwj_loader) -> dict | None:
     """Run calc_parity_sim against `variant_hash` for the full 50 boss turns
@@ -1655,29 +1694,35 @@ def build_potential_teams(max_count: int = 12):
         unm_link = next((c for c in calc_links if "ultra" in (c.get("name") or "").lower() or "unm" in (c.get("name") or "").lower()), None)
         sim_hash = (unm_link or (calc_links[0] if calc_links else {})).get("hash")
         parity = _parity_survival(sim_hash, _dwj) if missing == 0 else None
-        # Fold sim survival into confidence AND damage estimate. A comp that
-        # only survives 30 boss turns can't deal 50T worth of damage, so the
-        # est_damage should reflect that — otherwise every tune at the same
-        # key_capability shows an identical number.
+        # Real damage sim: cb_sim run with the user's actual 6-star gear.
+        # Substitutes generic "DPS" slots with the user's primary DPS so the
+        # sim can actually run on tunes that have a placeholder slot.
+        real_sim = None
+        if missing == 0:
+            team_names = []
+            for s in slots:
+                hn = s.get("hero")
+                if not hn or s.get("status") == "generic":
+                    team_names.append(_DEFAULT_DPS_HERO)
+                else:
+                    team_names.append(hn)
+            if len(team_names) == 5:
+                real_sim = _real_sim_damage(team_names, t.get("affinity"))
         if parity:
             bt = parity.get("boss_turns") or 0
             if parity.get("survived"):
                 conf = max(conf, 0.95)
             else:
                 conf = min(conf, 0.3 + (bt / 50) * 0.5)
-            # Survival-scaled damage: the floor is the "you should hit X with
-            # this many keys" target; if the sim says you only get 30/50 boss
-            # turns, you'll only see ~60% of that.
+        # Prefer the real damage sim when available; otherwise scale the floor
+        # by parity-sim signals so identical-tier tunes don't read identically.
+        if real_sim and real_sim.get("total_damage", 0) > 0:
+            est_damage = real_sim["total_damage"]
+        elif parity:
+            bt = parity.get("boss_turns") or 0
             if bt > 0:
                 surv_factor = min(1.0, bt / 50)
-                # Action density: tunes with more hero actions per 50T = more
-                # hits land = more damage. ~150-250 actions is the typical
-                # range; normalize so that 200 actions stays at the floor and
-                # higher/lower scales roughly linearly.
                 actions = parity.get("actions") or 0
-                # Square-root scaling so a tune with 2x actions ≠ 2x damage
-                # (diminishing returns at high speed). Anchored at 250 actions
-                # = 1.0x.
                 import math
                 action_factor = max(0.7, min(1.5, math.sqrt(actions / 250.0))) if actions else 1.0
                 est_damage = int(est_damage * surv_factor * action_factor)
@@ -1743,6 +1788,7 @@ def build_potential_teams(max_count: int = 12):
             "calculator_links": calc_links,
             "slots": slot_details,
             "parity_sim": parity,            # {boss_turns, actions, survived} or None
+            "real_sim": real_sim,            # {total_damage, boss_turns} or None
             "sim_hash": sim_hash,            # variant hash the parity sim ran against
         })
         if len(out) >= max_count:
