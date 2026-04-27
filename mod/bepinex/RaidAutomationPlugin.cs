@@ -10566,60 +10566,66 @@ namespace RaidAutomation
             object region, object idVal, int rid, Dictionary<int, object> stageById)
         {
             string regionName = idVal.ToString();
-            // Iterate StageIdsByDifficulty (Dict<DifficultyId, List<int>>) by
-            // probing each candidate DifficultyId enum value via the Item
-            // indexer + ContainsKey. Avoids the Il2Cpp entry walk (key field
-            // returns garbage for enum-keyed dicts).
-            var byDiff = new List<(string diffName, int diffId, List<int> stageIds)>();
+            // Walk StageIdsByDifficulty._entries directly. The key field is an
+            // Il2Cpp value-typed enum (DifficultyId) that doesn't unbox cleanly,
+            // so we identify buckets by the non-null value list and name them
+            // by inspecting the FIRST stage's properties for a difficulty hint.
+            // Order is preserved (Normal first → harder later in Plarium's data).
+            var byDiff = new List<(string diffName, int diffIdx, List<int> stageIds)>();
             var sidByDiff = Prop(region, "StageIdsByDifficulty");
             if (sidByDiff != null)
             {
                 try
                 {
-                    var dt = sidByDiff.GetType();
-                    Type diffEnumType = null;
-                    var ga = dt.GetGenericArguments();
-                    if (ga != null && ga.Length >= 1) diffEnumType = ga[0];
-                    var ck = dt.GetMethod("ContainsKey");
-                    var idx = dt.GetProperty("Item");
-                    int dictCount = IntProp(sidByDiff, "Count");
-                    int foundDiffs = 0;
-                    if (diffEnumType != null && ck != null && idx != null)
+                    var entries = Prop(sidByDiff, "_entries");
+                    int len = entries != null ? IntProp(entries, "Length") : 0;
+                    var get = entries != null
+                        ? (entries.GetType().GetMethod("get_Item", new[] { typeof(int) })
+                           ?? entries.GetType().GetProperty("Item")?.GetGetMethod())
+                        : null;
+                    int diffIdx = 0;
+                    for (int j = 0; j < len; j++)
                     {
-                        // Probe a narrow range of int values; DifficultyId
-                        // typically uses 0..5. Wider ranges thrash the main
-                        // thread (5 difficulties x 72 regions x ContainsKey
-                        // is already ~360 reflection calls).
-                        for (int diffInt = 0; diffInt <= 6 && foundDiffs < dictCount; diffInt++)
+                        var diffEntry = get.Invoke(entries, new object[] { j });
+                        if (diffEntry == null) continue;
+                        var idsList = Prop(diffEntry, "value");
+                        if (idsList == null) continue;
+                        int idsCount = IntProp(idsList, "_size");
+                        if (idsCount <= 0) continue;
+                        var idsItems = Prop(idsList, "_items");
+                        if (idsItems == null) continue;
+                        var idsGet = idsItems.GetType().GetMethod("get_Item", new[] { typeof(int) })
+                                     ?? idsItems.GetType().GetProperty("Item")?.GetGetMethod();
+                        var stageIds = new List<int>();
+                        for (int k = 0; k < idsCount; k++)
                         {
-                            object diffEnum;
-                            try { diffEnum = Enum.ToObject(diffEnumType, diffInt); }
-                            catch { continue; }
-                            bool hit;
-                            try { hit = (bool)ck.Invoke(sidByDiff, new object[] { diffEnum }); }
-                            catch { hit = false; }
-                            if (!hit) continue;
-                            foundDiffs++;
-                            object idsList;
-                            try { idsList = idx.GetValue(sidByDiff, new object[] { diffEnum }); }
-                            catch { continue; }
-                            if (idsList == null) continue;
-                            int idsCount = IntProp(idsList, "_size");
-                            if (idsCount <= 0) continue;
-                            var idsItems = Prop(idsList, "_items");
-                            if (idsItems == null) continue;
-                            var idsGet = idsItems.GetType().GetMethod("get_Item", new[] { typeof(int) })
-                                         ?? idsItems.GetType().GetProperty("Item")?.GetGetMethod();
-                            var stageIds = new List<int>();
-                            for (int k = 0; k < idsCount; k++)
-                            {
-                                var sidObj = idsGet.Invoke(idsItems, new object[] { k });
-                                if (sidObj == null) continue;
-                                stageIds.Add(Convert.ToInt32(sidObj));
-                            }
-                            string diffName = DifficultyName(diffInt);
-                            byDiff.Add((diffName, diffInt, stageIds));
+                            var sidObj = idsGet.Invoke(idsItems, new object[] { k });
+                            if (sidObj == null) continue;
+                            stageIds.Add(Convert.ToInt32(sidObj));
                         }
+                        // Dedupe a possible doppelganger from free-slot iteration
+                        // by checking if this stage-id list overlaps an earlier
+                        // bucket. Plarium's _entries are typically packed near
+                        // the start, so duplicates would occur in adjacent slots.
+                        bool dup = false;
+                        if (stageIds.Count > 0)
+                        {
+                            int firstSid = stageIds[0];
+                            foreach (var prev in byDiff)
+                            {
+                                if (prev.stageIds.Count > 0 && prev.stageIds[0] == firstSid)
+                                {
+                                    dup = true; break;
+                                }
+                            }
+                        }
+                        if (dup) continue;
+                        // Best-effort name: by index ordering. Plarium's enum
+                        // declaration order tends to be Normal, Brutal,
+                        // Nightmare, etc. — so bucket index matches that.
+                        string diffName = DifficultyName(diffIdx);
+                        byDiff.Add((diffName, diffIdx, stageIds));
+                        diffIdx++;
                     }
                 }
                 catch { }
@@ -10627,7 +10633,7 @@ namespace RaidAutomation
             if (byDiff.Count == 0) return;
 
             // Sort by enum int so Normal (typically 0) comes first.
-            byDiff.Sort((a, b) => a.diffId.CompareTo(b.diffId));
+            // Already in declaration order from the entries walk; no sort.
 
             var diffPayloads = new List<string>();
             foreach (var (diffName, diffId, stageIds) in byDiff)
