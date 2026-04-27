@@ -36,6 +36,7 @@ python3 tools/cb_team_search.py --top 20
 python3 tools/cb_gap_analysis.py
 python3 tools/gear_gap_analysis.py                    # gear-farm priorities by set/primary/substat × area
 python3 tools/gear_gap_analysis.py --area dragon --top 20
+curl -s http://localhost:6790/dungeon-drops > data/dungeon_drops.json   # refresh drop tables from live game
 python3 tools/global_gear_solver.py --team "ME,Demytha,Ninja,Geo,Venomage"
 python3 tools/auto_profile.py --hero Venus
 python3 tools/desc_profiler.py --compare

@@ -504,6 +504,8 @@ namespace RaidAutomation
                     "/all-resources" => RunOnMainThread(() => GetAllResources()),
                     "/shards" => RunOnMainThread(() => GetShards(QP(query, "debug") == "1")),
                     "/explore-uw" => RunOnMainThread(() => ExploreUserWrapper(QP(query, "path"))),
+                    "/explore-sd" => RunOnMainThread(() => ExploreStaticData(QP(query, "path"))),
+                    "/dungeon-drops" => RunOnMainThread(() => GetDungeonDrops()),
                     "/view-contexts" => RunOnMainThread(() => GetViewContexts(QP(query, "path"))),
                     "/invoke-context" => RunOnMainThread(() => InvokeOnContext(QP(query, "type"), QP(query, "method"))),
                     "/list-static-methods" => ListStaticMethods(QP(query, "type"), QP(query, "filter")),
@@ -10395,6 +10397,346 @@ namespace RaidAutomation
         // =====================================================
         // API: /explore-uw — list UserWrapper properties (debug)
         // =====================================================
+
+        // Walk AppModel.StaticData.<path> and return instance props (same shape as
+        // ExploreUserWrapper). Lets us discover the stage/artifact reward schema
+        // without needing a debugger attached. Path supports "Item[KEY]" segments
+        // for indexer access on dictionaries (e.g. HeroData.HeroTypeById.Item[123]).
+        private string ExploreStaticData(string path)
+        {
+            var appModel = GetAppModel();
+            if (appModel == null) return "{\"error\":\"appmodel not ready\"}";
+            object target = Prop(appModel, "StaticData");
+            if (target == null) return "{\"error\":\"AppModel.StaticData null\"}";
+            if (!string.IsNullOrEmpty(path))
+            {
+                foreach (var seg in path.Split('.'))
+                {
+                    object next;
+                    if (seg.StartsWith("Item[") && seg.EndsWith("]"))
+                    {
+                        var keyStr = seg.Substring(5, seg.Length - 6);
+                        var idx = target.GetType().GetProperty("Item");
+                        if (idx == null) return "{\"error\":\"no indexer on " + Esc(target.GetType().FullName) + "\"}";
+                        var paramT = idx.GetIndexParameters()[0].ParameterType;
+                        object key = keyStr;
+                        // Handle Il2Cpp enum / numeric types: parse to int then ToObject onto the param type.
+                        if (paramT.IsEnum)
+                        {
+                            try { key = Enum.ToObject(paramT, int.Parse(keyStr)); }
+                            catch { try { key = Enum.Parse(paramT, keyStr); } catch { } }
+                        }
+                        else
+                        {
+                            try { key = Convert.ChangeType(keyStr, paramT); } catch { }
+                        }
+                        try { next = idx.GetValue(target, new object[] { key }); }
+                        catch (Exception ex) { return "{\"error\":\"indexer threw " + Esc(ex.Message) + " (param=" + Esc(paramT.FullName) + ")\"}"; }
+                    }
+                    else if (seg.StartsWith("[") && seg.EndsWith("]"))
+                    {
+                        // List/array index: [N]
+                        var nStr = seg.Substring(1, seg.Length - 2);
+                        if (!int.TryParse(nStr, out int n)) return "{\"error\":\"bad index " + Esc(nStr) + "\"}";
+                        var get = target.GetType().GetMethod("get_Item", new[] { typeof(int) });
+                        if (get == null) return "{\"error\":\"no get_Item(int) on " + Esc(target.GetType().FullName) + "\"}";
+                        try { next = get.Invoke(target, new object[] { n }); }
+                        catch (Exception ex) { return "{\"error\":\"index threw " + Esc(ex.Message) + "\"}"; }
+                    }
+                    else
+                    {
+                        next = Prop(target, seg);
+                    }
+                    if (next == null) return "{\"error\":\"no property " + Esc(seg) + " on " + Esc(target.GetType().FullName) + "\"}";
+                    target = next;
+                }
+            }
+            var sb = new StringBuilder(2048);
+            sb.Append("{\"path\":\"sd").Append(string.IsNullOrEmpty(path) ? "" : "." + path)
+              .Append("\",\"type\":\"").Append(Esc(target.GetType().FullName)).Append("\",\"props\":[");
+            int i = 0;
+            foreach (var p in target.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
+            {
+                string valType = "?";
+                string sample = null;
+                int? collCount = null;
+                try
+                {
+                    var v = p.GetValue(target);
+                    if (v != null)
+                    {
+                        valType = v.GetType().FullName;
+                        try
+                        {
+                            var cp = v.GetType().GetProperty("Count");
+                            if (cp != null && cp.PropertyType == typeof(int))
+                                collCount = (int)cp.GetValue(v);
+                        }
+                        catch { }
+                        var s = v.ToString();
+                        if (s != null && s.Length < 80 && !s.Contains("Il2Cpp") && !s.StartsWith("System."))
+                            sample = s;
+                    }
+                }
+                catch (Exception ex) { valType = "err:" + ex.GetType().Name; }
+                if (i++ > 0) sb.Append(",");
+                sb.Append("{\"name\":\"").Append(Esc(p.Name))
+                  .Append("\",\"declared\":\"").Append(Esc(p.PropertyType.FullName))
+                  .Append("\",\"actual\":\"").Append(Esc(valType)).Append("\"");
+                if (collCount.HasValue) sb.Append(",\"count\":").Append(collCount.Value);
+                if (sample != null) sb.Append(",\"sample\":\"").Append(Esc(sample)).Append("\"");
+                sb.Append("}");
+            }
+            sb.Append("]}");
+            return sb.ToString();
+        }
+
+        // Walk AppModel.StaticData → StageData and emit per-region artifact +
+        // accessory drop pools. Pulls from each Stage's FlexibleReward, which
+        // exposes ArtifactProbsBySetKindId / ArtifactProbsByKindId /
+        // AccessoryProbsByKindId / AccessoryProbsByHeroFraction etc.
+        private string GetDungeonDrops()
+        {
+            var appModel = GetAppModel();
+            if (appModel == null) return "{\"error\":\"appmodel not ready\"}";
+            var sd = Prop(appModel, "StaticData");
+            if (sd == null) return "{\"error\":\"AppModel.StaticData null\"}";
+            var stageData = Prop(sd, "StageData");
+            if (stageData == null) return "{\"error\":\"StaticData.StageData null\"}";
+            var regionsById = Prop(stageData, "RegionsById");
+            var allStages = Prop(stageData, "Stages");
+            if (regionsById == null || allStages == null) return "{\"error\":\"StageData.RegionsById/Stages null\"}";
+
+            // Build stage_id -> Stage map.
+            var stageById = new Dictionary<int, object>();
+            try
+            {
+                int n = IntProp(allStages, "_size");
+                var items = Prop(allStages, "_items");
+                if (items != null)
+                {
+                    var get = items.GetType().GetMethod("get_Item", new[] { typeof(int) })
+                              ?? items.GetType().GetProperty("Item")?.GetGetMethod();
+                    for (int i = 0; i < n; i++)
+                    {
+                        var st = get.Invoke(items, new object[] { i });
+                        if (st == null) continue;
+                        int sid = IntProp(st, "Id");
+                        stageById[sid] = st;
+                    }
+                }
+            }
+            catch (Exception ex) { return "{\"error\":\"stage walk: " + Esc(ex.Message) + "\"}"; }
+
+            var sb = new StringBuilder(16384);
+            sb.Append("{\"regions\":{");
+            bool firstRegion = true;
+            try
+            {
+                // Walk RegionsById._entries; the value (Region) is reliable even
+                // when entry.key gives garbage for Il2Cpp enum dicts. Dedupe by
+                // region.Id so free-slot ghosts don't double-up.
+                var entries = Prop(regionsById, "_entries");
+                int len = entries != null ? IntProp(entries, "Length") : 0;
+                var get = entries != null
+                    ? (entries.GetType().GetMethod("get_Item", new[] { typeof(int) })
+                       ?? entries.GetType().GetProperty("Item")?.GetGetMethod())
+                    : null;
+                var seenIds = new HashSet<int>();
+                for (int i = 0; i < len; i++)
+                {
+                    var entry = get.Invoke(entries, new object[] { i });
+                    if (entry == null) continue;
+                    var region = Prop(entry, "value");
+                    if (region == null) continue;
+                    var idVal = Prop(region, "Id");
+                    if (idVal == null) continue;
+                    int rid = ExtractEnumInt(idVal);
+                    if (rid == 0) continue;
+                    if (!seenIds.Add(rid)) continue;
+                    EmitRegion(sb, ref firstRegion, region, idVal, rid, stageById);
+                }
+            }
+            catch (Exception ex) { return "{\"error\":\"region walk: " + Esc(ex.Message) + "\"}"; }
+            sb.Append("}}");
+            return sb.ToString();
+        }
+
+        private static void EmitRegion(StringBuilder sb, ref bool firstRegion,
+            object region, object idVal, int rid, Dictionary<int, object> stageById)
+        {
+            string regionName = idVal.ToString();
+            // Collect stage IDs across all difficulties via the dict's _entries;
+            // for Dict<DifficultyId, List<int>>, only the value (List<int>) matters.
+            var stageIds = new List<int>();
+            var sidByDiff = Prop(region, "StageIdsByDifficulty");
+            if (sidByDiff != null)
+            {
+                try
+                {
+                    var entries = Prop(sidByDiff, "_entries");
+                    int n = entries != null ? IntProp(entries, "Length") : 0;
+                    var get = entries != null
+                        ? (entries.GetType().GetMethod("get_Item", new[] { typeof(int) })
+                           ?? entries.GetType().GetProperty("Item")?.GetGetMethod())
+                        : null;
+                    for (int j = 0; j < n; j++)
+                    {
+                        var diffEntry = get.Invoke(entries, new object[] { j });
+                        if (diffEntry == null) continue;
+                        var idsList = Prop(diffEntry, "value");
+                        if (idsList == null) continue;
+                        int idsCount = IntProp(idsList, "_size");
+                        if (idsCount <= 0) continue;
+                        var idsItems = Prop(idsList, "_items");
+                        if (idsItems == null) continue;
+                        var idsGet = idsItems.GetType().GetMethod("get_Item", new[] { typeof(int) })
+                                     ?? idsItems.GetType().GetProperty("Item")?.GetGetMethod();
+                        for (int k = 0; k < idsCount; k++)
+                        {
+                            var sidObj = idsGet.Invoke(idsItems, new object[] { k });
+                            if (sidObj == null) continue;
+                            stageIds.Add(Convert.ToInt32(sidObj));
+                        }
+                    }
+                }
+                catch { }
+            }
+
+            // Aggregate per-set / per-accessory probs across stages.
+            var setCount = new Dictionary<int, int>();
+            var setMaxProb = new Dictionary<int, double>();
+            var accKindCount = new Dictionary<int, int>();
+            var accSetCount = new Dictionary<int, int>();
+            int stagesWithRewards = 0;
+            foreach (int sid in stageIds)
+            {
+                if (!stageById.TryGetValue(sid, out var stage)) continue;
+                var reward = Prop(stage, "Reward");
+                if (reward == null) continue;
+                stagesWithRewards++;
+                AggregateProbs(reward, "ArtifactProbsBySetKindId", setCount, setMaxProb);
+                AggregateProbsCountOnly(reward, "AccessoryProbsByKindId", accKindCount);
+                AggregateProbsCountOnly(reward, "AccessoryProbsBySetKindId", accSetCount);
+            }
+            if (stagesWithRewards == 0) return;
+
+            if (!firstRegion) sb.Append(",");
+            firstRegion = false;
+            sb.Append("\"").Append(Esc(regionName)).Append("\":{");
+            sb.Append("\"id\":").Append(rid);
+            sb.Append(",\"stages\":").Append(stagesWithRewards);
+            sb.Append(",\"set_drops\":");
+            AppendIntDoubleMap(sb, setCount, setMaxProb);
+            sb.Append(",\"accessory_kinds\":[");
+            AppendIntList(sb, accKindCount.Keys);
+            sb.Append("],\"accessory_sets\":[");
+            AppendIntList(sb, accSetCount.Keys);
+            sb.Append("]}");
+        }
+
+        private static void AggregateProbs(object reward, string propName,
+            Dictionary<int,int> count, Dictionary<int,double> maxProb, int maxKey = 100)
+        {
+            var d = Prop(reward, propName);
+            if (d == null) return;
+            try
+            {
+                int dictCount = IntProp(d, "Count");
+                if (dictCount <= 0) return;
+                var dt = d.GetType();
+                var ck = dt.GetMethod("ContainsKey");
+                var idx = dt.GetProperty("Item");
+                if (ck == null || idx == null) return;
+                int found = 0;
+                for (int key = 0; key <= maxKey && found < dictCount; key++)
+                {
+                    bool hit;
+                    try { hit = (bool)ck.Invoke(d, new object[] { key }); }
+                    catch { hit = false; }
+                    if (!hit) continue;
+                    found++;
+                    object v;
+                    try { v = idx.GetValue(d, new object[] { key }); }
+                    catch { continue; }
+                    double prob = v != null ? Convert.ToDouble(v) : 0.0;
+                    if (prob <= 0) continue;
+                    count[key] = count.TryGetValue(key, out int c) ? c + 1 : 1;
+                    if (!maxProb.TryGetValue(key, out double mp) || prob > mp) maxProb[key] = prob;
+                }
+            }
+            catch { }
+        }
+
+        private static void AggregateProbsCountOnly(object reward, string propName,
+            Dictionary<int,int> count, int maxKey = 100)
+        {
+            var d = Prop(reward, propName);
+            if (d == null) return;
+            try
+            {
+                int dictCount = IntProp(d, "Count");
+                if (dictCount <= 0) return;
+                var dt = d.GetType();
+                var ck = dt.GetMethod("ContainsKey");
+                if (ck == null) return;
+                int found = 0;
+                for (int key = 0; key <= maxKey && found < dictCount; key++)
+                {
+                    bool hit;
+                    try { hit = (bool)ck.Invoke(d, new object[] { key }); }
+                    catch { hit = false; }
+                    if (!hit) continue;
+                    found++;
+                    count[key] = count.TryGetValue(key, out int c) ? c + 1 : 1;
+                }
+            }
+            catch { }
+        }
+
+        // Best-effort enum-to-int. Tries Convert.ToInt32 first, falls back to
+        // the value__ field that Il2Cpp/CLR enums use for the underlying value.
+        private static int ExtractEnumInt(object enumVal)
+        {
+            if (enumVal == null) return 0;
+            try { return Convert.ToInt32(enumVal); } catch { }
+            try
+            {
+                var f = enumVal.GetType().GetField("value__", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                if (f != null) return (int)f.GetValue(enumVal);
+            }
+            catch { }
+            // Last resort: parse ToString as an int.
+            int n;
+            if (int.TryParse(enumVal.ToString(), out n)) return n;
+            return 0;
+        }
+
+        private static void AppendIntDoubleMap(StringBuilder sb, Dictionary<int,int> count, Dictionary<int,double> maxProb)
+        {
+            sb.Append("{");
+            bool first = true;
+            foreach (var kv in count)
+            {
+                if (!first) sb.Append(",");
+                first = false;
+                double mp = maxProb.TryGetValue(kv.Key, out double v) ? v : 0.0;
+                sb.Append("\"").Append(kv.Key).Append("\":{\"stages\":").Append(kv.Value)
+                  .Append(",\"max_prob\":").Append(mp.ToString("0.######", System.Globalization.CultureInfo.InvariantCulture)).Append("}");
+            }
+            sb.Append("}");
+        }
+
+        private static void AppendIntList(StringBuilder sb, IEnumerable<int> ints)
+        {
+            bool first = true;
+            foreach (var n in ints.OrderBy(x => x))
+            {
+                if (!first) sb.Append(",");
+                first = false;
+                sb.Append(n);
+            }
+        }
 
         private string ExploreUserWrapper(string path)
         {

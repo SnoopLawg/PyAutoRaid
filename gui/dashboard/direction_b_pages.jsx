@@ -1235,6 +1235,65 @@ function PageHeroes({s}) {
               {gapErr && <div style={{padding: 12, color:'var(--danger,#ff6b6b)'}}>{gapErr}</div>}
               {gapData && (
                 <div style={{display:'flex', flexDirection:'column', gap: 14}}>
+                  {gapData.dungeons && gapData.dungeons.length > 0 && (
+                    <div className="card" style={{padding: 0, overflow:'hidden'}}>
+                      <div style={{padding:'8px 12px', borderBottom:'1px solid var(--border)',
+                                   background:'var(--bg-subtle)', fontSize: 10.5,
+                                   color:'var(--text-sub)', textTransform:'uppercase',
+                                   letterSpacing:'0.06em', fontWeight: 600}}>
+                        Dungeon farming priority — highest gap-points closed first
+                      </div>
+                      <table style={{width:'100%', borderCollapse:'collapse', fontSize: 12}}>
+                        <thead>
+                          <tr style={{borderBottom:'1px solid var(--border)', background:'var(--bg-subtle)'}}>
+                            <th style={_th}>Dungeon</th>
+                            <th style={{..._th, textAlign:'right'}}>Score</th>
+                            <th style={_th}>Sets it closes</th>
+                            <th style={_th}>Accessory gaps</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {gapData.dungeons.map(d => (
+                            <tr key={d.region} style={{borderBottom:'1px solid var(--border)'}}>
+                              <td style={{..._td, fontWeight: 600}}>{d.label}</td>
+                              <td style={{..._td, textAlign:'right', fontWeight: 600,
+                                          color:'var(--accent, #6bd0ff)'}} className="mono">
+                                {d.score}
+                              </td>
+                              <td style={_td}>
+                                {d.gap_sets.length === 0
+                                  ? <span style={{color:'var(--text-dim)'}}>—</span>
+                                  : d.gap_sets.map((s, i) => (
+                                    <span key={i} style={{marginRight: 8}}>
+                                      <span style={{color:'var(--text)'}}>{s.set_name}</span>
+                                      <span className="mono" style={{color:'var(--danger,#ff6b6b)', marginLeft: 3}}>
+                                        ({s.gap > 0 ? '+' : ''}{s.gap})
+                                      </span>
+                                    </span>
+                                  ))}
+                              </td>
+                              <td style={_td}>
+                                {d.accessory_kinds.length === 0
+                                  ? <span style={{color:'var(--text-dim)'}}>—</span>
+                                  : (
+                                    <span>
+                                      <span style={{color:'var(--text)'}}>
+                                        {d.accessory_kinds.map(s => ({7:'Ring',8:'Amulet',9:'Banner'}[s] || `slot${s}`)).join(', ')}
+                                      </span>
+                                      {d.accessory_bonus > 0 && (
+                                        <span className="mono" style={{color:'var(--danger,#ff6b6b)', marginLeft: 6}}>
+                                          (-{d.accessory_bonus})
+                                        </span>
+                                      )}
+                                    </span>
+                                  )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                   <GapTable
                     title="Set gaps (most under-supplied first)"
                     rows={gapData.sets}

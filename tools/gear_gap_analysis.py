@@ -34,6 +34,18 @@ HEROES_PATH = PROJECT_ROOT / "heroes_all.json"
 ARTIFACTS_PATH = PROJECT_ROOT / "all_artifacts.json"
 HH_CHAMPS_PATH = PROJECT_ROOT / "data" / "hh" / "parsed" / "champions.json"
 HH_TIERLIST_PATH = PROJECT_ROOT / "data" / "hh" / "parsed" / "tierlist.json"
+DUNGEON_DROPS_PATH = PROJECT_ROOT / "data" / "dungeon_drops.json"
+
+# Game's RegionTypeId → friendly dungeon label (only the dungeons users farm
+# for gear). Drives the "what to farm" priority section. Story regions and
+# faction wars are filtered out — they're not gear farms.
+DUNGEON_LABELS = {
+    "DragonsLair":     "Dragon's Lair",
+    "IceGolemCave":    "Ice Golem Peak",
+    "FireGolemCave":   "Fire Knight Castle",
+    "SpiderCave":      "Spider's Den",
+    "EventDungeon":    "Event Dungeon",
+}
 
 # Areas we report on. Most use HH's `pve_*` build; arena uses `pvp_*`.
 PVE_AREAS = [
@@ -351,6 +363,11 @@ def build_gap_report(threshold: float = 4.0,
         })
     sub_rows.sort(key=lambda r: r["gap"])
 
+    # Per-dungeon farming priority: for each known farm, sum the absolute
+    # value of negative gaps for sets that dungeon drops, plus a bonus for
+    # accessory gaps if the dungeon drops accessories. Higher = better target.
+    dungeon_rows = build_dungeon_priority(set_rows, primary_rows)
+
     return {
         "threshold": threshold,
         "min_rarity": min_rarity,
@@ -362,7 +379,91 @@ def build_gap_report(threshold: float = 4.0,
         "sets": set_rows[:top],
         "primaries": primary_rows[:top],
         "substats": sub_rows[:top],
+        "dungeons": dungeon_rows,
     }
+
+
+def load_dungeon_drops() -> dict:
+    """Return {region_name: {id, sets:[set_id,...], accessory_kinds:[slot,...]}}.
+
+    Empty dict if data/dungeon_drops.json is missing — callers handle gracefully.
+    """
+    if not DUNGEON_DROPS_PATH.exists():
+        return {}
+    raw = _load_json(DUNGEON_DROPS_PATH)
+    out = {}
+    for name, info in (raw.get("regions") or {}).items():
+        sets = sorted(int(k) for k in (info.get("set_drops") or {}).keys())
+        out[name] = {
+            "id": info.get("id"),
+            "sets": sets,
+            "accessory_kinds": list(info.get("accessory_kinds") or []),
+            "stages": info.get("stages", 0),
+        }
+    return out
+
+
+def build_dungeon_priority(set_rows: list, primary_rows: list) -> list:
+    """Rank dungeons by gap-points they close.
+
+    For each dungeon in DUNGEON_LABELS, sum |gap| for under-supplied sets it
+    drops. Dungeons that drop accessories (rings/amulets/banners) also pick
+    up a bonus equal to the sum of |gap| for primary-stat rows whose slot
+    matches an accessory slot (7=Ring, 8=Amulet, 9=Banner).
+    """
+    drops = load_dungeon_drops()
+    if not drops:
+        return []
+
+    set_gap_by_id = {r["set_id"]: r for r in set_rows}
+    # Primary gaps grouped by slot id, summed for accessory bonus.
+    accessory_gap_by_slot: dict[int, float] = defaultdict(float)
+    accessory_top_by_slot: dict[int, list] = defaultdict(list)
+    for r in primary_rows:
+        if r["gap"] < 0 and r["slot"] in (7, 8, 9):
+            accessory_gap_by_slot[r["slot"]] += abs(r["gap"])
+            accessory_top_by_slot[r["slot"]].append(r)
+
+    out = []
+    for region_name, info in drops.items():
+        if region_name not in DUNGEON_LABELS:
+            continue
+        label = DUNGEON_LABELS[region_name]
+        gap_sets = []
+        score = 0.0
+        for sid in info["sets"]:
+            row = set_gap_by_id.get(sid)
+            if not row or row["gap"] >= 0:
+                continue
+            gap_sets.append({"set_id": sid, "set_name": row["set_name"], "gap": row["gap"]})
+            score += abs(row["gap"])
+        gap_sets.sort(key=lambda x: x["gap"])
+
+        accessory_bonus = 0.0
+        accessory_gaps = []
+        for slot in info["accessory_kinds"]:
+            if slot in accessory_gap_by_slot:
+                accessory_bonus += accessory_gap_by_slot[slot]
+                for r in accessory_top_by_slot[slot]:
+                    accessory_gaps.append({
+                        "slot_name": r["slot_name"], "stat": r["stat"], "gap": r["gap"]
+                    })
+        score += accessory_bonus
+        if score <= 0 and not info["accessory_kinds"]:
+            continue
+        out.append({
+            "region": region_name,
+            "label": label,
+            "id": info["id"],
+            "stages": info["stages"],
+            "score": round(score, 1),
+            "gap_sets": gap_sets,
+            "accessory_kinds": info["accessory_kinds"],
+            "accessory_gaps": accessory_gaps,
+            "accessory_bonus": round(accessory_bonus, 1),
+        })
+    out.sort(key=lambda r: -r["score"])
+    return out
 
 
 def render_text(report) -> str:
@@ -389,6 +490,16 @@ def render_text(report) -> str:
         ta = ", ".join(f"{a['area']}:{a['demand']}" for a in r["top_areas"])
         lines.append(f"{r['slot_name']:<8} {r['stat']:<6} {r['demand']:>7} {r['supply']:>7} {r['gap']:>+7}  {ta}")
     lines.append("")
+    if report.get("dungeons"):
+        lines.append("--- DUNGEON FARMING PRIORITY ---")
+        lines.append(f"{'Dungeon':<22} {'Score':>6}  Closes")
+        for d in report["dungeons"]:
+            sets_str = ", ".join(f"{s['set_name']}({s['gap']:+g})" for s in d["gap_sets"][:6])
+            acc_str = ""
+            if d["accessory_bonus"] > 0:
+                acc_str = f"  + accessories ({d['accessory_bonus']:.0f})"
+            lines.append(f"{d['label']:<22} {d['score']:>6}  {sets_str}{acc_str}")
+        lines.append("")
     lines.append("--- SUBSTAT GAPS ---")
     lines.append(f"{'Stat':<6} {'Demand':>7} {'Supply':>7} {'Gap':>7}  Top areas")
     for r in report["substats"]:
