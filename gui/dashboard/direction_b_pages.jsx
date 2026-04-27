@@ -986,6 +986,27 @@ function PageHeroes({s}) {
   const [artSubFilter, setArtSubFilter] = React.useState('all');
   const [artMinRank, setArtMinRank] = React.useState('all');
   const [artEquip, setArtEquip] = React.useState('all'); // all | equipped | vault
+  // Gap-analysis tab state.
+  const [gapData, setGapData] = React.useState(null);
+  const [gapErr, setGapErr] = React.useState('');
+  const [gapLoading, setGapLoading] = React.useState(false);
+  const [gapThreshold, setGapThreshold] = React.useState(4.0);
+  const [gapMinRarity, setGapMinRarity] = React.useState(4);
+  const [gapTopN, setGapTopN] = React.useState(15);
+  const fetchGaps = React.useCallback(async () => {
+    setGapLoading(true); setGapErr('');
+    try {
+      const params = new URLSearchParams({
+        threshold: String(gapThreshold), min_rarity: String(gapMinRarity), top: String(gapTopN),
+      });
+      const r = await fetch('/api/gear-gaps?' + params, {cache:'no-store'});
+      const j = await r.json();
+      if (j.error) { setGapErr(j.error); setGapData(null); }
+      else { setGapData(j); }
+    } catch (e) { setGapErr(String(e)); }
+    setGapLoading(false);
+  }, [gapThreshold, gapMinRarity, gapTopN]);
+  React.useEffect(() => { if (tab === 'gaps') fetchGaps(); }, [tab, fetchGaps]);
 
   const heroes = s.heroes.filter(h =>
     (heroFilter === 'all' || (h.rarity && h.rarity.toLowerCase() === heroFilter)) &&
@@ -1014,7 +1035,7 @@ function PageHeroes({s}) {
       <div className="card" style={{padding: 0, display:'flex', flexDirection:'column', overflow:'hidden'}}>
         {/* Tab bar */}
         <div style={{padding:'6px 6px 0', borderBottom:'1px solid var(--border)', display:'flex', gap: 4, background:'var(--bg-subtle)'}}>
-          {[['heroes', `Heroes · ${s.heroes.length}`], ['artifacts', `Artifacts · ${allArtifacts.length}`]].map(([k, label]) => (
+          {[['heroes', `Heroes · ${s.heroes.length}`], ['artifacts', `Artifacts · ${allArtifacts.length}`], ['gaps', 'Gaps']].map(([k, label]) => (
             <button key={k} onClick={()=>setTab(k)} style={{
               border: 0, background: tab===k ? 'var(--bg-elev)' : 'transparent',
               color: tab===k ? 'var(--text)' : 'var(--text-sub)',
@@ -1176,6 +1197,92 @@ function PageHeroes({s}) {
                     </div>
                   )}
                 </>
+              )}
+            </div>
+          </>
+        )}
+
+        {tab === 'gaps' && (
+          <>
+            <div style={{padding:'8px 12px', borderBottom:'1px solid var(--border)', display:'flex', alignItems:'center', gap: 10, flexWrap:'wrap'}}>
+              <label style={filterLbl}>HH ≥</label>
+              <input type="number" step="0.5" min="0" max="6" value={gapThreshold}
+                     onChange={e=>setGapThreshold(parseFloat(e.target.value)||0)}
+                     style={{...filterSel, width: 60}}/>
+              <label style={filterLbl}>inv. rarity ≥</label>
+              <select value={gapMinRarity} onChange={e=>setGapMinRarity(parseInt(e.target.value))}
+                      style={{...filterSel, width: 100}}>
+                <option value={3}>Rare+</option>
+                <option value={4}>Epic+</option>
+                <option value={5}>Legendary</option>
+              </select>
+              <label style={filterLbl}>top</label>
+              <input type="number" min="5" max="50" value={gapTopN}
+                     onChange={e=>setGapTopN(parseInt(e.target.value)||15)}
+                     style={{...filterSel, width: 50}}/>
+              <span style={{flex: 1}}/>
+              <button className="btn" onClick={fetchGaps} disabled={gapLoading}
+                      style={{height: 22, padding: '0 10px', fontSize: 11}}>
+                {gapLoading ? 'Loading…' : 'Refresh'}
+              </button>
+              {gapData && (
+                <span className="mono" style={{fontSize: 11, color:'var(--text-sub)'}}>
+                  {gapData.unique_viable_heroes} heroes · {gapData.inventory_total} pieces
+                </span>
+              )}
+            </div>
+            <div className="scroll" style={{flex: 1, overflowY:'auto', padding: 12}}>
+              {gapErr && <div style={{padding: 12, color:'var(--danger,#ff6b6b)'}}>{gapErr}</div>}
+              {gapData && (
+                <div style={{display:'flex', flexDirection:'column', gap: 14}}>
+                  <GapTable
+                    title="Set gaps (most under-supplied first)"
+                    rows={gapData.sets}
+                    cols={[
+                      {h:'Set',  v:r=>r.set_name},
+                      {h:'Demand', v:r=>r.demand, mono:1, align:'right'},
+                      {h:'Supply', v:r=>r.supply, mono:1, align:'right'},
+                      {h:'Gap',    v:r=>(r.gap>0?'+':'')+r.gap, mono:1, align:'right',
+                                   color:r=>r.gap<0?'var(--danger,#ff6b6b)':'var(--success,#6bd06b)', bold:1},
+                      {h:'Top areas', v:r=>(<TopAreas areas={r.top_areas}/>)},
+                    ]}/>
+                  <GapTable
+                    title="Primary stat × slot gaps"
+                    rows={gapData.primaries}
+                    cols={[
+                      {h:'Slot', v:r=>r.slot_name},
+                      {h:'Stat', v:r=>r.stat},
+                      {h:'Demand', v:r=>r.demand, mono:1, align:'right'},
+                      {h:'Supply', v:r=>r.supply, mono:1, align:'right'},
+                      {h:'Gap',    v:r=>(r.gap>0?'+':'')+r.gap, mono:1, align:'right',
+                                   color:r=>r.gap<0?'var(--danger,#ff6b6b)':'var(--success,#6bd06b)', bold:1},
+                      {h:'Top areas', v:r=>(<TopAreas areas={r.top_areas}/>)},
+                    ]}/>
+                  <GapTable
+                    title="Substat gaps (recommendation count vs total inventory substat appearances)"
+                    rows={gapData.substats}
+                    cols={[
+                      {h:'Stat', v:r=>r.stat},
+                      {h:'Demand', v:r=>r.demand, mono:1, align:'right'},
+                      {h:'Supply', v:r=>r.supply, mono:1, align:'right'},
+                      {h:'Gap',    v:r=>(r.gap>0?'+':'')+r.gap, mono:1, align:'right',
+                                   color:r=>r.gap<0?'var(--danger,#ff6b6b)':'var(--success,#6bd06b)', bold:1},
+                      {h:'Top areas', v:r=>(<TopAreas areas={r.top_areas}/>)},
+                    ]}/>
+                  <div className="card" style={{padding: 10}}>
+                    <div style={{fontSize: 10.5, color:'var(--text-sub)', textTransform:'uppercase',
+                                 letterSpacing:'0.06em', marginBottom: 6}}>Viable heroes per area</div>
+                    <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(110px, 1fr))', gap: 6}}>
+                      {Object.entries(gapData.viable_per_area).map(([area, n]) => (
+                        <div key={area} style={{display:'flex', justifyContent:'space-between', padding:'3px 8px',
+                                                 background:'var(--bg-subtle)', borderRadius: 3, fontSize: 11}}>
+                          <span style={{color:'var(--text-sub)'}}>{area}</span>
+                          <span className="mono" style={{fontWeight: 600}}>{n}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               )}
             </div>
           </>
@@ -1682,191 +1789,61 @@ const filterLbl = {
   marginLeft: 4,
 };
 
-/* ===================== Gear gaps ===================== */
+/* ============== Gear gaps helpers (used by PageHeroes 'gaps' tab) ============== */
 
-function PageGear({s}) {
-  const [data, setData] = React.useState(null);
-  const [error, setError] = React.useState('');
-  const [loading, setLoading] = React.useState(false);
-  const [threshold, setThreshold] = React.useState(4.0);
-  const [minRarity, setMinRarity] = React.useState(4);
-  const [topN, setTopN] = React.useState(15);
+const _th = {padding:'8px 10px', textAlign:'left', fontSize: 10.5,
+             color:'var(--text-sub)', textTransform:'uppercase',
+             letterSpacing:'0.06em', fontWeight: 600};
+const _td = {padding:'6px 10px', color:'var(--text)'};
 
-  const fetchData = React.useCallback(async () => {
-    setLoading(true); setError('');
-    try {
-      const params = new URLSearchParams({
-        threshold: String(threshold),
-        min_rarity: String(minRarity),
-        top: String(topN),
-      });
-      const r = await fetch('/api/gear-gaps?' + params, {cache:'no-store'});
-      const j = await r.json();
-      if (j.error) { setError(j.error); setData(null); }
-      else { setData(j); }
-    } catch (e) { setError(String(e)); }
-    setLoading(false);
-  }, [threshold, minRarity, topN]);
-
-  React.useEffect(() => { fetchData(); }, [fetchData]);
-
-  const gapColor = (gap) => gap < 0 ? 'var(--danger, #ff6b6b)' : 'var(--success, #6bd06b)';
-
-  const renderTopAreas = (rows) => rows.map((a, i) => (
-    <span key={i} style={{marginRight: 8, color:'var(--text-dim)'}}>
-      <span style={{color:'var(--text-sub)'}}>{a.area}</span>
-      <span style={{marginLeft: 3}}>{a.demand}</span>
-    </span>
-  ));
-
+function GapTable({title, rows, cols}) {
   return (
-    <div style={{display:'flex', flexDirection:'column', gap: 10, minHeight: '100%'}}>
-      {/* Filters */}
-      <div className="card" style={{padding: 12, display:'flex', alignItems:'center', gap: 14, flexWrap:'wrap'}}>
-        <span style={{...statLbl, marginBottom: 0}}>FILTERS</span>
-        <label style={{display:'flex', alignItems:'center', gap: 6, fontSize: 12, color:'var(--text-sub)'}}>
-          HH rating ≥
-          <input type="number" step="0.5" min="0" max="6" value={threshold}
-                 onChange={e=>setThreshold(parseFloat(e.target.value)||0)}
-                 style={{...sel, width: 70}}/>
-        </label>
-        <label style={{display:'flex', alignItems:'center', gap: 6, fontSize: 12, color:'var(--text-sub)'}}>
-          inv. rarity ≥
-          <select value={minRarity} onChange={e=>setMinRarity(parseInt(e.target.value))}
-                  style={{...sel, width: 110}}>
-            <option value={3}>Rare+</option>
-            <option value={4}>Epic+</option>
-            <option value={5}>Legendary</option>
-          </select>
-        </label>
-        <label style={{display:'flex', alignItems:'center', gap: 6, fontSize: 12, color:'var(--text-sub)'}}>
-          top
-          <input type="number" min="5" max="50" value={topN}
-                 onChange={e=>setTopN(parseInt(e.target.value)||15)}
-                 style={{...sel, width: 60}}/>
-        </label>
-        <span style={{flex: 1}}/>
-        <button className="btn" onClick={fetchData} disabled={loading}
-                style={{height: 28, padding: '0 12px'}}>
-          {loading ? 'Loading…' : 'Refresh'}
-        </button>
+    <div className="card" style={{padding: 0, overflow:'hidden'}}>
+      <div style={{padding:'8px 12px', borderBottom:'1px solid var(--border)',
+                   background:'var(--bg-subtle)', fontSize: 10.5,
+                   color:'var(--text-sub)', textTransform:'uppercase', letterSpacing:'0.06em', fontWeight: 600}}>
+        {title}
       </div>
-
-      {error && <div className="card" style={{padding: 12, color:'var(--danger,#ff6b6b)'}}>{error}</div>}
-
-      {data && (
-        <>
-          {/* Viable per-area summary */}
-          <div className="card" style={{padding: 12}}>
-            <PanelHeader title={`Viable heroes per area · ${data.unique_viable_heroes} unique · ${data.inventory_total} inventory pieces considered`}/>
-            <div style={{padding: 12, display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(120px, 1fr))', gap: 8}}>
-              {Object.entries(data.viable_per_area).map(([area, n]) => (
-                <div key={area} style={{display:'flex', justifyContent:'space-between', padding:'4px 8px', background:'var(--bg-subtle)', borderRadius: 3}}>
-                  <span style={{fontSize: 11, color:'var(--text-sub)'}}>{area}</span>
-                  <span className="mono" style={{fontSize: 12, fontWeight: 600}}>{n}</span>
-                </div>
+      <table style={{width:'100%', borderCollapse:'collapse', fontSize: 12}}>
+        <thead>
+          <tr style={{borderBottom:'1px solid var(--border)', background:'var(--bg-subtle)'}}>
+            {cols.map((c, i) => (
+              <th key={i} style={{..._th, textAlign: c.align || 'left'}}>{c.h}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r, ri) => (
+            <tr key={ri} style={{borderBottom:'1px solid var(--border)'}}>
+              {cols.map((c, i) => (
+                <td key={i} style={{
+                  ..._td, textAlign: c.align || 'left',
+                  ...(c.color ? {color: c.color(r)} : null),
+                  ...(c.bold ? {fontWeight: 600} : null),
+                }} className={c.mono ? 'mono' : undefined}>
+                  {c.v(r)}
+                </td>
               ))}
-            </div>
-          </div>
-
-          {/* Set gaps */}
-          <div className="card">
-            <PanelHeader title="Set gaps (most under-supplied first)"/>
-            <table style={{width:'100%', borderCollapse:'collapse', fontSize: 12}}>
-              <thead>
-                <tr style={{borderBottom: '1px solid var(--border)', background:'var(--bg-subtle)'}}>
-                  <th style={th}>Set</th>
-                  <th style={{...th, textAlign:'right'}}>Demand</th>
-                  <th style={{...th, textAlign:'right'}}>Supply</th>
-                  <th style={{...th, textAlign:'right'}}>Gap</th>
-                  <th style={th}>Top areas</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.sets.map(r => (
-                  <tr key={r.set_id} style={{borderBottom: '1px solid var(--border)'}}>
-                    <td style={td}>{r.set_name}</td>
-                    <td style={{...td, textAlign:'right'}} className="mono">{r.demand}</td>
-                    <td style={{...td, textAlign:'right'}} className="mono">{r.supply}</td>
-                    <td style={{...td, textAlign:'right', color: gapColor(r.gap), fontWeight: 600}} className="mono">
-                      {r.gap > 0 ? '+' : ''}{r.gap}
-                    </td>
-                    <td style={td}>{renderTopAreas(r.top_areas)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Primary stat × slot gaps */}
-          <div className="card">
-            <PanelHeader title="Primary stat × slot gaps"/>
-            <table style={{width:'100%', borderCollapse:'collapse', fontSize: 12}}>
-              <thead>
-                <tr style={{borderBottom: '1px solid var(--border)', background:'var(--bg-subtle)'}}>
-                  <th style={th}>Slot</th>
-                  <th style={th}>Stat</th>
-                  <th style={{...th, textAlign:'right'}}>Demand</th>
-                  <th style={{...th, textAlign:'right'}}>Supply</th>
-                  <th style={{...th, textAlign:'right'}}>Gap</th>
-                  <th style={th}>Top areas</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.primaries.map((r, i) => (
-                  <tr key={i} style={{borderBottom: '1px solid var(--border)'}}>
-                    <td style={td}>{r.slot_name}</td>
-                    <td style={td}>{r.stat}</td>
-                    <td style={{...td, textAlign:'right'}} className="mono">{r.demand}</td>
-                    <td style={{...td, textAlign:'right'}} className="mono">{r.supply}</td>
-                    <td style={{...td, textAlign:'right', color: gapColor(r.gap), fontWeight: 600}} className="mono">
-                      {r.gap > 0 ? '+' : ''}{r.gap}
-                    </td>
-                    <td style={td}>{renderTopAreas(r.top_areas)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Substat gaps */}
-          <div className="card">
-            <PanelHeader title="Substat gaps (recommendation count vs total inventory substat appearances)"/>
-            <table style={{width:'100%', borderCollapse:'collapse', fontSize: 12}}>
-              <thead>
-                <tr style={{borderBottom: '1px solid var(--border)', background:'var(--bg-subtle)'}}>
-                  <th style={th}>Stat</th>
-                  <th style={{...th, textAlign:'right'}}>Demand</th>
-                  <th style={{...th, textAlign:'right'}}>Supply</th>
-                  <th style={{...th, textAlign:'right'}}>Gap</th>
-                  <th style={th}>Top areas</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.substats.map(r => (
-                  <tr key={r.stat_id} style={{borderBottom: '1px solid var(--border)'}}>
-                    <td style={td}>{r.stat}</td>
-                    <td style={{...td, textAlign:'right'}} className="mono">{r.demand}</td>
-                    <td style={{...td, textAlign:'right'}} className="mono">{r.supply}</td>
-                    <td style={{...td, textAlign:'right', color: gapColor(r.gap), fontWeight: 600}} className="mono">
-                      {r.gap > 0 ? '+' : ''}{r.gap}
-                    </td>
-                    <td style={td}>{renderTopAreas(r.top_areas)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </>
-      )}
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
 
-const th = {padding: '8px 10px', textAlign:'left', fontSize: 10.5,
-            color:'var(--text-sub)', textTransform:'uppercase',
-            letterSpacing:'0.06em', fontWeight: 600};
-const td = {padding: '6px 10px', color:'var(--text)'};
+function TopAreas({areas}) {
+  return (
+    <span>
+      {(areas || []).map((a, i) => (
+        <span key={i} style={{marginRight: 8, color:'var(--text-dim)'}}>
+          <span style={{color:'var(--text-sub)'}}>{a.area}</span>
+          <span style={{marginLeft: 3}}>{a.demand}</span>
+        </span>
+      ))}
+    </span>
+  );
+}
 
 function PageEvents({s}) {
   return (
