@@ -1823,21 +1823,23 @@ def build_potential_teams(max_count: int = 12):
         sim_hash = (unm_link or (calc_links[0] if calc_links else {})).get("hash")
         parity = _parity_survival(sim_hash, _dwj) if missing == 0 else None
         # Real damage sim: cb_sim run with the user's actual 6-star gear.
-        # Substitutes generic "DPS" slots with the user's primary DPS so the
-        # sim can actually run on tunes that have a placeholder slot.
+        # For generic "DPS" slots, fill from the user's most-recent CB team
+        # (skipping heroes already named in the tune) so we sim with their
+        # actual DPS lineup, not 3 copies of a default placeholder.
         real_sim = None
         if missing == 0:
+            named_in_tune = {s.get("hero","").lower(): True
+                             for s in slots if s.get("status") != "generic"}
+            dps_pool = [n for n in last_team if n.lower() not in named_in_tune]
+            dps_iter = iter(dps_pool)
             team_names = []
             for s in slots:
                 hn = s.get("hero")
                 if not hn or s.get("status") == "generic":
-                    team_names.append(_DEFAULT_DPS_HERO)
+                    team_names.append(next(dps_iter, _DEFAULT_DPS_HERO))
                 else:
                     team_names.append(hn)
             if len(team_names) == 5:
-                # Prefer today's actual CB element from the battle log over
-                # the tune's affinity tag (which is often "Force Only" /
-                # "Void/Spirit" — useful for filtering, not for sim).
                 el_str = today_element or t.get("affinity")
                 real_sim = _real_sim_damage(team_names, el_str)
         if parity:
