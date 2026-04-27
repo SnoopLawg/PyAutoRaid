@@ -384,7 +384,11 @@ def build_gap_report(threshold: float = 4.0,
 
 
 def load_dungeon_drops() -> dict:
-    """Return {region_name: {id, sets:[set_id,...], accessory_kinds:[slot,...]}}.
+    """Return {region_name: {id, sets, accessory_kinds, difficulties}}.
+
+    Schema in data/dungeon_drops.json is per-difficulty; this flattens to a
+    union of sets/accessories across difficulties (you farm whichever band
+    makes sense), while keeping per-difficulty detail under "difficulties".
 
     Empty dict if data/dungeon_drops.json is missing — callers handle gracefully.
     """
@@ -393,12 +397,32 @@ def load_dungeon_drops() -> dict:
     raw = _load_json(DUNGEON_DROPS_PATH)
     out = {}
     for name, info in (raw.get("regions") or {}).items():
-        sets = sorted(int(k) for k in (info.get("set_drops") or {}).keys())
+        # New schema: by_difficulty=[{difficulty, set_drops, accessory_kinds, ...}]
+        # Old schema: set_drops dict at top level. Support both.
+        difficulties = info.get("by_difficulty") or []
+        sets_union: set[int] = set()
+        acc_union: set[int] = set()
+        diff_detail = []
+        if difficulties:
+            for d in difficulties:
+                sids = [int(k) for k in (d.get("set_drops") or {}).keys()]
+                sets_union.update(sids)
+                acc_union.update(d.get("accessory_kinds") or [])
+                diff_detail.append({
+                    "difficulty": d.get("difficulty"),
+                    "stages": d.get("stages", 0),
+                    "sets": sorted(sids),
+                    "accessory_kinds": list(d.get("accessory_kinds") or []),
+                })
+        else:
+            # Old flat schema fallback.
+            sets_union = {int(k) for k in (info.get("set_drops") or {}).keys()}
+            acc_union = set(info.get("accessory_kinds") or [])
         out[name] = {
             "id": info.get("id"),
-            "sets": sets,
-            "accessory_kinds": list(info.get("accessory_kinds") or []),
-            "stages": info.get("stages", 0),
+            "sets": sorted(sets_union),
+            "accessory_kinds": sorted(acc_union),
+            "difficulties": diff_detail,
         }
     return out
 
@@ -455,7 +479,7 @@ def build_dungeon_priority(set_rows: list, primary_rows: list) -> list:
             "region": region_name,
             "label": label,
             "id": info["id"],
-            "stages": info["stages"],
+            "difficulties": info.get("difficulties") or [],
             "score": round(score, 1),
             "gap_sets": gap_sets,
             "accessory_kinds": info["accessory_kinds"],

@@ -1255,7 +1255,14 @@ function PageHeroes({s}) {
                         <tbody>
                           {gapData.dungeons.map(d => (
                             <tr key={d.region} style={{borderBottom:'1px solid var(--border)'}}>
-                              <td style={{..._td, fontWeight: 600}}>{d.label}</td>
+                              <td style={_td}>
+                                <div style={{fontWeight: 600}}>{d.label}</div>
+                                {d.difficulties && d.difficulties.length > 0 && (
+                                  <div style={{fontSize: 10.5, color:'var(--text-dim)', marginTop: 2}}>
+                                    {d.difficulties.map(x => `${x.difficulty} (${x.stages} stages)`).join(' · ')}
+                                  </div>
+                                )}
+                              </td>
                               <td style={{..._td, textAlign:'right', fontWeight: 600,
                                           color:'var(--accent, #6bd0ff)'}} className="mono">
                                 {d.score}

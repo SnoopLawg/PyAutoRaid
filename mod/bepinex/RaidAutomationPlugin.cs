@@ -505,7 +505,7 @@ namespace RaidAutomation
                     "/shards" => RunOnMainThread(() => GetShards(QP(query, "debug") == "1")),
                     "/explore-uw" => RunOnMainThread(() => ExploreUserWrapper(QP(query, "path"))),
                     "/explore-sd" => RunOnMainThread(() => ExploreStaticData(QP(query, "path"))),
-                    "/dungeon-drops" => RunOnMainThread(() => GetDungeonDrops()),
+                    "/dungeon-drops" => RunOnMainThread(() => GetDungeonDrops(), 90000),
                     "/view-contexts" => RunOnMainThread(() => GetViewContexts(QP(query, "path"))),
                     "/invoke-context" => RunOnMainThread(() => InvokeOnContext(QP(query, "type"), QP(query, "method"))),
                     "/list-static-methods" => ListStaticMethods(QP(query, "type"), QP(query, "filter")),
@@ -10566,73 +10566,215 @@ namespace RaidAutomation
             object region, object idVal, int rid, Dictionary<int, object> stageById)
         {
             string regionName = idVal.ToString();
-            // Collect stage IDs across all difficulties via the dict's _entries;
-            // for Dict<DifficultyId, List<int>>, only the value (List<int>) matters.
-            var stageIds = new List<int>();
+            // Iterate StageIdsByDifficulty (Dict<DifficultyId, List<int>>) by
+            // probing each candidate DifficultyId enum value via the Item
+            // indexer + ContainsKey. Avoids the Il2Cpp entry walk (key field
+            // returns garbage for enum-keyed dicts).
+            var byDiff = new List<(string diffName, int diffId, List<int> stageIds)>();
             var sidByDiff = Prop(region, "StageIdsByDifficulty");
             if (sidByDiff != null)
             {
                 try
                 {
-                    var entries = Prop(sidByDiff, "_entries");
-                    int n = entries != null ? IntProp(entries, "Length") : 0;
-                    var get = entries != null
-                        ? (entries.GetType().GetMethod("get_Item", new[] { typeof(int) })
-                           ?? entries.GetType().GetProperty("Item")?.GetGetMethod())
-                        : null;
-                    for (int j = 0; j < n; j++)
+                    var dt = sidByDiff.GetType();
+                    Type diffEnumType = null;
+                    var ga = dt.GetGenericArguments();
+                    if (ga != null && ga.Length >= 1) diffEnumType = ga[0];
+                    var ck = dt.GetMethod("ContainsKey");
+                    var idx = dt.GetProperty("Item");
+                    int dictCount = IntProp(sidByDiff, "Count");
+                    int foundDiffs = 0;
+                    if (diffEnumType != null && ck != null && idx != null)
                     {
-                        var diffEntry = get.Invoke(entries, new object[] { j });
-                        if (diffEntry == null) continue;
-                        var idsList = Prop(diffEntry, "value");
-                        if (idsList == null) continue;
-                        int idsCount = IntProp(idsList, "_size");
-                        if (idsCount <= 0) continue;
-                        var idsItems = Prop(idsList, "_items");
-                        if (idsItems == null) continue;
-                        var idsGet = idsItems.GetType().GetMethod("get_Item", new[] { typeof(int) })
-                                     ?? idsItems.GetType().GetProperty("Item")?.GetGetMethod();
-                        for (int k = 0; k < idsCount; k++)
+                        // Probe a narrow range of int values; DifficultyId
+                        // typically uses 0..5. Wider ranges thrash the main
+                        // thread (5 difficulties x 72 regions x ContainsKey
+                        // is already ~360 reflection calls).
+                        for (int diffInt = 0; diffInt <= 6 && foundDiffs < dictCount; diffInt++)
                         {
-                            var sidObj = idsGet.Invoke(idsItems, new object[] { k });
-                            if (sidObj == null) continue;
-                            stageIds.Add(Convert.ToInt32(sidObj));
+                            object diffEnum;
+                            try { diffEnum = Enum.ToObject(diffEnumType, diffInt); }
+                            catch { continue; }
+                            bool hit;
+                            try { hit = (bool)ck.Invoke(sidByDiff, new object[] { diffEnum }); }
+                            catch { hit = false; }
+                            if (!hit) continue;
+                            foundDiffs++;
+                            object idsList;
+                            try { idsList = idx.GetValue(sidByDiff, new object[] { diffEnum }); }
+                            catch { continue; }
+                            if (idsList == null) continue;
+                            int idsCount = IntProp(idsList, "_size");
+                            if (idsCount <= 0) continue;
+                            var idsItems = Prop(idsList, "_items");
+                            if (idsItems == null) continue;
+                            var idsGet = idsItems.GetType().GetMethod("get_Item", new[] { typeof(int) })
+                                         ?? idsItems.GetType().GetProperty("Item")?.GetGetMethod();
+                            var stageIds = new List<int>();
+                            for (int k = 0; k < idsCount; k++)
+                            {
+                                var sidObj = idsGet.Invoke(idsItems, new object[] { k });
+                                if (sidObj == null) continue;
+                                stageIds.Add(Convert.ToInt32(sidObj));
+                            }
+                            string diffName = DifficultyName(diffInt);
+                            byDiff.Add((diffName, diffInt, stageIds));
                         }
                     }
                 }
                 catch { }
             }
+            if (byDiff.Count == 0) return;
 
-            // Aggregate per-set / per-accessory probs across stages.
-            var setCount = new Dictionary<int, int>();
-            var setMaxProb = new Dictionary<int, double>();
-            var accKindCount = new Dictionary<int, int>();
-            var accSetCount = new Dictionary<int, int>();
-            int stagesWithRewards = 0;
-            foreach (int sid in stageIds)
+            // Sort by enum int so Normal (typically 0) comes first.
+            byDiff.Sort((a, b) => a.diffId.CompareTo(b.diffId));
+
+            var diffPayloads = new List<string>();
+            foreach (var (diffName, diffId, stageIds) in byDiff)
             {
-                if (!stageById.TryGetValue(sid, out var stage)) continue;
-                var reward = Prop(stage, "Reward");
-                if (reward == null) continue;
-                stagesWithRewards++;
-                AggregateProbs(reward, "ArtifactProbsBySetKindId", setCount, setMaxProb);
-                AggregateProbsCountOnly(reward, "AccessoryProbsByKindId", accKindCount);
-                AggregateProbsCountOnly(reward, "AccessoryProbsBySetKindId", accSetCount);
+                var setCount = new Dictionary<int, int>();
+                var setMaxProb = new Dictionary<int, double>();
+                var accKindCount = new Dictionary<int, int>();
+                var accSetCount = new Dictionary<int, int>();
+                int stagesWithRewards = 0;
+                foreach (int sid in stageIds)
+                {
+                    if (!stageById.TryGetValue(sid, out var stage)) continue;
+                    var reward = Prop(stage, "Reward");
+                    if (reward == null) continue;
+                    stagesWithRewards++;
+                    // Path A: Dungeon-style probability dicts (Dragon, IG, FK, Spider).
+                    AggregateProbs(reward, "ArtifactProbsBySetKindId", setCount, setMaxProb);
+                    AggregateProbsCountOnly(reward, "AccessoryProbsByKindId", accKindCount);
+                    AggregateProbsCountOnly(reward, "AccessoryProbsBySetKindId", accSetCount);
+                    // Path B: Doom-Tower-style FlexibleRewardInfo list. Each entry
+                    // can carry SetKindId / KindId for sets and accessories.
+                    AggregateRewardList(reward, setCount, setMaxProb, accKindCount, accSetCount);
+                    // Path C: First-time UserPrize artifact-drop settings.
+                    AggregatePrizeArtifacts(stage, setCount, setMaxProb, accKindCount, accSetCount);
+                }
+                if (stagesWithRewards == 0) continue;
+
+                var dsb = new StringBuilder(2048);
+                dsb.Append("{\"difficulty\":\"").Append(Esc(diffName)).Append("\",");
+                dsb.Append("\"difficulty_id\":").Append(diffId);
+                dsb.Append(",\"stages\":").Append(stagesWithRewards);
+                dsb.Append(",\"set_drops\":");
+                AppendIntDoubleMap(dsb, setCount, setMaxProb);
+                dsb.Append(",\"accessory_kinds\":[");
+                AppendIntList(dsb, accKindCount.Keys);
+                dsb.Append("],\"accessory_sets\":[");
+                AppendIntList(dsb, accSetCount.Keys);
+                dsb.Append("]}");
+                diffPayloads.Add(dsb.ToString());
             }
-            if (stagesWithRewards == 0) return;
+            if (diffPayloads.Count == 0) return;
 
             if (!firstRegion) sb.Append(",");
             firstRegion = false;
             sb.Append("\"").Append(Esc(regionName)).Append("\":{");
             sb.Append("\"id\":").Append(rid);
-            sb.Append(",\"stages\":").Append(stagesWithRewards);
-            sb.Append(",\"set_drops\":");
-            AppendIntDoubleMap(sb, setCount, setMaxProb);
-            sb.Append(",\"accessory_kinds\":[");
-            AppendIntList(sb, accKindCount.Keys);
-            sb.Append("],\"accessory_sets\":[");
-            AppendIntList(sb, accSetCount.Keys);
-            sb.Append("]}");
+            sb.Append(",\"by_difficulty\":[").Append(string.Join(",", diffPayloads)).Append("]");
+            sb.Append("}");
+        }
+
+        // Walk reward.Rewards (List<FlexibleRewardInfo>) and harvest any entry
+        // that carries a SetKindId or KindId — that's how Doom Tower stages and
+        // some events encode artifact drops instead of the prob dicts.
+        private static void AggregateRewardList(object reward,
+            Dictionary<int,int> setCount, Dictionary<int,double> setMaxProb,
+            Dictionary<int,int> accKindCount, Dictionary<int,int> accSetCount)
+        {
+            var rewards = Prop(reward, "Rewards");
+            if (rewards == null) return;
+            try
+            {
+                int sz = IntProp(rewards, "_size");
+                if (sz <= 0) return;
+                var items = Prop(rewards, "_items");
+                if (items == null) return;
+                var get = items.GetType().GetMethod("get_Item", new[] { typeof(int) })
+                          ?? items.GetType().GetProperty("Item")?.GetGetMethod();
+                for (int i = 0; i < sz; i++)
+                {
+                    var info = get.Invoke(items, new object[] { i });
+                    if (info == null) continue;
+                    double prob = TryGetDouble(info, "Probability", 1.0);
+                    var setNullable = Prop(info, "SetKindId");
+                    int setId = NullableEnumInt(setNullable);
+                    if (setId > 0 && prob > 0)
+                    {
+                        setCount[setId] = setCount.TryGetValue(setId, out int c) ? c + 1 : 1;
+                        if (!setMaxProb.TryGetValue(setId, out double mp) || prob > mp) setMaxProb[setId] = prob;
+                    }
+                    var kindNullable = Prop(info, "KindId");
+                    int kindId = NullableEnumInt(kindNullable);
+                    if (kindId >= 7 && kindId <= 9) // accessories: ring/amulet/banner
+                    {
+                        accKindCount[kindId] = accKindCount.TryGetValue(kindId, out int c) ? c + 1 : 1;
+                    }
+                }
+            }
+            catch { }
+        }
+
+        // Walk Stage.FirstTimeReward.SetsOfArtifacts / ArtifactDropSettings —
+        // Doom Tower boss floors etc. encode their first-clear set rewards here.
+        private static void AggregatePrizeArtifacts(object stage,
+            Dictionary<int,int> setCount, Dictionary<int,double> setMaxProb,
+            Dictionary<int,int> accKindCount, Dictionary<int,int> accSetCount)
+        {
+            var prize = Prop(stage, "FirstTimeReward");
+            if (prize == null) return;
+            try
+            {
+                var setsList = Prop(prize, "SetsOfArtifacts") ?? Prop(prize, "_setsOfArtifacts");
+                if (setsList != null)
+                {
+                    int n = IntProp(setsList, "_size");
+                    var items = Prop(setsList, "_items");
+                    if (items != null && n > 0)
+                    {
+                        var get = items.GetType().GetMethod("get_Item", new[] { typeof(int) })
+                                  ?? items.GetType().GetProperty("Item")?.GetGetMethod();
+                        for (int i = 0; i < n; i++)
+                        {
+                            var s = get.Invoke(items, new object[] { i });
+                            if (s == null) continue;
+                            var sk = Prop(s, "SetKindId");
+                            int setId = NullableEnumInt(sk);
+                            if (setId > 0)
+                            {
+                                setCount[setId] = setCount.TryGetValue(setId, out int c) ? c + 1 : 1;
+                                if (!setMaxProb.ContainsKey(setId)) setMaxProb[setId] = 1.0;
+                            }
+                        }
+                    }
+                }
+            }
+            catch { }
+        }
+
+        private static double TryGetDouble(object obj, string name, double dflt)
+        {
+            var v = Prop(obj, name);
+            if (v == null) return dflt;
+            try { return Convert.ToDouble(v); } catch { return dflt; }
+        }
+
+        // Il2Cpp Nullable<TEnum> exposes HasValue + Value. Returns 0 if null.
+        private static int NullableEnumInt(object nullable)
+        {
+            if (nullable == null) return 0;
+            try
+            {
+                var hv = nullable.GetType().GetProperty("HasValue");
+                if (hv != null && hv.GetValue(nullable) is bool hasVal && !hasVal) return 0;
+                var v = nullable.GetType().GetProperty("Value")?.GetValue(nullable);
+                if (v == null) return 0;
+                return ExtractEnumInt(v);
+            }
+            catch { return 0; }
         }
 
         private static void AggregateProbs(object reward, string propName,
@@ -10692,6 +10834,21 @@ namespace RaidAutomation
                 }
             }
             catch { }
+        }
+
+        // Friendly name for DifficultyId enum int. Hardcoded because Il2Cpp's
+        // Enum.GetName isn't reliable on the interop wrapper.
+        private static string DifficultyName(int diffInt)
+        {
+            switch (diffInt)
+            {
+                case 0: return "Normal";
+                case 1: return "Brutal";
+                case 2: return "Nightmare";
+                case 3: return "Hard";    // doom tower / dungeon hard
+                case 4: return "Heroic";
+                default: return "diff" + diffInt;
+            }
         }
 
         // Best-effort enum-to-int. Tries Convert.ToInt32 first, falls back to
