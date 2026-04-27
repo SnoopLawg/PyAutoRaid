@@ -2463,6 +2463,42 @@ def build_cb_history_with_attribution():
     }
 
 
+def build_sim_calibration(limit: int = 30):
+    """Read data/sim_calibration_history.jsonl and return the recent N rows
+    plus a rolling summary (mean/median error_pct, count, latest delta).
+    Used by the dashboard to surface sim drift over time.
+    """
+    path = ROOT / "data" / "sim_calibration_history.jsonl"
+    if not path.exists():
+        return {"rows": [], "count": 0, "mean_error_pct": None,
+                "median_error_pct": None, "latest": None}
+    rows = []
+    try:
+        for line in path.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                rows.append(json.loads(line))
+            except Exception:
+                pass
+    except Exception:
+        return {"rows": [], "count": 0, "mean_error_pct": None,
+                "median_error_pct": None, "latest": None}
+    rows.sort(key=lambda r: r.get("ts") or "")
+    recent = rows[-limit:]
+    errs = [r.get("error_pct") for r in rows if isinstance(r.get("error_pct"), (int, float))]
+    mean_err = sum(errs) / len(errs) if errs else None
+    median_err = (sorted(errs)[len(errs)//2] if errs else None)
+    return {
+        "rows": recent,
+        "count": len(rows),
+        "mean_error_pct": round(mean_err, 2) if mean_err is not None else None,
+        "median_error_pct": round(median_err, 2) if median_err is not None else None,
+        "latest": rows[-1] if rows else None,
+    }
+
+
 def build_gear_gaps(threshold: float = 4.0, min_rarity: int = 4, min_rank: int = 4,
                     top: int = 15, areas=None):
     """Run the artifact gap analysis and return a JSON-shape report.
@@ -3342,6 +3378,9 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             return
         if parsed.path == "/api/dungeons/state":
             self._send_json(dungeon_run_state())
+            return
+        if parsed.path == "/api/sim-calibration":
+            self._send_json(build_sim_calibration())
             return
         if parsed.path == "/api/gear-gaps":
             q = urllib.parse.parse_qs(parsed.query)

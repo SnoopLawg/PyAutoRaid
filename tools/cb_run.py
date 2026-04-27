@@ -312,11 +312,41 @@ def run_calibration(log_filename, cb_element="void", team=None):
     sim_result = run_sim_for_team(team, element, False, max_cb_turns=50, use_current_gear=True)
     calibrate(real_data, sim_result)
 
-    return {
+    delta = {
         "real_total": real_data["total_damage"],
         "sim_total": sim_result["total"],
         "error_pct": (sim_result["total"] - real_data["total_damage"]) / max(real_data["total_damage"], 1) * 100,
     }
+    _record_calibration_delta(log_path.name, team, cb_element, real_data, sim_result)
+    return delta
+
+
+def _record_calibration_delta(log_filename, team, cb_element, real_data, sim_result):
+    """Append one calibration row to data/sim_calibration_history.jsonl so
+    drift over time is visible. Each row: when, team, cb_element, real,
+    sim, error_pct, real_turns, sim_turns. Append-only — never rewrites.
+    """
+    from datetime import datetime
+    out_path = PROJECT_ROOT / "data" / "sim_calibration_history.jsonl"
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    real = real_data.get("total_damage") or 0
+    sim = sim_result.get("total") or 0
+    row = {
+        "ts": datetime.now().isoformat(timespec="seconds"),
+        "log_file": log_filename,
+        "team": team,
+        "cb_element": cb_element,
+        "real_total": int(real),
+        "sim_total": int(sim),
+        "real_turns": real_data.get("boss_turns") or 0,
+        "sim_turns": sim_result.get("cb_turns") or 0,
+        "error_pct": round((sim - real) / max(real, 1) * 100, 2),
+    }
+    try:
+        with open(out_path, "a", encoding="utf-8") as f:
+            f.write(json.dumps(row) + "\n")
+    except Exception as ex:
+        print(f"  [warn] failed to record calibration delta: {ex}")
 
 
 def main():
