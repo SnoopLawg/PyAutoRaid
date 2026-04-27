@@ -35,6 +35,7 @@ ARTIFACTS_PATH = PROJECT_ROOT / "all_artifacts.json"
 HH_CHAMPS_PATH = PROJECT_ROOT / "data" / "hh" / "parsed" / "champions.json"
 HH_TIERLIST_PATH = PROJECT_ROOT / "data" / "hh" / "parsed" / "tierlist.json"
 DUNGEON_DROPS_PATH = PROJECT_ROOT / "data" / "dungeon_drops.json"
+FORGE_SETS_PATH = PROJECT_ROOT / "data" / "forge_sets.json"
 
 # Game's RegionTypeId → friendly dungeon label (only the dungeons users farm
 # for gear). Drives the "what to farm" priority section. Story regions and
@@ -368,6 +369,9 @@ def build_gap_report(threshold: float = 4.0,
     # accessory gaps if the dungeon drops accessories. Higher = better target.
     dungeon_rows = build_dungeon_priority(set_rows, primary_rows)
 
+    # Forge crafting priority: gaps for sets that are craftable (not dropped).
+    forge_rows = build_forge_priority(set_rows)
+
     return {
         "threshold": threshold,
         "min_rarity": min_rarity,
@@ -380,6 +384,7 @@ def build_gap_report(threshold: float = 4.0,
         "primaries": primary_rows[:top],
         "substats": sub_rows[:top],
         "dungeons": dungeon_rows,
+        "forge": forge_rows,
     }
 
 
@@ -424,6 +429,45 @@ def load_dungeon_drops() -> dict:
             "accessory_kinds": sorted(acc_union),
             "difficulties": diff_detail,
         }
+    return out
+
+
+def load_forge_sets() -> set[int]:
+    """Return the set of artifact set_ids that can be forge-crafted.
+
+    Empty if data/forge_sets.json is missing.
+    """
+    if not FORGE_SETS_PATH.exists():
+        return set()
+    raw = _load_json(FORGE_SETS_PATH)
+    return set(int(x) for x in raw.get("unique_set_ids", []))
+
+
+def build_forge_priority(set_rows: list) -> list:
+    """Forge-crafting priority: under-supplied sets that the Forge can make.
+
+    These don't drop in dungeons — the Doom Tower / Faction Wars / events
+    drop the FORGE PLATES used to craft them. So when Guardian/Lethal/etc.
+    show as gaps, the recommendation is to craft, not farm a dungeon.
+    """
+    forge_sets = load_forge_sets()
+    if not forge_sets:
+        return []
+    out = []
+    for r in set_rows:
+        if r["gap"] >= 0:
+            continue
+        if r["set_id"] not in forge_sets:
+            continue
+        out.append({
+            "set_id": r["set_id"],
+            "set_name": r["set_name"],
+            "gap": r["gap"],
+            "demand": r["demand"],
+            "supply": r["supply"],
+            "top_areas": r.get("top_areas", []),
+        })
+    out.sort(key=lambda x: x["gap"])
     return out
 
 
@@ -514,6 +558,13 @@ def render_text(report) -> str:
         ta = ", ".join(f"{a['area']}:{a['demand']}" for a in r["top_areas"])
         lines.append(f"{r['slot_name']:<8} {r['stat']:<6} {r['demand']:>7} {r['supply']:>7} {r['gap']:>+7}  {ta}")
     lines.append("")
+    if report.get("forge"):
+        lines.append("--- FORGE CRAFTING PRIORITY (gaps you fix in the Forge, not a dungeon) ---")
+        lines.append(f"{'Set':<20} {'Gap':>6}  Top areas driving demand")
+        for r in report["forge"]:
+            ta = ", ".join(f"{a['area']}:{a['demand']}" for a in r["top_areas"])
+            lines.append(f"{r['set_name']:<20} {r['gap']:>+6}  {ta}")
+        lines.append("")
     if report.get("dungeons"):
         lines.append("--- DUNGEON FARMING PRIORITY ---")
         lines.append(f"{'Dungeon':<22} {'Score':>6}  Closes")

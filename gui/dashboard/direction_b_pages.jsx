@@ -1235,6 +1235,41 @@ function PageHeroes({s}) {
               {gapErr && <div style={{padding: 12, color:'var(--danger,#ff6b6b)'}}>{gapErr}</div>}
               {gapData && (
                 <div style={{display:'flex', flexDirection:'column', gap: 14}}>
+                  {gapData.forge && gapData.forge.length > 0 && (
+                    <div className="card" style={{padding: 0, overflow:'hidden'}}>
+                      <div style={{padding:'8px 12px', borderBottom:'1px solid var(--border)',
+                                   background:'var(--bg-subtle)', fontSize: 10.5,
+                                   color:'var(--text-sub)', textTransform:'uppercase',
+                                   letterSpacing:'0.06em', fontWeight: 600}}>
+                        Forge crafting priority — gaps you fix in the Forge, not a dungeon
+                      </div>
+                      <table style={{width:'100%', borderCollapse:'collapse', fontSize: 12}}>
+                        <thead>
+                          <tr style={{borderBottom:'1px solid var(--border)', background:'var(--bg-subtle)'}}>
+                            <th style={_th}>Set</th>
+                            <th style={{..._th, textAlign:'right'}}>Gap</th>
+                            <th style={{..._th, textAlign:'right'}}>Demand</th>
+                            <th style={{..._th, textAlign:'right'}}>Supply</th>
+                            <th style={_th}>Top areas driving demand</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {gapData.forge.map(r => (
+                            <tr key={r.set_id} style={{borderBottom:'1px solid var(--border)'}}>
+                              <td style={{..._td, fontWeight: 600}}>{r.set_name}</td>
+                              <td style={{..._td, textAlign:'right', fontWeight: 600,
+                                          color:'var(--danger,#ff6b6b)'}} className="mono">
+                                {r.gap > 0 ? '+' : ''}{r.gap}
+                              </td>
+                              <td style={{..._td, textAlign:'right'}} className="mono">{r.demand}</td>
+                              <td style={{..._td, textAlign:'right'}} className="mono">{r.supply}</td>
+                              <td style={_td}><TopAreas areas={r.top_areas}/></td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                   {gapData.dungeons && gapData.dungeons.length > 0 && (
                     <div className="card" style={{padding: 0, overflow:'hidden'}}>
                       <div style={{padding:'8px 12px', borderBottom:'1px solid var(--border)',

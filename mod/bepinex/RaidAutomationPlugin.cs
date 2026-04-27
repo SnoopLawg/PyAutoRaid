@@ -506,6 +506,7 @@ namespace RaidAutomation
                     "/explore-uw" => RunOnMainThread(() => ExploreUserWrapper(QP(query, "path"))),
                     "/explore-sd" => RunOnMainThread(() => ExploreStaticData(QP(query, "path"))),
                     "/dungeon-drops" => RunOnMainThread(() => GetDungeonDrops(), 90000),
+                    "/forge-sets" => RunOnMainThread(() => GetForgeSets(), 30000),
                     "/view-contexts" => RunOnMainThread(() => GetViewContexts(QP(query, "path"))),
                     "/invoke-context" => RunOnMainThread(() => InvokeOnContext(QP(query, "type"), QP(query, "method"))),
                     "/list-static-methods" => ListStaticMethods(QP(query, "type"), QP(query, "filter")),
@@ -10559,6 +10560,65 @@ namespace RaidAutomation
             }
             catch (Exception ex) { return "{\"error\":\"region walk: " + Esc(ex.Message) + "\"}"; }
             sb.Append("}}");
+            return sb.ToString();
+        }
+
+        // Walk AppModel.StaticData.ForgeData.ForgeArtifactRecipes and emit
+        // the unique set IDs that can be crafted in the Forge. These typically
+        // include Lethal, Stoneskin, Bolster, Guardian, Protection, Curing,
+        // Untouchable, etc. — sets that don't drop in any dungeon.
+        private string GetForgeSets()
+        {
+            var appModel = GetAppModel();
+            if (appModel == null) return "{\"error\":\"appmodel not ready\"}";
+            var sd = Prop(appModel, "StaticData");
+            if (sd == null) return "{\"error\":\"AppModel.StaticData null\"}";
+            var forgeData = Prop(sd, "ForgeData");
+            if (forgeData == null) return "{\"error\":\"StaticData.ForgeData null\"}";
+            var recipes = Prop(forgeData, "ForgeArtifactRecipes");
+            if (recipes == null) return "{\"error\":\"ForgeData.ForgeArtifactRecipes null\"}";
+
+            var sb = new StringBuilder(4096);
+            sb.Append("{\"recipes\":[");
+            bool first = true;
+            try
+            {
+                int n = IntProp(recipes, "_size");
+                var items = Prop(recipes, "_items");
+                if (items != null && n > 0)
+                {
+                    var get = items.GetType().GetMethod("get_Item", new[] { typeof(int) })
+                              ?? items.GetType().GetProperty("Item")?.GetGetMethod();
+                    var seenSets = new HashSet<int>();
+                    for (int i = 0; i < n; i++)
+                    {
+                        var r = get.Invoke(items, new object[] { i });
+                        if (r == null) continue;
+                        int recipeId = IntProp(r, "Id");
+                        var setKind = Prop(r, "ArtifactSetKindId");
+                        int setId = ExtractEnumInt(setKind);
+                        string setName = setKind != null ? setKind.ToString() : "?";
+                        var rankVar = Prop(r, "OutputRankVariationId");
+                        string rankName = rankVar != null ? rankVar.ToString() : "?";
+                        if (!first) sb.Append(",");
+                        first = false;
+                        sb.Append("{\"recipe_id\":").Append(recipeId)
+                          .Append(",\"set_id\":").Append(setId)
+                          .Append(",\"set_kind\":\"").Append(Esc(setName))
+                          .Append("\",\"rank_variation\":\"").Append(Esc(rankName)).Append("\"}");
+                        if (setId > 0) seenSets.Add(setId);
+                    }
+                    sb.Append("],\"unique_set_ids\":[");
+                    AppendIntList(sb, seenSets);
+                    sb.Append("]");
+                }
+                else
+                {
+                    sb.Append("],\"unique_set_ids\":[]");
+                }
+            }
+            catch (Exception ex) { return "{\"error\":\"forge walk: " + Esc(ex.Message) + "\"}"; }
+            sb.Append("}");
             return sb.ToString();
         }
 
