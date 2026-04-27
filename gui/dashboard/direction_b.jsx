@@ -8,6 +8,7 @@ const B_NAV = [
   { id: 'cb',        label: 'Clan Boss',       hint: '⌘5' },
   { id: 'dungeons',  label: 'Dungeons',        hint: '⌘D' },
   { id: 'heroes',    label: 'Heroes & artifacts', hint: '⌘6' },
+  { id: 'gear',      label: 'Gear gaps',       hint: '⌘G' },
   { id: 'events',    label: 'Events',          hint: '⌘7' },
   { id: 'history',   label: 'History',         hint: '⌘8' },
   { id: 'mod',       label: 'Mod & offsets',   hint: '⌘9' },
@@ -122,6 +123,7 @@ function DirectionB() {
           {sec === 'cb'        && <PageCB s={s}/>}
           {sec === 'dungeons'  && <PageDungeons s={s}/>}
           {sec === 'heroes'    && <PageHeroes s={s}/>}
+          {sec === 'gear'      && <PageGear s={s}/>}
           {sec === 'events'    && <PageEvents s={s}/>}
           {sec === 'history'   && <PageHistory s={s}/>}
           {sec === 'mod'       && <PageMod s={s}/>}

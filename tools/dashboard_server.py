@@ -2241,6 +2241,31 @@ def build_cb_history_with_attribution():
     }
 
 
+def build_gear_gaps(threshold: float = 4.0, min_rarity: int = 4, min_rank: int = 4,
+                    top: int = 15, areas=None):
+    """Run the artifact gap analysis and return a JSON-shape report.
+
+    Wraps tools/gear_gap_analysis.build_gap_report so the dashboard can render
+    the same data the CLI prints. Cheap (no I/O beyond JSON files), safe to
+    call on demand.
+    """
+    try:
+        sys.path.insert(0, str(ROOT / "tools"))
+        import gear_gap_analysis as gga
+    except Exception as e:
+        return {"error": f"gear_gap_analysis import failed: {e}"}
+    try:
+        return gga.build_gap_report(
+            threshold=threshold,
+            min_rarity=min_rarity,
+            min_rank=min_rank,
+            areas=areas or gga.ALL_AREAS,
+            top=top,
+        )
+    except Exception as e:
+        return {"error": f"gear gap analysis failed: {e}"}
+
+
 def build_preset_view(preset_id):
     """Return the preset with skill_type_id→label lookups attached so the
     dashboard can render opener + priority dropdowns cleanly."""
@@ -3095,6 +3120,18 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             return
         if parsed.path == "/api/dungeons/state":
             self._send_json(dungeon_run_state())
+            return
+        if parsed.path == "/api/gear-gaps":
+            q = urllib.parse.parse_qs(parsed.query)
+            try:
+                threshold = float((q.get("threshold") or [4.0])[0])
+                min_rarity = int((q.get("min_rarity") or [4])[0])
+                min_rank = int((q.get("min_rank") or [4])[0])
+                top = int((q.get("top") or [15])[0])
+                areas = q.get("area")  # list, or None for all
+                self._send_json(build_gear_gaps(threshold, min_rarity, min_rank, top, areas))
+            except Exception as e:
+                self._send_json({"error": str(e)}, status=400)
             return
         if parsed.path == "/api/sim-sweep":
             q = urllib.parse.parse_qs(parsed.query)
