@@ -1560,6 +1560,30 @@ _real_sim_damage_cache: dict[str, dict] = {}
 _DEFAULT_DPS_HERO = "Ninja"
 
 
+def _today_cb_element_str() -> str | None:
+    """Return today's CB affinity ('magic'/'force'/'spirit'/'void') or None
+    by reading the boss `element` field from the latest battle log.
+
+    The mod captures element on each heroes-snapshot entry; we just need to
+    find the first entry that has an enemy side.
+    """
+    log_path = ROOT / "battle_logs_cb_latest.json"
+    if not log_path.exists():
+        return None
+    try:
+        d = json.loads(log_path.read_text())
+        for entry in (d.get("log") or [])[:50]:
+            if not isinstance(entry, dict):
+                continue
+            for h in entry.get("heroes") or []:
+                if h.get("side") == "enemy" and h.get("element"):
+                    el = int(h["element"])
+                    return {1: "magic", 2: "force", 3: "spirit", 4: "void"}.get(el)
+        return None
+    except Exception:
+        return None
+
+
 def _last_cb_team_names() -> list[str]:
     """Return [hero_name,...] for the team that appears in the most recent
     battle_logs_cb_latest.json — the team the user actually ran. Used to
@@ -1726,6 +1750,11 @@ def build_potential_teams(max_count: int = 12):
     evaluated = [cf.evaluate_tune(t, roster) for t in tunes]
     ranked = cf.rank_tunes(evaluated, hh)
 
+    # Today's CB affinity from the boss in the latest battle log. Used for
+    # the real-damage sim so we get an accurate number instead of always
+    # running against Void (the cb_run.py default).
+    today_element = _today_cb_element_str()
+
     # Determine which tune the user is ACTUALLY running by matching the
     # most recent CB battle's team against each tune's slots. Falls back
     # to "first roster-fit tune" when no battle log is available.
@@ -1806,7 +1835,11 @@ def build_potential_teams(max_count: int = 12):
                 else:
                     team_names.append(hn)
             if len(team_names) == 5:
-                real_sim = _real_sim_damage(team_names, t.get("affinity"))
+                # Prefer today's actual CB element from the battle log over
+                # the tune's affinity tag (which is often "Force Only" /
+                # "Void/Spirit" — useful for filtering, not for sim).
+                el_str = today_element or t.get("affinity")
+                real_sim = _real_sim_damage(team_names, el_str)
         if parity:
             bt = parity.get("boss_turns") or 0
             if parity.get("survived"):
