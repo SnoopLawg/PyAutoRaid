@@ -65,7 +65,17 @@ def start_battle():
     if "error" in r:
         print(f"  Navigate failed: {r['error']}")
         return False
-    time.sleep(3)
+
+    # Poll for the AllianceEnemiesDialog to actually appear before clicking it.
+    # The post-navigate transition can take 5-10s on the first open of the day.
+    for _ in range(15):
+        time.sleep(1)
+        ctxs = mod_get("/view-contexts").get("contexts") or []
+        if any("AllianceEnemiesDialog" in (c.get("dialog") or "") for c in ctxs):
+            break
+    else:
+        print("  AllianceEnemiesDialog did not appear after 15s")
+        return False
 
     print("Opening team selection (OnStartClick)...")
     # Use curl-style URL (spaces as %20, brackets as %5B%5D)
@@ -86,7 +96,15 @@ def start_battle():
         print(f"  OnStartClick error: {ex}")
         return False
 
-    time.sleep(5)
+    # Poll for the AllianceBossHeroesSelectionDialog to be loaded.
+    for _ in range(15):
+        time.sleep(1)
+        ctxs = mod_get("/view-contexts").get("contexts") or []
+        if any("AllianceBossHeroesSelectionDialog" in (c.get("dialog") or "") for c in ctxs):
+            break
+    else:
+        print("  AllianceBossHeroesSelectionDialog did not appear after 15s")
+        return False
 
     print("Starting battle (StartBattle)...")
     try:
