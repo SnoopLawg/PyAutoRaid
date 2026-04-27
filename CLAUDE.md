@@ -21,6 +21,9 @@ taskkill //F //IM Raid.exe   # PlariumPlay stays up
 cp mod/bepinex/bin/Release/net6.0/RaidAutomationPlugin.dll \
    "C:/Users/logan/AppData/Local/PlariumPlay/StandAloneApps/raid/build/BepInEx/plugins/RaidAutomationPlugin.dll"
 
+# Mod fails to attach (localhost:6790 dead despite Raid running) — full PP reset
+./tools/reset_pp.sh
+
 # Full data refresh + rebuild
 python3 tools/refresh_all.py --calibrate        # from live mod
 python3 tools/refresh_all.py --offline           # rebuild from cached JSON
@@ -165,7 +168,37 @@ HTTP API on port 6790. Key endpoints: `/status`, `/all-heroes`, `/all-artifacts`
 
 Build & deploy: see Quick Commands above (dotnet build → kill Raid.exe → copy DLL).
 
-**NEVER kill PlariumPlay** — breaks session. Only kill `Raid.exe` for redeploys.
+### Launching Raid (mod-attached)
+
+Standard invocation (used by `Modules/base.py:open_raid`):
+```bash
+"$LOCALAPPDATA/PlariumPlay/PlariumPlay.exe" --args -gameid=101 -tray-start
+```
+PP launches Raid; doorstop's local `winhttp.dll` hooks; BepInEx loads `RaidAutomationPlugin.dll`; mod binds `localhost:6790`. Verify: `curl localhost:6790/status` → `{"logged_in":true,"scene":"Village",...}`.
+
+**Mod URL**: listener prefix is `http://localhost:6790/` — `127.0.0.1:6790` returns HTTP.sys "Invalid Hostname".
+
+**Normal redeploy** (mod-only changes): `taskkill /F /IM Raid.exe` → copy DLL → relaunch via PP command above. PP stays up; you keep the session.
+
+### Recovery: mod fails to attach
+
+Symptom: Raid runs but `localhost:6790` is dead, or BepInEx log mtime doesn't update on launch, or `Get-Process -Module` shows local `winhttp.dll` loaded but no `BepInEx\*` modules.
+
+Cause: PlariumPlay session can wedge (often visible as 6+ stale `PlariumPlay.exe` processes). Wedged PP launches Raid in a state where doorstop hooks but BepInEx core never initializes.
+
+Fix — full PP reset:
+```bash
+taskkill //F //IM Raid.exe
+taskkill //F //IM PlariumPlay.exe         # kills all PP.exe instances
+taskkill //F //IM PlariumPlay.NetHost.exe # broker
+# Leave PlariumPlayClientService.exe alone (Windows service)
+"$LOCALAPPDATA/PlariumPlay/PlariumPlay.exe" &
+sleep 8
+"$LOCALAPPDATA/PlariumPlay/PlariumPlay.exe" --args -gameid=101 -tray-start
+```
+Re-login may be required in the PP window. After Raid is in-game, expect ~218 DLLs from `raid/build` and ~157 BepInEx assemblies in the Raid process — that's the "healthy" mod-attached state.
+
+**`NEVER kill PlariumPlay`** for normal mod redeploy (breaks session, costs a re-login). Only do the full PP reset when the mod fails to attach despite Raid launching.
 
 ## Key Rules
 
