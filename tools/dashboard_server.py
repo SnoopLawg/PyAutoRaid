@@ -1560,6 +1560,80 @@ _real_sim_damage_cache: dict[str, dict] = {}
 _DEFAULT_DPS_HERO = "Ninja"
 
 
+def _last_cb_team_names() -> list[str]:
+    """Return [hero_name,...] for the team that appears in the most recent
+    battle_logs_cb_latest.json — the team the user actually ran. Used to
+    pick which DWJ tune to label "active" rather than just the first-ranked.
+    """
+    log_path = ROOT / "battle_logs_cb_latest.json"
+    if not log_path.exists():
+        return []
+    try:
+        d = json.loads(log_path.read_text())
+        type_to_name = _hero_type_to_name()
+        for entry in (d.get("log") or [])[:30]:
+            if isinstance(entry, dict) and entry.get("heroes"):
+                names = []
+                for h in entry["heroes"]:
+                    if h.get("side") != "player":
+                        continue
+                    nm = h.get("name") or type_to_name.get(h.get("type_id"))
+                    if nm:
+                        names.append(nm)
+                if len(names) == 5:
+                    return names
+        return []
+    except Exception:
+        return []
+
+
+def _tune_match_score(tune_slots: list[dict], actual_team: list[str]) -> float:
+    """Score how well a DWJ tune's slot list matches the user's actual team.
+
+    1.0 = every named slot matches a hero in actual_team and any generic
+    "DPS" slot has at least one team hero left over to fill it. Lower
+    scores indicate partial/missing matches.
+    """
+    if not tune_slots or not actual_team:
+        return 0.0
+    actual_norm = {n.lower(): n for n in actual_team}
+    used = set()
+    named_total = 0
+    named_matched = 0
+    generic_count = 0
+    for s in tune_slots:
+        hero = (s.get("hero") or "").strip()
+        if not hero:
+            continue
+        if hero.upper() in ("DPS", "4:3 DPS", "ATTACKER", "BANNER LORD"):
+            generic_count += 1
+            continue
+        named_total += 1
+        # Try exact and partial match
+        nm_lower = hero.lower()
+        if nm_lower in actual_norm and nm_lower not in used:
+            named_matched += 1
+            used.add(nm_lower)
+            continue
+        # Partial match
+        for k in actual_norm:
+            if k in used:
+                continue
+            if nm_lower in k or k in nm_lower:
+                named_matched += 1
+                used.add(k)
+                break
+    if named_total == 0:
+        # All-generic tune; matches anything weakly
+        return 0.5 if generic_count >= 5 else 0.0
+    name_score = named_matched / named_total
+    # Generic slots need to be fillable from the leftover team heroes.
+    leftover = len(actual_team) - len(used)
+    fill_score = 1.0 if leftover >= generic_count else max(0.0, leftover / max(1, generic_count))
+    # Weighted: named matches dominate
+    return 0.8 * name_score + 0.2 * fill_score
+
+
 def _real_sim_damage(team_names: list[str], cb_element_str: str | None = None) -> dict | None:
     """Run cb_sim against a 5-hero team and return damage + boss_turns.
 
@@ -1652,6 +1726,29 @@ def build_potential_teams(max_count: int = 12):
     evaluated = [cf.evaluate_tune(t, roster) for t in tunes]
     ranked = cf.rank_tunes(evaluated, hh)
 
+    # Determine which tune the user is ACTUALLY running by matching the
+    # most recent CB battle's team against each tune's slots. Falls back
+    # to "first roster-fit tune" when no battle log is available.
+    last_team = _last_cb_team_names()
+    active_slug = None
+    if last_team:
+        best_score = 0.0
+        for ev in ranked:
+            score = _tune_match_score(ev["tune"].get("slots") or [], last_team)
+            if score > best_score and ev["missing"] == 0:
+                best_score = score
+                active_slug = ev["tune"].get("slug")
+        if best_score < 0.6:
+            active_slug = None
+
+    # If an active tune was detected, hoist it to position 0 so it actually
+    # ends up in the truncated response and renders as the highlighted card.
+    if active_slug:
+        active_idx = next((i for i, ev in enumerate(ranked)
+                           if ev["tune"].get("slug") == active_slug), None)
+        if active_idx is not None and active_idx > 0:
+            ranked.insert(0, ranked.pop(active_idx))
+
     out = []
     for ev in ranked:
         t = ev["tune"]
@@ -1659,8 +1756,10 @@ def build_potential_teams(max_count: int = 12):
         missing = ev["missing"]
         ascending = ev["ascending"]
         # Status mapping
-        if missing == 0 and ascending == 0:
-            status = "active" if len(out) == 0 else "candidate"
+        if t.get("slug") == active_slug:
+            status = "active"
+        elif missing == 0 and ascending == 0:
+            status = "active" if (active_slug is None and len(out) == 0) else "candidate"
         elif missing <= 1:
             status = "candidate"
         else:
