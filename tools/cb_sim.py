@@ -297,6 +297,12 @@ class SimChampion:
     burn_stat_pct: float = 0.0             # Sicia: +3% ATK per HP Burn on field
     burn_dmg_reduction: float = 0.0        # Sicia: 3% dmg reduction per HP Burn
 
+    # Used by --bug-fix-buff-tick: the last CB turn this champion ticked
+    # buffs in. When the flag is on, tick_buffs becomes a no-op if called
+    # twice within the same CB turn (a fast hero who double-turns no
+    # longer prematurely expires their own buffs).
+    last_ticked_cb_turn: int = -1
+
     def has_buff(self, name):
         return self.buffs.get(name, 0) > 0
 
@@ -304,8 +310,16 @@ class SimChampion:
         self.buffs[name] = max(self.buffs.get(name, 0), duration)
         self.buffs_new.add(name)  # mark as new — won't tick until next turn
 
-    def tick_buffs(self):
+    def tick_buffs(self, cb_turn: int = -1, once_per_cb_turn: bool = False):
         # DWJ: isAddedThisTurn — buffs added since last tick don't decrement
+        if once_per_cb_turn and cb_turn >= 0:
+            if self.last_ticked_cb_turn == cb_turn:
+                # Already ticked this CB turn — fast heroes who get a
+                # second hero turn shouldn't burn another point of duration
+                # off their own buffs. Real Raid behaves this way for
+                # boss-cycle buffs.
+                return
+            self.last_ticked_cb_turn = cb_turn
         expired = []
         for b, d in self.buffs.items():
             if b in self.buffs_new:
@@ -847,7 +861,8 @@ class CBSimulator:
                  cb_element: int = 4, deterministic: bool = True,
                  rng_seed: int = None, verbose: bool = False,
                  model_survival: bool = True, force_affinity: bool = False,
-                 cb_difficulty: str = None, speed_aura_pct: float = 0.0):
+                 cb_difficulty: str = None, speed_aura_pct: float = 0.0,
+                 bugfix_buff_tick: bool = False):
         self.champions = champions
         # cb_difficulty overrides cb_speed if provided (matches DWJ dropdown).
         # Keeps backwards-compat with direct cb_speed=190 callers.
@@ -877,6 +892,9 @@ class CBSimulator:
         # Empirically verified vs live runs — caps bring 43M sim prediction down
         # to observed ~31M actual (Myth-Eater team vs UNM FA).
         self.force_affinity = force_affinity
+        # Experimental: tick a champion's buffs at most once per CB turn.
+        # See SimChampion.tick_buffs once_per_cb_turn parameter.
+        self.bugfix_buff_tick = bugfix_buff_tick
         self.log = []
         self.errors = []
         self.turn_snapshots = []  # Per-CB-turn damage/debuff snapshots for calibration
@@ -1336,7 +1354,8 @@ class CBSimulator:
                     ally.is_stunned = False
                     break
 
-        champ.tick_buffs()
+        champ.tick_buffs(cb_turn=self.cb_turn,
+                         once_per_cb_turn=getattr(self, "bugfix_buff_tick", False))
         champ.tick_cooldowns()
 
         if champ.is_stunned:

@@ -86,7 +86,7 @@ def extract_real_data(log_path: Path) -> dict:
 
 
 def run_sim_for_team(team_names, cb_element, force_affinity, max_cb_turns,
-                     use_current_gear=True):
+                     use_current_gear=True, bugfix_buff_tick=False):
     """Run the CB sim and return result with turn snapshots."""
     base = PROJECT_ROOT
 
@@ -139,6 +139,7 @@ def run_sim_for_team(team_names, cb_element, force_affinity, max_cb_turns,
         deterministic=True,
         verbose=False,
         force_affinity=force_affinity,
+        bugfix_buff_tick=bugfix_buff_tick,
     )
     result = sim.run(max_cb_turns=max_cb_turns)
     return result
