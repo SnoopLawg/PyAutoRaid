@@ -238,20 +238,42 @@ without a code change — just refresh `skills_db.json`.
 - [ ] No `_OLD_SKILL_DATA` / `_OLD_SKILL_EFFECTS` blocks remain in the
       codebase. The truth layer is the single source.
 
-## Open questions to resolve before phase 2
+## Open questions — RESOLVED 2026-04-27
 
-1. **Mastery truth source.** The mod's `/mastery-data` returns mastery
-   IDs per hero — does it also return the *effects* of each mastery, or
-   only IDs? If only IDs, we need a separate data source for the effects
-   (the in-game mastery descriptions, scrapeable via the mod or an
-   existing source).
-2. **Blessing truth source.** Same question for blessings — do we have a
-   data file with blessing→effect mapping, or do we need to build one?
-3. **Gear optimizer for tune speeds.** `tools/gear_optimizer.py` already
-   does optimal assignment for a CB hero at a target SPD. Confirm it can
-   accept multiple heroes simultaneously (currently per-hero).
-4. **Calc variant selection.** When a tune has UNM/NM/Brutal/UNM-Spirit
-   variants, which do we use for sim purposes? Default to the variant
-   matching today's affinity; fall back to UNM.
+1. **Mastery truth source — HYBRID.**
+   - `AppModel.StaticData.MasteryData.MasteryTypes` (66 entries) gives only
+     `Id` / `TreeId` / `Row` / `Column` — no effect description.
+   - `AppModel.StaticData.MasteryData.MasteryBonusById` (13 entries) maps
+     mastery ids that are pure stat bonuses to `StatBonus{StatKindId,
+     Value, IsAbsolute}`. These auto-load.
+   - The other ~53 masteries (Warmaster, Single Out, Bring it Down, etc.)
+     are conditional / chance-based effects with no static-data shape —
+     game logic must encode them. We already have these in
+     `tools/raid_data.py` (Warmaster: 60% chance, 10% TRG HP per proc, etc.).
+   - **Plan**: build `data/masteries_truth.json` with two flavors:
+     `{"type": "stat_bonus", "stat": "ATK", "value": 75, "absolute": true}`
+     for the 13 from StaticData, and
+     `{"type": "conditional_logic", "logic_id": "warmaster"}` for the
+     ~53 hand-coded ones. Sim looks up by mastery_id and dispatches.
 
-Resolution of these blocks the start of phase 2.
+2. **Blessing truth source — HYBRID, same pattern.**
+   - `AppModel.StaticData.DoubleAscendData.Blessings` (30 entries). Each
+     has `GradeBonuses` dict (6 grades I-VI) → `BlessingBonus{SkillTypeId,
+     StatKindIds, Description}`.
+   - Stat-bonus blessings: `BlessingStatsByRarity` has the numeric values.
+   - Skill-modifier blessings (e.g., Crushing Rend on a specific A3) need
+     per-blessing logic similar to masteries.
+   - **Plan**: same hybrid — `data/blessings_truth.json` with stat_bonus
+     entries auto-loaded, conditional ones hand-coded.
+
+3. **Gear optimizer for tune speeds — DONE.**
+   `tools/gear_optimizer.assign_gear_constrained(team_names, heroes,
+   profiles, speed_ranges)` already accepts a `speed_ranges` dict per
+   slot. Use as-is in PotentialTeam Phase 2.
+
+4. **Calc variant selection — DONE.**
+   `tools/potential_team.pick_calc_variant(tune, calc_variants,
+   today_affinity)` prefers variants whose boss affinity matches today's
+   CB > Ultimate Nightmare > Nightmare > Brutal > first available.
+
+Phase 2 can now start.
