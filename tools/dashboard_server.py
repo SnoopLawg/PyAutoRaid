@@ -2475,15 +2475,23 @@ def build_cb_history_with_attribution():
     }
 
 
-def build_tune_lab(slug: str | None = None, runnable_only: bool = False):
+def build_tune_lab(slug: str | None = None, runnable_only: bool = False,
+                   include_sim: bool = True):
     """Per-tune blocker/todo/team output from tools/potential_team.
 
     Today's CB affinity is auto-detected from the latest battle log so
     Spirit-day tunes prefer the Spirit calc variant, etc.
+
+    When include_sim is True (default), runs cb_sim.run_potential_team
+    against each runnable tune to attach a real damage projection.
+    Generic DPS slots fill from the user's most recent battle team so
+    sim numbers reflect actual play.
     """
     try:
         sys.path.insert(0, str(ROOT / "tools"))
         from potential_team import build_potential_team, load_data
+        if include_sim:
+            from cb_sim import run_potential_team
     except Exception as e:
         return {"error": f"potential_team import failed: {e}"}
     try:
@@ -2495,8 +2503,36 @@ def build_tune_lab(slug: str | None = None, runnable_only: bool = False):
         results = [build_potential_team(t, data, affinity) for t in tunes]
         if runnable_only:
             results = [r for r in results if not r["blockers"]]
-        # Order: runnable first (fewest blockers), then most todos last.
         results.sort(key=lambda r: (len(r["blockers"]), len(r["todos"])))
+
+        if include_sim:
+            element_map = {"magic": 1, "force": 2, "spirit": 3, "void": 4}
+            cb_el = element_map.get((affinity or "void").lower(), 4)
+            generic_fillers = _last_cb_team_names() or ["Ninja"]
+            for r in results:
+                if r["blockers"]:
+                    r["sim"] = None
+                    continue
+                try:
+                    sim_res = run_potential_team(
+                        r, cb_element=cb_el, force_affinity=True,
+                        max_cb_turns=50, generic_fillers=generic_fillers,
+                    )
+                    if sim_res.get("partial_team"):
+                        r["sim"] = {
+                            "partial": True,
+                            "missing_at_6star": sim_res.get("missing_at_6star"),
+                        }
+                    else:
+                        r["sim"] = {
+                            "total_damage": int(sim_res.get("total", 0) or 0),
+                            "boss_turns": int(sim_res.get("cb_turns", 0) or 0),
+                            "team_names": sim_res.get("potential_team_meta", {}).get("team_names"),
+                            "warnings": len(sim_res.get("errors", [])),
+                        }
+                except Exception as ex:
+                    r["sim"] = {"error": str(ex)}
+
         return {
             "today_affinity": affinity,
             "total": len(tunes),

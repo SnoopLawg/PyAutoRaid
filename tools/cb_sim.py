@@ -1585,6 +1585,148 @@ def build_champion_minimal(name: str, position: int, speed: float,
 # =============================================================================
 # Tune Runner — simulate any DWJ tune with damage
 # =============================================================================
+def run_potential_team(pt: dict, cb_element: int = 4,
+                       force_affinity: bool = False, max_cb_turns: int = 50,
+                       generic_fillers: Optional[List[str]] = None,
+                       use_current_gear: bool = True,
+                       override_speeds: bool = False,
+                       override_priorities: bool = False) -> dict:
+    """Phase 3 sim driver — consume a PotentialTeam dict from
+    tools/potential_team.build_potential_team and run cb_sim against it.
+
+    Translation:
+      - team[i].target_speed   → SimChampion.stats[SPD] (only when
+        override_speeds=True; off by default since the user's gear may
+        not deliver those speeds, and forcing them desyncs the team)
+      - preset[hero].priorities → champ.skill_priority (in order)
+      - generic slots → filled from generic_fillers (default: ["Ninja"])
+
+    Stats come from heroes_6star.json + current gear via calc_stats.
+    Phase 4 will add gear_plan-driven stats so we can sim heroes the
+    user owns at <6 grade as if they were 6-star.
+
+    Args:
+        pt: dict returned by tools.potential_team.build_potential_team.
+            Must have pt['potential_team'] non-None (no blockers).
+        cb_element: 1=Magic, 2=Force, 3=Spirit, 4=Void.
+        override_speeds: when True, replace the user's actual gear-derived
+            speed with the tune's target_speed. Off by default — the
+            "potential" speed is meaningless without matching gear.
+        override_priorities: when True, force champ.skill_priority from
+            the calc variant's priority field. Off by default because
+            DWJ priorities 1..4 are the *default* skill ordering — the
+            real signal is the delay field, which cb_sim handles via
+            its own AI rather than priority overrides.
+        generic_fillers: list of hero names to substitute into generic
+            "DPS" slots, in order. Defaults to ["Ninja"].
+    """
+    if not pt or not pt.get("potential_team"):
+        return {"error": "no potential_team — tune has blockers"}
+    info = pt["potential_team"]
+    team_view = info.get("team") or []
+    preset = info.get("preset") or {}
+    # Filter out heroes already named in the tune so generic slots get
+    # filled from the *leftover* pool — otherwise [Ninja, Geo, Venomage]
+    # might overwrite a slot that already names Ninja.
+    named_in_tune = {(slot.get("hero") or "").lower()
+                     for slot in team_view if not slot.get("is_generic")}
+    fillers = [n for n in (generic_fillers or ["Ninja"])
+               if n.lower() not in named_in_tune]
+    if not fillers:
+        fillers = ["Ninja"]
+    fillers_iter = iter(fillers)
+
+    from cb_optimizer import calc_stats
+    from auto_profile import get_leader_skills
+    base = Path(__file__).parent.parent
+    with open(base / "heroes_6star.json") as f:
+        heroes_data = json.load(f)
+    with open(base / "account_data.json") as f:
+        account = json.load(f)
+    # Match cb_calibrate's dict-build pattern: first occurrence of a name
+    # wins, and a second Maneater (the user has 2) gets stashed under
+    # "Maneater_2" so RabBatEater-style tunes can reach both.
+    hero_by_name = {}
+    for h in heroes_data["heroes"]:
+        name = h.get("name", "")
+        if name and name not in hero_by_name:
+            hero_by_name[name] = h
+        elif name == "Maneater" and "Maneater_2" not in hero_by_name:
+            hero_by_name["Maneater_2"] = h
+
+    # Resolve concrete team_names: substitute generic slots from fillers.
+    team_names = []
+    for slot in team_view:
+        if slot.get("is_generic"):
+            team_names.append(next(fillers_iter, "Ninja"))
+        else:
+            team_names.append(slot["hero"])
+
+    # Leader aura comes from slot[0]'s hero.
+    leader_skills = get_leader_skills()
+    leader_aura = leader_skills.get(team_names[0])
+
+    sim_champs = []
+    missing_at_6star = []
+    for i, slot in enumerate(team_view):
+        nm = team_names[i]
+        hero = hero_by_name.get(nm)
+        if not hero:
+            missing_at_6star.append(nm)
+            continue
+        hero_arts = hero.get("artifacts", []) if use_current_gear else []
+        stats = calc_stats(hero, hero_arts, account)
+        if leader_aura:
+            stats = apply_leader_aura(stats, leader_aura)
+        if override_speeds:
+            target_spd = slot.get("target_speed") or 0
+            if target_spd:
+                stats[SPD] = float(target_spd)
+        element = hero.get("element", 4)
+
+        slot_preset = preset.get(slot.get("hero")) or {}
+        opener = slot_preset.get("opener")
+        priorities_list = [p.get("skill") for p in (slot_preset.get("priorities") or [])
+                           if p.get("skill") and p.get("skill") != "A4"]
+        skill_pri = priorities_list + (["A1"] if "A1" not in priorities_list else [])
+
+        # Only force an opening when the preset explicitly says one (Ninja's
+        # A2 opener for Myth Eater Ninja, etc). Default cb_sim AI picks
+        # the right opener based on priority + readiness, and forcing A1
+        # for everyone breaks tunes that aren't A1-opener.
+        opening = [opener] if (opener and opener != "A1") else None
+
+        champ = build_sim_champion(
+            nm, stats, i,
+            opening=opening,
+            element=element,
+        )
+        if override_priorities and skill_pri:
+            champ.skill_priority = skill_pri
+        sim_champs.append(champ)
+
+    if not sim_champs:
+        return {"error": "no champions resolved", "missing_at_6star": missing_at_6star}
+
+    sim = CBSimulator(
+        sim_champs,
+        cb_element=cb_element,
+        deterministic=True,
+        verbose=False,
+        force_affinity=force_affinity,
+    )
+    result = sim.run(max_cb_turns=max_cb_turns)
+    if missing_at_6star:
+        result["partial_team"] = True
+        result["missing_at_6star"] = missing_at_6star
+    result["potential_team_meta"] = {
+        "tune_slug": pt.get("tune_slug"),
+        "calc_variant": pt.get("calc_variant"),
+        "team_names": team_names,
+    }
+    return result
+
+
 def run_tune(tune_id: str, hero_names: List[str], cb_element: int = 4,
              force_affinity: bool = True, verbose: bool = False,
              use_current_gear: bool = True, spd_override: dict = None) -> dict:
