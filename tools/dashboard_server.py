@@ -2475,6 +2475,38 @@ def build_cb_history_with_attribution():
     }
 
 
+def build_tune_lab(slug: str | None = None, runnable_only: bool = False):
+    """Per-tune blocker/todo/team output from tools/potential_team.
+
+    Today's CB affinity is auto-detected from the latest battle log so
+    Spirit-day tunes prefer the Spirit calc variant, etc.
+    """
+    try:
+        sys.path.insert(0, str(ROOT / "tools"))
+        from potential_team import build_potential_team, load_data
+    except Exception as e:
+        return {"error": f"potential_team import failed: {e}"}
+    try:
+        data = load_data()
+        affinity = _today_cb_element_str()
+        tunes = data["tunes"]
+        if slug:
+            tunes = [t for t in tunes if t.get("slug") == slug]
+        results = [build_potential_team(t, data, affinity) for t in tunes]
+        if runnable_only:
+            results = [r for r in results if not r["blockers"]]
+        # Order: runnable first (fewest blockers), then most todos last.
+        results.sort(key=lambda r: (len(r["blockers"]), len(r["todos"])))
+        return {
+            "today_affinity": affinity,
+            "total": len(tunes),
+            "runnable": sum(1 for r in results if not r["blockers"]),
+            "tunes": results,
+        }
+    except Exception as e:
+        return {"error": f"tune-lab build failed: {e}"}
+
+
 def build_sim_calibration(limit: int = 30):
     """Read data/sim_calibration_history.jsonl and return the recent N rows
     plus a rolling summary (mean/median error_pct, count, latest delta).
@@ -3393,6 +3425,12 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             return
         if parsed.path == "/api/sim-calibration":
             self._send_json(build_sim_calibration())
+            return
+        if parsed.path == "/api/tune-lab":
+            q = urllib.parse.parse_qs(parsed.query)
+            slug = (q.get("slug") or [None])[0]
+            runnable_only = (q.get("runnable_only") or ["0"])[0] == "1"
+            self._send_json(build_tune_lab(slug=slug, runnable_only=runnable_only))
             return
         if parsed.path == "/api/gear-gaps":
             q = urllib.parse.parse_qs(parsed.query)
