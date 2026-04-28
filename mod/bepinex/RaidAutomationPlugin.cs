@@ -507,6 +507,8 @@ namespace RaidAutomation
                     "/explore-sd" => RunOnMainThread(() => ExploreStaticData(QP(query, "path"))),
                     "/dungeon-drops" => RunOnMainThread(() => GetDungeonDrops(), 90000),
                     "/forge-sets" => RunOnMainThread(() => GetForgeSets(), 30000),
+                    "/masteries-truth" => RunOnMainThread(() => GetMasteriesTruth(), 30000),
+                    "/blessings-truth" => RunOnMainThread(() => GetBlessingsTruth(), 30000),
                     "/view-contexts" => RunOnMainThread(() => GetViewContexts(QP(query, "path"))),
                     "/invoke-context" => RunOnMainThread(() => InvokeOnContext(QP(query, "type"), QP(query, "method"))),
                     "/list-static-methods" => ListStaticMethods(QP(query, "type"), QP(query, "filter")),
@@ -10619,6 +10621,207 @@ namespace RaidAutomation
             }
             catch (Exception ex) { return "{\"error\":\"forge walk: " + Esc(ex.Message) + "\"}"; }
             sb.Append("}");
+            return sb.ToString();
+        }
+
+        // /masteries-truth — dumps all 66 mastery types + per-id stat bonuses
+        // for the 13 stat masteries in MasteryBonusById. Conditional masteries
+        // (Warmaster etc.) are emitted with a stat_bonus=null; their effects
+        // live in tools/raid_data.py keyed by mastery id. See plan §masteries.
+        private string GetMasteriesTruth()
+        {
+            var sd = Prop(GetAppModel(), "StaticData");
+            if (sd == null) return "{\"error\":\"appmodel/staticdata not ready\"}";
+            var md = Prop(sd, "MasteryData");
+            if (md == null) return "{\"error\":\"StaticData.MasteryData null\"}";
+
+            // Stat-bonus map: mastery_id → {stat, value, absolute}
+            var bonusMap = new Dictionary<int, string>();
+            try
+            {
+                var bd = Prop(md, "MasteryBonusById");
+                if (bd != null)
+                {
+                    var entries = Prop(bd, "_entries");
+                    int n = entries != null ? IntProp(entries, "Length") : 0;
+                    var get = entries?.GetType().GetMethod("get_Item", new[] { typeof(int) })
+                              ?? entries?.GetType().GetProperty("Item")?.GetGetMethod();
+                    int dictCount = IntProp(bd, "Count");
+                    int found = 0;
+                    for (int i = 0; i < n && found < dictCount; i++)
+                    {
+                        var e = get.Invoke(entries, new object[] { i });
+                        if (e == null) continue;
+                        // Il2Cpp Dictionary<int, T>: .key reflection returns a
+                        // garbage pointer; the actual int key lives in
+                        // .hashCode (since hash(int)==int).
+                        int key = IntProp(e, "hashCode");
+                        if (key <= 0) continue;
+                        var v = Prop(e, "value");
+                        if (v == null) continue;
+                        found++;
+                        var stat = Prop(v, "StatKindId");
+                        var val = Prop(v, "Value");
+                        var abs = Prop(v, "IsAbsolute");
+                        // Plarium.Common.Numerics.Fixed — has a Value or
+                        // _value field; ToString() yields a parseable
+                        // number like "75.000".
+                        double valNum = 0;
+                        if (val != null)
+                        {
+                            try { valNum = Convert.ToDouble(val); }
+                            catch
+                            {
+                                if (!double.TryParse(val.ToString(), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out valNum))
+                                    valNum = 0;
+                            }
+                        }
+                        var sb2 = new StringBuilder();
+                        sb2.Append("{\"stat\":\"").Append(Esc(stat?.ToString() ?? ""))
+                           .Append("\",\"value\":").Append(valNum.ToString("0.####", System.Globalization.CultureInfo.InvariantCulture))
+                           .Append(",\"absolute\":").Append((abs is bool ab && ab) ? "true" : "false").Append("}");
+                        bonusMap[key] = sb2.ToString();
+                    }
+                }
+            }
+            catch (Exception ex) { return "{\"error\":\"bonus walk: " + Esc(ex.Message) + "\"}"; }
+
+            var sb = new StringBuilder(8192);
+            sb.Append("{\"masteries\":[");
+            try
+            {
+                var types = Prop(md, "MasteryTypes");
+                int n = IntProp(types, "_size");
+                var items = Prop(types, "_items");
+                var get = items?.GetType().GetMethod("get_Item", new[] { typeof(int) })
+                          ?? items?.GetType().GetProperty("Item")?.GetGetMethod();
+                bool first = true;
+                for (int i = 0; i < n; i++)
+                {
+                    var m = get.Invoke(items, new object[] { i });
+                    if (m == null) continue;
+                    int id = IntProp(m, "Id");
+                    if (id == 0) continue;
+                    var tree = Prop(m, "TreeId");
+                    int row = IntProp(m, "Row");
+                    int col = IntProp(m, "Column");
+                    if (!first) sb.Append(",");
+                    first = false;
+                    sb.Append("{\"id\":").Append(id)
+                      .Append(",\"tree\":\"").Append(Esc(tree?.ToString() ?? "?"))
+                      .Append("\",\"row\":").Append(row)
+                      .Append(",\"col\":").Append(col);
+                    if (bonusMap.TryGetValue(id, out var bj))
+                        sb.Append(",\"stat_bonus\":").Append(bj);
+                    sb.Append("}");
+                }
+            }
+            catch (Exception ex) { return "{\"error\":\"mastery walk: " + Esc(ex.Message) + "\"}"; }
+            sb.Append("]}");
+            return sb.ToString();
+        }
+
+        // /blessings-truth — dumps the 30 blessings with per-grade bonuses.
+        // BlessingBonus carries SkillTypeId / StatKindIds / Description; numeric
+        // stat values for stat-bonus blessings come from BlessingStatsByRarity.
+        // Skill-modifier blessings need hand-coded logic per blessing id.
+        private string GetBlessingsTruth()
+        {
+            var sd = Prop(GetAppModel(), "StaticData");
+            if (sd == null) return "{\"error\":\"appmodel/staticdata not ready\"}";
+            var dad = Prop(sd, "DoubleAscendData");
+            if (dad == null) return "{\"error\":\"StaticData.DoubleAscendData null\"}";
+
+            var sb = new StringBuilder(16384);
+            sb.Append("{\"blessings\":[");
+            try
+            {
+                var list = Prop(dad, "Blessings");
+                int n = IntProp(list, "_size");
+                var items = Prop(list, "_items");
+                var get = items?.GetType().GetMethod("get_Item", new[] { typeof(int) })
+                          ?? items?.GetType().GetProperty("Item")?.GetGetMethod();
+                bool first = true;
+                for (int i = 0; i < n; i++)
+                {
+                    var b = get.Invoke(items, new object[] { i });
+                    if (b == null) continue;
+                    var idObj = Prop(b, "Id");
+                    var rarity = Prop(b, "Rarity");
+                    var divinity = Prop(b, "DivinityId");
+                    if (!first) sb.Append(",");
+                    first = false;
+                    sb.Append("{\"id\":\"").Append(Esc(idObj?.ToString() ?? "?"))
+                      .Append("\",\"rarity\":\"").Append(Esc(rarity?.ToString() ?? "?"))
+                      .Append("\",\"divinity\":\"").Append(Esc(divinity?.ToString() ?? "?"))
+                      .Append("\",\"grade_bonuses\":[");
+                    // Walk GradeBonuses dict (DoubleAscendGrade → BlessingBonus)
+                    bool gFirst = true;
+                    int gradeIdx = 0;
+                    try
+                    {
+                        var gb = Prop(b, "GradeBonuses");
+                        var entries = Prop(gb, "_entries");
+                        int gn = entries != null ? IntProp(entries, "Length") : 0;
+                        var gget = entries?.GetType().GetMethod("get_Item", new[] { typeof(int) })
+                                   ?? entries?.GetType().GetProperty("Item")?.GetGetMethod();
+                        for (int j = 0; j < gn; j++)
+                        {
+                            var ge = gget.Invoke(entries, new object[] { j });
+                            if (ge == null) continue;
+                            var gv = Prop(ge, "value");
+                            if (gv == null) continue;
+                            var skillId = Prop(gv, "SkillTypeId");
+                            var statKinds = Prop(gv, "StatKindIds");
+                            int statCount = statKinds != null ? IntProp(statKinds, "_size") : 0;
+                            if (!gFirst) sb.Append(",");
+                            gFirst = false;
+                            sb.Append("{\"grade_index\":").Append(gradeIdx);
+                            gradeIdx++;
+                            // Nullable<int>.HasValue + .Value. Skip 0 — that's
+                            // Plarium's sentinel for "no skill modifier"; only
+                            // emit when the blessing actually targets a skill.
+                            if (skillId != null)
+                            {
+                                try
+                                {
+                                    var hv = skillId.GetType().GetProperty("HasValue");
+                                    bool has = hv != null && (bool)hv.GetValue(skillId);
+                                    if (has)
+                                    {
+                                        var vv = skillId.GetType().GetProperty("Value")?.GetValue(skillId);
+                                        int sid = vv != null ? Convert.ToInt32(vv) : 0;
+                                        if (sid > 0)
+                                            sb.Append(",\"skill_type_id\":").Append(sid);
+                                    }
+                                }
+                                catch { }
+                            }
+                            if (statCount > 0)
+                            {
+                                sb.Append(",\"stat_kinds\":[");
+                                bool sFirst = true;
+                                var sItems = Prop(statKinds, "_items");
+                                var sget = sItems?.GetType().GetMethod("get_Item", new[] { typeof(int) })
+                                           ?? sItems?.GetType().GetProperty("Item")?.GetGetMethod();
+                                for (int k = 0; k < statCount; k++)
+                                {
+                                    var s = sget.Invoke(sItems, new object[] { k });
+                                    if (!sFirst) sb.Append(",");
+                                    sFirst = false;
+                                    sb.Append("\"").Append(Esc(s?.ToString() ?? "?")).Append("\"");
+                                }
+                                sb.Append("]");
+                            }
+                            sb.Append("}");
+                        }
+                    }
+                    catch { }
+                    sb.Append("]}");
+                }
+            }
+            catch (Exception ex) { return "{\"error\":\"blessing walk: " + Esc(ex.Message) + "\"}"; }
+            sb.Append("]}");
             return sb.ToString();
         }
 
