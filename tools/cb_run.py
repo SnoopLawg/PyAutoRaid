@@ -324,7 +324,8 @@ def run_calibration(log_filename, cb_element="void", team=None):
 def _record_calibration_delta(log_filename, team, cb_element, real_data, sim_result):
     """Append one calibration row to data/sim_calibration_history.jsonl so
     drift over time is visible. Each row: when, team, cb_element, real,
-    sim, error_pct, real_turns, sim_turns. Append-only — never rewrites.
+    sim, error_pct, real_turns, sim_turns, tune_slug (best-effort match
+    against DWJ tunes). Append-only — never rewrites.
     """
     from datetime import datetime
     out_path = PROJECT_ROOT / "data" / "sim_calibration_history.jsonl"
@@ -341,12 +342,59 @@ def _record_calibration_delta(log_filename, team, cb_element, real_data, sim_res
         "real_turns": real_data.get("boss_turns") or 0,
         "sim_turns": sim_result.get("cb_turns") or 0,
         "error_pct": round((sim - real) / max(real, 1) * 100, 2),
+        "tune_slug": _detect_tune_slug(team),
     }
     try:
         with open(out_path, "a", encoding="utf-8") as f:
             f.write(json.dumps(row) + "\n")
     except Exception as ex:
         print(f"  [warn] failed to record calibration delta: {ex}")
+
+
+def _detect_tune_slug(team: list[str] | None) -> str | None:
+    """Match the team against DWJ tunes; return the slug of the highest-
+    matching tune (>=0.6 score). Lets per-tune accuracy aggregation work
+    without the user having to pass --tune explicitly.
+    """
+    if not team:
+        return None
+    try:
+        import json as _json
+        tunes_path = PROJECT_ROOT / "data" / "dwj" / "parsed" / "tunes.json"
+        if not tunes_path.exists():
+            return None
+        tunes = _json.loads(tunes_path.read_text(encoding="utf-8"))
+        team_lc = [n.lower() for n in team]
+        best = (0.0, None)
+        for t in tunes:
+            slots = t.get("slots") or []
+            named = [s.get("hero", "") for s in slots
+                     if s.get("hero") and (s.get("hero") or "").lower() not in
+                        ("dps", "1:1 dps", "1:1 dps 1", "1:1 dps 2", "4:3 dps",
+                         "block debuff", "cleanser", "stun target")]
+            if not named:
+                continue
+            # Each team member can only fill one slot (duplicates in `named`
+            # = needs that many copies). Track consumption to avoid scoring
+            # Double Demytha as a 2/2 match when the user has 1 Demytha.
+            available = list(team_lc)
+            matched = 0
+            for n in named:
+                nl = n.lower()
+                if nl in available:
+                    available.remove(nl)
+                    matched += 1
+            score = matched / len(named)
+            # Tiebreaker: prefer the tune with more distinct named heroes
+            # so Myth Eater (Maneater + Demytha) beats Double Demytha
+            # (Demytha × 2) when both happen to score the same.
+            tiebreak = len(set(n.lower() for n in named))
+            key = (score, tiebreak)
+            if score >= 0.6 and key > (best[0], best[2] if len(best) > 2 else 0):
+                best = (score, t.get("slug"), tiebreak)
+        return best[1] if best[1] is not None else None
+    except Exception:
+        return None
 
 
 def main():

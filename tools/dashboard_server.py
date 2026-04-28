@@ -2543,6 +2543,56 @@ def build_tune_lab(slug: str | None = None, runnable_only: bool = False,
         return {"error": f"tune-lab build failed: {e}"}
 
 
+def build_sim_per_tune_accuracy():
+    """Group data/sim_calibration_history.jsonl rows by tune_slug and
+    surface mean / stddev / count per tune. Phase 4 of the plan: lets
+    the dashboard detect per-tune drift instead of just an aggregate
+    calibration error.
+    """
+    path = ROOT / "data" / "sim_calibration_history.jsonl"
+    if not path.exists():
+        return {"tunes": {}, "total_rows": 0}
+    rows = []
+    try:
+        for line in path.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if line:
+                try:
+                    rows.append(json.loads(line))
+                except Exception:
+                    pass
+    except Exception:
+        return {"tunes": {}, "total_rows": 0}
+    by_tune: dict[str, list[dict]] = {}
+    for r in rows:
+        slug = r.get("tune_slug") or "unknown"
+        by_tune.setdefault(slug, []).append(r)
+    out = {}
+    import statistics
+    for slug, rs in by_tune.items():
+        # Only count "tuned" runs (>=30 boss turns) for accuracy stats —
+        # wipes (low boss turns) just say sim>>real because the team
+        # died early. Keep the wipe rows around in `all_rows` for context.
+        tuned = [r for r in rs if (r.get("real_turns") or 0) >= 30]
+        errs = [r["error_pct"] for r in tuned if isinstance(r.get("error_pct"), (int, float))]
+        out[slug] = {
+            "count": len(rs),
+            "tuned_count": len(tuned),
+            "mean_error_pct": round(statistics.mean(errs), 2) if errs else None,
+            "median_error_pct": round(statistics.median(errs), 2) if errs else None,
+            "stdev_error_pct": round(statistics.stdev(errs), 2) if len(errs) >= 2 else None,
+            "drift_flag": (
+                bool(errs) and abs(statistics.mean(errs)) > 10.0 and len(errs) >= 3
+            ),
+            "latest": rs[-1],
+        }
+    return {
+        "tunes": out,
+        "total_rows": len(rows),
+        "drift_count": sum(1 for s in out.values() if s["drift_flag"]),
+    }
+
+
 def build_sim_calibration(limit: int = 30):
     """Read data/sim_calibration_history.jsonl and return the recent N rows
     plus a rolling summary (mean/median error_pct, count, latest delta).
@@ -3461,6 +3511,9 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             return
         if parsed.path == "/api/sim-calibration":
             self._send_json(build_sim_calibration())
+            return
+        if parsed.path == "/api/sim-per-tune-accuracy":
+            self._send_json(build_sim_per_tune_accuracy())
             return
         if parsed.path == "/api/tune-lab":
             q = urllib.parse.parse_qs(parsed.query)
