@@ -1679,10 +1679,16 @@ def _real_sim_damage(team_names: list[str], cb_element_str: str | None = None) -
         result = run_sim_for_team(team_names, cb_element=cb_el_int,
                                   force_affinity=True, max_cb_turns=50,
                                   use_current_gear=True)
-        out = {
-            "total_damage": int(result.get("total", 0) or 0),
-            "boss_turns": int(result.get("cb_turns", 0) or 0),
-        }
+        # If any team member isn't a 6-star, the sim ran with fewer than 5
+        # champions — treat that as "not simmable" rather than reporting a
+        # misleading partial-team damage number.
+        if result.get("partial_team"):
+            out = None
+        else:
+            out = {
+                "total_damage": int(result.get("total", 0) or 0),
+                "boss_turns": int(result.get("cb_turns", 0) or 0),
+            }
     except Exception:
         out = None
     _real_sim_damage_cache[cache_key] = out
@@ -1737,6 +1743,12 @@ def build_potential_teams(max_count: int = 12):
         roster = cf.load_roster()
         tunes = cf.load_tunes()
         hh = cf.load_hh_ratings()
+        calc_variants = cf.load_calc_variants()
+        # Enrich each tune's slots with concrete heroes from its calc variant
+        # so generic placeholders ("Block Debuff", "DPS") that pin to a
+        # specific hero in the variant (e.g. Underpriest Brogni) get caught
+        # by the missing-hero gate instead of falsely matching anything.
+        tunes = [cf.enrich_tune_slots_with_calc(t, calc_variants) for t in tunes]
     except Exception as e:
         return {"error": f"dwj/hh data load failed: {e}"}
 

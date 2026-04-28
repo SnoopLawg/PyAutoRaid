@@ -113,10 +113,12 @@ def run_sim_for_team(team_names, cb_element, force_affinity, max_cb_turns,
     leader_aura = leader_skills.get(team_names[0])
 
     sim_champs = []
+    missing_at_6star = []
     for idx, name in enumerate(team_names):
         hero = hero_by_name.get(name)
         if not hero:
             print(f"  WARNING: Hero '{name}' not found in 6-star roster", file=sys.stderr)
+            missing_at_6star.append(name)
             continue
 
         profile = PROFILES.get(name, PROFILES.get("generic", {}))
@@ -142,6 +144,10 @@ def run_sim_for_team(team_names, cb_element, force_affinity, max_cb_turns,
         bugfix_buff_tick=bugfix_buff_tick,
     )
     result = sim.run(max_cb_turns=max_cb_turns)
+    # Surface partial-team runs so callers don't treat them as authoritative.
+    if missing_at_6star:
+        result["partial_team"] = True
+        result["missing_at_6star"] = missing_at_6star
     return result
 
 

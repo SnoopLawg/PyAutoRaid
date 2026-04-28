@@ -37,6 +37,7 @@ sys.path.insert(0, str(PROJECT_ROOT / "tools"))
 
 HEROES_ALL = PROJECT_ROOT / "heroes_all.json"
 DWJ_TUNES = PROJECT_ROOT / "data" / "dwj" / "parsed" / "tunes.json"
+DWJ_CALC_TUNES = PROJECT_ROOT / "data" / "dwj" / "parsed" / "calc_tunes.json"
 HH_TIERLIST = PROJECT_ROOT / "data" / "hh" / "parsed" / "tierlist.json"
 
 
@@ -63,6 +64,85 @@ def load_roster() -> dict[str, dict]:
 
 def load_tunes() -> list[dict]:
     return json.loads(DWJ_TUNES.read_text(encoding="utf-8"))
+
+
+def load_calc_variants() -> dict:
+    """Return {variant_hash: variant_dict}. Empty if calc_tunes.json missing."""
+    if not DWJ_CALC_TUNES.exists():
+        return {}
+    return json.loads(DWJ_CALC_TUNES.read_text(encoding="utf-8"))
+
+
+def enrich_tune_slots_with_calc(tune: dict, calc_variants: dict) -> dict:
+    """Replace generic "DPS" / "Block Debuff" / etc. slot names with the
+    actual hero from the tune's calc variant, when available.
+
+    Why: tunes like Myth Hare have slot[3].hero="Block Debuff" (generic),
+    but the calc variant pins that role to "Underpriest Brogni" (specific).
+    Treating it as generic = matches anyone, which falsely scores the tune
+    as runnable. Pulling the specific name from the calc variant turns
+    those slots into real "missing" gates.
+
+    Returns a new tune dict with `slots` updated in place; original tune
+    untouched. If no calc variant exists, the tune is returned as-is.
+    """
+    if not calc_variants:
+        return tune
+    links = tune.get("calculator_links") or []
+    if not links:
+        return tune
+    # Prefer Ultimate Nightmare > Nightmare > Brutal > first.
+    def _rank(c):
+        n = (c.get("name") or "").lower()
+        if "ultra" in n or "ultimate" in n: return 0
+        if "nightmare" in n: return 1
+        if "brutal" in n: return 2
+        return 3
+    sorted_links = sorted(links, key=_rank)
+    variant = None
+    for c in sorted_links:
+        v = calc_variants.get(c.get("hash"))
+        if v and v.get("champions"):
+            variant = v
+            break
+    if not variant:
+        return tune
+    variant_champs = list(variant.get("champions") or [])
+    # Match tune.slots to variant.champions by name first, leaving the
+    # leftover variant champions to fill the tune's generic slots.
+    tune_slots = list(tune.get("slots") or [])
+    used_variant_idxs = set()
+    for s in tune_slots:
+        sn = norm(s.get("hero") or "")
+        if not sn or is_generic_slot(s.get("hero") or ""):
+            continue
+        for vi, vc in enumerate(variant_champs):
+            if vi in used_variant_idxs:
+                continue
+            vn = norm(vc.get("name") or "")
+            if vn and (vn == sn or vn in sn or sn in vn):
+                used_variant_idxs.add(vi)
+                break
+    leftover = [variant_champs[i] for i in range(len(variant_champs)) if i not in used_variant_idxs]
+    # Now walk slots, replacing generic ones with leftover variant champions
+    # (in order). If we run out of leftovers, leave the slot generic.
+    new_slots = []
+    leftover_iter = iter(leftover)
+    for s in tune_slots:
+        s = dict(s)
+        if is_generic_slot(s.get("hero") or ""):
+            try:
+                vc = next(leftover_iter)
+                # Only override with a SPECIFIC hero name (not another
+                # placeholder). DWJ tunes like Myth Eater keep "1:1 DPS 1"
+                # in calc variants too — those stay generic.
+                if vc.get("name") and not is_generic_slot(vc["name"]):
+                    s["hero"] = vc["name"]
+                    s["_from_calc"] = True
+            except StopIteration:
+                pass
+        new_slots.append(s)
+    return {**tune, "slots": new_slots}
 
 
 def load_hh_ratings() -> dict[str, dict]:
