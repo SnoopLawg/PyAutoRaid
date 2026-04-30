@@ -1476,13 +1476,20 @@ function SellRulesPanel() {
   }, [cfg]);
 
   const loadPreview = React.useCallback(async () => {
+    // Open the modal immediately with a null/loading state so there's
+    // visual feedback while the (potentially slow) /api/sell-rules/preview
+    // call finishes. The vault fetch can take a few seconds when the
+    // mod-side artifact cache is cold.
+    setPreviewItems(null);
+    setShowPreview(true);
     setLoading(true);
     try {
       const r = await fetch('/api/sell-rules/preview', {cache:'no-store'});
       const j = await r.json();
       setPreviewItems(j.sell || []);
-      setShowPreview(true);
-    } catch (e) {}
+    } catch (e) {
+      setPreviewItems([]);
+    }
     setLoading(false);
   }, []);
 
@@ -1639,7 +1646,7 @@ function SellRulesPanel() {
           Settings file: <span className="mono">data/sell_rules.json</span>
         </div>
       </div>
-      {showPreview && previewItems && (
+      {showPreview && (
         <SellPreviewModal items={previewItems} onClose={() => setShowPreview(false)}/>
       )}
     </>
@@ -1802,16 +1809,13 @@ function RuleEditor({rule, onChange, onDelete, onMoveUp, onMoveDown}) {
 
 function SellPreviewModal({items, onClose}) {
   const [filter, setFilter] = React.useState('all');
+  const isLoading = items == null;
   const safeItems = Array.isArray(items) ? items : [];
   const ruleIds = [...new Set(safeItems.map(i => i.rule_id))];
   const filtered = filter === 'all' ? safeItems : safeItems.filter(i => i.rule_id === filter);
-  // Render to document.body via portal — the modal is rendered inside the
-  // sell-rules card which is overflow:auto; some browsers will clip
-  // position:fixed children of an overflow ancestor when a paint/transform
-  // contain context exists. Portal to body sidesteps it entirely.
-  const node = (
+  return (
     <div onClick={onClose} style={{
-      position:'fixed', inset: 0, background:'rgba(0,0,0,0.6)', zIndex: 9999,
+      position:'fixed', inset: 0, background:'rgba(0,0,0,0.6)', zIndex: 200,
       display:'flex', alignItems:'center', justifyContent:'center', padding: 20,
     }}>
       <div onClick={e => e.stopPropagation()} className="card scroll" style={{
@@ -1824,18 +1828,27 @@ function SellPreviewModal({items, onClose}) {
                      position:'sticky', top: 0, background:'var(--bg-elev)', zIndex: 1}}>
           <div>
             <div style={{fontSize: 10.5, color:'var(--text-dim)', textTransform:'uppercase', letterSpacing:'0.06em'}}>Sell preview</div>
-            <div style={{fontSize: 18, fontWeight: 500, marginTop: 2}}>{items.length} artifacts match current rules</div>
+            <div style={{fontSize: 18, fontWeight: 500, marginTop: 2}}>
+              {isLoading ? 'Loading vault…' : `${safeItems.length} artifacts match current rules`}
+            </div>
           </div>
           <span style={{flex: 1}}/>
-          <select value={filter} onChange={e => setFilter(e.target.value)}
-                  style={{height: 26, padding:'0 8px', fontSize: 11, background:'var(--bg-subtle)', color:'var(--text)', border:'1px solid var(--border)', borderRadius: 4}}>
-            <option value="all">all rules ({items.length})</option>
-            {ruleIds.map(rid => (
-              <option key={rid} value={rid}>{rid} ({items.filter(i => i.rule_id === rid).length})</option>
-            ))}
-          </select>
+          {!isLoading && (
+            <select value={filter} onChange={e => setFilter(e.target.value)}
+                    style={{height: 26, padding:'0 8px', fontSize: 11, background:'var(--bg-subtle)', color:'var(--text)', border:'1px solid var(--border)', borderRadius: 4}}>
+              <option value="all">all rules ({safeItems.length})</option>
+              {ruleIds.map(rid => (
+                <option key={rid} value={rid}>{rid} ({safeItems.filter(i => i.rule_id === rid).length})</option>
+              ))}
+            </select>
+          )}
           <button className="btn" onClick={onClose} style={{height: 26, padding:'0 12px'}}>Close</button>
         </div>
+        {isLoading ? (
+          <div style={{padding: 60, textAlign:'center', color:'var(--text-sub)', fontSize: 12}}>
+            Loading vault & evaluating rules…
+          </div>
+        ) : (
         <div style={{padding:'10px 20px 20px'}}>
           <div style={{display:'grid', gridTemplateColumns:'70px 80px 70px 90px 110px 80px 1fr', gap: 8,
                        fontSize: 10.5, color:'var(--text-dim)', textTransform:'uppercase',
@@ -1861,13 +1874,10 @@ function SellPreviewModal({items, onClose}) {
             </div>
           )}
         </div>
+        )}
       </div>
     </div>
   );
-  if (typeof document !== 'undefined' && ReactDOM && ReactDOM.createPortal) {
-    return ReactDOM.createPortal(node, document.body);
-  }
-  return node;
 }
 
 function CBRunDetailModal({s, lr, team, totalDealt, totalTaken, rarityColor, onClose}) {
