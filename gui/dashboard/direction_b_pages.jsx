@@ -1817,10 +1817,30 @@ function RuleEditor({rule, onChange, onDelete, onMoveUp, onMoveDown}) {
 
 function SellPreviewModal({items, onClose}) {
   const [filter, setFilter] = React.useState('all');
+  const [selling, setSelling] = React.useState(false);
+  const [confirm, setConfirm] = React.useState(false);
+  const [result, setResult] = React.useState(null);
   const isLoading = items == null;
   const safeItems = Array.isArray(items) ? items : [];
   const ruleIds = [...new Set(safeItems.map(i => i.rule_id))];
   const filtered = filter === 'all' ? safeItems : safeItems.filter(i => i.rule_id === filter);
+
+  const sellNow = async () => {
+    setSelling(true); setResult(null);
+    try {
+      const r = await fetch('/api/sell-rules/bulk-sell', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ids: filtered.map(i => i.id)}),
+      });
+      const j = await r.json();
+      setResult(j);
+    } catch (e) {
+      setResult({error: String(e)});
+    }
+    setSelling(false);
+    setConfirm(false);
+  };
+
   return (
     <div onClick={onClose} style={{
       position:'fixed', inset: 0, background:'rgba(0,0,0,0.6)', zIndex: 200,
@@ -1850,8 +1870,40 @@ function SellPreviewModal({items, onClose}) {
               ))}
             </select>
           )}
+          {!isLoading && filtered.length > 0 && !result && (
+            confirm ? (
+              <>
+                <button className="btn" onClick={sellNow} disabled={selling}
+                        style={{height: 26, padding:'0 12px', fontSize: 11,
+                                background:'oklch(0.55 0.18 25)', color:'#fff',
+                                borderColor:'oklch(0.55 0.18 25)'}}>
+                  {selling ? `Selling…` : `Confirm sell ${filtered.length}`}
+                </button>
+                <button className="btn" onClick={() => setConfirm(false)} disabled={selling}
+                        style={{height: 26, padding:'0 12px', fontSize: 11}}>
+                  Cancel
+                </button>
+              </>
+            ) : (
+              <button className="btn" onClick={() => setConfirm(true)}
+                      style={{height: 26, padding:'0 12px', fontSize: 11,
+                              background:'transparent',
+                              color:'oklch(0.70 0.18 25)',
+                              borderColor:'oklch(0.40 0.10 25)'}}>
+                Sell {filtered.length} now
+              </button>
+            )
+          )}
           <button className="btn" onClick={onClose} style={{height: 26, padding:'0 12px'}}>Close</button>
         </div>
+        {result && (
+          <div style={{padding:'10px 20px', background: result.error ? 'oklch(0.20 0.10 25)' : 'oklch(0.20 0.12 145)',
+                       fontSize: 12, color:'var(--text)', borderBottom:'1px solid var(--border)'}}>
+            {result.error
+              ? `Error: ${result.error}`
+              : `Sold ${result.sold?.length || 0} artifacts${result.skipped?.length ? ` · ${result.skipped.length} skipped (equipped/locked)` : ''}.`}
+          </div>
+        )}
         {isLoading ? (
           <div style={{padding: 60, textAlign:'center', color:'var(--text-sub)', fontSize: 12}}>
             Loading vault & evaluating rules…

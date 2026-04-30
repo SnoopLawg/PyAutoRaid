@@ -48,6 +48,7 @@ import sys
 import time
 import urllib.parse
 import urllib.request
+from pathlib import Path
 
 MOD_BASE = "http://localhost:6790"
 DUNGEONS_DIALOG = "UIManager/Canvas (Ui Root)/Dialogs/[DV] DungeonsDialog"
@@ -69,6 +70,163 @@ def _context_call(path: str, method: str, arg: str | None = None) -> dict:
     if arg is not None:
         q += "&arg=" + urllib.parse.quote(arg)
     return _get(q)
+
+
+# ---------- artifact auto-sell helpers ----------
+
+def _fetch_all_artifact_ids() -> set[int]:
+    """Fetch all artifact IDs from the mod (paginated). Used to diff
+    pre-/post-battle for auto-sell."""
+    ids: set[int] = set()
+    offset, page_size, hard_cap = 0, 500, 5000
+    while offset < hard_cap:
+        try:
+            r = _get(f"/all-artifacts?offset={offset}&limit={page_size}",
+                     timeout=15)
+        except Exception:
+            break
+        arts = r.get("artifacts") or []
+        if not arts:
+            break
+        for a in arts:
+            aid = a.get("id")
+            if aid:
+                ids.add(int(aid))
+        if len(arts) < page_size:
+            break
+        offset += page_size
+    return ids
+
+
+def _fetch_new_artifacts(known_ids: set[int]) -> list[dict]:
+    """Return full artifact dicts for IDs that weren't in `known_ids`."""
+    out: list[dict] = []
+    offset, page_size, hard_cap = 0, 500, 5000
+    while offset < hard_cap:
+        try:
+            r = _get(f"/all-artifacts?offset={offset}&limit={page_size}",
+                     timeout=15)
+        except Exception:
+            break
+        arts = r.get("artifacts") or []
+        if not arts:
+            break
+        for a in arts:
+            aid = a.get("id")
+            if aid and aid not in known_ids:
+                out.append(a)
+        if len(arts) < page_size:
+            break
+        offset += page_size
+    return out
+
+
+_SELL_RULES_CACHE: dict | None = None
+
+
+def _load_sell_rules_lazy():
+    """Import sell_rules.load_rules on demand. Skip if module not on path."""
+    global _SELL_RULES_CACHE
+    if _SELL_RULES_CACHE is not None:
+        return _SELL_RULES_CACHE
+    try:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        from sell_rules import load_rules  # type: ignore
+        _SELL_RULES_CACHE = load_rules()
+    except Exception as e:
+        print(f"  sell_rules load failed: {e}", file=sys.stderr)
+        _SELL_RULES_CACHE = {}
+    return _SELL_RULES_CACHE
+
+
+def _evaluate_drops_and_sell(new_arts: list[dict]) -> tuple[int, int]:
+    """For each new drop, check sell rules. If a drop matches, sell it via
+    /sell-artifacts. Returns (sold, kept) counts. Also writes audit lines
+    to data/sell_history.jsonl."""
+    if not new_arts:
+        return 0, 0
+    cfg = _load_sell_rules_lazy()
+    if not cfg or not cfg.get("rules"):
+        return 0, len(new_arts)
+    try:
+        from sell_rules import evaluate  # type: ignore
+    except Exception:
+        return 0, len(new_arts)
+
+    # Translate mod /all-artifacts shape into the dict shape sell_rules wants
+    SLOT = {1:'Helmet',2:'Chest',3:'Gloves',4:'Boots',5:'Weapon',
+            6:'Shield',7:'Ring',8:'Amulet',9:'Banner'}
+    STAT = {1:'HP',2:'ATK',3:'DEF',4:'SPD',5:'RES',6:'ACC',7:'CR',8:'CD'}
+    set_names: dict[int, str] = {}
+    try:
+        from gear_constants import SET_NAMES  # type: ignore
+        set_names = SET_NAMES
+    except Exception:
+        pass
+    to_sell: list[dict] = []
+    kept = 0
+    for a in new_arts:
+        kind = a.get("kind") or 0
+        pr = a.get("primary") or {}
+        subs = []
+        for sb in (a.get("substats") or []):
+            subs.append({
+                "stat": STAT.get(sb.get("stat"), ""),
+                "value": sb.get("value", 0),
+                "flat": bool(sb.get("flat", False)),
+            })
+        norm = {
+            "id": a.get("id"),
+            "rank": a.get("rank", 0),
+            "rarity": a.get("rarity", 0),
+            "level": a.get("level", 0),
+            "slot": SLOT.get(kind, ""),
+            "slot_id": kind,
+            "set_name": set_names.get(a.get("set", 0), ""),
+            "primary_stat": STAT.get(pr.get("stat"), ""),
+            "primary_flat": bool(pr.get("flat", False)),
+            "substats": subs,
+            "hero_id": 0,  # new drops are unequipped by definition
+        }
+        d = evaluate(norm, cfg)
+        if d["action"] == "sell":
+            to_sell.append({**norm, **d})
+        else:
+            kept += 1
+
+    if not to_sell:
+        return 0, kept
+
+    ids_param = ",".join(str(it["id"]) for it in to_sell)
+    try:
+        r = _get("/sell-artifacts?ids=" + ids_param, timeout=30)
+    except Exception as e:
+        print(f"  auto-sell HTTP error: {e}", file=sys.stderr)
+        return 0, kept + len(to_sell)
+    sold = list(r.get("sold") or [])
+    skipped = list(r.get("skipped") or [])
+    # Audit log
+    try:
+        hist_path = Path(__file__).resolve().parent.parent / "data" / "sell_history.jsonl"
+        hist_path.parent.mkdir(parents=True, exist_ok=True)
+        ts = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+        meta_by_id = {it["id"]: it for it in to_sell}
+        with hist_path.open("a") as f:
+            for aid in sold:
+                m = meta_by_id.get(aid, {})
+                f.write(json.dumps({
+                    "ts": ts, "source": "dungeon_run", "id": aid,
+                    "slot": m.get("slot"), "rank": m.get("rank"),
+                    "rarity": m.get("rarity"), "level": m.get("level"),
+                    "primary": m.get("primary_stat"),
+                    "rule_id": m.get("rule_id"),
+                }) + "\n")
+    except Exception as e:
+        print(f"  audit log failed: {e}", file=sys.stderr)
+    if sold:
+        print(f"  auto-sell: {len(sold)} sold, {kept} kept"
+              + (f", {len(skipped)} skipped" if skipped else ""))
+    return len(sold), kept
 
 
 def _dialogs() -> list[str]:
@@ -460,6 +618,20 @@ def run_loop(dungeon: str | None,
     is_capped = stop_condition.get("type") == "capped"
     max_iters = 10_000 if is_capped else int(stop_condition.get("n", 1))
 
+    # Auto-sell baseline: snapshot vault BEFORE the loop so each victory's
+    # drop set is just (current_ids - known_ids). Updated incrementally so
+    # we don't re-evaluate the same kept artifact twice.
+    auto_sell = bool(stop_condition.get("auto_sell", True))
+    sell_total = {"sold": 0, "kept": 0}
+    if auto_sell:
+        try:
+            known_ids = _fetch_all_artifact_ids()
+            print(f"  auto-sell: rules active, vault baseline {len(known_ids)} pieces")
+        except Exception as e:
+            print(f"  auto-sell: baseline fetch failed ({e}); disabling")
+            auto_sell = False
+            known_ids = set()
+
     for i in range(1, max_iters + 1):
         if should_stop():
             on_progress("end", reason="aborted", completed=completed)
@@ -495,6 +667,21 @@ def run_loop(dungeon: str | None,
         if status == "victory":
             completed += 1
             on_finish_dialog = True
+            if auto_sell:
+                try:
+                    new_arts = _fetch_new_artifacts(known_ids)
+                    if new_arts:
+                        sold, kept = _evaluate_drops_and_sell(new_arts)
+                        sell_total["sold"] += sold
+                        sell_total["kept"] += kept
+                        # Add the kept new IDs into known_ids; sold ones
+                        # disappeared from the vault so they shouldn't reappear.
+                        for a in new_arts:
+                            aid = a.get("id")
+                            if aid:
+                                known_ids.add(int(aid))
+                except Exception as ex:
+                    print(f"  auto-sell error: {ex}", file=sys.stderr)
             continue
         failures += 1
         on_finish_dialog = False
@@ -507,9 +694,16 @@ def run_loop(dungeon: str | None,
     if on_finish_dialog:
         _close_finish_dialog()
     print(f"  loop end: completed {completed} run(s)")
-    on_progress("end", reason="done", completed=completed)
+    if auto_sell and (sell_total["sold"] or sell_total["kept"]):
+        print(f"  auto-sell totals: {sell_total['sold']} sold, "
+              f"{sell_total['kept']} kept")
+    on_progress("end", reason="done", completed=completed,
+                auto_sell_sold=sell_total["sold"] if auto_sell else 0,
+                auto_sell_kept=sell_total["kept"] if auto_sell else 0)
     return {"ok": True, "reason": "done",
-            "completed": completed, "failures": failures}
+            "completed": completed, "failures": failures,
+            "auto_sell_sold": sell_total["sold"] if auto_sell else 0,
+            "auto_sell_kept": sell_total["kept"] if auto_sell else 0}
 
 
 def main():
@@ -533,6 +727,10 @@ def main():
     ap.add_argument("--log", default="data/runs/dungeon_runs.log",
                     help="Append per-run results to this log (default: "
                          "data/runs/dungeon_runs.log; pass empty to disable)")
+    ap.add_argument("--no-auto-sell", action="store_true",
+                    help="Disable post-battle auto-sell of new drops "
+                         "(otherwise drops are evaluated against "
+                         "data/sell_rules.json and sold via /sell-artifacts).")
     args = ap.parse_args()
 
     if args.until_capped and args.dungeon and args.dungeon != "minotaur":
@@ -580,6 +778,7 @@ def main():
     # Loop via the shared run_loop function.
     stop_condition = ({"type": "capped"} if args.until_capped
                       else {"type": "runs", "n": args.runs})
+    stop_condition["auto_sell"] = not args.no_auto_sell
     result = run_loop(dungeon=args.dungeon, stage=stage,
                       stop_condition=stop_condition,
                       log_path=args.log or None)

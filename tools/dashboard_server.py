@@ -743,6 +743,71 @@ def _all_artifacts_for_rules():
     return build_artifacts() or []
 
 
+# Persistent sell history (data/sell_history.jsonl) — append-only audit log
+# so the user can inspect what got auto-sold after a long farm run.
+_SELL_HISTORY_PATH = ROOT / "data" / "sell_history.jsonl"
+
+
+def _append_sell_history(entry: dict) -> None:
+    try:
+        _SELL_HISTORY_PATH.parent.mkdir(parents=True, exist_ok=True)
+        with _SELL_HISTORY_PATH.open("a") as f:
+            f.write(json.dumps(entry) + "\n")
+    except Exception as e:
+        logger.info("sell_history append failed: %s", e)
+
+
+def _run_bulk_sell(ids: list[int], source: str = "dashboard") -> dict:
+    """Sell a list of artifact IDs via the mod's /sell-artifacts endpoint.
+
+    Returns {ok, sold: [int], skipped: [{id, reason}], error?}.
+
+    Logs each successful sell to data/sell_history.jsonl for auditing.
+    Forces an artifact-cache refresh on success so subsequent /api/state
+    polls reflect the new vault state.
+    """
+    if not ids:
+        return {"ok": True, "sold": [], "skipped": []}
+    client = mod_client()
+    if not client.available:
+        return {"error": "mod not reachable"}
+    # Look up metadata for the audit log BEFORE the sell removes it from the cache
+    meta_by_id = {}
+    for a in (build_artifacts() or []):
+        if a.get("id") in ids:
+            meta_by_id[a["id"]] = a
+    # Chunk to avoid massive query strings
+    sold, skipped = [], []
+    err = None
+    for i in range(0, len(ids), 50):
+        chunk = ids[i:i+50]
+        ids_param = ",".join(str(x) for x in chunk)
+        r = client._get("/sell-artifacts?ids=" + ids_param) or {}
+        if "error" in r:
+            err = r["error"]
+            break
+        sold.extend(r.get("sold") or [])
+        skipped.extend(r.get("skipped") or [])
+    # Audit log
+    ts = datetime.datetime.utcnow().isoformat() + "Z"
+    for aid in sold:
+        m = meta_by_id.get(aid) or {}
+        _append_sell_history({
+            "ts": ts, "source": source, "id": aid,
+            "slot": m.get("slot"), "set": m.get("set_name"),
+            "rank": m.get("rank"), "rarity": m.get("rarity"),
+            "level": m.get("level"), "primary": m.get("primary_stat"),
+        })
+    # Bust the artifact cache so the next /api/state shows reduced count
+    if sold:
+        _artifacts_cache["ts"] = 0
+        _artifacts_cache["data"] = None
+    out = {"ok": err is None, "sold": sold, "skipped": skipped}
+    if err:
+        out["error"] = err
+    return out
+
+
 def build_events():
     """Live from memory reader."""
     reader = memory_reader()
@@ -3735,6 +3800,16 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 return self._send_json({"ok": True, "config": _load_sell()})
             except Exception as e:
                 return self._send_json({"error": str(e)}, status=400)
+
+        if parsed.path == "/api/sell-rules/bulk-sell":
+            ids = body.get("ids") if isinstance(body, dict) else None
+            if not isinstance(ids, list) or not ids:
+                return self._send_json({"error": "ids: list of artifact IDs required"}, status=400)
+            try:
+                ids_int = [int(x) for x in ids]
+            except Exception:
+                return self._send_json({"error": "ids must be integers"}, status=400)
+            return self._send_json(_run_bulk_sell(ids_int))
 
         if parsed.path == "/api/preset/edit":
             # Raw priority+opener push for a single preset. Accepts:
