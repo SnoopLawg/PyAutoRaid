@@ -1,0 +1,82 @@
+{
+  "version": 1,
+  "useful_substats": [
+    "SPD",
+    "ACC",
+    "CR",
+    "CD",
+    "HP%",
+    "ATK%",
+    "DEF%"
+  ],
+  "slot_required_primary": {
+    "Boots": [
+      "SPD"
+    ],
+    "Banner": [
+      "ACC",
+      "RES"
+    ],
+    "Chest": [
+      "HP%",
+      "ATK%",
+      "DEF%"
+    ],
+    "Gloves": [
+      "CR",
+      "CD"
+    ]
+  },
+  "junk_sets": [
+    "Avenge",
+    "Frenzy",
+    "CounterAttack",
+    "Resilience",
+    "Shield"
+  ],
+  "rules": [
+    {
+      "id": "trash",
+      "name": "Sell ranks 1-3 (trash drops)",
+      "enabled": true,
+      "max_rank": 3
+    },
+    {
+      "id": "low_rare",
+      "name": "Sell rank 4 below epic",
+      "enabled": true,
+      "max_rank": 4,
+      "max_rarity": 3
+    },
+    {
+      "id": "junk_set",
+      "name": "Sell junk-set rank 5",
+      "enabled": true,
+      "max_rank": 5,
+      "set_in_junk_list": true
+    },
+    {
+      "id": "bad_primary_r5",
+      "name": "Sell R5 with wrong primary on key slots",
+      "enabled": true,
+      "min_rank": 5,
+      "max_rank": 5,
+      "slots": [
+        "Boots",
+        "Banner",
+        "Chest",
+        "Gloves"
+      ],
+      "primary_not_in_slot_required": true
+    },
+    {
+      "id": "no_useful_subs_r5",
+      "name": "Sell R5 with < 2 useful substats",
+      "enabled": false,
+      "min_rank": 5,
+      "max_rank": 5,
+      "max_useful_subs": 1
+    }
+  ],
+  "exclude_equipped": true
+}

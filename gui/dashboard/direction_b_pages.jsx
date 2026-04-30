@@ -1424,14 +1424,198 @@ function PageHeroes({s}) {
             );
           })}
         </div>
-        <div className="card" style={{padding: 16}}>
-          <div className="card-title" style={{marginBottom: 10}}>Auto-sell rules</div>
-          <div style={{fontSize: 11.5, color:'var(--text-sub)', lineHeight: 1.7}}>
-            <div>• Rank ≤ 3 → sell</div>
-            <div>• No speed/crit subs → sell</div>
-            <div>• Common + Uncommon → sell</div>
-            <div style={{color:'var(--text-dim)', marginTop: 6}}>Rule engine queued · phase 4</div>
+        <SellRulesPanel/>
+      </div>
+    </div>
+  );
+}
+
+// Sell rules editor + preview. Mirrors RSL-helper's filter chain: each rule
+// is a set of AND'd conditions; rules evaluate top-to-bottom and the first
+// match marks the artifact for sale. Backend is /api/sell-rules.
+function SellRulesPanel() {
+  const [cfg, setCfg] = React.useState(null);
+  const [summary, setSummary] = React.useState(null);
+  const [loading, setLoading] = React.useState(false);
+  const [dirty, setDirty] = React.useState(false);
+  const [showPreview, setShowPreview] = React.useState(false);
+  const [previewItems, setPreviewItems] = React.useState(null);
+
+  const fetchRules = React.useCallback(async () => {
+    setLoading(true);
+    try {
+      const r = await fetch('/api/sell-rules', {cache:'no-store'});
+      const j = await r.json();
+      setCfg(j.config);
+      setSummary(j.summary);
+      setDirty(false);
+    } catch (e) {}
+    setLoading(false);
+  }, []);
+  React.useEffect(() => { fetchRules(); }, [fetchRules]);
+
+  const save = React.useCallback(async () => {
+    if (!cfg) return;
+    setLoading(true);
+    try {
+      const r = await fetch('/api/sell-rules', {
+        method: 'PUT', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(cfg),
+      });
+      const j = await r.json();
+      if (j.ok) {
+        setCfg(j.config);
+        setDirty(false);
+        // Refresh summary after save
+        const r2 = await fetch('/api/sell-rules', {cache:'no-store'});
+        const j2 = await r2.json();
+        setSummary(j2.summary);
+      }
+    } catch (e) {}
+    setLoading(false);
+  }, [cfg]);
+
+  const loadPreview = React.useCallback(async () => {
+    setLoading(true);
+    try {
+      const r = await fetch('/api/sell-rules/preview', {cache:'no-store'});
+      const j = await r.json();
+      setPreviewItems(j.sell || []);
+      setShowPreview(true);
+    } catch (e) {}
+    setLoading(false);
+  }, []);
+
+  const toggleRule = (idx) => {
+    const next = {...cfg, rules: cfg.rules.map((r, i) => i === idx ? {...r, enabled: !r.enabled} : r)};
+    setCfg(next); setDirty(true);
+  };
+
+  if (!cfg) {
+    return (
+      <div className="card" style={{padding: 16}}>
+        <div className="card-title" style={{marginBottom: 10}}>Sell rules</div>
+        <div style={{fontSize: 11.5, color:'var(--text-dim)'}}>{loading ? 'Loading…' : 'Failed to load.'}</div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className="card" style={{padding: 16}}>
+        <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom: 10}}>
+          <div className="card-title">Sell rules</div>
+          <span className="mono" style={{fontSize: 11, color:'var(--accent)'}}>
+            {summary ? `${summary.sell_count} match` : '…'}
+          </span>
+        </div>
+        <div style={{fontSize: 11, color:'var(--text-sub)', marginBottom: 10, lineHeight: 1.5}}>
+          First-match wins. Equipped pieces are always kept.
+        </div>
+        <div style={{display:'flex', flexDirection:'column', gap: 6, marginBottom: 10}}>
+          {cfg.rules.map((r, i) => {
+            const ruleCount = (summary?.by_rule || {})[r.id] || 0;
+            return (
+              <label key={r.id || i} style={{
+                display:'flex', alignItems:'center', gap: 8,
+                padding:'6px 8px', background:'var(--bg-subtle)', borderRadius: 4,
+                fontSize: 11.5, cursor: 'pointer',
+                opacity: r.enabled ? 1 : 0.5,
+                borderLeft: `2px solid ${r.enabled ? 'var(--accent)' : 'var(--border)'}`,
+              }}>
+                <input type="checkbox" checked={!!r.enabled}
+                       onChange={() => toggleRule(i)}
+                       style={{margin: 0, cursor:'pointer'}}/>
+                <span style={{flex: 1, minWidth: 0}} className="truncate">{r.name}</span>
+                {r.enabled && (
+                  <span className="mono" style={{
+                    fontSize: 10, color:'var(--text-sub)',
+                    minWidth: 30, textAlign:'right',
+                  }}>{ruleCount}</span>
+                )}
+              </label>
+            );
+          })}
+        </div>
+        <div style={{display:'flex', gap: 6}}>
+          <button className="btn" onClick={save} disabled={!dirty || loading}
+                  style={{flex: 1, height: 26, fontSize: 11,
+                          background: dirty ? 'var(--accent)' : 'transparent',
+                          color: dirty ? 'var(--bg)' : 'var(--text-sub)',
+                          borderColor: dirty ? 'var(--accent)' : 'var(--border)'}}>
+            {dirty ? 'Save' : 'Saved'}
+          </button>
+          <button className="btn" onClick={loadPreview} disabled={loading}
+                  style={{flex: 1, height: 26, fontSize: 11}}>
+            Preview
+          </button>
+        </div>
+        <div style={{fontSize: 10, color:'var(--text-dim)', marginTop: 8, lineHeight: 1.4}}>
+          Settings file: <span className="mono">data/sell_rules.json</span>
+        </div>
+      </div>
+      {showPreview && previewItems && (
+        <SellPreviewModal items={previewItems} onClose={() => setShowPreview(false)}/>
+      )}
+    </>
+  );
+}
+
+function SellPreviewModal({items, onClose}) {
+  const [filter, setFilter] = React.useState('all');
+  const ruleIds = [...new Set(items.map(i => i.rule_id))];
+  const filtered = filter === 'all' ? items : items.filter(i => i.rule_id === filter);
+  return (
+    <div onClick={onClose} style={{
+      position:'fixed', inset: 0, background:'rgba(0,0,0,0.6)', zIndex: 200,
+      display:'flex', alignItems:'center', justifyContent:'center', padding: 20,
+    }}>
+      <div onClick={e => e.stopPropagation()} className="card scroll" style={{
+        padding: 0, width: 800, maxWidth: '96vw', maxHeight: '85vh',
+        overflow:'auto', background:'var(--bg-elev)',
+        border:'1px solid var(--border-strong)',
+      }}>
+        <div style={{padding:'14px 20px', borderBottom:'1px solid var(--border)',
+                     display:'flex', alignItems:'center', gap: 12,
+                     position:'sticky', top: 0, background:'var(--bg-elev)', zIndex: 1}}>
+          <div>
+            <div style={{fontSize: 10.5, color:'var(--text-dim)', textTransform:'uppercase', letterSpacing:'0.06em'}}>Sell preview</div>
+            <div style={{fontSize: 18, fontWeight: 500, marginTop: 2}}>{items.length} artifacts match current rules</div>
           </div>
+          <span style={{flex: 1}}/>
+          <select value={filter} onChange={e => setFilter(e.target.value)}
+                  style={{height: 26, padding:'0 8px', fontSize: 11, background:'var(--bg-subtle)', color:'var(--text)', border:'1px solid var(--border)', borderRadius: 4}}>
+            <option value="all">all rules ({items.length})</option>
+            {ruleIds.map(rid => (
+              <option key={rid} value={rid}>{rid} ({items.filter(i => i.rule_id === rid).length})</option>
+            ))}
+          </select>
+          <button className="btn" onClick={onClose} style={{height: 26, padding:'0 12px'}}>Close</button>
+        </div>
+        <div style={{padding:'10px 20px 20px'}}>
+          <div style={{display:'grid', gridTemplateColumns:'70px 80px 70px 90px 110px 80px 1fr', gap: 8,
+                       fontSize: 10.5, color:'var(--text-dim)', textTransform:'uppercase',
+                       letterSpacing:'0.06em', padding:'6px 0', borderBottom:'1px solid var(--border)', marginBottom: 4}}>
+            <span>ID</span><span>Slot</span><span>Rank</span><span>Rarity</span><span>Set</span><span>Primary</span><span>Why</span>
+          </div>
+          {filtered.slice(0, 250).map((it, i) => (
+            <div key={it.id || i} style={{display:'grid', gridTemplateColumns:'70px 80px 70px 90px 110px 80px 1fr',
+                       gap: 8, fontSize: 11.5, padding:'5px 0',
+                       borderBottom:'1px solid var(--border)', alignItems:'center'}}>
+              <span className="mono" style={{color:'var(--text-dim)'}}>{it.id}</span>
+              <span>{it.slot}</span>
+              <span className="mono">R{it.rank}</span>
+              <span style={{color:'var(--text-sub)'}}>{['','Common','Uncommon','Rare','Epic','Legendary','Mythic'][it.rarity] || it.rarity}</span>
+              <span className="truncate" style={{color:'var(--text-sub)'}}>{it.set || '—'}</span>
+              <span className="mono" style={{color:'var(--accent)'}}>{it.primary || '—'}</span>
+              <span style={{color:'var(--text-sub)'}} className="truncate">{it.rule_name}</span>
+            </div>
+          ))}
+          {filtered.length > 250 && (
+            <div style={{padding:'10px 0', fontSize: 11, color:'var(--text-dim)', textAlign:'center'}}>
+              … {filtered.length - 250} more not shown
+            </div>
+          )}
         </div>
       </div>
     </div>

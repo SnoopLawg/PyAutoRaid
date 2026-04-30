@@ -32,6 +32,12 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from Modules.mod_client import ModClient  # noqa: E402
+from tools.sell_rules import (  # noqa: E402
+    DEFAULT_CONFIG as _SELL_DEFAULT,
+    evaluate_all as _eval_sell,
+    load_rules as _load_sell,
+    save_rules as _save_sell,
+)
 
 # Override to point proxy at a remote mod (e.g. PYAUTORAID_MOD_URL=http://mothership2:6790)
 MOD_URL = os.environ.get("PYAUTORAID_MOD_URL", "http://localhost:6790")
@@ -726,6 +732,15 @@ def build_artifacts():
     except Exception as e:
         logger.info("build_artifacts failed: %s", e)
         return None
+
+
+def _all_artifacts_for_rules():
+    """Return the full artifact list in the shape sell_rules.evaluate accepts.
+
+    Reuses build_artifacts() (the same data the dashboard table renders), so
+    field names match what the JSX would show in the rule preview.
+    """
+    return build_artifacts() or []
 
 
 def build_events():
@@ -3639,6 +3654,25 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             except Exception as e:
                 self._send_json({"error": str(e)}, status=400)
             return
+        if parsed.path == "/api/sell-rules":
+            cfg = _load_sell()
+            arts = _all_artifacts_for_rules()
+            preview = _eval_sell(arts, cfg)
+            return self._send_json({
+                "config": cfg,
+                "summary": {
+                    "sell_count": preview["sell_count"],
+                    "keep_count": preview["keep_count"],
+                    "by_rule": preview["by_rule"],
+                },
+            })
+
+        if parsed.path == "/api/sell-rules/preview":
+            cfg = _load_sell()
+            arts = _all_artifacts_for_rules()
+            preview = _eval_sell(arts, cfg)
+            return self._send_json(preview)
+
         if parsed.path == "/api/sim-sweep":
             q = urllib.parse.parse_qs(parsed.query)
             try:
@@ -3689,6 +3723,18 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             )
             return self._send_json({"ok": ok, "message": msg},
                                    status=200 if ok else 400)
+
+        if parsed.path == "/api/sell-rules":
+            # Replace the entire config. Caller must send the full schema.
+            cfg = body if isinstance(body, dict) else {}
+            try:
+                # Round-trip through the loader to fill defaults / validate.
+                merged = {**_SELL_DEFAULT, **cfg}
+                merged["rules"] = list(cfg.get("rules") or _SELL_DEFAULT["rules"])
+                _save_sell(merged)
+                return self._send_json({"ok": True, "config": _load_sell()})
+            except Exception as e:
+                return self._send_json({"error": str(e)}, status=400)
 
         if parsed.path == "/api/preset/edit":
             # Raw priority+opener push for a single preset. Accepts:
