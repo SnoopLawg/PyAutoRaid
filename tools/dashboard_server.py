@@ -734,14 +734,19 @@ def build_artifacts():
         return None
 
 
+_SQLITE_ARTIFACT_CACHE = {"ts": 0.0, "data": None}
+_SQLITE_ARTIFACT_TTL = 30.0  # seconds — full vault rule re-eval freshness
+
+
 def _all_artifacts_for_rules():
     """Return the full artifact list in the shape sell_rules.evaluate accepts.
 
     Speed-tier strategy:
-      1. If the in-memory artifact cache is warm, return it (~0ms).
-      2. Otherwise read from the SQLite cache (~50-200ms) — populated by
+      1. If the in-memory mod-paginated artifact cache is warm, use it.
+      2. If the SQLite-derived cache is warm (< 30s), use it (~0ms).
+      3. Otherwise read from the SQLite cache (~50-200ms) — populated by
          tools/refresh_data.py and good enough for rule evaluation.
-      3. Fall back to build_artifacts() (paginates from the mod, several
+      4. Fall back to build_artifacts() (paginates from the mod, several
          seconds) as a last resort.
 
     Rule evaluation does not need live freshness — a piece dropped
@@ -750,13 +755,28 @@ def _all_artifacts_for_rules():
     """
     if _artifacts_cache.get("data"):
         return _artifacts_cache["data"]
+    now = time.time()
+    cached = _SQLITE_ARTIFACT_CACHE.get("data")
+    if cached and (now - _SQLITE_ARTIFACT_CACHE["ts"]) < _SQLITE_ARTIFACT_TTL:
+        return cached
     try:
         rows = _artifacts_from_sqlite()
         if rows:
+            _SQLITE_ARTIFACT_CACHE["ts"] = now
+            _SQLITE_ARTIFACT_CACHE["data"] = rows
             return rows
     except Exception as e:
         logger.info("sqlite artifact read failed: %s", e)
     return build_artifacts() or []
+
+
+def _invalidate_artifact_cache():
+    """Bust the in-memory mod cache + the SQLite-derived cache. Called
+    after a sell so the next preview reflects the post-sell vault."""
+    _artifacts_cache["ts"] = 0
+    _artifacts_cache["data"] = None
+    _SQLITE_ARTIFACT_CACHE["ts"] = 0
+    _SQLITE_ARTIFACT_CACHE["data"] = None
 
 
 _SLOT_MAP = {1: "Helmet", 2: "Chest", 3: "Gloves", 4: "Boots",
@@ -879,8 +899,7 @@ def _run_bulk_sell(ids: list[int], source: str = "dashboard") -> dict:
         })
     # Bust the artifact cache so the next /api/state shows reduced count
     if sold:
-        _artifacts_cache["ts"] = 0
-        _artifacts_cache["data"] = None
+        _invalidate_artifact_cache()
     out = {"ok": err is None, "sold": sold, "skipped": skipped}
     if err:
         out["error"] = err
@@ -3953,6 +3972,16 @@ def main():
         _autorun_state["thread_started"] = True
         t = threading.Thread(target=_autorun_worker, daemon=True, name="cb-autorun")
         t.start()
+    # Pre-warm the SQLite-derived artifact cache so the first sell-rules
+    # preview hit is instant. Done in a background thread so it doesn't
+    # block the server from binding the port.
+    def _prewarm():
+        try:
+            n = len(_all_artifacts_for_rules())
+            logger.info("artifact cache pre-warmed: %d pieces", n)
+        except Exception as e:
+            logger.info("artifact cache pre-warm failed: %s", e)
+    threading.Thread(target=_prewarm, daemon=True, name="art-prewarm").start()
     with ReusableServer(("", PORT), Handler) as httpd:
         try:
             httpd.serve_forever()
