@@ -1752,6 +1752,14 @@ function RuleEditor({rule, onChange, onDelete, onMoveUp, onMoveDown}) {
           </div>
         </div>
         <div>
+          <div style={labelStyle} title="Upgrade level (+0 to +16). Rolls reveal/upgrade at +0/+4/+8/+12/+16.">Level</div>
+          <div style={{display:'flex', alignItems:'center', gap: 3}}>
+            <NumField value={rule.min_level} onChange={v => onChange({min_level: v})} placeholder="–" min={0} max={16}/>
+            <span style={{color:'var(--text-dim)', fontSize: 10}}>–</span>
+            <NumField value={rule.max_level} onChange={v => onChange({max_level: v})} placeholder="–" min={0} max={16}/>
+          </div>
+        </div>
+        <div>
           <div style={labelStyle}>Useful subs</div>
           <div style={{display:'flex', alignItems:'center', gap: 3}}>
             <NumField value={rule.min_useful_subs} onChange={v => onChange({min_useful_subs: v})} placeholder="–" min={0} max={4}/>
@@ -1850,18 +1858,19 @@ function SellPreviewModal({items, onClose}) {
           </div>
         ) : (
         <div style={{padding:'10px 20px 20px'}}>
-          <div style={{display:'grid', gridTemplateColumns:'70px 80px 70px 90px 110px 80px 1fr', gap: 8,
+          <div style={{display:'grid', gridTemplateColumns:'60px 80px 50px 50px 90px 110px 70px 1fr', gap: 8,
                        fontSize: 10.5, color:'var(--text-dim)', textTransform:'uppercase',
                        letterSpacing:'0.06em', padding:'6px 0', borderBottom:'1px solid var(--border)', marginBottom: 4}}>
-            <span>ID</span><span>Slot</span><span>Rank</span><span>Rarity</span><span>Set</span><span>Primary</span><span>Why</span>
+            <span>ID</span><span>Slot</span><span>Rank</span><span>+Lvl</span><span>Rarity</span><span>Set</span><span>Primary</span><span>Why</span>
           </div>
           {filtered.slice(0, 250).map((it, i) => (
-            <div key={it.id || i} style={{display:'grid', gridTemplateColumns:'70px 80px 70px 90px 110px 80px 1fr',
+            <div key={it.id || i} style={{display:'grid', gridTemplateColumns:'60px 80px 50px 50px 90px 110px 70px 1fr',
                        gap: 8, fontSize: 11.5, padding:'5px 0',
                        borderBottom:'1px solid var(--border)', alignItems:'center'}}>
               <span className="mono" style={{color:'var(--text-dim)'}}>{it.id}</span>
               <span>{it.slot}</span>
               <span className="mono">R{it.rank}</span>
+              <span className="mono" style={{color: it.level >= 12 ? 'var(--accent)' : 'var(--text-sub)'}}>+{it.level ?? 0}</span>
               <span style={{color:'var(--text-sub)'}}>{['','Common','Uncommon','Rare','Epic','Legendary','Mythic'][it.rarity] || it.rarity}</span>
               <span className="truncate" style={{color:'var(--text-sub)'}}>{it.set || '—'}</span>
               <span className="mono" style={{color:'var(--accent)'}}>{it.primary || '—'}</span>

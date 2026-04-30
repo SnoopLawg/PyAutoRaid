@@ -13,6 +13,9 @@ Conditions on a rule (all AND):
   enabled            — rule on/off
   min_rank/max_rank  — inclusive
   min_rarity/max_rarity — inclusive (1=Common, 6=Mythic)
+  min_level/max_level — inclusive upgrade level 0-16. Each rolled
+                       substat lands at lvl 0/4/8/12/16; pieces below
+                       lvl 12 still have unrealized substat upside.
   slots              — list of slot names ['Boots', 'Chest', ...]
   sets               — list of set names to match (case-insensitive)
   set_in_junk_list   — true → set must be in config.junk_sets
@@ -78,6 +81,16 @@ DEFAULT_RULES = [
      "enabled": False,
      "min_rank": 5, "max_rank": 5,
      "max_useful_subs": 1},
+    # Level-gated rule: a piece leveled to 12+ has revealed all four
+    # substats (the 4th reveals at +4 for Rare/Epic, +0 for Legendary,
+    # and the +12/+16 upgrades only enhance existing rolls). If by then
+    # it still has zero useful substats, the piece is locked-in junk
+    # regardless of its rank/rarity.
+    {"id": "leveled_with_no_useful_subs",
+     "name": "Sell level 12+ with 0 useful substats",
+     "enabled": True,
+     "min_level": 12,
+     "max_useful_subs": 0},
 ]
 
 DEFAULT_CONFIG = {
@@ -108,10 +121,21 @@ def save_rules(cfg: dict, path: Path = RULES_PATH) -> None:
 
 
 def _migrate(cfg: dict) -> dict:
-    """Fill in defaults for missing keys so older saves still work."""
+    """Fill in defaults for missing keys so older saves still work.
+
+    Also append any DEFAULT_RULES whose `id` is not already in the saved
+    rule list — this lets new built-in rules show up after an upgrade
+    without clobbering user edits to existing ones. New rules are added
+    in their default-enabled state.
+    """
     out = dict(DEFAULT_CONFIG)
     out.update(cfg)
-    out["rules"] = list(cfg.get("rules") or DEFAULT_RULES)
+    saved_rules = list(cfg.get("rules") or [])
+    saved_ids = {r.get("id") for r in saved_rules if isinstance(r, dict)}
+    for default_rule in DEFAULT_RULES:
+        if default_rule.get("id") not in saved_ids:
+            saved_rules.append(dict(default_rule))
+    out["rules"] = saved_rules or list(DEFAULT_RULES)
     out["useful_substats"] = list(
         cfg.get("useful_substats") or DEFAULT_USEFUL_SUBSTATS)
     out["slot_required_primary"] = dict(
@@ -210,6 +234,7 @@ def evaluate(art: dict, cfg: dict) -> dict:
     set_n = _set_name(art)
     rank = int(art.get("rank") or 0)
     rarity = int(art.get("rarity") or 0)
+    level = int(art.get("level") or 0)
 
     useful = set(cfg.get("useful_substats") or [])
     junk_sets = {s.lower() for s in (cfg.get("junk_sets") or [])}
@@ -227,6 +252,10 @@ def evaluate(art: dict, cfg: dict) -> dict:
         if "min_rarity" in r and rarity < int(r["min_rarity"]):
             continue
         if "max_rarity" in r and rarity > int(r["max_rarity"]):
+            continue
+        if "min_level" in r and level < int(r["min_level"]):
+            continue
+        if "max_level" in r and level > int(r["max_level"]):
             continue
         if r.get("slots") and slot not in r["slots"]:
             continue
@@ -266,6 +295,7 @@ def evaluate_all(artifacts: list[dict], cfg: dict | None = None) -> dict:
             sell.append({**d, "id": a.get("id"), "slot": _slot_name(a),
                          "set": _set_name(a), "rank": a.get("rank"),
                          "rarity": a.get("rarity"),
+                         "level": a.get("level", 0),
                          "primary": _primary_name(a)})
             by_rule[d["rule_id"] or "?"] = by_rule.get(d["rule_id"] or "?", 0) + 1
         else:
