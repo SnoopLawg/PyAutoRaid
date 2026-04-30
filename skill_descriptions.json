@@ -6479,8 +6479,8 @@
     },
     "A3": {
       "name": "Fated Destruction",
-      "desc": "Attacks 1 enemy. Will ignore 60% of the target's DEF. Will also ignore [Unkillable] and [Block Damage] buffs.",
-      "skill_type_id": 47603
+      "desc": "Attacks 1 enemy. Will ignore 60% of the target's DEF. Will also ignore [Unkillable] and [Block Damage] buffs. Enemies killed by this skill cannot be revived if this Champion has gained maximum amount of HP from the Vitality Plunder skill. Grants an Extra Turn if this skill kills an enemy.",
+      "skill_type_id": 47605
     },
     "Passive": {
       "name": "Spurn Oblivion [P]",

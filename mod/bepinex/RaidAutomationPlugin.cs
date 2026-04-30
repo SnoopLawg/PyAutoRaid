@@ -484,7 +484,13 @@ namespace RaidAutomation
                     "/unequip" => RunOnMainThread(() => UnequipArtifact(QP(query, "hero_id"), QP(query, "artifact_id")), 30000),
                     "/swap" => RunOnMainThread(() => SwapArtifact(QP(query, "hero_id"), QP(query, "from_id"), QP(query, "to_id"), QP(query, "owner_id")), 30000),
                     "/bulk-equip" => RunOnMainThread(() => BulkEquipArtifacts(QP(query, "hero_id"), QP(query, "artifacts")), 30000),
-                    "/sell-artifacts" => RunOnMainThread(() => SellArtifacts(QP(query, "ids")), 30000),
+                    // /sell-artifacts removed — direct cmd reflection on
+                    // SellArtifactsCmd causes Plarium to return HTTP 404 and
+                    // pop a "currently experiencing issues" dialog. The cmd
+                    // needs the proper viewmodel path (Storage dialog →
+                    // multi-select → Sell button) to populate request body.
+                    // Tracked: data/sell_history.jsonl is still useful for
+                    // a future viewmodel-driven implementation.
                     "/presets" => RunOnMainThread(() => GetPresets(), 30000),
                     "/remove-preset" => RunOnMainThread(() => RemovePreset(QP(query, "id")), 30000),
                     "/save-preset" => RunOnMainThread(() => SavePreset(QP(query, "name"), QP(query, "heroes"), QP(query, "type")), 30000),
@@ -9371,162 +9377,6 @@ namespace RaidAutomation
             throw new Exception("Execute method not found on " + gameCmd.GetType().Name);
         }
 
-        // Sell one or more vault artifacts via the game's SellArtifactsCmd.
-        // Equipped pieces are skipped (the cmd would error on them anyway —
-        // SellArtifactsWithEquippedCmd is a different code path we don't expose).
-        // ids: comma-separated artifact IDs, e.g. "1234,5678"
-        private string SellArtifacts(string idsStr)
-        {
-            if (string.IsNullOrEmpty(idsStr))
-                return "{\"error\":\"ids required (comma-separated artifact IDs)\"}";
-
-            var uw = GetUserWrapper();
-            if (uw == null) return "{\"error\":\"Not logged in\"}";
-            var equipment = Prop(uw, "Artifacts");
-            if (equipment == null) return "{\"error\":\"EquipmentWrapper null\"}";
-            var oneMethod = equipment.GetType().GetMethod("One");
-
-            var requested = new List<int>();
-            foreach (var s in idsStr.Trim().TrimStart('[').TrimEnd(']').Split(','))
-            {
-                if (int.TryParse(s.Trim(), out int id) && id > 0) requested.Add(id);
-            }
-            if (requested.Count == 0)
-                return "{\"error\":\"no valid IDs in ids parameter\"}";
-
-            // Validate: piece exists, is in vault (not equipped), not locked.
-            // Game's SellArtifactsCmd will reject equipped/locked pieces but failing fast
-            // gives clean per-id error reporting.
-            var toSell = new List<int>();
-            var skipped = new StringBuilder();
-            int skipCount = 0;
-            foreach (int aid in requested)
-            {
-                if (oneMethod == null) { toSell.Add(aid); continue; }
-                object art = null;
-                try { art = oneMethod.Invoke(equipment, new object[] { aid }); } catch { }
-                if (art == null)
-                {
-                    if (skipCount > 0) skipped.Append(",");
-                    skipped.Append("{\"id\":" + aid + ",\"reason\":\"not_found\"}");
-                    skipCount++;
-                    continue;
-                }
-                int owner = GetArtifactOwner(equipment, aid);
-                if (owner > 0)
-                {
-                    if (skipCount > 0) skipped.Append(",");
-                    skipped.Append("{\"id\":" + aid + ",\"reason\":\"equipped_on_" + owner + "\"}");
-                    skipCount++;
-                    continue;
-                }
-                bool locked = false;
-                try { locked = (bool)(art.GetType().GetProperty("Locked")?.GetValue(art) ?? false); } catch { }
-                if (locked)
-                {
-                    if (skipCount > 0) skipped.Append(",");
-                    skipped.Append("{\"id\":" + aid + ",\"reason\":\"locked\"}");
-                    skipCount++;
-                    continue;
-                }
-                toSell.Add(aid);
-            }
-
-            if (toSell.Count == 0)
-            {
-                return "{\"ok\":true,\"sold\":[],\"skipped\":[" + skipped + "]}";
-            }
-
-            var cmdType = FindType("Client.Model.Gameplay.Artifacts.Commands.SellArtifactsCmd");
-            if (cmdType == null)
-                return "{\"error\":\"SellArtifactsCmd type not found\"}";
-
-            // Find a single-param ctor whose parameter type is some IList/IEnumerable
-            // we can fill with ints. Most common shape: List<int>.
-            ConstructorInfo chosen = null;
-            Type paramType = null;
-            foreach (var c in cmdType.GetConstructors(BindingFlags.Public | BindingFlags.Instance))
-            {
-                var ps = c.GetParameters();
-                if (ps.Length != 1) continue;
-                var pt = ps[0].ParameterType;
-                // Looking for List<int>, List<long>, or anything assignable from List<int>
-                if (typeof(System.Collections.IEnumerable).IsAssignableFrom(pt))
-                {
-                    chosen = c;
-                    paramType = pt;
-                    break;
-                }
-            }
-            if (chosen == null)
-                return "{\"error\":\"SellArtifactsCmd ctor (List<>) not found\"}";
-
-            // Build the argument list. Try the parameter type's element type.
-            object arg = null;
-            try
-            {
-                if (paramType.IsGenericType)
-                {
-                    var elem = paramType.GetGenericArguments()[0];
-                    if (elem == typeof(int))
-                    {
-                        arg = toSell;
-                    }
-                    else if (elem == typeof(long))
-                    {
-                        var ll = new List<long>();
-                        foreach (var i in toSell) ll.Add(i);
-                        arg = ll;
-                    }
-                    else
-                    {
-                        // Generic fallback: instantiate List<elem> via reflection
-                        var listGeneric = typeof(List<>).MakeGenericType(elem);
-                        var inst = Activator.CreateInstance(listGeneric);
-                        var addM = listGeneric.GetMethod("Add");
-                        foreach (var i in toSell)
-                        {
-                            object boxed = Convert.ChangeType(i, elem);
-                            addM.Invoke(inst, new object[] { boxed });
-                        }
-                        arg = inst;
-                    }
-                }
-                else
-                {
-                    arg = toSell;
-                }
-            }
-            catch (Exception ex)
-            {
-                return "{\"error\":\"failed to build cmd arg: " + Esc(ex.Message) + "\"}";
-            }
-
-            try
-            {
-                var cmd = chosen.Invoke(new object[] { arg });
-                InvokeExecute(cmd);
-            }
-            catch (TargetInvocationException tex)
-            {
-                return "{\"error\":\"" + Esc((tex.InnerException ?? tex).Message) + "\"}";
-            }
-            catch (Exception ex)
-            {
-                return "{\"error\":\"" + Esc(ex.Message) + "\"}";
-            }
-
-            // Build response
-            var sb = new StringBuilder();
-            sb.Append("{\"ok\":true,\"sold\":[");
-            for (int i = 0; i < toSell.Count; i++)
-            {
-                if (i > 0) sb.Append(",");
-                sb.Append(toSell[i]);
-            }
-            sb.Append("],\"skipped\":[" + skipped + "]}");
-            return sb.ToString();
-        }
 
         private string DoSwap(int heroId, int ownerId, int fromId, int toId)
         {

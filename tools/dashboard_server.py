@@ -847,10 +847,13 @@ def _run_bulk_sell(ids: list[int], source: str = "dashboard") -> dict:
     client = mod_client()
     if not client.available:
         return {"error": "mod not reachable"}
-    # Look up metadata for the audit log BEFORE the sell removes it from the cache
+    # Look up metadata for the audit log BEFORE the sell removes it from
+    # the cache. Use the fast sqlite/in-mem path — calling build_artifacts()
+    # here would re-paginate the mod (8s) and block the entire request.
     meta_by_id = {}
-    for a in (build_artifacts() or []):
-        if a.get("id") in ids:
+    ids_set = set(ids)
+    for a in _all_artifacts_for_rules():
+        if a.get("id") in ids_set:
             meta_by_id[a["id"]] = a
     # Chunk to avoid massive query strings
     sold, skipped = [], []
@@ -3878,14 +3881,14 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 return self._send_json({"error": str(e)}, status=400)
 
         if parsed.path == "/api/sell-rules/bulk-sell":
-            ids = body.get("ids") if isinstance(body, dict) else None
-            if not isinstance(ids, list) or not ids:
-                return self._send_json({"error": "ids: list of artifact IDs required"}, status=400)
-            try:
-                ids_int = [int(x) for x in ids]
-            except Exception:
-                return self._send_json({"error": "ids must be integers"}, status=400)
-            return self._send_json(_run_bulk_sell(ids_int))
+            # Disabled: direct cmd reflection on SellArtifactsCmd causes
+            # Plarium to return HTTP 404. Need a viewmodel-driven path
+            # (open Storage dialog → multi-select → Sell button).
+            return self._send_json({
+                "error": "bulk-sell disabled — game rejects reflected "
+                         "SellArtifactsCmd with 404. Needs UI-driven "
+                         "Storage-dialog path; tracked as TODO."
+            }, status=501)
 
         if parsed.path == "/api/preset/edit":
             # Raw priority+opener push for a single preset. Accepts:
