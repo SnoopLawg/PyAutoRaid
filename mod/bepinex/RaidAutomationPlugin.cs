@@ -484,13 +484,7 @@ namespace RaidAutomation
                     "/unequip" => RunOnMainThread(() => UnequipArtifact(QP(query, "hero_id"), QP(query, "artifact_id")), 30000),
                     "/swap" => RunOnMainThread(() => SwapArtifact(QP(query, "hero_id"), QP(query, "from_id"), QP(query, "to_id"), QP(query, "owner_id")), 30000),
                     "/bulk-equip" => RunOnMainThread(() => BulkEquipArtifacts(QP(query, "hero_id"), QP(query, "artifacts")), 30000),
-                    // /sell-artifacts removed — direct cmd reflection on
-                    // SellArtifactsCmd causes Plarium to return HTTP 404 and
-                    // pop a "currently experiencing issues" dialog. The cmd
-                    // needs the proper viewmodel path (Storage dialog →
-                    // multi-select → Sell button) to populate request body.
-                    // Tracked: data/sell_history.jsonl is still useful for
-                    // a future viewmodel-driven implementation.
+                    "/sell-artifacts" => RunOnMainThread(() => SellArtifactsViaDto(QP(query, "ids")), 30000),
                     "/presets" => RunOnMainThread(() => GetPresets(), 30000),
                     "/remove-preset" => RunOnMainThread(() => RemovePreset(QP(query, "id")), 30000),
                     "/save-preset" => RunOnMainThread(() => SavePreset(QP(query, "name"), QP(query, "heroes"), QP(query, "type")), 30000),
@@ -9375,6 +9369,153 @@ namespace RaidAutomation
                 t = t.BaseType;
             }
             throw new Exception("Execute method not found on " + gameCmd.GetType().Name);
+        }
+
+
+        // Vault-only sell: build ArtifactsToSellDto with empty
+        // ArtifactsOnHeroes and the IDs in ArtifactsFromStorage. Dispatch
+        // SellArtifactsWithEquippedCmd which is the canonical current
+        // server endpoint. The plain SellArtifactsCmd returns 404 — likely
+        // deprecated.
+        private string SellArtifactsViaDto(string idsStr)
+        {
+            if (string.IsNullOrEmpty(idsStr))
+                return "{\"error\":\"ids required (comma-separated artifact IDs)\"}";
+
+            var uw = GetUserWrapper();
+            if (uw == null) return "{\"error\":\"Not logged in\"}";
+            var equipment = Prop(uw, "Artifacts");
+            if (equipment == null) return "{\"error\":\"EquipmentWrapper null\"}";
+            var oneMethod = equipment.GetType().GetMethod("One");
+
+            var requested = new List<int>();
+            foreach (var s in idsStr.Trim().TrimStart('[').TrimEnd(']').Split(','))
+            {
+                if (int.TryParse(s.Trim(), out int id) && id > 0) requested.Add(id);
+            }
+            if (requested.Count == 0)
+                return "{\"error\":\"no valid IDs in ids parameter\"}";
+
+            // Validate: each ID must exist in vault, not equipped, not locked.
+            var vaultIds = new List<int>();
+            var skippedSb = new StringBuilder();
+            int sk = 0;
+            foreach (int aid in requested)
+            {
+                if (oneMethod == null) { vaultIds.Add(aid); continue; }
+                object art = null;
+                try { art = oneMethod.Invoke(equipment, new object[] { aid }); } catch { }
+                string skipReason = null;
+                if (art == null) skipReason = "not_found";
+                else
+                {
+                    int owner = GetArtifactOwner(equipment, aid);
+                    if (owner > 0) skipReason = "equipped_on_" + owner;
+                    else
+                    {
+                        bool locked = false;
+                        try { locked = (bool)(art.GetType().GetProperty("Locked")?.GetValue(art) ?? false); } catch { }
+                        if (locked) skipReason = "locked";
+                    }
+                }
+                if (skipReason != null)
+                {
+                    if (sk > 0) skippedSb.Append(",");
+                    skippedSb.Append("{\"id\":" + aid + ",\"reason\":\"" + skipReason + "\"}");
+                    sk++;
+                }
+                else
+                {
+                    vaultIds.Add(aid);
+                }
+            }
+            if (vaultIds.Count == 0)
+                return "{\"ok\":true,\"sold\":[],\"skipped\":[" + skippedSb + "]}";
+
+            // Build ArtifactsToSellDto
+            var dtoType = FindType("SharedModel.Meta.Artifacts.Dtos.ArtifactsToSellDto");
+            if (dtoType == null)
+                return "{\"error\":\"ArtifactsToSellDto type not found\"}";
+            object dto;
+            try { dto = Activator.CreateInstance(dtoType); }
+            catch (Exception ex) { return "{\"error\":\"failed to construct DTO: " + Esc(ex.Message) + "\"}"; }
+
+            // Set ArtifactsFromStorage = Il2CppSystem.Collections.Generic.List<int>(vault IDs)
+            var artsFromStorageProp = dtoType.GetProperty("ArtifactsFromStorage");
+            if (artsFromStorageProp == null)
+                return "{\"error\":\"ArtifactsFromStorage property missing\"}";
+            var listType = artsFromStorageProp.PropertyType;
+            object listInst;
+            try
+            {
+                listInst = Activator.CreateInstance(listType);
+                MethodInfo addM = null;
+                foreach (var m in listType.GetMethods(BindingFlags.Public | BindingFlags.Instance))
+                {
+                    if (m.Name == "Add" && m.GetParameters().Length == 1) { addM = m; break; }
+                }
+                if (addM == null) return "{\"error\":\"List<int>.Add not found on " + listType.FullName + "\"}";
+                foreach (int i in vaultIds) addM.Invoke(listInst, new object[] { i });
+                artsFromStorageProp.SetValue(dto, listInst);
+            }
+            catch (Exception ex)
+            {
+                return "{\"error\":\"failed to populate ArtifactsFromStorage: " + Esc(ex.Message) + "\"}";
+            }
+
+            // Set ArtifactsOnHeroes to an empty Il2Cpp dict (the cmd may
+            // dereference it during request body build even if empty).
+            var artsOnHeroesProp = dtoType.GetProperty("ArtifactsOnHeroes");
+            if (artsOnHeroesProp != null)
+            {
+                try
+                {
+                    var dictType = artsOnHeroesProp.PropertyType;
+                    var dictInst = Activator.CreateInstance(dictType);
+                    artsOnHeroesProp.SetValue(dto, dictInst);
+                }
+                catch { /* leave null if construction fails */ }
+            }
+
+            // Find SellArtifactsWithEquippedCmd ctor that takes the Dto.
+            var cmdType = FindType("Client.Model.Gameplay.Artifacts.Commands.SellArtifactsWithEquippedCmd");
+            if (cmdType == null)
+                return "{\"error\":\"SellArtifactsWithEquippedCmd type not found\"}";
+            ConstructorInfo ctor = null;
+            foreach (var c in cmdType.GetConstructors(BindingFlags.Public | BindingFlags.Instance))
+            {
+                var ps = c.GetParameters();
+                if (ps.Length == 1 && ps[0].ParameterType == dtoType)
+                {
+                    ctor = c; break;
+                }
+            }
+            if (ctor == null)
+                return "{\"error\":\"SellArtifactsWithEquippedCmd(Dto) ctor not found\"}";
+
+            try
+            {
+                var cmd = ctor.Invoke(new object[] { dto });
+                InvokeExecute(cmd);
+            }
+            catch (TargetInvocationException tex)
+            {
+                return "{\"error\":\"" + Esc((tex.InnerException ?? tex).Message) + "\"}";
+            }
+            catch (Exception ex)
+            {
+                return "{\"error\":\"" + Esc(ex.Message) + "\"}";
+            }
+
+            var sb = new StringBuilder();
+            sb.Append("{\"ok\":true,\"sold\":[");
+            for (int i = 0; i < vaultIds.Count; i++)
+            {
+                if (i > 0) sb.Append(",");
+                sb.Append(vaultIds[i]);
+            }
+            sb.Append("],\"skipped\":[" + skippedSb + "]}");
+            return sb.ToString();
         }
 
 

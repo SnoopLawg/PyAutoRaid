@@ -1870,13 +1870,29 @@ function SellPreviewModal({items, onClose}) {
               ))}
             </select>
           )}
-          {!isLoading && filtered.length > 0 && (
-            <span title="Sell-from-API is disabled — Plarium rejects reflected SellArtifactsCmd with HTTP 404. Sell from the in-game Storage dialog for now."
-                  style={{height: 26, display:'flex', alignItems:'center', padding:'0 10px',
-                          fontSize: 11, color:'var(--text-dim)',
-                          border:'1px dashed var(--border)', borderRadius: 4}}>
-              Sell {filtered.length} (manual — see tooltip)
-            </span>
+          {!isLoading && filtered.length > 0 && !result && (
+            confirm ? (
+              <>
+                <button className="btn" onClick={sellNow} disabled={selling}
+                        style={{height: 26, padding:'0 12px', fontSize: 11,
+                                background:'oklch(0.55 0.18 25)', color:'#fff',
+                                borderColor:'oklch(0.55 0.18 25)'}}>
+                  {selling ? `Selling…` : `Confirm sell ${filtered.length}`}
+                </button>
+                <button className="btn" onClick={() => setConfirm(false)} disabled={selling}
+                        style={{height: 26, padding:'0 12px', fontSize: 11}}>
+                  Cancel
+                </button>
+              </>
+            ) : (
+              <button className="btn" onClick={() => setConfirm(true)}
+                      style={{height: 26, padding:'0 12px', fontSize: 11,
+                              background:'transparent',
+                              color:'oklch(0.70 0.18 25)',
+                              borderColor:'oklch(0.40 0.10 25)'}}>
+                Sell {filtered.length} now
+              </button>
+            )
           )}
           <button className="btn" onClick={onClose} style={{height: 26, padding:'0 12px'}}>Close</button>
         </div>

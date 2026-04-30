@@ -621,15 +621,22 @@ def run_loop(dungeon: str | None,
     # Auto-sell baseline: snapshot vault BEFORE the loop so each victory's
     # drop set is just (current_ids - known_ids). Updated incrementally so
     # we don't re-evaluate the same kept artifact twice.
-    # Auto-sell currently disabled: reflecting SellArtifactsCmd directly
-    # causes Plarium to return HTTP 404. Re-enable once the viewmodel-
-    # driven Storage-dialog path is wired up.
-    auto_sell = False
+    # Auto-sell baseline: snapshot vault BEFORE the loop so each victory's
+    # drop set is just (current_ids - known_ids). Updated incrementally so
+    # we don't re-evaluate the same kept artifact twice. Uses the
+    # SellArtifactsWithEquippedCmd path (vault-only Dto), which is the
+    # canonical sell endpoint — direct SellArtifactsCmd was deprecated.
+    auto_sell = bool(stop_condition.get("auto_sell", True))
     sell_total = {"sold": 0, "kept": 0}
     known_ids: set[int] = set()
-    if stop_condition.get("auto_sell", False):
-        print("  auto-sell: requested but disabled "
-              "(SellArtifactsCmd reflection returns 404 — needs UI path)")
+    if auto_sell:
+        try:
+            known_ids = _fetch_all_artifact_ids()
+            print(f"  auto-sell: rules active, vault baseline {len(known_ids)} pieces")
+        except Exception as e:
+            print(f"  auto-sell: baseline fetch failed ({e}); disabling")
+            auto_sell = False
+            known_ids = set()
 
     for i in range(1, max_iters + 1):
         if should_stop():
