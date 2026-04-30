@@ -748,10 +748,15 @@ class CBSimulator:
                 if c.has_passive_dmg_reduction > 0:
                     aoe_dmg *= (1 - c.has_passive_dmg_reduction)
 
-                # Sicia passive: -3% damage taken per HP Burn on field
-                if c.burn_dmg_reduction > 0:
-                    burn_count = sum(1 for s in self.debuff_bar.slots if s.debuff_type == "hp_burn")
-                    aoe_dmg *= max(0, 1 - c.burn_dmg_reduction * burn_count)
+                # NOTE: removed an incorrect "Sicia -3% damage taken per HP
+                # Burn" interpretation. Real Metaphysics passive is "+3 SPD
+                # and +3% damage INFLICTED per ally/enemy under HP Burn"
+                # (handled via burn_stat_pct in calc_skill_damage), and
+                # "if Cardiel on team, allies heal 3% MAX HP from HP burns
+                # instead of taking damage". Allies don't take HP burn
+                # damage in the first place, so the Cardiel-conditional
+                # heal only applies to ally burns Sicia self-places via
+                # her A3.
 
                 # Stalwart set: 30% AoE damage reduction
                 if c.stats.get("has_stalwart"):
@@ -1445,12 +1450,23 @@ class CBSimulator:
                                 break
 
             elif eff.effect_type == "extend_debuffs_hp_burn":
-                # Sicia A1: extend only HP Burn debuffs by N turns, per hit.
-                # Capped at DebuffBar.EXTEND_CAP_TURNS to match in-game clamp.
+                # Sicia A1 (chance=0.30 per hit, hit_count=3) and Artak A1
+                # (chance=0.45 per cast). Each "rep" rolls the extend chance
+                # independently; in deterministic mode, use the fractional
+                # accumulator (matches debuff-placement convention) so the
+                # average rate matches expected over many calls.
                 turns = eff.params.get("turns", 1)
                 per_hit = eff.params.get("per_hit", False)
+                chance = eff.params.get("chance", 1.0)
                 reps = skill.hit_count if per_hit else 1
                 for _ in range(reps):
+                    if chance < 1.0:
+                        key = (champ.name, skill.name, "extend_burn")
+                        debt = self._placement_debt.get(key, 0.0) + chance
+                        if debt < 1.0:
+                            self._placement_debt[key] = debt
+                            continue
+                        self._placement_debt[key] = debt - 1.0
                     for slot in self.debuff_bar.slots:
                         if slot.debuff_type == "hp_burn":
                             slot.remaining = min(slot.remaining + turns,

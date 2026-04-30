@@ -327,19 +327,29 @@ def load_profiles():
 
                 # Extend debuffs (kind=5008)
                 # Per skill descriptions:
-                #   Sicia A1 (57701): extends [HP Burn] only, per hit
-                #   Teodor A3 (36003): extends [Poison] and [HP Burn]
+                #   Sicia A1 (57701): extends [HP Burn] only, 15% chance per hit
+                #     (+15% from type=2 books → 30% effective per hit)
+                #   Teodor A3 (36003): extends [Poison] and [HP Burn] all-or-none
+                #   Artak A1 (78601): extends [HP Burn] only, 35% chance per
+                #     target (+10% books → 45%) — single AoE pass, not per-hit
                 #   Others: extends all debuffs
                 elif kind == 5008:
                     per_hit = (actual_hits > 1)
-                    # Determine which debuffs to extend based on skill context
                     skill_id = sk.get('id', 0)
-                    if skill_id == 57701:  # Sicia A1: only HP Burn
-                        effects_list.append(_eff("extend_debuffs_hp_burn", turns=1, per_hit=per_hit))
-                    elif skill_id == 36003:  # Teodor A3: poison + HP burn
-                        effects_list.append(_eff("extend_debuffs_poison_burn", turns=1, per_hit=per_hit))
+                    if skill_id == 57701:  # Sicia A1: HP Burn only, chance per hit
+                        effects_list.append(_eff("extend_debuffs_hp_burn",
+                                                 turns=1, per_hit=True,
+                                                 chance=0.30))
+                    elif skill_id == 78601:  # Artak A1: HP Burn only, 45% chance per target
+                        effects_list.append(_eff("extend_debuffs_hp_burn",
+                                                 turns=1, per_hit=False,
+                                                 chance=0.45))
+                    elif skill_id == 36003:  # Teodor A3: poison + HP burn (no chance)
+                        effects_list.append(_eff("extend_debuffs_poison_burn",
+                                                 turns=1, per_hit=per_hit))
                     else:
-                        effects_list.append(_eff("extend_debuffs", turns=1, per_hit=per_hit))
+                        effects_list.append(_eff("extend_debuffs",
+                                                 turns=1, per_hit=per_hit))
 
                 # Extend buffs (kind=4011). Demytha A2 (skill_id 65102)
                 # has the unique compound shape: extends ally buffs +1,
@@ -516,11 +526,15 @@ def load_profiles():
         # Drexthar Passive: HP Burn when attacked (passive debuff on attacker)
         # Already detected by passive processor via kind=5000+type=470
 
-        # Artak A1 (78601): extends HP Burn duration (like Sicia A1)
+        # Artak A1 (78601): extends HP Burn duration. Real game: 35% chance
+        # per target + 10% books = 45% effective. Per-target on AoE attack
+        # (single boss in CB = single roll per cast).
         if name == "Artak" and "A1" in hero_eff:
             has_extend = any('extend' in e.get('effect_type', '') for e in hero_eff["A1"])
             if not has_extend:
-                hero_eff["A1"].append(_eff("extend_debuffs_hp_burn", turns=1, per_hit=True))
+                hero_eff["A1"].append(_eff("extend_debuffs_hp_burn",
+                                           turns=1, per_hit=False,
+                                           chance=0.45))
 
         # Geomancer A2 (Creeping Petrify, 48802) reduces Quicksand Grasp's
         # cooldown by 2 turns. Without this, A3 fires every ~4 actions; with
@@ -716,19 +730,23 @@ def load_profiles():
                 if not p.get("extra_turn") and sd_entry.get("grants_extra_turn"):
                     sd_entry["grants_extra_turn"] = False
 
-                # Add missing activate effects from descriptions
-                if p.get("activate_burns"):
+                # Add missing activate effects from descriptions.
+                # activate_dots is a superset of activate_hp_burns + poisons,
+                # so don't double-add — Teodor A3 has both flags but only
+                # activate_dots should fire (real game = single tick of
+                # all DoTs, not double).
+                has_dots = any("activate_dots" in e.get("effect_type", "")
+                               for e in eff_list)
+                if p.get("activate_burns") and not has_dots:
                     has = any("activate_hp_burns" in e.get("effect_type", "") for e in eff_list)
                     if not has:
                         eff_list.append(_eff("activate_hp_burns"))
-                if p.get("activate_poisons"):
+                if p.get("activate_poisons") and not has_dots:
                     has = any("activate_poisons" in e.get("effect_type", "") for e in eff_list)
                     if not has:
                         eff_list.append(_eff("activate_poisons", max_count=2))
-                if p.get("activate_dots"):
-                    has = any("activate_dots" in e.get("effect_type", "") for e in eff_list)
-                    if not has:
-                        eff_list.append(_eff("activate_dots"))
+                if p.get("activate_dots") and not has_dots:
+                    eff_list.append(_eff("activate_dots"))
 
                 # Add ally attack from descriptions
                 if p.get("ally_attack"):
