@@ -1540,7 +1540,7 @@ function SellRulesPanel() {
                 background:'var(--bg-subtle)', borderRadius: 4,
                 opacity: r.enabled ? 1 : 0.55,
                 borderLeft: `2px solid ${r.enabled ? 'var(--accent)' : 'var(--border)'}`,
-                minWidth: 0, overflow:'hidden',
+                minWidth: 0,
               }}>
                 <div style={{display:'flex', alignItems:'center', gap: 8,
                              padding:'6px 8px', fontSize: 11.5, cursor:'pointer'}}
@@ -1683,7 +1683,7 @@ function NumField({value, onChange, placeholder, min, max}) {
         else onChange(Number(v));
       }}
       style={{
-        width: 56, boxSizing:'border-box', height: 22,
+        width: 44, boxSizing:'border-box', height: 22,
         padding:'0 4px', fontSize: 11, fontFamily:'inherit',
         background:'var(--bg)', color:'var(--text)',
         border:'1px solid var(--border)', borderRadius: 3,
@@ -1727,29 +1727,29 @@ function RuleEditor({rule, onChange, onDelete, onMoveUp, onMoveDown}) {
                        background:'var(--bg)', color:'var(--text)',
                        border:'1px solid var(--border)', borderRadius: 3}}/>
       </div>
-      <div style={{display:'flex', gap: 12}}>
+      <div style={{display:'flex', flexWrap:'wrap', gap:'8px 14px'}}>
         <div>
           <div style={labelStyle}>Rank</div>
-          <div style={{display:'flex', alignItems:'center', gap: 4}}>
-            <NumField value={rule.min_rank} onChange={v => onChange({min_rank: v})} placeholder="min" min={1} max={6}/>
+          <div style={{display:'flex', alignItems:'center', gap: 3}}>
+            <NumField value={rule.min_rank} onChange={v => onChange({min_rank: v})} placeholder="–" min={1} max={6}/>
             <span style={{color:'var(--text-dim)', fontSize: 10}}>–</span>
-            <NumField value={rule.max_rank} onChange={v => onChange({max_rank: v})} placeholder="max" min={1} max={6}/>
+            <NumField value={rule.max_rank} onChange={v => onChange({max_rank: v})} placeholder="–" min={1} max={6}/>
           </div>
         </div>
         <div>
           <div style={labelStyle}>Rarity</div>
-          <div style={{display:'flex', alignItems:'center', gap: 4}}>
-            <NumField value={rule.min_rarity} onChange={v => onChange({min_rarity: v})} placeholder="min" min={1} max={6}/>
+          <div style={{display:'flex', alignItems:'center', gap: 3}}>
+            <NumField value={rule.min_rarity} onChange={v => onChange({min_rarity: v})} placeholder="–" min={1} max={6}/>
             <span style={{color:'var(--text-dim)', fontSize: 10}}>–</span>
-            <NumField value={rule.max_rarity} onChange={v => onChange({max_rarity: v})} placeholder="max" min={1} max={6}/>
+            <NumField value={rule.max_rarity} onChange={v => onChange({max_rarity: v})} placeholder="–" min={1} max={6}/>
           </div>
         </div>
         <div>
           <div style={labelStyle}>Useful subs</div>
-          <div style={{display:'flex', alignItems:'center', gap: 4}}>
-            <NumField value={rule.min_useful_subs} onChange={v => onChange({min_useful_subs: v})} placeholder="min" min={0} max={4}/>
+          <div style={{display:'flex', alignItems:'center', gap: 3}}>
+            <NumField value={rule.min_useful_subs} onChange={v => onChange({min_useful_subs: v})} placeholder="–" min={0} max={4}/>
             <span style={{color:'var(--text-dim)', fontSize: 10}}>–</span>
-            <NumField value={rule.max_useful_subs} onChange={v => onChange({max_useful_subs: v})} placeholder="max" min={0} max={4}/>
+            <NumField value={rule.max_useful_subs} onChange={v => onChange({max_useful_subs: v})} placeholder="–" min={0} max={4}/>
           </div>
         </div>
       </div>
@@ -1760,23 +1760,18 @@ function RuleEditor({rule, onChange, onDelete, onMoveUp, onMoveDown}) {
       </div>
       <div>
         <div style={labelStyle}>Primary stat</div>
-        <div style={{display:'flex', flexDirection:'column', gap: 4}}>
-          <label style={{display:'flex', alignItems:'center', gap: 4, fontSize: 10.5}}>
-            <input type="checkbox" checked={!!rule.primary_not_in_slot_required}
-                   onChange={e => onChange({primary_not_in_slot_required: e.target.checked || undefined})}/>
-            <span>Primary NOT in slot's required list</span>
-          </label>
-          <div>
-            <div style={labelStyle}>Primary IS in:</div>
-            <MultiSelect options={PRIMARY_OPTIONS} value={rule.primary_in || []}
-                         onChange={v => onChange({primary_in: v.length ? v : undefined})}/>
-          </div>
-          <div>
-            <div style={labelStyle}>Primary NOT in:</div>
-            <MultiSelect options={PRIMARY_OPTIONS} value={rule.primary_not_in || []}
-                         onChange={v => onChange({primary_not_in: v.length ? v : undefined})}/>
-          </div>
-        </div>
+        <label style={{display:'flex', alignItems:'flex-start', gap: 4, fontSize: 10.5, lineHeight: 1.4, marginBottom: 4}}>
+          <input type="checkbox" checked={!!rule.primary_not_in_slot_required}
+                 onChange={e => onChange({primary_not_in_slot_required: e.target.checked || undefined})}
+                 style={{marginTop: 2}}/>
+          <span>Primary NOT in slot's required list</span>
+        </label>
+        <div style={labelStyle}>Primary IS one of (any selected)</div>
+        <MultiSelect options={PRIMARY_OPTIONS} value={rule.primary_in || []}
+                     onChange={v => onChange({primary_in: v.length ? v : undefined})}/>
+        <div style={{...labelStyle, marginTop: 4}}>Primary IS NOT one of</div>
+        <MultiSelect options={PRIMARY_OPTIONS} value={rule.primary_not_in || []}
+                     onChange={v => onChange({primary_not_in: v.length ? v : undefined})}/>
       </div>
       <div>
         <div style={labelStyle}>Sets</div>
