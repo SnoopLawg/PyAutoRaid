@@ -3751,6 +3751,14 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 
         self._send_json({"error": "not found"}, status=404)
 
+    def do_PUT(self):
+        # PUT shares the JSON-body parsing path with POST. Reroute through
+        # do_POST so any handler that semantically replaces a resource (the
+        # sell-rules save was the original case) doesn't have to be
+        # duplicated. Endpoints that only want POST can guard on
+        # self.command in the future.
+        return self.do_POST()
+
     def do_DELETE(self):
         parsed = urllib.parse.urlparse(self.path)
         if parsed.path == "/api/run":
