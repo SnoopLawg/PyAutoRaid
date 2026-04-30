@@ -737,10 +737,86 @@ def build_artifacts():
 def _all_artifacts_for_rules():
     """Return the full artifact list in the shape sell_rules.evaluate accepts.
 
-    Reuses build_artifacts() (the same data the dashboard table renders), so
-    field names match what the JSX would show in the rule preview.
+    Speed-tier strategy:
+      1. If the in-memory artifact cache is warm, return it (~0ms).
+      2. Otherwise read from the SQLite cache (~50-200ms) — populated by
+         tools/refresh_data.py and good enough for rule evaluation.
+      3. Fall back to build_artifacts() (paginates from the mod, several
+         seconds) as a last resort.
+
+    Rule evaluation does not need live freshness — a piece dropped
+    between the last refresh and "now" simply isn't evaluated for sale,
+    which is safer than the previous "user waits 8 seconds for Preview".
     """
+    if _artifacts_cache.get("data"):
+        return _artifacts_cache["data"]
+    try:
+        rows = _artifacts_from_sqlite()
+        if rows:
+            return rows
+    except Exception as e:
+        logger.info("sqlite artifact read failed: %s", e)
     return build_artifacts() or []
+
+
+_SLOT_MAP = {1: "Helmet", 2: "Chest", 3: "Gloves", 4: "Boots",
+             5: "Weapon", 6: "Shield", 7: "Ring", 8: "Amulet", 9: "Banner"}
+_STAT_MAP = {1: "HP", 2: "ATK", 3: "DEF", 4: "SPD",
+             5: "RES", 6: "ACC", 7: "CR", 8: "CD"}
+
+
+def _artifacts_from_sqlite():
+    """Pull all artifacts + their substats from pyautoraid.db.
+
+    Returns the list shape build_artifacts() produces (slot/primary_stat
+    as strings, primary_flat bool, substats[]) so sell_rules.evaluate
+    sees the same fields. Empty list if the db is missing.
+    """
+    db_path = ROOT / "pyautoraid.db"
+    if not db_path.exists():
+        return []
+    conn = sqlite3.connect(str(db_path))
+    try:
+        cur = conn.cursor()
+        sets = {r[0]: r[1] for r in cur.execute(
+            "SELECT set_id, name FROM ref_artifact_sets").fetchall()}
+        art_rows = cur.execute(
+            "SELECT id, kind, rank, rarity, level, set_id, hero_id, "
+            "primary_stat, primary_value, primary_flat FROM artifacts"
+        ).fetchall()
+        sub_map: dict[int, list] = {}
+        for r in cur.execute(
+                "SELECT artifact_id, stat_id, value, is_flat, rolls "
+                "FROM artifact_substats").fetchall():
+            sub_map.setdefault(r[0], []).append({
+                "stat": _STAT_MAP.get(r[1], ""),
+                "value": r[2],
+                "flat": bool(r[3]),
+                "rolls": r[4],
+            })
+    finally:
+        conn.close()
+    out = []
+    for r in art_rows:
+        aid, kind, rank, rarity, level, sid, hid, pstat, pval, pflat = r
+        out.append({
+            "id": aid,
+            "level": level or 0,
+            "rank": rank or 0,
+            "rarity": rarity or 0,
+            "set_id": sid or 0,
+            "set_name": sets.get(sid, ""),
+            "slot": _SLOT_MAP.get(kind, ""),
+            "slot_id": kind,
+            "primary_stat": _STAT_MAP.get(pstat, ""),
+            "primary_value": pval or 0,
+            "primary_flat": bool(pflat),
+            "substats": sub_map.get(aid, []),
+            "sub_count": len(sub_map.get(aid, [])),
+            "hero_id": hid,
+            "equipped_on": {"hero_id": hid} if hid else None,
+        })
+    return out
 
 
 # Persistent sell history (data/sell_history.jsonl) — append-only audit log
