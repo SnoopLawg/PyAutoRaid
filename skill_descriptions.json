@@ -394,7 +394,7 @@
     },
     "Passive": {
       "name": "Escalation [P]",
-      "desc": "Increases Ninja's ATK by 10% (up to 100%) and C. DMG by 5% (up to 25%) each time a single enemy is hit by all three of Ninja's Active Skills in a single Round. This effect can occur multiple times against the same enemy.\r\n\r\nWhen fighting Bosses, will increase Ninja's ATK by 20% (up to 100%) and C. DMG by 10% (up to 25%) instead.",
+      "desc": "Increases Ninja's ATK by 10% (up to 100%) and C. DMG by 5% (up to 25%) each time a single enemy is hit by all three of Ninja's active skills in a single Round. This effect is multiplicative, & can occur multiple times against the same enemy.\r\n\r\nWhen fighting Bosses, will increase Ninja's ATK by 20% (up to 100%) and C. DMG by 10% (up to 25%) instead.",
       "skill_type_id": 62004
     }
   },
@@ -513,16 +513,6 @@
       "skill_type_id": 36202
     },
     "A7": {
-      "name": "Call to Life",
-      "desc": "Revives an ally with 30% HP and fills their Turn Meter by 30%.",
-      "skill_type_id": 36203
-    },
-    "A8": {
-      "name": "Tender's Watch",
-      "desc": "Removes all debuffs from all allies, then places a 7.5% [Continuous Heal] buff on them for 2 turns.",
-      "skill_type_id": 36202
-    },
-    "A9": {
       "name": "Call to Life",
       "desc": "Revives an ally with 30% HP and fills their Turn Meter by 30%.",
       "skill_type_id": 36203
@@ -812,36 +802,6 @@
       "skill_type_id": 4202
     },
     "A5": {
-      "name": "Sacrificial Ritual",
-      "desc": "Decreases the cooldown of all ally skills by 2 turns. This skill does not affect this Champion, or other Champions with this skill. This Champion will receive damage equal to 30% of their MAX HP. This will happen even if it kills this Champion. This skill's cooldown cannot be reduced or reset.",
-      "skill_type_id": 4203
-    },
-    "A6": {
-      "name": "Lash Out",
-      "desc": "Attacks at random 3 times. Has a 50% chance of placing a 15% [Decrease SPD] debuff for 2 turns. Places a 25% [Decrease ACC] debuff for 2 turns if the target has any active buffs.",
-      "skill_type_id": 4202
-    },
-    "A7": {
-      "name": "Sacrificial Ritual",
-      "desc": "Decreases the cooldown of all ally skills by 2 turns. This skill does not affect this Champion, or other Champions with this skill. This Champion will receive damage equal to 30% of their MAX HP. This will happen even if it kills this Champion. This skill's cooldown cannot be reduced or reset.",
-      "skill_type_id": 4203
-    },
-    "A8": {
-      "name": "Lash Out",
-      "desc": "Attacks at random 3 times. Has a 50% chance of placing a 15% [Decrease SPD] debuff for 2 turns. Places a 25% [Decrease ACC] debuff for 2 turns if the target has any active buffs.",
-      "skill_type_id": 4202
-    },
-    "A9": {
-      "name": "Sacrificial Ritual",
-      "desc": "Decreases the cooldown of all ally skills by 2 turns. This skill does not affect this Champion, or other Champions with this skill. This Champion will receive damage equal to 30% of their MAX HP. This will happen even if it kills this Champion. This skill's cooldown cannot be reduced or reset.",
-      "skill_type_id": 4203
-    },
-    "A10": {
-      "name": "Lash Out",
-      "desc": "Attacks at random 3 times. Has a 50% chance of placing a 15% [Decrease SPD] debuff for 2 turns. Places a 25% [Decrease ACC] debuff for 2 turns if the target has any active buffs.",
-      "skill_type_id": 4202
-    },
-    "A11": {
       "name": "Sacrificial Ritual",
       "desc": "Decreases the cooldown of all ally skills by 2 turns. This skill does not affect this Champion, or other Champions with this skill. This Champion will receive damage equal to 30% of their MAX HP. This will happen even if it kills this Champion. This skill's cooldown cannot be reduced or reset.",
       "skill_type_id": 4203
@@ -2072,16 +2032,6 @@
       "name": "Paranoia [P]",
       "desc": "Places a [Counterattack] buff on this Champion for 1 turn at the start of each Round. Places a [Counterattack] buff on this Champion for 1 turn at the end of their turn.",
       "skill_type_id": 42903
-    },
-    "A6": {
-      "name": "Fey Protection",
-      "desc": "Attacks 1 enemy 3 times. Each hit has a 75% chance of placing a 60% [Decrease DEF] debuff for 2 turns if the target is under a [Heal Reduction] debuff. Places a [Shield] buff on this Champion for 3 turns equal to 30% of the damage inflicted.",
-      "skill_type_id": 42902
-    },
-    "A7": {
-      "name": "Fey Protection",
-      "desc": "Attacks 1 enemy 3 times. Each hit has a 75% chance of placing a 60% [Decrease DEF] debuff for 2 turns if the target is under a [Heal Reduction] debuff. Places a [Shield] buff on this Champion for 3 turns equal to 30% of the damage inflicted.",
-      "skill_type_id": 42902
     }
   },
   "Tayrel": {
@@ -2786,16 +2736,6 @@
       "name": "Chain of Delusion",
       "desc": "Attacks all enemies. Has a 75% chance of placing a [Leech] debuff on all enemies for 2 turns.",
       "skill_type_id": 76403
-    },
-    "A8": {
-      "name": "Glimmer",
-      "desc": "Attacks 3 times at random. Each hit has a 75% chance of increasing the duration of a random debuff on the target by 1 turn.",
-      "skill_type_id": 76402
-    },
-    "A9": {
-      "name": "Chain of Delusion",
-      "desc": "Attacks all enemies. Has a 75% chance of placing a [Leech] debuff on all enemies for 2 turns.",
-      "skill_type_id": 76403
     }
   },
   "Fyr-gun Isbeil": {
@@ -3115,16 +3055,6 @@
       "skill_type_id": 73102
     },
     "A5": {
-      "name": "Rise And Fight",
-      "desc": "Revives all dead allies with 30% HP. Also places a [Shield] buff on all allies for 2 turns equal to 20% of this Champion’s MAX HP.",
-      "skill_type_id": 73103
-    },
-    "A6": {
-      "name": "Charge Cant",
-      "desc": "Attacks all enemies. Places a 30% [Increase SPD] buff on all allies for 2 turns, then heals all allies by 15% of this Champion’s MAX HP.",
-      "skill_type_id": 73102
-    },
-    "A7": {
       "name": "Rise And Fight",
       "desc": "Revives all dead allies with 30% HP. Also places a [Shield] buff on all allies for 2 turns equal to 20% of this Champion’s MAX HP.",
       "skill_type_id": 73103
@@ -3462,16 +3392,6 @@
       "skill_type_id": 68702
     },
     "A5": {
-      "name": "First to Fight",
-      "desc": "Attacks all enemies. Places a 30% [Increase C. DMG] buff on all allies for 2 turns.",
-      "skill_type_id": 68703
-    },
-    "A6": {
-      "name": "Glory Hound",
-      "desc": "Attacks 1 enemy. Places an extra hit if this attack is critical. Fills the Turn Meters of all allies by 30% if this attack kills an enemy.",
-      "skill_type_id": 68702
-    },
-    "A7": {
       "name": "First to Fight",
       "desc": "Attacks all enemies. Places a 30% [Increase C. DMG] buff on all allies for 2 turns.",
       "skill_type_id": 68703
@@ -4511,11 +4431,6 @@
       "name": "Diehard [P]",
       "desc": "Decreases the damage taken by this Champion by 30% when their HP drops below 30%.",
       "skill_type_id": 21903
-    },
-    "A6": {
-      "name": "Crystal Burst",
-      "desc": "Attacks all enemies.",
-      "skill_type_id": 21902
     }
   },
   "Sachi": {
@@ -4862,23 +4777,6 @@
       "skill_type_id": 40903
     }
   },
-  "Shatterbones": {
-    "A1": {
-      "name": "Rend",
-      "desc": "Attacks 1 enemy. Places a 25% [Increase ATK] buff on all allies for 1 turn if this attack is critical.",
-      "skill_type_id": 10101
-    },
-    "A2": {
-      "name": "Hail",
-      "desc": "Attacks all enemies 3 times. Has a 50% chance to decrease the Turn Meter by 30%.",
-      "skill_type_id": 10102
-    },
-    "A3": {
-      "name": "Warcry",
-      "desc": "Places a 15% [Decrease SPD] debuff on all enemies for 2 turns. Fills the Turn Meter of all allies by 25%.",
-      "skill_type_id": 10103
-    }
-  },
   "Runic Warder": {
     "A1": {
       "name": "Twin Chops",
@@ -5055,43 +4953,6 @@
       "name": "Channel the Bloodline",
       "desc": "Places a [Block Damage] buff on all allies for 1 turn, and a 15% [Continuous Heal] buff on all allies for 2 turns.",
       "skill_type_id": 65103
-    }
-  },
-  "Aeshma": {
-    "A1": {
-      "name": "Ichor Sickles",
-      "desc": "Attacks 1 enemy 2 times. Each hit has a 20% chance of placing a 5% [Poison] debuff for 2 turns.",
-      "skill_type_id": 75301
-    },
-    "A2": {
-      "name": "Wasting Affliction",
-      "desc": "Attacks all enemies. Has a 75% chance of placing a 25% [Weaken] debuff for 2 turns.",
-      "skill_type_id": 75302
-    },
-    "A3": {
-      "name": "Languish",
-      "desc": "Attacks 1 enemy. Has a 75% chance of decreasing the duration of all buffs on the target by 1 turn.\r\n\r\nAlso has a 75% chance of increasing the duration of all debuffs on the target by 1 turn.",
-      "skill_type_id": 75303
-    },
-    "A4": {
-      "name": "Wasting Affliction",
-      "desc": "Attacks all enemies. Has a 75% chance of placing a 25% [Weaken] debuff for 2 turns.",
-      "skill_type_id": 75302
-    },
-    "A5": {
-      "name": "Languish",
-      "desc": "Attacks 1 enemy. Has a 75% chance of decreasing the duration of all buffs on the target by 1 turn.\r\n\r\nAlso has a 75% chance of increasing the duration of all debuffs on the target by 1 turn.",
-      "skill_type_id": 75303
-    },
-    "A6": {
-      "name": "Wasting Affliction",
-      "desc": "Attacks all enemies. Has a 75% chance of placing a 25% [Weaken] debuff for 2 turns.",
-      "skill_type_id": 75302
-    },
-    "A7": {
-      "name": "Languish",
-      "desc": "Attacks 1 enemy. Has a 75% chance of decreasing the duration of all buffs on the target by 1 turn.\r\n\r\nAlso has a 75% chance of increasing the duration of all debuffs on the target by 1 turn.",
-      "skill_type_id": 75303
     }
   },
   "Robar": {
@@ -5307,6 +5168,23 @@
       "skill_type_id": 93304
     }
   },
+  "Aeshma": {
+    "A1": {
+      "name": "Ichor Sickles",
+      "desc": "Attacks 1 enemy 2 times. Each hit has a 20% chance of placing a 5% [Poison] debuff for 2 turns.",
+      "skill_type_id": 75301
+    },
+    "A2": {
+      "name": "Wasting Affliction",
+      "desc": "Attacks all enemies. Has a 75% chance of placing a 25% [Weaken] debuff for 2 turns.",
+      "skill_type_id": 75302
+    },
+    "A3": {
+      "name": "Languish",
+      "desc": "Attacks 1 enemy. Has a 75% chance of decreasing the duration of all buffs on the target by 1 turn.\r\n\r\nAlso has a 75% chance of increasing the duration of all debuffs on the target by 1 turn.",
+      "skill_type_id": 75303
+    }
+  },
   "Justiciar": {
     "A1": {
       "name": "Hold the Line",
@@ -5344,50 +5222,6 @@
       "name": "Prey on the Weak [P]",
       "desc": "Deals 30% more damage against targets whose current HP is lower than this Champion’s current HP.",
       "skill_type_id": 80404
-    }
-  },
-  "Tomoe": {
-    "A1": {
-      "name": "Stab and Grab",
-      "desc": "Attacks 1 enemy. Has a 30% chance of stealing 1 random buff from the target.",
-      "skill_type_id": 48701
-    },
-    "A2": {
-      "name": "Bamboozle",
-      "desc": "Attacks all enemies. Has a 75% chance of placing a 50% [Decrease ATK] debuff for 2 turns.",
-      "skill_type_id": 48702
-    },
-    "A3": {
-      "name": "Thick as Thieves",
-      "desc": "Places a [Counterattack] buff on a target ally for 2 turns. Places a [Counterattack] buff for 3 turns instead if the ally is from the Shadowkin Faction. \r\n\r\nThen fills the Turn Meters of all allies by 15% and places a 30% [Increase C. DMG] buff on all allies for 2 turns. \r\n\r\nAlso places a 30% [Increase C. RATE] buff for 2 turns on allies from the Shadowkin Faction.",
-      "skill_type_id": 48703
-    },
-    "A4": {
-      "name": "Bamboozle",
-      "desc": "Attacks all enemies. Has a 75% chance of placing a 50% [Decrease ATK] debuff for 2 turns.",
-      "skill_type_id": 48702
-    },
-    "A5": {
-      "name": "Thick as Thieves",
-      "desc": "Places a [Counterattack] buff on a target ally for 2 turns. Places a [Counterattack] buff for 3 turns instead if the ally is from the Shadowkin Faction. \r\n\r\nThen fills the Turn Meters of all allies by 15% and places a 30% [Increase C. DMG] buff on all allies for 2 turns. \r\n\r\nAlso places a 30% [Increase C. RATE] buff for 2 turns on allies from the Shadowkin Faction.",
-      "skill_type_id": 48703
-    }
-  },
-  "Kallia": {
-    "A1": {
-      "name": "Superheated Hammer",
-      "desc": "Attacks 1 enemy. Has a 30% chance of placing a [HP Burn] debuff for 2 turns.\r\n\r\n[Heals this Champion by 20% of the damage inflicted when Atur is on the same team.]",
-      "skill_type_id": 34601
-    },
-    "A2": {
-      "name": "Curse of Nullity",
-      "desc": "Attacks all enemies. Has a 75% chance of placing a 100% [Heal Reduction] debuff for 2 turns.\r\n\r\n[Heals this Champion by 10% of the damage inflicted when Atur is on the same team.]",
-      "skill_type_id": 34602
-    },
-    "A3": {
-      "name": "Flame Tempest",
-      "desc": "Attacks 3 times at random. Each hit places a [HP Burn] debuff for 2 turns.\r\n \r\n[Heals this Champion by 15% of the damage inflicted when Atur is on the same team.]",
-      "skill_type_id": 34603
     }
   },
   "Confessor": {
@@ -5478,6 +5312,23 @@
       "name": "Serpent Axes",
       "desc": "Attacks 1 enemy 2 times. The first hit has a 75% chance of placing a 50% [Decrease ATK] debuff for 2 turns. The second hit has a 75% chance of placing a 60% [Decrease DEF] debuff for 2 turns.",
       "skill_type_id": 53103
+    }
+  },
+  "Tomoe": {
+    "A1": {
+      "name": "Stab and Grab",
+      "desc": "Attacks 1 enemy. Has a 30% chance of stealing 1 random buff from the target.",
+      "skill_type_id": 48701
+    },
+    "A2": {
+      "name": "Bamboozle",
+      "desc": "Attacks all enemies. Has a 75% chance of placing a 50% [Decrease ATK] debuff for 2 turns.",
+      "skill_type_id": 48702
+    },
+    "A3": {
+      "name": "Thick as Thieves",
+      "desc": "Places a [Counterattack] buff on a target ally for 2 turns. Places a [Counterattack] buff for 3 turns instead if the ally is from the Shadowkin Faction. \r\n\r\nThen fills the Turn Meters of all allies by 15% and places a 30% [Increase C. DMG] buff on all allies for 2 turns. \r\n\r\nAlso places a 30% [Increase C. RATE] buff for 2 turns on allies from the Shadowkin Faction.",
+      "skill_type_id": 48703
     }
   },
   "Daywalker": {
@@ -5607,23 +5458,6 @@
       "skill_type_id": 94403
     }
   },
-  "Whisper": {
-    "A1": {
-      "name": "Softening Drive",
-      "desc": "Attacks 1 enemy. Has a 50% chance of placing a 25% [Weaken] debuff for 2 turns.",
-      "skill_type_id": 46201
-    },
-    "A2": {
-      "name": "Charged Assault",
-      "desc": "Attacks 1 enemy. Places a 50% [Increase ATK] buff and a 30% [Increase C. RATE] buff on this Champion for 2 turns before attacking if the target has higher MAX HP than this Champion. Will ignore DEF if the target is under a [Weaken] debuff.",
-      "skill_type_id": 46202
-    },
-    "A3": {
-      "name": "Unyielding Flurry",
-      "desc": "Attacks 1 enemy 2 times. Grants an Extra Turn if the target is under [Decrease DEF] and [Weaken] debuffs.",
-      "skill_type_id": 46203
-    }
-  },
   "Branch-arm Lasair": {
     "A1": {
       "name": "Chop, Chop, Chop",
@@ -5653,23 +5487,6 @@
       "skill_type_id": 22303
     }
   },
-  "Grinner": {
-    "A1": {
-      "name": "Bile",
-      "desc": "Attacks 1 enemy. Has a 25% chance of placing a 25% [Increase ATK] buff on all allies for 2 turns. This chance applies individually for each ally.",
-      "skill_type_id": 12004
-    },
-    "A2": {
-      "name": "Shock",
-      "desc": "Attacks all enemies. Has a 20% chance of removing 1 random buff from each target.",
-      "skill_type_id": 12002
-    },
-    "A3": {
-      "name": "Unbury",
-      "desc": "Revives an ally with 50% HP. Places a [Shield] buff on the revived Champion for 2 turns equal to 20% of their MAX HP.",
-      "skill_type_id": 12003
-    }
-  },
   "Ghostborn": {
     "A1": {
       "name": "Energy Bolt",
@@ -5685,18 +5502,6 @@
       "name": "Ancestral Spirits",
       "desc": "Attacks all enemies. Has a 75% chance of placing a 60% [Decrease DEF] debuff for 2 turns.",
       "skill_type_id": 19003
-    }
-  },
-  "Hurler": {
-    "A1": {
-      "name": "Spin Throw",
-      "desc": "Attacks 1 enemy 2 times. Each hit has a 25% chance to ignore DEF by 50%.",
-      "skill_type_id": 11401
-    },
-    "A2": {
-      "name": "Firebolt",
-      "desc": "Attacks 1 enemy. Removes 1 random buff from the target. Fills this Champion's Turn Meter by 30%.",
-      "skill_type_id": 11402
     }
   },
   "Siegebreaker": {
@@ -5923,23 +5728,6 @@
       "skill_type_id": 67404
     }
   },
-  "Fylja": {
-    "A1": {
-      "name": "Elders' Judgment",
-      "desc": "Attacks 1 enemy 2 times. Destroys the target’s MAX HP by 10% of the damage inflicted. \r\n\r\nCannot destroy a single enemy’s MAX HP by more than 50%.",
-      "skill_type_id": 69201
-    },
-    "A2": {
-      "name": "Crushing Eternity",
-      "desc": "Attacks 1 enemy. Has a 75% chance of fully depleting the target’s Turn Meter.",
-      "skill_type_id": 69202
-    },
-    "A3": {
-      "name": "Righteous Evocation",
-      "desc": "Attacks all enemies. Fills this Champion’s Turn Meter by 15% and heals them by 15% of the damage inflicted if this attack is critical.",
-      "skill_type_id": 69203
-    }
-  },
   "Slixus Stripehide": {
     "A1": {
       "name": "Harmonious Strike",
@@ -5994,23 +5782,6 @@
       "name": "Skill 99406 name",
       "desc": "Skill 8000628 description",
       "skill_type_id": 99406
-    }
-  },
-  "Luthiea": {
-    "A1": {
-      "name": "Burning Arrow",
-      "desc": "Attacks 1 enemy. Has a 30% chance of placing a 5% [Poison] debuff for 2 turns.",
-      "skill_type_id": 17301
-    },
-    "A2": {
-      "name": "Ice Shot",
-      "desc": "Attacks 3 times at random. Each hit has a 25% chance of placing a [Freeze] debuff for 1 turn.",
-      "skill_type_id": 17302
-    },
-    "A3": {
-      "name": "Numbing Poison",
-      "desc": "Attacks all enemies. Has a 75% chance of placing a 30% [Decrease SPD] debuff for 2 turns.",
-      "skill_type_id": 17303
     }
   },
   "Wagonbane": {
@@ -6654,6 +6425,67 @@
       "name": "Punishing Defenses [P]",
       "desc": "When attacked, has a 30% chance of extending the duration of all debuffs on the attacker by 1 turn.",
       "skill_type_id": 41803
+    }
+  },
+  "Wuzgar": {
+    "A1": {
+      "name": "Restorative Violence",
+      "desc": "Attacks 1 enemy 4 times. Each hit heals the ally with the lowest HP by 2% of this Champion’s MAX HP.",
+      "skill_type_id": 79601
+    },
+    "A2": {
+      "name": "Shaman's Gift",
+      "desc": "Heals all allies by 10% of this Champion’s MAX HP. \r\n\r\nAlso places a [Counterattack] buff on this Champion for 2 turns.",
+      "skill_type_id": 79602
+    },
+    "A3": {
+      "name": "Tusked Protection",
+      "desc": "Places a 30% [Reflect Damage] buff and a [Shield] buff equal to 20% of this Champion’s MAX HP on all allies for 2 turns.",
+      "skill_type_id": 79603
+    }
+  },
+  "Harima": {
+    "A1": {
+      "name": "Debasement",
+      "desc": "Attacks 1 enemy. Has a 50% chance of placing a 50% [Decrease ATK] debuff for 2 turns. Also has a 25% chance of placing a 50% [Decrease ATK] debuff on all other enemies for 2 turns if this attack is critical.",
+      "skill_type_id": 49001
+    },
+    "A2": {
+      "name": "Purgative Punishment",
+      "desc": "Attacks 1 enemy 3 times. Each hit decreases the target’s DEF by 5% (Stacks up to 30%). Each hit also increases this Champion’s DEF by 5% (Stacks up to 100%). \r\n\r\nInstantly activates the Celestial Awe skill if this skill kills an enemy.",
+      "skill_type_id": 49002
+    },
+    "A3": {
+      "name": "Celestial Awe",
+      "desc": "Attacks all enemies. Places a [Provoke] debuff for 1 turn. This debuff cannot be blocked or resisted if the target Champion is from the Demonspawn Faction.",
+      "skill_type_id": 49003
+    },
+    "Passive": {
+      "name": "Skill 49005 name",
+      "desc": "Skill 7000002 description",
+      "skill_type_id": 49005
+    }
+  },
+  "Rotos the Lost Groom": {
+    "A1": {
+      "name": "Terror Scourge",
+      "desc": "Attacks 1 enemy. Has a 75% chance of placing a 60% [Decrease DEF] debuff for 2 turns. Also has a 25% chance of granting an Extra Turn.",
+      "skill_type_id": 47601
+    },
+    "A2": {
+      "name": "Vitality Plunder",
+      "desc": "Attacks 1 enemy. Destroys the target's MAX HP by 20%, then adds that HP to this Champion's own MAX HP.\r\n\r\n[Cannot destroy a single Champion's MAX HP by more than 60% in one Battle. Cannot increase this Champion's MAX HP by more than 60,000. Destroys the MAX HP of Bosses by 30% of the damage inflicted instead. This Champion's MAX HP will be increased by 15,000 when this Skill is used against Bosses.]",
+      "skill_type_id": 47602
+    },
+    "A3": {
+      "name": "Fated Destruction",
+      "desc": "Attacks 1 enemy. Will ignore 60% of the target's DEF. Will also ignore [Unkillable] and [Block Damage] buffs.",
+      "skill_type_id": 47603
+    },
+    "Passive": {
+      "name": "Spurn Oblivion [P]",
+      "desc": "Will decrease damage from enemy hits so that incoming damage from any single hit will not exceed 50% of this Сhampion's MAX HP. Grants an Extra Turn if this damage reduction occurs. \r\n\r\n[Does not work against Bosses.] \r\n\r\nDecreases the damage taken from Bosses by 15%. Decreases the damage taken from Bosses by 30% if Siphi the Lost Bride is on the same team.",
+      "skill_type_id": 47604
     }
   }
 }

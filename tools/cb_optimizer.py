@@ -357,6 +357,98 @@ try:
 except:
     pass
 
+# Load mastery stat-bonus table from data/masteries_truth.json. The 13 masteries
+# with `stat_bonus` are flat additions to scaled stats; the other 53 are
+# conditional/logic and applied during sim turn scheduling.
+_MASTERY_STAT_BONUS = {}     # mastery_id -> (stat_const, value, absolute)
+_ALL_STAT_BONUS_MASTERY_IDS = set()  # for projection mode (assume hero has all)
+try:
+    import os as _os
+    _mt_path = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), '..', 'data', 'masteries_truth.json')
+    if _os.path.exists(_mt_path):
+        _STAT_NAME_TO_ID = {
+            'Health': HP, 'Attack': ATK, 'Defence': DEF, 'Speed': SPD,
+            'Resistance': RES, 'Accuracy': ACC,
+            'CriticalChance': CR, 'CriticalDamage': CD,
+        }
+        with open(_mt_path) as _f:
+            _mt = json.load(_f)
+        for _m in _mt.get('masteries', []):
+            sb = _m.get('stat_bonus')
+            if not sb:
+                continue
+            stat_id = _STAT_NAME_TO_ID.get(sb.get('stat'))
+            if stat_id is None:
+                # 'stat': '-1' is Lore of Steel (set bonus +15%) — handled separately.
+                continue
+            _MASTERY_STAT_BONUS[_m['id']] = (stat_id, sb['value'], sb.get('absolute', True))
+            _ALL_STAT_BONUS_MASTERY_IDS.add(_m['id'])
+except:
+    pass
+
+
+# Max possible Sacred Gear glyph value per (flat, rarity, stat). Derived
+# empirically from the user's vault by data-mining all_artifacts.json —
+# for each (flat?, rarity, stat_id) combo, pick the largest glyph value
+# the user has actually applied. These represent the ceiling a fully-
+# glyphed substat can reach. Projection mode replaces the current glyph
+# with this max so the sim shows "if I max-glyph every substat".
+#
+# Flat vs percent matters: an HP substat can be either flat (+475 max
+# glyph) or percent (+7% max glyph). Keyed separately so a percent HP
+# substat doesn't get a 475 bonus that would balloon HP to 500K+.
+#
+# Stat IDs: 1=HP, 2=ATK, 3=DEF, 4=SPD, 5=RES, 6=ACC, 7=CR, 8=CD.
+# Rarity IDs: 3=Rare, 4=Epic, 5=Legendary, 6=Mythical.
+_MAX_GLYPH_FLAT = {
+    3: {1: 475, 2: 6,  3: 23, 4: 4, 5: 0,  6: 7,  7: 0, 8: 0},
+    4: {1: 475, 2: 23, 3: 25, 4: 5, 5: 10, 6: 10, 7: 0, 8: 0},
+    5: {1: 425, 2: 17, 3: 25, 4: 7, 5: 10, 6: 10, 7: 0, 8: 0},
+    6: {1: 425, 2: 8,  3: 0,  4: 5, 5: 0,  6: 0,  7: 0, 8: 0},
+}
+_MAX_GLYPH_PCT = {
+    3: {1: 5, 2: 4, 3: 5, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0},
+    4: {1: 7, 2: 5, 3: 5, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0},
+    5: {1: 5, 2: 5, 3: 7, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0},
+    6: {1: 0, 2: 8, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0},
+}
+
+
+def _glyph_delta(art_rarity: int, stat: int, current_glyph: float, flat: bool) -> float:
+    """Return how much extra value a max-glyph projection adds to this
+    substat. 0 if already at max, or if no max known for this combo.
+    `flat` differentiates flat (+475 HP) from percent (+5% HP) substats.
+    """
+    table = _MAX_GLYPH_FLAT if flat else _MAX_GLYPH_PCT
+    max_g = table.get(art_rarity, {}).get(stat, 0)
+    if max_g <= 0:
+        return 0
+    delta = max_g - (current_glyph or 0)
+    return max(0, delta)
+
+
+def _apply_mastery_stat_bonuses(scaled, mastery_ids):
+    """Add the 13 stat-bonus mastery effects to a stats dict in-place.
+
+    `mastery_ids`: iterable of mastery ids the hero has (or all
+    _ALL_STAT_BONUS_MASTERY_IDS for projection mode).
+    `scaled`: stats dict keyed by stat constants (HP, ATK, ...). For
+    relative bonuses (CR, CD as absolute=False), the value is in
+    fraction form (0.05 for +5%) so we multiply by 100 to match the
+    percent-encoded scaled stats.
+    """
+    for mid in mastery_ids:
+        bonus = _MASTERY_STAT_BONUS.get(mid)
+        if not bonus:
+            continue
+        stat_id, val, absolute = bonus
+        if absolute:
+            scaled[stat_id] = scaled.get(stat_id, 0) + val
+        else:
+            # Relative: stored as fraction (0.05 == +5%). The CR/CD scaled
+            # values are already in percent form, so scale up to %.
+            scaled[stat_id] = scaled.get(stat_id, 0) + val * 100
+
 
 def calc_stats(hero, artifacts, account):
     hero_id = hero.get("id", 0)
@@ -438,6 +530,15 @@ def calc_stats(hero, artifacts, account):
             CR: base.get("CR", 0) + emp_cr, CD: base.get("CD", 0) + emp_cd,
             RES: base.get("RES", 0) + emp_res, ACC: base.get("ACC", 0) + emp_acc,
         }
+    # Apply stat-bonus masteries (13 of 66) to scaled stats. Hero data ships
+    # the mastery_ids the user has actually selected. Projection mode (set
+    # via hero["_project_full_masteries"] = True by run_potential_team) treats
+    # the hero as having every stat-bonus mastery, regardless of selection.
+    if hero.get("_project_full_masteries"):
+        _apply_mastery_stat_bonuses(scaled, _ALL_STAT_BONUS_MASTERY_IDS)
+    else:
+        _apply_mastery_stat_bonuses(scaled, hero.get("masteries", []) or [])
+    project_glyph = hero.get("_project_max_glyphs", False)
     flat_b, pct_b, sets = {s:0 for s in range(1,9)}, {s:0 for s in range(1,9)}, {}
     for art in artifacts:
         s_id = art.get("set", 0)
@@ -458,8 +559,28 @@ def calc_stats(hero, artifacts, account):
             stat = b.get("stat", 0)
             if stat not in (ACC, RES, CR, CD): continue
             val = b.get("value", 0) + (b.get("glyph", 0) or 0)
-            if b.get("flat", True): flat_b[stat] += val
+            is_flat = bool(b.get("flat", True))
+            if project_glyph:
+                val += _glyph_delta(art.get("rarity", 0), stat, b.get("glyph", 0) or 0, is_flat)
+            if is_flat: flat_b[stat] += val
             else: pct_b[stat] += val
+        # Glyph-max projection for HP/ATK/DEF/SPD: the mod's flat_bonus
+        # already incorporates current glyph values, so we add only the
+        # delta to max-glyph to avoid double-counting.
+        if project_glyph:
+            for b in (art.get("substats") or []):
+                stat = b.get("stat", 0)
+                if stat not in (HP, ATK, DEF, SPD):
+                    continue
+                is_flat = bool(b.get("flat", True))
+                delta = _glyph_delta(art.get("rarity", 0), stat,
+                                      b.get("glyph", 0) or 0, is_flat)
+                if delta <= 0:
+                    continue
+                if is_flat:
+                    flat_b[stat] += delta
+                else:
+                    pct_b[stat] += delta
 
     set_pct = {s:0 for s in range(1,9)}
     active_sets = set()

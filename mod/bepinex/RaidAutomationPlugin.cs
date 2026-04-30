@@ -5888,8 +5888,30 @@ namespace RaidAutomation
                                 // TurnCount @ 0xE8
                                 turnN = Marshal.ReadInt32(heroObj + 0xE8);
                                 long tmDisplay = tmRaw >> 32;  // 32.32 fixed → display
+                                // Stats.Speed: the FULLY RESOLVED in-battle SPD value (base + gear +
+                                // sets + masteries + buffs). The Python sim's calc_stats produces a
+                                // SPD that doesn't match real-game action ratios; the gap was
+                                // unmeasurable without this ground-truth value. BattleStats has
+                                // get_Speed returning Fixed (32.32). 0 if read fails.
+                                long sSpd = 0;
+                                try {
+                                    IntPtr getStats = FindIL2CPPMethodStatic(hc, "get_Stats", 0);
+                                    if (getStats != IntPtr.Zero) {
+                                        IntPtr eS1 = IntPtr.Zero;
+                                        IntPtr statsObj = il2cpp_runtime_invoke(getStats, heroObj, IntPtr.Zero, ref eS1);
+                                        if (statsObj != IntPtr.Zero) {
+                                            IntPtr statsClass = il2cpp_object_get_class(statsObj);
+                                            IntPtr getSpd = FindIL2CPPMethodStatic(statsClass, "get_Speed", 0);
+                                            if (getSpd != IntPtr.Zero) {
+                                                IntPtr eS2 = IntPtr.Zero;
+                                                IntPtr spdRes = il2cpp_runtime_invoke(getSpd, statsObj, IntPtr.Zero, ref eS2);
+                                                if (spdRes != IntPtr.Zero) sSpd = Marshal.ReadInt64(spdRes + 0x10) >> 32;
+                                            }
+                                        }
+                                    }
+                                } catch { }
                                 if (uidx > 0) sbtl.Append(",");
-                                sbtl.Append("{\"s\":\"" + side + "\",\"id\":" + id + ",\"tm\":" + tmDisplay + ",\"tn\":" + turnN);
+                                sbtl.Append("{\"s\":\"" + side + "\",\"id\":" + id + ",\"tm\":" + tmDisplay + ",\"tn\":" + turnN + ",\"s_spd\":" + sSpd);
                                 // Read AppliedEffectsByHeroes dict pointer directly from field offset 0x108
                                 // (getter is inlined by IL2CPP AOT — field offset found via Il2CppDumper against GameAssembly.dll).
                                 // Dict is Dictionary<int, List<AppliedEffect>>; iterate via get_Values on raw pointer.

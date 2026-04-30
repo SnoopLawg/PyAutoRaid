@@ -2476,16 +2476,24 @@ def build_cb_history_with_attribution():
 
 
 def build_tune_lab(slug: str | None = None, runnable_only: bool = False,
-                   include_sim: bool = True):
+                   include_sim: bool = True, affinity: str | None = None,
+                   projection: bool = True):
     """Per-tune blocker/todo/team output from tools/potential_team.
 
     Today's CB affinity is auto-detected from the latest battle log so
-    Spirit-day tunes prefer the Spirit calc variant, etc.
+    Spirit-day tunes prefer the Spirit calc variant, etc. Pass an
+    explicit `affinity` to override (used by the per-affinity drilldown
+    in the dashboard modal).
 
     When include_sim is True (default), runs cb_sim.run_potential_team
     against each runnable tune to attach a real damage projection.
     Generic DPS slots fill from the user's most recent battle team so
     sim numbers reflect actual play.
+
+    `projection` (default True, Phase 6): runs the sim with every
+    stat-bonus mastery treated as taken, regardless of the user's actual
+    mastery picks. Set to False for "what does this do with my current
+    progression today" mode.
     """
     try:
         sys.path.insert(0, str(ROOT / "tools"))
@@ -2496,7 +2504,8 @@ def build_tune_lab(slug: str | None = None, runnable_only: bool = False,
         return {"error": f"potential_team import failed: {e}"}
     try:
         data = load_data()
-        affinity = _today_cb_element_str()
+        if affinity is None:
+            affinity = _today_cb_element_str()
         tunes = data["tunes"]
         if slug:
             tunes = [t for t in tunes if t.get("slug") == slug]
@@ -2517,6 +2526,7 @@ def build_tune_lab(slug: str | None = None, runnable_only: bool = False,
                     sim_res = run_potential_team(
                         r, cb_element=cb_el, force_affinity=True,
                         max_cb_turns=50, generic_fillers=generic_fillers,
+                        projection=projection,
                     )
                     if sim_res.get("partial_team"):
                         r["sim"] = {
@@ -2529,6 +2539,7 @@ def build_tune_lab(slug: str | None = None, runnable_only: bool = False,
                             "boss_turns": int(sim_res.get("cb_turns", 0) or 0),
                             "team_names": sim_res.get("potential_team_meta", {}).get("team_names"),
                             "warnings": len(sim_res.get("errors", [])),
+                            "projection": sim_res.get("projection_meta") or {},
                         }
                 except Exception as ex:
                     r["sim"] = {"error": str(ex)}
@@ -2541,6 +2552,90 @@ def build_tune_lab(slug: str | None = None, runnable_only: bool = False,
         }
     except Exception as e:
         return {"error": f"tune-lab build failed: {e}"}
+
+
+def build_tune_slot_alternatives(query: str):
+    """Lazy-loaded generic-slot alternatives for one tune. For each
+    is_generic slot in the tune, returns the top-N owned 6★ heroes by
+    sim damage when substituted into that slot.
+    """
+    try:
+        import urllib.parse as _u
+        q = _u.parse_qs(query)
+        slug = (q.get("slug") or [None])[0]
+        affinity = (q.get("affinity") or [None])[0]
+        top_n = int((q.get("top") or [5])[0])
+        if not slug:
+            return {"error": "missing slug"}
+        sys.path.insert(0, str(ROOT / "tools"))
+        from potential_team import build_potential_team, load_data
+        from slot_alternatives import compute_slot_alternatives
+        data = load_data()
+        if affinity is None:
+            affinity = _today_cb_element_str()
+        tune = next((t for t in data["tunes"] if t.get("slug") == slug), None)
+        if not tune:
+            return {"error": f"tune {slug!r} not found"}
+        pt = build_potential_team(tune, data, affinity)
+        if pt.get("blockers"):
+            return {"error": "tune has blockers", "blockers": pt["blockers"]}
+        element_map = {"magic": 1, "force": 2, "spirit": 3, "void": 4}
+        cb_el = element_map.get((affinity or "void").lower(), 4)
+        default_fillers = _last_cb_team_names() or ["Ninja"]
+        out = compute_slot_alternatives(
+            pt, default_fillers, cb_element=cb_el,
+            top_n=top_n, cache_key=f"{slug}|{affinity}",
+        )
+        return out
+    except Exception as e:
+        return {"error": f"slot alternatives failed: {e}"}
+
+
+def build_tune_gear_plan(query: str):
+    """Lazy-loaded gear plan for one tune. Wraps potential_gear.compute_gear_plan_for_tune
+    so the modal can fetch on demand without blocking the tune list.
+
+    Cached results from data/gear_plans_cache.json return immediately
+    when the user's vault hash matches.
+    """
+    try:
+        import urllib.parse as _u
+        q = _u.parse_qs(query)
+        slug = (q.get("slug") or [None])[0]
+        sa_iter = int((q.get("sa") or [500])[0])
+        if not slug:
+            return {"error": "missing slug"}
+        sys.path.insert(0, str(ROOT / "tools"))
+        from potential_team import build_potential_team, load_data
+        from potential_gear import compute_gear_plan_for_tune
+        data = load_data()
+        affinity = _today_cb_element_str()
+        tune = next((t for t in data["tunes"] if t.get("slug") == slug), None)
+        if not tune:
+            return {"error": f"tune {slug!r} not found"}
+        pt = build_potential_team(tune, data, affinity)
+        if pt.get("blockers"):
+            return {"error": "tune has blockers", "blockers": pt["blockers"]}
+        team = (pt.get("potential_team") or {}).get("team") or []
+        # Resolve generic-DPS slots from the user's last battle team.
+        named_in_tune = {(s.get("hero") or "").lower()
+                         for s in team if not s.get("is_generic")}
+        fillers = [n for n in (_last_cb_team_names() or ["Ninja"])
+                   if n.lower() not in named_in_tune]
+        f_iter = iter(fillers)
+        resolved = []
+        for s in team:
+            if s.get("is_generic"):
+                resolved.append({**s, "hero": next(f_iter, "Ninja")})
+            else:
+                resolved.append(s)
+        element_map = {"magic": 1, "force": 2, "spirit": 3, "void": 4}
+        cb_el = element_map.get((affinity or "void").lower(), 4)
+        plan = compute_gear_plan_for_tune(slug, resolved,
+                                          sa_iterations=sa_iter, cb_element=cb_el)
+        return {"slug": slug, "team": [s["hero"] for s in resolved], "plan": plan}
+    except Exception as e:
+        return {"error": f"gear plan failed: {e}"}
 
 
 def build_sim_per_tune_accuracy():
@@ -3519,7 +3614,18 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             q = urllib.parse.parse_qs(parsed.query)
             slug = (q.get("slug") or [None])[0]
             runnable_only = (q.get("runnable_only") or ["0"])[0] == "1"
-            self._send_json(build_tune_lab(slug=slug, runnable_only=runnable_only))
+            affinity = (q.get("affinity") or [None])[0]
+            # `projection=0` runs in current-progression mode (skips Phase 6
+            # mastery/blessing projection). Defaults to projection=True.
+            projection = (q.get("projection") or ["1"])[0] != "0"
+            self._send_json(build_tune_lab(slug=slug, runnable_only=runnable_only,
+                                           affinity=affinity, projection=projection))
+            return
+        if parsed.path == "/api/tune-gear-plan":
+            self._send_json(build_tune_gear_plan(parsed.query))
+            return
+        if parsed.path == "/api/tune-slot-alternatives":
+            self._send_json(build_tune_slot_alternatives(parsed.query))
             return
         if parsed.path == "/api/gear-gaps":
             q = urllib.parse.parse_qs(parsed.query)

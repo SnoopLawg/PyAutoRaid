@@ -596,8 +596,8 @@ function PageCB({s}) {
                           rarityColor={rarityColor} onClose={()=>setRunDetailOpen(false)}/>
       )}
 
-      {/* ======= Tune Lab — DWJ comps + parity sim + compliance + recommender ======= */}
-      <CBTuneLab potentialTeams={s.cb.potential_teams || []} initialSim={s.cb.calc_parity_sim || null}/>
+      {/* ======= Tune Lab — runnable DWJ tunes; click for per-affinity drilldown ======= */}
+      <CBTuneLab/>
 
       {/* ======= 7-day damage history ======= */}
       <CBHistoryPanel history={s.cb.history} perKey={s.cb.per_key_history}/>
@@ -2229,206 +2229,252 @@ function ScheduleCard() {
 }
 
 // ============================================================================
-// CBTuneLab — tune picker, compliance diff, affinity matrix, apply-tune button.
-// Combines /api/tune-library, /api/tune-compliance, /api/sim-affinity-matrix,
-// and POST /api/apply-tune into a single panel on the CB page.
+// CBTuneLab — runnable DWJ tunes from /api/tune-lab. Click a tune to open a
+// modal with per-affinity sim drilldown + DWJ-parity cast timeline.
 // ============================================================================
-function CBTuneLab({potentialTeams = [], initialSim = null}) {
-  const [tunes, setTunes] = React.useState([]);
-  const [selectedTune, setSelectedTune] = React.useState('myth_eater');
-  const [compliance, setCompliance] = React.useState(null);
-  const [affMatrix, setAffMatrix] = React.useState(null);
-  const [recommend, setRecommend] = React.useState(null);
-  const [busy, setBusy] = React.useState(false);
-  const [applyMsg, setApplyMsg] = React.useState(null);
-  const [showSweep, setShowSweep] = React.useState(false);
-  // DWJ-parity sim — defaults to top-runnable; clicking a comp swaps it.
-  const [parity, setParity] = React.useState(initialSim);
-  const [parityBusy, setParityBusy] = React.useState(false);
-  const [pickedComp, setPickedComp] = React.useState(null);   // comp.id
-  React.useEffect(() => { if (initialSim && !parity) setParity(initialSim); }, [initialSim]);
+function CBTuneLab() {
+  const [lab, setLab] = React.useState(null);          // {today_affinity, tunes}
+  const [openSlug, setOpenSlug] = React.useState(null);
 
-  const loadParity = (hash) => {
-    if (!hash) return;
+  React.useEffect(() => {
+    fetch('/api/tune-lab?runnable_only=1').then(r => r.json()).then(setLab);
+  }, []);
+
+  const openTune = lab?.tunes?.find(t => t.tune_slug === openSlug) || null;
+
+  return (
+    <div className="card" style={{padding: 0, gridColumn: '1 / -1', overflow: 'hidden'}}>
+      <PanelHeader
+        title="tune lab"
+        right={lab ? `${lab.runnable}/${lab.total} runnable · today ${lab.today_affinity}` : 'loading…'}
+      />
+
+      {!lab && (
+        <div style={{padding: 14, fontSize: 11, color: 'var(--text-dim)'}}>Loading tunes…</div>
+      )}
+      {lab?.error && (
+        <div style={{padding: 14, fontSize: 11, color: 'var(--danger)'}}>{lab.error}</div>
+      )}
+
+      {lab?.tunes && (
+        <div style={{display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap: 1, background:'var(--border)'}}>
+          {lab.tunes.map(t => {
+            const sim = t.sim || {};
+            const dmg = sim.total_damage || 0;
+            const partial = sim.partial;
+            const variantLabel = t.calc_variant || '—';
+            return (
+              <div key={t.tune_slug}
+                   onClick={() => setOpenSlug(t.tune_slug)}
+                   style={{padding: 14, background:'var(--bg-elev)', display:'flex', flexDirection:'column', gap: 8, cursor:'pointer'}}>
+                <div style={{display:'flex', alignItems:'baseline', justifyContent:'space-between', gap: 8}}>
+                  <div style={{fontSize: 14, fontWeight: 500}}>{t.tune_name}</div>
+                  <div style={{display:'flex', alignItems:'baseline', gap: 5}}>
+                    {partial ? (
+                      <span style={{fontSize: 10, color: 'var(--warn)'}}>partial team</span>
+                    ) : (
+                      <>
+                        <span className="num mono" style={{fontSize: 18, fontWeight: 600, color:'var(--accent)'}}>{(dmg/1e6).toFixed(1)}</span>
+                        <span style={{fontSize: 10, color:'var(--text-sub)'}}>M today</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+                <div style={{display:'flex', gap: 6, flexWrap:'wrap'}}>
+                  <span style={{fontSize: 9, padding:'1px 5px', background:'var(--bg-subtle)', border:'1px solid var(--border)', borderRadius: 3, color:'var(--text-sub)'}}>{variantLabel}</span>
+                  {t.todos?.length > 0 && (
+                    <span style={{fontSize: 9, padding:'1px 5px', background:'var(--bg-subtle)', border:'1px solid var(--border)', borderRadius: 3, color:'var(--text-dim)'}}>
+                      {t.todos.length} todo{t.todos.length === 1 ? '' : 's'}
+                    </span>
+                  )}
+                  {sim.warnings > 0 && (
+                    <span style={{fontSize: 9, padding:'1px 5px', background:'var(--bg-subtle)', border:'1px solid var(--border)', borderRadius: 3, color:'var(--warn)'}}>
+                      {sim.warnings} sim warning{sim.warnings === 1 ? '' : 's'}
+                    </span>
+                  )}
+                </div>
+                {t.potential_team?.team && (
+                  <div style={{display:'grid', gridTemplateColumns:'1fr 60px', gap: 4, fontSize: 10.5, lineHeight: 1.5}}>
+                    {t.potential_team.team.map((sl, i) => (
+                      <React.Fragment key={i}>
+                        <span style={{color: sl.is_generic ? 'var(--text-dim)' : 'var(--text)'}}>
+                          {sl.hero}{sl.owned_grade ? ` ${sl.owned_grade}★` : ''}
+                        </span>
+                        <span className="mono" style={{color:'var(--text-sub)', textAlign:'right', fontSize: 10}}>
+                          SPD {sl.target_speed}
+                        </span>
+                      </React.Fragment>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {openTune && (
+        <CBTuneLabModal tune={openTune} onClose={() => setOpenSlug(null)}/>
+      )}
+    </div>
+  );
+}
+
+
+// ============================================================================
+// CBTuneLabModal — opened by CBTuneLab. Per-affinity sim drilldown for one tune
+// + DWJ-parity cast timeline. Re-fetches /api/tune-lab on affinity tab switch.
+// ============================================================================
+function CBTuneLabModal({tune, onClose}) {
+  const [affinity, setAffinity] = React.useState(tune.today_affinity || 'void');
+  const [affTune, setAffTune] = React.useState(tune);
+  const [affBusy, setAffBusy] = React.useState(false);
+  const [parity, setParity] = React.useState(null);
+  const [parityBusy, setParityBusy] = React.useState(false);
+  const [gearPlan, setGearPlan] = React.useState(null);
+  const [gearBusy, setGearBusy] = React.useState(false);
+  const [slotAlts, setSlotAlts] = React.useState(null);
+  const [slotBusy, setSlotBusy] = React.useState(false);
+
+  const slug = tune.tune_slug;
+  const hash = affTune.calc_variant_hash || tune.calc_variant_hash;
+
+  // Refetch tune-lab when affinity tab changes (so calc variant + sim
+  // both re-pick for the selected affinity).
+  React.useEffect(() => {
+    setAffBusy(true);
+    fetch(`/api/tune-lab?slug=${encodeURIComponent(slug)}&affinity=${affinity}`)
+      .then(r => r.json())
+      .then(d => {
+        const t = (d.tunes || [])[0];
+        if (t) setAffTune(t);
+        setAffBusy(false);
+      })
+      .catch(() => setAffBusy(false));
+  }, [slug, affinity]);
+
+  // Load DWJ-parity cast timeline for the selected variant hash.
+  React.useEffect(() => {
+    if (!hash) { setParity(null); return; }
     setParityBusy(true);
     fetch(`/api/calc-parity-sim?hash=${encodeURIComponent(hash)}&turns=20`)
       .then(r => r.json())
       .then(d => { if (!d.error) setParity(d); setParityBusy(false); })
       .catch(() => setParityBusy(false));
-  };
+  }, [hash]);
 
+  // Lazy-load the gear plan for this tune. Uses a 500-iter SA budget
+  // (~8s first call, instant from cache thereafter). Doesn't block the
+  // rest of the modal.
   React.useEffect(() => {
-    fetch('/api/tune-library').then(r => r.json()).then(d => setTunes(d.tunes || []));
-    fetch('/api/sim-affinity-matrix').then(r => r.json()).then(d => setAffMatrix(d.results || null));
-    fetch('/api/tune-recommend').then(r => r.json()).then(setRecommend);
-  }, []);
+    if (!slug) return;
+    setGearBusy(true);
+    fetch(`/api/tune-gear-plan?slug=${encodeURIComponent(slug)}`)
+      .then(r => r.json())
+      .then(d => { setGearPlan(d); setGearBusy(false); })
+      .catch(() => setGearBusy(false));
+  }, [slug]);
 
+  // Lazy-load generic-slot alternatives. Refetches when affinity changes
+  // since damage rankings shift per affinity.
   React.useEffect(() => {
-    if (!selectedTune) return;
-    setCompliance(null);
-    fetch('/api/tune-compliance?tune=' + selectedTune).then(r => r.json()).then(setCompliance);
-  }, [selectedTune]);
+    if (!slug) return;
+    setSlotBusy(true);
+    fetch(`/api/tune-slot-alternatives?slug=${encodeURIComponent(slug)}&affinity=${affinity}&top=5`)
+      .then(r => r.json())
+      .then(d => { setSlotAlts(d); setSlotBusy(false); })
+      .catch(() => setSlotBusy(false));
+  }, [slug, affinity]);
 
-  const apply = async (tuneId) => {
-    setBusy(true); setApplyMsg(null);
-    try {
-      const r = await fetch('/api/apply-tune', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({tune: tuneId || selectedTune, preset_id: 1}),
-      });
-      const d = await r.json();
-      setApplyMsg(d.ok ? `Applied ${tuneId || selectedTune} to preset #1 ✓` : `${d.error || 'failed'}`);
-    } catch (e) { setApplyMsg(String(e)); }
-    setBusy(false);
-  };
-
-  const statusColor = {
-    on_target: 'var(--accent)',
-    too_fast:  'oklch(0.75 0.17 85)',
-    too_slow:  'oklch(0.65 0.23 25)',
-  };
+  const sim = affTune.sim || {};
+  const todos = affTune.todos || [];
 
   return (
-    <div className="card" style={{padding: 0, gridColumn: '1 / -1', overflow: 'hidden'}}>
-      <PanelHeader title="tune lab" right={`${potentialTeams.length} DWJ comps · 100% parity vs DWJ calc · ${tunes.length} sim tunes`}/>
-
-      {/* ======= Section 1: DWJ tunes vs your roster (potential teams) ======= */}
-      {potentialTeams.length > 0 && (
-        <div style={{borderBottom:'1px solid var(--border)'}}>
-          <div style={{padding:'10px 14px', display:'flex', alignItems:'baseline', justifyContent:'space-between'}}>
-            <span style={{fontSize: 10.5, color:'var(--text-dim)', textTransform:'uppercase', letterSpacing:'0.06em'}}>DWJ tunes vs your roster · sim-validated</span>
-            <span style={{fontSize: 10, color:'var(--text-dim)'}}>click a comp to load its DWJ-parity cast timeline below</span>
-          </div>
-          <div style={{display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap: 1, background:'var(--border)'}}>
-            {potentialTeams.map(pt => {
-              const statusColor = pt.status==='active' ? 'var(--accent)' : pt.status==='backup' ? 'var(--text-dim)' : 'var(--violet)';
-              const calcUnm = (pt.calculator_links || []).find(l => /ultra|unm/i.test(l.name || ''))
-                           || (pt.calculator_links || [])[0];
-              const isPicked = pickedComp === pt.id;
-              return (
-                <div key={pt.id || pt.name}
-                     onClick={() => { setPickedComp(pt.id); if (calcUnm?.hash) loadParity(calcUnm.hash); }}
-                     style={{padding: 14, background: isPicked ? 'var(--bg-subtle)' : 'var(--bg-elev)', display:'flex', flexDirection:'column', gap: 8, cursor:'pointer', borderLeft: isPicked ? '2px solid var(--accent)' : '2px solid transparent'}}>
-                  <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', gap: 8}}>
-                    <div style={{display:'flex', gap: 6, alignItems:'center', flexWrap:'wrap'}}>
-                      <span style={{fontSize: 9, textTransform:'uppercase', letterSpacing:'0.08em', color: statusColor, border:`1px solid ${statusColor}`, padding:'1px 5px', borderRadius: 3}}>
-                        {pt.status}
-                      </span>
-                      {pt.key_capability && <span style={{fontSize: 9, padding:'1px 5px', background:'var(--bg-subtle)', border:'1px solid var(--border)', borderRadius: 3, color:'var(--text-sub)'}}>{pt.key_capability}</span>}
-                      {pt.affinity && <span style={{fontSize: 9, padding:'1px 5px', background:'var(--bg-subtle)', border:'1px solid var(--border)', borderRadius: 3, color:'var(--text-sub)'}}>{pt.affinity}</span>}
-                      {pt.parity_sim && (
-                        <span title="DWJ-parity scheduler simulation (100% calc match across 4 tested variants)"
-                              style={{
-                                fontSize: 9, padding:'1px 5px', borderRadius: 3,
-                                background: pt.parity_sim.survived ? 'oklch(0.55 0.15 145 / 0.18)' : 'oklch(0.55 0.17 25 / 0.18)',
-                                border: `1px solid ${pt.parity_sim.survived ? 'var(--ok)' : 'var(--danger)'}`,
-                                color: pt.parity_sim.survived ? 'var(--ok)' : 'var(--danger)',
-                              }}>
-                          {pt.parity_sim.survived ? `✓ 50T sim` : `✗ dies bt${pt.parity_sim.boss_turns}`}
-                        </span>
-                      )}
-                    </div>
-                    <span className="mono" style={{fontSize: 10.5, color:'var(--text-dim)'}}>conf {(pt.confidence*100).toFixed(0)}%</span>
-                  </div>
-                  <div style={{display:'flex', alignItems:'baseline', justifyContent:'space-between', gap: 8}}>
-                    <div style={{fontSize: 14, fontWeight: 500}}>{pt.name}</div>
-                    <div style={{display:'flex', alignItems:'baseline', gap: 5}}>
-                      <span className="num mono" style={{fontSize: 18, fontWeight: 600, color: pt.status==='active' ? 'var(--accent)' : 'var(--text)'}}>{(pt.est_damage/1e6).toFixed(1)}</span>
-                      <span style={{fontSize: 10, color:'var(--text-sub)'}}>M est</span>
-                    </div>
-                  </div>
-                  {pt.slots && pt.slots.length > 0 && (
-                    <div style={{display:'grid', gridTemplateColumns:'24px 1fr 110px 50px', gap: 4, fontSize: 10.5, lineHeight: 1.5}}>
-                      {pt.slots.map((sl, i) => {
-                        const mark = sl.status === 'filled_6star' ? '✓' : sl.status === 'filled_ascending' ? '~' : sl.status === 'generic' ? '·' : '✗';
-                        const markColor = sl.status === 'filled_6star' ? 'var(--ok)' : sl.status === 'filled_ascending' ? 'var(--warn)' : sl.status === 'generic' ? 'var(--text-dim)' : 'var(--danger)';
-                        const spdRange = (sl.min_spd !== null && sl.max_spd !== null)
-                          ? (sl.min_spd === sl.max_spd ? String(sl.min_spd) : `${sl.min_spd}-${sl.max_spd}`)
-                          : '—';
-                        return (
-                          <React.Fragment key={i}>
-                            <span style={{color: markColor, textAlign:'center'}}>{mark}</span>
-                            <span style={{color:'var(--text)'}}>{sl.hero || '—'}</span>
-                            <span className="mono" style={{color:'var(--text-sub)', textAlign:'right', fontSize: 10}}>SPD {spdRange}</span>
-                            <span className="mono" style={{color:'var(--text-dim)', textAlign:'right', fontSize: 10}}>{sl.roster_grade ? `${sl.roster_grade}★` : ''}</span>
-                          </React.Fragment>
-                        );
-                      })}
-                    </div>
-                  )}
-                  {pt.note && (
-                    <div style={{fontSize: 10.5, color:'var(--text-sub)', lineHeight: 1.5, marginTop: 2}}>
-                      {pt.note}
-                    </div>
-                  )}
-                  <div style={{display:'flex', gap: 6, marginTop: 4}} onClick={e => e.stopPropagation()}>
-                    {calcUnm && calcUnm.url && (
-                      <a href={calcUnm.url} target="_blank" rel="noreferrer" className="mono" style={{fontSize: 10, color:'var(--accent)', textDecoration:'none', padding:'2px 6px', border:'1px solid var(--accent)', borderRadius: 3}}>
-                        open DWJ calc ↗
-                      </a>
-                    )}
-                    {pt.dwj_url && (
-                      <a href={pt.dwj_url} target="_blank" rel="noreferrer" className="mono" style={{fontSize: 10, color:'var(--text-dim)', textDecoration:'none', padding:'2px 6px', border:'1px solid var(--border)', borderRadius: 3}}>
-                        tune page ↗
-                      </a>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* ======= Section 2: DWJ-parity cast timeline (driven by Section 1 selection) ======= */}
-      {parity && (
-        <div style={{borderBottom:'1px solid var(--border)'}}>
-          <div style={{padding:'10px 14px', display:'flex', alignItems:'baseline', justifyContent:'space-between'}}>
-            <span style={{fontSize: 10.5, color:'var(--text-dim)', textTransform:'uppercase', letterSpacing:'0.06em'}}>
-              cast timeline · {parity.variant?.name || '?'}{parityBusy ? ' · loading…' : ''}
-            </span>
-            <span style={{fontSize: 10, color:'var(--text-dim)'}}>
-              DWJ-parity scheduler · {parity.boss_turn_count} boss turns · {parity.turn_count} actions
-            </span>
-          </div>
-          <div style={{display:'grid', gridTemplateColumns:'1.1fr 1fr', gap: 1, background:'var(--border)'}}>
-            {/* left: slot overview */}
-            <div style={{padding: 14, background:'var(--bg-elev)'}}>
-              <div style={{fontSize: 10.5, color:'var(--text-dim)', textTransform:'uppercase', letterSpacing:'0.06em', marginBottom: 10}}>
-                Team ({(parity.variant?.slots || []).length} slots, boss SPD {parity.variant?.boss_speed})
-              </div>
-              {(parity.variant?.slots || []).map((sl, i, arr) => (
-                <div key={i} style={{display:'grid', gridTemplateColumns:'1fr 60px 200px', gap: 8, fontSize: 11, lineHeight: 1.7, borderBottom: i < arr.length - 1 ? '1px dashed var(--border)' : 'none', padding:'3px 0'}}>
-                  <span>{sl.name}</span>
-                  <span className="mono" style={{textAlign:'right', color:'var(--text-sub)'}}>SPD {sl.total_speed}</span>
-                  <span className="mono" style={{fontSize: 9.5, color:'var(--text-dim)'}}>
-                    {(sl.skill_configs || []).filter(c => c.alias !== 'A4').map(c => `${c.alias}${c.delay ? `d${c.delay}` : ''}${c.cooldown ? `/${c.cooldown}` : ''}`).join(' · ')}
-                  </span>
-                </div>
-              ))}
-              {parity.cast_summary && parity.cast_summary.length > 0 && (
-                <div style={{marginTop: 14, borderTop:'1px solid var(--border)', paddingTop: 10}}>
-                  <div style={{fontSize: 10.5, color:'var(--text-dim)', textTransform:'uppercase', letterSpacing:'0.06em', marginBottom: 6}}>
-                    Cast counts (top)
-                  </div>
-                  <div style={{display:'grid', gridTemplateColumns:'1fr 60px 30px', gap: 4, fontSize: 11, lineHeight: 1.6}}>
-                    {parity.cast_summary.slice(0, 10).map((c, i) => (
-                      <React.Fragment key={i}>
-                        <span>{c.actor}</span>
-                        <span className="mono" style={{color:'var(--text-sub)'}}>{c.skill}</span>
-                        <span className="mono num" style={{textAlign:'right'}}>{c.count}</span>
-                      </React.Fragment>
-                    ))}
-                  </div>
-                </div>
+    <div onClick={onClose}
+         style={{position:'fixed', inset:0, background:'rgba(0,0,0,0.55)', zIndex: 50, display:'flex', alignItems:'center', justifyContent:'center', padding: 20}}>
+      <div onClick={e => e.stopPropagation()}
+           style={{background:'var(--bg)', border:'1px solid var(--border)', borderRadius: 6, width:'min(960px, 96vw)', maxHeight:'92vh', overflow:'auto', display:'flex', flexDirection:'column'}}>
+        {/* Header */}
+        <div style={{padding:'12px 16px', borderBottom:'1px solid var(--border)', display:'flex', alignItems:'center', justifyContent:'space-between'}}>
+          <div>
+            <div style={{fontSize: 16, fontWeight: 500}}>{tune.tune_name}</div>
+            <div style={{fontSize: 10.5, color:'var(--text-dim)', marginTop: 2}}>
+              {affTune.calc_variant || '—'}
+              {affTune.calc_variant_hash && (
+                <span className="mono" style={{marginLeft: 6, color:'var(--text-dim)'}}>{affTune.calc_variant_hash.slice(0, 8)}</span>
               )}
             </div>
-            {/* right: boss-turn grouped timeline */}
-            <div style={{padding: 14, background:'var(--bg-elev)', maxHeight: 400, overflowY:'auto'}}>
-              <div style={{fontSize: 10.5, color:'var(--text-dim)', textTransform:'uppercase', letterSpacing:'0.06em', marginBottom: 10}}>
-                Turn order (champion actions between boss turns)
+          </div>
+          <button onClick={onClose} className="btn"
+                  style={{height: 24, padding:'0 10px', fontSize: 11}}>Close</button>
+        </div>
+
+        {/* Affinity tabs + sim */}
+        <div style={{padding:'12px 16px', borderBottom:'1px solid var(--border)'}}>
+          <div style={{display:'flex', gap: 6, marginBottom: 10}}>
+            {['magic','force','spirit','void'].map(a => (
+              <button key={a} onClick={() => setAffinity(a)} className="btn"
+                      style={{
+                        height: 26, padding:'0 12px', fontSize: 11,
+                        background: a === affinity ? 'var(--accent)' : 'var(--bg-subtle)',
+                        color: a === affinity ? 'var(--bg)' : 'var(--text)',
+                        border: '1px solid var(--border)', textTransform:'capitalize',
+                      }}>
+                {a}
+              </button>
+            ))}
+            {affBusy && <span style={{alignSelf:'center', fontSize: 10.5, color:'var(--text-dim)'}}>simulating…</span>}
+          </div>
+          <div style={{display:'grid', gridTemplateColumns:'auto auto auto', gap: 24}}>
+            <div>
+              <div style={{fontSize: 10, color:'var(--text-dim)', textTransform:'uppercase', letterSpacing:'0.06em'}}>Sim damage</div>
+              <div className="num mono" style={{fontSize: 24, fontWeight: 600, color:'var(--accent)'}}>
+                {sim.partial ? '—' : `${((sim.total_damage || 0)/1e6).toFixed(1)}M`}
               </div>
+            </div>
+            <div>
+              <div style={{fontSize: 10, color:'var(--text-dim)', textTransform:'uppercase', letterSpacing:'0.06em'}}>Boss turns</div>
+              <div className="num mono" style={{fontSize: 24, fontWeight: 600}}>{sim.boss_turns || '—'}</div>
+            </div>
+            <div>
+              <div style={{fontSize: 10, color:'var(--text-dim)', textTransform:'uppercase', letterSpacing:'0.06em'}}>Sim warnings</div>
+              <div className="num mono" style={{fontSize: 24, fontWeight: 600, color: sim.warnings > 0 ? 'var(--warn)' : 'var(--text-dim)'}}>
+                {sim.warnings ?? 0}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Team */}
+        {affTune.potential_team?.team && (
+          <div style={{padding:'12px 16px', borderBottom:'1px solid var(--border)'}}>
+            <div style={{fontSize: 10.5, color:'var(--text-dim)', textTransform:'uppercase', letterSpacing:'0.06em', marginBottom: 6}}>Team</div>
+            <div style={{display:'grid', gridTemplateColumns:'30px 1fr 80px 80px 100px', gap: 6, fontSize: 11.5}}>
+              {affTune.potential_team.team.map(sl => (
+                <React.Fragment key={sl.index}>
+                  <span className="mono" style={{color:'var(--text-dim)'}}>{sl.index}</span>
+                  <span style={{color: sl.is_generic ? 'var(--text-dim)' : 'var(--text)'}}>{sl.hero}</span>
+                  <span className="mono" style={{color:'var(--text-sub)'}}>SPD {sl.target_speed}</span>
+                  <span className="mono" style={{color:'var(--text-dim)'}}>base {sl.base_speed || '—'}</span>
+                  <span className="mono" style={{color:'var(--text-dim)'}}>{sl.owned_grade ? `${sl.owned_grade}★ lvl ${sl.owned_level}` : '—'}</span>
+                </React.Fragment>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Cast timeline */}
+        {parity && (
+          <div style={{padding:'12px 16px', borderBottom:'1px solid var(--border)'}}>
+            <div style={{display:'flex', alignItems:'baseline', justifyContent:'space-between', marginBottom: 8}}>
+              <span style={{fontSize: 10.5, color:'var(--text-dim)', textTransform:'uppercase', letterSpacing:'0.06em'}}>
+                Cast timeline · DWJ-parity scheduler
+              </span>
+              <span style={{fontSize: 10, color:'var(--text-dim)'}}>
+                {parity.boss_turn_count} boss turns · {parity.turn_count} actions{parityBusy ? ' · loading…' : ''}
+              </span>
+            </div>
+            <div style={{maxHeight: 380, overflowY:'auto', background:'var(--bg-elev)', border:'1px solid var(--border)', borderRadius: 4, padding: 10}}>
               {(() => {
                 const groups = [];
                 let current = {boss_turn: null, actions: []};
@@ -2444,15 +2490,15 @@ function CBTuneLab({potentialTeams = [], initialSim = null}) {
                 }
                 if (current.actions.length) groups.push(current);
                 return groups.map((g, gi) => (
-                  <div key={gi} style={{marginBottom: 10}}>
+                  <div key={gi} style={{marginBottom: 8}}>
                     {g.actions.map((a, ai) => (
                       <div key={ai} style={{
-                        display:'flex', gap: 6, padding:'3px 8px', fontSize: 11, lineHeight: 1.6,
+                        display:'flex', gap: 6, padding:'2px 6px', fontSize: 11, lineHeight: 1.6,
                         background: a.isBoss ? 'var(--bg-subtle)' : 'transparent',
                         color: a.isBoss ? 'var(--violet)' : 'var(--text)',
-                        borderRadius: 3, marginBottom: 1,
+                        borderRadius: 3,
                       }}>
-                        <span className="mono" style={{width: 30, color:'var(--text-dim)', fontSize: 10}}>
+                        <span className="mono" style={{width: 36, color:'var(--text-dim)', fontSize: 10}}>
                           {a.isBoss ? `bt${a.boss_turn}` : ''}
                         </span>
                         <span style={{flex: 1}}>{a.actor}</span>
@@ -2464,340 +2510,138 @@ function CBTuneLab({potentialTeams = [], initialSim = null}) {
               })()}
             </div>
           </div>
-        </div>
-      )}
+        )}
+        {!parity && hash && (
+          <div style={{padding:'12px 16px', fontSize: 11, color:'var(--text-dim)'}}>
+            Loading cast timeline…
+          </div>
+        )}
 
-      {/* ======= Section 3: Hand-tune compliance (cb_sim using your real gear) ======= */}
-      <div style={{padding:'10px 14px 4px 14px', fontSize: 10.5, color:'var(--text-dim)', textTransform:'uppercase', letterSpacing:'0.06em', borderBottom:'1px solid var(--border)'}}>
-        Hand-maintained tunes · run cb_sim on your live gear
-      </div>
-      <div style={{display: 'grid', gridTemplateColumns: '280px 1fr 340px', gap: 14, padding: 14, alignItems: 'start'}}>
+        {/* Gear plan — solver picks 30 artifacts from your vault for this tune */}
+        {(gearBusy || gearPlan) && (
+          <div style={{padding:'12px 16px', borderBottom:'1px solid var(--border)'}}>
+            <div style={{display:'flex', alignItems:'baseline', justifyContent:'space-between', marginBottom: 8}}>
+              <span style={{fontSize: 10.5, color:'var(--text-dim)', textTransform:'uppercase', letterSpacing:'0.06em'}}>
+                Gear plan · vault solver
+              </span>
+              <span style={{fontSize: 10, color:'var(--text-dim)'}}>
+                {gearBusy && !gearPlan ? 'solving (~8s)…' : gearPlan?.plan ? `${(gearPlan.plan.total_damage/1e6).toFixed(1)}M planned` : ''}
+              </span>
+            </div>
+            {gearPlan?.error && (
+              <div style={{fontSize: 11, color:'var(--danger)'}}>{gearPlan.error}</div>
+            )}
+            {gearPlan?.plan?.team && (
+              <div style={{display:'grid', gridTemplateColumns:'1fr', gap: 6}}>
+                {gearPlan.plan.team.map((h, i) => (
+                  <div key={i} style={{padding: 8, background:'var(--bg-elev)', border:'1px solid var(--border)', borderRadius: 4}}>
+                    <div style={{display:'flex', alignItems:'baseline', justifyContent:'space-between', marginBottom: 4}}>
+                      <span style={{fontWeight: 500, fontSize: 12}}>{h.name}</span>
+                      <span className="mono" style={{fontSize: 10.5, color:'var(--text-sub)'}}>
+                        SPD {h.projected_stats.SPD} · ACC {h.projected_stats.ACC} · CR {h.projected_stats.CR}% · CD {h.projected_stats.CD}%
+                      </span>
+                    </div>
+                    <div style={{display:'flex', gap: 4, flexWrap:'wrap', marginBottom: 4}}>
+                      {(h.active_sets || []).filter(s => s.count > 0).map((s, j) => (
+                        <span key={j} style={{fontSize: 9, padding:'1px 5px', background:'var(--bg-subtle)', border:'1px solid var(--border)', borderRadius: 3, color:'var(--text-dim)'}}>
+                          {s.set_name}×{s.count}
+                        </span>
+                      ))}
+                    </div>
+                    <div style={{display:'grid', gridTemplateColumns:'70px 80px 1fr', gap: 2, fontSize: 10, lineHeight: 1.5, color:'var(--text-sub)'}}>
+                      {(h.slots || []).map((sl, j) => (
+                        <React.Fragment key={j}>
+                          <span style={{color:'var(--text-dim)'}}>{sl.slot_name}</span>
+                          <span>{sl.set_name}</span>
+                          <span className="mono" style={{color:'var(--text-dim)'}}>id {sl.artifact_id}</span>
+                        </React.Fragment>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
-        {/* LEFT: Tune picker + Apply */}
-        <div>
-          <div style={{fontSize: 10.5, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6}}>Tune</div>
-          <select value={selectedTune} onChange={e => setSelectedTune(e.target.value)}
-            style={{width: '100%', padding: '6px 8px', background: 'var(--bg-subtle)', border: '1px solid var(--border)',
-                    borderRadius: 4, color: 'var(--text)', fontSize: 12.5, fontFamily: 'inherit'}}>
-            {tunes.map(t => (
-              <option key={t.id} value={t.id}>{t.name} · {t.performance} · {t.difficulty}</option>
+        {/* Generic-slot alternatives — which owned 6★ best fills each "DPS" slot */}
+        {(slotBusy || slotAlts) && (slotAlts?.slots?.length > 0 || slotBusy) && (
+          <div style={{padding:'12px 16px', borderBottom:'1px solid var(--border)'}}>
+            <div style={{display:'flex', alignItems:'baseline', justifyContent:'space-between', marginBottom: 8}}>
+              <span style={{fontSize: 10.5, color:'var(--text-dim)', textTransform:'uppercase', letterSpacing:'0.06em'}}>
+                Generic-slot alternatives · best fits
+              </span>
+              <span style={{fontSize: 10, color:'var(--text-dim)'}}>
+                {slotBusy && !slotAlts ? 'simulating ~10s…' : slotAlts ? `${slotAlts.candidates_considered} 6★ candidates` : ''}
+              </span>
+            </div>
+            {slotAlts?.error && (
+              <div style={{fontSize: 11, color:'var(--danger)'}}>{slotAlts.error}</div>
+            )}
+            {slotAlts?.slots?.map((s, i) => (
+              <div key={i} style={{marginBottom: 10}}>
+                <div style={{fontSize: 11, color:'var(--text-sub)', marginBottom: 4}}>
+                  Slot {s.index} · <span style={{color:'var(--text-dim)'}}>{s.label}</span>
+                  {s.target_speed && <span className="mono" style={{marginLeft: 6, color:'var(--text-dim)'}}>SPD {s.target_speed}</span>}
+                </div>
+                <div style={{display:'grid', gridTemplateColumns:'1fr 80px 80px', gap: 4, fontSize: 11}}>
+                  {s.alternatives.map((a, j) => {
+                    const deltaColor = a.delta > 0 ? 'var(--ok)' : a.delta < 0 ? 'var(--danger)' : 'var(--text-dim)';
+                    const deltaStr = (a.delta >= 0 ? '+' : '') + (a.delta/1e6).toFixed(1) + 'M';
+                    return (
+                      <React.Fragment key={j}>
+                        <span>{a.hero}</span>
+                        <span className="mono num" style={{textAlign:'right', color:'var(--accent)'}}>{(a.damage/1e6).toFixed(1)}M</span>
+                        <span className="mono" style={{textAlign:'right', color: deltaColor, fontSize: 10}}>{deltaStr}</span>
+                      </React.Fragment>
+                    );
+                  })}
+                </div>
+              </div>
             ))}
-          </select>
-          {(() => {
-            const t = tunes.find(x => x.id === selectedTune);
-            if (!t) return null;
-            return (
-              <div style={{marginTop: 8, fontSize: 11, color: 'var(--text-sub)', lineHeight: 1.5}}>
-                {t.notes?.slice(0, 250)}
-              </div>
-            );
-          })()}
-          <button className="btn primary"
-                  onClick={apply} disabled={busy || selectedTune !== 'myth_eater'}
-                  title={selectedTune !== 'myth_eater' ? 'Auto-apply only supported for myth_eater currently' : 'Push tune opener+priorities to preset #1'}
-                  style={{marginTop: 10, width: '100%', height: 28, fontSize: 12, justifyContent: 'center'}}>
-            {busy ? 'Applying…' : 'Apply to CB preset #1'}
-          </button>
-          {applyMsg && <div style={{marginTop: 6, fontSize: 10.5, color: 'var(--text-sub)'}}>{applyMsg}</div>}
-        </div>
-
-        {/* CENTER: Per-hero tune compliance */}
-        <div>
-          <div style={{fontSize: 10.5, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6}}>Team vs Tune</div>
-          {!compliance ? (
-            <div style={{fontSize: 11, color: 'var(--text-dim)'}}>Loading…</div>
-          ) : compliance.error ? (
-            <div style={{fontSize: 11, color: 'oklch(0.65 0.23 25)'}}>{compliance.error}</div>
-          ) : (
-            <div>
-              {(compliance.slots || []).map(s => {
-                const c = statusColor[s.status] || 'var(--text-dim)';
-                const bandTxt = s.target_low === s.target_high ? `${s.target_low}` : `${s.target_low}–${s.target_high}`;
-                return (
-                  <div key={s.slot} style={{display: 'grid', gridTemplateColumns: '24px 1fr 60px 80px 110px', gap: 8, padding: '4px 0', fontSize: 12, alignItems: 'center', borderBottom: '1px solid var(--border)'}}>
-                    <span className="mono" style={{color: 'var(--text-dim)'}}>{s.slot}</span>
-                    <div>
-                      <div>{s.hero}</div>
-                      <div style={{fontSize: 10, color: 'var(--text-dim)'}}>{s.role}</div>
-                    </div>
-                    <span className="mono num" style={{color: c, fontWeight: 500}}>{s.actual_spd}</span>
-                    <span className="mono" style={{color: 'var(--text-dim)', fontSize: 11}}>target {bandTxt}</span>
-                    <span className="mono" style={{color: c, fontSize: 11}}>
-                      {s.status === 'on_target' ? '✓ on target' :
-                       s.status === 'too_fast'  ? `+${s.delta} too fast` :
-                                                   `${s.delta} too slow`}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* RIGHT: Affinity matrix */}
-        <div>
-          <div style={{fontSize: 10.5, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6}}>
-            Sim on all 4 affinities
           </div>
-          {!affMatrix ? (
-            <div style={{fontSize: 11, color: 'var(--text-dim)'}}>Running sim…</div>
-          ) : (
-            <div>
-              <div style={{display: 'grid', gridTemplateColumns: '70px 50px 80px 50px', gap: 6, padding: '4px 0', fontSize: 10.5, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '1px solid var(--border)'}}>
-                <span>Affinity</span><span>Turns</span><span style={{textAlign:'right'}}>Damage</span><span style={{textAlign:'right'}}>Gaps</span>
-              </div>
-              {['magic', 'force', 'spirit', 'void'].map(a => {
-                const r = affMatrix[a];
-                if (!r) return null;
-                const isBest = Object.values(affMatrix).reduce((m, x) => Math.max(m, x.total_damage || 0), 0) === (r.total_damage || 0);
-                const isDead = r.first_death_bt != null && r.first_death_bt < 50;
-                return (
-                  <div key={a} style={{display: 'grid', gridTemplateColumns: '70px 50px 80px 50px', gap: 6, padding: '5px 0', fontSize: 12, borderBottom: '1px solid var(--border)'}}>
-                    <span style={{color: isBest ? 'var(--accent)' : 'var(--text)'}}>{r.affinity}</span>
-                    <span className="mono num" style={{color: isDead ? 'oklch(0.65 0.23 25)' : 'var(--text-sub)'}}>
-                      {isDead ? `✗${r.first_death_bt}` : r.cb_turns}
-                    </span>
-                    <span className="mono num" style={{textAlign: 'right', color: isBest ? 'var(--accent)' : 'var(--text)'}}>
-                      {r.total_damage ? (r.total_damage/1e6).toFixed(1) + 'M' : '—'}
-                    </span>
-                    <span className="mono" style={{textAlign: 'right', color: r.gaps > 2 ? 'oklch(0.65 0.23 25)' : 'var(--text-dim)', fontSize: 11}}>
-                      {r.gaps ?? '—'}
-                    </span>
-                  </div>
-                );
-              })}
-              <div style={{marginTop: 6, fontSize: 10.5, color: 'var(--text-dim)', lineHeight: 1.4}}>
-                Sim currently predicts 50T survival on all affinities — real gameplay may still fail on Force due to weak-affinity damage amp.
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+        )}
 
-      {/* Bottom row: tune recommender + CB reset countdown + SPD sweep toggle */}
-      <div style={{borderTop: '1px solid var(--border)', padding: '12px 14px', display: 'grid', gridTemplateColumns: '1fr 260px', gap: 14}}>
-        {/* Tune recommender: ranks all tunes by predicted damage on today's affinity */}
-        <div>
-          <div style={{display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 4}}>
-            <span style={{fontSize: 10.5, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.06em'}}>
-              Best tune for {recommend?.affinity || 'today'}
-            </span>
-            <span style={{fontSize: 10, color: 'var(--text-dim)'}} title="Sim damage across the full 50-turn prediction per tune.">
-              ranked by sim damage
-            </span>
+        {/* Projection meta — what levers were applied to get this number */}
+        {sim.projection && (
+          <div style={{padding:'12px 16px', borderBottom:'1px solid var(--border)'}}>
+            <div style={{fontSize: 10.5, color:'var(--text-dim)', textTransform:'uppercase', letterSpacing:'0.06em', marginBottom: 6}}>
+              Projection levers ({sim.projection.projection_mode ? 'ceiling' : 'current progression'})
+            </div>
+            <div style={{display:'grid', gridTemplateColumns:'140px 1fr', gap: 4, fontSize: 11, lineHeight: 1.5}}>
+              {Object.entries(sim.projection).filter(([k]) => k !== 'projection_mode').map(([k, v]) => (
+                <React.Fragment key={k}>
+                  <span style={{color:'var(--text-dim)', textTransform:'capitalize'}}>{k.replace(/_/g, ' ')}</span>
+                  <span style={{color: String(v).includes('NOT YET') ? 'var(--warn)' : 'var(--text-sub)'}}>{v}</span>
+                </React.Fragment>
+              ))}
+            </div>
           </div>
-          {!recommend ? (
-            <div style={{fontSize: 11, color: 'var(--text-dim)'}}>Running sim on each tune…</div>
-          ) : (
-            <div style={{display: 'grid', gridTemplateColumns: '180px 80px 80px 70px 1fr 100px', gap: 6, fontSize: 11.5}}>
-              <span style={{color: 'var(--text-dim)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.04em'}}>Tune</span>
-              <span style={{color: 'var(--text-dim)', fontSize: 10, textTransform: 'uppercase'}}>Difficulty</span>
-              <span style={{color: 'var(--text-dim)', fontSize: 10, textTransform: 'uppercase'}}>Perf</span>
-              <span style={{color: 'var(--text-dim)', fontSize: 10, textTransform: 'uppercase', textAlign: 'right'}}>Turns</span>
-              <span style={{color: 'var(--text-dim)', fontSize: 10, textTransform: 'uppercase', textAlign: 'right'}}>Damage</span>
-              <span></span>
-              {(recommend.results || []).map((r, i) => {
-                if (r.incompatible) {
-                  return (
-                    <React.Fragment key={r.tune}>
-                      <span style={{color: 'var(--text-dim)', textDecoration: 'line-through'}} title={`Missing: ${(r.missing_heroes||[]).join(', ')}`}>
-                        {r.name}
-                      </span>
-                      <span style={{color: 'var(--text-dim)', fontSize: 10.5}}>—</span>
-                      <span style={{color: 'var(--text-dim)', fontSize: 10.5}}>—</span>
-                      <span style={{color: 'var(--text-dim)', textAlign: 'right'}}>—</span>
-                      <span style={{color: 'oklch(0.65 0.23 25)', textAlign: 'right', fontSize: 10.5}}>
-                        need {(r.missing_heroes || []).join(', ')}
-                      </span>
-                      <span></span>
-                    </React.Fragment>
-                  );
-                }
-                // Index among compatibles only
-                const compIdx = (recommend.results || []).filter(x => !x.incompatible).indexOf(r);
-                return (
-                  <React.Fragment key={r.tune}>
-                    <span style={{color: compIdx === 0 ? 'var(--accent)' : 'var(--text)', fontWeight: compIdx === 0 ? 500 : 400}}>
-                      {compIdx === 0 ? '🏆 ' : ''}{r.name}
-                    </span>
-                    <span style={{color: 'var(--text-sub)', fontSize: 10.5}}>{r.difficulty}</span>
-                    <span style={{color: 'var(--text-sub)', fontSize: 10.5}}>{r.performance}</span>
-                    <span className="mono" style={{textAlign: 'right', color: 'var(--text-sub)'}}>
-                      {r.cb_turns ?? '—'}
-                    </span>
-                    <span className="mono num" style={{textAlign: 'right', color: compIdx === 0 ? 'var(--accent)' : 'var(--text)'}}>
-                      {r.damage ? (r.damage/1e6).toFixed(1) + 'M' : '—'}
-                    </span>
-                    <button className="btn" onClick={() => apply(r.tune)} disabled={busy}
-                            style={{height: 20, fontSize: 10, padding: '0 6px', justifyContent: 'center'}}>
-                      Apply
-                    </button>
-                  </React.Fragment>
-                );
-              })}
+        )}
+
+        {/* Todos */}
+        {todos.length > 0 && (
+          <div style={{padding:'12px 16px'}}>
+            <div style={{fontSize: 10.5, color:'var(--text-dim)', textTransform:'uppercase', letterSpacing:'0.06em', marginBottom: 6}}>
+              Todos ({todos.length})
             </div>
-          )}
-        </div>
-
-        {/* Right: SPD sweep toggle (reset countdown moved to CB page header) */}
-        <div style={{alignSelf: 'start'}}>
-          <button className="btn" onClick={() => setShowSweep(!showSweep)}
-                  style={{height: 24, fontSize: 11, justifyContent: 'center', width: '100%'}}>
-            {showSweep ? 'Hide' : 'Show'} SPD sweep
-          </button>
-        </div>
+            <div style={{display:'grid', gridTemplateColumns:'80px 100px 1fr', gap: 6, fontSize: 11}}>
+              {todos.map((td, i) => (
+                <React.Fragment key={i}>
+                  <span style={{color:'var(--text-dim)', textTransform:'uppercase', fontSize: 10}}>{td.kind}</span>
+                  <span>{td.hero || '—'}</span>
+                  <span style={{color:'var(--text-sub)'}}>
+                    {td.detail || td.recommended?.blessing_pve_high || td.recommended?.blessing_pve_low || ''}
+                  </span>
+                </React.Fragment>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
-
-      {showSweep && <CBSpeedSweep/>}
-      <CBPresetEditor/>
     </div>
   );
 }
-
-
-// ============================================================================
-// CBPresetEditor — edit Openers (∞) + per-skill priority ranks without
-// leaving the dashboard. Mirrors Raid's in-game Skill Instructions UI.
-// ============================================================================
-function CBPresetEditor() {
-  const [preset, setPreset] = React.useState(null);
-  const [edits, setEdits] = React.useState({});  // hero_id -> {opener, priorities:{sid:rank}}
-  const [busy, setBusy] = React.useState(false);
-  const [msg, setMsg] = React.useState(null);
-
-  const load = () => {
-    fetch('/api/preset?id=1').then(r => r.json()).then(d => {
-      setPreset(d); setEdits({});
-    });
-  };
-  React.useEffect(() => { load(); }, []);
-
-  const setField = (hero_id, patch) => {
-    setEdits(prev => ({...prev, [hero_id]: {...(prev[hero_id] || {}), ...patch}}));
-  };
-
-  // Build effective state per hero: original + user edits overlay
-  const effective = (h) => {
-    const e = edits[h.hero_id] || {};
-    return {
-      opener: e.opener !== undefined ? e.opener : (h.starter_ids[0] || null),
-      priorities: e.priorities || h.priorities,
-    };
-  };
-
-  const save = async () => {
-    if (!preset) return;
-    setBusy(true); setMsg(null);
-    try {
-      const payload = {
-        preset_id: preset.id,
-        heroes: (preset.heroes || []).map(h => {
-          const eff = effective(h);
-          return {
-            hero_id: h.hero_id,
-            opener: eff.opener,
-            priorities: eff.priorities,
-          };
-        }),
-      };
-      const r = await fetch('/api/preset/edit', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(payload),
-      });
-      const d = await r.json();
-      setMsg(d.ok ? 'Saved ✓' : (d.error || 'failed'));
-      setTimeout(load, 600);
-    } catch (e) { setMsg(String(e)); }
-    setBusy(false);
-  };
-
-  if (!preset) return null;
-  if (preset.error) {
-    return (
-      <div style={{borderTop: '1px solid var(--border)', padding: 12, fontSize: 11, color: 'var(--text-dim)'}}>
-        Preset editor: {preset.error}
-      </div>
-    );
-  }
-
-  const RANK_OPTS = [
-    {v: 0, label: 'Default'},
-    {v: 1, label: '1st'},
-    {v: 2, label: '2nd'},
-    {v: 3, label: '3rd'},
-    {v: 4, label: 'Don\'t use'},
-  ];
-
-  return (
-    <div style={{borderTop: '1px solid var(--border)', padding: '12px 14px'}}>
-      <div style={{display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8}}>
-        <span style={{fontSize: 10.5, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.06em'}}>
-          Preset #{preset.id} · {preset.name} · Skill Instructions
-        </span>
-        <div style={{display: 'flex', gap: 6, alignItems: 'center'}}>
-          {msg && <span style={{fontSize: 10.5, color: msg === 'Saved ✓' ? 'var(--accent)' : 'oklch(0.65 0.23 25)'}}>{msg}</span>}
-          <button className="btn" onClick={load} disabled={busy}
-                  style={{height: 20, fontSize: 10, padding: '0 8px'}}>Reload</button>
-          <button className="btn primary" onClick={save} disabled={busy}
-                  style={{height: 20, fontSize: 10, padding: '0 10px'}}>{busy ? 'Saving…' : 'Save'}</button>
-        </div>
-      </div>
-
-      {(preset.heroes || []).map(h => {
-        const eff = effective(h);
-        const labelEntries = Object.entries(h.skill_labels || {});
-        // Sort by label (A1 → A2 → A3)
-        labelEntries.sort((a, b) => (a[1].label || '').localeCompare(b[1].label || ''));
-        return (
-          <div key={h.hero_id} style={{display: 'grid', gridTemplateColumns: '140px 1fr', gap: 10, padding: '6px 0', borderBottom: '1px solid var(--border)', fontSize: 12, alignItems: 'center'}}>
-            <div>
-              <div style={{fontWeight: 500}}>{h.name}</div>
-              <div style={{fontSize: 10, color: 'var(--text-dim)'}}>slot · hero {h.hero_id}</div>
-            </div>
-            <div style={{display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8}}>
-              {labelEntries.map(([sid, info]) => {
-                const isOpener = eff.opener == sid;
-                const rank = eff.priorities[sid] ?? 0;
-                return (
-                  <div key={sid} style={{display: 'flex', flexDirection: 'column', gap: 2, padding: 6, background: 'var(--bg-subtle)', border: '1px solid var(--border)', borderRadius: 3}}>
-                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 4}}>
-                      <span className="mono" style={{fontSize: 11, color: 'var(--accent)'}}>{info.label}</span>
-                      <span style={{fontSize: 10, color: 'var(--text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>
-                        {info.name}{info.cd ? ` · CD${info.cd}` : ''}
-                      </span>
-                    </div>
-                    <div style={{display: 'flex', gap: 4}}>
-                      <label style={{fontSize: 10, color: 'var(--text-sub)', display: 'flex', gap: 3, alignItems: 'center', cursor: 'pointer'}}>
-                        <input type="checkbox" checked={isOpener}
-                               onChange={e => {
-                                 const curEdits = edits[h.hero_id] || {};
-                                 setField(h.hero_id, {opener: e.target.checked ? sid : null});
-                               }}
-                               style={{margin: 0}}/>
-                        ∞ Opener
-                      </label>
-                      <select value={rank}
-                              onChange={e => {
-                                const curPrios = {...(effective(h).priorities)};
-                                curPrios[sid] = parseInt(e.target.value, 10);
-                                setField(h.hero_id, {priorities: curPrios});
-                              }}
-                              style={{flex: 1, background: 'var(--bg-elev)', border: '1px solid var(--border)', borderRadius: 2, padding: '1px 4px', fontSize: 10, color: 'var(--text)', fontFamily: 'inherit'}}>
-                        {RANK_OPTS.map(o => <option key={o.v} value={o.v}>{o.label}</option>)}
-                      </select>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
 
 // ============================================================================
 // CBSpeedSweep — interactive slider that varies one hero's SPD and re-runs

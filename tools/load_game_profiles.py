@@ -266,6 +266,7 @@ def load_profiles():
             self_tm_fill = 0.0
             grants_extra_turn = False
             ignore_def_pct = 0.0
+            cb_tm_drain_pct = 0.0
 
             effects_list = []
 
@@ -296,7 +297,13 @@ def load_profiles():
                                 effects_list.append(_eff("debuff",
                                     debuff=se_name, duration=dur, chance=chance))
 
-                # TM boost (kind=4001)
+                # TM boost (kind=4001) — fixed-fraction self/team fill,
+                # e.g. "0.15*MAX_STAMINA" (Ninja A1: +15% TM on cast).
+                # CHANGED_STAMINA-style formulas pair with kind=5001 drain;
+                # against the CB boss those drains are no-ops AND the caster
+                # does not receive a fill (verified 2026-04-29 via per-tick
+                # TM telemetry). So CHANGED_STAMINA is intentionally ignored
+                # here.
                 elif kind == 4001 and formula:
                     if "MAX_STAMINA" in formula:
                         m = re.match(r'([\d.]+)\*MAX_STAMINA', formula)
@@ -334,9 +341,23 @@ def load_profiles():
                     else:
                         effects_list.append(_eff("extend_debuffs", turns=1, per_hit=per_hit))
 
-                # Extend buffs (kind=4011)
+                # Extend buffs (kind=4011). Demytha A2 (skill_id 65102)
+                # has the unique compound shape: extends ally buffs +1,
+                # shrinks ally debuffs -1, AND heals 2.5% MAX_HP per ally
+                # PLUS 2.5% per buff/debuff modified. Verified against real
+                # battle log: Maneater HP recovers from 25673 → 34025 at
+                # tick 12 (her A2 cast time) — 21% MAX_HP heal matches the
+                # 2.5% × (1 base + 7 changes) formula. Other heroes with
+                # 4011 are pure extenders.
                 elif kind == 4011:
-                    effects_list.append(_eff("extend_buffs", turns=1))
+                    skill_id = sk.get('id', 0)
+                    if skill_id == 65102:  # Demytha A2 Light of the Deep
+                        effects_list.append(_eff(
+                            "extend_buffs", turns=1, shrink_debuffs=1,
+                            heal_pct=0.025, heal_per_change_pct=0.025,
+                        ))
+                    else:
+                        effects_list.append(_eff("extend_buffs", turns=1))
 
                 # Activate DoTs (kind=9002) — mechanic varies by hero/skill.
                 # Verified from in-game skill descriptions:
@@ -347,12 +368,15 @@ def load_profiles():
                 #   Artak A2 (78602): activates HP Burns
                 elif kind == 9002:
                     skill_id = sk.get('id', 0)
-                    # Ninja A2 (62002): "will instantly activate any [HP Burn] debuffs"
-                    #   Description says once per skill use, not per hit. The game data
-                    #   has 3x kind=9002 (one per hit) but the effect triggers once.
-                    #   Only add on first occurrence to avoid triple-counting.
-                    already_has = any(e.get('effect_type') == 'activate_hp_burns' for e in effects_list)
-                    if skill_id == 62002 and not already_has:  # Ninja A2
+                    # Ninja A2 (62002): "will instantly activate any [HP Burn]
+                    # debuffs, including ones placed by this Skill". Game data
+                    # has 3× kind=9002 (one per hit). The activation fires per
+                    # hit — confirmed by back-solving real damage: per-cast
+                    # activation only produces ~2.5M of attributed burn damage,
+                    # but real Ninja's burn-attributed damage requires ~7M of
+                    # activation contribution, matching 3 activations per
+                    # cast (one per hit).
+                    if skill_id == 62002:  # Ninja A2 — emit per kind=9002 occurrence
                         effects_list.append(_eff("activate_hp_burns"))
                     elif skill_id == 57702:  # Sicia A2: activate HP Burns (1 tick)
                         effects_list.append(_eff("activate_hp_burns"))
@@ -361,7 +385,14 @@ def load_profiles():
                     elif skill_id == 36003:  # Teodor A3: activate all DoTs (poison + burn)
                         effects_list.append(_eff("activate_dots"))
                     elif skill_id == 62801:  # Venomage A1: activate up to 2 Poisons per hit
-                        effects_list.append(_eff("activate_poisons", max_count=2))
+                        # Real game: "Each hit has a 35% chance of activating
+                        # up to two [Poison] debuffs". Books type=2 sum to +15
+                        # → 50% effective per-hit chance. Without the chance,
+                        # sim activates every cast (over-attributes Venomage
+                        # by ~50%).
+                        chance = 0.50  # 35% base + 15% books (verified Toxicity bonuses)
+                        effects_list.append(_eff("activate_poisons",
+                                                 max_count=2, chance=chance))
                     # Other heroes with 9002: skip (unknown mechanic)
 
                 # Detonate poisons (kind=5018)
@@ -378,7 +409,22 @@ def load_profiles():
                     if m:
                         ignore_def_pct = float(m.group(1))
 
-                # TM reduce (kind=5001) — not modeled for CB (immune)
+                # TM reduce (kind=5001) — Syphon-style drain target stamina.
+                # CB boss is immune (TM doesn't drop) AND caster does NOT
+                # gain "what would have been drained" (verified 2026-04-29
+                # via per-tick TM log: Maneater post-A2 TM matches pure
+                # natural accumulation, no drain bonus). Recorded for
+                # non-CB use only.
+                elif kind == 5001 and formula:
+                    if "MAX_STAMINA" in formula or "TRG_STAMINA" in formula:
+                        cb_tm_drain_pct = 1.0
+                    else:
+                        m = re.match(r'([\d.]+)', formula)
+                        if m:
+                            try:
+                                cb_tm_drain_pct = max(cb_tm_drain_pct, float(m.group(1)))
+                            except Exception:
+                                pass
                 # Cleanse (kind=4010) — relevant for passive only
                 # Strip buff (kind=5003) — not relevant for CB
                 # Reduce CD (kind=4009) — handle per hero if needed
@@ -396,6 +442,8 @@ def load_profiles():
             }
             if ignore_def_pct > 0:
                 sd_entry["ignore_def"] = ignore_def_pct
+            if cb_tm_drain_pct > 0:
+                sd_entry["cb_tm_drain_pct"] = cb_tm_drain_pct
 
             hero_sd[label] = sd_entry
             hero_eff[label] = effects_list
@@ -473,6 +521,17 @@ def load_profiles():
             has_extend = any('extend' in e.get('effect_type', '') for e in hero_eff["A1"])
             if not has_extend:
                 hero_eff["A1"].append(_eff("extend_debuffs_hp_burn", turns=1, per_hit=True))
+
+        # Geomancer A2 (Creeping Petrify, 48802) reduces Quicksand Grasp's
+        # cooldown by 2 turns. Without this, A3 fires every ~4 actions; with
+        # it, A3 cycles much faster (A2 → A3 → A2 → A3) and burn placement
+        # roughly doubles. Verified from in-game skill description.
+        if name == "Geomancer" and "A2" in hero_eff:
+            has_cdr = any(e.get('effect_type') == 'cd_reduce_skill'
+                          for e in hero_eff["A2"])
+            if not has_cdr:
+                hero_eff["A2"].append(_eff("cd_reduce_skill",
+                                           target_skill="A3", turns=2))
 
         if hero_sd:
             skill_data[name] = hero_sd

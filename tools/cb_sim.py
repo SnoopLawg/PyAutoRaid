@@ -43,6 +43,7 @@ TM_THRESHOLD = 1000
 MAX_CB_TURNS = 50
 MAX_DEBUFF_SLOTS = 10
 
+
 WM_PROC_RATE = 0.60   # Warmaster: 60% once per skill
 GS_PROC_RATE = 0.30   # Giant Slayer: 30% per hit
 LEECH_HEAL_RATE = 0.10  # Leech debuff: attackers heal 10% of damage dealt
@@ -167,10 +168,18 @@ class DebuffBar:
     def count(self, debuff_type: str) -> int:
         return sum(1 for s in self.slots if s.debuff_type == debuff_type)
 
+    # Plarium clamps remaining-turns when extending debuffs. The exact cap
+    # isn't documented but community testing shows extensions don't push
+    # beyond ~4 turns of remaining duration, regardless of how many extenders
+    # are stacked. Without this cap, Teodor/Sicia/Vizier-style extenders
+    # produce runaway DoT damage in projection sims (e.g., Teodor in
+    # myth-eater projecting at 87M = ~2.3x the real-team baseline).
+    EXTEND_CAP_TURNS = 4
+
     def extend_all(self, turns: int = 1):
-        """Extend all debuffs by N turns (Vizier/Corvis mechanic)."""
+        """Extend all debuffs by N turns, clamped at EXTEND_CAP_TURNS."""
         for s in self.slots:
-            s.remaining += turns
+            s.remaining = min(s.remaining + turns, DebuffBar.EXTEND_CAP_TURNS)
 
     def is_full(self) -> bool:
         return len(self.slots) >= MAX_DEBUFF_SLOTS
@@ -228,12 +237,14 @@ class SimSkill:
     self_tm_fill: float = 0.0  # fraction of TM bar to fill for self on use (e.g., Ninja A1: 0.15)
     grants_extra_turn: bool = False  # kind=4007: immediately get another turn after use
     ignore_def: float = 0.0   # fraction of DEF to ignore (Ninja A3: 0.5, OB A2: 0.3)
-    # Maneater A2 Syphon-style: drain boss TM by X (fraction of threshold), and
-    # fill caster's own TM by the same amount. kind=5001 in game data with
-    # formula=TRG_STAMINA (100% of target TM). Without this, Maneater's A3
-    # recast cycle shifts from ~3 BT (correct) to ~4.6 BT (breaks Myth Eater).
-    cb_tm_drain_pct: float = 0.0   # drain THIS fraction of boss TM on cast
-    self_tm_fill_from_drain: bool = False  # fill caster TM by the drained amount
+    # CB boss is immune to TM drain — drain skills (Maneater A2 Syphon,
+    # Geomancer A3 Quicksand Grasp) are silent against the boss. Verified
+    # 2026-04-29 against per-tick TM telemetry: Maneater's TM after his
+    # A2 cast matches pure natural accumulation (287 SPD × 0.07 × N ticks),
+    # NOT a Syphon caster-fill bonus. Earlier "self_tm_fill_from_drain"
+    # model boosted sim by ~10M but was a compensating wrong masking a
+    # different missing SPD source. Removed.
+    cb_tm_drain_pct: float = 0.0   # parsed but no-op against CB
     # Skill Delay (DWJ "Delay" field): number of boss turns from battle start
     # before this skill can be cast at all. Lets us model tunes that want a
     # skill held until a specific turn (e.g. Turn 6 sync).
@@ -281,6 +292,10 @@ class SimChampion:
     current_hp: float = 0.0
     max_hp: float = 0.0
     has_lifesteal: bool = False
+    # Shield absorption pool — Demytha A1 Fires of Old places ~10%
+    # caster MAX_HP per hit (2 hits) on lowest-HP ally. Absorbs incoming
+    # damage before HP. Cleared when the shield buff expires.
+    shield_hp: float = 0.0
 
     # Passive abilities (detected from game data)
     has_passive_ally_protect: bool = False   # Skullcrusher: permanent Ally Protect
@@ -330,6 +345,8 @@ class SimChampion:
                 self.buffs[b] = d - 1
         for b in expired:
             del self.buffs[b]
+            if b == "shield":
+                self.shield_hp = 0.0  # absorption pool dies with the buff
         self.buffs_new.clear()  # next tick will decrement normally
 
     def tick_cooldowns(self):
@@ -432,7 +449,7 @@ class CBSimulator:
                  rng_seed: int = None, verbose: bool = False,
                  model_survival: bool = True, force_affinity: bool = False,
                  cb_difficulty: str = None, speed_aura_pct: float = 0.0,
-                 bugfix_buff_tick: bool = False):
+                 bugfix_buff_tick: bool = True):
         self.champions = champions
         # cb_difficulty overrides cb_speed if provided (matches DWJ dropdown).
         # Keeps backwards-compat with direct cb_speed=190 callers.
@@ -746,6 +763,15 @@ class CBSimulator:
                 # Block Damage fully blocks the attack attempt; Ally Protect
                 # does NOT transfer damage to a protector in this game setup.
                 # Damage lands on the target hero in full (after reductions).
+
+                # Shield absorbs damage before HP. Demytha A1 places ~10%
+                # MAX_HP per hit; absorbed amount is removed from both
+                # the shield pool and the incoming damage.
+                if getattr(c, "shield_hp", 0) > 0:
+                    absorbed = min(c.shield_hp, aoe_dmg)
+                    c.shield_hp -= absorbed
+                    aoe_dmg -= absorbed
+
                 c.current_hp -= aoe_dmg
 
                 # Cardiel passive: Block Damage when about to die (4T CD per ally)
@@ -808,31 +834,38 @@ class CBSimulator:
                 if not c.is_dead and c.has_passive_extra_turns:
                     c.tm += TM_THRESHOLD
 
-            # Geomancer Stoneguard passive: deflects 15% of incoming AoE damage
-            # back to enemies under his HP Burn. The previous formula used a
-            # synthetic CB_ATK * AOE_MULT * 15% scaled by fury_mult, which by
-            # boss turn 50 produced ~5M of deflect damage per Geomancer over the
-            # run — about 4× too high vs ground-truth (real Geomancer total =
-            # 5.05M for the entire run; this passive alone was crediting 4.79M).
+            # Geomancer Stoneguard passive (full description):
+            #   "Decreases the damage all allies receive by 15% and deflects
+            #   that damage onto each enemy under a [HP Burn] debuff placed
+            #   by this Champion. ... When deflecting damage, on each enemy
+            #   hit, has a 30% chance of dealing additional damage equal to
+            #   3% of the target's MAX HP."
             #
-            # Better approach: deflect from actual AoE damage that landed this
-            # turn. Until that's wired up, scale passive to a realistic floor
-            # (~0.5–1M per run) by basing it on the per-hit AoE damage, no
-            # fury_mult amplification (fury affects boss damage, not the 15%
-            # share that deflects), and only 1× per AoE event.
+            # Real game: per ally that takes damage, ONE deflect event fires
+            # at each Geo-burned enemy. Since CB is single-target, that's 1
+            # deflect per ally per AoE. The 3% TRG_HP bonus (capped at the
+            # standard 75K DOT cap for boss) procs at 30% per deflect event.
+            # Empirically Stoneguard contributes ~3-5M over 50 UNM turns —
+            # most of it from the bonus proc, since base 15% deflect is
+            # small relative to ally per-hit damage.
             for c in self.champions:
                 if c.is_geomancer and not c.is_dead:
-                    has_geo_burn = self.debuff_bar.has("hp_burn")
+                    has_geo_burn = any(s.debuff_type == "hp_burn"
+                                       and s.source == c.name
+                                       for s in self.debuff_bar.slots)
                     if has_geo_burn:
-                        # Deflect 15% of incoming AoE damage. Base AoE per hero
-                        # already reflects the boss's actual hit; fury is its
-                        # own boss-side multiplier and is not re-applied here.
-                        # 5 heroes × per-hero AoE × 15% deflect.
-                        base_aoe_per_hero = CB_ATK * CB_AOE_MULT * 0.15
-                        deflect_dmg = base_aoe_per_hero * 5 * dec_atk_mult
-                        # 30% chance bonus, 75K cap (GS-equivalent)
-                        bonus_dmg = 0.30 * 75_000
-                        c.damage.passive += deflect_dmg + bonus_dmg
+                        atk_mult = CB_ATTACK_MULT.get(attack, CB_AOE_MULT)
+                        per_ally_aoe = CB_ATK * atk_mult * dec_atk_mult
+                        living_allies = sum(1 for a in self.champions
+                                            if not a.is_dead)
+                        # Base deflect: 15% of per-ally damage, summed
+                        # across allies, × 1 (single boss target).
+                        base_deflect = per_ally_aoe * living_allies * 0.15
+                        # 30% chance bonus per deflect event (one event per
+                        # ally), 75K cap on boss MAX HP percentage.
+                        bonus_per_event = 0.30 * 75_000
+                        bonus_total = living_allies * bonus_per_event
+                        c.damage.passive += base_deflect + bonus_total
 
         elif attack == "stun":
             # Game data: fromTargetsWithSkillOnCDSelectWithMaxStamina
@@ -894,6 +927,13 @@ class CBSimulator:
             "dec_atk_active": self.debuff_bar.has("dec_atk"),
             "debuff_bar_size": len(self.debuff_bar),
             "attack": attack,
+            # Buff state per hero at moment of boss attack — used by
+            # tools/sim_vs_real_diff.py to compare against ground-truth
+            # tick-log buff state. Captures the actual durations the sim
+            # has placed on each champ.
+            "hero_buffs": {
+                c.name: dict(c.buffs) for c in self.champions
+            },
         })
 
         if self.verbose:
@@ -924,12 +964,12 @@ class CBSimulator:
                     ally.is_stunned = False
                     break
 
-        champ.tick_buffs(cb_turn=self.cb_turn,
-                         once_per_cb_turn=getattr(self, "bugfix_buff_tick", False))
-        champ.tick_cooldowns()
-
         if champ.is_stunned:
             champ.is_stunned = False
+            # Stun consumes the turn — buffs/CDs still tick at end.
+            champ.tick_buffs(cb_turn=self.cb_turn,
+                             once_per_cb_turn=getattr(self, "bugfix_buff_tick", True))
+            champ.tick_cooldowns()
             if self.verbose:
                 self.log.append(f"       {champ.name:>20} — STUNNED")
             return
@@ -960,8 +1000,15 @@ class CBSimulator:
                 if chosen.name == prio_name:
                     break
         else:
-            # Default: highest CD skill first (A3 > A2 > A1)
-            for sk in reversed(champ.skills):
+            # Default AI: skills in declaration order (A1 → A2 → A3),
+            # first eligible CD > 0 wins. Then A1 as fallback if all
+            # CD-skills are on cooldown. Verified against ground-truth
+            # tick logs: every CB hero opens with A2 (Maneater Syphon,
+            # Ninja Hailburn, Demytha Light of the Deep, etc.) before
+            # A3, and falls through to A1 only when both higher skills
+            # are on cooldown. The previous "highest CD first" logic
+            # incorrectly forced A3 as the opener.
+            for sk in champ.skills:
                 if sk.base_cd > 0 and _eligible(sk):
                     chosen = sk
                     break
@@ -978,8 +1025,21 @@ class CBSimulator:
             "position": champ.position,
         })
 
-        # Apply team buffs
+        # Apply team buffs. Shield is special — Demytha A1 places it on
+        # the LOWEST-HP ally only (excluding caster), with absorption
+        # equal to 10% caster MAX_HP × hit_count. Other team buffs go to
+        # the whole team uniformly.
         for buff_name, duration in chosen.team_buffs:
+            if buff_name == "shield":
+                shield_amount = champ.max_hp * 0.10 * max(1, chosen.hit_count)
+                allies = [c for c in self.champions
+                          if c is not champ and not c.is_dead]
+                if allies:
+                    target = min(allies, key=lambda c: c.current_hp / max(1, c.max_hp))
+                    target.add_buff("shield", duration)
+                    target.shield_hp = min(target.max_hp,
+                                           target.shield_hp + shield_amount)
+                continue
             for c in self.champions:
                 c.add_buff(buff_name, duration)
 
@@ -994,14 +1054,12 @@ class CBSimulator:
         if chosen.self_tm_fill > 0:
             champ.tm += chosen.self_tm_fill * TM_THRESHOLD
 
-        # Syphon / TM-drain mechanic (Maneater A2, Geomancer A3 "Quicksand Grasp",
-        # etc.). In real Raid, CB is IMMUNE to turn-meter manipulation so neither
-        # the boss TM drain nor the caster's TM fill from drain activates when
-        # targeting the boss. We retain the field so the effect can be honored
-        # for non-CB contexts (future arena / dungeon sims) but explicitly NO-OP
-        # here so the sim matches in-game CB behavior.
-        # See load_game_profiles.py kind=5001 comment: "not modeled for CB (immune)".
-        # (Intentionally no operation on self.cb_tm / champ.tm here.)
+        # CB boss is immune to TM manipulation — drain skills (Maneater A2
+        # Syphon, Geomancer A3 Quicksand Grasp) are no-ops here. Verified
+        # 2026-04-29 via per-tick TM log: Maneater's post-A2 TM matches
+        # pure SPD-based accumulation, no caster fill from "what would
+        # have been drained". cb_tm_drain_pct is parsed for non-CB use
+        # but does nothing in this scheduler.
 
         # Ninja Escalation: combo counter increments when ALL 3 active skills
         # hit the same target in a single round. In CB (single boss), this happens
@@ -1078,6 +1136,17 @@ class CBSimulator:
         # Extra turn: immediately take another turn (DWJ: TM += threshold)
         if chosen.grants_extra_turn:
             champ.tm += TM_THRESHOLD
+
+        # Real-game order: buffs and cooldowns tick at END of holder's turn
+        # (not start). This lets a hero who places/extends a buff this turn
+        # benefit from the full duration — e.g. Demytha A2 extending her own
+        # UK from 1→2: the +1 survives the end-of-turn tick because the buff
+        # is in `buffs_new` (placed/modified this turn, skipped on first tick).
+        # `once_per_cb_turn=True` ensures fast heroes who double-act in one
+        # CB turn don't double-tick their own buffs.
+        champ.tick_buffs(cb_turn=self.cb_turn,
+                         once_per_cb_turn=getattr(self, "bugfix_buff_tick", True))
+        champ.tick_cooldowns()
 
         if self.verbose:
             buffs = ",".join(f"{k}{v}" for k, v in champ.buffs.items()) or "-"
@@ -1257,9 +1326,49 @@ class CBSimulator:
 
             elif eff.effect_type == "extend_buffs":
                 turns = eff.params.get("turns", 1)
+                # Track per-ally changes — Demytha A2's heal scales with
+                # each ally's OWN modified buffs/debuffs (not team total).
+                # Real game: "Heals by a further 2.5% MAX HP for each
+                # turn added to or removed from the duration of buffs and
+                # debuffs" — read as per-hero scaling.
+                per_ally_changes = {c.name: 0 for c in self.champions}
                 for c in self.champions:
-                    for b in c.buffs:
+                    if c.is_dead:
+                        continue
+                    for b in list(c.buffs.keys()):
                         c.buffs[b] += turns
+                        # Mark extended buffs as "modified this turn" so
+                        # the end-of-turn tick on the casting hero doesn't
+                        # immediately undo the +1. Real game rule: a buff
+                        # touched (placed OR extended) this turn does not
+                        # decrement at end of that turn.
+                        c.buffs_new.add(b)
+                        per_ally_changes[c.name] += 1
+                # Demytha A2 also shrinks ally debuffs by N turns. Debuffs
+                # are on the boss (debuff_bar), not heroes, so shrinking
+                # one debuff counts as one team-wide change. Distribute
+                # across allies (1 change each per debuff shrunk).
+                debuff_shrink = eff.params.get("shrink_debuffs", 0)
+                if debuff_shrink:
+                    survivors = []
+                    debuff_changes = 0
+                    for slot in self.debuff_bar.slots:
+                        slot.remaining -= debuff_shrink
+                        debuff_changes += 1
+                        if slot.remaining >= 0:
+                            survivors.append(slot)
+                    self.debuff_bar.slots = survivors
+                    for nm in per_ally_changes:
+                        per_ally_changes[nm] += debuff_changes
+                base_heal_pct = eff.params.get("heal_pct", 0.0)
+                per_change_pct = eff.params.get("heal_per_change_pct", 0.0)
+                if (base_heal_pct or per_change_pct) and self.model_survival:
+                    for c in self.champions:
+                        if c.is_dead:
+                            continue
+                        changes = per_ally_changes.get(c.name, 0)
+                        heal = c.max_hp * (base_heal_pct + per_change_pct * changes)
+                        c.current_hp = min(c.max_hp, c.current_hp + heal)
 
             elif eff.effect_type == "ally_attack":
                 count = eff.params.get("count", 3)
@@ -1281,17 +1390,31 @@ class CBSimulator:
                                           if s.debuff_type != "poison_5pct"]
 
             elif eff.effect_type == "activate_hp_burns":
-                # Ninja A2 / Sicia A2: instantly trigger all HP Burn debuffs (1 tick each)
+                # Ninja A2 / Sicia A2: instantly trigger all HP Burn debuffs
+                # (1 tick each). Activation damage attributes to the
+                # ACTIVATING champion (the one who cast this skill), not
+                # the original placer — matches in-game UI breakdown which
+                # credits the triggering hero with the activated tick damage.
                 for slot in list(self.debuff_bar.slots):
                     if slot.debuff_type == "hp_burn":
                         dmg = self._cap_fa(HP_BURN_DMG, kind="dot")
-                        for c in self.champions:
-                            if c.name == slot.source:
-                                c.damage.hp_burn += dmg
-                                break
+                        champ.damage.hp_burn += dmg
 
             elif eff.effect_type == "activate_poisons":
-                # Venomage A1: activate up to N poisons (trigger 1 tick each)
+                # Venomage A1: "Each hit has a 35% chance of activating up to
+                # two [Poison] debuffs". Books boost +15% → 50% effective.
+                # The chance is per-hit; load_game_profiles emits one effect
+                # per hit so the chance applies per effect occurrence.
+                chance = eff.params.get("chance", 1.0)
+                if chance < 1.0:
+                    # Deterministic mode: fractional accumulator across casts
+                    # (matches debuff-placement convention).
+                    key = (champ.name, "activate_poisons")
+                    debt = self._placement_debt.get(key, 0.0) + chance
+                    if debt < 1.0:
+                        self._placement_debt[key] = debt
+                        continue  # this occurrence didn't activate
+                    self._placement_debt[key] = debt - 1.0
                 psens = 1.25 if self.debuff_bar.has("poison_sensitivity") else 1.0
                 max_count = eff.params.get("max_count", 99)
                 activated = 0
@@ -1322,21 +1445,36 @@ class CBSimulator:
                                 break
 
             elif eff.effect_type == "extend_debuffs_hp_burn":
-                # Sicia A1: extend only HP Burn debuffs by N turns, per hit
+                # Sicia A1: extend only HP Burn debuffs by N turns, per hit.
+                # Capped at DebuffBar.EXTEND_CAP_TURNS to match in-game clamp.
                 turns = eff.params.get("turns", 1)
                 per_hit = eff.params.get("per_hit", False)
                 reps = skill.hit_count if per_hit else 1
                 for _ in range(reps):
                     for slot in self.debuff_bar.slots:
                         if slot.debuff_type == "hp_burn":
-                            slot.remaining += turns
+                            slot.remaining = min(slot.remaining + turns,
+                                                  DebuffBar.EXTEND_CAP_TURNS)
 
             elif eff.effect_type == "extend_debuffs_poison_burn":
-                # Teodor A3: extend only poison and HP burn debuffs by N turns
+                # Teodor A3: extend only poison and HP burn debuffs by N turns.
+                # Capped at DebuffBar.EXTEND_CAP_TURNS.
                 turns = eff.params.get("turns", 1)
                 for slot in self.debuff_bar.slots:
                     if slot.debuff_type in ("poison_5pct", "hp_burn"):
-                        slot.remaining += turns
+                        slot.remaining = min(slot.remaining + turns,
+                                              DebuffBar.EXTEND_CAP_TURNS)
+
+            elif eff.effect_type == "cd_reduce_skill":
+                # Geomancer A2 reduces Quicksand Grasp's CD by 2; Aox A3
+                # reduces ally CDs by 1; etc. Per-skill CD reduction targets
+                # a specific skill on the caster (not allies, not enemies).
+                target_skill = eff.params.get("target_skill", "")
+                turns = eff.params.get("turns", 1)
+                for sk in champ.skills:
+                    if sk.name == target_skill and sk.current_cd > 0:
+                        sk.current_cd = max(0, sk.current_cd - turns)
+                        break
 
         # Master Hexer: 30% chance to extend placed debuffs
         if champ.has_master_hexer and not self.deterministic:
@@ -1450,48 +1588,33 @@ def build_sim_champion(name: str, stats: dict, position: int,
         sd = hero_sd.get(sk_name)
         if not sd:
             continue
-        # Detect TM-steal effects on this skill. The raid_data profile lists
-        # them as strings in an "effects" array (e.g. "tm_steal",
-        # "tm_steal_100pct", "tm_steal_75pct"). Convert to structured fields
-        # so the simulator can apply them. Without this, Syphon-style A2s (e.g.
-        # Maneater A2) are silent and the hero's recast cycle is incorrect.
-        tm_drain = 0.0
-        tm_fill_drain = False
+        # CB boss is immune to TM drain — record drain_pct for non-CB use
+        # but do not propagate any "caster fill from drain" flag (verified
+        # 2026-04-29 against per-tick TM telemetry).
+        tm_drain = float(sd.get("cb_tm_drain_pct", 0.0) or 0.0)
         for eff in (sd.get("effects") or []):
             if not isinstance(eff, str):
                 continue
             e = eff.lower()
             if e == "tm_steal" or e == "tm_steal_100pct":
-                tm_drain = 1.0
-                tm_fill_drain = True
+                tm_drain = max(tm_drain, 1.0)
             elif e.startswith("tm_steal_"):
-                # "tm_steal_75pct", "tm_steal_5pct_per_hit", etc.
                 try:
                     pct = int(e.split("_")[-1].replace("pct", ""))
                     tm_drain = max(tm_drain, pct / 100.0)
-                    tm_fill_drain = True
                 except Exception:
                     pass
 
         sim_sk = SimSkill(
             name=sk_name,
-            # Known calibration hack: -1 from displayed CD makes skills
-            # eligible 1 turn earlier than parity. The investigation:
-            #   - parity scheduler is 100% accurate to DWJ calc cast order
-            #   - parity-correct CDs (no -1) match real cadence
-            #   - But survival fails at bt 21 because cb_sim's per-holder
-            #     buff-tick model expires Maneater's BD copy before
-            #     Demytha's next A3 places another
-            # The -1 hack speeds skill cycles, increasing UK uptime, masking
-            # the survival-model gap. Without it cb_sim Maneater dies at bt 18
-            # despite Demytha A2's heal (now modeled at +2.5% MAX_HP per buff
-            # extended) firing every cycle.
-            #
-            # The real fix needs: per-holder buff-tick alignment matching real
-            # game (possibly ticking team buffs on placer's clock, not
-            # holder's), shield absorption modeling, and tighter Maneater A3
-            # cycle calibration. Multi-session work, deferred.
-            base_cd=max(0, sd["cd"] - 1) if sd["cd"] > 0 else 0,
+            # Real game CDs verified against ground-truth tick log:
+            # Maneater A3 fires every exactly 5 of his actions (matching
+            # raid_data CD=5); Demytha A2 every 3, A3 every 3 (both CD=3
+            # in raid_data after books). The previous -1 hack was always
+            # wrong — it dropped Demytha to CD=2 alternating A2↔A3 and
+            # never letting A1 fire, when real game has her cycle
+            # A2,A1,A3,A1 (17 A1 casts in 49 actions, verified).
+            base_cd=sd["cd"] if sd["cd"] > 0 else 0,
             multiplier=sd["mult"],
             scaling_stat=sd["stat"],
             hit_count=sd["hits"],
@@ -1501,7 +1624,6 @@ def build_sim_champion(name: str, stats: dict, position: int,
             grants_extra_turn=sd.get("grants_extra_turn", False),
             ignore_def=sd.get("ignore_def", 0.0),
             cb_tm_drain_pct=tm_drain,
-            self_tm_fill_from_drain=tm_fill_drain,
             delay_turns=int(sd.get("delay_turns", 0) or 0),
         )
         skills.append(sim_sk)
@@ -1590,7 +1712,8 @@ def run_potential_team(pt: dict, cb_element: int = 4,
                        generic_fillers: Optional[List[str]] = None,
                        use_current_gear: bool = True,
                        override_speeds: bool = False,
-                       override_priorities: bool = False) -> dict:
+                       override_priorities: bool = False,
+                       projection: bool = False) -> dict:
     """Phase 3 sim driver — consume a PotentialTeam dict from
     tools/potential_team.build_potential_team and run cb_sim against it.
 
@@ -1619,6 +1742,12 @@ def run_potential_team(pt: dict, cb_element: int = 4,
             its own AI rather than priority overrides.
         generic_fillers: list of hero names to substitute into generic
             "DPS" slots, in order. Defaults to ["Ninja"].
+        projection: when True (Phase 6), each hero is treated as having
+            every stat-bonus mastery, regardless of which masteries the
+            user has actually selected. Surfaces the projected ceiling
+            ("if I do every todo, what does this tune do?"). Off by
+            default — current mode runs against the user's actual mastery
+            picks.
     """
     if not pt or not pt.get("potential_team"):
         return {"error": "no potential_team — tune has blockers"}
@@ -1675,6 +1804,14 @@ def run_potential_team(pt: dict, cb_element: int = 4,
             missing_at_6star.append(nm)
             continue
         hero_arts = hero.get("artifacts", []) if use_current_gear else []
+        if projection:
+            # Phase 6: project the hero at full progression — every
+            # stat-bonus mastery applied + every artifact substat
+            # glyphed to its max-rarity ceiling. Mutates a shallow copy
+            # so we don't poison the cached heroes_data.
+            hero = dict(hero)
+            hero["_project_full_masteries"] = True
+            hero["_project_max_glyphs"] = True
         stats = calc_stats(hero, hero_arts, account)
         if leader_aura:
             stats = apply_leader_aura(stats, leader_aura)
@@ -1723,6 +1860,20 @@ def run_potential_team(pt: dict, cb_element: int = 4,
         "tune_slug": pt.get("tune_slug"),
         "calc_variant": pt.get("calc_variant"),
         "team_names": team_names,
+    }
+    # Phase 6: surface which projection levers were applied so the
+    # dashboard can show *why* the sim landed on this number.
+    result["projection_meta"] = {
+        "projection_mode": projection,
+        "stars": "6★ assumed (heroes_6star.json)",
+        "level": 60,
+        "books": "applied via DWJ calc cd_after_books" if pt.get("calc_variant") else "skill_db level_bonuses",
+        "masteries": "all stat-bonus" if projection else "user's selected (15/66)",
+        "stat_blessing": "current blessing via hero_computed_stats",
+        "skill_modifier_blessing": "NOT YET APPLIED (Phantom Touch, Crushing Rend, etc.)",
+        "glyphs": "current substats (no max-glyph projection)",
+        "gear": "current equipped (sim) · planned via /api/tune-gear-plan" if use_current_gear else "none",
+        "account_auras": "Great Hall + Arena + Empower from hero_computed_stats",
     }
     return result
 
