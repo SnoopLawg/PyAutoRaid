@@ -1820,10 +1820,20 @@ function SellPreviewModal({items, onClose}) {
   const [selling, setSelling] = React.useState(false);
   const [confirm, setConfirm] = React.useState(false);
   const [result, setResult] = React.useState(null);
+  const [elapsed, setElapsed] = React.useState(0);  // seconds since sell started
   const isLoading = items == null;
   const safeItems = Array.isArray(items) ? items : [];
   const ruleIds = [...new Set(safeItems.map(i => i.rule_id))];
   const filtered = filter === 'all' ? safeItems : safeItems.filter(i => i.rule_id === filter);
+
+  // Tick a counter while selling so the user sees the request is active
+  React.useEffect(() => {
+    if (!selling) return;
+    setElapsed(0);
+    const t0 = Date.now();
+    const handle = setInterval(() => setElapsed(Math.floor((Date.now() - t0) / 1000)), 250);
+    return () => clearInterval(handle);
+  }, [selling]);
 
   const sellNow = async () => {
     setSelling(true); setResult(null);
@@ -1877,12 +1887,16 @@ function SellPreviewModal({items, onClose}) {
                         style={{height: 26, padding:'0 12px', fontSize: 11,
                                 background:'oklch(0.55 0.18 25)', color:'#fff',
                                 borderColor:'oklch(0.55 0.18 25)'}}>
-                  {selling ? `Selling…` : `Confirm sell ${filtered.length}`}
+                  {selling
+                    ? `Selling ${filtered.length}… ${elapsed}s`
+                    : `Confirm sell ${filtered.length}`}
                 </button>
-                <button className="btn" onClick={() => setConfirm(false)} disabled={selling}
-                        style={{height: 26, padding:'0 12px', fontSize: 11}}>
-                  Cancel
-                </button>
+                {!selling && (
+                  <button className="btn" onClick={() => setConfirm(false)}
+                          style={{height: 26, padding:'0 12px', fontSize: 11}}>
+                    Cancel
+                  </button>
+                )}
               </>
             ) : (
               <button className="btn" onClick={() => setConfirm(true)}
