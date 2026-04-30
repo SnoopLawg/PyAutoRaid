@@ -1031,8 +1031,8 @@ function PageHeroes({s}) {
   );
 
   return (
-    <div style={{display:'grid', gridTemplateColumns:'1fr 300px', gap: 10, minHeight: '100%'}}>
-      <div className="card" style={{padding: 0, display:'flex', flexDirection:'column', overflow:'hidden'}}>
+    <div style={{display:'grid', gridTemplateColumns:'1fr 340px', gap: 10, minHeight: '100%', maxHeight: '100%', minWidth: 0}}>
+      <div className="card" style={{padding: 0, display:'flex', flexDirection:'column', overflow:'hidden', minWidth: 0}}>
         {/* Tab bar */}
         <div style={{padding:'6px 6px 0', borderBottom:'1px solid var(--border)', display:'flex', gap: 4, background:'var(--bg-subtle)'}}>
           {[['heroes', `Heroes · ${s.heroes.length}`], ['artifacts', `Artifacts · ${allArtifacts.length}`], ['gaps', 'Gaps']].map(([k, label]) => (
@@ -1391,7 +1391,7 @@ function PageHeroes({s}) {
       </div>
 
       {/* Right sidebar */}
-      <div style={{display:'grid', gridTemplateRows:'auto auto 1fr', gap: 10, minHeight: 0}}>
+      <div style={{display:'grid', gridTemplateRows:'auto auto minmax(0, 1fr)', gap: 10, minHeight: 0, maxHeight: '100%'}}>
         <div className="card" style={{padding: 16}}>
           <div className="card-title" style={{marginBottom: 10}}>Vault</div>
           <div style={{display:'flex', justifyContent:'space-between', fontSize: 12, marginBottom: 6}}>
@@ -1521,7 +1521,7 @@ function SellRulesPanel() {
 
   return (
     <>
-      <div className="card" style={{padding: 16}}>
+      <div className="card scroll" style={{padding: 16, overflowY:'auto', minHeight: 0, maxHeight:'100%'}}>
         <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom: 10}}>
           <div className="card-title">Sell rules</div>
           <span className="mono" style={{fontSize: 11, color:'var(--accent)'}}>
@@ -1540,6 +1540,7 @@ function SellRulesPanel() {
                 background:'var(--bg-subtle)', borderRadius: 4,
                 opacity: r.enabled ? 1 : 0.55,
                 borderLeft: `2px solid ${r.enabled ? 'var(--accent)' : 'var(--border)'}`,
+                minWidth: 0, overflow:'hidden',
               }}>
                 <div style={{display:'flex', alignItems:'center', gap: 8,
                              padding:'6px 8px', fontSize: 11.5, cursor:'pointer'}}
