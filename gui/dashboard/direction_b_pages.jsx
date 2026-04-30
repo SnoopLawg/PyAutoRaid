@@ -1486,10 +1486,29 @@ function SellRulesPanel() {
     setLoading(false);
   }, []);
 
-  const toggleRule = (idx) => {
-    const next = {...cfg, rules: cfg.rules.map((r, i) => i === idx ? {...r, enabled: !r.enabled} : r)};
-    setCfg(next); setDirty(true);
+  const updateRule = (idx, patch) => {
+    setCfg({...cfg, rules: cfg.rules.map((r, i) => i === idx ? {...r, ...patch} : r)});
+    setDirty(true);
   };
+  const toggleRule = (idx) => updateRule(idx, {enabled: !cfg.rules[idx].enabled});
+  const deleteRule = (idx) => {
+    setCfg({...cfg, rules: cfg.rules.filter((_, i) => i !== idx)});
+    setDirty(true);
+  };
+  const moveRule = (idx, dir) => {
+    const next = [...cfg.rules];
+    const target = idx + dir;
+    if (target < 0 || target >= next.length) return;
+    [next[idx], next[target]] = [next[target], next[idx]];
+    setCfg({...cfg, rules: next}); setDirty(true);
+  };
+  const addRule = () => {
+    const id = `rule_${Date.now().toString(36)}`;
+    setCfg({...cfg, rules: [...cfg.rules, {id, name: 'New rule', enabled: false}]});
+    setDirty(true);
+  };
+  const [expanded, setExpanded] = React.useState(null);  // index of expanded rule
+  const [showAdvanced, setShowAdvanced] = React.useState(false);
 
   if (!cfg) {
     return (
@@ -1515,27 +1534,49 @@ function SellRulesPanel() {
         <div style={{display:'flex', flexDirection:'column', gap: 6, marginBottom: 10}}>
           {cfg.rules.map((r, i) => {
             const ruleCount = (summary?.by_rule || {})[r.id] || 0;
+            const isOpen = expanded === i;
             return (
-              <label key={r.id || i} style={{
-                display:'flex', alignItems:'center', gap: 8,
-                padding:'6px 8px', background:'var(--bg-subtle)', borderRadius: 4,
-                fontSize: 11.5, cursor: 'pointer',
-                opacity: r.enabled ? 1 : 0.5,
+              <div key={r.id || i} style={{
+                background:'var(--bg-subtle)', borderRadius: 4,
+                opacity: r.enabled ? 1 : 0.55,
                 borderLeft: `2px solid ${r.enabled ? 'var(--accent)' : 'var(--border)'}`,
               }}>
-                <input type="checkbox" checked={!!r.enabled}
-                       onChange={() => toggleRule(i)}
-                       style={{margin: 0, cursor:'pointer'}}/>
-                <span style={{flex: 1, minWidth: 0}} className="truncate">{r.name}</span>
-                {r.enabled && (
-                  <span className="mono" style={{
-                    fontSize: 10, color:'var(--text-sub)',
-                    minWidth: 30, textAlign:'right',
-                  }}>{ruleCount}</span>
+                <div style={{display:'flex', alignItems:'center', gap: 8,
+                             padding:'6px 8px', fontSize: 11.5, cursor:'pointer'}}
+                     onClick={() => setExpanded(isOpen ? null : i)}>
+                  <input type="checkbox" checked={!!r.enabled}
+                         onChange={(e) => { e.stopPropagation(); toggleRule(i); }}
+                         onClick={(e) => e.stopPropagation()}
+                         style={{margin: 0, cursor:'pointer'}}/>
+                  <span style={{flex: 1, minWidth: 0}} className="truncate">{r.name}</span>
+                  {r.enabled && (
+                    <span className="mono" style={{
+                      fontSize: 10, color:'var(--text-sub)',
+                      minWidth: 30, textAlign:'right',
+                    }}>{ruleCount}</span>
+                  )}
+                  <span style={{fontSize: 10, color:'var(--text-dim)', width: 12, textAlign:'center'}}>
+                    {isOpen ? '▾' : '▸'}
+                  </span>
+                </div>
+                {isOpen && (
+                  <RuleEditor
+                    rule={r}
+                    onChange={(patch) => updateRule(i, patch)}
+                    onDelete={() => deleteRule(i)}
+                    onMoveUp={i > 0 ? () => moveRule(i, -1) : null}
+                    onMoveDown={i < cfg.rules.length - 1 ? () => moveRule(i, 1) : null}
+                  />
                 )}
-              </label>
+              </div>
             );
           })}
+          <button className="btn" onClick={addRule}
+                  style={{height: 24, fontSize: 11, marginTop: 2,
+                          color:'var(--text-sub)',
+                          borderStyle:'dashed'}}>
+            + Add rule
+          </button>
         </div>
         <div style={{display:'flex', gap: 6}}>
           <button className="btn" onClick={save} disabled={!dirty || loading}
@@ -1550,6 +1591,49 @@ function SellRulesPanel() {
             Preview
           </button>
         </div>
+        <div style={{marginTop: 10}}>
+          <button onClick={() => setShowAdvanced(!showAdvanced)}
+                  style={{background:'transparent', border:0, padding: 0,
+                          fontSize: 10.5, color:'var(--text-sub)', cursor:'pointer',
+                          display:'flex', alignItems:'center', gap: 4}}>
+            <span>{showAdvanced ? '▾' : '▸'}</span>
+            <span>Global config</span>
+          </button>
+          {showAdvanced && (
+            <div style={{padding:'8px 4px', display:'flex', flexDirection:'column', gap: 8, marginTop: 6}}>
+              <div>
+                <div style={{fontSize: 10, color:'var(--text-dim)', marginBottom: 3}}>Junk sets (always sell)</div>
+                <CSVField value={cfg.junk_sets || []}
+                          onChange={v => { setCfg({...cfg, junk_sets: v}); setDirty(true); }}
+                          placeholder="Avenge, Frenzy, …"/>
+              </div>
+              <div>
+                <div style={{fontSize: 10, color:'var(--text-dim)', marginBottom: 3}}>Useful substats</div>
+                <CSVField value={cfg.useful_substats || []}
+                          onChange={v => { setCfg({...cfg, useful_substats: v}); setDirty(true); }}
+                          placeholder="SPD, ACC, CR, CD, HP%, …"/>
+              </div>
+              <div>
+                <div style={{fontSize: 10, color:'var(--text-dim)', marginBottom: 3}}>Slot → required primary</div>
+                {Object.entries(cfg.slot_required_primary || {}).map(([slot, prims]) => (
+                  <div key={slot} style={{display:'flex', gap: 4, marginBottom: 3, alignItems:'center'}}>
+                    <span className="mono" style={{fontSize: 10, color:'var(--text-sub)', width: 56}}>{slot}</span>
+                    <CSVField value={prims}
+                              onChange={v => {
+                                const next = {...(cfg.slot_required_primary || {}), [slot]: v};
+                                setCfg({...cfg, slot_required_primary: next}); setDirty(true);
+                              }}/>
+                  </div>
+                ))}
+              </div>
+              <label style={{display:'flex', alignItems:'center', gap: 6, fontSize: 11}}>
+                <input type="checkbox" checked={!!cfg.exclude_equipped}
+                       onChange={e => { setCfg({...cfg, exclude_equipped: e.target.checked}); setDirty(true); }}/>
+                <span>Exclude equipped pieces (recommended)</span>
+              </label>
+            </div>
+          )}
+        </div>
         <div style={{fontSize: 10, color:'var(--text-dim)', marginTop: 8, lineHeight: 1.4}}>
           Settings file: <span className="mono">data/sell_rules.json</span>
         </div>
@@ -1558,6 +1642,165 @@ function SellRulesPanel() {
         <SellPreviewModal items={previewItems} onClose={() => setShowPreview(false)}/>
       )}
     </>
+  );
+}
+
+// --- helpers for rule editing -----------------------------------------------
+
+const SLOT_OPTIONS = ['Helmet','Chest','Gloves','Boots','Weapon','Shield','Ring','Amulet','Banner'];
+const PRIMARY_OPTIONS = ['HP','HP%','ATK','ATK%','DEF','DEF%','SPD','RES','ACC','CR','CD'];
+
+function CSVField({value, onChange, placeholder}) {
+  const [raw, setRaw] = React.useState((value || []).join(', '));
+  React.useEffect(() => { setRaw((value || []).join(', ')); }, [value]);
+  return (
+    <input
+      type="text" value={raw} placeholder={placeholder || ''}
+      onChange={e => setRaw(e.target.value)}
+      onBlur={() => {
+        const parsed = raw.split(',').map(s => s.trim()).filter(Boolean);
+        onChange(parsed);
+      }}
+      style={{
+        width:'100%', boxSizing:'border-box', height: 22,
+        padding:'0 6px', fontSize: 11, fontFamily:'inherit',
+        background:'var(--bg)', color:'var(--text)',
+        border:'1px solid var(--border)', borderRadius: 3,
+      }}/>
+  );
+}
+
+function NumField({value, onChange, placeholder, min, max}) {
+  return (
+    <input
+      type="number" value={value ?? ''}
+      placeholder={placeholder || ''}
+      min={min} max={max}
+      onChange={e => {
+        const v = e.target.value;
+        if (v === '') onChange(undefined);
+        else onChange(Number(v));
+      }}
+      style={{
+        width: 56, boxSizing:'border-box', height: 22,
+        padding:'0 4px', fontSize: 11, fontFamily:'inherit',
+        background:'var(--bg)', color:'var(--text)',
+        border:'1px solid var(--border)', borderRadius: 3,
+      }}/>
+  );
+}
+
+function MultiSelect({options, value, onChange}) {
+  const set = new Set(value || []);
+  return (
+    <div style={{display:'flex', flexWrap:'wrap', gap: 3}}>
+      {options.map(o => {
+        const on = set.has(o);
+        return (
+          <button key={o} onClick={() => {
+            const next = on ? value.filter(v => v !== o) : [...(value || []), o];
+            onChange(next);
+          }} style={{
+            height: 20, padding:'0 6px', fontSize: 10,
+            background: on ? 'var(--accent)' : 'transparent',
+            color: on ? 'var(--bg)' : 'var(--text-sub)',
+            border:`1px solid ${on ? 'var(--accent)' : 'var(--border)'}`,
+            borderRadius: 3, cursor:'pointer',
+          }}>{o}</button>
+        );
+      })}
+    </div>
+  );
+}
+
+function RuleEditor({rule, onChange, onDelete, onMoveUp, onMoveDown}) {
+  const labelStyle = {fontSize: 10, color:'var(--text-dim)', marginBottom: 2, marginTop: 4};
+  return (
+    <div style={{padding:'8px 10px 10px', borderTop:'1px solid var(--border)', display:'flex', flexDirection:'column', gap: 4}}>
+      <div>
+        <div style={labelStyle}>Name</div>
+        <input type="text" value={rule.name || ''}
+               onChange={e => onChange({name: e.target.value})}
+               style={{width:'100%', boxSizing:'border-box', height: 22,
+                       padding:'0 6px', fontSize: 11, fontFamily:'inherit',
+                       background:'var(--bg)', color:'var(--text)',
+                       border:'1px solid var(--border)', borderRadius: 3}}/>
+      </div>
+      <div style={{display:'flex', gap: 12}}>
+        <div>
+          <div style={labelStyle}>Rank</div>
+          <div style={{display:'flex', alignItems:'center', gap: 4}}>
+            <NumField value={rule.min_rank} onChange={v => onChange({min_rank: v})} placeholder="min" min={1} max={6}/>
+            <span style={{color:'var(--text-dim)', fontSize: 10}}>–</span>
+            <NumField value={rule.max_rank} onChange={v => onChange({max_rank: v})} placeholder="max" min={1} max={6}/>
+          </div>
+        </div>
+        <div>
+          <div style={labelStyle}>Rarity</div>
+          <div style={{display:'flex', alignItems:'center', gap: 4}}>
+            <NumField value={rule.min_rarity} onChange={v => onChange({min_rarity: v})} placeholder="min" min={1} max={6}/>
+            <span style={{color:'var(--text-dim)', fontSize: 10}}>–</span>
+            <NumField value={rule.max_rarity} onChange={v => onChange({max_rarity: v})} placeholder="max" min={1} max={6}/>
+          </div>
+        </div>
+        <div>
+          <div style={labelStyle}>Useful subs</div>
+          <div style={{display:'flex', alignItems:'center', gap: 4}}>
+            <NumField value={rule.min_useful_subs} onChange={v => onChange({min_useful_subs: v})} placeholder="min" min={0} max={4}/>
+            <span style={{color:'var(--text-dim)', fontSize: 10}}>–</span>
+            <NumField value={rule.max_useful_subs} onChange={v => onChange({max_useful_subs: v})} placeholder="max" min={0} max={4}/>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div style={labelStyle}>Slots (any of)</div>
+        <MultiSelect options={SLOT_OPTIONS} value={rule.slots || []}
+                     onChange={v => onChange({slots: v.length ? v : undefined})}/>
+      </div>
+      <div>
+        <div style={labelStyle}>Primary stat</div>
+        <div style={{display:'flex', flexDirection:'column', gap: 4}}>
+          <label style={{display:'flex', alignItems:'center', gap: 4, fontSize: 10.5}}>
+            <input type="checkbox" checked={!!rule.primary_not_in_slot_required}
+                   onChange={e => onChange({primary_not_in_slot_required: e.target.checked || undefined})}/>
+            <span>Primary NOT in slot's required list</span>
+          </label>
+          <div>
+            <div style={labelStyle}>Primary IS in:</div>
+            <MultiSelect options={PRIMARY_OPTIONS} value={rule.primary_in || []}
+                         onChange={v => onChange({primary_in: v.length ? v : undefined})}/>
+          </div>
+          <div>
+            <div style={labelStyle}>Primary NOT in:</div>
+            <MultiSelect options={PRIMARY_OPTIONS} value={rule.primary_not_in || []}
+                         onChange={v => onChange({primary_not_in: v.length ? v : undefined})}/>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div style={labelStyle}>Sets</div>
+        <div style={{display:'flex', flexDirection:'column', gap: 3}}>
+          <label style={{display:'flex', alignItems:'center', gap: 4, fontSize: 10.5}}>
+            <input type="checkbox" checked={!!rule.set_in_junk_list}
+                   onChange={e => onChange({set_in_junk_list: e.target.checked || undefined})}/>
+            <span>Set in global junk list</span>
+          </label>
+          <CSVField value={rule.sets || []}
+                    onChange={v => onChange({sets: v.length ? v : undefined})}
+                    placeholder="Specific sets (comma-separated)"/>
+        </div>
+      </div>
+      <div style={{display:'flex', gap: 4, marginTop: 6}}>
+        {onMoveUp && <button className="btn" onClick={onMoveUp} style={{height: 22, padding:'0 8px', fontSize: 10}}>↑</button>}
+        {onMoveDown && <button className="btn" onClick={onMoveDown} style={{height: 22, padding:'0 8px', fontSize: 10}}>↓</button>}
+        <span style={{flex: 1}}/>
+        <button onClick={onDelete} style={{height: 22, padding:'0 8px', fontSize: 10,
+                background:'transparent', color:'oklch(0.70 0.18 25)',
+                border:'1px solid oklch(0.40 0.10 25)', borderRadius: 3, cursor:'pointer'}}>
+          Delete
+        </button>
+      </div>
+    </div>
   );
 }
 
