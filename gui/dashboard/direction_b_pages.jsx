@@ -1802,11 +1802,16 @@ function RuleEditor({rule, onChange, onDelete, onMoveUp, onMoveDown}) {
 
 function SellPreviewModal({items, onClose}) {
   const [filter, setFilter] = React.useState('all');
-  const ruleIds = [...new Set(items.map(i => i.rule_id))];
-  const filtered = filter === 'all' ? items : items.filter(i => i.rule_id === filter);
-  return (
+  const safeItems = Array.isArray(items) ? items : [];
+  const ruleIds = [...new Set(safeItems.map(i => i.rule_id))];
+  const filtered = filter === 'all' ? safeItems : safeItems.filter(i => i.rule_id === filter);
+  // Render to document.body via portal — the modal is rendered inside the
+  // sell-rules card which is overflow:auto; some browsers will clip
+  // position:fixed children of an overflow ancestor when a paint/transform
+  // contain context exists. Portal to body sidesteps it entirely.
+  const node = (
     <div onClick={onClose} style={{
-      position:'fixed', inset: 0, background:'rgba(0,0,0,0.6)', zIndex: 200,
+      position:'fixed', inset: 0, background:'rgba(0,0,0,0.6)', zIndex: 9999,
       display:'flex', alignItems:'center', justifyContent:'center', padding: 20,
     }}>
       <div onClick={e => e.stopPropagation()} className="card scroll" style={{
@@ -1859,6 +1864,10 @@ function SellPreviewModal({items, onClose}) {
       </div>
     </div>
   );
+  if (typeof document !== 'undefined' && ReactDOM && ReactDOM.createPortal) {
+    return ReactDOM.createPortal(node, document.body);
+  }
+  return node;
 }
 
 function CBRunDetailModal({s, lr, team, totalDealt, totalTaken, rarityColor, onClose}) {
