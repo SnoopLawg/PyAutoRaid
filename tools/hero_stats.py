@@ -41,7 +41,7 @@ except Exception:
     }
 
 
-def compute_hero_actual_stats(hero):
+def compute_hero_actual_stats(hero, *, base_computed: dict | None = None):
     """Return gear-inclusive actual stats (SPD/HP/ATK/DEF/ACC/RES/CR/CD).
 
     Source: hero dict from /all-heroes (must have base_stats + artifacts +
@@ -49,9 +49,26 @@ def compute_hero_actual_stats(hero):
     (base + artifacts + sets + Lore of Steel + empowerment). Arena/blessing/
     Faction Guardians/relic bonuses are NOT included — those come from the
     mod's /hero-computed-stats endpoint if needed.
+
+    Bug history (2026-05-01): /all-heroes returns the rank-6 *ascended*
+    base stats (e.g. Cardiel HP=119), NOT the level-60 *scaled* base
+    (HP=19,650). Using the ascended base directly under-counts %-bonus
+    artifacts by a factor of ~165x. Pass `base_computed` from the mod's
+    /hero-computed-stats endpoint to override with the level-scaled
+    Basic-column values; without it, the calc still works for low-rank
+    heroes but misreports L60 6★ stats badly.
     """
-    base = hero.get("base_stats") or {}
-    flat = {k: float(base.get(k, 0) or 0) for k in ["HP", "ATK", "DEF", "SPD", "RES", "ACC", "CR", "CD"]}
+    if base_computed:
+        # Mod-supplied level-scaled base (matches in-game Basic column).
+        flat = {k: float(base_computed.get(k, 0) or 0)
+                for k in ["HP", "ATK", "DEF", "SPD", "RES", "ACC", "CR", "CD"]}
+        # The mod returns CR/CD as fractions (0.1 / 0.5). Convert to
+        # percentage shape that downstream code expects.
+        flat["CR"] *= 100
+        flat["CD"] *= 100
+    else:
+        base = hero.get("base_stats") or {}
+        flat = {k: float(base.get(k, 0) or 0) for k in ["HP", "ATK", "DEF", "SPD", "RES", "ACC", "CR", "CD"]}
     art_flat = dict.fromkeys(flat, 0.0)
     art_pct = dict.fromkeys(flat, 0.0)
     sets = {}
@@ -156,6 +173,110 @@ def _format_breakdown(name: str, stats: dict) -> str:
     return "\n".join(out)
 
 
+def fetch_computed_from_mod(mod_url: str = "http://localhost:6790") -> dict[int, dict]:
+    """Live-pull /hero-computed-stats and return {hero_id: stats_dict}.
+
+    The mod returns the game's own per-column breakdown:
+    base_computed, blessing_bonus, empower_bonus, great_hall_bonus
+    (which is actually Affinity Bonuses), arena_bonus, and (sometimes)
+    relic_bonus. Empty dict on any error.
+    """
+    import json as _json
+    import urllib.request
+    try:
+        with urllib.request.urlopen(f"{mod_url}/hero-computed-stats?min_grade=6", timeout=30) as r:
+            data = _json.loads(r.read().decode("utf-8"))
+        return {int(h["id"]): h for h in data.get("heroes", [])}
+    except Exception:
+        return {}
+
+
+def diff_vs_mod(hero: dict, mod_computed: dict, *, tolerance: float = 1.0) -> list[dict]:
+    """Compare our PyAutoRaid calc to the mod's /hero-computed-stats.
+
+    Returns a list of per-stat diff rows. Each row:
+      {stat, our, mod_total, mod_breakdown:{base,blessing,...}, ok, delta}
+
+    ok=True if abs(our - mod_total) <= tolerance.
+
+    The mod doesn't break out Artifacts/Masteries/Mastery columns —
+    those still come from our own calc. We compare the SUM of all
+    columns we both compute (base + blessing + empower + affinity +
+    arena + relic) against the corresponding components of `our`.
+    """
+    # Use the mod's level-scaled base_computed for an apples-to-apples
+    # comparison; without it our calc applies %-artifacts to a level-1
+    # base and underflows badly.
+    ours = compute_hero_actual_stats(hero, base_computed=mod_computed.get("base_computed"))
+    rows: list[dict] = []
+
+    base = mod_computed.get("base_computed") or {}
+    blessing = mod_computed.get("blessing_bonus") or {}
+    empower = mod_computed.get("empower_bonus") or {}
+    affinity = mod_computed.get("great_hall_bonus") or {}  # mod misnamed; this is Affinity
+    arena = mod_computed.get("arena_bonus") or {}
+    relic = mod_computed.get("relic_bonus") or {}
+
+    for stat in ("HP", "ATK", "DEF", "SPD", "RES", "ACC", "CR", "CD"):
+        b = base.get(stat, 0)
+        bl = blessing.get(stat, 0)
+        em = empower.get(stat, 0)
+        af = affinity.get(stat, 0)
+        ar = arena.get(stat, 0)
+        rl = relic.get(stat, 0)
+        # Sum what the mod gave us; the rest (Artifacts, Classic Arena,
+        # Masteries, Faction Guardians, Area Bonuses) we currently miss.
+        mod_partial = b + bl + em + af + ar + rl
+        our_val = ours.get(stat, 0)
+        delta = our_val - mod_partial
+        rows.append({
+            "stat": stat,
+            "our": our_val,
+            "mod_partial": round(mod_partial, 2),
+            "delta": round(delta, 2),
+            "breakdown": {
+                "base": b, "blessing": bl, "empower": em,
+                "affinity_(great_hall_misnamed)": af,
+                "arena_(unknown_meaning)": ar,
+                "relic": rl,
+            },
+            # ok ignored for now — the mod isn't returning everything yet,
+            # so deltas are expected. Surfaces the GAP, doesn't gate on it.
+        })
+    return rows
+
+
+def _format_breakdown_full(name: str, hero_meta: dict, mod_computed: dict | None) -> str:
+    """Render the per-column Total Stats breakdown."""
+    ours = compute_hero_actual_stats(
+        hero_meta,
+        base_computed=mod_computed.get("base_computed") if mod_computed else None,
+    )
+    out = [f"{name}", "=" * len(name)]
+    out.append(f"  {'stat':5s}  {'our':>7s}  {'mod':>7s}  {'delta':>7s}  breakdown (mod)")
+    if not mod_computed:
+        out.append("  (mod /hero-computed-stats not available — only our calc shown)")
+        for stat in ("HP", "ATK", "DEF", "SPD", "RES", "ACC", "CR", "CD"):
+            out.append(f"  {stat:5s}  {ours.get(stat,0):>7}")
+        return "\n".join(out)
+    rows = diff_vs_mod(hero_meta, mod_computed)
+    for r in rows:
+        b = r["breakdown"]
+        # compact breakdown string — only nonzero parts
+        parts = []
+        for k in ("base", "blessing", "empower"):
+            if b[k]:
+                parts.append(f"{k[:3]}={b[k]:.0f}")
+        if b["affinity_(great_hall_misnamed)"]:
+            parts.append(f"aff={b['affinity_(great_hall_misnamed)']:.0f}")
+        if b["arena_(unknown_meaning)"]:
+            parts.append(f"arena?={b['arena_(unknown_meaning)']:.0f}")
+        if b["relic"]:
+            parts.append(f"rel={b['relic']:.0f}")
+        out.append(f"  {r['stat']:5s}  {r['our']:>7}  {r['mod_partial']:>7}  {r['delta']:>+7}  {' '.join(parts)}")
+    return "\n".join(out)
+
+
 def _main() -> int:
     """CLI: print gear-inclusive stats for a named hero from the live mod."""
     import argparse
@@ -168,6 +289,9 @@ def _main() -> int:
     ap.add_argument("--mod-url", default="http://localhost:6790")
     ap.add_argument("--json", action="store_true",
                     help="emit JSON instead of formatted text")
+    ap.add_argument("--vs-mod", action="store_true",
+                    help="diff our calc against the mod's /hero-computed-stats "
+                         "(surfaces missing columns / mismatches)")
     args = ap.parse_args()
 
     heroes = fetch_heroes_from_mod(args.mod_url)
@@ -178,6 +302,20 @@ def _main() -> int:
     if not hero:
         print(f"ERR: no hero matching {args.name!r}", file=sys.stderr)
         return 1
+
+    if args.vs_mod:
+        mod_computed = fetch_computed_from_mod(args.mod_url).get(hero["id"])
+        if args.json:
+            print(_json.dumps({
+                "name": hero.get("name"), "id": hero.get("id"),
+                "ours": compute_hero_actual_stats(hero),
+                "mod_breakdown": mod_computed,
+                "diff": diff_vs_mod(hero, mod_computed or {}),
+            }, indent=2))
+        else:
+            print(_format_breakdown_full(hero.get("name", "?"), hero, mod_computed))
+        return 0
+
     stats = compute_hero_actual_stats(hero)
     if args.json:
         print(_json.dumps({"name": hero.get("name"), "id": hero.get("id"), "stats": stats}, indent=2))
