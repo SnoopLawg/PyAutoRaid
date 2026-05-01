@@ -227,15 +227,24 @@ def compute_hero_actual_stats(hero, *, base_computed: dict | None = None,
             # CR / CD: artifact contribution from primary + substats only.
             out[k] = round(base_val + art_val + extra_val + mast_val + emp_val, 1)
 
-    # Layer in the mod's per-column bonuses if provided. These come from
-    # /hero-computed-stats and represent Affinity (mislabeled "great_hall_bonus"),
-    # Classic Arena (= mystery "arena_bonus"), Blessing, Empowerment, Relic.
-    # We add them on top of our base + artifacts + masteries calc.
+    # Layer in the mod's per-column bonuses. Field names match the
+    # in-game Total Stats columns after the 2026-05-01 mod patch:
+    # - affinity_bonus (was great_hall_bonus; Village faction-guardian towers)
+    # - classic_arena_bonus (was arena_bonus; user's CURRENT arena league)
+    # - faction_guardians_bonus (NEW; Academy progression)
+    # - mastery_bonus (NEW; replaces our static-derived calc)
+    # - blessing_bonus, empower_bonus, relic_bonus (unchanged)
     if mod_bonuses:
-        # Map: which mod field contributes to which in-game column
+        # NOTE: deliberately NOT layering mod's mastery_bonus — verified
+        # 2026-05-01 that CalcMasteriesBonus returns CR=10% for Cardiel
+        # but the in-game Total Stats screen + static data both show +5%.
+        # The mod's IL2CPP call has a bug we don't yet understand; our
+        # static-derived calc (computed above into mastery_flat/pct) is
+        # more accurate. Revisit if/when the mod call is fixed.
         column_to_field = {
-            "affinity": "great_hall_bonus",
-            "arena_unknown": "arena_bonus",  # mystery for now
+            "affinity": "affinity_bonus",
+            "classic_arena": "classic_arena_bonus",
+            "faction_guardians": "faction_guardians_bonus",
             "blessing": "blessing_bonus",
             "empower_mod": "empower_bonus",
             "relic": "relic_bonus",
@@ -334,20 +343,31 @@ def diff_vs_mod(hero: dict, mod_computed: dict, *, tolerance: float = 1.0) -> li
     base = mod_computed.get("base_computed") or {}
     blessing = mod_computed.get("blessing_bonus") or {}
     empower = mod_computed.get("empower_bonus") or {}
-    affinity = mod_computed.get("great_hall_bonus") or {}  # mod misnamed; this is Affinity
-    arena = mod_computed.get("arena_bonus") or {}
+    affinity = mod_computed.get("affinity_bonus") or {}
+    classic_arena = mod_computed.get("classic_arena_bonus") or {}
     relic = mod_computed.get("relic_bonus") or {}
+    mastery = mod_computed.get("mastery_bonus") or {}
+    faction_guardians = mod_computed.get("faction_guardians_bonus") or {}
 
     for stat in ("HP", "ATK", "DEF", "SPD", "RES", "ACC", "CR", "CD"):
         b = base.get(stat, 0)
+        # CR/CD: convert mod fractions (0.1, 0.5) to percentage form (10, 50)
+        if stat in ("CR", "CD"):
+            b = b * 100
         bl = blessing.get(stat, 0)
         em = empower.get(stat, 0)
         af = affinity.get(stat, 0)
-        ar = arena.get(stat, 0)
+        ca = classic_arena.get(stat, 0)
         rl = relic.get(stat, 0)
-        # Sum what the mod gave us; the rest (Artifacts, Classic Arena,
-        # Masteries, Faction Guardians, Area Bonuses) we currently miss.
-        mod_partial = b + bl + em + af + ar + rl
+        ms = mastery.get(stat, 0)
+        fg = faction_guardians.get(stat, 0)
+        if stat in ("CR", "CD"):
+            af = af * 100; ca = ca * 100; rl = rl * 100
+            ms = ms * 100; fg = fg * 100
+        # Mod partial = sum of every column the mod can compute. Doesn't
+        # include Artifacts (we still compute that) or Area Bonuses
+        # (per-location, not in payload yet).
+        mod_partial = b + bl + em + af + ca + rl + ms + fg
         our_val = ours.get(stat, 0)
         delta = our_val - mod_partial
         rows.append({
@@ -357,12 +377,9 @@ def diff_vs_mod(hero: dict, mod_computed: dict, *, tolerance: float = 1.0) -> li
             "delta": round(delta, 2),
             "breakdown": {
                 "base": b, "blessing": bl, "empower": em,
-                "affinity_(great_hall_misnamed)": af,
-                "arena_(unknown_meaning)": ar,
-                "relic": rl,
+                "affinity": af, "classic_arena": ca, "relic": rl,
+                "mastery_from_mod": ms, "faction_guardians": fg,
             },
-            # ok ignored for now — the mod isn't returning everything yet,
-            # so deltas are expected. Surfaces the GAP, doesn't gate on it.
         })
     return rows
 
@@ -384,17 +401,19 @@ def _format_breakdown_full(name: str, hero_meta: dict, mod_computed: dict | None
     rows = diff_vs_mod(hero_meta, mod_computed)
     for r in rows:
         b = r["breakdown"]
-        # compact breakdown string — only nonzero parts
         parts = []
-        for k in ("base", "blessing", "empower"):
-            if b[k]:
-                parts.append(f"{k[:3]}={b[k]:.0f}")
-        if b["affinity_(great_hall_misnamed)"]:
-            parts.append(f"aff={b['affinity_(great_hall_misnamed)']:.0f}")
-        if b["arena_(unknown_meaning)"]:
-            parts.append(f"arena?={b['arena_(unknown_meaning)']:.0f}")
-        if b["relic"]:
-            parts.append(f"rel={b['relic']:.0f}")
+        # Compact breakdown — only nonzero parts to keep lines short.
+        for label, key in [
+            ("bas", "base"), ("art", None),  # placeholder
+            ("aff", "affinity"), ("arn", "classic_arena"),
+            ("mas", "mastery_from_mod"), ("fg", "faction_guardians"),
+            ("emp", "empower"), ("ble", "blessing"), ("rel", "relic"),
+        ]:
+            if key is None:
+                continue
+            v = b.get(key, 0)
+            if v:
+                parts.append(f"{label}={v:.0f}")
         out.append(f"  {r['stat']:5s}  {r['our']:>7}  {r['mod_partial']:>7}  {r['delta']:>+7}  {' '.join(parts)}")
     return "\n".join(out)
 

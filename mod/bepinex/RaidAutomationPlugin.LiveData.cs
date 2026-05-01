@@ -1135,24 +1135,25 @@ namespace RaidAutomation
                                 }
                                 catch { }
 
-                                // Always try constructing from known league value
+                                // Read the user's CURRENT league directly from Arena.League. This
+                                // is the in-game *Classic Arena* league (BronzeI..PlatinumIII).
+                                // The Nullable<>-wrapped Arena.LeagueId field returns a different
+                                // (probably "highest reached") value and gave wrong stat bonuses.
                                 if (arenaEnumType != null)
                                 {
-                                    // Get league from account data endpoint (we know it's 22 = GoldII)
-                                    int knownLeague = 22;
+                                    int knownLeague = 0;
                                     try
                                     {
-                                        // Read from the account data we already parse
-                                        var arenaData = Prop(arenaWrapper, "ArenaData");
-                                        if (arenaData != null)
+                                        var leagueProp = arenaWrapper.GetType().GetProperty("League");
+                                        if (leagueProp != null)
                                         {
-                                            int league = IntProp(arenaData, "LeagueId");
-                                            if (league > 0) knownLeague = league;
+                                            var leagueVal = leagueProp.GetValue(arenaWrapper);
+                                            if (leagueVal != null)
+                                                knownLeague = ExtractEnumInt(leagueVal);
                                         }
                                     }
                                     catch { }
 
-                                    // Construct the enum — IL2CPP enums are just ints underneath
                                     try { leagueEnum = Enum.ToObject(arenaEnumType, knownLeague); }
                                     catch { leagueEnum = knownLeague; }
                                 }
@@ -1168,7 +1169,8 @@ namespace RaidAutomation
                                 var arenaStats = arenaMethod.Invoke(null, new object[] { hero, leagueEnum, form });
                                 if (arenaStats != null)
                                 {
-                                    sb.Append(",\"arena_bonus\":{");
+                                    // Renamed: this is the in-game "Classic Arena" column.
+                                    sb.Append(",\"classic_arena_bonus\":{");
                                     AppendFixed(sb, arenaStats, "Health", "HP");
                                     sb.Append(","); AppendFixed(sb, arenaStats, "Attack", "ATK");
                                     sb.Append(","); AppendFixed(sb, arenaStats, "Defence", "DEF");
@@ -1306,7 +1308,12 @@ namespace RaidAutomation
                                             var buildStats = buildMethod.Invoke(null, new object[] { hero, buildingSetup, form3 });
                                             if (buildStats != null)
                                             {
-                                                sb.Append(",\"great_hall_bonus\":{");
+                                                // Renamed: this is the in-game "Affinity Bonuses" column
+                                                // (the Village Faction Guardian towers, applied per-element).
+                                                // Previously misnamed "great_hall_bonus" — the actual Great
+                                                // Hall is the Classic Arena rank tier, which is a different
+                                                // calc.
+                                                sb.Append(",\"affinity_bonus\":{");
                                                 AppendFixed(sb, buildStats, "Health", "HP");
                                                 sb.Append(","); AppendFixed(sb, buildStats, "Attack", "ATK");
                                                 sb.Append(","); AppendFixed(sb, buildStats, "Defence", "DEF");
@@ -1326,39 +1333,62 @@ namespace RaidAutomation
                         }
                         catch (Exception ex) { sb.Append(",\"_gh_err\":\"" + Esc(ex.InnerException != null ? ex.InnerException.Message : ex.Message) + "\""); }
 
-                        // CalcRelicsBonus
+                        // CalcRelicsBonus — every silent-exit path now reports a reason.
                         try
                         {
-                            var relicSetupType = FindType("SharedModel.Battle.Core.Setup.RelicSetup");
+                            var relicSetupType = FindType("SharedModel.Battle.Core.Setup.RelicSetup")
+                                              ?? FindType("SharedModel.Meta.Relics.RelicSetup");
                             if (relicSetupType == null)
-                                relicSetupType = FindType("SharedModel.Meta.Relics.RelicSetup");
-
-                            if (relicSetupType != null)
+                            {
+                                sb.Append(",\"_relic_err\":\"RelicSetup type not found\"");
+                            }
+                            else
                             {
                                 var uw5 = GetUserWrapper();
-                                // Get Relics list via the public property on RelicsWrapper
-                                try
+                                var relicWrapper = Prop(uw5, "Relics");
+                                if (relicWrapper == null)
                                 {
-                                    var relicWrapper = Prop(uw5, "Relics");
-                                    if (relicWrapper != null)
+                                    sb.Append(",\"_relic_err\":\"UserWrapper.Relics is null\"");
+                                }
+                                else
+                                {
+                                    var relicsList = Prop(relicWrapper, "Relics");
+                                    if (relicsList == null)
                                     {
-                                        // RelicsWrapperReadonly has a public List<Relic> Relics property
-                                        var relicsList = Prop(relicWrapper, "Relics");
-                                        if (relicsList != null)
+                                        sb.Append(",\"_relic_err\":\"Relics list null\"");
+                                    }
+                                    else
+                                    {
+                                        var toSetupsMethod = relicSetupType.GetMethod("ToRelicSetups");
+                                        if (toSetupsMethod == null)
                                         {
-                                            var toSetupsMethod = relicSetupType.GetMethod("ToRelicSetups");
-                                            if (toSetupsMethod != null)
+                                            sb.Append(",\"_relic_err\":\"ToRelicSetups method not found\"");
+                                        }
+                                        else
+                                        {
+                                            var setups = toSetupsMethod.Invoke(null, new object[] { relicsList });
+                                            if (setups == null)
                                             {
-                                                var setups = toSetupsMethod.Invoke(null, new object[] { relicsList });
-                                                if (setups != null)
+                                                sb.Append(",\"_relic_err\":\"ToRelicSetups returned null\"");
+                                            }
+                                            else
+                                            {
+                                                var formType4 = FindType("SharedModel.Meta.Heroes.HeroMetamorphForm");
+                                                object form4 = 0;
+                                                if (formType4 != null) try { form4 = Enum.ToObject(formType4, 0); } catch { }
+                                                var relicMethod = heroExtType.GetMethod("CalcRelicsBonus");
+                                                if (relicMethod == null)
                                                 {
-                                                    var formType4 = FindType("SharedModel.Meta.Heroes.HeroMetamorphForm");
-                                                    object form4 = 0;
-                                                    if (formType4 != null) try { form4 = Enum.ToObject(formType4, 0); } catch { }
-
-                                                    var relicMethod = heroExtType.GetMethod("CalcRelicsBonus");
+                                                    sb.Append(",\"_relic_err\":\"CalcRelicsBonus method not found\"");
+                                                }
+                                                else
+                                                {
                                                     var relicStats = relicMethod.Invoke(null, new object[] { hero, setups, form4 });
-                                                    if (relicStats != null)
+                                                    if (relicStats == null)
+                                                    {
+                                                        sb.Append(",\"_relic_err\":\"CalcRelicsBonus returned null\"");
+                                                    }
+                                                    else
                                                     {
                                                         sb.Append(",\"relic_bonus\":{");
                                                         AppendFixed(sb, relicStats, "Health", "HP");
@@ -1369,16 +1399,104 @@ namespace RaidAutomation
                                                 }
                                             }
                                         }
-                                        else
-                                        {
-                                            sb.Append(",\"_relic_err\":\"Relics list null\"");
-                                        }
                                     }
                                 }
-                                catch (Exception rex) { sb.Append(",\"_relic_err\":\"" + Esc(rex.InnerException != null ? rex.InnerException.Message : rex.Message) + "\""); }
                             }
                         }
-                        catch (Exception ex) { sb.Append(",\"_relic_err\":\"" + Esc(ex.Message) + "\""); }
+                        catch (Exception ex)
+                        {
+                            sb.Append(",\"_relic_err\":\"" + Esc(ex.InnerException != null ? ex.InnerException.Message : ex.Message) + "\"");
+                        }
+
+                        // CalcMasteriesBonus(Hero, List<int> masteryIds, HeroMetamorphForm).
+                        // Use the hero's actual Masteries list directly — it's already a
+                        // List<int> shape that the IL2CPP runtime accepts.
+                        try
+                        {
+                            var masteryMethod = heroExtType.GetMethod("CalcMasteriesBonus");
+                            if (masteryMethod == null)
+                            {
+                                sb.Append(",\"_mast_err\":\"CalcMasteriesBonus not found\"");
+                            }
+                            else
+                            {
+                                var heroMasteries = Prop(hero, "Masteries");
+                                var formType5 = FindType("SharedModel.Meta.Heroes.HeroMetamorphForm");
+                                object form5 = 0;
+                                if (formType5 != null) try { form5 = Enum.ToObject(formType5, 0); } catch { }
+                                var mastStats = masteryMethod.Invoke(null, new object[] { hero, heroMasteries, form5 });
+                                if (mastStats != null)
+                                {
+                                    sb.Append(",\"mastery_bonus\":{");
+                                    AppendFixed(sb, mastStats, "Health", "HP");
+                                    sb.Append(","); AppendFixed(sb, mastStats, "Attack", "ATK");
+                                    sb.Append(","); AppendFixed(sb, mastStats, "Defence", "DEF");
+                                    sb.Append(","); AppendFixed(sb, mastStats, "Speed", "SPD");
+                                    sb.Append(","); AppendFixed(sb, mastStats, "Resistance", "RES");
+                                    sb.Append(","); AppendFixed(sb, mastStats, "Accuracy", "ACC");
+                                    sb.Append(","); AppendFixed(sb, mastStats, "CriticalChance", "CR");
+                                    sb.Append(","); AppendFixed(sb, mastStats, "CriticalDamage", "CD");
+                                    sb.Append("}");
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            sb.Append(",\"_mast_err\":\"" + Esc(ex.InnerException != null ? ex.InnerException.Message : ex.Message) + "\"");
+                        }
+
+                        // CalcAcademyBonus(Hero, AcademySetup, HeroMetamorphForm) — Faction Guardians.
+                        try
+                        {
+                            var acadMethod = heroExtType.GetMethod("CalcAcademyBonus");
+                            if (acadMethod != null)
+                            {
+                                var uw6 = GetUserWrapper();
+                                var academy = Prop(uw6, "Academy");
+                                // AcademySetup factory — try a few known names.
+                                var acadSetupType = FindType("SharedModel.Meta.Academy.AcademySetup")
+                                                  ?? FindType("SharedModel.Battle.Core.Setup.AcademySetup");
+                                object acadSetup = null;
+                                if (acadSetupType != null)
+                                {
+                                    var fromMethod = acadSetupType.GetMethod("FromAcademy")
+                                                  ?? acadSetupType.GetMethod("ToSetup");
+                                    if (fromMethod != null)
+                                    {
+                                        try { acadSetup = fromMethod.Invoke(null, new object[] { academy }); } catch { }
+                                    }
+                                }
+                                if (acadSetup != null)
+                                {
+                                    var formType6 = FindType("SharedModel.Meta.Heroes.HeroMetamorphForm");
+                                    object form6 = 0;
+                                    if (formType6 != null) try { form6 = Enum.ToObject(formType6, 0); } catch { }
+                                    var acadStats = acadMethod.Invoke(null, new object[] { hero, acadSetup, form6 });
+                                    if (acadStats != null)
+                                    {
+                                        // In the in-game UI this is the "Faction Guardians" column.
+                                        sb.Append(",\"faction_guardians_bonus\":{");
+                                        AppendFixed(sb, acadStats, "Health", "HP");
+                                        sb.Append(","); AppendFixed(sb, acadStats, "Attack", "ATK");
+                                        sb.Append(","); AppendFixed(sb, acadStats, "Defence", "DEF");
+                                        sb.Append(","); AppendFixed(sb, acadStats, "Speed", "SPD");
+                                        sb.Append("}");
+                                    }
+                                    else
+                                    {
+                                        sb.Append(",\"_fg_err\":\"CalcAcademyBonus returned null\"");
+                                    }
+                                }
+                                else
+                                {
+                                    sb.Append(",\"_fg_err\":\"AcademySetup factory not found\"");
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            sb.Append(",\"_fg_err\":\"" + Esc(ex.InnerException != null ? ex.InnerException.Message : ex.Message) + "\"");
+                        }
                     }
                     else
                     {
