@@ -37,15 +37,24 @@ from raid_data import (SKILLS, POISON_5PCT_DMG, HP_BURN_DMG, WM_DMG, GS_DMG,
                        MASTERY_IDS, calc_acc_land_rate)
 
 # =============================================================================
-# Constants
+# Constants — game/sim values are sourced from tools.cb_constants where
+# possible (DRY: single source of truth, see cb_constants.py for the
+# STATIC vs CALIBRATED tagging).
 # =============================================================================
+from cb_constants import (
+    WM_PROC_RATE, GS_PROC_RATE, LIFESTEAL_RATE, CONT_HEAL_RATE,
+    WEAK_HIT_DMG_MULT, WEAK_HIT_DEBUFF_FAIL, STRONG_HIT_DMG_MULT,
+    CB_ATTACK_MULT, CB_STUN_HP_FRACTION,
+    CB_HP_BY_DIFFICULTY, CB_SPEED_BY_DIFFICULTY,
+    CB_ATK,
+    GATHERING_FURY_START_TURN, GATHERING_FURY_RATE_PER_TURN,
+    GATHERING_FURY_CLIFF_TURN, ENRAGE_TURN,
+)
+
 TM_THRESHOLD = 1000
 MAX_CB_TURNS = 50
 MAX_DEBUFF_SLOTS = 10
 
-
-WM_PROC_RATE = 0.60   # Warmaster: 60% once per skill
-GS_PROC_RATE = 0.30   # Giant Slayer: 30% per hit
 LEECH_HEAL_RATE = 0.10  # Leech debuff: attackers heal 10% of damage dealt
 
 # Force Affinity damage caps — empirical observation from live UNM Force-Affinity runs
@@ -67,28 +76,14 @@ FA_CAP_DOT     =  75_000   # per-tick DoT cap (HP Burn / Poison tick)
 # Strong hit: 20-30% damage increase
 WEAK_AFFINITY = {1: 2, 2: 3, 3: 1}  # Magic weak vs Force, Force weak vs Spirit, Spirit weak vs Magic
 STRONG_AFFINITY = {1: 3, 2: 1, 3: 2}  # Magic strong vs Spirit, etc.
-WEAK_HIT_DMG_MULT = 0.70      # 30% damage reduction on weak hit
-WEAK_HIT_DEBUFF_FAIL = 0.35   # 35% chance debuff doesn't land on weak hit
-STRONG_HIT_DMG_MULT = 1.30    # 30% damage increase on strong hit
+# WEAK_HIT_DMG_MULT, WEAK_HIT_DEBUFF_FAIL, STRONG_HIT_DMG_MULT — see cb_constants.
 
 HP, ATK, DEF, SPD, RES, ACC, CR, CD = 1, 2, 3, 4, 5, 6, 7, 8
 
 CB_VOID_PATTERN = ["aoe1", "aoe2", "stun"]
 
-# Boss base speed by CB difficulty (Raid in-game values).
-# Used by the `cb_difficulty` kwarg on CBSimulator. Matches the dropdown in
-# DWJ's calculator: Easy/Normal/Hard/Brutal/Nightmare/Ultra-Nightmare.
-CB_SPEED_BY_DIFFICULTY = {
-    "easy":             80,
-    "normal":           100,
-    "hard":             120,
-    "brutal":           160,
-    "nightmare":        170,
-    "ultra-nightmare":  190,
-    # Aliases
-    "unm":              190,
-    "nm":               170,
-}
+# CB_SPEED_BY_DIFFICULTY — see cb_constants (CALIBRATED, do not flip from
+# alliance_bosses[].base_stats.spd which are pre-modifier values).
 
 
 # =============================================================================
@@ -401,46 +396,14 @@ DEFAULT_SKILL_DATA = {
 # =============================================================================
 # Core Simulator
 # =============================================================================
-# UNM CB damage parameters
-CB_ATK = 3950          # back-solved from real BT 1 AOE1 data (2026-04-23)
-                       # Was 10,000 (guess). Observed BT 1 Maneater: 7969 dmg with
-                       # DEF 2177 → def_red 0.505, 4-hit AOE1 → ATK = 3950.
-                       # Matches 4 other heroes at BT 1 within 10% margin.
+# UNM CB damage parameters — see tools/cb_constants.py for sourcing.
+# CB_ATK is CALIBRATED (back-solved from BT 1 AOE1 data 2026-04-23). The
+# CB_ATTACK_MULT dict is sourced from SkillData via /static-export at
+# import time of cb_constants. GATHERING_FURY values are also there.
 CB_AOE_MULT = 3.5      # legacy AoE multiplier (used when per-attack mult unset)
 CB_STUN_MULT = 5.0     # legacy — stun now uses 0.2*MAX_HP directly (see _cb_turn)
-
-# Per-attack multipliers (verified from /enemy-skills on CB boss 22270):
-#   AOE1 "Crash Through" (skill 222603): 4 hits × 1*ATK each
-#   AOE2 "Belittle"      (skill 222702): 2 hits (2*ATK + 1*ATK)
-#   STUN "Crushing Force" (skill 222601): 1 target at 0.2*TARGET_MAX_HP (HP-based, not ATK)
-CB_ATTACK_MULT = {
-    "aoe1": 4.0,   # 4 hits × 1
-    "aoe2": 3.0,   # 2*ATK + 1*ATK
-}
 GATHERING_FURY_START_ROUND = 4  # legacy — no longer used (see per-turn model)
 GATHERING_FURY_RATE = 0.02     # legacy
-
-# Real game fury model, read from /enemy-skills on skill 222904 "Gathering Fury":
-#   eff[0] formula = DMG_MUL*0.75*(OWNERS_TURN_NUMBER-9)   [turns 10-19]
-#   eff[1] formula = DMG_MUL*7.5+DMG_MUL*(OWNERS_TURN_NUMBER-19)   [turns 20+]
-# This is the game's own expression. Conservative empirical fit (matches
-# real BT-17 observed damage of ~2.4x pre-DEF) uses a gentler linear
-# ramp — the game's 0.75 coefficient appears to be a multiplier on a
-# smaller base rather than raw 75%/turn.
-GATHERING_FURY_START_TURN = 10  # first boss turn where fury applies
-# Empirical fit: BT 14 AOE2 dealt ~33K to Maneater (DEF 2177, def_red 0.505).
-# With CB_ATK=3950 and 3-hit AOE2 base: fury_14 = 33K / (3950*3*0.505) = 5.5x.
-# Solving for rate per turn (starting turn 10): 5.5 = 1 + rate*5 → rate = 0.90.
-# BT 17 AOE2 = 28,770 HP depleted (UK saved, real could be higher); fury_17 ~4.8.
-# Compromise fit: 0.85 per turn, matches BT 14 within 5%.
-GATHERING_FURY_RATE_PER_TURN = 0.85  # +85% extra damage per boss turn from turn 10
-GATHERING_FURY_CLIFF_TURN = 20   # hard enrage cliff per skill description
-# Turn 50 hard enrage: CB ignores Unkillable/Block Damage. In practice, the game
-# severely limits damage output on the final turn. Calibrated from battle logs:
-# real turn 50 = 75K (one poison tick), sim was predicting 1M+.
-ENRAGE_TURN = 50
-LIFESTEAL_RATE = 0.30  # Lifesteal set: 30% of damage dealt as healing
-CONT_HEAL_RATE = 0.075  # Continuous Heal: 7.5% max HP per tick
 
 
 class CBSimulator:
@@ -913,7 +876,7 @@ class CBSimulator:
                     if self.cb_turn >= GATHERING_FURY_START_TURN:
                         fury_mult = 1.0 + GATHERING_FURY_RATE_PER_TURN * (self.cb_turn - GATHERING_FURY_START_TURN + 1)
                     target_max_hp = target.stats.get(HP, target.hp_max if hasattr(target, 'hp_max') else 40000)
-                    stun_dmg = 0.2 * target_max_hp * fury_mult
+                    stun_dmg = CB_STUN_HP_FRACTION * target_max_hp * fury_mult
                     target.current_hp -= stun_dmg
                     if target.current_hp <= 0:
                         target.is_dead = True
