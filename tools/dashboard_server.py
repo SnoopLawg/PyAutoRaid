@@ -78,26 +78,16 @@ def _cb_affinity_name(boss_element, boss_tid):
         return _ELEMENT_NAMES.get(_CB_TID_TO_ELEMENT[boss_tid])
     return None
 
-# Gear-inclusive stat calc constants (mirrored from tools/gear_constants +
-# tools/raid_data). Kept local to avoid a hard import dependency on those
-# modules from the dashboard path.
-_SET_BONUSES = {
-    # set_id -> (pieces_per_bonus, {stat_id: bonus_value_pct_or_flat})
-    # Basic 2-piece sets
-    1: (2, {1: 15}), 2: (2, {2: 15}), 3: (2, {3: 15}), 4: (2, {4: 12}),
-    5: (2, {7: 12}), 6: (2, {8: 20}), 7: (2, {6: 40}), 8: (2, {5: 40}),
-    22: (2, {2: 15}),  # Cruel (ATK +15%)
-    29: (2, {6: 40, 4: 5}), 38: (2, {6: 40, 4: 5}),  # Perception (+40 ACC, +5 SPD)
-    35: (2, {5: 40, 1: 10}),  # Resilience
-    # Divine 4-piece sets (Divine Speed = +30% SPD + bonus)
-    24: (4, {4: 30, 7: 10}),   # Divine Speed (+30% SPD, +10% CR)
-    25: (4, {7: 30, 2: 15}),   # Divine CritRate
-    27: (4, {1: 30}),           # Divine Life (+30% HP)
-    61: (4, {2: 30}),           # Divine Offense (+30% ATK)
-    # Other SPD-adjacent sets
-    28: (4, {}),                # Swift Parry — 25% counter on hit (no stat bonus)
-    33: (4, {4: 15, 8: 15}),    # Reflex / Speed variant (+15% SPD, +15% CD)
-}
+# Set bonuses sourced from data/static/artifact_sets.json via gear_constants.
+# Keeping a fallback for when the dashboard runs in isolated test contexts
+# without static data refreshed.
+try:
+    from gear_constants import SET_BONUSES as _SET_BONUSES
+except Exception:
+    _SET_BONUSES = {
+        1: (2, {1: 15}), 2: (2, {2: 15}), 3: (2, {3: 15}), 4: (2, {4: 12}),
+        5: (2, {7: 12}), 6: (2, {8: 20}), 7: (2, {6: 40}), 8: (2, {5: 40}),
+    }
 _STAT_KEY = {1: "HP", 2: "ATK", 3: "DEF", 4: "SPD", 5: "RES", 6: "ACC", 7: "CR", 8: "CD"}
 _LORE_OF_STEEL = 500343
 # Empowerment stat bonuses per level: (hp_atk_def_pct, acc, res, spd, cd_pct, cr_pct)

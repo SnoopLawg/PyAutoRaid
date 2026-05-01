@@ -26,11 +26,27 @@ Effect Kind IDs (from game):
 # UNM Clan Boss
 # =============================================================================
 # CB HP is split across phases. Poison does 5% of the current phase HP bar.
-# In practice, verified UNM poison/burn tick values:
-UNM_HP = 50_000_000    # total display HP (for reference)
+# In practice, verified UNM poison/burn tick values.
+#
+# UNM_HP is sourced from data/static/alliance_bosses.json (1,171,204,485,
+# verified against live battle log 2026-05-01). The hand-coded fallback
+# below is what older versions of this file shipped — kept for offline use.
+# UNM_DEF/UNM_RES/UNM_SPD remain back-solved against tick-log data; they
+# differ from HeroType.DefaultBaseStats which are pre-modifier and not
+# directly comparable. Do not auto-migrate without per-stat verification.
+UNM_HP = 1_171_204_485
 UNM_SPD = 190
 UNM_DEF = 4878
 UNM_RES = 250
+try:
+    try:
+        from tools.static_data import default as _sd
+    except ImportError:
+        from static_data import default as _sd
+    _boss = _sd().alliance_boss("unm")
+    UNM_HP = _boss.hp
+except Exception:
+    pass  # fall back to the literal above
 
 # =============================================================================
 # Per-tick DoT caps — derived from ground-truth tick-log captures.

@@ -106,6 +106,14 @@ def to_artifact_stat_kind_id(stat_id, is_flat):
 
 # =============================================================================
 # Set IDs (ArtifactSetKindId)
+#
+# SET_NAMES — display-friendly names (HP / ATK / Speed / Lifesteal / etc.)
+# kept hand-maintained for UI rendering; sourced from the legacy table.
+# SET_KIND_IDS — Plarium-internal enum names (Hp / AttackPower / AttackSpeed
+# / LifeDrain) sourced from data/static/artifact_sets.json. Use this when
+# bridging to static_data.artifact_set(...).
+# SET_BONUSES — derived from static_data so the values are always live-game
+# correct (e.g. Speed = 2-piece +12%, AccuracyAndSpeed = +40 ACC + 5% SPD).
 # =============================================================================
 SET_NAMES = {
     0: "None",
@@ -115,7 +123,7 @@ SET_NAMES = {
     14: "Frenzy", 15: "Regeneration", 16: "Toxic", 17: "Shield",
     18: "Relentless", 19: "Savage", 20: "Destroy", 21: "Stun",
     22: "Cruel", 23: "Immortal", 24: "DivineSpeed", 25: "DivineCritRate",
-    26: "Stalwart", 27: "DivineLife", 28: "Swift Parry", 29: "Perception",
+    26: "Stalwart", 27: "DivineLife", 28: "Swift Parry", 29: "Cruel",
     30: "Regeneration", 33: "Reflex", 34: "Deflection",
     35: "Resilience", 36: "Deflection", 37: "Immunity", 38: "Perception",
     40: "Guardian", 41: "Untouchable", 43: "Cruel",
@@ -127,23 +135,31 @@ SET_NAMES = {
     63: "Fortitude",
 }
 
-# Set bonuses: {set_id: (pieces_needed, {stat_id: bonus_value})}
-# Only commonly used sets included. Bonus is percentage for HP/ATK/DEF/SPD/CR/CD,
-# flat for ACC/RES.
-SET_BONUSES = {
-    1: (2, {STAT_HP: 15}),
-    2: (2, {STAT_ATK: 15}),
-    3: (2, {STAT_DEF: 15}),
-    4: (2, {STAT_SPD: 12}),
-    5: (2, {STAT_CR: 12}),
-    6: (2, {STAT_CD: 20}),
-    7: (2, {STAT_ACC: 40}),     # flat
-    8: (2, {STAT_RES: 40}),     # flat
-    22: (2, {STAT_ATK: 15}),    # Cruel = ATK + ignore DEF (DEF ignore in sim)
-    29: (2, {STAT_ACC: 40, STAT_SPD: 5}),  # Perception
-    38: (2, {STAT_ACC: 40, STAT_SPD: 5}),  # Perception variant
-    35: (2, {STAT_RES: 40, STAT_HP: 10}),  # Resilience
-}
+SET_KIND_IDS: dict[int, str] = {}     # numeric id → Plarium enum name (e.g. "Hp", "AttackSpeed")
+SET_BONUSES: dict[int, tuple[int, dict[int, float]]] = {}
+
+try:
+    try:
+        from tools.static_data import default as _sd
+    except ImportError:
+        from static_data import default as _sd  # called from tools/ cwd
+    _static = _sd()
+    for _id, _set in _static.artifact_sets_by_id.items():
+        SET_KIND_IDS[_id] = _set.set
+    SET_BONUSES.update(_static.set_bonus_table())
+except Exception:
+    # Fallback when data/static/artifact_sets.json is missing. Covers the
+    # 8 base stat sets only; proc/combo sets need a static refresh.
+    SET_KIND_IDS.update({
+        1: "Hp", 2: "AttackPower", 3: "Defense", 4: "AttackSpeed",
+        5: "CriticalChance", 6: "CriticalDamage", 7: "Accuracy", 8: "Resistance",
+    })
+    SET_BONUSES.update({
+        1: (2, {STAT_HP: 15}),    2: (2, {STAT_ATK: 15}),
+        3: (2, {STAT_DEF: 15}),   4: (2, {STAT_SPD: 12}),
+        5: (2, {STAT_CR: 12}),    6: (2, {STAT_CD: 20}),
+        7: (2, {STAT_ACC: 40}),   8: (2, {STAT_RES: 40}),
+    })
 
 # Special set flags (tracked but bonuses applied in sim, not stat calc)
 SPECIAL_SETS = {

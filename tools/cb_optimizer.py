@@ -59,28 +59,12 @@ GH_BONUSES = {
     CD:  [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 12],
 }
 
-# Set bonuses: (pieces_needed, {stat: bonus%})
-# From ArtifactSetKindId enum in game
-SET_BONUSES = {
-    1:  (2, {HP: 15}), 2: (2, {ATK: 15}), 3: (2, {DEF: 15}),
-    4:  (2, {SPD: 12}), 5: (2, {CR: 12}), 6: (2, {CD: 20}),
-    7:  (2, {ACC: 40}), 8: (2, {RES: 40}),
-    29: (2, {SPD: 5, ACC: 40}),   # Perception (ACC+SPD)
-    38: (2, {SPD: 5, ACC: 40}),   # AccuracyAndSpeed (similar to Perception)
-}
-# Complete set name mapping from ArtifactSetKindId enum
-SET_NAMES = {
-    0:"None", 1:"HP%", 2:"ATK%", 3:"DEF%", 4:"Speed", 5:"CritRate", 6:"CritDmg",
-    7:"ACC", 8:"RES", 9:"Lifesteal", 10:"Savage", 11:"Daze", 12:"Cursed",
-    13:"Frost", 14:"Frenzy", 15:"Regeneration", 16:"Toxic", 17:"Shield",
-    18:"Relentless", 19:"Destroy", 20:"DecMaxHP", 21:"Stun", 22:"DotRate",
-    23:"Provoke", 24:"Counterattack", 25:"Fury", 26:"Stalwart", 27:"Reflex",
-    28:"CritHeal", 29:"Perception", 30:"Regeneration", 31:"Avenging",
-    32:"Cruel", 33:"Guardian", 34:"SwiftParry", 35:"Unkillable", 36:"Immortal",
-    37:"Resilience", 38:"AccSpeed", 44:"Protection", 47:"Bolster", 48:"StoneSkin",
-    57:"Untouchable", 61:"Lethal", 1002:"DivinOffense", 1003:"DivinLife", 1004:"DivinSpeed",
-}
 STAT_NAMES = {HP:"HP", ATK:"ATK", DEF:"DEF", SPD:"SPD", RES:"RES", ACC:"ACC", CR:"CR%", CD:"CD%"}
+
+# Set bonuses + names — sourced from data/static/artifact_sets.json via
+# gear_constants. SET_BONUSES is value-correct (live-game derived); SET_NAMES
+# is display-friendly. See gear_constants.py for details.
+from gear_constants import SET_BONUSES, SET_NAMES  # noqa: E402
 
 # Import canonical slot/set names from central module
 try:

@@ -128,14 +128,7 @@ def main():
     STAT_NAMES = {1: "HP", 2: "ATK", 3: "DEF", 4: "SPD", 5: "RES", 6: "ACC", 7: "CR%", 8: "CD%"}
     ELEMENT = {0: "Mag", 1: "Frc", 2: "Spt", 3: "Voi", 4: "???"}
     RARITY = {3: "R", 4: "E", 5: "L", 6: "M"}
-    SET_NAMES = {
-        0: "None", 1: "HP", 2: "ATK", 3: "DEF", 4: "Speed", 5: "CritRate",
-        6: "CritDmg", 7: "ACC", 8: "RES", 9: "Lifesteal", 10: "Savage",
-        11: "Fury", 13: "Daze", 14: "Cursed", 16: "Toxic", 17: "Shield",
-        18: "Frost", 22: "Stalwart", 24: "Counterattack", 26: "Destroy",
-        29: "Perception", 30: "Regeneration", 34: "Relentless",
-        35: "Unkillable", 36: "Immortal", 38: "Reflex",
-    }
+    from gear_constants import SET_NAMES
 
     print(f"\n{'Name':22s} {'R':1s} {'E':3s} {'emp':3s} {'arts':4s} {'Sets':30s}")
     print("-" * 70)

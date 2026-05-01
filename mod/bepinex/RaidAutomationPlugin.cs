@@ -11725,7 +11725,20 @@ namespace RaidAutomation
                     int maxPieces = IntProp(si, "MaxArtifactCount");
                     if (!first) sb.Append(",");
                     first = false;
-                    sb.Append("{\"set\":\"").Append(Esc(kindId))
+                    // Numeric set ID — extract from the localization key
+                    // ("l10n:artifact-set/name?id=4#static" → 4). The same int
+                    // is what the artifact-on-hero `set` field carries.
+                    int numericId = 0;
+                    try
+                    {
+                        var nameLs = Prop(si, "Name");
+                        var key = Prop(nameLs, "Key")?.ToString() ?? "";
+                        var m = System.Text.RegularExpressions.Regex.Match(key, "id=(\\d+)");
+                        if (m.Success) int.TryParse(m.Groups[1].Value, out numericId);
+                    }
+                    catch { }
+                    sb.Append("{\"id\":").Append(numericId)
+                      .Append(",\"set\":\"").Append(Esc(kindId))
                       .Append("\",\"pieces\":").Append(pieces)
                       .Append(",\"max_pieces\":").Append(maxPieces);
 

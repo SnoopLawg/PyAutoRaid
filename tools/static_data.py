@@ -108,7 +108,8 @@ class SetEffect:
 
 @dataclass(frozen=True)
 class ArtifactSet:
-    set: str                      # ArtifactSetKindId (e.g. "Hp", "AttackSpeed", "LifeDrain")
+    id: int                       # numeric ArtifactSetKindId (the int stored on each artifact)
+    set: str                      # ArtifactSetKindId enum name (e.g. "Hp", "AttackSpeed", "LifeDrain")
     pieces: int                   # the trigger count (2 or 4 normally)
     max_pieces: int
     stat_bonuses: list[StatBonus] = field(default_factory=list)
@@ -244,6 +245,7 @@ class StaticData:
                 for e in sk.get("effects", [])
             ]
             out[kind] = ArtifactSet(
+                id=s.get("id", 0),
                 set=kind,
                 pieces=s.get("pieces") or s.get("ArtifactCount", 0),
                 max_pieces=s.get("max_pieces") or s.get("MaxArtifactCount", 0),
@@ -258,6 +260,43 @@ class StaticData:
 
     def artifact_set(self, kind: str) -> ArtifactSet:
         return self.artifact_sets[kind]
+
+    @cached_property
+    def artifact_sets_by_id(self) -> dict[int, ArtifactSet]:
+        """Numeric ID lookup — bridges artifacts on heroes (which carry the int
+        `set` field) to the static set definitions."""
+        return {a.id: a for a in self.artifact_sets.values() if a.id}
+
+    # Stat name → numeric stat id. Used to convert artifact_set's
+    # "Health"/"Attack"/"Speed"/etc. strings into the int constants the
+    # optimizer's stat-aggregation logic uses.
+    STAT_KIND_TO_ID: dict[str, int] = {
+        "Health": 1, "Attack": 2, "Defence": 3, "Speed": 4, "Resistance": 5,
+        "Accuracy": 6, "CriticalChance": 7, "CriticalDamage": 8,
+    }
+
+    def set_bonus_table(self) -> dict[int, tuple[int, dict[int, float]]]:
+        """Optimizer-friendly view: {numeric_set_id: (pieces_needed, {stat_id:
+        bonus_value})}. Mirrors the legacy SET_BONUSES table in cb_optimizer
+        and gear_constants. Pulls only from `stat_bonuses` (procs are scored
+        separately by the sim, not the stat optimizer).
+
+        Bonus value is in percent (e.g. 12 for 12% Speed) for percentage
+        stats; flat absolute (40) for ACC/RES."""
+        out: dict[int, tuple[int, dict[int, float]]] = {}
+        for s in self.artifact_sets.values():
+            if not s.id or not s.stat_bonuses:
+                continue
+            stat_map: dict[int, float] = {}
+            for b in s.stat_bonuses:
+                sid = self.STAT_KIND_TO_ID.get(b.stat)
+                if sid is None:
+                    continue
+                # absolute=true (ACC/RES) → store flat int; percentage → 100×
+                stat_map[sid] = b.value if b.absolute else round(b.value * 100, 4)
+            if stat_map:
+                out[s.id] = (s.pieces, stat_map)
+        return out
 
     @cached_property
     def masteries(self) -> list[dict]:

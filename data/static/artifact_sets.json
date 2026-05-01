@@ -1,12 +1,13 @@
 {
   "_meta": {
-    "fetched_at": "2026-05-01T18:02:35.510895+00:00",
+    "fetched_at": "2026-05-01T18:14:45.259518+00:00",
     "scene": "Village",
     "mod_version": "2.0-bepinex",
     "unity": "6000.0.60f1"
   },
   "sets": [
     {
+      "id": 1,
       "set": "Hp",
       "pieces": 2,
       "max_pieces": 2,
@@ -24,6 +25,7 @@
       }
     },
     {
+      "id": 2,
       "set": "AttackPower",
       "pieces": 2,
       "max_pieces": 2,
@@ -41,6 +43,7 @@
       }
     },
     {
+      "id": 3,
       "set": "Defense",
       "pieces": 2,
       "max_pieces": 2,
@@ -58,6 +61,7 @@
       }
     },
     {
+      "id": 4,
       "set": "AttackSpeed",
       "pieces": 2,
       "max_pieces": 2,
@@ -75,6 +79,7 @@
       }
     },
     {
+      "id": 5,
       "set": "CriticalChance",
       "pieces": 2,
       "max_pieces": 2,
@@ -92,6 +97,7 @@
       }
     },
     {
+      "id": 6,
       "set": "CriticalDamage",
       "pieces": 2,
       "max_pieces": 2,
@@ -109,6 +115,7 @@
       }
     },
     {
+      "id": 7,
       "set": "Accuracy",
       "pieces": 2,
       "max_pieces": 2,
@@ -126,6 +133,7 @@
       }
     },
     {
+      "id": 8,
       "set": "Resistance",
       "pieces": 2,
       "max_pieces": 2,
@@ -143,6 +151,7 @@
       }
     },
     {
+      "id": 28,
       "set": "CriticalHealMultiplier",
       "pieces": 4,
       "max_pieces": 4,
@@ -172,6 +181,7 @@
       }
     },
     {
+      "id": 9,
       "set": "LifeDrain",
       "pieces": 4,
       "max_pieces": 4,
@@ -194,6 +204,7 @@
       }
     },
     {
+      "id": 10,
       "set": "DamageIncreaseOnHpDecrease",
       "pieces": 4,
       "max_pieces": 4,
@@ -216,6 +227,7 @@
       }
     },
     {
+      "id": 11,
       "set": "SleepChance",
       "pieces": 4,
       "max_pieces": 4,
@@ -238,6 +250,7 @@
       }
     },
     {
+      "id": 12,
       "set": "BlockHealChance",
       "pieces": 4,
       "max_pieces": 4,
@@ -260,6 +273,7 @@
       }
     },
     {
+      "id": 13,
       "set": "FreezeRateOnDamageReceived",
       "pieces": 4,
       "max_pieces": 4,
@@ -282,6 +296,7 @@
       }
     },
     {
+      "id": 14,
       "set": "Stamina",
       "pieces": 4,
       "max_pieces": 4,
@@ -304,6 +319,7 @@
       }
     },
     {
+      "id": 15,
       "set": "Heal",
       "pieces": 4,
       "max_pieces": 4,
@@ -326,6 +342,7 @@
       }
     },
     {
+      "id": 16,
       "set": "BlockDebuff",
       "pieces": 4,
       "max_pieces": 4,
@@ -348,6 +365,7 @@
       }
     },
     {
+      "id": 17,
       "set": "Shield",
       "pieces": 4,
       "max_pieces": 4,
@@ -370,6 +388,7 @@
       }
     },
     {
+      "id": 18,
       "set": "GetExtraTurn",
       "pieces": 4,
       "max_pieces": 4,
@@ -402,6 +421,7 @@
       }
     },
     {
+      "id": 19,
       "set": "IgnoreDefense",
       "pieces": 4,
       "max_pieces": 4,
@@ -424,6 +444,7 @@
       }
     },
     {
+      "id": 20,
       "set": "DecreaseMaxHp",
       "pieces": 4,
       "max_pieces": 4,
@@ -446,6 +467,7 @@
       }
     },
     {
+      "id": 21,
       "set": "StunChance",
       "pieces": 4,
       "max_pieces": 4,
@@ -468,6 +490,7 @@
       }
     },
     {
+      "id": 22,
       "set": "DotRate",
       "pieces": 4,
       "max_pieces": 4,
@@ -490,6 +513,7 @@
       }
     },
     {
+      "id": 23,
       "set": "ProvokeChance",
       "pieces": 4,
       "max_pieces": 4,
@@ -512,6 +536,7 @@
       }
     },
     {
+      "id": 24,
       "set": "Counterattack",
       "pieces": 2,
       "max_pieces": 2,
@@ -544,6 +569,7 @@
       }
     },
     {
+      "id": 25,
       "set": "CounterattackOnCrit",
       "pieces": 4,
       "max_pieces": 4,
@@ -566,6 +592,7 @@
       }
     },
     {
+      "id": 26,
       "set": "AoeDamageDecrease",
       "pieces": 4,
       "max_pieces": 4,
@@ -588,6 +615,7 @@
       }
     },
     {
+      "id": 27,
       "set": "CooldownReductionChance",
       "pieces": 4,
       "max_pieces": 4,
@@ -610,6 +638,7 @@
       }
     },
     {
+      "id": 29,
       "set": "AttackPowerAndIgnoreDefense",
       "pieces": 2,
       "max_pieces": 2,
@@ -644,6 +673,7 @@
       }
     },
     {
+      "id": 30,
       "set": "HpAndHeal",
       "pieces": 2,
       "max_pieces": 2,
@@ -678,6 +708,7 @@
       }
     },
     {
+      "id": 31,
       "set": "ShieldAndAttackPower",
       "pieces": 2,
       "max_pieces": 2,
@@ -712,6 +743,7 @@
       }
     },
     {
+      "id": 32,
       "set": "ShieldAndCriticalChance",
       "pieces": 2,
       "max_pieces": 2,
@@ -746,6 +778,7 @@
       }
     },
     {
+      "id": 33,
       "set": "ShieldAndHp",
       "pieces": 2,
       "max_pieces": 2,
@@ -780,6 +813,7 @@
       }
     },
     {
+      "id": 34,
       "set": "ShieldAndSpeed",
       "pieces": 2,
       "max_pieces": 2,
@@ -814,6 +848,7 @@
       }
     },
     {
+      "id": 35,
       "set": "UnkillableAndSpdAndCrDmg",
       "pieces": 0,
       "max_pieces": 9,
@@ -991,6 +1026,7 @@
       ]
     },
     {
+      "id": 36,
       "set": "BlockReflectDebuffAndHpAndDef",
       "pieces": 0,
       "max_pieces": 9,
@@ -1143,6 +1179,7 @@
       ]
     },
     {
+      "id": 37,
       "set": "HpAndDefence",
       "pieces": 2,
       "max_pieces": 2,
@@ -1165,6 +1202,7 @@
       }
     },
     {
+      "id": 38,
       "set": "AccuracyAndSpeed",
       "pieces": 2,
       "max_pieces": 2,
@@ -1187,6 +1225,7 @@
       }
     },
     {
+      "id": 1001,
       "set": "RemoveDebuff",
       "pieces": 1,
       "max_pieces": 1,
@@ -1219,6 +1258,7 @@
       }
     },
     {
+      "id": 1000,
       "set": "IgnoreCooldown",
       "pieces": 1,
       "max_pieces": 1,
@@ -1271,6 +1311,7 @@
       }
     },
     {
+      "id": 41,
       "set": "AttackAndCritRate",
       "pieces": 2,
       "max_pieces": 2,
@@ -1293,6 +1334,7 @@
       }
     },
     {
+      "id": 40,
       "set": "ResistanceAndBlockDebuff",
       "pieces": 4,
       "max_pieces": 4,
@@ -1327,6 +1369,7 @@
       }
     },
     {
+      "id": 39,
       "set": "CritDmgAndTransformWeekIntoCritHit",
       "pieces": 4,
       "max_pieces": 4,
@@ -1361,6 +1404,7 @@
       }
     },
     {
+      "id": 42,
       "set": "FreezeResistAndRate",
       "pieces": 2,
       "max_pieces": 2,
@@ -1413,6 +1457,7 @@
       }
     },
     {
+      "id": 1002,
       "set": "ShieldAccessory",
       "pieces": 1,
       "max_pieces": 1,
@@ -1435,6 +1480,7 @@
       }
     },
     {
+      "id": 1003,
       "set": "ChangeHitType",
       "pieces": 1,
       "max_pieces": 1,
@@ -1467,6 +1513,7 @@
       }
     },
     {
+      "id": 43,
       "set": "CritRateAndLifeDrain",
       "pieces": 4,
       "max_pieces": 4,
@@ -1501,6 +1548,7 @@
       }
     },
     {
+      "id": 44,
       "set": "PassiveShareDamageAndHeal",
       "pieces": 4,
       "max_pieces": 4,
@@ -1533,6 +1581,7 @@
       }
     },
     {
+      "id": 45,
       "set": "ResistAndDef",
       "pieces": 2,
       "max_pieces": 2,
@@ -1555,6 +1604,7 @@
       }
     },
     {
+      "id": 46,
       "set": "CritRateAndIgnoreDefMultiplier",
       "pieces": 4,
       "max_pieces": 4,
@@ -1589,6 +1639,7 @@
       }
     },
     {
+      "id": 1004,
       "set": "CounterattackAccessory",
       "pieces": 1,
       "max_pieces": 1,
@@ -1621,6 +1672,7 @@
       }
     },
     {
+      "id": 47,
       "set": "BuffChanceResHpSpd",
       "pieces": 0,
       "max_pieces": 9,
@@ -1808,6 +1860,7 @@
       ]
     },
     {
+      "id": 48,
       "set": "StoneSkinHpResDef",
       "pieces": 0,
       "max_pieces": 9,
@@ -1995,6 +2048,7 @@
       ]
     },
     {
+      "id": 50,
       "set": "SpeedAndIgnoreDefMultiplier",
       "pieces": 4,
       "max_pieces": 4,
@@ -2029,6 +2083,7 @@
       }
     },
     {
+      "id": 49,
       "set": "CritDamageAndSpeed",
       "pieces": 2,
       "max_pieces": 2,
@@ -2051,6 +2106,7 @@
       }
     },
     {
+      "id": 51,
       "set": "ShieldAndHp2",
       "pieces": 4,
       "max_pieces": 4,
@@ -2083,6 +2139,7 @@
       }
     },
     {
+      "id": 52,
       "set": "DefAndAoeDamageReduce",
       "pieces": 2,
       "max_pieces": 2,
@@ -2117,6 +2174,7 @@
       }
     },
     {
+      "id": 53,
       "set": "SpeedAndCdReductionChance",
       "pieces": 2,
       "max_pieces": 2,
@@ -2161,6 +2219,7 @@
       }
     },
     {
+      "id": 54,
       "set": "CritDmgAndDmgIncreaseOnHpIncrease",
       "pieces": 2,
       "max_pieces": 2,
@@ -2195,6 +2254,7 @@
       }
     },
     {
+      "id": 55,
       "set": "IncreaseStaminaAndSpdAndAcc",
       "pieces": 4,
       "max_pieces": 4,
@@ -2217,6 +2277,7 @@
       }
     },
     {
+      "id": 56,
       "set": "CritDmgAndIgnoreDefAndCdReductionChance",
       "pieces": 4,
       "max_pieces": 4,
@@ -2239,6 +2300,7 @@
       }
     },
     {
+      "id": 57,
       "set": "SpeedAndResistance",
       "pieces": 2,
       "max_pieces": 2,
@@ -2261,6 +2323,7 @@
       }
     },
     {
+      "id": 60,
       "set": "IncreaseStaminaIgnoreDefMultiplierDmgAndSpd",
       "pieces": 0,
       "max_pieces": 9,
@@ -2448,6 +2511,7 @@
       ]
     },
     {
+      "id": 61,
       "set": "IncreaseAccuracyAndSpeedWithSkillEffects",
       "pieces": 0,
       "max_pieces": 9,
@@ -2600,6 +2664,7 @@
       ]
     },
     {
+      "id": 58,
       "set": "IncreaseStaminaAndResHpSpd",
       "pieces": 0,
       "max_pieces": 9,
@@ -2787,6 +2852,7 @@
       ]
     },
     {
+      "id": 59,
       "set": "IgnoreDefMultAndAtkSpdCritDmg",
       "pieces": 0,
       "max_pieces": 9,
@@ -2974,6 +3040,7 @@
       ]
     },
     {
+      "id": 62,
       "set": "IncreaseAccuracyAndSpeedWithInterceptBuff",
       "pieces": 0,
       "max_pieces": 9,
@@ -3126,6 +3193,7 @@
       ]
     },
     {
+      "id": 63,
       "set": "IgnoreDefMultiplierIncreaseAtkAndCritDmgAndSpd",
       "pieces": 0,
       "max_pieces": 9,
@@ -3313,6 +3381,7 @@
       ]
     },
     {
+      "id": 64,
       "set": "ReviveSkillDecreaseCooldownIncreaseResAndSpd",
       "pieces": 0,
       "max_pieces": 9,
@@ -3465,6 +3534,7 @@
       ]
     },
     {
+      "id": 65,
       "set": "HpResSpdChronoBuffScalingWithStacks",
       "pieces": 0,
       "max_pieces": 9,
@@ -3617,6 +3687,7 @@
       ]
     },
     {
+      "id": 66,
       "set": "HpResSpdOnGuardBuffScalingWithStacks",
       "pieces": 0,
       "max_pieces": 9,
