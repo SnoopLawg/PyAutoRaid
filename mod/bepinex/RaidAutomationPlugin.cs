@@ -518,6 +518,7 @@ namespace RaidAutomation
                     "/stage-bosses" => RunOnMainThread(() => GetCbBosses(), 90000),
                     "/cb-bosses" => RunOnMainThread(() => GetCbBosses(), 90000),  // alias
                     "/alliance-bosses" => RunOnMainThread(() => GetAllianceBosses(), 30000),
+                    "/artifact-sets-truth" => RunOnMainThread(() => GetArtifactSetsTruth(), 30000),
                     "/view-contexts" => RunOnMainThread(() => GetViewContexts(QP(query, "path"))),
                     "/invoke-context" => RunOnMainThread(() => InvokeOnContext(QP(query, "type"), QP(query, "method"))),
                     "/list-static-methods" => ListStaticMethods(QP(query, "type"), QP(query, "filter")),
@@ -11668,6 +11669,271 @@ namespace RaidAutomation
             return sb.ToString();
         }
 
+        // /artifact-sets-truth — clean SetInfo records with both StatBonus and
+        // SkillBonus expanded. SkillBonus.SkillTypeId is dereferenced through
+        // SkillData.SkillTypeById to give consumers the proc effect at first
+        // level: Group, Cooldown, Effects[]{KindId, Condition, MultiplierFormula,
+        // Phases}. Replaces the "+0% ?" rows in artifact_sets.json with
+        // structured proc data.
+        private string GetArtifactSetsTruth()
+        {
+            var sd = Prop(GetAppModel(), "StaticData");
+            if (sd == null) return "{\"error\":\"appmodel/staticdata not ready\"}";
+            var ad = Prop(sd, "ArtifactData");
+            var skd = Prop(sd, "SkillData");
+            if (ad == null || skd == null) return "{\"error\":\"ArtifactData/SkillData null\"}";
+            var setInfos = Prop(ad, "SetInfos");
+            if (setInfos == null) return "{\"error\":\"ArtifactData.SetInfos null\"}";
+
+            // Build a SkillType lookup: id -> SkillType (for proc deref).
+            var skillById = new Dictionary<int, object>();
+            try
+            {
+                var stTypes = Prop(skd, "SkillTypes");
+                if (stTypes != null)
+                {
+                    int sn = IntProp(stTypes, "_size");
+                    var sitems = Prop(stTypes, "_items");
+                    var sget = sitems?.GetType().GetMethod("get_Item", new[] { typeof(int) })
+                               ?? sitems?.GetType().GetProperty("Item")?.GetGetMethod();
+                    for (int i = 0; i < sn; i++)
+                    {
+                        var s = sget.Invoke(sitems, new object[] { i });
+                        if (s == null) continue;
+                        int sid = IntProp(s, "Id");
+                        if (sid > 0) skillById[sid] = s;
+                    }
+                }
+            }
+            catch { /* best-effort; we'll emit SkillTypeId without deref */ }
+
+            var sb = new StringBuilder(1 << 14);
+            sb.Append("{\"sets\":[");
+            try
+            {
+                int n = IntProp(setInfos, "_size");
+                var items = Prop(setInfos, "_items");
+                var get = items?.GetType().GetMethod("get_Item", new[] { typeof(int) })
+                          ?? items?.GetType().GetProperty("Item")?.GetGetMethod();
+                bool first = true;
+                for (int i = 0; i < n; i++)
+                {
+                    var si = get.Invoke(items, new object[] { i });
+                    if (si == null) continue;
+                    string kindId = Prop(si, "ArtifactSetKindId")?.ToString() ?? "?";
+                    int pieces = IntProp(si, "ArtifactCount");
+                    int maxPieces = IntProp(si, "MaxArtifactCount");
+                    if (!first) sb.Append(",");
+                    first = false;
+                    sb.Append("{\"set\":\"").Append(Esc(kindId))
+                      .Append("\",\"pieces\":").Append(pieces)
+                      .Append(",\"max_pieces\":").Append(maxPieces);
+
+                    // StatBonus block — singular for simple sets, list for
+                    // combo sets like AccuracyAndSpeed (StatBonuses: list).
+                    // Always emit as a list under "stat_bonuses" for uniform
+                    // consumer handling; also keep "stat_bonus" alias for the
+                    // first entry for back-compat.
+                    var bonusList = new List<(string stat, double val, bool abs)>();
+                    var statBonus = Prop(si, "StatBonus");
+                    if (statBonus != null)
+                    {
+                        string stat = Prop(statBonus, "StatKindId")?.ToString() ?? "?";
+                        double val = TryGetDouble(statBonus, "Value", 0);
+                        bool abs = false; try { abs = (bool)Prop(statBonus, "IsAbsolute"); } catch { }
+                        if (stat != "?") bonusList.Add((stat, val, abs));
+                    }
+                    var statBonuses = Prop(si, "StatBonuses");
+                    if (statBonuses != null)
+                    {
+                        try
+                        {
+                            int bn = IntProp(statBonuses, "_size");
+                            var bitems = Prop(statBonuses, "_items");
+                            var bget = bitems?.GetType().GetMethod("get_Item", new[] { typeof(int) })
+                                       ?? bitems?.GetType().GetProperty("Item")?.GetGetMethod();
+                            for (int b = 0; b < bn; b++)
+                            {
+                                var bonus = bget.Invoke(bitems, new object[] { b });
+                                if (bonus == null) continue;
+                                string stat = Prop(bonus, "StatKindId")?.ToString() ?? "?";
+                                double val = TryGetDouble(bonus, "Value", 0);
+                                bool abs = false; try { abs = (bool)Prop(bonus, "IsAbsolute"); } catch { }
+                                if (stat != "?") bonusList.Add((stat, val, abs));
+                            }
+                        }
+                        catch { }
+                    }
+                    if (bonusList.Count > 0)
+                    {
+                        sb.Append(",\"stat_bonuses\":[");
+                        for (int b = 0; b < bonusList.Count; b++)
+                        {
+                            if (b > 0) sb.Append(",");
+                            sb.Append("{\"stat\":\"").Append(Esc(bonusList[b].stat))
+                              .Append("\",\"value\":").Append(bonusList[b].val.ToString("0.######", System.Globalization.CultureInfo.InvariantCulture))
+                              .Append(",\"absolute\":").Append(bonusList[b].abs ? "true" : "false")
+                              .Append("}");
+                        }
+                        sb.Append("]");
+                        // back-compat: also emit stat_bonus = first entry
+                        sb.Append(",\"stat_bonus\":{\"stat\":\"").Append(Esc(bonusList[0].stat))
+                          .Append("\",\"value\":").Append(bonusList[0].val.ToString("0.######", System.Globalization.CultureInfo.InvariantCulture))
+                          .Append(",\"absolute\":").Append(bonusList[0].abs ? "true" : "false")
+                          .Append("}");
+                    }
+
+                    // SubSetInfos — tiered relic sets like UnkillableAndSpdAndCrDmg
+                    // (9 piece thresholds, each adds its own StatBonuses).
+                    var subSetInfos = Prop(si, "SubSetInfos");
+                    if (subSetInfos != null)
+                    {
+                        try
+                        {
+                            int sub_n = IntProp(subSetInfos, "_size");
+                            var sub_items = Prop(subSetInfos, "_items");
+                            var sub_get = sub_items?.GetType().GetMethod("get_Item", new[] { typeof(int) })
+                                       ?? sub_items?.GetType().GetProperty("Item")?.GetGetMethod();
+                            if (sub_n > 0)
+                            {
+                                sb.Append(",\"sub_sets\":[");
+                                for (int s_i = 0; s_i < sub_n; s_i++)
+                                {
+                                    var sub = sub_get.Invoke(sub_items, new object[] { s_i });
+                                    if (sub == null) continue;
+                                    if (s_i > 0) sb.Append(",");
+                                    string subId = Prop(sub, "SubSetId")?.ToString() ?? "?";
+                                    int subPieces = IntProp(sub, "ArtifactCount");
+                                    sb.Append("{\"sub_set_id\":\"").Append(Esc(subId))
+                                      .Append("\",\"pieces\":").Append(subPieces);
+                                    var subBonuses = Prop(sub, "StatBonuses");
+                                    if (subBonuses != null)
+                                    {
+                                        try
+                                        {
+                                            int sbn = IntProp(subBonuses, "_size");
+                                            var sbitems = Prop(subBonuses, "_items");
+                                            var sbget = sbitems?.GetType().GetMethod("get_Item", new[] { typeof(int) })
+                                                       ?? sbitems?.GetType().GetProperty("Item")?.GetGetMethod();
+                                            sb.Append(",\"stat_bonuses\":[");
+                                            bool sbf = true;
+                                            for (int b = 0; b < sbn; b++)
+                                            {
+                                                var bonus = sbget.Invoke(sbitems, new object[] { b });
+                                                if (bonus == null) continue;
+                                                string stat = Prop(bonus, "StatKindId")?.ToString() ?? "?";
+                                                double val = TryGetDouble(bonus, "Value", 0);
+                                                bool abs = false; try { abs = (bool)Prop(bonus, "IsAbsolute"); } catch { }
+                                                if (!sbf) sb.Append(",");
+                                                sbf = false;
+                                                sb.Append("{\"stat\":\"").Append(Esc(stat))
+                                                  .Append("\",\"value\":").Append(val.ToString("0.######", System.Globalization.CultureInfo.InvariantCulture))
+                                                  .Append(",\"absolute\":").Append(abs ? "true" : "false")
+                                                  .Append("}");
+                                            }
+                                            sb.Append("]");
+                                        }
+                                        catch { }
+                                    }
+                                    // SubSet may also carry a SkillBonus (tiered procs).
+                                    var subSkill = Prop(sub, "SkillBonus");
+                                    if (subSkill != null)
+                                    {
+                                        int subSkillId = IntProp(subSkill, "SkillTypeId");
+                                        sb.Append(",\"skill_type_id\":").Append(subSkillId);
+                                    }
+                                    sb.Append("}");
+                                }
+                                sb.Append("]");
+                            }
+                        }
+                        catch { }
+                    }
+
+                    // SkillBonus block (new) — the proc that drives Stoneskin/
+                    // Lifesteal/Stun/etc. Deref through SkillData when found.
+                    var skillBonus = Prop(si, "SkillBonus");
+                    if (skillBonus != null)
+                    {
+                        int skillTypeId = IntProp(skillBonus, "SkillTypeId");
+                        sb.Append(",\"skill_bonus\":{\"skill_type_id\":").Append(skillTypeId);
+                        if (skillById.TryGetValue(skillTypeId, out var skill))
+                        {
+                            string group = Prop(skill, "Group")?.ToString() ?? "?";
+                            int cd = IntProp(skill, "Cooldown");
+                            sb.Append(",\"group\":\"").Append(Esc(group))
+                              .Append("\",\"cooldown\":").Append(cd)
+                              .Append(",\"effects\":[");
+                            // Walk skill.Effects[] — emit a compact form per effect.
+                            var effs = Prop(skill, "Effects");
+                            if (effs != null)
+                            {
+                                try
+                                {
+                                    int en = IntProp(effs, "_size");
+                                    var eitems = Prop(effs, "_items");
+                                    var eget = eitems?.GetType().GetMethod("get_Item", new[] { typeof(int) })
+                                               ?? eitems?.GetType().GetProperty("Item")?.GetGetMethod();
+                                    bool ef = true;
+                                    for (int e = 0; e < en; e++)
+                                    {
+                                        var eff = eget.Invoke(eitems, new object[] { e });
+                                        if (eff == null) continue;
+                                        string kind = Prop(eff, "KindId")?.ToString() ?? "?";
+                                        string egroup = Prop(eff, "Group")?.ToString() ?? "?";
+                                        string mform = Prop(eff, "MultiplierFormula")?.ToString() ?? "";
+                                        string cond = Prop(eff, "Condition")?.ToString() ?? "";
+                                        int stack = IntProp(eff, "StackCount");
+                                        if (!ef) sb.Append(",");
+                                        ef = false;
+                                        sb.Append("{\"kind\":\"").Append(Esc(kind))
+                                          .Append("\",\"group\":\"").Append(Esc(egroup))
+                                          .Append("\",\"stack\":").Append(stack)
+                                          .Append(",\"formula\":\"").Append(Esc(mform))
+                                          .Append("\",\"condition\":\"").Append(Esc(cond))
+                                          .Append("\"");
+                                        // Phases (when this effect triggers): AfterDamageDealt etc.
+                                        var rel = Prop(eff, "Relation");
+                                        if (rel != null)
+                                        {
+                                            var phases = Prop(rel, "Phases");
+                                            if (phases != null)
+                                            {
+                                                try
+                                                {
+                                                    int pn = IntProp(phases, "_size");
+                                                    var pitems = Prop(phases, "_items");
+                                                    var pget = pitems?.GetType().GetMethod("get_Item", new[] { typeof(int) })
+                                                               ?? pitems?.GetType().GetProperty("Item")?.GetGetMethod();
+                                                    sb.Append(",\"phases\":[");
+                                                    for (int p = 0; p < pn; p++)
+                                                    {
+                                                        if (p > 0) sb.Append(",");
+                                                        var ph = pget.Invoke(pitems, new object[] { p });
+                                                        sb.Append("\"").Append(Esc(ph?.ToString() ?? "?")).Append("\"");
+                                                    }
+                                                    sb.Append("]");
+                                                }
+                                                catch { }
+                                            }
+                                        }
+                                        sb.Append("}");
+                                    }
+                                }
+                                catch { }
+                            }
+                            sb.Append("]");
+                        }
+                        sb.Append("}");
+                    }
+                    sb.Append("}");
+                }
+            }
+            catch (Exception ex) { return "{\"error\":\"sets walk: " + Esc(ex.Message) + "\"}"; }
+            sb.Append("]}");
+            return sb.ToString();
+        }
+
         // Helper for emitting a numeric stat field; handles Plarium Fixed types
         // (via Convert.ToDouble) and falls back to ToString-parse for IL2CPP
         // wrappers that don't implement IConvertible cleanly.
@@ -11896,7 +12162,14 @@ namespace RaidAutomation
         {
             var v = Prop(obj, name);
             if (v == null) return dflt;
-            try { return Convert.ToDouble(v); } catch { return dflt; }
+            try { return Convert.ToDouble(v); } catch { }
+            // Fallback for Plarium Fixed / IL2CPP wrappers that don't implement
+            // IConvertible cleanly: parse the type's ToString output. Fixed
+            // types print as "0.150" or similar, so this round-trips correctly.
+            if (double.TryParse(v.ToString(), System.Globalization.NumberStyles.Any,
+                System.Globalization.CultureInfo.InvariantCulture, out double d))
+                return d;
+            return dflt;
         }
 
         // Il2Cpp Nullable<TEnum> exposes HasValue + Value. Returns 0 if null.

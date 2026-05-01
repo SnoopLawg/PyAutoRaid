@@ -85,6 +85,41 @@ class HeroType:
 
 
 @dataclass(frozen=True)
+class StatBonus:
+    stat: str
+    value: float
+    absolute: bool
+
+    def __str__(self) -> str:
+        suffix = "" if self.absolute else "%"
+        scale = 1 if self.absolute else 100
+        return f"+{self.value * scale:.0f}{suffix} {self.stat}"
+
+
+@dataclass(frozen=True)
+class SetEffect:
+    """Proc effect on a set (e.g. Lifesteal heal, Stun on-hit)."""
+    kind: str                     # Heal / ApplyBuff / PassiveCounterattack / etc.
+    group: str                    # Passive / Active / RoundStart / etc.
+    formula: str                  # e.g. "0.3*DEALT_DMG"
+    condition: str                # e.g. "isOwnerProduceRelatedEffect && !relationTargetIsAlly"
+    phases: list[str]             # ["AfterDamageDealt"]
+
+
+@dataclass(frozen=True)
+class ArtifactSet:
+    set: str                      # ArtifactSetKindId (e.g. "Hp", "AttackSpeed", "LifeDrain")
+    pieces: int                   # the trigger count (2 or 4 normally)
+    max_pieces: int
+    stat_bonuses: list[StatBonus] = field(default_factory=list)
+    skill_type_id: int | None = None
+    skill_group: str | None = None  # "Passive" / "Active"
+    skill_cooldown: int = 0
+    effects: list[SetEffect] = field(default_factory=list)
+    sub_sets: list[dict[str, Any]] = field(default_factory=list)  # tiered relics
+
+
+@dataclass(frozen=True)
 class AllianceBoss:
     difficulty: str          # Easy/Normal/Hard/Brutal/Nightmare/UltraNightmare
     hp: int                  # full effective HP (e.g. UNM = 1,171,204,485)
@@ -182,8 +217,47 @@ class StaticData:
         return self.alliance_bosses[key]
 
     @cached_property
-    def artifact_sets(self) -> list[dict]:
-        return _load("artifact_sets.json").get("data", [])
+    def _artifact_sets_raw(self) -> list[dict]:
+        # Newer format: {"sets": [...]} from /artifact-sets-truth. Old format
+        # used {"data": [...]} via /static-export. Support both.
+        d = _load("artifact_sets.json")
+        return d.get("sets") or d.get("data", [])
+
+    @cached_property
+    def artifact_sets(self) -> dict[str, ArtifactSet]:
+        out: dict[str, ArtifactSet] = {}
+        for s in self._artifact_sets_raw:
+            kind = s.get("set") or s.get("ArtifactSetKindId")
+            if not kind:
+                continue
+            bonuses = [
+                StatBonus(stat=b["stat"], value=b["value"], absolute=b.get("absolute", False))
+                for b in (s.get("stat_bonuses") or
+                          ([s["stat_bonus"]] if s.get("stat_bonus") else []))
+            ]
+            sk = s.get("skill_bonus") or {}
+            effects = [
+                SetEffect(kind=e["kind"], group=e.get("group", ""),
+                          formula=e.get("formula", ""),
+                          condition=e.get("condition", ""),
+                          phases=e.get("phases", []))
+                for e in sk.get("effects", [])
+            ]
+            out[kind] = ArtifactSet(
+                set=kind,
+                pieces=s.get("pieces") or s.get("ArtifactCount", 0),
+                max_pieces=s.get("max_pieces") or s.get("MaxArtifactCount", 0),
+                stat_bonuses=bonuses,
+                skill_type_id=sk.get("skill_type_id"),
+                skill_group=sk.get("group"),
+                skill_cooldown=sk.get("cooldown", 0),
+                effects=effects,
+                sub_sets=s.get("sub_sets", []),
+            )
+        return out
+
+    def artifact_set(self, kind: str) -> ArtifactSet:
+        return self.artifact_sets[kind]
 
     @cached_property
     def masteries(self) -> list[dict]:

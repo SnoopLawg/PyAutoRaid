@@ -57,9 +57,10 @@ SECTIONS: dict = {
     # Sections via generic /static-export. Shape: (file, /static-export-query, transform).
     # The transform=_static_export_transform marker tells fetch_section to
     # wrap the raw list/dict output without the usual _meta merging.
-    "artifact_sets": ("artifact_sets.json",
-        "/static-export?path=ArtifactData.SetInfos&depth=4&max=200",
-        "data_under_data"),
+    # Use the dedicated truth endpoint that derefs SkillBonus.SkillTypeId
+    # through SkillData so proc-based sets (Lifesteal, Stoneskin, Stun, etc.)
+    # have full effect formulas, not just "+0% ?" placeholders.
+    "artifact_sets": ("artifact_sets.json", "/artifact-sets-truth", None),
     "primary_bonuses": ("primary_bonuses.json",
         "/static-export?path=ArtifactData.PrimaryBonusInfos&depth=4&max=200",
         "data_under_data"),
