@@ -56,6 +56,23 @@ def cb_day_today() -> datetime.date:
     return cb_day_for_timestamp(time.time())
 
 
+def reset_info() -> dict:
+    """Return seconds until next CB reset + the next-reset UTC timestamp.
+    Used by the dashboard's CB countdown panel and any CLI / cron script
+    that needs to know how long until the next CB instance opens."""
+    now_utc = datetime.datetime.now(datetime.timezone.utc)
+    next_utc = now_utc.replace(hour=CB_RESET_UTC_HOUR, minute=0,
+                                second=0, microsecond=0)
+    if next_utc <= now_utc:
+        next_utc += datetime.timedelta(days=1)
+    return {
+        "now_utc": now_utc.isoformat(timespec="seconds"),
+        "next_reset_utc": next_utc.isoformat(timespec="seconds"),
+        "seconds_until_reset": int((next_utc - now_utc).total_seconds()),
+        "reset_hour_utc": CB_RESET_UTC_HOUR,
+    }
+
+
 def today_cb_element_str(battle_log_path) -> str | None:
     """Read the current CB affinity from the most recent battle log.
     Returns one of 'magic'/'force'/'spirit'/'void' or None if unknown."""
@@ -95,6 +112,11 @@ def _main() -> int:
     day = cb_day_for_timestamp(ts)
     print(f"CB reset hour (UTC):  {CB_RESET_UTC_HOUR}")
     print(f"CB day window:        {day.isoformat()}")
+    info = reset_info()
+    secs = info["seconds_until_reset"]
+    h, rem = divmod(secs, 3600)
+    m = rem // 60
+    print(f"Next reset:           {info['next_reset_utc']} ({h}h {m}m from now)")
     elem = today_cb_element_str(args.battle_log)
     print(f"Most-recent affinity: {elem or '(no log / no element field)'}")
     return 0

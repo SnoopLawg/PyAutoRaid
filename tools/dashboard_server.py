@@ -1233,71 +1233,30 @@ def build_tune_recommend():
     }
 
 
-def build_cb_reset_info():
-    """Return seconds until next CB reset + reset-window-aware "today" key."""
-    import datetime as _dt
-    now_utc = _dt.datetime.now(_dt.timezone.utc)
-    next_utc = now_utc.replace(hour=CB_RESET_UTC_HOUR, minute=0, second=0, microsecond=0)
-    if next_utc <= now_utc:
-        next_utc += _dt.timedelta(days=1)
-    return {
-        "now_utc": now_utc.isoformat(timespec="seconds"),
-        "next_reset_utc": next_utc.isoformat(timespec="seconds"),
-        "seconds_until_reset": int((next_utc - now_utc).total_seconds()),
-        "reset_hour_utc": CB_RESET_UTC_HOUR,
-    }
+# CB reset countdown + autorun live in dedicated CLI modules:
+#   python3 tools/cb_day.py              — print today's window + next reset
+#   python3 tools/cb_autorun.py status   — current autorun state
+#   python3 tools/cb_autorun.py start    — enable + block, print fires
+from tools.cb_day import reset_info as build_cb_reset_info  # noqa: E402, F401
+from tools import cb_autorun as _autorun  # noqa: E402
 
 
-_autorun_state = {
-    "enabled": False,
-    "last_fired": None,
-    "last_result": None,
-    "thread_started": False,
-}
+# Back-compat shim — older /api/autorun handler reads _autorun_state.
+class _AutorunStateProxy:
+    def get(self, k, default=None):
+        return _autorun.state().get(k, default)
+
+    def __getitem__(self, k):
+        return _autorun.state().get(k)
+
+
+_autorun_state = _AutorunStateProxy()
 
 
 def _autorun_worker():
-    """Background thread: checks CB key count every 60s; fires cb_run.py if
-    enabled and keys are available. Opt-in via `/api/autorun/enable`.
-
-    Runs in a daemon thread so we don't block shutdown. Uses subprocess with
-    a timeout so a stuck battle can't hang the autorunner.
-    """
-    import subprocess
-    import time as _t
-    while True:
-        _t.sleep(60)
-        if not _autorun_state.get("enabled"):
-            continue
-        try:
-            import urllib.request
-            raw = urllib.request.urlopen(f"{MOD_URL}/all-resources", timeout=10).read().decode()
-            data = json.loads(raw)
-            keys = int((data.get("cb_keys") or 0) if isinstance(data, dict) else 0)
-        except Exception:
-            continue
-        if keys <= 0:
-            continue
-        # Avoid rapid refiring: require at least 60s since last fire
-        last = _autorun_state.get("last_fired") or 0
-        if time.time() - last < 60:
-            continue
-        _autorun_state["last_fired"] = time.time()
-        try:
-            result = subprocess.run(
-                ["python", str(ROOT / "tools" / "cb_run.py")],
-                cwd=str(ROOT), timeout=420,
-                capture_output=True, text=True,
-            )
-            _autorun_state["last_result"] = {
-                "ok": result.returncode == 0,
-                "stdout_tail": result.stdout[-500:] if result.stdout else "",
-                "stderr_tail": result.stderr[-500:] if result.stderr else "",
-            }
-        except subprocess.TimeoutExpired:
-            _autorun_state["last_result"] = {"ok": False, "error": "timed out (>7min)"}
-        except Exception as e:
-            _autorun_state["last_result"] = {"ok": False, "error": str(e)}
+    """Compat wrapper — older code paths called this directly to start the
+    background thread. The new module exposes ensure_thread()."""
+    _autorun.ensure_thread(MOD_URL, ROOT)
 
 
 def build_cb_history_with_attribution():
@@ -2234,8 +2193,13 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             return self._send_json(apply_tune_to_preset(tune, preset_id))
 
         if parsed.path == "/api/autorun/enable":
-            _autorun_state["enabled"] = bool(body.get("enabled", True))
-            return self._send_json({"ok": True, "enabled": _autorun_state["enabled"]})
+            enabled = bool(body.get("enabled", True))
+            if enabled:
+                _autorun.enable()
+                _autorun.ensure_thread(MOD_URL, ROOT)
+            else:
+                _autorun.disable()
+            return self._send_json({"ok": True, "enabled": enabled})
 
         if parsed.path == "/api/dungeons/start":
             ok, msg = start_dungeon_run(
