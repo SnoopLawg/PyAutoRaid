@@ -89,7 +89,11 @@ except Exception:
         5: (2, {7: 12}), 6: (2, {8: 20}), 7: (2, {6: 40}), 8: (2, {5: 40}),
     }
 _STAT_KEY = {1: "HP", 2: "ATK", 3: "DEF", 4: "SPD", 5: "RES", 6: "ACC", 7: "CR", 8: "CD"}
-_LORE_OF_STEEL = 500343
+try:
+    from raid_data import MASTERY_IDS as _MASTERY_IDS
+    _LORE_OF_STEEL = _MASTERY_IDS["lore_of_steel"]
+except Exception:
+    _LORE_OF_STEEL = 500343
 # Empowerment stat bonuses per level: (hp_atk_def_pct, acc, res, spd, cd_pct, cr_pct)
 _EMP_BONUSES = {
     "epic":      [(0,0,0,0,0,0), (10,10,10,0,0,0), (20,20,20,5,5,0),   (30,30,30,5,5,0),   (40,40,40,10,15,5)],
