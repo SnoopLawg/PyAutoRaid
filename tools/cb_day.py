@@ -54,3 +54,51 @@ def cb_day_for_timestamp(ts: float) -> datetime.date:
 
 def cb_day_today() -> datetime.date:
     return cb_day_for_timestamp(time.time())
+
+
+def today_cb_element_str(battle_log_path) -> str | None:
+    """Read the current CB affinity from the most recent battle log.
+    Returns one of 'magic'/'force'/'spirit'/'void' or None if unknown."""
+    import json
+    from pathlib import Path
+    p = Path(battle_log_path)
+    if not p.exists():
+        return None
+    try:
+        d = json.loads(p.read_text())
+        for entry in (d.get("log") or [])[:50]:
+            if not isinstance(entry, dict):
+                continue
+            for h in entry.get("heroes") or []:
+                if h.get("side") == "enemy" and h.get("element"):
+                    el = int(h["element"])
+                    return {1: "magic", 2: "force", 3: "spirit", 4: "void"}.get(el)
+        return None
+    except Exception:
+        return None
+
+
+def _main() -> int:
+    """CLI: print today's CB window + most-recent affinity if a battle log exists."""
+    import argparse
+    from pathlib import Path
+
+    ap = argparse.ArgumentParser(description="CB day window + element resolution")
+    ap.add_argument("--battle-log",
+                    default=str(Path(__file__).resolve().parent.parent / "battle_logs_cb_latest.json"),
+                    help="path to battle_logs_cb_latest.json")
+    ap.add_argument("--at", type=float, default=None,
+                    help="unix timestamp to resolve CB day for (default: now)")
+    args = ap.parse_args()
+
+    ts = args.at if args.at is not None else time.time()
+    day = cb_day_for_timestamp(ts)
+    print(f"CB reset hour (UTC):  {CB_RESET_UTC_HOUR}")
+    print(f"CB day window:        {day.isoformat()}")
+    elem = today_cb_element_str(args.battle_log)
+    print(f"Most-recent affinity: {elem or '(no log / no element field)'}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(_main())

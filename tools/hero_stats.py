@@ -4,9 +4,12 @@ Mirrors the game's Total Stats screen: base + artifacts + sets + Lore of
 Steel + empowerment. NOT included: Arena bonuses, Blessings, Faction
 Guardians, relic bonuses — those live in /hero-computed-stats.
 
-Extracted from dashboard_server.py for separation of concerns. Set
-bonuses come from data/static/artifact_sets.json via gear_constants;
+Set bonuses come from data/static/artifact_sets.json via gear_constants;
 LoS mastery id and empowerment table come from raid_data.
+
+CLI usage:
+    python3 tools/hero_stats.py "Maneater"
+    python3 tools/hero_stats.py "Demytha" --json
 """
 from __future__ import annotations
 
@@ -123,3 +126,71 @@ def compute_hero_actual_stats(hero):
             out[k] = round(base_val + art_val + mast_val + emp_val, 1)
     out["_breakdown"] = breakdown
     return out
+
+
+def fetch_heroes_from_mod(mod_url: str = "http://localhost:6790") -> list[dict]:
+    """Live-pull /all-heroes from the mod. Returns [] on any error."""
+    import json as _json
+    import urllib.request
+    try:
+        with urllib.request.urlopen(f"{mod_url}/all-heroes", timeout=30) as r:
+            return _json.loads(r.read().decode("utf-8")).get("heroes", [])
+    except Exception:
+        return []
+
+
+def find_hero(heroes: list[dict], query: str) -> dict | None:
+    """Case-insensitive name match; prefers max-ascended / 6-star matches."""
+    q = query.lower()
+    matches = [h for h in heroes if q in (h.get("name") or "").lower()]
+    if not matches:
+        return None
+    # Prefer 6-star with most empower
+    matches.sort(key=lambda h: (h.get("rank", 0), h.get("empower", 0)), reverse=True)
+    return matches[0]
+
+
+def _format_breakdown(name: str, stats: dict) -> str:
+    breakdown = stats.get("_breakdown", {})
+    out = [f"{name}", "-" * len(name)]
+    out.append(f"  {'stat':5s}  {'total':>7s}  =  {'basic':>6s} + {'artifacts':>9s} + {'mastery':>7s} + {'empower':>7s}")
+    for k in ("HP", "ATK", "DEF", "SPD", "RES", "ACC"):
+        b = breakdown.get(k, {})
+        out.append(f"  {k:5s}  {stats[k]:>7}  =  {b.get('basic',0):>6} + {b.get('artifacts',0):>9} + {b.get('masteries',0):>7} + {b.get('empower',0):>7}")
+    out.append(f"  {'CR':5s}  {stats['CR']:>7}%")
+    out.append(f"  {'CD':5s}  {stats['CD']:>7}%")
+    return "\n".join(out)
+
+
+def _main() -> int:
+    """CLI: print gear-inclusive stats for a named hero from the live mod."""
+    import argparse
+    import json as _json
+    import sys
+
+    ap = argparse.ArgumentParser(
+        description="Print gear-inclusive hero stats (matches in-game Total Stats)")
+    ap.add_argument("name", help="hero name (or partial match)")
+    ap.add_argument("--mod-url", default="http://localhost:6790")
+    ap.add_argument("--json", action="store_true",
+                    help="emit JSON instead of formatted text")
+    args = ap.parse_args()
+
+    heroes = fetch_heroes_from_mod(args.mod_url)
+    if not heroes:
+        print(f"ERR: mod not reachable at {args.mod_url}", file=sys.stderr)
+        return 2
+    hero = find_hero(heroes, args.name)
+    if not hero:
+        print(f"ERR: no hero matching {args.name!r}", file=sys.stderr)
+        return 1
+    stats = compute_hero_actual_stats(hero)
+    if args.json:
+        print(_json.dumps({"name": hero.get("name"), "id": hero.get("id"), "stats": stats}, indent=2))
+    else:
+        print(_format_breakdown(hero.get("name", "?"), stats))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(_main())

@@ -6,6 +6,8 @@ PyAutoRaid automates Raid: Shadow Legends via a BepInEx mod HTTP API (port 6790)
 
 **NEVER use UI/screen automation.** All game actions go through the mod API context-calls.
 
+**CLI is the source of truth.** Every dashboard feature has a CLI counterpart so the system runs headless. When adding a feature, write it as `tools/<feature>.py` with an `if __name__ == "__main__"` entrypoint first; the dashboard becomes a thin HTTP wrapper that calls the same domain functions. Examples: `tools/sell.py preview|execute|history`, `tools/hero_stats.py "<name>"`, `tools/cb_day.py`.
+
 ## Quick Commands
 
 ```bash

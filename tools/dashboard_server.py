@@ -44,8 +44,9 @@ MOD_URL = os.environ.get("PYAUTORAID_MOD_URL", "http://localhost:6790")
 
 RARITY_NAMES = {1: "Common", 2: "Uncommon", 3: "Rare", 4: "Epic", 5: "Legendary", 6: "Mythical"}
 
-# CB element/affinity helpers and day-window math live in tools/dashboard/cb_affinity.
-from tools.dashboard.cb_affinity import (  # noqa: E402
+# CB element/affinity + day-window math live in tools/cb_day.py
+# (CLI: `python3 tools/cb_day.py` prints today's CB window + affinity).
+from tools.cb_day import (  # noqa: E402
     CB_RESET_UTC_HOUR,
     ELEMENT_NAMES as _ELEMENT_NAMES,
     CB_TID_TO_ELEMENT as _CB_TID_TO_ELEMENT,
@@ -54,10 +55,10 @@ from tools.dashboard.cb_affinity import (  # noqa: E402
     cb_day_today as _cb_day_today,
 )
 
-# compute_hero_actual_stats — extracted to tools/dashboard/stat_calc.py.
-# The same module owns the SET_BONUSES / EMPOWERMENT_BONUSES / LORE_OF_STEEL
-# bridges so consumers don't need to know about static-data plumbing.
-from tools.dashboard.stat_calc import compute_hero_actual_stats  # noqa: E402, F401
+# compute_hero_actual_stats — domain logic lives in tools/hero_stats.py
+# (with its own CLI: `python3 tools/hero_stats.py "<name>"`). The dashboard
+# is one consumer; CLI is another. Same code path either way.
+from tools.hero_stats import compute_hero_actual_stats  # noqa: E402, F401
 FACTION_NAMES = {
     0: "Unknown", 1: "Banner Lords", 2: "High Elves", 3: "Sacred Order",
     4: "Coven of Magi", 5: "Ogryn Tribes", 6: "Lizardmen", 7: "Skinwalkers",
@@ -599,176 +600,44 @@ def build_artifacts():
         return None
 
 
-_SQLITE_ARTIFACT_CACHE = {"ts": 0.0, "data": None}
-_SQLITE_ARTIFACT_TTL = 30.0  # seconds — full vault rule re-eval freshness
+# Sell-rules pipeline lives in tools/sell.py — same module backs the CLI
+# (`python3 tools/sell.py preview|execute|history`). The dashboard wraps
+# the pure functions to inject its module-level state (artifact cache,
+# DB path, mod client, history file).
+from tools import sell as _sell  # noqa: E402
 
-
-def _all_artifacts_for_rules():
-    """Return the full artifact list in the shape sell_rules.evaluate accepts.
-
-    Speed-tier strategy:
-      1. If the in-memory mod-paginated artifact cache is warm, use it.
-      2. If the SQLite-derived cache is warm (< 30s), use it (~0ms).
-      3. Otherwise read from the SQLite cache (~50-200ms) — populated by
-         tools/refresh_data.py and good enough for rule evaluation.
-      4. Fall back to build_artifacts() (paginates from the mod, several
-         seconds) as a last resort.
-
-    Rule evaluation does not need live freshness — a piece dropped
-    between the last refresh and "now" simply isn't evaluated for sale,
-    which is safer than the previous "user waits 8 seconds for Preview".
-    """
-    if _artifacts_cache.get("data"):
-        return _artifacts_cache["data"]
-    now = time.time()
-    cached = _SQLITE_ARTIFACT_CACHE.get("data")
-    if cached and (now - _SQLITE_ARTIFACT_CACHE["ts"]) < _SQLITE_ARTIFACT_TTL:
-        return cached
-    try:
-        rows = _artifacts_from_sqlite()
-        if rows:
-            _SQLITE_ARTIFACT_CACHE["ts"] = now
-            _SQLITE_ARTIFACT_CACHE["data"] = rows
-            return rows
-    except Exception as e:
-        logger.info("sqlite artifact read failed: %s", e)
-    return build_artifacts() or []
-
-
-def _invalidate_artifact_cache():
-    """Bust the in-memory mod cache + the SQLite-derived cache. Called
-    after a sell so the next preview reflects the post-sell vault."""
-    _artifacts_cache["ts"] = 0
-    _artifacts_cache["data"] = None
-    _SQLITE_ARTIFACT_CACHE["ts"] = 0
-    _SQLITE_ARTIFACT_CACHE["data"] = None
-
-
-_SLOT_MAP = {1: "Helmet", 2: "Chest", 3: "Gloves", 4: "Boots",
-             5: "Weapon", 6: "Shield", 7: "Ring", 8: "Amulet", 9: "Banner"}
-_STAT_MAP = {1: "HP", 2: "ATK", 3: "DEF", 4: "SPD",
-             5: "RES", 6: "ACC", 7: "CR", 8: "CD"}
-
-
-def _artifacts_from_sqlite():
-    """Pull all artifacts + their substats from pyautoraid.db.
-
-    Returns the list shape build_artifacts() produces (slot/primary_stat
-    as strings, primary_flat bool, substats[]) so sell_rules.evaluate
-    sees the same fields. Empty list if the db is missing.
-    """
-    db_path = ROOT / "pyautoraid.db"
-    if not db_path.exists():
-        return []
-    conn = sqlite3.connect(str(db_path))
-    try:
-        cur = conn.cursor()
-        sets = {r[0]: r[1] for r in cur.execute(
-            "SELECT set_id, name FROM ref_artifact_sets").fetchall()}
-        art_rows = cur.execute(
-            "SELECT id, kind, rank, rarity, level, set_id, hero_id, "
-            "primary_stat, primary_value, primary_flat FROM artifacts"
-        ).fetchall()
-        sub_map: dict[int, list] = {}
-        for r in cur.execute(
-                "SELECT artifact_id, stat_id, value, is_flat, rolls "
-                "FROM artifact_substats").fetchall():
-            sub_map.setdefault(r[0], []).append({
-                "stat": _STAT_MAP.get(r[1], ""),
-                "value": r[2],
-                "flat": bool(r[3]),
-                "rolls": r[4],
-            })
-    finally:
-        conn.close()
-    out = []
-    for r in art_rows:
-        aid, kind, rank, rarity, level, sid, hid, pstat, pval, pflat = r
-        out.append({
-            "id": aid,
-            "level": level or 0,
-            "rank": rank or 0,
-            "rarity": rarity or 0,
-            "set_id": sid or 0,
-            "set_name": sets.get(sid, ""),
-            "slot": _SLOT_MAP.get(kind, ""),
-            "slot_id": kind,
-            "primary_stat": _STAT_MAP.get(pstat, ""),
-            "primary_value": pval or 0,
-            "primary_flat": bool(pflat),
-            "substats": sub_map.get(aid, []),
-            "sub_count": len(sub_map.get(aid, [])),
-            "hero_id": hid,
-            "equipped_on": {"hero_id": hid} if hid else None,
-        })
-    return out
-
-
-# Persistent sell history (data/sell_history.jsonl) — append-only audit log
-# so the user can inspect what got auto-sold after a long farm run.
 _SELL_HISTORY_PATH = ROOT / "data" / "sell_history.jsonl"
 
 
+def _all_artifacts_for_rules():
+    return _sell.all_artifacts_for_rules(
+        db_path=DB_PATH,
+        in_memory_cache=_artifacts_cache,
+        fallback_loader=build_artifacts,
+    )
+
+
+def _invalidate_artifact_cache():
+    _sell.invalidate_artifact_cache(_artifacts_cache)
+
+
+def _artifacts_from_sqlite():
+    return _sell.artifacts_from_sqlite(DB_PATH)
+
+
 def _append_sell_history(entry: dict) -> None:
-    try:
-        _SELL_HISTORY_PATH.parent.mkdir(parents=True, exist_ok=True)
-        with _SELL_HISTORY_PATH.open("a") as f:
-            f.write(json.dumps(entry) + "\n")
-    except Exception as e:
-        logger.info("sell_history append failed: %s", e)
+    _sell.append_sell_history(_SELL_HISTORY_PATH, entry)
 
 
 def _run_bulk_sell(ids: list[int], source: str = "dashboard") -> dict:
-    """Sell a list of artifact IDs via the mod's /sell-artifacts endpoint.
-
-    Returns {ok, sold: [int], skipped: [{id, reason}], error?}.
-
-    Logs each successful sell to data/sell_history.jsonl for auditing.
-    Forces an artifact-cache refresh on success so subsequent /api/state
-    polls reflect the new vault state.
-    """
-    if not ids:
-        return {"ok": True, "sold": [], "skipped": []}
-    client = mod_client()
-    if not client.available:
-        return {"error": "mod not reachable"}
-    # Look up metadata for the audit log BEFORE the sell removes it from
-    # the cache. Use the fast sqlite/in-mem path — calling build_artifacts()
-    # here would re-paginate the mod (8s) and block the entire request.
-    meta_by_id = {}
-    ids_set = set(ids)
-    for a in _all_artifacts_for_rules():
-        if a.get("id") in ids_set:
-            meta_by_id[a["id"]] = a
-    # Chunk to avoid massive query strings
-    sold, skipped = [], []
-    err = None
-    for i in range(0, len(ids), 50):
-        chunk = ids[i:i+50]
-        ids_param = ",".join(str(x) for x in chunk)
-        r = client._get("/sell-artifacts?ids=" + ids_param) or {}
-        if "error" in r:
-            err = r["error"]
-            break
-        sold.extend(r.get("sold") or [])
-        skipped.extend(r.get("skipped") or [])
-    # Audit log
-    ts = datetime.datetime.utcnow().isoformat() + "Z"
-    for aid in sold:
-        m = meta_by_id.get(aid) or {}
-        _append_sell_history({
-            "ts": ts, "source": source, "id": aid,
-            "slot": m.get("slot"), "set": m.get("set_name"),
-            "rank": m.get("rank"), "rarity": m.get("rarity"),
-            "level": m.get("level"), "primary": m.get("primary_stat"),
-        })
-    # Bust the artifact cache so the next /api/state shows reduced count
-    if sold:
-        _invalidate_artifact_cache()
-    out = {"ok": err is None, "sold": sold, "skipped": skipped}
-    if err:
-        out["error"] = err
-    return out
+    return _sell.run_bulk_sell(
+        ids, source,
+        mod_client=mod_client(),
+        db_path=DB_PATH,
+        history_path=_SELL_HISTORY_PATH,
+        in_memory_cache=_artifacts_cache,
+        fallback_loader=build_artifacts,
+    )
 
 
 def build_events():
