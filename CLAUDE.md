@@ -8,6 +8,12 @@ PyAutoRaid automates Raid: Shadow Legends via a BepInEx mod HTTP API (port 6790)
 
 **CLI is the source of truth.** Every dashboard feature has a CLI counterpart so the system runs headless. When adding a feature, write it as `tools/<feature>.py` with an `if __name__ == "__main__"` entrypoint first; the dashboard becomes a thin HTTP wrapper that calls the same domain functions. Examples: `tools/sell.py preview|execute|history`, `tools/hero_stats.py "<name>"`, `tools/cb_day.py`.
 
+**The game is ground truth.** Plarium's IL2CPP runtime is the only authoritative source for stats, skills, and effects. DeadwoodJedi's calculator and HellHades's optimizer are *additive* references — useful for cross-checking and learning their profiling approaches, but they are NOT primary sources. Concretely:
+- `tools/calc_parity_sim.py` matches DWJ's scheduler 100% — that's a sanity check that our turn order is right, not a coupling. If DWJ disagrees with the live game, the game wins.
+- `data/hh/parsed/` holds HH's public hero ratings + tier list — we use them as scoring signals in `comp_finder.py`, never as authoritative data. If HH says hero X is S-tier but the in-game skill description says it does 1×ATK, the game's number wins.
+- RSL Helper has feature parity with much of what we do (auto-farm, sell rules, mastery setup). We borrow ideas, not code or data.
+- Avoid tight coupling to either source: if DWJ's site goes down or HH changes their schema, PyAutoRaid keeps working because the game is on the local machine.
+
 ## Goals & Scope
 
 PyAutoRaid is a comprehensive offline assistant for Raid: Shadow Legends. It

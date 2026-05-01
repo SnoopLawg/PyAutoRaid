@@ -225,6 +225,93 @@ the user which dungeons to farm and how many runs.
 
 **Deliverable**: farming becomes a measured process, not vibes.
 
+## External Data Sources — How We Use Them
+
+The game on the user's PC is the ground truth. Everything else is
+additive — useful for ideas, cross-checks, and pre-computed signals,
+but never authoritative.
+
+### DeadwoodJedi (DWJ)
+
+**What we have**: 103 tunes + 246 calc variants + 859 champion configs
+in `data/dwj/parsed/`. `tools/calc_parity_sim.py` is a 100%-matching
+port of DWJ's turn-meter / priority / delay scheduler.
+
+**What we use it for**:
+- Turn-order sanity check — if our cb_sim picks a different action
+  than DWJ's calc, one of us is wrong (and DWJ has had years to bake)
+- Tune library — pre-computed slot configs / SPD bands / opener orders
+  that we score against the user's roster (`tools/comp_finder.py`)
+- Profiling approach — DWJ has a clean way of representing per-skill
+  priorities, delays, and cooldowns; we mirror that shape
+
+**What we do NOT use it for**:
+- Damage numbers (DWJ doesn't even calculate damage, only sync)
+- Authoritative skill effects — if DWJ's calc says A2 places Poison
+  but the in-game description says HP Burn, the game wins
+- Live data — DWJ is a static scrape; only refreshed when we re-run
+  `tools/scrape_dwj_calc.py`
+
+**Coupling boundary**: tight enough to inherit their data shapes (slug,
+hash, slot), loose enough that DWJ going dark wouldn't break us — the
+parsed JSON is our local copy.
+
+### HellHades
+
+**What we have**: 1013 champion ratings + tier list in `data/hh/parsed/`.
+Public WordPress data via `tools/scrape_hellhades.py`.
+
+**What we use it for**:
+- Tier list as a tiebreaker in `comp_finder.rank_tunes` (when two tunes
+  score equally vs roster, prefer the one with higher HH-rated heroes)
+- "Should I pull this hero?" gap analysis (`tools/cb.py gaps`)
+
+**What we do NOT use it for**:
+- Authoritative team recommendations
+- Live damage numbers
+- Their crawled user-battle database (see below)
+
+### Open question — HellHades's "Find Team" community data
+
+[Image of raidoptimiser.hellhades.com/team-optimizer]
+
+HH's site has a *Find Team* feature: enter your owned heroes, get
+suggested teams that real users have logged on their server. This is
+their crawled user-battle dataset — not public scraping fodder.
+
+**Three options**:
+
+1. **Scrape it (light)** — paginate through public team-finder results
+   and cache successful team compositions. Pros: instant team recs
+   without our sim. Cons: HH's TOS may forbid; their API changes
+   would break us; depends on HH staying up.
+
+2. **Build our own community submission system** — let users
+   opt-in to upload their battle logs to a shared db; over time
+   build the same kind of dataset. Pros: not dependent on HH; we
+   own the data. Cons: huge engineering lift; needs hosting; needs
+   privacy policy; useless until many users adopt it.
+
+3. **Don't crawl, sim instead** — keep our own sim approach
+   (`tools/cb_sim.py` + `calc_parity_sim.py` + `comp_finder.py`)
+   and rely on it for team recs. Pros: self-contained; matches our
+   "game is ground truth" principle; already 80% built. Cons:
+   accuracy still depends on Phase 5 calibration finishing.
+
+**Recommendation: option 3.** HH's user-battle data is their moat;
+duplicating or scraping it is a long-tail burden we don't need. Our
+sim, once Phase 5 calibrates damage to ±5%, should be a strict
+upgrade — it tells you *why* a team works, not just that it did once.
+We'd consider option 2 only if a community grows around PyAutoRaid.
+
+### RSL Helper
+
+Reference tool — similar feature surface to ours: auto-farm, sell rules,
+artifact optimizer, mastery setup, scheduling. We borrow *ideas* (e.g.
+their sell-rules UX informed `tools/sell_rules.py`'s rule shape), not
+code or data. Worth periodically checking what features they ship that
+we don't, and asking whether the gap matters.
+
 ## Process Rules
 
 1. **Don't silently delete code.** Anything in the "Suspected
@@ -242,6 +329,13 @@ the user which dungeons to farm and how many runs.
 
 ## Open Questions (for the user before we execute)
 
+**Resolved 2026-05-01**:
+- HellHades user-battle data: NOT crawling. Stick with our own sim
+  (option 3 above). Game is ground truth; HH is additive.
+- DWJ + HH stay loose-coupled — `tools/calc_parity_sim.py` is sanity
+  checking, never authoritative.
+
+**Still open**:
 - Phase 0 — `tune_library_dwj.py` → JSON: do it now, or wait until we
   next touch the DWJ pipeline?
 - Phase 0 — `tune_library.py` vs `tune_library_dwj.py`: are both used,
@@ -258,5 +352,7 @@ the user which dungeons to farm and how many runs.
 - Phase 5 — what's the regression bar? "Same per-hero damage to ±5%"
   or "same total damage to ±10%"? (Per-hero is harder; team-total
   hides errors.)
+- RSL Helper feature gap audit — should we make a one-time list of
+  what RSL Helper does that we don't, and decide which gaps matter?
 
 Add answers / counter-proposals inline; we iterate from there.
