@@ -25,6 +25,38 @@ except Exception:
         5: (2, {7: 12}), 6: (2, {8: 20}), 7: (2, {6: 40}), 8: (2, {5: 40}),
     }
 _STAT_KEY = {1: "HP", 2: "ATK", 3: "DEF", 4: "SPD", 5: "RES", 6: "ACC", 7: "CR", 8: "CD"}
+
+# Masteries with stat bonuses — read from data/static/masteries.json so a
+# Raid version bump auto-picks up new ones. The 13 stat-bonus masteries
+# are flat or percentage; conditional ones (Warmaster, Giant Slayer, etc.)
+# don't show on the in-game Masteries column and are sim-time effects only.
+# Stat names use the IL2CPP enum; map to our 1-letter keys.
+_MASTERY_STAT_NAME = {
+    "Health": "HP", "Attack": "ATK", "Defence": "DEF", "Speed": "SPD",
+    "Resistance": "RES", "Accuracy": "ACC",
+    "CriticalChance": "CR", "CriticalDamage": "CD",
+}
+_MASTERY_STAT_BONUSES: dict[int, dict] = {}  # mastery_id -> {stat, value, absolute}
+try:
+    import json as _json
+    from pathlib import Path as _Path
+    _mp = _Path(__file__).resolve().parent.parent / "data" / "static" / "masteries.json"
+    if _mp.exists():
+        for _m in _json.loads(_mp.read_text()).get("masteries", []):
+            sb = _m.get("stat_bonus")
+            if not sb:
+                continue
+            stat_key = _MASTERY_STAT_NAME.get(sb.get("stat"))
+            if not stat_key:
+                # stat=='-1' is Lore of Steel — handled separately as a set
+                # bonus multiplier, not a flat stat.
+                continue
+            _MASTERY_STAT_BONUSES[_m["id"]] = {
+                "stat": stat_key, "value": sb["value"],
+                "absolute": sb.get("absolute", True),
+            }
+except Exception:
+    pass
 try:
     from raid_data import MASTERY_IDS as _MASTERY_IDS
     _LORE_OF_STEEL = _MASTERY_IDS["lore_of_steel"]
@@ -41,7 +73,8 @@ except Exception:
     }
 
 
-def compute_hero_actual_stats(hero, *, base_computed: dict | None = None):
+def compute_hero_actual_stats(hero, *, base_computed: dict | None = None,
+                              mod_bonuses: dict | None = None):
     """Return gear-inclusive actual stats (SPD/HP/ATK/DEF/ACC/RES/CR/CD).
 
     Source: hero dict from /all-heroes (must have base_stats + artifacts +
@@ -59,18 +92,27 @@ def compute_hero_actual_stats(hero, *, base_computed: dict | None = None):
     heroes but misreports L60 6★ stats badly.
     """
     if base_computed:
-        # Mod-supplied level-scaled base (matches in-game Basic column).
+        # Mod-supplied level-scaled base for HP/ATK/DEF/SPD/RES/ACC.
         flat = {k: float(base_computed.get(k, 0) or 0)
                 for k in ["HP", "ATK", "DEF", "SPD", "RES", "ACC", "CR", "CD"]}
-        # The mod returns CR/CD as fractions (0.1 / 0.5). Convert to
-        # percentage shape that downstream code expects.
-        flat["CR"] *= 100
-        flat["CD"] *= 100
+        # The mod's /hero-computed-stats returns CR/CD as fractions
+        # (e.g. 0.1, 0.5) which are NOT the in-game-displayed percentages
+        # (15%, 50%). /all-heroes.base_stats has the right values. Prefer
+        # those for CR/CD only.
+        ah_base = hero.get("base_stats") or {}
+        flat["CR"] = float(ah_base.get("CR", flat["CR"]))
+        flat["CD"] = float(ah_base.get("CD", flat["CD"]))
     else:
         base = hero.get("base_stats") or {}
         flat = {k: float(base.get(k, 0) or 0) for k in ["HP", "ATK", "DEF", "SPD", "RES", "ACC", "CR", "CD"]}
     art_flat = dict.fromkeys(flat, 0.0)
     art_pct = dict.fromkeys(flat, 0.0)
+    # The mod's pre-summed pct_bonus + flat_bonus dicts only include
+    # HP/ATK/DEF/SPD; RES/ACC/CR/CD are dropped. Aggregate those four
+    # ourselves from primary + substats. stat-id mapping:
+    # 5=RES, 6=ACC, 7=CR, 8=CD.
+    _STAT_ID_TO_KEY = {5: "RES", 6: "ACC", 7: "CR", 8: "CD"}
+    art_extra: dict[str, float] = {"RES": 0.0, "ACC": 0.0, "CR": 0.0, "CD": 0.0}
     sets = {}
     for a in (hero.get("artifacts") or []):
         fb = a.get("flat_bonus") or {}
@@ -78,15 +120,41 @@ def compute_hero_actual_stats(hero, *, base_computed: dict | None = None):
         for k in flat:
             art_flat[k] += float(fb.get(k, 0) or 0)
             art_pct[k] += float(pb.get(k, 0) or 0)
+        pri = a.get("primary") or {}
+        pri_key = _STAT_ID_TO_KEY.get(pri.get("stat"))
+        if pri_key:
+            art_extra[pri_key] += float(pri.get("value", 0) or 0)
+        for ss in (a.get("substats") or []):
+            ss_key = _STAT_ID_TO_KEY.get(ss.get("stat"))
+            if ss_key:
+                art_extra[ss_key] += float(ss.get("value", 0) or 0)
         s = a.get("set", 0)
         if s:
             sets[s] = sets.get(s, 0) + 1
-    has_los = _LORE_OF_STEEL in (hero.get("masteries") or [])
+    hero_masteries = hero.get("masteries") or []
+    has_los = _LORE_OF_STEEL in hero_masteries
     # Base set bonus (no LoS), with the LoS amplifier tracked separately so we
     # can attribute it to the "Masteries" column like the in-game stat sheet.
     set_pct = dict.fromkeys(flat, 0.0)      # pct portion from sets, no LoS
     set_flat = dict.fromkeys(flat, 0.0)
     mastery_pct = dict.fromkeys(flat, 0.0)  # LoS delta (15% of base set pct)
+    mastery_flat = dict.fromkeys(flat, 0.0)  # +75 DEF / +810 HP / +50 ACC etc.
+    # Masteries that grant a flat or %-of-base stat (DEF +75, CR +5%, ...)
+    for mid in hero_masteries:
+        mb = _MASTERY_STAT_BONUSES.get(mid)
+        if not mb:
+            continue
+        stat_key = mb["stat"]
+        val = mb["value"]
+        if mb.get("absolute"):
+            mastery_flat[stat_key] += val
+        else:
+            # percent-of-base (e.g. 0.05 for CR +5% literally adds 5 to the
+            # 0-100 CR scale; not multiplicative on an existing %)
+            if stat_key in ("CR", "CD"):
+                mastery_flat[stat_key] += val * 100  # 0.05 -> +5
+            else:
+                mastery_pct[stat_key] += val
     for set_id, count in sets.items():
         spec = _SET_BONUSES.get(set_id)
         if not spec:
@@ -125,10 +193,15 @@ def compute_hero_actual_stats(hero, *, base_computed: dict | None = None):
     for k in flat:
         base_val = flat[k]
         art_val = art_flat[k] + flat[k] * art_pct[k] + flat[k] * set_pct[k]  # flat + %substats + base set
-        mast_val = flat[k] * mastery_pct[k]  # LoS delta only, attributed to masteries
+        # Masteries column = flat-stat masteries (+75 DEF, +810 HP, +5 CR%, etc.)
+        # PLUS the LoS delta on set bonuses. Both attribute to "Masteries"
+        # in the in-game Total Stats column.
+        mast_val = mastery_flat[k] + flat[k] * mastery_pct[k]
         emp_val = emp_flat[k] + flat[k] * emp_pct[k]
         set_flat_val = set_flat[k]  # ACC/RES flat-set bonuses
-        if k in ("HP", "ATK", "DEF", "SPD", "ACC", "RES"):
+        # RES/ACC/CR/CD aren't in the mod's pre-summed pct/flat bonus dicts.
+        extra_val = art_extra.get(k, 0.0)
+        if k in ("HP", "ATK", "DEF", "SPD"):
             # Game floors the per-column integer display
             components = [
                 int(base_val),
@@ -139,8 +212,50 @@ def compute_hero_actual_stats(hero, *, base_computed: dict | None = None):
             out[k] = sum(components)
             breakdown[k] = {"basic": components[0], "artifacts": components[1],
                             "masteries": components[2], "empower": components[3]}
+        elif k in ("ACC", "RES"):
+            # Flat columns (treated as ints in the in-game display).
+            components = [
+                int(base_val),
+                int(art_val + set_flat_val + extra_val),  # +substats / +primary aggregated
+                round(mast_val),
+                int(emp_val),
+            ]
+            out[k] = sum(components)
+            breakdown[k] = {"basic": components[0], "artifacts": components[1],
+                            "masteries": components[2], "empower": components[3]}
         else:
-            out[k] = round(base_val + art_val + mast_val + emp_val, 1)
+            # CR / CD: artifact contribution from primary + substats only.
+            out[k] = round(base_val + art_val + extra_val + mast_val + emp_val, 1)
+
+    # Layer in the mod's per-column bonuses if provided. These come from
+    # /hero-computed-stats and represent Affinity (mislabeled "great_hall_bonus"),
+    # Classic Arena (= mystery "arena_bonus"), Blessing, Empowerment, Relic.
+    # We add them on top of our base + artifacts + masteries calc.
+    if mod_bonuses:
+        # Map: which mod field contributes to which in-game column
+        column_to_field = {
+            "affinity": "great_hall_bonus",
+            "arena_unknown": "arena_bonus",  # mystery for now
+            "blessing": "blessing_bonus",
+            "empower_mod": "empower_bonus",
+            "relic": "relic_bonus",
+        }
+        bonus_breakdown: dict[str, dict] = {}
+        for col_name, field_name in column_to_field.items():
+            field_data = mod_bonuses.get(field_name) or {}
+            bonus_breakdown[col_name] = {}
+            for stat_key, val in field_data.items():
+                if stat_key not in out:
+                    continue
+                v = float(val or 0)
+                if v == 0:
+                    continue
+                # CR/CD in mod come as 0.05 fractions; rest are flat numbers.
+                if stat_key in ("CR", "CD"):
+                    v = v * 100  # 0.18 -> 18
+                out[stat_key] = round(out[stat_key] + v, 1) if isinstance(out[stat_key], float) else int(out[stat_key] + v)
+                bonus_breakdown[col_name][stat_key] = v
+        out["_mod_bonuses_breakdown"] = bonus_breakdown
     out["_breakdown"] = breakdown
     return out
 
@@ -206,8 +321,14 @@ def diff_vs_mod(hero: dict, mod_computed: dict, *, tolerance: float = 1.0) -> li
     """
     # Use the mod's level-scaled base_computed for an apples-to-apples
     # comparison; without it our calc applies %-artifacts to a level-1
-    # base and underflows badly.
-    ours = compute_hero_actual_stats(hero, base_computed=mod_computed.get("base_computed"))
+    # base and underflows badly. Also layer the mod's per-column bonuses
+    # (Affinity / Blessing / Relic / Empower / mystery arena) so the
+    # final number matches what the in-game Total Stats screen shows.
+    ours = compute_hero_actual_stats(
+        hero,
+        base_computed=mod_computed.get("base_computed"),
+        mod_bonuses=mod_computed,
+    )
     rows: list[dict] = []
 
     base = mod_computed.get("base_computed") or {}
@@ -251,6 +372,7 @@ def _format_breakdown_full(name: str, hero_meta: dict, mod_computed: dict | None
     ours = compute_hero_actual_stats(
         hero_meta,
         base_computed=mod_computed.get("base_computed") if mod_computed else None,
+        mod_bonuses=mod_computed if mod_computed else None,
     )
     out = [f"{name}", "=" * len(name)]
     out.append(f"  {'stat':5s}  {'our':>7s}  {'mod':>7s}  {'delta':>7s}  breakdown (mod)")
