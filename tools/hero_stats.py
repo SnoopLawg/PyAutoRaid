@@ -105,29 +105,61 @@ def compute_hero_actual_stats(hero, *, base_computed: dict | None = None,
     else:
         base = hero.get("base_stats") or {}
         flat = {k: float(base.get(k, 0) or 0) for k in ["HP", "ATK", "DEF", "SPD", "RES", "ACC", "CR", "CD"]}
+    # Aggregate artifact contributions from primary + substats directly.
+    # The mod's pre-summed pct_bonus / flat_bonus dicts have known bugs:
+    #   - RES/ACC/CR/CD substats are dropped from pct_bonus.
+    #   - Duplicate substats per stat are sometimes only counted once
+    #     (verified 2026-05-01 for Cardiel slot 7 with both flat HP and
+    #     %HP subs — the % sub was missing from pct_bonus.HP).
+    # Working from primary + substats matches the in-game *Total Stats*
+    # screen exactly (verified +786 HP delta closes when using this path).
     art_flat = dict.fromkeys(flat, 0.0)
     art_pct = dict.fromkeys(flat, 0.0)
-    # The mod's pre-summed pct_bonus + flat_bonus dicts only include
-    # HP/ATK/DEF/SPD; RES/ACC/CR/CD are dropped. Aggregate those four
-    # ourselves from primary + substats. stat-id mapping:
-    # 5=RES, 6=ACC, 7=CR, 8=CD.
-    _STAT_ID_TO_KEY = {5: "RES", 6: "ACC", 7: "CR", 8: "CD"}
+    _STAT_ID_TO_KEY = {1: "HP", 2: "ATK", 3: "DEF", 4: "SPD",
+                       5: "RES", 6: "ACC", 7: "CR", 8: "CD"}
+    # art_extra holds the absolute (flat ACC/RES/CR/CD) contributions
+    # while art_flat/art_pct hold the percent + flat-base bonuses for
+    # the percent stats.
     art_extra: dict[str, float] = {"RES": 0.0, "ACC": 0.0, "CR": 0.0, "CD": 0.0}
     sets = {}
     for a in (hero.get("artifacts") or []):
-        fb = a.get("flat_bonus") or {}
-        pb = a.get("pct_bonus") or {}
-        for k in flat:
-            art_flat[k] += float(fb.get(k, 0) or 0)
-            art_pct[k] += float(pb.get(k, 0) or 0)
+        # Primary stat: value field already includes any rank/level
+        # scaling — pick whether to file under flat vs pct based on
+        # the artifact's `primary.flat` boolean.
         pri = a.get("primary") or {}
         pri_key = _STAT_ID_TO_KEY.get(pri.get("stat"))
         if pri_key:
-            art_extra[pri_key] += float(pri.get("value", 0) or 0)
+            v = float(pri.get("value", 0) or 0)
+            if pri.get("flat"):
+                if pri_key in ("RES", "ACC", "CR", "CD"):
+                    art_extra[pri_key] += v
+                else:
+                    art_flat[pri_key] += v
+            else:
+                # %-stat primaries on Gloves/Chest/Boots etc. The value
+                # field is the raw % (60.0 means 60%).
+                if pri_key in ("CR", "CD"):
+                    art_extra[pri_key] += v
+                else:
+                    art_pct[pri_key] += v / 100.0
+        # Substats: include glyph upgrades. ss.value is the BASE substat;
+        # ss.glyph is the bonus from substat-glyph upgrades (Sacred Gear).
+        # The in-game UI reports the sum.
         for ss in (a.get("substats") or []):
             ss_key = _STAT_ID_TO_KEY.get(ss.get("stat"))
-            if ss_key:
-                art_extra[ss_key] += float(ss.get("value", 0) or 0)
+            if not ss_key:
+                continue
+            v = float(ss.get("value", 0) or 0) + float(ss.get("glyph", 0) or 0)
+            if ss.get("flat"):
+                if ss_key in ("RES", "ACC", "CR", "CD"):
+                    art_extra[ss_key] += v
+                else:
+                    art_flat[ss_key] += v
+            else:
+                if ss_key in ("CR", "CD"):
+                    art_extra[ss_key] += v
+                else:
+                    art_pct[ss_key] += v / 100.0
         s = a.get("set", 0)
         if s:
             sets[s] = sets.get(s, 0) + 1
