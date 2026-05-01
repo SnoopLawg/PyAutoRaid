@@ -650,12 +650,30 @@ namespace RaidAutomation
                                 sb.Append(","); AppendFixed(sb, flatBonus, "Speed", "SPD");
                                 sb.Append("}");
                             }
-                            // Also output ascend bonus
+                            // Also output ascend bonus from setup
                             var ascBonus = Prop(setup, "AscendBonus");
                             if (ascBonus != null)
                                 AppendBonus(sb, ascBonus, "ascend_bonus");
+                            else
+                                sb.Append(",\"_no_setup_ascend\":1");
                         }
                     }
+                }
+            }
+            catch (Exception artSetupEx) { sb.Append(",\"_setup_err\":\"" + Esc(artSetupEx.Message) + "\""); }
+
+            // Read Artifact.AscendBonus directly too (not via Setup) — sometimes
+            // the Setup version is null while the Artifact's own AscendBonus is set.
+            try
+            {
+                var artAscend = Prop(art, "AscendBonus");
+                if (artAscend != null)
+                    AppendBonus(sb, artAscend, "art_ascend_bonus");
+                var ascLevel = Prop(art, "AscendLevel");
+                if (ascLevel != null)
+                {
+                    var asLvlVal = Prop(ascLevel, "Value");
+                    if (asLvlVal != null) sb.Append(",\"ascend_level\":" + Convert.ToInt32(asLvlVal));
                 }
             }
             catch { }

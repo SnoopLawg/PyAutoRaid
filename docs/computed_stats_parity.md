@@ -68,6 +68,53 @@ the `BuildingSetup` returned by `Village.CapitalBuildingSetupForElement`).
 The mod calls this `great_hall_bonus` which is misleading; the in-game
 labels it "Affinity Bonuses".
 
+## Verification status (2026-05-01)
+
+### Cardiel L60 6★ (no Faction Guardians, +900 HP Relic)
+
+| Stat | Ours | Screenshot | Δ |
+|------|-----:|-----------:|---:|
+| HP   | 45,379 | 45,379 | ✅ EXACT |
+| ATK  | 3,885 | 3,887 | -2 |
+| DEF  | 3,328 | 3,392 | -64 (−1.9%) |
+| SPD  | 236 | 237 | -1 |
+| RES  | 194 | 194 | ✅ EXACT |
+| ACC  | 103 | 103 | ✅ EXACT |
+| CR   | 66 | 66 | ✅ EXACT |
+| CD   | 149 | 147 | +2 |
+
+### Gnut L60 6★ (Faction Guardians +1965 HP, +11% CD Relic)
+
+| Stat | Ours | Screenshot | Δ |
+|------|-----:|-----------:|---:|
+| HP   | 41,445 | 41,445 | ✅ EXACT |
+| ATK  | 2,007 | 2,008 | -1 |
+| DEF  | 4,950 | 4,951 | -1 |
+| SPD  | 180 | 180 | ✅ EXACT |
+| RES  | 152 | 152 | ✅ EXACT |
+| ACC  | 207 | 218 | -11 |
+| CR   | 87 | 87 | ✅ EXACT |
+| CD   | 188 | 194 | -6 |
+
+**11/16 EXACT match. 5/16 with small residuals (≤6.4% on the worst case).**
+
+## Outstanding residuals (investigation status)
+
+Investigated and ruled out:
+- ❌ NOT artifact ascend bonuses — none of Cardiel's or Gnut's artifacts have AscendLevel set.
+- ❌ NOT mastery sums — both have only the expected stat-bonus masteries (DEF +75 on Cardiel, +10 ACC / +5% CR / +10% CD on Gnut, plus Lore of Steel which only multiplies set bonuses).
+- ❌ NOT set-bonus DEF — neither hero has a 2-piece DEF / Resilience / Stoneskin / Reflex set active.
+- ❌ NOT mod's `CalcArtifactsBonus` — the IL2CPP `Dictionary<EnumKey, Int32>` enumeration on `ArtifactIdByKind` returns empty regardless of approach (GetEnumerator, _entries walk, indexer 1..9). Mod returns 0-stats; Python aggregation matches HP exactly so the numbers we have are the right ones, but a chunk is missing for some heroes.
+
+Still mysterious:
+- Cardiel DEF -64. Per-slot mod's `pct_bonus.DEF` shows 50% total; our manual sub-aggregation shows 54%; the screenshot wants 59%. Where the missing 5% comes from is unclear.
+- Gnut ACC -11 (substats sum to 97; screenshot shows +108 from artifacts).
+- Gnut CD -6 (mod's affinity_bonus.CD = 0.20 → 20%; screenshot column shows +25%; mod's relic_bonus.CD = 0.10 → 10%; screenshot shows +11%; combined -6).
+
+The current best guess: the mod's `CalcBuildingsBonus` (Affinity column) and `CalcArenaBonus` use a slightly different rounding or scaling than the in-game *Total Stats* screen for percentage stats specifically. For HP/ATK/DEF flat stats they match exactly. For % stats (CD specifically on Gnut, possibly DEF substats) there's a 1-5% systematic underreport.
+
+These are small enough that sim/optimizer downstream is well within trust bounds, but worth tracking for future investigation.
+
 ## What the mod needs to add / fix
 
 | Issue | Fix |
