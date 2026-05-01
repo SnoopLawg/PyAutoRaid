@@ -63,11 +63,9 @@ _real_sim_damage_cache: dict[str, dict | None] = {}
 # Helpers — read battle log for "today's element" + "last team"
 # ============================================================================
 
-def _ensure_path(root: Path) -> None:
-    """Make sure root + tools/ are importable when run as a script."""
-    for p in (str(root), str(root / "tools")):
-        if p not in sys.path:
-            sys.path.insert(0, p)
+import os as _os
+sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+from cli_util import ensure_path as _ensure_path  # noqa: E402
 
 
 def last_cb_team_names(root: Path) -> list[str]:

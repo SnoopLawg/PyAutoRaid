@@ -128,15 +128,9 @@ def compute_hero_actual_stats(hero):
     return out
 
 
-def fetch_heroes_from_mod(mod_url: str = "http://localhost:6790") -> list[dict]:
-    """Live-pull /all-heroes from the mod. Returns [] on any error."""
-    import json as _json
-    import urllib.request
-    try:
-        with urllib.request.urlopen(f"{mod_url}/all-heroes", timeout=30) as r:
-            return _json.loads(r.read().decode("utf-8")).get("heroes", [])
-    except Exception:
-        return []
+import os as _os, sys as _sys
+_sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+from cli_util import fetch_heroes_from_mod  # noqa: E402, F401
 
 
 def find_hero(heroes: list[dict], query: str) -> dict | None:

@@ -597,25 +597,14 @@ def build_last_run(
 # CLI — headless equivalent of the dashboard's CB history panels.
 # ============================================================================
 
-def _project_root() -> Path:
-    return Path(__file__).resolve().parent.parent
-
-
-def _ensure_path(root: Path) -> None:
-    import sys
-    for p in (str(root), str(root / "tools")):
-        if p not in sys.path:
-            sys.path.insert(0, p)
-
-
-def _fetch_all_heroes_default(mod_url: str = "http://localhost:6790"):
-    """Live-pull /all-heroes; returns [] on any error."""
-    import urllib.request
-    try:
-        with urllib.request.urlopen(f"{mod_url}/all-heroes", timeout=30) as r:
-            return json.loads(r.read().decode("utf-8")).get("heroes", [])
-    except Exception:
-        return []
+# Same-directory import; add tools/ to sys.path before importing.
+import os as _os, sys as _sys
+_sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+from cli_util import (  # noqa: E402
+    project_root as _project_root,
+    ensure_path as _ensure_path,
+    fetch_heroes_from_mod as _fetch_all_heroes_default,
+)
 
 
 def _cmd_history(args) -> int:

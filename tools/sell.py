@@ -209,16 +209,11 @@ def run_bulk_sell(
 # Both code paths funnel through run_bulk_sell() so behavior is identical.
 # ============================================================================
 
-def _project_root() -> Path:
-    return Path(__file__).resolve().parent.parent
-
-
-def _ensure_path(root: Path) -> None:
-    """Make sure tools/ + project root are on sys.path when run as a script."""
-    import sys
-    for p in (str(root), str(root / "tools")):
-        if p not in sys.path:
-            sys.path.insert(0, p)
+# cli_util is in the same directory; add its dir to sys.path before importing
+# so the script works whether run as `python3 tools/sell.py` or imported.
+import os as _os, sys as _sys
+_sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+from cli_util import project_root as _project_root, ensure_path as _ensure_path  # noqa: E402
 
 
 def _evaluate(root: Path) -> dict:

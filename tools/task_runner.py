@@ -149,8 +149,9 @@ def stop_run() -> tuple[bool, str]:
 # Dashboard merges its own connect-task on top.
 # ============================================================================
 
-def _project_root() -> Path:
-    return Path(__file__).resolve().parent.parent
+import os as _os
+sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+from cli_util import project_root as _project_root  # noqa: E402
 
 
 def _task_cb(tid: str) -> bool:
