@@ -1628,15 +1628,27 @@ def build_gear_gaps(threshold: float = 4.0, min_rarity: int = 4, min_rank: int =
         return {"error": f"gear gap analysis failed: {e}"}
 
 
+def _fetch_presets() -> dict | None:
+    """Fetch /presets via the mod client and repair stray "{," sequences the
+    mod sometimes emits. Used by build_preset_view + apply_tune_to_preset."""
+    client = mod_client()
+    if not client.available:
+        return None
+    try:
+        raw = urllib.request.urlopen(f"{client.base_url}/presets", timeout=15).read().decode()
+        return json.loads(re.sub(r"\{,", "{", raw))
+    except Exception as e:
+        logger.info("_fetch_presets failed: %s", e)
+        return None
+
+
 def build_preset_view(preset_id):
     """Return the preset with skill_type_id→label lookups attached so the
     dashboard can render opener + priority dropdowns cleanly."""
-    try:
-        raw = urllib.request.urlopen(f"{MOD_URL}/presets", timeout=15).read().decode()
-        fixed = re.sub(r"\{,", "{", raw)
-        presets = json.loads(fixed).get("presets", [])
-    except Exception as e:
-        return {"error": f"fetch presets: {e}"}
+    data = _fetch_presets()
+    if data is None:
+        return {"error": "fetch presets failed"}
+    presets = data.get("presets", [])
     heroes_meta = _fetch_all_heroes() or []
     hid_to_meta = {h.get("id"): h for h in heroes_meta}
 
@@ -1744,11 +1756,8 @@ def apply_tune_to_preset(tune_id, preset_id):
 
     # Fetch current team names from the preset for ordered slot assignment
     team_names = []
-    try:
-        raw = urllib.request.urlopen(f"{MOD_URL}/presets", timeout=15).read().decode()
-        # /presets may return malformed JSON — repair stray "{," sequences
-        fixed = re.sub(r"\{,", "{", raw)
-        presets_data = json.loads(fixed)
+    presets_data = _fetch_presets()
+    if presets_data is not None:
         heroes_meta = _fetch_all_heroes() or []
         hid_to_name = {h.get("id"): h.get("name") for h in heroes_meta}
         for p in presets_data.get("presets", []):
@@ -1759,8 +1768,6 @@ def apply_tune_to_preset(tune_id, preset_id):
                 if nm:
                     team_names.append(nm)
             break
-    except Exception as e:
-        return {"error": f"fetching preset team failed: {e}"}
 
     if len(team_names) != 5:
         return {"error": f"Expected 5 heroes in preset #{preset_id}, found {len(team_names)}: {team_names}"}

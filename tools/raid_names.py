@@ -23,12 +23,22 @@ ROLE_NAMES: dict[int, str] = {
     0: "Unknown", 1: "Attack", 2: "Defense", 3: "HP", 4: "Support",
 }
 
-# Faction (HeroType.Fraction enum int).
+# Faction (HeroType.Fraction enum int) — display form ("Banner Lords").
 FACTION_NAMES: dict[int, str] = {
     0: "Unknown", 1: "Banner Lords", 2: "High Elves", 3: "Sacred Order",
     4: "Coven of Magi", 5: "Ogryn Tribes", 6: "Lizardmen", 7: "Skinwalkers",
     8: "Orcs", 9: "Demonspawn", 10: "Undead Hordes", 11: "Dark Elves",
     12: "Knights Revenant", 13: "Barbarians", 14: "Sylvan Watchers",
+    15: "Samurai", 16: "Dwarves", 17: "Olympians",
+}
+
+# Faction in raw enum form ("BannerLords") — what mod IL2CPP reads emit.
+# Memory readers + mod_heroes use this for matching against the live game.
+FACTION_NAMES_ENUM: dict[int, str] = {
+    0: "Unknown", 1: "BannerLords", 2: "HighElves", 3: "SacredOrder",
+    4: "CovenOfMagi", 5: "OgrynTribes", 6: "LizardMen", 7: "Skinwalkers",
+    8: "Orcs", 9: "Demonspawn", 10: "UndeadHordes", 11: "DarkElves",
+    12: "KnightsRevenant", 13: "Barbarians", 14: "SylvanWatchers",
     15: "Samurai", 16: "Dwarves", 17: "Olympians",
 }
 

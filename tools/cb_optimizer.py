@@ -93,8 +93,11 @@ try:
             _cs_data = json.load(_f)
         for _h in _cs_data.get('heroes', []):
             _COMPUTED_STATS[_h['id']] = _h
-except:
-    pass
+except Exception as _e:
+    # Optional optimization data — sim still works without it (just less accurate
+    # stat composition). Print so the user knows their cache is stale rather than
+    # silently absorbing JSON corruption.
+    print(f"  WARN: hero_computed_stats.json load failed: {_e}", file=__import__("sys").stderr)
 
 # Load mastery stat-bonus table from data/masteries_truth.json. The 13 masteries
 # with `stat_bonus` are flat additions to scaled stats; the other 53 are
@@ -122,8 +125,8 @@ try:
                 continue
             _MASTERY_STAT_BONUS[_m['id']] = (stat_id, sb['value'], sb.get('absolute', True))
             _ALL_STAT_BONUS_MASTERY_IDS.add(_m['id'])
-except:
-    pass
+except Exception as _e:
+    print(f"  WARN: data/masteries_truth.json load failed: {_e}", file=__import__("sys").stderr)
 
 
 # Max possible Sacred Gear glyph value per (flat, rarity, stat). Derived

@@ -29,15 +29,11 @@ STAT_NAMES = {
 ELEMENT_NAMES = {0: "Magic", 1: "Force", 2: "Spirit", 3: "Void"}
 ROLE_NAMES = {0: "Attack", 1: "Defense", 2: "HP", 3: "Support"}
 
-RARITY_NAMES = {1: "Common", 2: "Uncommon", 3: "Rare", 4: "Epic", 5: "Legendary", 6: "Mythical"}
-
-FACTION_NAMES = {
-    0: "Unknown", 1: "BannerLords", 2: "HighElves", 3: "SacredOrder",
-    4: "CovenOfMagi", 5: "OgrynTribes", 6: "LizardMen", 7: "Skinwalkers",
-    8: "Orcs", 9: "Demonspawn", 10: "UndeadHordes", 11: "DarkElves",
-    12: "KnightsRevenant", 13: "Barbarians", 14: "SylvanWatchers",
-    15: "Samurai", 16: "Dwarves", 17: "Olympians",
-}
+# RARITY_NAMES + FACTION_NAMES sourced from tools/raid_names so they don't
+# drift between mod_heroes / memory_reader / dashboard.
+import os as _os, sys as _sys
+_sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "..", "tools"))
+from raid_names import RARITY_NAMES, FACTION_NAMES_ENUM as FACTION_NAMES  # noqa: E402, F401
 
 SET_NAMES = {
     0: "None", 1: "HP", 2: "ATK", 3: "DEF", 4: "Speed", 5: "CritRate",

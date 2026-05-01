@@ -298,14 +298,12 @@ SET_NAMES = {
     54: "CritDmgHPScale", 55: "StaminaSPDAcc", 56: "CritDmgIgnoreDefCD",
 }
 
-RARITY_NAMES = {1: "Common", 2: "Uncommon", 3: "Rare", 4: "Epic", 5: "Legendary", 6: "Mythical"}
-FACTION_NAMES = {
-    0: "Unknown", 1: "BannerLords", 2: "HighElves", 3: "SacredOrder",
-    4: "CovenOfMagi", 5: "OgrynTribes", 6: "LizardMen", 7: "Skinwalkers",
-    8: "Orcs", 9: "Demonspawn", 10: "UndeadHordes", 11: "DarkElves",
-    12: "KnightsRevenant", 13: "Barbarians", 14: "SylvanWatchers",
-    15: "Samurai", 16: "Dwarves", 17: "Olympians",
-}
+# RARITY_NAMES + FACTION_NAMES sourced from tools/raid_names. Memory reads
+# emit raw IL2CPP enum strings, so we use the *_ENUM variant of FACTION_NAMES
+# (PascalCase "BannerLords") rather than the display form ("Banner Lords").
+import os as _os, sys as _sys
+_sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "..", "tools"))
+from raid_names import RARITY_NAMES, FACTION_NAMES_ENUM as FACTION_NAMES  # noqa: E402, F401
 
 # ViewKey (key screens — full list of 497 in offsets/viewkeys.json)
 VIEW_VILLAGE = 1032
