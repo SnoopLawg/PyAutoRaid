@@ -1,0 +1,75 @@
+{
+  "_meta": {
+    "fetched_at": "2026-05-01T17:47:29.343511+00:00",
+    "scene": "Village",
+    "mod_version": "2.0-bepinex",
+    "unity": "6000.0.60f1"
+  },
+  "DeleteArtifactEnabled": true,
+  "MaxArtifactsCount": 2000,
+  "GradationUpgradeConstraintLevel": 25,
+  "UpToSixteenUpgradeConstraintLevel": 20,
+  "UpToTwelveUpgradeConstraintLevel": 10,
+  "MaxDropRankId": {
+    "hasValue": true,
+    "value": 539352288,
+    "HasValue": true,
+    "Value": 0
+  },
+  "MaxDropRarityId": {
+    "hasValue": true,
+    "value": 539352288,
+    "HasValue": true,
+    "Value": 0
+  },
+  "UpgradeOptimizationClientEnabled": true,
+  "UpgradeOptimizationServerEnabled": true,
+  "InventoryFilterEnabled": true,
+  "SecondaryStatsSelectionLimit": 4,
+  "ArtifactCheckroomEnabled": true,
+  "ArtifactsRefreshInactivityTimeoutSeconds": 0,
+  "ArtifactStorageState": "Enabled",
+  "ArtifactStorageUsersPercent": 100,
+  "ArtifactLoadOnSignInPercent": 100,
+  "SendArtifactOnMaximumLevelReached": false,
+  "ArtifactStoragePushDelayMinutes": 60,
+  "ExtendedLoggingEnabled": false,
+  "DeactivateArtifactBeforeAscendHeroEnabled": false,
+  "ArtifactBoosterEnabled": false,
+  "RestoreAfterFailedUpgradeEnabled": true,
+  "RerollSettings": {
+    "Enabled": true,
+    "MaxRerollsCount": 1
+  },
+  "UpgradeJournal": {
+    "Enabled": true,
+    "Percents": 50,
+    "MaxRecordsCount": 100
+  },
+  "SendArtifactAlways": true,
+  "UpgradeInBackgroundMode": false,
+  "InstantUpgradeEnabled": true,
+  "InstantUpgradeRequiredLevel": 5,
+  "AscendSettings": {
+    "ArtifactEnabled": true,
+    "AccessoryEnabled": true,
+    "RequiredLevel": 38,
+    "RequiredMinArtifactLevel": 12,
+    "RequiredMinArtifactRank": "Four",
+    "RerollEnabled": true
+  },
+  "PresetSettings": {
+    "Enabled": true,
+    "CheckStorageConsistency": true,
+    "MaxPresetsGlobal": 50,
+    "MaxPresetsByHero": 5,
+    "MaxItemsCountForArtifactPreset": 6,
+    "MaxItemsCountForAccessoryPreset": 3,
+    "NameMinLength": 1,
+    "NameMaxLength": 15,
+    "AvailableHeroLocations": [
+      "Inventory",
+      "Storage"
+    ]
+  }
+}

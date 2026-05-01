@@ -506,10 +506,18 @@ namespace RaidAutomation
                     "/shards" => RunOnMainThread(() => GetShards(QP(query, "debug") == "1")),
                     "/explore-uw" => RunOnMainThread(() => ExploreUserWrapper(QP(query, "path"))),
                     "/explore-sd" => RunOnMainThread(() => ExploreStaticData(QP(query, "path"))),
+                    "/static-export" => RunOnMainThread(() => ExportStaticDataPath(
+                        QP(query, "path"),
+                        int.TryParse(QP(query, "depth"), out var __d) ? __d : 4,
+                        int.TryParse(QP(query, "max"), out var __m) ? __m : 5000), 60000),
                     "/dungeon-drops" => RunOnMainThread(() => GetDungeonDrops(), 90000),
                     "/forge-sets" => RunOnMainThread(() => GetForgeSets(), 30000),
                     "/masteries-truth" => RunOnMainThread(() => GetMasteriesTruth(), 30000),
                     "/blessings-truth" => RunOnMainThread(() => GetBlessingsTruth(), 30000),
+                    "/hero-types" => RunOnMainThread(() => GetHeroTypes(), 90000),
+                    "/stage-bosses" => RunOnMainThread(() => GetCbBosses(), 90000),
+                    "/cb-bosses" => RunOnMainThread(() => GetCbBosses(), 90000),  // alias
+                    "/alliance-bosses" => RunOnMainThread(() => GetAllianceBosses(), 30000),
                     "/view-contexts" => RunOnMainThread(() => GetViewContexts(QP(query, "path"))),
                     "/invoke-context" => RunOnMainThread(() => InvokeOnContext(QP(query, "type"), QP(query, "method"))),
                     "/list-static-methods" => ListStaticMethods(QP(query, "type"), QP(query, "filter")),
@@ -10665,6 +10673,232 @@ namespace RaidAutomation
             return sb.ToString();
         }
 
+        // Recursively serialize any StaticData subtree to JSON.
+        //
+        // Path format mirrors /explore-sd: dot-separated property names,
+        // with `Item[key]` for dictionary indexing and `[N]` for list index.
+        //   /static-export?path=EffectData.EffectTypeById&depth=4&max=200
+        //
+        // depth: how many levels of nested objects to expand. Below depth=0
+        // values render as "<TypeName>" stubs.
+        // max:   per-collection cap (so a 8100-entry HeroTypeById doesn't
+        // OOM the response). Truncated collections include _truncated:true.
+        private string ExportStaticDataPath(string path, int depth, int max)
+        {
+            var appModel = GetAppModel();
+            if (appModel == null) return "{\"error\":\"appmodel not ready\"}";
+            object target = Prop(appModel, "StaticData");
+            if (target == null) return "{\"error\":\"AppModel.StaticData null\"}";
+            // Reuse the same path-walker as /explore-sd
+            if (!string.IsNullOrEmpty(path))
+            {
+                foreach (var seg in path.Split('.'))
+                {
+                    object next;
+                    if (seg.StartsWith("Item[") && seg.EndsWith("]"))
+                    {
+                        var keyStr = seg.Substring(5, seg.Length - 6);
+                        var idx = target.GetType().GetProperty("Item");
+                        if (idx == null) return "{\"error\":\"no indexer at " + Esc(seg) + "\"}";
+                        var paramT = idx.GetIndexParameters()[0].ParameterType;
+                        object key = keyStr;
+                        if (paramT.IsEnum)
+                        {
+                            try { key = Enum.ToObject(paramT, int.Parse(keyStr)); }
+                            catch { try { key = Enum.Parse(paramT, keyStr); } catch { } }
+                        }
+                        else
+                        {
+                            try { key = Convert.ChangeType(keyStr, paramT); } catch { }
+                        }
+                        try { next = idx.GetValue(target, new object[] { key }); }
+                        catch (Exception ex) { return "{\"error\":\"indexer threw " + Esc(ex.Message) + "\"}"; }
+                    }
+                    else if (seg.StartsWith("[") && seg.EndsWith("]"))
+                    {
+                        var nStr = seg.Substring(1, seg.Length - 2);
+                        if (!int.TryParse(nStr, out int n)) return "{\"error\":\"bad index " + Esc(nStr) + "\"}";
+                        var get = target.GetType().GetMethod("get_Item", new[] { typeof(int) });
+                        if (get == null) return "{\"error\":\"no get_Item(int) at " + Esc(seg) + "\"}";
+                        try { next = get.Invoke(target, new object[] { n }); }
+                        catch (Exception ex) { return "{\"error\":\"index threw " + Esc(ex.Message) + "\"}"; }
+                    }
+                    else
+                    {
+                        next = Prop(target, seg);
+                    }
+                    if (next == null) return "{\"error\":\"no segment " + Esc(seg) + " on " + Esc(target.GetType().FullName) + "\"}";
+                    target = next;
+                }
+            }
+            var sb = new StringBuilder(8192);
+            try
+            {
+                SerializeValue(sb, target, depth, max, new HashSet<object>(new ReferenceEqualityComparer()));
+            }
+            catch (Exception ex)
+            {
+                return "{\"error\":\"serialize threw " + Esc(ex.Message) + "\"}";
+            }
+            return sb.ToString();
+        }
+
+        // Custom equality comparer for cycle detection — defaults to
+        // reference equality but works on Il2Cpp wrapper objects too.
+        private class ReferenceEqualityComparer : IEqualityComparer<object>
+        {
+            public new bool Equals(object x, object y) => ReferenceEquals(x, y);
+            public int GetHashCode(object obj) =>
+                obj == null ? 0 : System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(obj);
+        }
+
+        private void SerializeValue(StringBuilder sb, object v, int depth, int max,
+                                     HashSet<object> seen)
+        {
+            if (v == null) { sb.Append("null"); return; }
+            var t = v.GetType();
+            // Skip noisy / unhelpful types: delegates leak IL2CPP internal
+            // pointers, IntPtrs are just memory addresses, MethodInfo is a
+            // reflection wrapper. Render as a stub so nesting still works.
+            if (typeof(System.Delegate).IsAssignableFrom(t)
+                || t.Name == "MethodInfo" || t.Name == "RuntimeMethodInfo"
+                || v is IntPtr)
+            {
+                sb.Append("\"<").Append(Esc(t.Name)).Append(">\"");
+                return;
+            }
+            // Primitives & string
+            if (v is bool b) { sb.Append(b ? "true" : "false"); return; }
+            if (v is string s) { sb.Append("\"").Append(Esc(s)).Append("\""); return; }
+            if (t.IsPrimitive)
+            {
+                // double/float need invariant culture; ints append directly
+                if (v is double d)
+                    sb.Append(d.ToString("R", System.Globalization.CultureInfo.InvariantCulture));
+                else if (v is float f)
+                    sb.Append(f.ToString("R", System.Globalization.CultureInfo.InvariantCulture));
+                else
+                    sb.Append(Convert.ToString(v, System.Globalization.CultureInfo.InvariantCulture));
+                return;
+            }
+            if (t.IsEnum) { sb.Append("\"").Append(v.ToString()).Append("\""); return; }
+            // Plarium "Fixed" stat type — has a Value or RawValue property
+            if (t.Name == "Fixed" || t.Name == "Fixed64")
+            {
+                try
+                {
+                    var raw = Convert.ToDouble(v);
+                    sb.Append(raw.ToString("R", System.Globalization.CultureInfo.InvariantCulture));
+                    return;
+                }
+                catch
+                {
+                    if (double.TryParse(v.ToString(),
+                        System.Globalization.NumberStyles.Any,
+                        System.Globalization.CultureInfo.InvariantCulture,
+                        out var dd))
+                    {
+                        sb.Append(dd.ToString("R", System.Globalization.CultureInfo.InvariantCulture));
+                        return;
+                    }
+                }
+            }
+            // Cycle / depth guard
+            if (depth < 0 || seen.Contains(v))
+            {
+                sb.Append("\"<").Append(Esc(t.Name)).Append(">\"");
+                return;
+            }
+            // Dictionary: { "key": serialized_value, ... }
+            // We detect by looking for an "_entries" array (Il2Cpp Dictionary
+            // layout) OR via IDictionary interface as fallback.
+            var entries = t.GetProperty("_entries", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)?.GetValue(v)
+                       ?? t.GetField("_entries", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)?.GetValue(v);
+            if (entries != null)
+            {
+                int count = IntProp(v, "Count");
+                seen.Add(v);
+                sb.Append("{");
+                int written = 0;
+                int n = IntProp(entries, "Length");
+                var get = entries.GetType().GetMethod("get_Item", new[] { typeof(int) });
+                bool truncated = false;
+                for (int i = 0; i < n && written < count; i++)
+                {
+                    if (written >= max) { truncated = true; break; }
+                    object e = null;
+                    try { e = get?.Invoke(entries, new object[] { i }); } catch { }
+                    if (e == null) continue;
+                    int hash = IntProp(e, "hashCode");
+                    if (hash == 0) continue;  // skip empty slots
+                    var key = Prop(e, "key");
+                    var value = Prop(e, "value");
+                    if (value == null && key == null) continue;
+                    // Fall back: if key is the kind of int that hashes to itself (most ids)
+                    // hashCode == key. Otherwise serialize key directly.
+                    string keyStr;
+                    if (key == null || key.GetType() == typeof(int))
+                        keyStr = (key ?? hash).ToString();
+                    else if (key is string ks)
+                        keyStr = ks;
+                    else
+                        keyStr = key.ToString();
+                    if (written > 0) sb.Append(",");
+                    sb.Append("\"").Append(Esc(keyStr)).Append("\":");
+                    SerializeValue(sb, value, depth - 1, max, seen);
+                    written++;
+                }
+                if (truncated) sb.Append(",\"_truncated\":true");
+                sb.Append("}");
+                seen.Remove(v);
+                return;
+            }
+            // List / array: iterate via get_Item(int) + Count
+            var countProp = t.GetProperty("Count");
+            var getItem = t.GetMethod("get_Item", new[] { typeof(int) });
+            if (countProp != null && getItem != null)
+            {
+                int n = (int)countProp.GetValue(v);
+                seen.Add(v);
+                sb.Append("[");
+                int limit = Math.Min(n, max);
+                for (int i = 0; i < limit; i++)
+                {
+                    object item = null;
+                    try { item = getItem.Invoke(v, new object[] { i }); } catch { }
+                    if (i > 0) sb.Append(",");
+                    SerializeValue(sb, item, depth - 1, max, seen);
+                }
+                if (n > limit) sb.Append(",\"<truncated_at_" + limit + "_of_" + n + ">\"");
+                sb.Append("]");
+                seen.Remove(v);
+                return;
+            }
+            // Generic object: walk public properties + non-static fields.
+            // Skip uninteresting ones (Pointer, ObjectClass, WasCollected,
+            // Backing fields, Il2Cpp-internal).
+            seen.Add(v);
+            sb.Append("{");
+            bool first = true;
+            foreach (var p in t.GetProperties(BindingFlags.Instance | BindingFlags.Public))
+            {
+                if (p.GetIndexParameters().Length > 0) continue;
+                var name = p.Name;
+                if (name == "Pointer" || name == "ObjectClass" || name == "WasCollected") continue;
+                if (name.StartsWith("_") || name.EndsWith("_k__BackingField")) continue;
+                if (!p.CanRead) continue;
+                object pv = null;
+                try { pv = p.GetValue(v); } catch { continue; }
+                if (pv == null) continue;
+                if (!first) sb.Append(",");
+                first = false;
+                sb.Append("\"").Append(Esc(name)).Append("\":");
+                SerializeValue(sb, pv, depth - 1, max, seen);
+            }
+            sb.Append("}");
+            seen.Remove(v);
+        }
+
         // Walk AppModel.StaticData → StageData and emit per-region artifact +
         // accessory drop pools. Pulls from each Stage's FlexibleReward, which
         // exposes ArtifactProbsBySetKindId / ArtifactProbsByKindId /
@@ -10994,6 +11228,469 @@ namespace RaidAutomation
             catch (Exception ex) { return "{\"error\":\"blessing walk: " + Esc(ex.Message) + "\"}"; }
             sb.Append("]}");
             return sb.ToString();
+        }
+
+        // /hero-types — pristine base-stat profile per HeroType row.
+        //   id, name, fraction, rarity, ascend_level, base_id, default_element,
+        //   default_role, is_boss, base_stats {hp, atk, def, spd, res, acc, cr,
+        //   cd, ch, ignore_def, weight}, skill_ids[], leader_skills[].
+        // Skips bloat (AscendMaterials Resources struct, 100+ zero-valued fields).
+        // Each row is small — full ~2k entries fits well under 5MB JSON.
+        private string GetHeroTypes()
+        {
+            var sd = Prop(GetAppModel(), "StaticData");
+            if (sd == null) return "{\"error\":\"appmodel/staticdata not ready\"}";
+            var hd = Prop(sd, "HeroData");
+            if (hd == null) return "{\"error\":\"StaticData.HeroData null\"}";
+            var types = Prop(hd, "HeroTypes");
+            if (types == null) return "{\"error\":\"HeroData.HeroTypes null\"}";
+
+            var sb = new StringBuilder(1 << 18);
+            sb.Append("{\"hero_types\":[");
+            try
+            {
+                int n = IntProp(types, "_size");
+                var items = Prop(types, "_items");
+                var get = items?.GetType().GetMethod("get_Item", new[] { typeof(int) })
+                          ?? items?.GetType().GetProperty("Item")?.GetGetMethod();
+                if (get == null) return "{\"error\":\"HeroTypes._items has no indexer\"}";
+                bool first = true;
+                for (int i = 0; i < n; i++)
+                {
+                    var h = get.Invoke(items, new object[] { i });
+                    if (h == null) continue;
+                    int id = IntProp(h, "Id");
+                    if (id == 0) continue;
+                    var fraction = Prop(h, "Fraction");
+                    var rarity = Prop(h, "Rarity");
+                    var elem = Prop(h, "DefaultElement");
+                    var role = Prop(h, "DefaultRole");
+                    int baseId = IntProp(h, "BaseId");
+                    int ascend = IntProp(h, "AscendLevel");
+                    bool isBoss = false; try { isBoss = (bool)Prop(h, "IsBoss"); } catch { }
+                    bool isMax = false; try { isMax = (bool)Prop(h, "IsMaxAscended"); } catch { }
+                    string name = "?";
+                    var nameLs = Prop(h, "Name");
+                    if (nameLs != null)
+                    {
+                        var nv = Prop(nameLs, "DefaultValue");
+                        if (nv != null) name = nv.ToString();
+                    }
+                    if (!first) sb.Append(",");
+                    first = false;
+                    sb.Append("{\"id\":").Append(id)
+                      .Append(",\"name\":\"").Append(Esc(name))
+                      .Append("\",\"fraction\":\"").Append(Esc(fraction?.ToString() ?? "?"))
+                      .Append("\",\"rarity\":\"").Append(Esc(rarity?.ToString() ?? "?"))
+                      .Append("\",\"element\":\"").Append(Esc(elem?.ToString() ?? "?"))
+                      .Append("\",\"role\":\"").Append(Esc(role?.ToString() ?? "?"))
+                      .Append("\",\"ascend_level\":").Append(ascend)
+                      .Append(",\"base_id\":").Append(baseId)
+                      .Append(",\"is_boss\":").Append(isBoss ? "true" : "false")
+                      .Append(",\"is_max_ascended\":").Append(isMax ? "true" : "false");
+
+                    // base_stats
+                    var bs = Prop(h, "DefaultBaseStats");
+                    if (bs != null)
+                    {
+                        sb.Append(",\"base_stats\":{")
+                          .Append("\"hp\":").Append(StatNum(bs, "Health"))
+                          .Append(",\"atk\":").Append(StatNum(bs, "Attack"))
+                          .Append(",\"def\":").Append(StatNum(bs, "Defence"))
+                          .Append(",\"spd\":").Append(StatNum(bs, "Speed"))
+                          .Append(",\"res\":").Append(StatNum(bs, "Resistance"))
+                          .Append(",\"acc\":").Append(StatNum(bs, "Accuracy"))
+                          .Append(",\"cr\":").Append(StatNum(bs, "CriticalChance"))
+                          .Append(",\"cd\":").Append(StatNum(bs, "CriticalDamage"))
+                          .Append(",\"ch\":").Append(StatNum(bs, "CriticalHeal"))
+                          .Append(",\"ignore_def\":").Append(StatNum(bs, "IgnoreDefence"))
+                          .Append(",\"weight\":").Append(StatNum(bs, "Weight"))
+                          .Append("}");
+                    }
+
+                    // skill ids
+                    var skillIds = Prop(h, "DefaultSkillTypeIds");
+                    if (skillIds != null)
+                    {
+                        sb.Append(",\"skill_ids\":[");
+                        try
+                        {
+                            int sn = IntProp(skillIds, "_size");
+                            var sitems = Prop(skillIds, "_items");
+                            var sget = sitems?.GetType().GetMethod("get_Item", new[] { typeof(int) })
+                                       ?? sitems?.GetType().GetProperty("Item")?.GetGetMethod();
+                            for (int k = 0; k < sn; k++)
+                            {
+                                if (k > 0) sb.Append(",");
+                                sb.Append(IntFrom(sget.Invoke(sitems, new object[] { k })));
+                            }
+                        }
+                        catch { }
+                        sb.Append("]");
+                    }
+
+                    // leader skills
+                    var leaders = Prop(h, "AllLeaderSkills");
+                    if (leaders != null)
+                    {
+                        sb.Append(",\"leader_skills\":[");
+                        try
+                        {
+                            int ln = IntProp(leaders, "_size");
+                            var litems = Prop(leaders, "_items");
+                            var lget = litems?.GetType().GetMethod("get_Item", new[] { typeof(int) })
+                                       ?? litems?.GetType().GetProperty("Item")?.GetGetMethod();
+                            bool lf = true;
+                            for (int k = 0; k < ln; k++)
+                            {
+                                var ls = lget.Invoke(litems, new object[] { k });
+                                if (ls == null) continue;
+                                var stat = Prop(ls, "StatKindId");
+                                bool abs = false; try { abs = (bool)Prop(ls, "IsAbsolute"); } catch { }
+                                double amt = TryGetDouble(ls, "Amount", 0);
+                                int amtI = (int)TryGetDouble(ls, "GetAmount", 0);
+                                if (!lf) sb.Append(",");
+                                lf = false;
+                                sb.Append("{\"stat\":\"").Append(Esc(stat?.ToString() ?? "?"))
+                                  .Append("\",\"amount\":").Append(amt.ToString("0.######", System.Globalization.CultureInfo.InvariantCulture))
+                                  .Append(",\"amount_int\":").Append(amtI)
+                                  .Append(",\"absolute\":").Append(abs ? "true" : "false")
+                                  .Append("}");
+                            }
+                        }
+                        catch { }
+                        sb.Append("]");
+                    }
+
+                    sb.Append("}");
+                }
+            }
+            catch (Exception ex) { return "{\"error\":\"hero-type walk: " + Esc(ex.Message) + "\"}"; }
+            sb.Append("]}");
+            return sb.ToString();
+        }
+
+        // /cb-bosses — per-stage boss stat profiles for CB / Hydra / Chimera /
+        // DT-bosses. Walks StageData.Stages and emits any stage where any
+        // HeroSlotsSetup row has IsHeroBoss==true OR IsMainBoss==true. For each
+        // boss, joins to HeroData.HeroTypes for the base stats. Adds Modifiers
+        // (per-round Accuracy/Resistance scalers) which the live game applies
+        // on top of the boss's base.
+        private string GetCbBosses()
+        {
+            var sd = Prop(GetAppModel(), "StaticData");
+            if (sd == null) return "{\"error\":\"appmodel/staticdata not ready\"}";
+            var sgd = Prop(sd, "StageData");
+            var hd = Prop(sd, "HeroData");
+            if (sgd == null || hd == null) return "{\"error\":\"StageData/HeroData null\"}";
+            var stages = Prop(sgd, "Stages");
+            if (stages == null) return "{\"error\":\"StageData.Stages null\"}";
+
+            // Build a HeroType lookup table: id -> HeroType.
+            var heroById = new Dictionary<int, object>();
+            try
+            {
+                var types = Prop(hd, "HeroTypes");
+                int hn = IntProp(types, "_size");
+                var hitems = Prop(types, "_items");
+                var hget = hitems?.GetType().GetMethod("get_Item", new[] { typeof(int) })
+                           ?? hitems?.GetType().GetProperty("Item")?.GetGetMethod();
+                for (int i = 0; i < hn; i++)
+                {
+                    var h = hget.Invoke(hitems, new object[] { i });
+                    if (h == null) continue;
+                    int hid = IntProp(h, "Id");
+                    if (hid > 0 && !heroById.ContainsKey(hid)) heroById[hid] = h;
+                }
+            }
+            catch (Exception ex) { return "{\"error\":\"hero index: " + Esc(ex.Message) + "\"}"; }
+
+            var sb = new StringBuilder(1 << 16);
+            sb.Append("{\"stages\":[");
+            try
+            {
+                int n = IntProp(stages, "_size");
+                var sitems = Prop(stages, "_items");
+                var sget = sitems?.GetType().GetMethod("get_Item", new[] { typeof(int) })
+                           ?? sitems?.GetType().GetProperty("Item")?.GetGetMethod();
+                bool first = true;
+                for (int i = 0; i < n; i++)
+                {
+                    var stage = sget.Invoke(sitems, new object[] { i });
+                    if (stage == null) continue;
+                    bool hasBoss = false; try { hasBoss = (bool)Prop(stage, "HasBoss"); } catch { }
+                    bool hasDouble = false; try { hasDouble = (bool)Prop(stage, "HasDoubleBoss"); } catch { }
+                    if (!hasBoss && !hasDouble) continue;
+                    int stageId = IntProp(stage, "Id");
+                    var diff = Prop(stage, "Difficulty");
+                    var area = Prop(stage, "Area");
+                    var region = Prop(stage, "Region");
+                    string areaId = "?", regionId = "?";
+                    try { areaId = Prop(area, "Id")?.ToString() ?? "?"; } catch { }
+                    try { regionId = Prop(region, "Id")?.ToString() ?? "?"; } catch { }
+
+                    // Find boss heroes in formations (any IsHeroBoss/IsMainBoss row).
+                    var bossList = new List<(int round, int slot, int heroTypeId, int level, string grade, bool main)>();
+                    var formations = Prop(stage, "Formations");
+                    if (formations != null)
+                    {
+                        try
+                        {
+                            int fn = IntProp(formations, "_size");
+                            var fitems = Prop(formations, "_items");
+                            var fget = fitems?.GetType().GetMethod("get_Item", new[] { typeof(int) })
+                                       ?? fitems?.GetType().GetProperty("Item")?.GetGetMethod();
+                            for (int f = 0; f < fn; f++)
+                            {
+                                var formation = fget.Invoke(fitems, new object[] { f });
+                                if (formation == null) continue;
+                                var setup = Prop(formation, "HeroSlotsSetup");
+                                if (setup == null) continue;
+                                int hn = IntProp(setup, "_size");
+                                var hitems = Prop(setup, "_items");
+                                var hget = hitems?.GetType().GetMethod("get_Item", new[] { typeof(int) })
+                                           ?? hitems?.GetType().GetProperty("Item")?.GetGetMethod();
+                                for (int h = 0; h < hn; h++)
+                                {
+                                    var slot = hget.Invoke(hitems, new object[] { h });
+                                    if (slot == null) continue;
+                                    bool hb = false; try { hb = (bool)Prop(slot, "IsHeroBoss"); } catch { }
+                                    bool mb = false; try { mb = (bool)Prop(slot, "IsMainBoss"); } catch { }
+                                    if (!hb && !mb) continue;
+                                    int round = IntProp(slot, "Round");
+                                    int slotN = IntProp(slot, "Slot");
+                                    int htId = IntProp(slot, "HeroTypeId");
+                                    int lvl = IntProp(slot, "Level");
+                                    string grade = Prop(slot, "Grade")?.ToString() ?? "?";
+                                    bossList.Add((round, slotN, htId, lvl, grade, mb));
+                                }
+                            }
+                        }
+                        catch { }
+                    }
+                    if (bossList.Count == 0) continue;
+
+                    // Modifiers (per-round flat-stat modifiers, e.g. CB UNM Acc/Res).
+                    var modList = new List<(int round, string stat, double val, bool absolute, bool bossOnly)>();
+                    var mods = Prop(stage, "Modifiers");
+                    if (mods != null)
+                    {
+                        try
+                        {
+                            int mn = IntProp(mods, "_size");
+                            var mitems = Prop(mods, "_items");
+                            var mget = mitems?.GetType().GetMethod("get_Item", new[] { typeof(int) })
+                                       ?? mitems?.GetType().GetProperty("Item")?.GetGetMethod();
+                            for (int m = 0; m < mn; m++)
+                            {
+                                var mod = mget.Invoke(mitems, new object[] { m });
+                                if (mod == null) continue;
+                                int round = IntProp(mod, "Round");
+                                string stat = Prop(mod, "KindId")?.ToString() ?? "?";
+                                double val = TryGetDouble(mod, "Value", 0);
+                                bool abs = false; try { abs = (bool)Prop(mod, "IsAbsolute"); } catch { }
+                                bool bo = false; try { bo = (bool)Prop(mod, "BossOnly"); } catch { }
+                                modList.Add((round, stat, val, abs, bo));
+                            }
+                        }
+                        catch { }
+                    }
+
+                    if (!first) sb.Append(",");
+                    first = false;
+                    sb.Append("{\"stage_id\":").Append(stageId)
+                      .Append(",\"area\":\"").Append(Esc(areaId))
+                      .Append("\",\"region\":\"").Append(Esc(regionId))
+                      .Append("\",\"difficulty\":\"").Append(Esc(diff?.ToString() ?? "?"))
+                      .Append("\",\"bosses\":[");
+                    bool bf = true;
+                    foreach (var b in bossList)
+                    {
+                        if (!bf) sb.Append(",");
+                        bf = false;
+                        sb.Append("{\"round\":").Append(b.round)
+                          .Append(",\"slot\":").Append(b.slot)
+                          .Append(",\"hero_type_id\":").Append(b.heroTypeId)
+                          .Append(",\"level\":").Append(b.level)
+                          .Append(",\"grade\":\"").Append(Esc(b.grade))
+                          .Append("\",\"is_main\":").Append(b.main ? "true" : "false");
+                        // Resolve base stats from HeroType.
+                        if (heroById.TryGetValue(b.heroTypeId, out var ht))
+                        {
+                            string name = "?";
+                            try { name = Prop(Prop(ht, "Name"), "DefaultValue")?.ToString() ?? "?"; } catch { }
+                            string elem = Prop(ht, "DefaultElement")?.ToString() ?? "?";
+                            sb.Append(",\"name\":\"").Append(Esc(name))
+                              .Append("\",\"element\":\"").Append(Esc(elem)).Append("\"");
+                            var bs = Prop(ht, "DefaultBaseStats");
+                            if (bs != null)
+                            {
+                                sb.Append(",\"base_stats\":{")
+                                  .Append("\"hp\":").Append(StatNum(bs, "Health"))
+                                  .Append(",\"atk\":").Append(StatNum(bs, "Attack"))
+                                  .Append(",\"def\":").Append(StatNum(bs, "Defence"))
+                                  .Append(",\"spd\":").Append(StatNum(bs, "Speed"))
+                                  .Append(",\"res\":").Append(StatNum(bs, "Resistance"))
+                                  .Append(",\"acc\":").Append(StatNum(bs, "Accuracy"))
+                                  .Append(",\"cr\":").Append(StatNum(bs, "CriticalChance"))
+                                  .Append(",\"cd\":").Append(StatNum(bs, "CriticalDamage"))
+                                  .Append("}");
+                            }
+                        }
+                        sb.Append("}");
+                    }
+                    sb.Append("],\"modifiers\":[");
+                    bool mf = true;
+                    foreach (var m in modList)
+                    {
+                        if (!mf) sb.Append(",");
+                        mf = false;
+                        sb.Append("{\"round\":").Append(m.round)
+                          .Append(",\"stat\":\"").Append(Esc(m.stat))
+                          .Append("\",\"value\":").Append(m.val.ToString("0.####", System.Globalization.CultureInfo.InvariantCulture))
+                          .Append(",\"absolute\":").Append(m.absolute ? "true" : "false")
+                          .Append(",\"boss_only\":").Append(m.bossOnly ? "true" : "false")
+                          .Append("}");
+                    }
+                    sb.Append("]}");
+                }
+            }
+            catch (Exception ex) { return "{\"error\":\"stage walk: " + Esc(ex.Message) + "\"}"; }
+            sb.Append("]}");
+            return sb.ToString();
+        }
+
+        // /alliance-bosses — CB boss profile per difficulty.
+        //   AllianceData.BossTypes is a 6-row list (Easy/Normal/Hard/Brutal/
+        //   Nightmare/UltraNightmare). Each row carries Health, HeroTypeId,
+        //   Level. We join to HeroData.HeroTypes for ATK/DEF/SPD/RES/ACC/CR/CD
+        //   base stats. Replaces hardcoded CB_ATK/UNM_DEF/CB_SPEED constants.
+        private string GetAllianceBosses()
+        {
+            var sd = Prop(GetAppModel(), "StaticData");
+            if (sd == null) return "{\"error\":\"appmodel/staticdata not ready\"}";
+            var ad = Prop(sd, "AllianceData");
+            var hd = Prop(sd, "HeroData");
+            if (ad == null || hd == null) return "{\"error\":\"AllianceData/HeroData null\"}";
+            var bossTypes = Prop(ad, "BossTypes");
+            if (bossTypes == null) return "{\"error\":\"AllianceData.BossTypes null\"}";
+
+            // Build hero type lookup.
+            var heroById = new Dictionary<int, object>();
+            try
+            {
+                var types = Prop(hd, "HeroTypes");
+                int hn = IntProp(types, "_size");
+                var hitems = Prop(types, "_items");
+                var hget = hitems?.GetType().GetMethod("get_Item", new[] { typeof(int) })
+                           ?? hitems?.GetType().GetProperty("Item")?.GetGetMethod();
+                for (int i = 0; i < hn; i++)
+                {
+                    var h = hget.Invoke(hitems, new object[] { i });
+                    if (h == null) continue;
+                    int hid = IntProp(h, "Id");
+                    if (hid > 0 && !heroById.ContainsKey(hid)) heroById[hid] = h;
+                }
+            }
+            catch (Exception ex) { return "{\"error\":\"hero index: " + Esc(ex.Message) + "\"}"; }
+
+            var sb = new StringBuilder(2048);
+            sb.Append("{\"bosses\":[");
+            try
+            {
+                int n = IntProp(bossTypes, "_size");
+                var items = Prop(bossTypes, "_items");
+                var get = items?.GetType().GetMethod("get_Item", new[] { typeof(int) })
+                          ?? items?.GetType().GetProperty("Item")?.GetGetMethod();
+                bool first = true;
+                for (int i = 0; i < n; i++)
+                {
+                    var bt = get.Invoke(items, new object[] { i });
+                    if (bt == null) continue;
+                    string diffId = Prop(bt, "Id")?.ToString() ?? "?";
+                    long hp = 0;
+                    try { hp = Convert.ToInt64(Prop(bt, "Health")); } catch { }
+                    int htId = IntProp(bt, "HeroTypeId");
+                    int lvl = IntProp(bt, "Level");
+                    if (!first) sb.Append(",");
+                    first = false;
+                    sb.Append("{\"difficulty\":\"").Append(Esc(diffId))
+                      .Append("\",\"hp\":").Append(hp)
+                      .Append(",\"hero_type_id\":").Append(htId)
+                      .Append(",\"level\":").Append(lvl);
+                    if (heroById.TryGetValue(htId, out var ht))
+                    {
+                        string name = "?";
+                        try { name = Prop(Prop(ht, "Name"), "DefaultValue")?.ToString() ?? "?"; } catch { }
+                        string elem = Prop(ht, "DefaultElement")?.ToString() ?? "?";
+                        sb.Append(",\"name\":\"").Append(Esc(name))
+                          .Append("\",\"element\":\"").Append(Esc(elem)).Append("\"");
+                        var bs = Prop(ht, "DefaultBaseStats");
+                        if (bs != null)
+                        {
+                            sb.Append(",\"base_stats\":{")
+                              .Append("\"hp_base\":").Append(StatNum(bs, "Health"))
+                              .Append(",\"atk\":").Append(StatNum(bs, "Attack"))
+                              .Append(",\"def\":").Append(StatNum(bs, "Defence"))
+                              .Append(",\"spd\":").Append(StatNum(bs, "Speed"))
+                              .Append(",\"res\":").Append(StatNum(bs, "Resistance"))
+                              .Append(",\"acc\":").Append(StatNum(bs, "Accuracy"))
+                              .Append(",\"cr\":").Append(StatNum(bs, "CriticalChance"))
+                              .Append(",\"cd\":").Append(StatNum(bs, "CriticalDamage"))
+                              .Append("}");
+                        }
+                        // Skill ids for the boss (so consumers can look up skill text).
+                        var skillIds = Prop(ht, "DefaultSkillTypeIds");
+                        if (skillIds != null)
+                        {
+                            sb.Append(",\"skill_ids\":[");
+                            try
+                            {
+                                int sn = IntProp(skillIds, "_size");
+                                var sitems = Prop(skillIds, "_items");
+                                var sget = sitems?.GetType().GetMethod("get_Item", new[] { typeof(int) })
+                                           ?? sitems?.GetType().GetProperty("Item")?.GetGetMethod();
+                                for (int k = 0; k < sn; k++)
+                                {
+                                    if (k > 0) sb.Append(",");
+                                    sb.Append(IntFrom(sget.Invoke(sitems, new object[] { k })));
+                                }
+                            }
+                            catch { }
+                            sb.Append("]");
+                        }
+                    }
+                    sb.Append("}");
+                }
+            }
+            catch (Exception ex) { return "{\"error\":\"boss walk: " + Esc(ex.Message) + "\"}"; }
+            sb.Append("]}");
+            return sb.ToString();
+        }
+
+        // Helper for emitting a numeric stat field; handles Plarium Fixed types
+        // (via Convert.ToDouble) and falls back to ToString-parse for IL2CPP
+        // wrappers that don't implement IConvertible cleanly.
+        private static string StatNum(object holder, string fieldName)
+        {
+            var v = Prop(holder, fieldName);
+            if (v == null) return "0";
+            try { return Convert.ToDouble(v).ToString("0.######", System.Globalization.CultureInfo.InvariantCulture); }
+            catch
+            {
+                if (double.TryParse(v.ToString(), System.Globalization.NumberStyles.Any,
+                    System.Globalization.CultureInfo.InvariantCulture, out var d))
+                    return d.ToString("0.######", System.Globalization.CultureInfo.InvariantCulture);
+                return "0";
+            }
+        }
+
+        private static int IntFrom(object v)
+        {
+            if (v == null) return 0;
+            try { return Convert.ToInt32(v); } catch { }
+            if (int.TryParse(v.ToString(), out int i)) return i;
+            return 0;
         }
 
         private static void EmitRegion(StringBuilder sb, ref bool firstRegion,

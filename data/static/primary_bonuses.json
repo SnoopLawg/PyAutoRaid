@@ -1,0 +1,483 @@
+{
+  "_meta": {
+    "fetched_at": "2026-05-01T17:47:27.678158+00:00",
+    "scene": "Village",
+    "mod_version": "2.0-bepinex",
+    "unity": "6000.0.60f1"
+  },
+  "data": [
+    {
+      "StatKey": {
+        "KindId": "Health",
+        "IsAbsolute": true
+      },
+      "ValuesByLevelByRankId": {
+        "586604592": [
+          600,
+          769,
+          939,
+          1108,
+          1277,
+          1446,
+          1616,
+          1785,
+          1954,
+          2123,
+          2293,
+          2462,
+          2631,
+          2800,
+          2970,
+          3139,
+          4080
+        ]
+      },
+      "ApplicableKindIds": [
+        "Helmet",
+        "Chest",
+        "Gloves",
+        "Boots",
+        "Ring",
+        "Cloak"
+      ]
+    },
+    {
+      "StatKey": {
+        "KindId": "Health",
+        "IsAbsolute": false
+      },
+      "ValuesByLevelByRankId": {
+        "586604592": [
+          0.1,
+          0.12,
+          0.15,
+          0.17,
+          0.2,
+          0.22,
+          0.24,
+          0.27,
+          0.29,
+          0.32,
+          0.34,
+          0.36,
+          0.39,
+          0.41,
+          0.44,
+          0.46,
+          0.6
+        ]
+      },
+      "ApplicableKindIds": [
+        "Chest",
+        "Gloves",
+        "Boots"
+      ]
+    },
+    {
+      "StatKey": {
+        "KindId": "Attack",
+        "IsAbsolute": true
+      },
+      "ValuesByLevelByRankId": {
+        "586604592": [
+          35,
+          46,
+          58,
+          69,
+          80,
+          91,
+          103,
+          114,
+          125,
+          136,
+          148,
+          159,
+          170,
+          181,
+          193,
+          204,
+          265
+        ]
+      },
+      "ApplicableKindIds": [
+        "Weapon",
+        "Chest",
+        "Gloves",
+        "Boots",
+        "Ring",
+        "Cloak"
+      ]
+    },
+    {
+      "StatKey": {
+        "KindId": "Attack",
+        "IsAbsolute": false
+      },
+      "ValuesByLevelByRankId": {
+        "586604592": [
+          0.1,
+          0.12,
+          0.15,
+          0.17,
+          0.2,
+          0.22,
+          0.24,
+          0.27,
+          0.29,
+          0.32,
+          0.34,
+          0.36,
+          0.39,
+          0.41,
+          0.44,
+          0.46,
+          0.6
+        ]
+      },
+      "ApplicableKindIds": [
+        "Chest",
+        "Gloves",
+        "Boots"
+      ]
+    },
+    {
+      "StatKey": {
+        "KindId": "Defence",
+        "IsAbsolute": true
+      },
+      "ValuesByLevelByRankId": {
+        "586604592": [
+          35,
+          46,
+          58,
+          69,
+          80,
+          91,
+          103,
+          114,
+          125,
+          136,
+          148,
+          159,
+          170,
+          181,
+          193,
+          204,
+          265
+        ]
+      },
+      "ApplicableKindIds": [
+        "Shield",
+        "Chest",
+        "Gloves",
+        "Boots",
+        "Ring",
+        "Cloak"
+      ]
+    },
+    {
+      "StatKey": {
+        "KindId": "Defence",
+        "IsAbsolute": false
+      },
+      "ValuesByLevelByRankId": {
+        "586604592": [
+          0.1,
+          0.12,
+          0.15,
+          0.17,
+          0.2,
+          0.22,
+          0.24,
+          0.27,
+          0.29,
+          0.32,
+          0.34,
+          0.36,
+          0.39,
+          0.41,
+          0.44,
+          0.46,
+          0.6
+        ]
+      },
+      "ApplicableKindIds": [
+        "Chest",
+        "Gloves",
+        "Boots"
+      ]
+    },
+    {
+      "StatKey": {
+        "KindId": "Speed",
+        "IsAbsolute": true
+      },
+      "ValuesByLevelByRankId": {
+        "586604592": [
+          6,
+          8,
+          10,
+          12,
+          14,
+          16,
+          17,
+          19,
+          21,
+          23,
+          25,
+          27,
+          29,
+          31,
+          33,
+          35,
+          45
+        ]
+      },
+      "ApplicableKindIds": [
+        "Boots"
+      ]
+    },
+    {
+      "StatKey": {
+        "KindId": "CriticalChance",
+        "IsAbsolute": false
+      },
+      "ValuesByLevelByRankId": {
+        "586604592": [
+          0.1,
+          0.12,
+          0.15,
+          0.17,
+          0.2,
+          0.22,
+          0.24,
+          0.27,
+          0.29,
+          0.32,
+          0.34,
+          0.36,
+          0.39,
+          0.41,
+          0.44,
+          0.46,
+          0.6
+        ]
+      },
+      "ApplicableKindIds": [
+        "Gloves"
+      ]
+    },
+    {
+      "StatKey": {
+        "KindId": "CriticalDamage",
+        "IsAbsolute": false
+      },
+      "ValuesByLevelByRankId": {
+        "586604592": [
+          0.12,
+          0.15,
+          0.19,
+          0.22,
+          0.25,
+          0.29,
+          0.32,
+          0.35,
+          0.38,
+          0.42,
+          0.45,
+          0.48,
+          0.52,
+          0.55,
+          0.58,
+          0.62,
+          0.8
+        ]
+      },
+      "ApplicableKindIds": [
+        "Gloves"
+      ]
+    },
+    {
+      "StatKey": {
+        "KindId": "Resistance",
+        "IsAbsolute": true
+      },
+      "ValuesByLevelByRankId": {
+        "586604592": [
+          16,
+          20,
+          24,
+          28,
+          31,
+          35,
+          39,
+          43,
+          47,
+          51,
+          55,
+          58,
+          62,
+          66,
+          70,
+          74,
+          96
+        ]
+      },
+      "ApplicableKindIds": [
+        "Chest",
+        "Banner"
+      ]
+    },
+    {
+      "StatKey": {
+        "KindId": "Accuracy",
+        "IsAbsolute": true
+      },
+      "ValuesByLevelByRankId": {
+        "586604592": [
+          16,
+          20,
+          24,
+          28,
+          31,
+          35,
+          39,
+          43,
+          47,
+          51,
+          55,
+          58,
+          62,
+          66,
+          70,
+          74,
+          96
+        ]
+      },
+      "ApplicableKindIds": [
+        "Chest",
+        "Banner"
+      ]
+    },
+    {
+      "StatKey": {
+        "KindId": "CriticalDamage",
+        "IsAbsolute": false
+      },
+      "ValuesByLevelByRankId": {
+        "586604592": [
+          0.06,
+          0.08,
+          0.1,
+          0.11,
+          0.13,
+          0.15,
+          0.16,
+          0.18,
+          0.19,
+          0.21,
+          0.23,
+          0.24,
+          0.26,
+          0.28,
+          0.29,
+          0.31,
+          0.4
+        ]
+      },
+      "ApplicableKindIds": [
+        "Cloak"
+      ]
+    },
+    {
+      "StatKey": {
+        "KindId": "Health",
+        "IsAbsolute": true
+      },
+      "ValuesByLevelByRankId": {
+        "586604592": [
+          900,
+          1154,
+          1409,
+          1662,
+          1916,
+          2169,
+          2424,
+          2678,
+          2931,
+          3185,
+          3440,
+          3693,
+          3947,
+          4200,
+          4455,
+          4709,
+          6120
+        ]
+      },
+      "ApplicableKindIds": [
+        "Banner"
+      ]
+    },
+    {
+      "StatKey": {
+        "KindId": "Attack",
+        "IsAbsolute": true
+      },
+      "ValuesByLevelByRankId": {
+        "586604592": [
+          53,
+          69,
+          87,
+          104,
+          120,
+          137,
+          155,
+          171,
+          188,
+          204,
+          222,
+          239,
+          255,
+          272,
+          290,
+          306,
+          398
+        ]
+      },
+      "ApplicableKindIds": [
+        "Banner"
+      ]
+    },
+    {
+      "StatKey": {
+        "KindId": "Defence",
+        "IsAbsolute": true
+      },
+      "ValuesByLevelByRankId": {
+        "586604592": [
+          53,
+          69,
+          87,
+          104,
+          120,
+          137,
+          155,
+          171,
+          188,
+          204,
+          222,
+          239,
+          255,
+          272,
+          290,
+          306,
+          398
+        ]
+      },
+      "ApplicableKindIds": [
+        "Banner"
+      ]
+    }
+  ]
+}

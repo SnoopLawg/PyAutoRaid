@@ -27,18 +27,62 @@ typed fields off the live object graph.
 
 | File | Source endpoint | Records | Used by |
 |---|---|---|---|
-| `masteries.json`  | `/masteries-truth`  | 66  | (none yet — replaces `data/masteries_truth.json`) |
-| `blessings.json`  | `/blessings-truth`  | 30  | (none yet — replaces hardcoded blessing values) |
-| `drops.json`      | `/dungeon-drops`    | 46 regions | `tools/gear_gap_analysis.py` |
-| `forge_sets.json` | `/forge-sets`       | 49 recipes | (reference) |
-| `revision.json`   | `/status`           | meta | cache-bust signal |
+| `masteries.json`         | `/masteries-truth`            | 66                    | (none yet — replaces `data/masteries_truth.json`) |
+| `blessings.json`         | `/blessings-truth`            | 30                    | (none yet — replaces hardcoded blessing values) |
+| `drops.json`             | `/dungeon-drops`              | 46 regions            | `tools/gear_gap_analysis.py` |
+| `forge_sets.json`        | `/forge-sets`                 | 49 recipes            | (reference) |
+| `hero_types.json`        | `/hero-types`                 | 8100 (HH parity)      | `tools/static_data.py` (HeroType / LeaderSkill) |
+| `alliance_bosses.json`   | `/alliance-bosses`            | 6 (Easy→UNM)          | `tools/static_data.py` (AllianceBoss) — **UNM HP matches battle log exactly** |
+| `stage_bosses.json`      | `/stage-bosses`               | 228 (dungeons + FF)   | (reference) |
+| `artifact_sets.json`     | `/static-export?...SetInfos`  | 71 (proc-based have +0% ?) | (reference) |
+| `primary_bonuses.json`   | `/static-export`              | 15                    | (reference) |
+| `secondary_bonuses.json` | `/static-export`              | 11                    | (reference) |
+| `ascend_bonuses.json`    | `/static-export`              | 15                    | (reference) |
+| `effects.json`           | `/static-export?...EffectTypes` | 136                | (reference — full buff/debuff catalog) |
+| `battle_quests.json`     | `/static-export`              | 35                    | (reference — quest defs not boss stats) |
+| `gameplay.json`          | `/static-export?...GameplayData` | 7 keys             | (reference) |
+| `artifact_settings.json` | `/static-export`              | 4 keys                | (reference) |
+| `factions.json`          | `/static-export`              | 1 (walker bug)        | (BROKEN — HeroRace enum keys → hash) |
+| `revision.json`          | `/status`                     | meta                  | cache-bust signal |
+
+Total ~7.3MB. The `tools/static_data.py` module is the canonical
+import surface (`StaticData()` lazy-loaded, typed dataclasses).
 
 Run `python3 tools/refresh_static_data.py` to refresh after a Raid update.
 `python3 tools/refresh_static_data.py --check` reports stale files.
 
 ## Gaps — known, prioritized
 
-### P1 — Boss stat profiles per stage  (impact: cb_sim accuracy)
+### Done — 2026-05-01
+
+- **P1 (CB boss profiles)** — `/alliance-bosses` extracts the 6 difficulty rows
+  from `AllianceData.BossTypes`. UNM HP=1,171,204,485 matches the live battle
+  log exactly. Per-stage modifiers + dungeon bosses live in `/stage-bosses`
+  (228 entries — Dragon/Spider/FoggyForest etc.).
+- **P4 (Hero base stats + leader skills)** — `/hero-types` extracts all 8100
+  HeroType rows (1296 base + 7 ascend tiers each). 4356 carry leader skills.
+  Reaches HellHades parity for hero reference data. Caveat: leader skill
+  `amount` field reads as 0 due to Plarium Fixed→double conversion; use
+  `amount_int` (percentage as int) instead.
+- **P5 (battle-results tail)** — investigated. Path
+  `%LOCALAPPDATA%/Plarium/Raid_ Shadow Legends/battle-results/battleResults`
+  doesn't exist on game version 11.40.0. The local SQLite (`raid.db`,
+  `raidV2.db`) only stores telemetry events + UserId. HellHades's "last team
+  per location" must come from a memory read or the Plarium server. Mark
+  not-applicable until a memory-extraction mod endpoint is needed.
+
+### P-now — Wire static data into consumers (P2 in old order)
+
+`tools/static_data.py` exists; consumers should migrate from hand-coded
+constants. Risk: some HeroType.DefaultBaseStats values are pre-modifier;
+the in-battle effective values (e.g. UNM SPD=190 hardcoded vs static SPD=170
+base) may not match. Per-stat verification required before flipping
+`cb_sim.py`'s `CB_SPEED_BY_DIFFICULTY` / `CB_ATK` / `UNM_DEF`. UNM HP is
+verified safe to migrate now.
+
+### Remaining gaps
+
+#### Boss stat profiles per stage  (impact: cb_sim accuracy — partially done)
 
 **What's hardcoded today** (in `tools/cb_sim.py`):
 ```python

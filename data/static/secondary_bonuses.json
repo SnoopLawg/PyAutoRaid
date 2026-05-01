@@ -1,0 +1,242 @@
+{
+  "_meta": {
+    "fetched_at": "2026-05-01T17:47:27.689693+00:00",
+    "scene": "Village",
+    "mod_version": "2.0-bepinex",
+    "unity": "6000.0.60f1"
+  },
+  "data": [
+    {
+      "StatKey": {
+        "KindId": "Health",
+        "IsAbsolute": true
+      },
+      "ValueByRankId": {
+        "586604592": {
+          "FromValue": 200,
+          "ToValue": 565
+        }
+      },
+      "ApplicableKindIds": [
+        "Weapon",
+        "Shield",
+        "Chest",
+        "Gloves",
+        "Boots",
+        "Banner",
+        "Cloak",
+        "Ring"
+      ]
+    },
+    {
+      "StatKey": {
+        "KindId": "Health",
+        "IsAbsolute": false
+      },
+      "ValueByRankId": {
+        "586604592": {
+          "FromValue": 0.05,
+          "ToValue": 0.07
+        }
+      },
+      "ApplicableKindIds": [
+        "Helmet",
+        "Weapon",
+        "Shield",
+        "Chest",
+        "Gloves",
+        "Boots",
+        "Ring",
+        "Banner"
+      ]
+    },
+    {
+      "StatKey": {
+        "KindId": "Attack",
+        "IsAbsolute": true
+      },
+      "ValueByRankId": {
+        "586604592": {
+          "FromValue": 15,
+          "ToValue": 30
+        }
+      },
+      "ApplicableKindIds": [
+        "Helmet",
+        "Chest",
+        "Gloves",
+        "Boots",
+        "Banner",
+        "Cloak",
+        "Ring"
+      ]
+    },
+    {
+      "StatKey": {
+        "KindId": "Attack",
+        "IsAbsolute": false
+      },
+      "ValueByRankId": {
+        "586604592": {
+          "FromValue": 0.05,
+          "ToValue": 0.07
+        }
+      },
+      "ApplicableKindIds": [
+        "Helmet",
+        "Weapon",
+        "Chest",
+        "Gloves",
+        "Boots",
+        "Ring",
+        "Banner"
+      ]
+    },
+    {
+      "StatKey": {
+        "KindId": "Defence",
+        "IsAbsolute": true
+      },
+      "ValueByRankId": {
+        "586604592": {
+          "FromValue": 15,
+          "ToValue": 30
+        }
+      },
+      "ApplicableKindIds": [
+        "Helmet",
+        "Chest",
+        "Gloves",
+        "Boots",
+        "Banner",
+        "Cloak",
+        "Ring"
+      ]
+    },
+    {
+      "StatKey": {
+        "KindId": "Defence",
+        "IsAbsolute": false
+      },
+      "ValueByRankId": {
+        "586604592": {
+          "FromValue": 0.05,
+          "ToValue": 0.07
+        }
+      },
+      "ApplicableKindIds": [
+        "Helmet",
+        "Shield",
+        "Chest",
+        "Gloves",
+        "Boots",
+        "Ring",
+        "Banner"
+      ]
+    },
+    {
+      "StatKey": {
+        "KindId": "Speed",
+        "IsAbsolute": true
+      },
+      "ValueByRankId": {
+        "586604592": {
+          "FromValue": 5,
+          "ToValue": 6
+        }
+      },
+      "ApplicableKindIds": [
+        "Helmet",
+        "Weapon",
+        "Shield",
+        "Chest",
+        "Gloves",
+        "Boots",
+        "Banner"
+      ]
+    },
+    {
+      "StatKey": {
+        "KindId": "CriticalChance",
+        "IsAbsolute": false
+      },
+      "ValueByRankId": {
+        "586604592": {
+          "FromValue": 0.05,
+          "ToValue": 0.07
+        }
+      },
+      "ApplicableKindIds": [
+        "Helmet",
+        "Weapon",
+        "Shield",
+        "Chest",
+        "Gloves",
+        "Boots"
+      ]
+    },
+    {
+      "StatKey": {
+        "KindId": "CriticalDamage",
+        "IsAbsolute": false
+      },
+      "ValueByRankId": {
+        "586604592": {
+          "FromValue": 0.05,
+          "ToValue": 0.07
+        }
+      },
+      "ApplicableKindIds": [
+        "Helmet",
+        "Weapon",
+        "Shield",
+        "Chest",
+        "Gloves",
+        "Boots",
+        "Cloak"
+      ]
+    },
+    {
+      "StatKey": {
+        "KindId": "Resistance",
+        "IsAbsolute": true
+      },
+      "ValueByRankId": {
+        "586604592": {
+          "FromValue": 9,
+          "ToValue": 12
+        }
+      },
+      "ApplicableKindIds": [
+        "Helmet",
+        "Weapon",
+        "Shield",
+        "Chest",
+        "Gloves",
+        "Boots",
+        "Cloak"
+      ]
+    },
+    {
+      "StatKey": {
+        "KindId": "Accuracy",
+        "IsAbsolute": true
+      },
+      "ValueByRankId": {
+        "586604592": {
+          "FromValue": 9,
+          "ToValue": 12
+        }
+      },
+      "ApplicableKindIds": [
+        "Helmet",
+        "Weapon",
+        "Shield",
+        "Chest",
+        "Gloves",
+        "Boots",
+        "Cloak"
+      ]
+    }
+  ]
+}

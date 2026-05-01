@@ -48,6 +48,42 @@ SECTIONS: dict = {
     "blessings":  ("blessings.json",  "/blessings-truth", None),
     "drops":      ("drops.json",      "/dungeon-drops",   None),
     "forge_sets": ("forge_sets.json", "/forge-sets",      None),
+    # Hero base stats + leader skills + skill ids; ~8k rows (incl ascend tiers).
+    "hero_types": ("hero_types.json", "/hero-types",      None),
+    # Stage-bosses: dungeon (Dragon/Spider/etc) + FoggyForest joined to HeroData.
+    "stage_bosses":  ("stage_bosses.json", "/stage-bosses", None),
+    # CB-specific: 6 difficulty rows with HP/level/base stats.
+    "alliance_bosses":  ("alliance_bosses.json", "/alliance-bosses", None),
+    # Sections via generic /static-export. Shape: (file, /static-export-query, transform).
+    # The transform=_static_export_transform marker tells fetch_section to
+    # wrap the raw list/dict output without the usual _meta merging.
+    "artifact_sets": ("artifact_sets.json",
+        "/static-export?path=ArtifactData.SetInfos&depth=4&max=200",
+        "data_under_data"),
+    "primary_bonuses": ("primary_bonuses.json",
+        "/static-export?path=ArtifactData.PrimaryBonusInfos&depth=4&max=200",
+        "data_under_data"),
+    "secondary_bonuses": ("secondary_bonuses.json",
+        "/static-export?path=ArtifactData.SecBonusInfos&depth=4&max=200",
+        "data_under_data"),
+    "ascend_bonuses": ("ascend_bonuses.json",
+        "/static-export?path=ArtifactData.AscendBonusInfos&depth=4&max=200",
+        "data_under_data"),
+    "effects": ("effects.json",
+        "/static-export?path=EffectData.EffectTypes&depth=3&max=300",
+        "data_under_data"),
+    "battle_quests": ("battle_quests.json",
+        "/static-export?path=BattleQuestData.BattleQuestTypes&depth=4&max=100",
+        "data_under_data"),
+    "gameplay": ("gameplay.json",
+        "/static-export?path=GameplayData&depth=3&max=200",
+        None),
+    "artifact_settings": ("artifact_settings.json",
+        "/static-export?path=ArtifactData.Settings&depth=3&max=200",
+        None),
+    "factions": ("factions.json",
+        "/static-export?path=HeroData.FractionsByRace&depth=3&max=50",
+        "data_under_data"),
 }
 
 
@@ -97,7 +133,13 @@ def fetch_section(name: str, mod_status: dict | None) -> tuple[Path, dict] | Non
     if isinstance(raw, dict) and raw.get("error"):
         print(f"  [err] {name}: mod returned {raw['error']!r}", file=sys.stderr)
         return None
-    payload = transform(raw) if transform else raw
+    if transform == "data_under_data":
+        # /static-export returns a bare list/dict; wrap under "data" so _meta merges cleanly
+        payload = {"data": raw}
+    elif callable(transform):
+        payload = transform(raw)
+    else:
+        payload = raw
     out = _wrap_meta(payload, mod_status)
     target = DATA_DIR / filename
     target.parent.mkdir(parents=True, exist_ok=True)

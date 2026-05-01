@@ -1,0 +1,178 @@
+{
+  "_meta": {
+    "fetched_at": "2026-05-01T17:47:27.628438+00:00",
+    "scene": "Village",
+    "mod_version": "2.0-bepinex",
+    "unity": "6000.0.60f1"
+  },
+  "bosses": [
+    {
+      "difficulty": "Easy",
+      "hp": 19021215,
+      "hero_type_id": 22280,
+      "level": 60,
+      "name": "Demon Lord",
+      "element": "Spirit",
+      "base_stats": {
+        "hp_base": 108000,
+        "atk": 115,
+        "def": 25,
+        "spd": 90,
+        "res": 30,
+        "acc": 0,
+        "cr": 15,
+        "cd": 50
+      },
+      "skill_ids": [
+        222601,
+        222802,
+        222603,
+        200008,
+        222904,
+        200004,
+        200000,
+        220605
+      ]
+    },
+    {
+      "difficulty": "Normal",
+      "hp": 60616860,
+      "hero_type_id": 22281,
+      "level": 90,
+      "name": "Demon Lord",
+      "element": "Spirit",
+      "base_stats": {
+        "hp_base": 273600,
+        "atk": 115,
+        "def": 25,
+        "spd": 120,
+        "res": 30,
+        "acc": 0,
+        "cr": 15,
+        "cd": 50
+      },
+      "skill_ids": [
+        222601,
+        222802,
+        222603,
+        200008,
+        222904,
+        200005,
+        200000,
+        220605
+      ]
+    },
+    {
+      "difficulty": "Hard",
+      "hp": 194130180,
+      "hero_type_id": 22282,
+      "level": 120,
+      "name": "Demon Lord",
+      "element": "Spirit",
+      "base_stats": {
+        "hp_base": 732000,
+        "atk": 115,
+        "def": 25,
+        "spd": 140,
+        "res": 30,
+        "acc": 0,
+        "cr": 15,
+        "cd": 50
+      },
+      "skill_ids": [
+        222601,
+        222802,
+        222603,
+        200008,
+        222904,
+        200006,
+        200000,
+        220605
+      ]
+    },
+    {
+      "difficulty": "Brutal",
+      "hp": 361551030,
+      "hero_type_id": 22283,
+      "level": 150,
+      "name": "Demon Lord",
+      "element": "Spirit",
+      "base_stats": {
+        "hp_base": 1008000,
+        "atk": 115,
+        "def": 25,
+        "spd": 160,
+        "res": 30,
+        "acc": 0,
+        "cr": 15,
+        "cd": 50
+      },
+      "skill_ids": [
+        222601,
+        222802,
+        222603,
+        200008,
+        222904,
+        200007,
+        200000,
+        220605
+      ]
+    },
+    {
+      "difficulty": "Nightmare",
+      "hp": 652752165,
+      "hero_type_id": 22286,
+      "level": 185,
+      "name": "Demon Lord",
+      "element": "Spirit",
+      "base_stats": {
+        "hp_base": 1284000,
+        "atk": 115,
+        "def": 25,
+        "spd": 170,
+        "res": 30,
+        "acc": 0,
+        "cr": 15,
+        "cd": 50
+      },
+      "skill_ids": [
+        222601,
+        222802,
+        222603,
+        200008,
+        222904,
+        200007,
+        200000,
+        220605
+      ]
+    },
+    {
+      "difficulty": "UltraNightmare",
+      "hp": 1171204485,
+      "hero_type_id": 22286,
+      "level": 250,
+      "name": "Demon Lord",
+      "element": "Spirit",
+      "base_stats": {
+        "hp_base": 1284000,
+        "atk": 115,
+        "def": 25,
+        "spd": 170,
+        "res": 30,
+        "acc": 0,
+        "cr": 15,
+        "cd": 50
+      },
+      "skill_ids": [
+        222601,
+        222802,
+        222603,
+        200008,
+        222904,
+        200007,
+        200000,
+        220605
+      ]
+    }
+  ]
+}
