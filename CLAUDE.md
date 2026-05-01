@@ -8,6 +8,216 @@ PyAutoRaid automates Raid: Shadow Legends via a BepInEx mod HTTP API (port 6790)
 
 **CLI is the source of truth.** Every dashboard feature has a CLI counterpart so the system runs headless. When adding a feature, write it as `tools/<feature>.py` with an `if __name__ == "__main__"` entrypoint first; the dashboard becomes a thin HTTP wrapper that calls the same domain functions. Examples: `tools/sell.py preview|execute|history`, `tools/hero_stats.py "<name>"`, `tools/cb_day.py`.
 
+## Goals & Scope
+
+PyAutoRaid is a comprehensive offline assistant for Raid: Shadow Legends. It
+must be able to run any battle the game offers, log it perfectly, simulate it
+without spending energy/keys, optimize gear and masteries for the hero+location
+combo, and either drive runs interactively or on a schedule.
+
+The non-negotiables:
+- Mod API only (never screen automation).
+- Stats and skills must match what the game shows (the in-game *Total Stats*
+  and skill-effect descriptions are the ground truth).
+- Sim numbers must match observed battle logs within calibrated bounds.
+
+### Battle Locations (the universe of activity)
+
+Every location below uses the same **Battle Setup** screen (5+ slot grid +
+hero list at the bottom; Battle/Multi-Battle on the right). Hero slot
+contents persist across runs — Raid auto-fills the previous team. The
+`Team Setup` button on the left opens **15 saved presets**; checking a
+preset's box auto-populates the slots. Each preset has a per-round skill
+order editor (essential for CB delays, e.g. delay-2 A3).
+
+| Location           | Stages          | Notes / Reward profile                                  |
+|--------------------|-----------------|---------------------------------------------------------|
+| Campaign           | 12 chapters × Brutal/Nightmare | XP, silver, shards (drop-rate by stage)  |
+| Dungeons           | Dragon, Spider, Fire Knight, Ice Golem, Minotaur, 4 Keeps | Stage-specific gear/accessories. Some have Hard tier. |
+| Faction Wars       | 16 factions × 21 stages | Crypt items, soulstones, Glyph rewards.        |
+| Demon Lord         | Easy/Normal/Hard/Brutal/NM/UNM | Chest tiers by damage; affinity rotates daily |
+| Hydra              | Easy/Normal/Hard/Brutal/NM/UNM | Mythical/Divine/Celestial/Transcendent chests |
+| Chimera            | Easy/Normal/Hard/Brutal/NM/UNM | Same chest model as Hydra                     |
+| Doom Tower         | 120 floors × Normal/Hard       | Doom keys, frags, secret-room rewards         |
+| Cursed City        | Districts × Quests             | Cursed City currency, items                   |
+| Siege              | Castle/War assault             | Siege resources                               |
+| Grim Forest        | Easy/Hard worlds × stages      | Foggy Forest currency, gold, treasure         |
+
+**What we need stored** (per stage, per location):
+- Reward composition (gear, silver, shards, scrolls, potions, awakening, relics, soulstones)
+- Drop rates for each artifact slot/rank/rarity
+- Enemy lineup per round + stat block (HP/ATK/DEF/SPD/RES/ACC/CR/CD)
+- Skill rotation pattern (boss skill cycle, mob compositions)
+- Stage-level modifiers (Acc/Res floor, SPD bonus, e.g. CB UNM modifiers)
+
+`tools/refresh_static_data.py` pulls most of this from the live mod via
+`/static-export` and `/alliance-bosses`/`/cb-bosses` (P1/P4 done; see
+`docs/static_data_roadmap.md`).
+
+### Battle Logger (the foundation)
+
+Every battle the user (or PyAutoRaid) runs MUST capture:
+- Per-turn turn-meter / stamina state for every champion + boss
+- Active hero and skill chosen on each turn
+- Buff list per champion (type, source, duration), debuff list per enemy
+- HP / current_hp / max_hp / dmg_taken / dmg_dealt
+- Counter-attack triggers, Unkillable saves, ally-protect events
+- Boss action (AOE1 / AOE2 / Stun / Affinity-skill) + the resulting damage delta
+
+Captured by the BepInEx mod via `/battle-state` polling + Harmony hooks.
+Output: `battle_logs_cb_*.json` and similar. The dashboard's **Last Run**
+panel and `tools/cb_history.py last-run` parse this format.
+
+### Hero / Skill / Mastery Index (must be exhaustive)
+
+We need every hero in the game (not just the user's roster), every skill,
+and every mastery — exact effect IDs, multipliers, durations, books-applied
+state, max-stack rules.
+
+- `data/static/hero_types.json` — 8100 HeroType rows (ALL heroes × forms × ascend grades, base stats + leader skills + skill IDs).
+- `data/static/effects.json` — 136 effect catalog (buff/debuff types, max stack, dispellable).
+- `data/static/masteries.json` — 66 masteries with stat-bonus rows (the 13 stat ones); conditional masteries (Warmaster/GS/Crushing Rend/etc.) need hand-coded effect logic.
+- `skills_db.json` + `skill_descriptions.json` — per-account snapshot of owned heroes' skills + book status.
+
+**Update cadence**: re-run `tools/refresh_static_data.py` after any Raid
+version bump. New heroes get auto-indexed; new skill effects need a sim
+mapping (see "Skill Effect Mapping" table below).
+
+### Computed Stats — must match the game exactly
+
+Per-hero *Total Stats* screen breaks down into columns:
+
+```
+Basic | Artifacts | Affinity | Classic Arena | Masteries | Faction Guardians | Empowerment | Blessing | Relic | Area Bonuses | Total
+```
+
+`tools/hero_stats.py` covers Basic + Artifacts + Set Bonuses + Lore-of-Steel
++ Empowerment. **Missing**: Arena, Faction Guardians, Blessing, Relic, Area
+Bonuses. The mod's `/hero-computed-stats` endpoint reads the live game's
+computed values directly — that's the cross-check ground truth. Any divergence
+between our calc and the mod read should be treated as a bug in our column
+breakdown.
+
+### Artifact Optimizer
+
+Goal: assign artifacts to heroes to hit location-specific stat targets.
+
+Examples:
+- Demon Lord UNM debuffer needs **≥250 ACC**.
+- Speed-tune slots need exact SPD values (e.g. Myth Eater Ninja: 246 SPD).
+- Dragon 20 attacker needs **CR≥80, CD≥150, ATK%>+200%**.
+
+Inputs:
+- Vault: `all_artifacts.json` (or `data/static/...` snapshot)
+- Hero base stats: `hero_types.json`
+- Already-equipped (lock vs swap): `/all-heroes`
+- Location targets: per-location preset (e.g. `data/targets/cb_unm.json`)
+
+Outputs:
+- Per-hero artifact assignment that maximises a scoring function under
+  constraints (set bonuses, slot requirements, accessory faction lock).
+- Diff vs current loadout (so the user only swaps what improves the team).
+
+Exists today: `tools/cb_optimizer.py`, `tools/global_gear_solver.py`. Needs
+extension to all locations.
+
+### Mastery System
+
+Each hero has 3 trees (Offense/Defense/Support) with up to 15 slots. Costs
+are scrolls (Basic/Advanced/Divine — 100/600/950 per maxed hero). Per-area
+recommendations differ (CB benefits Warmaster/GS, dungeons benefit different
+trees). Unmastered heroes show empty + slots [Image #7].
+
+What we need:
+- Per-hero scroll inventory: `/all-resources` (already have)
+- Per-hero current masteries: `/all-heroes` (already have)
+- Per-area recommendation: data table + lookup (TODO)
+- Programmatic apply: mod's `/open-mastery?hero_id=X&mastery_id=Y` per click
+  (already implemented for individual masteries; needs a `/apply-build`
+  batch endpoint)
+
+### Auto-Run Modes
+
+1. **Active / interactive** — user clicks Battle in the dashboard or runs `tools/cb_run.py`.
+2. **N-runs of a location** — `tools/dungeon_run.py --runs 50`, the dungeon
+   LoopController for the dashboard, `tools/cb_daily.py` for CB. Reads
+   energy/keys before each iteration and stops on cap.
+3. **Scheduled / cron** — Windows Task Scheduler entries created via
+   `tools/windows_tasks.py`. The dashboard's Schedule tab is one consumer.
+4. **Smart farming** (planned) — given a list of stat goals (CB ACC for
+   Hero X, Dragon CD for Hero Y) and the drop-rate tables in
+   `data/static/drops.json`, recommend which dungeons to farm and how
+   many runs.
+
+### Selling & Upgrading Gear
+
+Substat upgrades happen at levels 4/8/12/16 (max 16). Main stat upgrades
+every level. **Flat main stat is undesirable on Gloves/Chest/Boots** (those
+slots can roll a percent main, which scales with base). Other slots
+(Helmet/Shield/Weapon) are flat by definition.
+
+Approach:
+- Rules engine in `tools/sell_rules.py` — user-defined predicates per slot/
+  rank/rarity/primary/substats. Rules are user-approved.
+- Recommendations from `tools/sell.py preview` show what rules would catch.
+- 6★ rank weighted higher; good main+substat combos weighted more for upgrades.
+- Per-team / per-area need: an artifact useful to one of the user's planned
+  builds is upgrade-worthy even if generic rules would mark it sellable.
+
+### Demon Lord — Sim & Speed Tuning
+
+Demon Lord is the headline use-case. Mechanics that make it tricky:
+- HP-tier rewards: Mythical (17.57M-23.43M), Divine (23.43M-46.85M),
+  Celestial (46.85M-70.28M), Transcendent (70.28M+) [Image #11/12].
+- Affinity rotates daily (Magic / Force / Spirit / Void). Off-affinity
+  damage is reduced (-30% on weak hits).
+- HP-phase transition: below ~50% HP the Demon Lord switches to a faction
+  affinity skill set. Sim must model this.
+- **CB is immune to**: Stun, Sleep, Freeze, Provoke, all turn-meter
+  manipulation (drain skills are full no-op vs CB; the caster does NOT
+  retain "what would have been drained").
+- DoT caps: Poison and HP Burn are capped per-tick on CB (prevents 5%-of-
+  1.17B nukes).
+
+Speed tuning: champions are geared so their SPD ratios cycle perfectly
+against the boss. SPD buffs / TM manipulation / extra-turn skills break
+these tunes — the sim has to model each champion's actual kit, not just
+"hits N times". Hero-level signals to the sim:
+- A1 hits + multiplier
+- Active-skill cooldowns + delays + priority order
+- Turn-meter modification (boost on hit, share on cast)
+- Buff/debuff placements (DoTs need separate damage tick handling)
+- "Breaks tune" flag for kits that are incompatible with shared-cycle tunes
+  (e.g. Ninja's TM-on-burn passive)
+
+DeadwoodJedi has done this work for ~103 tunes / 246 calc variants / 859
+champion configs (`data/dwj/parsed/`). `tools/calc_parity_sim.py` is a
+100%-matching port of his scheduler. The sim already gets turn order
+right; **damage numbers are still off**. The remaining work is per-hero
+damage modeling (multipliers, stat-scaling, set procs) which lives in
+`tools/cb_sim.py` — currently calibrated to ~94% accuracy with several
+compensating wrongs (see memory `project_cb_sim_calibration_state.md`).
+
+### Architectural Principles
+
+These guide every refactor:
+- **Modularity**: each domain (sell, hero stats, CB sim, dungeon runner,
+  cb history) lives in its own `tools/<feature>.py` with a CLI entrypoint.
+- **Abstraction**: hide IL2CPP plumbing inside the mod; consumers see plain
+  JSON. Hide live-mod fetch/cache details behind `tools/cli_util.py`.
+- **Encapsulation**: module-level mutable state (caches) is owned by the
+  module that defines it; cross-module access goes through a function.
+- **Separation of Concerns**: HTTP routing, business logic, and game-state
+  reading are different layers — don't mix in the same class.
+- **DRY**: one source of truth per concept (set bonuses, faction names,
+  CB constants, etc.). New duplicates are a code smell.
+- **KISS**: don't catch what you can't recover from. Avoid silent `except:`.
+  Don't add abstractions that don't have at least 2 consumers.
+- **YAGNI**: don't write a generic framework when one concrete tool will do.
+  Delete dead code rather than commenting it out.
+- **Low Coupling / High Cohesion**: a module's functions belong together
+  (cohesion); modules don't reach into each other's privates (coupling).
+
 ## Quick Commands
 
 ```bash
