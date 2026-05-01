@@ -712,6 +712,223 @@ def run_loop(dungeon: str | None,
             "auto_sell_kept": sell_total["kept"] if auto_sell else 0}
 
 
+# =============================================================================
+# LoopController — stateful wrapper around run_loop()
+# =============================================================================
+# Used by the dashboard's Dungeons tab to start a long-running loop, poll
+# its state, and request a stop. Same control surface is exposed in the
+# CLI's `--runs N` mode (which uses run_loop() directly without the
+# threading + state-dict). Keeping the controller in this module — rather
+# than a dashboard-only file — ensures any other consumer (e.g. a future
+# headless cron) can drive the same code path.
+
+import threading as _threading
+
+
+def _read_team() -> list[int] | None:
+    """Snapshot the active dungeon team's BaseTypeIds via /battle-state.
+    Returns the list of int type_ids, or None if no battle is in progress."""
+    try:
+        with urllib.request.urlopen(MOD_BASE + "/battle-state", timeout=2) as resp:
+            r = json.loads(resp.read().decode()) or {}
+    except Exception:
+        return None
+    heroes = r.get("heroes")
+    if not isinstance(heroes, list):
+        return None
+    team = []
+    for h in heroes:
+        if (h or {}).get("side") != "player":
+            continue
+        tid = h.get("type_id")
+        if isinstance(tid, int) and tid > 0:
+            team.append(tid)
+    return team or None
+
+
+def _read_resources() -> tuple[int | None, int | None]:
+    """Snapshot energy + silver from /resources. Returns (None, None) on err."""
+    try:
+        with urllib.request.urlopen(MOD_BASE + "/resources", timeout=2) as resp:
+            r = json.loads(resp.read().decode()) or {}
+    except Exception:
+        return None, None
+
+    def _coerce(v):
+        try:
+            return int(v) if v is not None else None
+        except (TypeError, ValueError):
+            return v if isinstance(v, (int, float)) else None
+
+    return _coerce(r.get("energy")), _coerce(r.get("silver"))
+
+
+class LoopController:
+    """One process owns one loop. Threadsafe state for callers (dashboard
+    poll / CLI) to read and request a stop.
+
+    Lifecycle:
+        ctrl = LoopController()
+        ok, msg = ctrl.start("dragon", 20, {"type": "runs", "n": 10})
+        # later, poll ctrl.snapshot() repeatedly
+        ctrl.stop()
+    """
+
+    def __init__(self):
+        self._lock = _threading.Lock()
+        self._state: dict = self._fresh_state()
+
+    @staticmethod
+    def _fresh_state() -> dict:
+        return {
+            "running": False, "dungeon": None, "stage": None,
+            "stop_condition": None, "completed": 0, "failures": 0,
+            "target": None, "started_at": None, "finished_at": None,
+            "last_status": None, "last_elapsed_s": None,
+            "energy_start": None, "energy_now": None,
+            "silver_start": None, "silver_now": None,
+            "result_reason": None, "stop_requested": False, "team": [],
+        }
+
+    def snapshot(self) -> dict:
+        with self._lock:
+            return dict(self._state)
+
+    def stop(self) -> tuple[bool, str]:
+        with self._lock:
+            if not self._state["running"]:
+                return False, "not running"
+            self._state["stop_requested"] = True
+        return True, "stop requested (current battle will finish)"
+
+    def start(self, dungeon: str, stage,
+              stop_condition: dict) -> tuple[bool, str]:
+        if dungeon not in DUNGEONS:
+            return False, f"unknown dungeon '{dungeon}'"
+        sc_type = (stop_condition or {}).get("type")
+        if sc_type not in ("runs", "capped"):
+            return False, f"unknown stop_condition type '{sc_type}'"
+        if sc_type == "runs":
+            try:
+                n = int(stop_condition.get("n", 0))
+            except (TypeError, ValueError):
+                return False, "stop_condition.n must be an int"
+            if n < 1:
+                return False, "stop_condition.n must be >= 1"
+            stop_condition = {"type": "runs", "n": n}
+        if sc_type == "capped" and dungeon != "minotaur":
+            return False, "capped stop condition is minotaur-only"
+        if not (isinstance(stage, int) or (isinstance(stage, str)
+                                           and (stage.lower() == "max"
+                                                or stage.isdigit()))):
+            return False, "stage must be 1-25 or 'max'"
+
+        with self._lock:
+            if self._state["running"]:
+                return False, "a dungeon loop is already running"
+            self._state = self._fresh_state()
+            self._state.update({
+                "running": True, "dungeon": dungeon, "stage": stage,
+                "stop_condition": stop_condition,
+                "target": stop_condition.get("n") if sc_type == "runs" else None,
+                "started_at": time.time(),
+            })
+        _threading.Thread(target=self._runner, args=(dungeon, stage, stop_condition),
+                          daemon=True, name="dungeon-loop").start()
+        _threading.Thread(target=self._team_poller,
+                          daemon=True, name="dungeon-team-poller").start()
+        return True, "started"
+
+    def _on_progress(self, kind, **kw):
+        """Mirror run_loop progress events into the state dict."""
+        energy, silver = _read_resources()
+        with self._lock:
+            if energy is not None:
+                self._state["energy_now"] = energy
+            if silver is not None:
+                self._state["silver_now"] = silver
+            if kind == "run_done":
+                self._state["last_status"] = kw.get("status")
+                self._state["last_elapsed_s"] = kw.get("elapsed_s")
+                if kw.get("status") == "victory":
+                    self._state["completed"] += 1
+            elif kind == "end":
+                self._state["result_reason"] = kw.get("reason")
+
+    def _should_stop(self) -> bool:
+        with self._lock:
+            return self._state["stop_requested"]
+
+    def _runner(self, dungeon, stage, stop_condition):
+        energy_start, silver_start = _read_resources()
+        with self._lock:
+            self._state["energy_start"] = energy_start
+            self._state["energy_now"] = energy_start
+            self._state["silver_start"] = silver_start
+            self._state["silver_now"] = silver_start
+        try:
+            if isinstance(stage, str) and stage.lower() == "max":
+                try:
+                    if dungeon:
+                        open_dungeon(dungeon)
+                except Exception:
+                    pass
+                resolved = _resolve_max_stage()
+                if resolved is None:
+                    with self._lock:
+                        self._state["result_reason"] = "no_stage_visible"
+                        self._state["running"] = False
+                        self._state["finished_at"] = time.time()
+                    return
+                stage = resolved
+            with self._lock:
+                self._state["stage"] = stage
+
+            result = run_loop(
+                dungeon=dungeon, stage=int(stage),
+                stop_condition=stop_condition,
+                on_progress=self._on_progress,
+                should_stop=self._should_stop,
+            )
+            with self._lock:
+                self._state["result_reason"] = result.get("reason")
+                self._state["failures"] = result.get("failures", 0)
+        except Exception as ex:
+            print(f"  dungeon loop crashed: {ex}", file=sys.stderr)
+            with self._lock:
+                self._state["result_reason"] = f"crashed: {ex}"
+        finally:
+            with self._lock:
+                self._state["running"] = False
+                self._state["finished_at"] = time.time()
+
+    def _team_poller(self):
+        """Poll /battle-state until a player team is captured. Team is only
+        readable mid-battle, so we sample at 3s intervals until we get one,
+        then back off to 15s for the rest of the loop."""
+        while True:
+            with self._lock:
+                running = self._state["running"]
+                have_team = bool(self._state.get("team"))
+            if not running:
+                return
+            if not have_team:
+                team = _read_team()
+                if team:
+                    with self._lock:
+                        self._state["team"] = team
+            time.sleep(3 if not have_team else 15)
+
+
+# Process-shared default controller. Dashboard uses this; CLI loop mode
+# bypasses it (uses run_loop directly).
+_default_controller = LoopController()
+
+
+def default_controller() -> LoopController:
+    return _default_controller
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
