@@ -2043,6 +2043,218 @@ from tools.windows_tasks import (  # noqa: E402
 
 # ---------- HTTP handler ----------
 
+# =============================================================================
+# Route tables
+# =============================================================================
+# Each handler returns either a dict (200 OK) or a (dict, status) tuple.
+# Splitting GET / POST / DELETE keeps the handler signatures small —
+# GET handlers only see the parsed query, POST only see the JSON body.
+# Adding a new endpoint = adding one entry to the appropriate dict.
+# Pattern routes (path-with-id like /api/schedule/<name>/toggle) live in
+# the *_PATTERNS lists with their compiled regex.
+# =============================================================================
+
+def _q(query: dict, key: str, default=None):
+    """parse_qs returns lists; this fetches the first value (or default)."""
+    return (query.get(key) or [default])[0]
+
+
+def _gear_gaps(query: dict):
+    try:
+        return build_gear_gaps(
+            float(_q(query, "threshold", 4.0)),
+            int(_q(query, "min_rarity", 4)),
+            int(_q(query, "min_rank", 4)),
+            int(_q(query, "top", 15)),
+            query.get("area"),  # list or None
+        )
+    except Exception as e:
+        return ({"error": str(e)}, 400)
+
+
+def _sim_sweep(query: dict):
+    try:
+        return build_sim_sweep(
+            _q(query, "hero", ""),
+            int(_q(query, "lo", 0)),
+            int(_q(query, "hi", 0)),
+        )
+    except Exception as e:
+        return ({"error": str(e)}, 400)
+
+
+def _sell_rules_summary(query: dict):
+    cfg = _load_sell()
+    preview = _eval_sell(_all_artifacts_for_rules(), cfg)
+    return {
+        "config": cfg,
+        "summary": {
+            "sell_count": preview["sell_count"],
+            "keep_count": preview["keep_count"],
+            "by_rule": preview["by_rule"],
+        },
+    }
+
+
+# GET handlers: query-only inputs.
+GET_ROUTES = {
+    "/api/state":                  lambda q: build_state(),
+    "/api/schedule":               lambda q: {"tasks": list_scheduled_tasks()},
+    "/api/run":                    lambda q: run_state(),
+    "/api/sim-last-run":           lambda q: build_sim_last_run(),
+    "/api/tune-library":           lambda q: build_tune_library(),
+    "/api/sim-affinity-matrix":    lambda q: build_sim_affinity_matrix(),
+    "/api/tune-compliance":        lambda q: build_tune_compliance(_q(q, "tune", "myth_eater")),
+    "/api/tune-recommend":         lambda q: build_tune_recommend(),
+    "/api/potential-teams":        lambda q: build_potential_teams(max_count=int(_q(q, "n", 12))),
+    "/api/calc-parity-sim":        lambda q: build_cb_parity_sim(
+        hash_=_q(q, "hash"), max_boss_turns=int(_q(q, "turns", 25))),
+    "/api/preset":                 lambda q: build_preset_view(int(_q(q, "id", 1))),
+    "/api/cb-history":             lambda q: build_cb_history_with_attribution(),
+    "/api/autorun/status":         lambda q: {
+        "enabled": _autorun_state.get("enabled", False),
+        "last_fired": _autorun_state.get("last_fired"),
+        "last_result": _autorun_state.get("last_result"),
+    },
+    "/api/cb-reset-info":          lambda q: build_cb_reset_info(),
+    "/api/dungeons/state":         lambda q: dungeon_run_state(),
+    "/api/sim-calibration":        lambda q: build_sim_calibration(),
+    "/api/sim-per-tune-accuracy":  lambda q: build_sim_per_tune_accuracy(),
+    "/api/tune-lab":               lambda q: build_tune_lab(
+        slug=_q(q, "slug"),
+        runnable_only=_q(q, "runnable_only", "0") == "1",
+        affinity=_q(q, "affinity"),
+        # projection=0 → current-progression mode (skip Phase 6 mastery/
+        # blessing projection). Defaults to projection=True.
+        projection=_q(q, "projection", "1") != "0",
+    ),
+    "/api/gear-gaps":              _gear_gaps,
+    "/api/sim-sweep":              _sim_sweep,
+    "/api/sell-rules":             lambda q: _sell_rules_summary(q),
+    "/api/sell-rules/preview":     lambda q: _eval_sell(_all_artifacts_for_rules(), _load_sell()),
+}
+
+# A couple GET handlers want the raw `parsed.query` string instead of the
+# parse_qs dict (legacy contract; both internal helpers split the string
+# themselves). Kept separate from GET_ROUTES so the lambda shape stays clean.
+GET_ROUTES_RAW_QUERY = {
+    "/api/tune-gear-plan":          build_tune_gear_plan,
+    "/api/tune-slot-alternatives":  build_tune_slot_alternatives,
+}
+
+
+# POST handlers: take the parsed JSON body.
+def _post_schedule(body: dict):
+    ok, msg = create_scheduled_task(body.get("name", ""), body.get("time", ""),
+                                    body.get("command", ""))
+    return ({"ok": ok, "message": msg}, 200 if ok else 400)
+
+
+def _post_run(body: dict):
+    ids = body.get("task_ids") or []
+    if not isinstance(ids, list):
+        return ({"error": "task_ids must be a list"}, 400)
+    ok, msg = start_run(ids)
+    return ({"ok": ok, "message": msg}, 200 if ok else 409)
+
+
+def _post_apply_tune(body: dict):
+    return apply_tune_to_preset(body.get("tune") or "", int(body.get("preset_id") or 1))
+
+
+def _post_autorun_enable(body: dict):
+    enabled = bool(body.get("enabled", True))
+    if enabled:
+        _autorun.enable()
+        _autorun.ensure_thread(MOD_URL, ROOT)
+    else:
+        _autorun.disable()
+    return {"ok": True, "enabled": enabled}
+
+
+def _post_dungeons_start(body: dict):
+    ok, msg = start_dungeon_run(
+        body.get("dungeon"), body.get("stage"),
+        body.get("stop_condition") or {},
+    )
+    return ({"ok": ok, "message": msg}, 200 if ok else 400)
+
+
+def _post_sell_rules(body: dict):
+    """Replace the entire sell-rules config. Caller must send the full schema."""
+    cfg = body if isinstance(body, dict) else {}
+    try:
+        merged = {**_SELL_DEFAULT, **cfg}
+        merged["rules"] = list(cfg.get("rules") or _SELL_DEFAULT["rules"])
+        _save_sell(merged)
+        return {"ok": True, "config": _load_sell()}
+    except Exception as e:
+        return ({"error": str(e)}, 400)
+
+
+def _post_bulk_sell(body: dict):
+    ids = body.get("ids") if isinstance(body, dict) else None
+    if not isinstance(ids, list) or not ids:
+        return ({"error": "ids: list of artifact IDs required"}, 400)
+    try:
+        ids_int = [int(x) for x in ids]
+    except Exception:
+        return ({"error": "ids must be integers"}, 400)
+    return _run_bulk_sell(ids_int)
+
+
+def _post_preset_edit(body: dict):
+    """Raw priority+opener push for a single preset. Accepts:
+    {"preset_id":1, "heroes":[{"hero_id":X, "opener":<sid|null>,
+                                "priorities":{sid: rank, ...}}, ...]}"""
+    return edit_preset_raw(int(body.get("preset_id") or 1), body.get("heroes") or [])
+
+
+POST_ROUTES = {
+    "/api/schedule":              _post_schedule,
+    "/api/run":                   _post_run,
+    "/api/apply-tune":            _post_apply_tune,
+    "/api/autorun/enable":        _post_autorun_enable,
+    "/api/dungeons/start":        _post_dungeons_start,
+    "/api/sell-rules":            _post_sell_rules,
+    "/api/sell-rules/bulk-sell":  _post_bulk_sell,
+    "/api/preset/edit":           _post_preset_edit,
+}
+
+# POST handlers matched by regex — the captured group is appended to the body args.
+POST_PATTERNS = [
+    (re.compile(r"^/api/schedule/([A-Za-z0-9_\-]+)/toggle$"),
+     lambda body, name: (
+         (lambda ok, msg: ({"ok": ok, "message": msg}, 200 if ok else 400))(
+             *set_scheduled_task_enabled(name, bool(body.get("enabled", True))))
+     )),
+]
+
+# DELETE handlers: take only the path (no body).
+def _delete_run(_):
+    ok, msg = stop_run()
+    return ({"ok": ok, "message": msg}, 200 if ok else 400)
+
+
+def _delete_dungeons_run(_):
+    ok, msg = stop_dungeon_run()
+    return ({"ok": ok, "message": msg}, 200 if ok else 400)
+
+
+DELETE_ROUTES = {
+    "/api/run":           _delete_run,
+    "/api/dungeons/run":  _delete_dungeons_run,
+}
+
+DELETE_PATTERNS = [
+    (re.compile(r"^/api/schedule/([A-Za-z0-9_\-]+)$"),
+     lambda name: (
+         (lambda ok, msg: ({"ok": ok, "message": msg}, 200 if ok else 400))(
+             *delete_scheduled_task(name))
+     )),
+]
+
+
 class Handler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *a, **kw):
         super().__init__(*a, directory=str(DASHBOARD_DIR), **kw)
@@ -2050,232 +2262,14 @@ class Handler(http.server.SimpleHTTPRequestHandler):
     def log_message(self, fmt, *args):
         logger.info("%s - %s", self.address_string(), fmt % args)
 
-    def do_GET(self):
-        parsed = urllib.parse.urlparse(self.path)
-        if parsed.path == "/api/state":
-            self._send_json(build_state())
-            return
-        if parsed.path == "/api/schedule":
-            self._send_json({"tasks": list_scheduled_tasks()})
-            return
-        if parsed.path == "/api/run":
-            self._send_json(run_state())
-            return
-        if parsed.path == "/api/sim-last-run":
-            self._send_json(build_sim_last_run())
-            return
-        if parsed.path == "/api/tune-library":
-            self._send_json(build_tune_library())
-            return
-        if parsed.path == "/api/sim-affinity-matrix":
-            self._send_json(build_sim_affinity_matrix())
-            return
-        if parsed.path == "/api/tune-compliance":
-            q = urllib.parse.parse_qs(parsed.query)
-            self._send_json(build_tune_compliance(q.get("tune", ["myth_eater"])[0]))
-            return
-        if parsed.path == "/api/tune-recommend":
-            self._send_json(build_tune_recommend())
-            return
-        if parsed.path == "/api/potential-teams":
-            q = urllib.parse.parse_qs(parsed.query)
-            n = int((q.get("n") or [12])[0])
-            self._send_json(build_potential_teams(max_count=n))
-            return
-        if parsed.path == "/api/calc-parity-sim":
-            q = urllib.parse.parse_qs(parsed.query)
-            h = (q.get("hash") or [None])[0]
-            turns = int((q.get("turns") or [25])[0])
-            self._send_json(build_cb_parity_sim(hash_=h, max_boss_turns=turns))
-            return
-        if parsed.path == "/api/preset":
-            q = urllib.parse.parse_qs(parsed.query)
-            pid = int(q.get("id", ["1"])[0])
-            self._send_json(build_preset_view(pid))
-            return
-        if parsed.path == "/api/cb-history":
-            self._send_json(build_cb_history_with_attribution())
-            return
-        if parsed.path == "/api/autorun/status":
-            self._send_json({"enabled": _autorun_state.get("enabled", False),
-                             "last_fired": _autorun_state.get("last_fired"),
-                             "last_result": _autorun_state.get("last_result")})
-            return
-        if parsed.path == "/api/cb-reset-info":
-            self._send_json(build_cb_reset_info())
-            return
-        if parsed.path == "/api/dungeons/state":
-            self._send_json(dungeon_run_state())
-            return
-        if parsed.path == "/api/sim-calibration":
-            self._send_json(build_sim_calibration())
-            return
-        if parsed.path == "/api/sim-per-tune-accuracy":
-            self._send_json(build_sim_per_tune_accuracy())
-            return
-        if parsed.path == "/api/tune-lab":
-            q = urllib.parse.parse_qs(parsed.query)
-            slug = (q.get("slug") or [None])[0]
-            runnable_only = (q.get("runnable_only") or ["0"])[0] == "1"
-            affinity = (q.get("affinity") or [None])[0]
-            # `projection=0` runs in current-progression mode (skips Phase 6
-            # mastery/blessing projection). Defaults to projection=True.
-            projection = (q.get("projection") or ["1"])[0] != "0"
-            self._send_json(build_tune_lab(slug=slug, runnable_only=runnable_only,
-                                           affinity=affinity, projection=projection))
-            return
-        if parsed.path == "/api/tune-gear-plan":
-            self._send_json(build_tune_gear_plan(parsed.query))
-            return
-        if parsed.path == "/api/tune-slot-alternatives":
-            self._send_json(build_tune_slot_alternatives(parsed.query))
-            return
-        if parsed.path == "/api/gear-gaps":
-            q = urllib.parse.parse_qs(parsed.query)
-            try:
-                threshold = float((q.get("threshold") or [4.0])[0])
-                min_rarity = int((q.get("min_rarity") or [4])[0])
-                min_rank = int((q.get("min_rank") or [4])[0])
-                top = int((q.get("top") or [15])[0])
-                areas = q.get("area")  # list, or None for all
-                self._send_json(build_gear_gaps(threshold, min_rarity, min_rank, top, areas))
-            except Exception as e:
-                self._send_json({"error": str(e)}, status=400)
-            return
-        if parsed.path == "/api/sell-rules":
-            cfg = _load_sell()
-            arts = _all_artifacts_for_rules()
-            preview = _eval_sell(arts, cfg)
-            return self._send_json({
-                "config": cfg,
-                "summary": {
-                    "sell_count": preview["sell_count"],
-                    "keep_count": preview["keep_count"],
-                    "by_rule": preview["by_rule"],
-                },
-            })
+    # ---- helpers --------------------------------------------------------
 
-        if parsed.path == "/api/sell-rules/preview":
-            cfg = _load_sell()
-            arts = _all_artifacts_for_rules()
-            preview = _eval_sell(arts, cfg)
-            return self._send_json(preview)
-
-        if parsed.path == "/api/sim-sweep":
-            q = urllib.parse.parse_qs(parsed.query)
-            try:
-                hero = q.get("hero", [""])[0]
-                lo = int(q.get("lo", ["0"])[0])
-                hi = int(q.get("hi", ["0"])[0])
-                self._send_json(build_sim_sweep(hero, lo, hi))
-            except Exception as e:
-                self._send_json({"error": str(e)}, status=400)
-            return
-        super().do_GET()
-
-    def do_POST(self):
-        parsed = urllib.parse.urlparse(self.path)
-        length = int(self.headers.get('Content-Length') or 0)
-        try:
-            body = json.loads(self.rfile.read(length) or b"{}")
-        except json.JSONDecodeError:
-            return self._send_json({"error": "invalid json"}, status=400)
-
-        if parsed.path == "/api/schedule":
-            ok, msg = create_scheduled_task(
-                body.get("name", ""), body.get("time", ""), body.get("command", "")
-            )
-            return self._send_json({"ok": ok, "message": msg}, status=200 if ok else 400)
-
-        if parsed.path == "/api/run":
-            ids = body.get("task_ids") or []
-            if not isinstance(ids, list):
-                return self._send_json({"error": "task_ids must be a list"}, status=400)
-            ok, msg = start_run(ids)
-            return self._send_json({"ok": ok, "message": msg}, status=200 if ok else 409)
-
-        if parsed.path == "/api/apply-tune":
-            tune = body.get("tune") or ""
-            preset_id = int(body.get("preset_id") or 1)
-            return self._send_json(apply_tune_to_preset(tune, preset_id))
-
-        if parsed.path == "/api/autorun/enable":
-            enabled = bool(body.get("enabled", True))
-            if enabled:
-                _autorun.enable()
-                _autorun.ensure_thread(MOD_URL, ROOT)
-            else:
-                _autorun.disable()
-            return self._send_json({"ok": True, "enabled": enabled})
-
-        if parsed.path == "/api/dungeons/start":
-            ok, msg = start_dungeon_run(
-                body.get("dungeon"),
-                body.get("stage"),
-                body.get("stop_condition") or {},
-            )
-            return self._send_json({"ok": ok, "message": msg},
-                                   status=200 if ok else 400)
-
-        if parsed.path == "/api/sell-rules":
-            # Replace the entire config. Caller must send the full schema.
-            cfg = body if isinstance(body, dict) else {}
-            try:
-                # Round-trip through the loader to fill defaults / validate.
-                merged = {**_SELL_DEFAULT, **cfg}
-                merged["rules"] = list(cfg.get("rules") or _SELL_DEFAULT["rules"])
-                _save_sell(merged)
-                return self._send_json({"ok": True, "config": _load_sell()})
-            except Exception as e:
-                return self._send_json({"error": str(e)}, status=400)
-
-        if parsed.path == "/api/sell-rules/bulk-sell":
-            ids = body.get("ids") if isinstance(body, dict) else None
-            if not isinstance(ids, list) or not ids:
-                return self._send_json({"error": "ids: list of artifact IDs required"}, status=400)
-            try:
-                ids_int = [int(x) for x in ids]
-            except Exception:
-                return self._send_json({"error": "ids must be integers"}, status=400)
-            return self._send_json(_run_bulk_sell(ids_int))
-
-        if parsed.path == "/api/preset/edit":
-            # Raw priority+opener push for a single preset. Accepts:
-            #   {"preset_id":1, "heroes":[{"hero_id":X, "opener":<sid|null>,
-            #                              "priorities":{sid: rank, ...}}, ...]}
-            pid = int(body.get("preset_id") or 1)
-            heroes = body.get("heroes") or []
-            return self._send_json(edit_preset_raw(pid, heroes))
-
-        m = re.match(r"^/api/schedule/([A-Za-z0-9_\-]+)/toggle$", parsed.path)
-        if m:
-            ok, msg = set_scheduled_task_enabled(m.group(1), bool(body.get("enabled", True)))
-            return self._send_json({"ok": ok, "message": msg}, status=200 if ok else 400)
-
-        self._send_json({"error": "not found"}, status=404)
-
-    def do_PUT(self):
-        # PUT shares the JSON-body parsing path with POST. Reroute through
-        # do_POST so any handler that semantically replaces a resource (the
-        # sell-rules save was the original case) doesn't have to be
-        # duplicated. Endpoints that only want POST can guard on
-        # self.command in the future.
-        return self.do_POST()
-
-    def do_DELETE(self):
-        parsed = urllib.parse.urlparse(self.path)
-        if parsed.path == "/api/run":
-            ok, msg = stop_run()
-            return self._send_json({"ok": ok, "message": msg}, status=200 if ok else 400)
-        if parsed.path == "/api/dungeons/run":
-            ok, msg = stop_dungeon_run()
-            return self._send_json({"ok": ok, "message": msg},
-                                   status=200 if ok else 400)
-        m = re.match(r"^/api/schedule/([A-Za-z0-9_\-]+)$", parsed.path)
-        if not m:
-            return self._send_json({"error": "not found"}, status=404)
-        ok, msg = delete_scheduled_task(m.group(1))
-        self._send_json({"ok": ok, "message": msg}, status=200 if ok else 400)
+    @staticmethod
+    def _unwrap(result):
+        """Handler return value → (data, status). Bare dict means 200 OK."""
+        if isinstance(result, tuple) and len(result) == 2:
+            return result
+        return (result, 200)
 
     def _send_json(self, data, status=200):
         body = json.dumps(data).encode()
@@ -2285,6 +2279,58 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         self.send_header("Cache-Control", "no-store")
         self.end_headers()
         self.wfile.write(body)
+
+    # ---- method dispatch ------------------------------------------------
+
+    def do_GET(self):
+        parsed = urllib.parse.urlparse(self.path)
+        handler = GET_ROUTES.get(parsed.path)
+        if handler is not None:
+            data, status = self._unwrap(handler(urllib.parse.parse_qs(parsed.query)))
+            return self._send_json(data, status)
+        raw_handler = GET_ROUTES_RAW_QUERY.get(parsed.path)
+        if raw_handler is not None:
+            data, status = self._unwrap(raw_handler(parsed.query))
+            return self._send_json(data, status)
+        # Static file fallthrough (gui/dashboard/*).
+        super().do_GET()
+
+    def do_POST(self):
+        parsed = urllib.parse.urlparse(self.path)
+        length = int(self.headers.get('Content-Length') or 0)
+        try:
+            body = json.loads(self.rfile.read(length) or b"{}")
+        except json.JSONDecodeError:
+            return self._send_json({"error": "invalid json"}, status=400)
+        handler = POST_ROUTES.get(parsed.path)
+        if handler is not None:
+            data, status = self._unwrap(handler(body))
+            return self._send_json(data, status)
+        for pattern, fn in POST_PATTERNS:
+            m = pattern.match(parsed.path)
+            if m:
+                data, status = self._unwrap(fn(body, *m.groups()))
+                return self._send_json(data, status)
+        self._send_json({"error": "not found"}, status=404)
+
+    def do_PUT(self):
+        # PUT routes through POST — historically the sell-rules save came
+        # in as PUT. Endpoints that want to distinguish can guard on
+        # self.command in the handler.
+        return self.do_POST()
+
+    def do_DELETE(self):
+        parsed = urllib.parse.urlparse(self.path)
+        handler = DELETE_ROUTES.get(parsed.path)
+        if handler is not None:
+            data, status = self._unwrap(handler(parsed.path))
+            return self._send_json(data, status)
+        for pattern, fn in DELETE_PATTERNS:
+            m = pattern.match(parsed.path)
+            if m:
+                data, status = self._unwrap(fn(*m.groups()))
+                return self._send_json(data, status)
+        self._send_json({"error": "not found"}, status=404)
 
 
 class ReusableServer(socketserver.ThreadingMixIn, http.server.HTTPServer):

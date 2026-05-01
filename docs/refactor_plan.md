@@ -118,9 +118,13 @@ ends with a working game on user's machine.
       `Modules/hybrid_controller.py` is the legacy pyautogui-based
       VM-scheduled entry point. Documented but NOT deleted (active
       production scheduled task per `docs/vm_deployment.md`).
-- [ ] Convert HTTP `Handler.do_GET`/`do_POST` from giant if-chain to a route-table dispatcher (~30 min, easier to add routes)
+- [x] Convert HTTP `Handler.do_GET`/`do_POST` from giant if-chain to a
+      route-table dispatcher — done. GET_ROUTES (22) +
+      GET_ROUTES_RAW_QUERY (2) + POST_ROUTES (8) + POST_PATTERNS (1) +
+      DELETE_ROUTES (2) + DELETE_PATTERNS (1) = 36 endpoints, same as
+      before. Live-tested 6 routes; static-file fallthrough verified.
 
-**Deliverable**: cleaner baseline. Behavior unchanged.
+**Deliverable**: cleaner baseline. Behavior unchanged. ✅ Phase 0 complete.
 
 ### Phase 1 — Computed Stats parity (the trust foundation)
 
