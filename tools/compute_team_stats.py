@@ -11,19 +11,14 @@ are mis-tuned.
 import argparse, json, sys, urllib.request
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
-from gear_constants import SET_BONUSES as _BASE_SET_BONUSES, STAT_HP, STAT_ATK, STAT_DEF, STAT_SPD, STAT_CR, STAT_CD, STAT_ACC, STAT_RES
+from gear_constants import SET_BONUSES, STAT_HP, STAT_ATK, STAT_DEF, STAT_SPD, STAT_CR, STAT_CD, STAT_ACC, STAT_RES
 from raid_data import EMPOWERMENT_BONUSES
 
-# Extend set bonuses with Divine sets + missing variants. Mirrors the table in
-# dashboard_server.py's compute_hero_actual_stats.
-SET_BONUSES = dict(_BASE_SET_BONUSES)
-SET_BONUSES.update({
-    24: (4, {STAT_SPD: 30, STAT_CR: 10}),   # Divine Speed: +30% SPD, +10% CR
-    25: (4, {STAT_CR: 30, STAT_ATK: 15}),   # Divine CritRate
-    27: (4, {STAT_HP: 30}),                  # Divine Life
-    61: (4, {STAT_ATK: 30}),                 # Divine Offense
-    33: (4, {STAT_SPD: 15, STAT_CD: 15}),    # Reflex (4-piece SPD+CD)
-})
+# SET_BONUSES now derives from data/static/artifact_sets.json via
+# gear_constants. The previous hand-coded Divine-set override (set IDs
+# 24/25/27/61/33) was using wrong IDs — set 24 is Counterattack in the
+# live game, not DivineSpeed. Anyone using actual Divine relics should
+# refresh static data and the right values will load automatically.
 
 RARITY_TO_EMPOWER = {4: "epic", 5: "legendary"}
 

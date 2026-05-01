@@ -94,11 +94,15 @@ try:
     _LORE_OF_STEEL = _MASTERY_IDS["lore_of_steel"]
 except Exception:
     _LORE_OF_STEEL = 500343
-# Empowerment stat bonuses per level: (hp_atk_def_pct, acc, res, spd, cd_pct, cr_pct)
-_EMP_BONUSES = {
-    "epic":      [(0,0,0,0,0,0), (10,10,10,0,0,0), (20,20,20,5,5,0),   (30,30,30,5,5,0),   (40,40,40,10,15,5)],
-    "legendary": [(0,0,0,0,0,0), (10,15,15,0,0,0), (20,25,25,10,0,0),  (30,45,45,10,0,0),  (40,55,55,15,30,10)],
-}
+# Empowerment stat bonuses per level: see raid_data.EMPOWERMENT_BONUSES
+# for the canonical table; mirrored here only for offline test contexts.
+try:
+    from raid_data import EMPOWERMENT_BONUSES as _EMP_BONUSES
+except Exception:
+    _EMP_BONUSES = {
+        "epic":      [(0,0,0,0,0,0), (10,10,10,0,0,0), (20,20,20,5,5,0),   (30,30,30,5,5,0),   (40,40,40,10,15,5)],
+        "legendary": [(0,0,0,0,0,0), (10,15,15,0,0,0), (20,25,25,10,0,0),  (30,45,45,10,0,0),  (40,55,55,15,30,10)],
+    }
 
 
 def compute_hero_actual_stats(hero):
