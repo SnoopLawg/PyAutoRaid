@@ -452,16 +452,10 @@ namespace RaidAutomation
             if (fixedVal == null) return 0;
             var ft = fixedVal.GetType();
 
-            // Try ToString() — might output the double value
-            string str = fixedVal.ToString();
-            if (double.TryParse(str, System.Globalization.NumberStyles.Any,
-                System.Globalization.CultureInfo.InvariantCulture, out double parsed))
-            {
-                if (!double.IsNaN(parsed) && !double.IsInfinity(parsed))
-                    return parsed;
-            }
-
-            // Try RawValue / m_value / _value field
+            // PREFER raw long fields — Fixed64.ToString() truncates precision
+            // (often to ~2 decimals), so the underlying 32.32 raw value via
+            // raw / 2^32 is more accurate. Only fall back to ToString if the
+            // raw access fails.
             foreach (var fname in new[] { "RawValue", "m_value", "_value", "Value" })
             {
                 var f = ft.GetField(fname, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
@@ -484,15 +478,25 @@ namespace RaidAutomation
                 }
             }
 
+            // Fallback: ToString parse, then Convert.ToDouble.
+            string str = fixedVal.ToString();
+            if (double.TryParse(str, System.Globalization.NumberStyles.Any,
+                System.Globalization.CultureInfo.InvariantCulture, out double parsed))
+            {
+                if (!double.IsNaN(parsed) && !double.IsInfinity(parsed))
+                    return parsed;
+            }
             try { return Convert.ToDouble(fixedVal); } catch { }
-
             return 0;
         }
 
         private string FixedToJson(double val)
         {
             if (double.IsNaN(val) || double.IsInfinity(val)) return "0";
-            return val.ToString("F1");
+            // F10 preserves enough precision to reveal the real Fixed64 fractional
+            // bits (e.g. 125.4999990463 vs apparent 125.5) so Python summation
+            // matches the in-game total exactly when floored.
+            return val.ToString("F10", System.Globalization.CultureInfo.InvariantCulture);
         }
 
         private void AppendEquippedArtifacts(StringBuilder sb, int heroId, object equipment)
@@ -1392,41 +1396,46 @@ namespace RaidAutomation
                                 var addArt = listOfArt.GetMethod("Add");
                                 var oneMeth = artWrapper.GetType().GetMethod("One");
                                 int artListN = 0;
-                                if (heroArtData != null && oneMeth != null && addArt != null)
+                                // Use the same GetEnumerator + MoveNext + Current pattern that
+                                // AppendEquippedArtifacts uses successfully. The IL2CPP-wrapped
+                                // Dictionary<ArtifactKindId, int> rejects ContainsKey(int) but
+                                // the enumerator pattern works.
+                                // CalcArtifactsBonus takes List<ArtifactSetup>, not List<Artifact>.
+                                // Wrap each Artifact via ArtifactSetup.FromArtifact before adding.
+                                var artSetupType = FindType("SharedModel.Battle.Core.Setup.ArtifactSetup");
+                                var fromArtMeth = artSetupType?.GetMethod("FromArtifact");
+                                if (heroArtData != null && oneMeth != null && addArt != null && fromArtMeth != null)
                                 {
                                     var byKind = Prop(heroArtData, "ArtifactIdByKind");
                                     if (byKind != null)
                                     {
-                                        // Iterate via slot indexer 1..9 (ArtifactKindId enum
-                                        // values map to slots; 1=Helmet ... 9=Banner). The
-                                        // standard enumerator pattern returns empty for this
-                                        // IL2CPP-wrapped Dictionary<EnumKey, Int32>.
-                                        var ck = byKind.GetType().GetMethod("ContainsKey");
-                                        var idxr = byKind.GetType().GetProperty("Item");
-                                        if (ck != null && idxr != null)
+                                        try
                                         {
-                                            for (int slot = 1; slot <= 9; slot++)
+                                            var dictType2 = byKind.GetType();
+                                            var getEnum2 = dictType2.GetMethod("GetEnumerator");
+                                            if (getEnum2 != null)
                                             {
-                                                bool has = false;
-                                                try { has = (bool)ck.Invoke(byKind, new object[] { slot }); }
-                                                catch { continue; }
-                                                if (!has) continue;
-                                                int aid = 0;
-                                                try
+                                                var enum2 = getEnum2.Invoke(byKind, null);
+                                                var enumType2 = enum2.GetType();
+                                                var moveNext2 = enumType2.GetMethod("MoveNext");
+                                                var currentProp2 = enumType2.GetProperty("Current");
+                                                while ((bool)moveNext2.Invoke(enum2, null))
                                                 {
-                                                    var v = idxr.GetValue(byKind, new object[] { slot });
-                                                    if (v != null) aid = Convert.ToInt32(v);
+                                                    try
+                                                    {
+                                                        var kvp = currentProp2.GetValue(enum2);
+                                                        int aid = IntProp(kvp, "Value");
+                                                        if (aid <= 0) continue;
+                                                        var artObj = oneMeth.Invoke(artWrapper, new object[] { aid });
+                                                        if (artObj == null) continue;
+                                                        var setup = fromArtMeth.Invoke(null, new object[] { artObj });
+                                                        if (setup != null) { addArt.Invoke(artList, new object[] { setup }); artListN++; }
+                                                    }
+                                                    catch { }
                                                 }
-                                                catch { }
-                                                if (aid <= 0) continue;
-                                                try
-                                                {
-                                                    var artObj = oneMeth.Invoke(artWrapper, new object[] { aid });
-                                                    if (artObj != null) { addArt.Invoke(artList, new object[] { artObj }); artListN++; }
-                                                }
-                                                catch { }
                                             }
                                         }
+                                        catch { }
                                     }
                                 }
                                 var formTypeA = FindType("SharedModel.Meta.Heroes.HeroMetamorphForm");

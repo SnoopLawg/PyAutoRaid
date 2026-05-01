@@ -259,49 +259,62 @@ def compute_hero_actual_stats(hero, *, base_computed: dict | None = None,
             # CR / CD: artifact contribution from primary + substats only.
             out[k] = round(base_val + art_val + extra_val + mast_val + emp_val, 1)
 
-    # Layer in the mod's per-column bonuses. Field names match the
-    # in-game Total Stats columns after the 2026-05-01 mod patch:
-    # - affinity_bonus (was great_hall_bonus; Village faction-guardian towers)
-    # - classic_arena_bonus (was arena_bonus; user's CURRENT arena league)
-    # - faction_guardians_bonus (NEW; Academy progression)
-    # - mastery_bonus (NEW; replaces our static-derived calc)
-    # - blessing_bonus, empower_bonus, relic_bonus (unchanged)
+    # When the mod's /hero-computed-stats payload is available, use its
+    # per-column values directly — they're the game's own authoritative
+    # CalcXxxBonus outputs (verified 2026-05-01 against in-game Total
+    # Stats screen for Cardiel + Gnut, all 8 stats EXACT match). The
+    # manual aggregation above stays as the fallback for low-rank heroes
+    # or when the mod isn't running.
     if mod_bonuses:
-        # NOTE: deliberately NOT layering mod's mastery_bonus — verified
-        # 2026-05-01 that CalcMasteriesBonus returns CR=10% for Cardiel
-        # but the in-game Total Stats screen + static data both show +5%.
-        # The mod's IL2CPP call has a bug we don't yet understand; our
-        # static-derived calc (computed above into mastery_flat/pct) is
-        # more accurate. Revisit if/when the mod call is fixed.
-        # NOT layering mod's artifact_bonus either — its IL2CPP dict
-        # enumeration on Dictionary<EnumKey, Int32> always returns
-        # empty for the equipped-artifact list, so CalcArtifactsBonus
-        # gets called with [] and returns zero. Our manual aggregation
-        # from primary+substats matches in-game HP exactly.
-        column_to_field = {
+        mod_columns = {
+            "basic": "base_computed",
+            "artifacts": "artifact_bonus",
             "affinity": "affinity_bonus",
             "classic_arena": "classic_arena_bonus",
+            "masteries": "mastery_bonus",
             "faction_guardians": "faction_guardians_bonus",
             "blessing": "blessing_bonus",
             "empower_mod": "empower_bonus",
             "relic": "relic_bonus",
         }
         bonus_breakdown: dict[str, dict] = {}
-        for col_name, field_name in column_to_field.items():
+        # Round each column with HALF-DOWN (125.5 → 125) then sum — this is
+        # what the in-game Total Stats screen does. Verified vs Cardiel +
+        # Gnut screenshots 2026-05-01: every per-column displayed integer
+        # matches `int(value + 0.5 - 1e-9)`, and the screenshot total is
+        # the sum of those integers (NOT floor/round of the unrounded total).
+        def _round_half_down(x: float) -> int:
+            return int(x + 0.5 - 1e-9)
+        col_rounded: dict[str, dict[str, int]] = {}
+        for col_name, field_name in mod_columns.items():
             field_data = mod_bonuses.get(field_name) or {}
             bonus_breakdown[col_name] = {}
-            for stat_key, val in field_data.items():
-                if stat_key not in out:
-                    continue
-                v = float(val or 0)
+            col_rounded[col_name] = {}
+            for stat_key in ("HP", "ATK", "DEF", "SPD", "RES", "ACC", "CR", "CD"):
+                v = float(field_data.get(stat_key, 0) or 0)
                 if v == 0:
                     continue
-                # CR/CD in mod come as 0.05 fractions; rest are flat numbers.
+                # CR/CD come from mod as fractions (0.46, 0.69) — convert
+                # to in-game percentage scale (46, 69).
                 if stat_key in ("CR", "CD"):
-                    v = v * 100  # 0.18 -> 18
-                out[stat_key] = round(out[stat_key] + v, 1) if isinstance(out[stat_key], float) else int(out[stat_key] + v)
+                    v = v * 100
                 bonus_breakdown[col_name][stat_key] = v
+                col_rounded[col_name][stat_key] = _round_half_down(v)
+        out = {}
+        breakdown = {k: {"basic": 0, "artifacts": 0, "masteries": 0, "empower": 0}
+                     for k in ("HP", "ATK", "DEF", "SPD", "RES", "ACC")}
+        for stat_key in ("HP", "ATK", "DEF", "SPD", "RES", "ACC", "CR", "CD"):
+            total = 0
+            for col_name in mod_columns:
+                total += col_rounded.get(col_name, {}).get(stat_key, 0)
+            out[stat_key] = total
+            if stat_key in breakdown:
+                breakdown[stat_key]["basic"] = col_rounded.get("basic", {}).get(stat_key, 0)
+                breakdown[stat_key]["artifacts"] = col_rounded.get("artifacts", {}).get(stat_key, 0)
+                breakdown[stat_key]["masteries"] = col_rounded.get("masteries", {}).get(stat_key, 0)
+                breakdown[stat_key]["empower"] = col_rounded.get("empower_mod", {}).get(stat_key, 0)
         out["_mod_bonuses_breakdown"] = bonus_breakdown
+        out["_mod_col_rounded"] = col_rounded
     out["_breakdown"] = breakdown
     return out
 

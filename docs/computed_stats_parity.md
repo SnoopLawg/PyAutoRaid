@@ -68,64 +68,69 @@ the `BuildingSetup` returned by `Village.CapitalBuildingSetupForElement`).
 The mod calls this `great_hall_bonus` which is misleading; the in-game
 labels it "Affinity Bonuses".
 
-## Verification status (2026-05-01)
+## Verification status (2026-05-01) — 🎯 **EXACT MATCH 16/16**
 
 ### Cardiel L60 6★ (no Faction Guardians, +900 HP Relic)
 
 | Stat | Ours | Screenshot | Δ |
 |------|-----:|-----------:|---:|
 | HP   | 45,379 | 45,379 | ✅ EXACT |
-| ATK  | 3,885 | 3,887 | -2 |
-| DEF  | 3,328 | 3,392 | -64 (−1.9%) |
-| SPD  | 236 | 237 | -1 |
+| ATK  | 3,887 | 3,887 | ✅ EXACT |
+| DEF  | 3,392 | 3,392 | ✅ EXACT |
+| SPD  | 237 | 237 | ✅ EXACT |
 | RES  | 194 | 194 | ✅ EXACT |
 | ACC  | 103 | 103 | ✅ EXACT |
 | CR   | 66 | 66 | ✅ EXACT |
-| CD   | 149 | 147 | +2 |
+| CD   | 147 | 147 | ✅ EXACT |
 
 ### Gnut L60 6★ (Faction Guardians +1965 HP, +11% CD Relic)
 
 | Stat | Ours | Screenshot | Δ |
 |------|-----:|-----------:|---:|
 | HP   | 41,445 | 41,445 | ✅ EXACT |
-| ATK  | 2,007 | 2,008 | -1 |
-| DEF  | 4,950 | 4,951 | -1 |
+| ATK  | 2,008 | 2,008 | ✅ EXACT |
+| DEF  | 4,951 | 4,951 | ✅ EXACT |
 | SPD  | 180 | 180 | ✅ EXACT |
 | RES  | 152 | 152 | ✅ EXACT |
-| ACC  | 207 | 218 | -11 |
+| ACC  | 218 | 218 | ✅ EXACT |
 | CR   | 87 | 87 | ✅ EXACT |
-| CD   | 188 | 194 | -6 |
+| CD   | 194 | 194 | ✅ EXACT |
 
-**11/16 EXACT match. 5/16 with small residuals (≤6.4% on the worst case).**
+**16/16 EXACT match across both test heroes.**
 
-## Outstanding residuals (investigation status)
+## Fixes that closed the residuals (2026-05-01)
 
-Investigated and ruled out:
-- ❌ NOT artifact ascend bonuses — none of Cardiel's or Gnut's artifacts have AscendLevel set.
-- ❌ NOT mastery sums — both have only the expected stat-bonus masteries (DEF +75 on Cardiel, +10 ACC / +5% CR / +10% CD on Gnut, plus Lore of Steel which only multiplies set bonuses).
-- ❌ NOT set-bonus DEF — neither hero has a 2-piece DEF / Resilience / Stoneskin / Reflex set active.
-- ❌ NOT mod's `CalcArtifactsBonus` — the IL2CPP `Dictionary<EnumKey, Int32>` enumeration on `ArtifactIdByKind` returns empty regardless of approach (GetEnumerator, _entries walk, indexer 1..9). Mod returns 0-stats; Python aggregation matches HP exactly so the numbers we have are the right ones, but a chunk is missing for some heroes.
+1. **`CalcArtifactsBonus` was passing the wrong type.** `HeroExtensions.CalcArtifactsBonus` takes `List<ArtifactSetup>`, not `List<Artifact>`. Wrapping each `Artifact` via `ArtifactSetup.FromArtifact` before adding fixed the silent `Artifact cannot be converted to ArtifactSetup` error and closed the Cardiel DEF -64 / Gnut ACC -11 residuals.
 
-Still mysterious:
-- Cardiel DEF -64. Per-slot mod's `pct_bonus.DEF` shows 50% total; our manual sub-aggregation shows 54%; the screenshot wants 59%. Where the missing 5% comes from is unclear.
-- Gnut ACC -11 (substats sum to 97; screenshot shows +108 from artifacts).
-- Gnut CD -6 (mod's affinity_bonus.CD = 0.20 → 20%; screenshot column shows +25%; mod's relic_bonus.CD = 0.10 → 10%; screenshot shows +11%; combined -6).
+2. **`Dictionary<ArtifactKindId, int>` doesn't accept `int` for `ContainsKey`.** Replaced the slot-1..9 indexer pattern with the `GetEnumerator + MoveNext + Current` pattern that `AppendEquippedArtifacts` already uses successfully for the same dictionary.
 
-The current best guess: the mod's `CalcBuildingsBonus` (Affinity column) and `CalcArenaBonus` use a slightly different rounding or scaling than the in-game *Total Stats* screen for percentage stats specifically. For HP/ATK/DEF flat stats they match exactly. For % stats (CD specifically on Gnut, possibly DEF substats) there's a 1-5% systematic underreport.
+3. **Float precision: `FixedToJson` used F1 (1 decimal).** Bumped to F10. `0.4596` was being formatted as `"0.5"`, so CR/CD percentages came through as 50% instead of 46%. F10 reveals the true Fixed64 fractional bits (e.g. affinity DEF is `125.4999998247`, not exactly `125.5`).
 
-These are small enough that sim/optimizer downstream is well within trust bounds, but worth tracking for future investigation.
+4. **`ReadFixed` preferred `ToString()` over raw long.** Fixed64's `ToString` truncates precision; reordered to read the underlying long first and divide by 2^32 for an exact double conversion.
 
-## What the mod needs to add / fix
+5. **In-game display rounding rule.** Each per-column displayed integer is `int(value + 0.5 - 1e-9)` — i.e. round-half-down. The total = sum of per-column rounded integers (NOT round/floor of the unrounded sum). This matters for Cardiel DEF (3392.6 → 3392 not 3393) and ATK (3886.97 → 3887 not 3886).
 
-| Issue | Fix |
-|---|---|
-| Rename `great_hall_bonus` → `affinity_bonus` | Cosmetic; update the mod emit + Python consumers |
-| `arena_bonus` value doesn't match anything | Investigate — what does `Hero.CalcArenaBonus(GoldII)` actually compute? Maybe Arena Defense / Faction Wars / Doom Tower? Empirically test. |
-| Classic Arena column missing | Find the IL2CPP method that produces ClassicArena +589 HP. Likely `CalcGreatHallBonus` (the *real* Great Hall — bonuses based on Classic Arena rank/league). Re-investigate naming. |
-| Relic column missing | Mod has a `CalcRelicsBonus` block but it silently fails — debug why no `relic_bonus` or `_relic_err` field appears. |
-| Faction Guardians missing | New `CalcFactionGuardiansBonus` method (if it exists). |
-| Masteries column missing | Mastery stat-bonus lookup — already in `data/static/masteries.json` for the 13 stat ones; just needs to read hero.masteries[] and sum them. Pure Python. |
-| Area Bonuses missing | Per-location bonuses (CB/Dungeon/Hydra/etc.); the dropdown on the Total Stats screen. Mod's `CalcAreaBonus` if it exists. |
+## Architecture: how the calc works now
+
+`tools/hero_stats.py:compute_hero_actual_stats(hero, base_computed=, mod_bonuses=)` accepts the mod's `/hero-computed-stats` payload and uses each per-column field as the authoritative value:
+
+| Column           | Mod field                  | Source method               |
+|------------------|----------------------------|-----------------------------|
+| Basic            | `base_computed`            | `HeroExtensions.GetBaseStats`     |
+| Artifacts        | `artifact_bonus`           | `CalcArtifactsBonus`        |
+| Affinity         | `affinity_bonus`           | `CalcBuildingsBonus`        |
+| Classic Arena    | `classic_arena_bonus`      | `CalcArenaBonus`            |
+| Masteries        | `mastery_bonus`            | `CalcMasteriesBonus`        |
+| Faction Guardians| `faction_guardians_bonus`  | `CalcAcademyBonus`          |
+| Empowerment      | `empower_bonus`            | `CalcEmpowerBonus`          |
+| Blessing         | `blessing_bonus`           | `CalcBlessingBonus`         |
+| Relic            | `relic_bonus`              | `CalcRelicsBonus`           |
+
+Each value is rounded with the in-game display rule (`int(v + 0.5 - 1e-9)`) and summed.
+
+## Outstanding gap: Area Bonuses
+
+The Total Stats screen has an "Area Bonuses" dropdown (CB / Dungeon / Hydra / Faction Wars / Doom Tower / etc.) — these are per-location buffs. The mod doesn't expose a `CalcAreaBonus` yet. They aren't shown in the default Total Stats view, so the 16/16 EXACT matches above don't include them. Add when the sim/optimizer needs per-area accuracy.
 
 ## Approach
 
