@@ -42,7 +42,11 @@ from tools.sell_rules import (  # noqa: E402
 # Override to point proxy at a remote mod (e.g. PYAUTORAID_MOD_URL=http://mothership2:6790)
 MOD_URL = os.environ.get("PYAUTORAID_MOD_URL", "http://localhost:6790")
 
-RARITY_NAMES = {1: "Common", 2: "Uncommon", 3: "Rare", 4: "Epic", 5: "Legendary", 6: "Mythical"}
+# Display-name maps for Raid enums centralised in tools/raid_names.
+from tools.raid_names import (  # noqa: E402
+    RARITY_NAMES, FACTION_NAMES, FACTION_PRETTY as _FACTION_PRETTY,
+    ROLE_NAMES as _HERO_ROLE_NAMES, ELEMENT_NAMES as _HERO_ELEMENT_NAMES,
+)
 
 # CB element/affinity + day-window math live in tools/cb_day.py
 # (CLI: `python3 tools/cb_day.py` prints today's CB window + affinity).
@@ -59,14 +63,6 @@ from tools.cb_day import (  # noqa: E402
 # (with its own CLI: `python3 tools/hero_stats.py "<name>"`). The dashboard
 # is one consumer; CLI is another. Same code path either way.
 from tools.hero_stats import compute_hero_actual_stats  # noqa: E402, F401
-FACTION_NAMES = {
-    0: "Unknown", 1: "Banner Lords", 2: "High Elves", 3: "Sacred Order",
-    4: "Coven of Magi", 5: "Ogryn Tribes", 6: "Lizardmen", 7: "Skinwalkers",
-    8: "Orcs", 9: "Demonspawn", 10: "Undead Hordes", 11: "Dark Elves",
-    12: "Knights Revenant", 13: "Barbarians", 14: "Sylvan Watchers",
-    15: "Samurai", 16: "Dwarves", 17: "Olympians",
-}
-
 logger = logging.getLogger("dashboard_server")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
@@ -362,8 +358,7 @@ def build_arena_opponents():
         return None
 
 
-_HERO_ROLE_NAMES = {0: "Unknown", 1: "Attack", 2: "Defense", 3: "HP", 4: "Support"}
-_HERO_ELEMENT_NAMES = {1: "Magic", 2: "Force", 3: "Spirit", 4: "Void"}
+# _HERO_ROLE_NAMES, _HERO_ELEMENT_NAMES — re-exported from tools/raid_names
 
 
 def _fetch_all_heroes():
@@ -391,14 +386,6 @@ def _fetch_all_heroes():
     except Exception as e:
         logger.info("_fetch_all_heroes failed: %s", e)
         return None
-
-
-_FACTION_PRETTY = {
-    "BannerLords": "Banner Lords", "HighElves": "High Elves", "SacredOrder": "Sacred Order",
-    "CovenOfMagi": "Coven of Magi", "OgrynTribes": "Ogryn Tribes", "LizardMen": "Lizardmen",
-    "UndeadHordes": "Undead Hordes", "DarkElves": "Dark Elves",
-    "KnightsRevenant": "Knights Revenant", "SylvanWatchers": "Sylvan Watchers",
-}
 
 
 def build_heroes():
@@ -672,72 +659,23 @@ def build_events():
         return None
 
 
+# Battle-log loaders + per-key history live in tools/cb_history.py
+# (CLI: `python3 tools/cb_history.py history|last-run`). The dashboard
+# uses thin wrappers that share its in-memory _battle_log_cache so
+# repeated polls don't re-parse the JSON.
+from tools import cb_history as _cb_history  # noqa: E402
+
+
 def _most_recent_battle_log():
-    """Pick the newest battle_logs_cb_*.json by mtime. Prefers timestamped
-    files; falls back to battle_logs_cb_latest.json if that's all we have."""
-    import glob
-    candidates = glob.glob(str(ROOT / "battle_logs_cb_*.json"))
-    if not candidates:
-        return None
-    # Prefer timestamped files over 'latest' when ties; then newest mtime
-    def key(p):
-        name = Path(p).name
-        return (name != "battle_logs_cb_latest.json", Path(p).stat().st_mtime)
-    candidates.sort(key=key)
-    return Path(candidates[-1])
+    return _cb_history.most_recent_battle_log(ROOT)
 
 
 def _load_battle_log():
-    path = _most_recent_battle_log()
-    if path is None or not path.exists():
-        return None
-    mtime = path.stat().st_mtime
-    cache_key = (str(path), mtime)
-    if _battle_log_cache.get("key") == cache_key and _battle_log_cache["data"]:
-        return _battle_log_cache["data"]
-    try:
-        data = json.loads(path.read_text())
-        _battle_log_cache["key"] = cache_key
-        _battle_log_cache["mtime"] = mtime
-        _battle_log_cache["path"] = path
-        _battle_log_cache["data"] = data
-        return data
-    except Exception as e:
-        logger.info("battle log parse failed (%s): %s", path.name, e)
-        return None
+    return _cb_history.load_battle_log(ROOT, cache=_battle_log_cache)
 
 
 def _hero_type_to_name():
-    """Best-effort hero type_id -> name map. Prefers skills_db.json, falls back
-    to skill_descriptions.json (different shape)."""
-    out = {22270: "CB Boss"}
-    skills_path = ROOT / "skills_db.json"
-    if skills_path.exists():
-        try:
-            db = json.loads(skills_path.read_text())
-            for name, skills in db.items():
-                if not skills:
-                    continue
-                first = skills[0].get("skill_type_id", 0)
-                if first:
-                    out[first // 10] = name
-            return out
-        except Exception:
-            pass
-    desc_path = ROOT / "skill_descriptions.json"
-    if desc_path.exists():
-        try:
-            db = json.loads(desc_path.read_text())
-            for name, skills in db.items():
-                if not isinstance(skills, dict):
-                    continue
-                for sk in skills.values():
-                    if isinstance(sk, dict) and sk.get("skill_type_id"):
-                        out[sk["skill_type_id"] // 10] = name
-                        break
-        except Exception:
-            pass
-    return out
+    return _cb_history.hero_type_to_name(ROOT)
 
 
 _STATUS_ID_TO_NAME = {}
@@ -795,538 +733,23 @@ _CB_DEBUFF_EFFECTS = {
 
 def build_cb_per_key_history(days=7):
     """Aggregate per-run CB damage from saved battle_logs_cb_*.json files,
-    grouped by CB window. Each key entry includes damage, team composition,
-    turn count, and file timestamp for rich hover tooltips."""
-    import glob
-    from collections import defaultdict
-    name_map = _hero_type_to_name()
-    by_day = defaultdict(list)  # iso_date -> list of key dicts
-    for path in glob.glob(str(ROOT / "battle_logs_cb_*.json")):
-        name = Path(path).name
-        if name == "battle_logs_cb_latest.json":
-            continue
-        try:
-            mt = Path(path).stat().st_mtime
-            cb_date = _cb_day_for_timestamp(mt)
-        except Exception:
-            continue
-        try:
-            data = json.loads(Path(path).read_text())
-            entries = data.get("log", []) if isinstance(data, dict) else []
-            max_dmg = 0
-            turns = 0
-            team_types = []
-            boss_tid = None
-            boss_element = None
-            for e in entries:
-                if not isinstance(e, dict):
-                    continue
-                for h in (e.get("heroes") or []):
-                    if h.get("side") == "enemy":
-                        max_dmg = max(max_dmg, int(h.get("dmg_taken", 0) or 0))
-                        turns = max(turns, int(h.get("turn_n", 0) or 0))
-                        # Prefer first non-zero element / type_id seen on boss
-                        if not boss_tid:
-                            boss_tid = h.get("type_id")
-                        if not boss_element:
-                            boss_element = h.get("element")
-                    elif h.get("side") == "player" and not team_types:
-                        # capture team on first poll
-                        pass
-                if not team_types and e.get("heroes"):
-                    team_types = [h.get("type_id") for h in e["heroes"] if h.get("side") == "player"]
-            if max_dmg <= 0:
-                continue
-            team_names = [name_map.get(tid, f"#{tid}") for tid in team_types if tid]
-            local_dt = datetime.datetime.fromtimestamp(mt)
-            affinity = _cb_affinity_name(boss_element, boss_tid)
-            by_day[cb_date.isoformat()].append({
-                "damage": max_dmg,
-                "turns": turns,
-                "team": team_names,
-                "boss_tid": boss_tid,
-                "boss_element": boss_element,
-                "affinity": affinity,
-                "time": local_dt.strftime("%H:%M"),
-                "iso_time": local_dt.isoformat(timespec="minutes"),
-                "file": name,
-            })
-        except Exception:
-            continue
-    today = _cb_day_today()
-    out = []
-    for i in range(days - 1, -1, -1):
-        d = today - datetime.timedelta(days=i)
-        iso = d.isoformat()
-        # Sort each day's keys by damage descending (display order)
-        keys = sorted(by_day.get(iso, []), key=lambda k: -k["damage"])
-        out.append({
-            "date": iso,
-            "day": iso[5:],
-            "keys": keys,
-            "total": sum(k["damage"] for k in keys),
-        })
-    return out
+    grouped by CB window. Domain logic is in tools/cb_history.py."""
+    return _cb_history.per_key_history(ROOT, days=days)
 
 
 def build_cb_last_run():
-    """Parse latest CB battle log into team breakdown + timeline."""
-    data = _load_battle_log()
-    if not data:
-        return None
-    log = data.get("log", []) if isinstance(data, dict) else data
-    name_map = _hero_type_to_name()
+    """Parse latest CB battle log into team breakdown + timeline.
+    Domain logic is in tools/cb_history.py (CLI: `python3 tools/cb_history.py last-run`).
+    """
+    return _cb_history.build_last_run(
+        ROOT,
+        cache=_battle_log_cache,
+        fetch_all_heroes=_fetch_all_heroes,
+        status_id_to_name=_STATUS_ID_TO_NAME,
+        compute_actual_stats=compute_hero_actual_stats,
+    )
 
-    # Pre-index mod's /all-heroes by NAME — the battle log's type_id is an
-    # internal slot id that doesn't match /all-heroes's TypeId. Names are the
-    # reliable bridge (both sources agree on "Maneater", "Ninja", etc.).
-    heroes_by_name = {}
-    for h in (_fetch_all_heroes() or []):
-        n = h.get("name")
-        if n and n not in heroes_by_name:
-            heroes_by_name[n] = h
 
-    team = {}            # slot -> {type_id, dmg_taken, absorbed, turns, buffs_seen, status_seen, counter_procs, uk_saves}
-    boss_prev_dmg = 0
-    boss_max_hp = 0
-    boss_tid = None
-    boss_element = None
-    dealt_attrib = {}    # slot -> cumulative dmg dealt
-    active_hero_id = None
-    last_active_hero = None  # remembers who just took their turn
-    # DoT tick attribution: at each new boss turn, debuff damage ticks BEFORE
-    # any hero takes an action. We detect that window and split the HP delta
-    # among sources of Poison / HP Burn debuffs currently on the boss.
-    DOT_DEBUFF_TYPES = {80, 81, 470, 310}  # Poison 5%, Poison 2.5%, HP Burn, legacy HPB
-    turn_has_hero_action = False
-    current_boss_debuffs = []   # list of {t, src} — refreshed each boss snapshot
-    # Debuffs applied to the boss via the clean `debuffs[]` field. Each entry
-    # is {t: StatusEffectTypeId, d: duration_remaining, src: slot_id}.
-    # We dedupe by (turn, type_id, src) so a 2-turn debuff isn't counted twice.
-    debuff_placement_sigs = set()
-    debuff_counts_by_type = {}  # type_id -> total placements
-    debuff_by_src = {}          # (type_id, src_slot_id) -> placements (attribution)
-    boss_status_seen = set()
-    boss_uk_saves = 0
-    timeline = []        # [{t: turn, ev: text, by: hero_name}]
-
-    # Per-turn log buckets (key = boss turn_n)
-    turn_log = {}        # turn -> {boss_turn, hero_moves, debuffs_applied, buffs_gained, boss_damage}
-    boss_prev_hp = None
-    prev_buffs_by_slot = {}  # slot -> set((type_id, duration)) of buffs last seen
-    prev_boss_mods = set()   # set of (mod.id)
-    prev_boss_turn = 0
-    prev_boss_uk_saved = False
-
-    total_damage = 0
-    turns_total = 0
-
-    def hero_for(hid):
-        slot = team.get(hid)
-        if not slot:
-            return f"#{hid}"
-        return name_map.get(slot["type_id"], f"#{slot['type_id']}")
-
-    # Stat kind names for mod decoding (matches ARTIFACT_STATS order)
-    stat_label = {1:"HP", 2:"ATK", 3:"DEF", 4:"SPD", 5:"RES", 6:"ACC", 7:"CR", 8:"CD"}
-
-    def _ensure_turn(t):
-        if t not in turn_log:
-            turn_log[t] = {
-                "boss_turn": t,
-                "events": [],
-                "damage": 0,
-                "boss_hp_start": None,
-                "boss_hp_end": None,
-                # CB boss skill cycle: AOE1 -> AOE2 -> STUN repeating every 3
-                # turns (per DWJ tune simulator convention). Turn 0 = AOE1
-                # opener.
-                "boss_action": ["AOE1", "AOE2", "STUN"][t % 3],
-                # Per-hero protection at the moment of boss action (captured
-                # from the poll snapshot just BEFORE the HP drop that starts
-                # this boss turn's damage event).
-                "protection": {},   # slot_id -> {"uk": bool, "bd": bool, "sh": bool}
-            }
-        return turn_log[t]
-
-    for entry in log:
-        if not isinstance(entry, dict):
-            continue
-        if "active_hero" in entry:
-            hid = entry.get("active_hero")
-            active_hero_id = hid
-            # Record hero turn in the current boss turn's log (if side=player)
-            if hid is not None and hid in team and team[hid].get("type_id"):
-                t = prev_boss_turn or 0
-                if t:
-                    tlog = _ensure_turn(t)
-                    tlog["events"].append({
-                        "k": "hero_turn",
-                        "by": name_map.get(team[hid]["type_id"], f"#{hid}"),
-                    })
-                turn_has_hero_action = True
-            last_active_hero = hid
-            continue
-        if "heroes" not in entry:
-            continue
-
-        for h in entry["heroes"]:
-            side = h.get("side")
-            hid = h.get("id")
-            tid = h.get("type_id")
-            if hid is None:
-                continue
-
-            if side == "enemy":
-                cur_dmg = h.get("dmg_taken", 0) or 0
-                hp_max = h.get("hp_max", 0) or 0
-                boss_turn = h.get("turn_n", 0) or 0
-                if hp_max > boss_max_hp:
-                    boss_max_hp = hp_max
-                if boss_tid is None:
-                    boss_tid = h.get("type_id")
-                if boss_element is None and h.get("element") is not None:
-                    boss_element = h.get("element")
-
-                # New boss turn boundary: capture HP start + emit prior HP end.
-                # Also reset the "has any hero acted this turn?" flag so DoT
-                # tick damage at the top of the next boss turn is distinguished.
-                if boss_turn != prev_boss_turn:
-                    if prev_boss_turn and prev_boss_turn in turn_log:
-                        turn_log[prev_boss_turn]["boss_hp_end"] = h.get("hp_cur")
-                    if boss_turn:
-                        tl = _ensure_turn(boss_turn)
-                        if tl["boss_hp_start"] is None:
-                            tl["boss_hp_start"] = h.get("hp_cur")
-                    prev_boss_turn = boss_turn
-                    turn_has_hero_action = False
-
-                # Capture current boss debuffs for DoT-tick attribution fallback
-                current_boss_debuffs = list(h.get("debuffs") or [])
-
-                if cur_dmg > boss_prev_dmg:
-                    delta = cur_dmg - boss_prev_dmg
-                    # Active-hero phase: a hero has acted this boss turn AND
-                    # active_hero_id currently points to a player slot -> direct
-                    # attribution. Otherwise this is DoT tick / boss-phase
-                    # damage -> split among debuff sources.
-                    is_hero_phase = (
-                        turn_has_hero_action
-                        and active_hero_id is not None
-                        and active_hero_id in team
-                    )
-                    if is_hero_phase:
-                        dealt_attrib[active_hero_id] = dealt_attrib.get(active_hero_id, 0) + delta
-                        by_name = hero_for(active_hero_id)
-                    else:
-                        # Find active DoT sources (Poison + HP Burn). Share
-                        # the delta by stack count -> each stack's `src` slot.
-                        dot_sources = [db.get("src") for db in current_boss_debuffs
-                                       if db.get("t") in DOT_DEBUFF_TYPES and db.get("src") is not None]
-                        if dot_sources:
-                            share = delta / len(dot_sources)
-                            for src in dot_sources:
-                                dealt_attrib[src] = dealt_attrib.get(src, 0) + share
-                            # Credit the timeline to the biggest contributor
-                            from collections import Counter
-                            top_src = Counter(dot_sources).most_common(1)[0][0]
-                            by_name = f"{hero_for(top_src)} (DoT)"
-                        else:
-                            # No debuff data (mid-log gap) — fall back to the
-                            # last active hero rather than dropping the delta.
-                            if active_hero_id is not None:
-                                dealt_attrib[active_hero_id] = dealt_attrib.get(active_hero_id, 0) + delta
-                            by_name = hero_for(active_hero_id) if active_hero_id is not None else "?"
-                    if boss_turn and boss_turn in turn_log:
-                        turn_log[boss_turn]["damage"] += delta
-                    if delta >= 500_000:
-                        timeline.append({"t": boss_turn, "ev": f"{delta/1e6:.2f}M damage", "by": by_name})
-                    boss_prev_dmg = cur_dmg
-
-                # Boss debuffs via the clean `debuffs[]` field. Each placement
-                # is (type_id, src, duration). A given placement is the same as
-                # long as duration is decreasing; when duration RESETS or the
-                # pair (type, src) disappears and reappears, count as new.
-                # We dedupe by "did this (turn, type, src, remaining-duration)
-                # arrive this turn for the first time?" — in practice, we count
-                # once per (boss_turn, type_id, src_slot) first-seen.
-                cur_debuff_keys = set()
-                for db in (h.get("debuffs") or []):
-                    t_id = db.get("t")
-                    src = db.get("src")
-                    if t_id is None:
-                        continue
-                    key = (boss_turn, t_id, src)
-                    cur_debuff_keys.add((t_id, src))
-                    if key in debuff_placement_sigs:
-                        continue
-                    debuff_placement_sigs.add(key)
-                    # Only count when the debuff JUST APPEARED this boss turn
-                    # (not present the previous turn). Without prev-turn state
-                    # this naturally fires on first appearance per turn which
-                    # is what we want.
-                    debuff_counts_by_type[t_id] = debuff_counts_by_type.get(t_id, 0) + 1
-                    k_src = (t_id, src)
-                    debuff_by_src[k_src] = debuff_by_src.get(k_src, 0) + 1
-                    # Log a turn event for the first new debuff of each type
-                    if boss_turn in turn_log:
-                        name = _STATUS_ID_TO_NAME.get(t_id, f"effect {t_id}")
-                        by_name = hero_for(src) if src is not None else (hero_for(active_hero_id) if active_hero_id is not None else "?")
-                        turn_log[boss_turn]["events"].append({
-                            "k": "debuff", "name": name, "by": by_name,
-                        })
-
-                # Boss status flags observed this poll
-                for st in (h.get("st") or []):
-                    boss_status_seen.add(st)
-
-                # Boss Unkillable-like save count — only count False->True transitions
-                cur_uk = h.get("uk_saved") is True
-                if cur_uk and not prev_boss_uk_saved:
-                    boss_uk_saves += 1
-                prev_boss_uk_saved = cur_uk
-
-                total_damage = cur_dmg
-                turns_total = max(turns_total, boss_turn)
-            elif side == "player":
-                slot = team.setdefault(hid, {
-                    "type_id": tid,
-                    "dmg_taken": 0,
-                    "absorbed": 0,
-                    "turns": 0,
-                    "buffs_seen": set(),
-                    "status_seen": set(),
-                    "counter_procs": 0,
-                    "uk_saves": 0,
-                    "hp_max": h.get("hp_max", 0) or 0,
-                })
-                dt = h.get("dmg_taken") or h.get("hp_lost") or 0
-                slot["dmg_taken"] = max(slot["dmg_taken"], dt)
-                slot["turns"] = max(slot["turns"], h.get("turn_n", 0) or 0)
-                # Absorbed damage (block damage + unkillable shields). `abs` is
-                # a dict { effect_id: amount }.
-                abs_dict = h.get("abs") or {}
-                total_abs = 0
-                try:
-                    total_abs = sum(int(v) for v in abs_dict.values())
-                except Exception:
-                    total_abs = 0
-                slot["absorbed"] = max(slot["absorbed"], total_abs)
-
-                # Status flags
-                for st in (h.get("st") or []):
-                    slot["status_seen"].add(st)
-
-                # Active buffs from `buffs` list: {t: type_id, d: duration, src: slot_id}
-                # Track source per buff so the UI can show "Unkillable (from Demytha)"
-                if "buff_sources" not in slot:
-                    slot["buff_sources"] = {}  # type_id -> set of source slot ids
-                cur_buff_types = set()
-                for b in (h.get("buffs") or []):
-                    t_id = b.get("t")
-                    src = b.get("src")
-                    if t_id is None:
-                        continue
-                    cur_buff_types.add(t_id)
-                    slot["buffs_seen"].add(t_id)
-                    if src is not None:
-                        slot["buff_sources"].setdefault(t_id, set()).add(src)
-
-                # Protection snapshot for THIS boss turn's action. The last
-                # snapshot we see before the turn transitions is the "state at
-                # boss hit" — overwrite on every poll of this boss_turn so the
-                # final overwrite is the most-recent-before-transition.
-                if prev_boss_turn and prev_boss_turn in turn_log:
-                    turn_log[prev_boss_turn]["protection"][hid] = {
-                        "uk": 320 in cur_buff_types,
-                        "bd": 60 in cur_buff_types,
-                        "sh": 280 in cur_buff_types,
-                    }
-                # Detect buff transitions (new buff this poll vs last poll)
-                prev = prev_buffs_by_slot.get(hid, set())
-                added = cur_buff_types - prev
-                if added and prev_boss_turn:
-                    hero_name = name_map.get(slot["type_id"], f"#{hid}")
-                    for t_id in added:
-                        name = _STATUS_ID_TO_NAME.get(t_id)
-                        if not name:
-                            continue
-                        _ensure_turn(prev_boss_turn)["events"].append({
-                            "k": "buff", "name": name, "on": hero_name,
-                        })
-                prev_buffs_by_slot[hid] = cur_buff_types
-
-                # Counter counter dict
-                ctr_dict = h.get("ctr") or {}
-                try:
-                    ctr_total = sum(int(v) for v in ctr_dict.values())
-                except Exception:
-                    ctr_total = 0
-                if ctr_total > slot["counter_procs"]:
-                    slot["counter_procs"] = ctr_total
-
-                # Unkillable save: hero was about to die (hp_cur stuck at 1) and uk_saved true would be on mod.
-                if h.get("hp_cur") == 1 and (h.get("st") or []):
-                    if "unkillable" in (h.get("st") or []) or 320 in cur_buff_types:
-                        pass  # active; don't count
-
-    if not team:
-        return None
-
-    # Enrich team rows with metadata from /all-heroes — match by hero NAME
-    team_out = []
-    for hid, slot in sorted(team.items()):
-        tid = slot["type_id"]
-        lookup_name = name_map.get(tid, f"#{tid}")
-        meta = heroes_by_name.get(lookup_name) or {}
-        rarity = RARITY_NAMES.get(meta.get("rarity") or 0, "")
-        faction = FACTION_NAMES.get(meta.get("fraction") or 0, "")
-        # Build structured buff entries with source attribution
-        buff_sources = slot.get("buff_sources") or {}
-        buffs_named = []
-        # Map slot_id -> hero name lookup helper. If a buff's src is the hero
-        # themselves, mark self-cast; otherwise show the teammate's name.
-        def _slot_name(slot_id):
-            if slot_id == hid: return "self"
-            other = team.get(slot_id)
-            if other and other.get("type_id"):
-                return name_map.get(other["type_id"], f"#{slot_id}")
-            return f"#{slot_id}"
-        for t_id in sorted(slot.get("buffs_seen") or set()):
-            if t_id not in _STATUS_ID_TO_NAME:
-                continue
-            srcs = buff_sources.get(t_id, set())
-            buffs_named.append({
-                "name": _STATUS_ID_TO_NAME[t_id],
-                "sources": sorted({_slot_name(s) for s in srcs}),
-            })
-        # Actual gear-inclusive stats (base + artifacts + sets + LoS + empower).
-        # Falls back to base_stats if meta is missing (e.g. unmatched name).
-        actual = compute_hero_actual_stats(meta) if meta else {}
-        team_out.append({
-            "name": lookup_name,
-            "preset_slot": hid + 1,  # battle log slot id 0-4 => in-team position 1-5
-            "role": _HERO_ROLE_NAMES.get(meta.get("role") or 0, ""),
-            "rarity": rarity,
-            "faction": _FACTION_PRETTY.get(faction, faction),
-            "stars": meta.get("grade") or 0,
-            "element": _HERO_ELEMENT_NAMES.get(meta.get("element") or 0, ""),
-            "level": meta.get("level") or 0,
-            "hp": int(actual.get("HP") or (meta.get("base_stats") or {}).get("HP") or 0),
-            "def": int(actual.get("DEF") or (meta.get("base_stats") or {}).get("DEF") or 0),
-            "spd": int(actual.get("SPD") or (meta.get("base_stats") or {}).get("SPD") or 0),
-            "spd_base": int((meta.get("base_stats") or {}).get("SPD") or 0),
-            "dmg_dealt": int(dealt_attrib.get(hid, 0)),
-            "dmg_taken": int(slot["dmg_taken"]),
-            "absorbed": int(slot.get("absorbed", 0)),
-            "counters": int(slot.get("counter_procs", 0)),
-            "turns": int(slot["turns"]),
-            "buffs": buffs_named,
-            "status_flags": sorted(list(slot.get("status_seen") or [])),
-        })
-
-    # Aggregate boss debuffs under friendly names. Multiple ID variants can map
-    # to the same label (e.g. Poison 5% and Poison 2.5% both appear as "Poison").
-    debuffs_applied = {}
-    label_group = {
-        # Collapse variants under a single user-facing name.
-        "Poison 5%":           "Poison",
-        "Poison 2.5%":         "Poison",
-        "Block Heal 100":      "Block Heal",
-        "Block Heal 50":       "Block Heal",
-        "Weaken 15":           "Weaken",
-        "Dec Atk 25":          "Dec ATK",
-        "Dec Atk":             "Dec ATK",
-        "Dec Def 30":          "Dec DEF",
-        "Def Down":            "Dec DEF",
-        "Dec Spd 15":          "Dec SPD",
-        "Dec Spd":             "Dec SPD",
-        "Dec Cd 15":           "Dec CD",
-        "Dec Cd 25":           "Dec CD",
-        "Hp Burn":             "HP Burn",
-        "Dec Res 25":          "Dec RES",
-        "Dec Res 50":          "Dec RES",
-        "Block Revive":        "Block Revive",
-        "Leech":               "Leech",
-        "Fear":                "Fear",
-        "True Fear":           "True Fear",
-        "Poison Sensitivity":  "Poison Sensitivity",
-        "Poison Sensitivity 50": "Poison Sensitivity",
-        "Stun":                "Stun",
-        "Freeze":              "Freeze",
-        "Sleep":               "Sleep",
-        "Provoke":             "Provoke",
-        "Dec Cr 15":           "Dec CR",
-        "Dec Cr":              "Dec CR",
-        "Cooldown":            "Inc Cooldown",
-    }
-    for t_id, n in debuff_counts_by_type.items():
-        name = _STATUS_ID_TO_NAME.get(t_id, f"effect {t_id}")
-        canonical = label_group.get(name, name)
-        debuffs_applied[canonical] = debuffs_applied.get(canonical, 0) + n
-
-    # Final event on timeline
-    if turns_total:
-        timeline.append({"t": turns_total, "ev": f"Run end - {total_damage/1e6:.2f}M", "by": "result"})
-    timeline.sort(key=lambda x: x.get("t") or 0)
-    seen = set(); dedup = []
-    for ev in timeline:
-        key = (ev.get("t"), ev.get("ev"), ev.get("by"))
-        if key in seen:
-            continue
-        seen.add(key); dedup.append(ev)
-    timeline = dedup[:20]
-
-    # Boss metadata
-    boss_info = {
-        "hp_max": boss_max_hp if boss_max_hp else None,
-        "type_id": boss_tid,
-        "element": boss_element,
-        "affinity": _cb_affinity_name(boss_element, boss_tid),
-    }
-
-    # Sort turn log by boss turn + compact each
-    turn_log_out = []
-    for t in sorted(turn_log.keys()):
-        tl = turn_log[t]
-        # Collapse consecutive duplicate hero_turn events
-        compact = []
-        for ev in tl["events"]:
-            if compact and compact[-1] == ev:
-                continue
-            compact.append(ev)
-        # Convert per-slot protection dict to hero-name keyed dict for UI
-        prot = {}
-        for slot_id, p in (tl.get("protection") or {}).items():
-            s = team.get(slot_id) or {}
-            nm = name_map.get(s.get("type_id"), f"#{slot_id}")
-            prot[nm] = p
-        turn_log_out.append({
-            "boss_turn": tl["boss_turn"],
-            "boss_action": tl.get("boss_action"),
-            "damage": int(tl["damage"]),
-            "boss_hp_start": tl.get("boss_hp_start"),
-            "boss_hp_end": tl.get("boss_hp_end"),
-            "protection": prot,
-            "events": compact,
-        })
-
-    return {
-        "team": team_out,
-        "boss": boss_info,
-        "last_run": {
-            "duration_s": None,
-            "turns_total": int(turns_total),
-            "damage": int(total_damage),
-            "damage_taken": int(sum(t["dmg_taken"] for t in team_out)),
-            "damage_absorbed": int(sum(t.get("absorbed", 0) for t in team_out)),
-            "unkillable_triggers": int(boss_uk_saves),
-            "counters_total": int(sum(t.get("counters", 0) for t in team_out)),
-            "debuffs_applied": debuffs_applied,
-            "timeline": timeline,
-            "turn_log": turn_log_out,
-        },
-    }
 
 
 # ---------- Simulator bridge ------------------------------------------------
@@ -2977,136 +2400,55 @@ def build_state():
     }
 
 
-# ---------- Live task runner ----------
+## ---------- Live task runner (generic state machine in tools/task_runner) ----------
+# The dashboard adds a "connect" task that probes the memory reader + mod;
+# everything else (cb, etc.) lives in the shared registry.
 
-_run_state = {
-    "running": False,
-    "started_at": None,
-    "current_task_id": None,
-    "tasks": {},  # task_id -> {status, log:[], started_at, finished_at}
-}
-_run_lock = threading.Lock()
-
-
-def _rlog(tid, msg):
-    with _run_lock:
-        t = _run_state["tasks"].setdefault(tid, {"log": []})
-        t.setdefault("log", []).append({"ts": time.time(), "msg": str(msg)[:400]})
-        if len(t["log"]) > 80:
-            t["log"] = t["log"][-80:]
-    logger.info("[run:%s] %s", tid, msg)
+from tools import task_runner as _tr  # noqa: E402
 
 
 def _task_connect(tid):
     reader = memory_reader()
     if reader is None:
-        _rlog(tid, "memory reader not attached")
+        _tr.rlog(tid, "memory reader not attached")
         return False
-    _rlog(tid, "attached to Raid.exe via pymem")
+    _tr.rlog(tid, "attached to Raid.exe via pymem")
     client = mod_client()
     if client.available:
         try:
             status = client.get_status() or {}
-            _rlog(tid, f"mod online — scene={status.get('scene')} logged_in={status.get('logged_in')}")
+            _tr.rlog(tid, f"mod online — scene={status.get('scene')} logged_in={status.get('logged_in')}")
         except Exception as e:
-            _rlog(tid, f"mod probe err: {e}")
+            _tr.rlog(tid, f"mod probe err: {e}")
     else:
-        _rlog(tid, "mod API offline (memory-only mode)")
+        _tr.rlog(tid, "mod API offline (memory-only mode)")
     return True
 
 
-def _task_subprocess(tid, args, cwd=None):
-    """Run a Python tool, streaming stdout into the task log."""
-    _rlog(tid, f"exec: {' '.join(args)}")
-    try:
-        p = subprocess.Popen(
-            args,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            cwd=str(cwd or ROOT),
-            text=True,
-            bufsize=1,
-        )
-        if p.stdout:
-            for line in iter(p.stdout.readline, ''):
-                line = line.rstrip()
-                if line:
-                    _rlog(tid, line)
-        p.wait(timeout=600)
-        _rlog(tid, f"exit code {p.returncode}")
-        return p.returncode == 0
-    except Exception as e:
-        _rlog(tid, f"subprocess err: {e}")
-        return False
-
-
-# ---- Task impls — CLI tools only (mod API, no pyautogui per CLAUDE.md) ----
-
-def _task_cb(tid):
-    return _task_subprocess(tid, [sys.executable, str(ROOT / "tools" / "cb_daily.py"), "--wait"])
-
-
-# Task ID -> impl. Only tasks with a mod-API CLI tool defined in CLAUDE.md
-# are wired. Anything else reports "not implemented" — we never fall back to
-# pyautogui / screen automation.
-TASK_IMPL = {
-    "connect": _task_connect,
-    "cb":      _task_cb,
-    # shop, inbox, quests_reg, quests_adv, clan, gem_mine, timed, arena,
-    # dungeon, window — no pure mod-API CLI exists; reported as not-implemented
-    # until someone adds tools/{shop,inbox,...}_daily.py equivalents.
-}
-
-
-def _runner_thread(task_ids):
-    with _run_lock:
-        _run_state["running"] = True
-        _run_state["started_at"] = time.time()
-        _run_state["tasks"] = {
-            tid: {"status": "pending", "log": [], "started_at": None, "finished_at": None}
-            for tid in task_ids
-        }
-    for tid in task_ids:
-        if not _run_state["running"]:
-            break  # stop requested
-        with _run_lock:
-            _run_state["current_task_id"] = tid
-            _run_state["tasks"][tid]["status"] = "running"
-            _run_state["tasks"][tid]["started_at"] = time.time()
-        impl = TASK_IMPL.get(tid)
-        if impl is None:
-            _rlog(tid, "not implemented for this task id")
-            status = "skipped"
-        else:
-            try:
-                status = "done" if impl(tid) else "error"
-            except Exception as e:
-                _rlog(tid, f"unhandled exception: {e}")
-                status = "error"
-        with _run_lock:
-            _run_state["tasks"][tid]["status"] = status
-            _run_state["tasks"][tid]["finished_at"] = time.time()
-    with _run_lock:
-        _run_state["current_task_id"] = None
-        _run_state["running"] = False
+# Dashboard task registry = shared CLI registry + dashboard-only "connect"
+# probe. Any new tools/<x>_daily.py task should be added to
+# tools/task_runner.DEFAULT_REGISTRY so both sides stay in sync.
+TASK_IMPL = dict(_tr.DEFAULT_REGISTRY)
+TASK_IMPL["connect"] = _task_connect
 
 
 def start_run(task_ids):
-    if _run_state["running"]:
-        return False, "a run is already in progress"
-    ids = [str(x) for x in task_ids if str(x) in TASK_IMPL or True]
-    if not ids:
-        return False, "no task_ids"
-    threading.Thread(target=_runner_thread, args=(ids,), daemon=True).start()
-    return True, f"started {len(ids)} task(s)"
+    return _tr.start_run([str(x) for x in task_ids], TASK_IMPL)
 
 
 def stop_run():
-    with _run_lock:
-        if not _run_state["running"]:
-            return False, "not running"
-        _run_state["running"] = False  # current task finishes, loop exits
-    return True, "stop requested (current task will finish)"
+    return _tr.stop_run()
+
+
+# Back-compat shims — older code paths import these from dashboard_server.
+def _rlog(tid, msg):
+    _tr.rlog(tid, msg)
+
+
+def run_state():
+    """Snapshot of the current task chain state. The HTTP /api/run handler
+    serializes this dict as JSON."""
+    return _tr.state()
 
 
 # ---------- Dungeon loop runner (mod-API only) ----------
@@ -3368,7 +2710,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self._send_json({"tasks": list_scheduled_tasks()})
             return
         if parsed.path == "/api/run":
-            self._send_json(_run_state)
+            self._send_json(run_state())
             return
         if parsed.path == "/api/sim-last-run":
             self._send_json(build_sim_last_run())
