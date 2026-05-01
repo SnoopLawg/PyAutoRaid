@@ -1,6 +1,20 @@
 #!/usr/bin/env python3
 """Generate tools/tune_library_dwj.py from data/dwj/parsed/calc_tunes.json.
 
+CURRENT STATUS (2026-05-01): UNUSED.
+
+The output file `tools/tune_library_dwj.py` was deleted because nothing
+imported it — DWJ-sourced tunes are read directly from
+`data/dwj/parsed/calc_tunes.json` by `tools/comp_finder.py` and the
+dashboard's potential-teams panel. The Python-module bridge this script
+generates is redundant.
+
+This script is kept (not deleted) in case a future need arises to expose
+DWJ tunes as `tune_library.TuneDefinition` objects for the older sim
+plumbing in `tools/cb_sim.py`. If you re-enable it, also re-add the
+import side-effect somewhere (e.g. at the bottom of `tune_library.py`)
+so `_register` actually fires.
+
 Produces a static Python module matching tools/tune_library.py's
 TuneDefinition / TuneSlot dataclass schema so existing sim tooling can
 import DWJ-sourced tunes without refactor.
