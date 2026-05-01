@@ -30,6 +30,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "tools"))
 
 from Modules.mod_client import ModClient  # noqa: E402
 from tools.sell_rules import (  # noqa: E402
@@ -517,7 +518,6 @@ def build_artifacts():
     # Try to import set-name lookup from tools/gear_constants.py
     set_names = {}
     try:
-        sys.path.insert(0, str(ROOT / "tools"))
         from gear_constants import SET_NAMES
         set_names = SET_NAMES
     except Exception:
@@ -680,7 +680,6 @@ def _hero_type_to_name():
 
 _STATUS_ID_TO_NAME = {}
 try:
-    sys.path.insert(0, str(ROOT / "tools"))
     from status_effect_map import STATUS_EFFECT_MAP as _SEM
     # Pretty-print the name: "dec_atk" -> "Dec ATK"
     def _pretty(s):
@@ -777,7 +776,6 @@ def build_sim_last_run():
 
     # Lazy import to keep server startup cheap when sim isn't needed
     try:
-        sys.path.insert(0, str(ROOT / "tools"))
         from cb_sim import CBSimulator, build_champion_minimal  # build_champion_minimal added below
     except Exception as e:
         return {"error": f"cb_sim import failed: {e}"}
@@ -880,7 +878,6 @@ def build_cb_parity_sim(hash_: str | None = None, max_boss_turns: int = 25):
     dashboard sim panel.
     """
     try:
-        sys.path.insert(0, str(ROOT / "tools"))
         import calc_parity_sim as cps
         from dwj_tunes import load_all
     except Exception as e:
@@ -951,7 +948,6 @@ def build_cb_parity_sim(hash_: str | None = None, max_boss_turns: int = 25):
 def build_tune_library():
     """Return all tunes from tools/tune_library.py in a UI-friendly shape."""
     try:
-        sys.path.insert(0, str(ROOT / "tools"))
         from tune_library import TUNES
     except Exception as e:
         return {"error": f"tune_library import failed: {e}"}
@@ -984,7 +980,6 @@ def build_tune_library():
 def build_tune_compliance(tune_id):
     """Compare current team SPDs vs the tune's bands. Returns a per-hero diff."""
     try:
-        sys.path.insert(0, str(ROOT / "tools"))
         from tune_library import get_tune
     except Exception as e:
         return {"error": f"tune_library: {e}"}
@@ -1046,7 +1041,6 @@ def build_sim_affinity_matrix():
         return {"error": "no battle log available"}
     team_rows = real.get("team") or []
     try:
-        sys.path.insert(0, str(ROOT / "tools"))
         from cb_sim import run_tune
     except Exception as e:
         return {"error": f"cb_sim import: {e}"}
@@ -1156,7 +1150,6 @@ def build_tune_recommend():
     boss = real.get("boss") or {}
     cb_element = boss.get("element") or 4
     try:
-        sys.path.insert(0, str(ROOT / "tools"))
         from tune_library import TUNES
         from cb_sim import CBSimulator, build_champion_minimal
     except Exception as e:
@@ -1427,7 +1420,6 @@ def build_tune_lab(slug: str | None = None, runnable_only: bool = False,
     progression today" mode.
     """
     try:
-        sys.path.insert(0, str(ROOT / "tools"))
         from potential_team import build_potential_team, load_data
         if include_sim:
             from cb_sim import run_potential_team
@@ -1498,7 +1490,6 @@ def build_tune_slot_alternatives(query: str):
         top_n = int((q.get("top") or [5])[0])
         if not slug:
             return {"error": "missing slug"}
-        sys.path.insert(0, str(ROOT / "tools"))
         from potential_team import build_potential_team, load_data
         from slot_alternatives import compute_slot_alternatives
         data = load_data()
@@ -1536,7 +1527,6 @@ def build_tune_gear_plan(query: str):
         sa_iter = int((q.get("sa") or [500])[0])
         if not slug:
             return {"error": "missing slug"}
-        sys.path.insert(0, str(ROOT / "tools"))
         from potential_team import build_potential_team, load_data
         from potential_gear import compute_gear_plan_for_tune
         data = load_data()
@@ -1664,7 +1654,6 @@ def build_gear_gaps(threshold: float = 4.0, min_rarity: int = 4, min_rank: int =
     call on demand.
     """
     try:
-        sys.path.insert(0, str(ROOT / "tools"))
         import gear_gap_analysis as gga
     except Exception as e:
         return {"error": f"gear_gap_analysis import failed: {e}"}
@@ -1788,7 +1777,6 @@ def apply_tune_to_preset(tune_id, preset_id):
     Supports all 5 tunes in tune_library via role-based delay lookup.
     """
     try:
-        sys.path.insert(0, str(ROOT / "tools"))
         from tune_to_preset import build_update_preset_url as _build_url, TUNE_ROLE_DELAYS
     except Exception as e:
         return {"error": f"tune_to_preset import: {e}"}
