@@ -43,10 +43,12 @@ from raid_data import (SKILLS, POISON_5PCT_DMG, HP_BURN_DMG, WM_DMG, GS_DMG,
 # =============================================================================
 from cb_constants import (
     WM_PROC_RATE, GS_PROC_RATE, LIFESTEAL_RATE, CONT_HEAL_RATE,
+    LEECH_HEAL_RATE,
     WEAK_HIT_DMG_MULT, WEAK_HIT_DEBUFF_FAIL, STRONG_HIT_DMG_MULT,
     CB_ATTACK_MULT, CB_STUN_HP_FRACTION,
     CB_HP_BY_DIFFICULTY, CB_SPEED_BY_DIFFICULTY,
     CB_ATK,
+    FA_CAP_BIG, FA_CAP_MEDIUM, FA_CAP_SMALL, FA_CAP_DOT,
     GATHERING_FURY_START_TURN, GATHERING_FURY_RATE_PER_TURN,
     GATHERING_FURY_CLIFF_TURN, ENRAGE_TURN,
 )
@@ -55,21 +57,7 @@ TM_THRESHOLD = 1000
 MAX_CB_TURNS = 50
 MAX_DEBUFF_SLOTS = 10
 
-LEECH_HEAL_RATE = 0.10  # Leech debuff: attackers heal 10% of damage dealt
-
-# Force Affinity damage caps — empirical observation from live UNM Force-Affinity runs
-# (clan has already beaten CB; he's in "infinite HP / capped-damage" endless mode).
-# Per-skill damage to CB is capped at:
-#   - ~250K  for big AoE / A3 skills (Maneater A2, Venomage A3, etc.)
-#   - ~175K  for single-target big hits
-#   - ~75K   for A1 / basic skills
-# Observed as suspiciously round numbers in per-turn damage deltas.
-# These caps are applied AFTER damage calc, before WM/GS/passive add-ons.
-# Override via CBSimulator(force_affinity=False) to disable.
-FA_CAP_BIG     = 250_000   # big AoE / A3
-FA_CAP_MEDIUM  = 175_000   # large single-target
-FA_CAP_SMALL   =  75_000   # A1 baseline
-FA_CAP_DOT     =  75_000   # per-tick DoT cap (HP Burn / Poison tick)
+# FA_CAP_*, LEECH_HEAL_RATE — see cb_constants.
 
 # Affinity system: Magic=1, Force=2, Spirit=3, Void=4
 # Weak hit: 20-35% damage reduction AND 35% chance debuffs don't land

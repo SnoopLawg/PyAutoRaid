@@ -222,3 +222,26 @@ ENRAGE_TURN: int = 50                         # GAME-SPEC
 # ============================================================================
 
 CONT_HEAL_RATE: float = 0.075  # Continuous Heal: 7.5% max HP per tick
+
+
+# ============================================================================
+# Force Affinity damage caps — CALIBRATED
+# ============================================================================
+# Per-skill damage caps observed on live UNM Force-Affinity runs (clan has
+# already beaten CB; he's in "infinite HP / capped-damage" endless mode).
+# Round numbers in per-turn damage deltas suggest these are real game caps,
+# not statistical artifacts. Caps are applied AFTER damage calc, before
+# WM/GS/passive add-ons. Disable via CBSimulator(force_affinity=False).
+
+FA_CAP_BIG:    int = 250_000   # big AoE / A3
+FA_CAP_MEDIUM: int = 175_000   # large single-target
+FA_CAP_SMALL:  int =  75_000   # A1 baseline
+FA_CAP_DOT:    int =  75_000   # per-tick DoT cap (HP Burn / Poison tick)
+
+
+# ============================================================================
+# Lifesteal / Leech debuff — GAME-SPEC
+# ============================================================================
+# Leech debuff: attackers heal 10% of damage dealt. Skill-induced (Sicia,
+# Cardiel A3) — distinct from the LifeDrain artifact set proc.
+LEECH_HEAL_RATE: float = 0.10
