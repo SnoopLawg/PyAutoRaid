@@ -95,6 +95,7 @@ the question is whether it still serves a goal.
 | Multiple `_today_cb_element_str` / `_last_cb_team_names` shims in dashboard_server.py | Back-compat wrappers around the new tools/ modules, used by 6 leftover dashboard build_X functions. | Keep until the `build_X` callers are also extracted; delete shims when their last caller leaves. |
 | `tools/cb_optimizer.py : simulate_damage` | Older damage estimator. `tools/cb_sim.py` is the canonical sim now. | Audit callers. If only used by the optimizer's own scoring, leave it (cohesion); if external code calls it, that's a refactor target. |
 | `tools/auto_profile.py` | "Auto-generate CB profiles for all 343 heroes." Did this run produce `cb_profiles.PROFILES`? Or was that hand-curated? | Determine if it's still useful or if `cb_profiles.py` superseded it. |
+| `Modules/{hybrid_controller, PyAutoRaid, DailyQuests, PullMysteryShards, CreateTask, base, screen_state, game_state, win32_input}.py` | Legacy pyautogui-based screen automation. Violates CLAUDE.md "NEVER use UI/screen automation". **BUT** `hybrid_controller.py` is still wired as a VM scheduled-task entry point per `docs/vm_deployment.md`. | Real migration job — port each daily run to a mod-API `tools/<x>_daily.py`. Don't delete until the VM scheduled task is repointed. Tracked as Phase ?? (after Phase 2 enables enough locations). |
 
 ## Refactor Plan — Phases
 
@@ -108,9 +109,15 @@ ends with a working game on user's machine.
 - [x] DRY out duplicate name dicts (memory_reader, mod_heroes) — done in commit ad7d621
 - [x] Replace silent `except: pass` in cb_optimizer with logged variants — done in ad7d621
 - [x] Remove dead `ReadBattleHeroesIL2CPP_OLD` — done in ad7d621
-- [ ] Convert `tune_library_dwj.py` from 5k-LOC Python → JSON + loader (5 min, big startup-time win)
-- [ ] Audit `tune_library.py` vs `tune_library_dwj.py` — collapse if redundant
-- [ ] Document `Modules/` vs `tools/` boundary in a one-liner per package init
+- [x] Audit `tune_library.py` vs `tune_library_dwj.py` — done a57989c
+      Result: `tune_library_dwj.py` (5159 LOC, 0 callers) was dead.
+      Deleted; generator `gen_tune_library_dwj.py` kept + marked
+      "CURRENT STATUS: UNUSED" in its docstring.
+- [x] Document `Modules/` vs `tools/` boundary — done. Both packages
+      now have docstring `__init__.py`. Audit revealed
+      `Modules/hybrid_controller.py` is the legacy pyautogui-based
+      VM-scheduled entry point. Documented but NOT deleted (active
+      production scheduled task per `docs/vm_deployment.md`).
 - [ ] Convert HTTP `Handler.do_GET`/`do_POST` from giant if-chain to a route-table dispatcher (~30 min, easier to add routes)
 
 **Deliverable**: cleaner baseline. Behavior unchanged.
