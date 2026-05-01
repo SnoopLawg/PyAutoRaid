@@ -28,7 +28,7 @@ try:
     LORE_OF_STEEL = _MASTERY_IDS["lore_of_steel"]
 except Exception:
     LORE_OF_STEEL = 500343
-STAT_NAMES = {1: "HP", 2: "ATK", 3: "DEF", 4: "SPD", 5: "RES", 6: "ACC", 7: "CR", 8: "CD"}
+from gear_constants import STAT_NAMES  # noqa: E402, F401
 
 
 def fetch_heroes():
