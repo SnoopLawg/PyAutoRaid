@@ -1359,43 +1359,94 @@ namespace RaidAutomation
                                     }
                                     else
                                     {
-                                        var toSetupsMethod = relicSetupType.GetMethod("ToRelicSetups");
-                                        if (toSetupsMethod == null)
+                                        // Real method name: PartialCreateFromRelic(Relic) — per
+                                        // relic, not a batch. Build a List<RelicSetup> ourselves.
+                                        var partialCreate = relicSetupType.GetMethod("PartialCreateFromRelic");
+                                        if (partialCreate == null)
                                         {
-                                            sb.Append(",\"_relic_err\":\"ToRelicSetups method not found\"");
+                                            sb.Append(",\"_relic_err\":\"PartialCreateFromRelic method not found\"");
                                         }
                                         else
                                         {
-                                            var setups = toSetupsMethod.Invoke(null, new object[] { relicsList });
-                                            if (setups == null)
+                                            // Construct a List<RelicSetup>. CalcRelicsBonus expects
+                                            // List`1 — match the method's actual parameter type.
+                                            var relicMethod = heroExtType.GetMethod("CalcRelicsBonus");
+                                            if (relicMethod == null)
                                             {
-                                                sb.Append(",\"_relic_err\":\"ToRelicSetups returned null\"");
+                                                sb.Append(",\"_relic_err\":\"CalcRelicsBonus method not found\"");
                                             }
                                             else
                                             {
+                                                Type listOfSetupType = relicMethod.GetParameters()[1].ParameterType;
+                                                var setupList = Activator.CreateInstance(listOfSetupType);
+                                                var addMeth = listOfSetupType.GetMethod("Add");
+                                                // Filter to relics equipped on THIS hero only.
+                                                // RelicDataByHeroId[hero.Id].RelicIds → list of int relic IDs;
+                                                // each id resolves to a Relic in relicsList by Relic.Id.
+                                                var relicsData = Prop(relicWrapper, "RelicsData");
+                                                var byHero = Prop(relicsData, "RelicDataByHeroId");
+                                                int heroId = IntProp(hero, "Id");
+                                                var byHeroIdx = byHero?.GetType().GetMethod("get_Item", new[] { typeof(int) });
+                                                object heroRelicData = null;
+                                                if (byHeroIdx != null)
+                                                {
+                                                    try { heroRelicData = byHeroIdx.Invoke(byHero, new object[] { heroId }); }
+                                                    catch { /* hero has no relics — leave list empty */ }
+                                                }
+                                                var equippedIds = new HashSet<int>();
+                                                if (heroRelicData != null)
+                                                {
+                                                    var ridList = Prop(heroRelicData, "RelicIds");
+                                                    if (ridList != null)
+                                                    {
+                                                        int ridN = IntProp(ridList, "_size");
+                                                        var ridItems = Prop(ridList, "_items");
+                                                        if (ridItems != null && ridN > 0)
+                                                        {
+                                                            var getRid = ridItems.GetType().GetMethod("get_Item", new[] { typeof(int) });
+                                                            for (int i = 0; i < ridN; i++)
+                                                            {
+                                                                var idVal = getRid.Invoke(ridItems, new object[] { i });
+                                                                if (idVal != null) equippedIds.Add(Convert.ToInt32(idVal));
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                                int relN = IntProp(relicsList, "_size");
+                                                var relItems = Prop(relicsList, "_items");
+                                                if (relItems != null && relN > 0 && addMeth != null)
+                                                {
+                                                    var getRel = relItems.GetType().GetMethod("get_Item", new[] { typeof(int) });
+                                                    for (int ri = 0; ri < relN; ri++)
+                                                    {
+                                                        var relicEntry = getRel.Invoke(relItems, new object[] { ri });
+                                                        if (relicEntry == null) continue;
+                                                        int rid = IntProp(relicEntry, "Id");
+                                                        // Only include relics this hero has equipped.
+                                                        if (equippedIds.Count > 0 && !equippedIds.Contains(rid)) continue;
+                                                        try
+                                                        {
+                                                            var setup = partialCreate.Invoke(null, new object[] { relicEntry });
+                                                            if (setup != null) addMeth.Invoke(setupList, new object[] { setup });
+                                                        }
+                                                        catch { }
+                                                    }
+                                                }
                                                 var formType4 = FindType("SharedModel.Meta.Heroes.HeroMetamorphForm");
                                                 object form4 = 0;
                                                 if (formType4 != null) try { form4 = Enum.ToObject(formType4, 0); } catch { }
-                                                var relicMethod = heroExtType.GetMethod("CalcRelicsBonus");
-                                                if (relicMethod == null)
+                                                var relicStats = relicMethod.Invoke(null, new object[] { hero, setupList, form4 });
+                                                if (relicStats == null)
                                                 {
-                                                    sb.Append(",\"_relic_err\":\"CalcRelicsBonus method not found\"");
+                                                    sb.Append(",\"_relic_err\":\"CalcRelicsBonus returned null\"");
                                                 }
                                                 else
                                                 {
-                                                    var relicStats = relicMethod.Invoke(null, new object[] { hero, setups, form4 });
-                                                    if (relicStats == null)
-                                                    {
-                                                        sb.Append(",\"_relic_err\":\"CalcRelicsBonus returned null\"");
-                                                    }
-                                                    else
-                                                    {
-                                                        sb.Append(",\"relic_bonus\":{");
-                                                        AppendFixed(sb, relicStats, "Health", "HP");
-                                                        sb.Append(","); AppendFixed(sb, relicStats, "Attack", "ATK");
-                                                        sb.Append(","); AppendFixed(sb, relicStats, "Defence", "DEF");
-                                                        sb.Append("}");
-                                                    }
+                                                    sb.Append(",\"relic_bonus\":{");
+                                                    AppendFixed(sb, relicStats, "Health", "HP");
+                                                    sb.Append(","); AppendFixed(sb, relicStats, "Attack", "ATK");
+                                                    sb.Append(","); AppendFixed(sb, relicStats, "Defence", "DEF");
+                                                    sb.Append("}");
                                                 }
                                             }
                                         }
@@ -1446,50 +1497,69 @@ namespace RaidAutomation
                         }
 
                         // CalcAcademyBonus(Hero, AcademySetup, HeroMetamorphForm) — Faction Guardians.
+                        // AcademySetup.Create(UserAcademyGuardiansData, HeroType) — found via
+                        // /list-static-methods. The Guardians data lives at
+                        // UserWrapper.Academy.Guardians.AcademyData.Guardians, and HeroType
+                        // is StaticData.HeroData.HeroTypeById[hero.TypeId].
                         try
                         {
                             var acadMethod = heroExtType.GetMethod("CalcAcademyBonus");
-                            if (acadMethod != null)
+                            if (acadMethod == null)
                             {
-                                var uw6 = GetUserWrapper();
-                                var academy = Prop(uw6, "Academy");
-                                // AcademySetup factory — try a few known names.
-                                var acadSetupType = FindType("SharedModel.Meta.Academy.AcademySetup")
-                                                  ?? FindType("SharedModel.Battle.Core.Setup.AcademySetup");
-                                object acadSetup = null;
-                                if (acadSetupType != null)
+                                sb.Append(",\"_fg_err\":\"CalcAcademyBonus method not found\"");
+                            }
+                            else
+                            {
+                                var acadSetupType = FindType("SharedModel.Battle.Core.Setup.AcademySetup");
+                                if (acadSetupType == null)
                                 {
-                                    var fromMethod = acadSetupType.GetMethod("FromAcademy")
-                                                  ?? acadSetupType.GetMethod("ToSetup");
-                                    if (fromMethod != null)
-                                    {
-                                        try { acadSetup = fromMethod.Invoke(null, new object[] { academy }); } catch { }
-                                    }
-                                }
-                                if (acadSetup != null)
-                                {
-                                    var formType6 = FindType("SharedModel.Meta.Heroes.HeroMetamorphForm");
-                                    object form6 = 0;
-                                    if (formType6 != null) try { form6 = Enum.ToObject(formType6, 0); } catch { }
-                                    var acadStats = acadMethod.Invoke(null, new object[] { hero, acadSetup, form6 });
-                                    if (acadStats != null)
-                                    {
-                                        // In the in-game UI this is the "Faction Guardians" column.
-                                        sb.Append(",\"faction_guardians_bonus\":{");
-                                        AppendFixed(sb, acadStats, "Health", "HP");
-                                        sb.Append(","); AppendFixed(sb, acadStats, "Attack", "ATK");
-                                        sb.Append(","); AppendFixed(sb, acadStats, "Defence", "DEF");
-                                        sb.Append(","); AppendFixed(sb, acadStats, "Speed", "SPD");
-                                        sb.Append("}");
-                                    }
-                                    else
-                                    {
-                                        sb.Append(",\"_fg_err\":\"CalcAcademyBonus returned null\"");
-                                    }
+                                    sb.Append(",\"_fg_err\":\"AcademySetup type not found\"");
                                 }
                                 else
                                 {
-                                    sb.Append(",\"_fg_err\":\"AcademySetup factory not found\"");
+                                    var createMethod = acadSetupType.GetMethod("Create",
+                                        new[] {
+                                            FindType("SharedModel.Meta.Academy.User.UserAcademyGuardiansData"),
+                                            FindType("SharedModel.Meta.Heroes.HeroType"),
+                                        });
+                                    if (createMethod == null)
+                                    {
+                                        sb.Append(",\"_fg_err\":\"AcademySetup.Create overload not found\"");
+                                    }
+                                    else
+                                    {
+                                        var uw6 = GetUserWrapper();
+                                        var guardians = Prop(Prop(Prop(uw6, "Academy"), "Guardians"), "AcademyData");
+                                        var userGuardiansData = Prop(guardians, "Guardians");
+                                        // Hero.Type is the resolved HeroType — no dictionary lookup needed.
+                                        var heroType = Prop(hero, "Type");
+                                        if (userGuardiansData == null || heroType == null)
+                                        {
+                                            sb.Append(",\"_fg_err\":\"guardians=" + (userGuardiansData != null) + " heroType=" + (heroType != null) + "\"");
+                                        }
+                                        else
+                                        {
+                                            object acadSetup = null;
+                                            try { acadSetup = createMethod.Invoke(null, new object[] { userGuardiansData, heroType }); }
+                                            catch (Exception cex) { sb.Append(",\"_fg_err\":\"Create threw: " + Esc(cex.InnerException != null ? cex.InnerException.Message : cex.Message) + "\""); }
+                                            if (acadSetup != null)
+                                            {
+                                                var formType6 = FindType("SharedModel.Meta.Heroes.HeroMetamorphForm");
+                                                object form6 = 0;
+                                                if (formType6 != null) try { form6 = Enum.ToObject(formType6, 0); } catch { }
+                                                var acadStats = acadMethod.Invoke(null, new object[] { hero, acadSetup, form6 });
+                                                if (acadStats != null)
+                                                {
+                                                    sb.Append(",\"faction_guardians_bonus\":{");
+                                                    AppendFixed(sb, acadStats, "Health", "HP");
+                                                    sb.Append(","); AppendFixed(sb, acadStats, "Attack", "ATK");
+                                                    sb.Append(","); AppendFixed(sb, acadStats, "Defence", "DEF");
+                                                    sb.Append(","); AppendFixed(sb, acadStats, "Speed", "SPD");
+                                                    sb.Append("}");
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
