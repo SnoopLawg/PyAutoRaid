@@ -428,6 +428,25 @@ namespace RaidAutomation
             sb.Append("\"" + jsonName + "\":" + FixedToJson(d));
         }
 
+        // Emit a stat block (BattleHero stats / bonus stats) with all 8 game
+        // stats in a single dict. Centralised so per-bonus code paths don't
+        // each have to remember to include every stat — a missing field on
+        // a bonus that turns out to need it (e.g. Relic +CD% on a CD relic)
+        // becomes a silent gap in the dashboard otherwise.
+        private void AppendAllStats(StringBuilder sb, object stats)
+        {
+            sb.Append("{");
+            AppendFixed(sb, stats, "Health", "HP");
+            sb.Append(","); AppendFixed(sb, stats, "Attack", "ATK");
+            sb.Append(","); AppendFixed(sb, stats, "Defence", "DEF");
+            sb.Append(","); AppendFixed(sb, stats, "Speed", "SPD");
+            sb.Append(","); AppendFixed(sb, stats, "Resistance", "RES");
+            sb.Append(","); AppendFixed(sb, stats, "Accuracy", "ACC");
+            sb.Append(","); AppendFixed(sb, stats, "CriticalChance", "CR");
+            sb.Append(","); AppendFixed(sb, stats, "CriticalDamage", "CD");
+            sb.Append("}");
+        }
+
         private double ReadFixed(object fixedVal)
         {
             if (fixedVal == null) return 0;
@@ -1073,11 +1092,8 @@ namespace RaidAutomation
                                 var blessStats = blessMethod.Invoke(null, new object[] { hero, 0 });
                                 if (blessStats != null)
                                 {
-                                    sb.Append(",\"blessing_bonus\":{");
-                                    AppendFixed(sb, blessStats, "Health", "HP");
-                                    sb.Append(","); AppendFixed(sb, blessStats, "Attack", "ATK");
-                                    sb.Append(","); AppendFixed(sb, blessStats, "Defence", "DEF");
-                                    sb.Append("}");
+                                    sb.Append(",\"blessing_bonus\":");
+                                    AppendAllStats(sb, blessStats);
                                 }
                             }
                         }
@@ -1092,11 +1108,8 @@ namespace RaidAutomation
                                 var empStats = empMethod.Invoke(null, new object[] { hero, 0 });
                                 if (empStats != null)
                                 {
-                                    sb.Append(",\"empower_bonus\":{");
-                                    AppendFixed(sb, empStats, "Health", "HP");
-                                    sb.Append(","); AppendFixed(sb, empStats, "Attack", "ATK");
-                                    sb.Append(","); AppendFixed(sb, empStats, "Defence", "DEF");
-                                    sb.Append("}");
+                                    sb.Append(",\"empower_bonus\":");
+                                    AppendAllStats(sb, empStats);
                                 }
                             }
                         }
@@ -1170,12 +1183,8 @@ namespace RaidAutomation
                                 if (arenaStats != null)
                                 {
                                     // Renamed: this is the in-game "Classic Arena" column.
-                                    sb.Append(",\"classic_arena_bonus\":{");
-                                    AppendFixed(sb, arenaStats, "Health", "HP");
-                                    sb.Append(","); AppendFixed(sb, arenaStats, "Attack", "ATK");
-                                    sb.Append(","); AppendFixed(sb, arenaStats, "Defence", "DEF");
-                                    sb.Append(","); AppendFixed(sb, arenaStats, "Speed", "SPD");
-                                    sb.Append("}");
+                                    sb.Append(",\"classic_arena_bonus\":");
+                                    AppendAllStats(sb, arenaStats);
                                 }
                             }
                         }
@@ -1313,14 +1322,8 @@ namespace RaidAutomation
                                                 // Previously misnamed "great_hall_bonus" — the actual Great
                                                 // Hall is the Classic Arena rank tier, which is a different
                                                 // calc.
-                                                sb.Append(",\"affinity_bonus\":{");
-                                                AppendFixed(sb, buildStats, "Health", "HP");
-                                                sb.Append(","); AppendFixed(sb, buildStats, "Attack", "ATK");
-                                                sb.Append(","); AppendFixed(sb, buildStats, "Defence", "DEF");
-                                                sb.Append(","); AppendFixed(sb, buildStats, "Accuracy", "ACC");
-                                                sb.Append(","); AppendFixed(sb, buildStats, "Resistance", "RES");
-                                                sb.Append(","); AppendFixed(sb, buildStats, "CriticalDamage", "CD");
-                                                sb.Append("}");
+                                                sb.Append(",\"affinity_bonus\":");
+                                                AppendAllStats(sb, buildStats);
                                             }
                                         }
                                     }
@@ -1332,6 +1335,101 @@ namespace RaidAutomation
                             }
                         }
                         catch (Exception ex) { sb.Append(",\"_gh_err\":\"" + Esc(ex.InnerException != null ? ex.InnerException.Message : ex.Message) + "\""); }
+
+                        // CalcArtifactsBonus(Hero, List<Artifact>, HeroMetamorphForm) —
+                        // authoritative Artifacts column from the in-game's own calc,
+                        // including ascend bonuses + glyph upgrades + any hidden bonus
+                        // we'd miss aggregating from primary+substats manually.
+                        try
+                        {
+                            var artMethod = heroExtType.GetMethod("CalcArtifactsBonus");
+                            if (artMethod == null)
+                            {
+                                sb.Append(",\"_art_err\":\"CalcArtifactsBonus not found\"");
+                            }
+                            else
+                            {
+                                var uwArt = GetUserWrapper();
+                                var artWrapper = Prop(uwArt, "Artifacts");
+                                var artData = Prop(artWrapper, "ArtifactData");
+                                var byHero = Prop(artData, "ArtifactDataByHeroId");
+                                int hid = IntProp(hero, "Id");
+                                // Use ContainsKey/Item path on the Dictionary (same as
+                                // AppendEquippedArtifacts elsewhere in this file).
+                                object heroArtData = null;
+                                if (byHero != null)
+                                {
+                                    var ck = byHero.GetType().GetMethod("ContainsKey");
+                                    if (ck != null && (bool)ck.Invoke(byHero, new object[] { hid }))
+                                    {
+                                        var itemProp = byHero.GetType().GetProperty("Item");
+                                        heroArtData = itemProp?.GetValue(byHero, new object[] { hid });
+                                    }
+                                }
+                                // Build List<Artifact> via equipment.One(id) for each
+                                // equipped artifact_id (same pattern as the existing
+                                // AppendEquippedArtifacts code path).
+                                Type listOfArt = artMethod.GetParameters()[1].ParameterType;
+                                var artList = Activator.CreateInstance(listOfArt);
+                                var addArt = listOfArt.GetMethod("Add");
+                                var oneMeth = artWrapper.GetType().GetMethod("One");
+                                int artListN = 0;
+                                if (heroArtData != null && oneMeth != null && addArt != null)
+                                {
+                                    var byKind = Prop(heroArtData, "ArtifactIdByKind");
+                                    if (byKind != null)
+                                    {
+                                        // Iterate via slot indexer 1..9 (ArtifactKindId enum
+                                        // values map to slots; 1=Helmet ... 9=Banner). The
+                                        // standard enumerator pattern returns empty for this
+                                        // IL2CPP-wrapped Dictionary<EnumKey, Int32>.
+                                        var ck = byKind.GetType().GetMethod("ContainsKey");
+                                        var idxr = byKind.GetType().GetProperty("Item");
+                                        if (ck != null && idxr != null)
+                                        {
+                                            for (int slot = 1; slot <= 9; slot++)
+                                            {
+                                                bool has = false;
+                                                try { has = (bool)ck.Invoke(byKind, new object[] { slot }); }
+                                                catch { continue; }
+                                                if (!has) continue;
+                                                int aid = 0;
+                                                try
+                                                {
+                                                    var v = idxr.GetValue(byKind, new object[] { slot });
+                                                    if (v != null) aid = Convert.ToInt32(v);
+                                                }
+                                                catch { }
+                                                if (aid <= 0) continue;
+                                                try
+                                                {
+                                                    var artObj = oneMeth.Invoke(artWrapper, new object[] { aid });
+                                                    if (artObj != null) { addArt.Invoke(artList, new object[] { artObj }); artListN++; }
+                                                }
+                                                catch { }
+                                            }
+                                        }
+                                    }
+                                }
+                                var formTypeA = FindType("SharedModel.Meta.Heroes.HeroMetamorphForm");
+                                object formA = 0;
+                                if (formTypeA != null) try { formA = Enum.ToObject(formTypeA, 0); } catch { }
+                                var artStats = artMethod.Invoke(null, new object[] { hero, artList, formA });
+                                if (artStats != null)
+                                {
+                                    sb.Append(",\"artifact_bonus\":");
+                                    AppendAllStats(sb, artStats);
+                                }
+                                else
+                                {
+                                    sb.Append(",\"_art_err\":\"CalcArtifactsBonus returned null\"");
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            sb.Append(",\"_art_err\":\"" + Esc(ex.InnerException != null ? ex.InnerException.Message : ex.Message) + "\"");
+                        }
 
                         // CalcRelicsBonus — every silent-exit path now reports a reason.
                         try
@@ -1412,24 +1510,30 @@ namespace RaidAutomation
                                                         }
                                                     }
                                                 }
-                                                int relN = IntProp(relicsList, "_size");
-                                                var relItems = Prop(relicsList, "_items");
-                                                if (relItems != null && relN > 0 && addMeth != null)
+                                                // Only iterate if the hero has at least one
+                                                // equipped relic — empty equippedIds means this
+                                                // hero has none, so the bonus is 0 (don't sum
+                                                // every relic in the vault as a fallback).
+                                                if (equippedIds.Count > 0)
                                                 {
-                                                    var getRel = relItems.GetType().GetMethod("get_Item", new[] { typeof(int) });
-                                                    for (int ri = 0; ri < relN; ri++)
+                                                    int relN = IntProp(relicsList, "_size");
+                                                    var relItems = Prop(relicsList, "_items");
+                                                    if (relItems != null && relN > 0 && addMeth != null)
                                                     {
-                                                        var relicEntry = getRel.Invoke(relItems, new object[] { ri });
-                                                        if (relicEntry == null) continue;
-                                                        int rid = IntProp(relicEntry, "Id");
-                                                        // Only include relics this hero has equipped.
-                                                        if (equippedIds.Count > 0 && !equippedIds.Contains(rid)) continue;
-                                                        try
+                                                        var getRel = relItems.GetType().GetMethod("get_Item", new[] { typeof(int) });
+                                                        for (int ri = 0; ri < relN; ri++)
                                                         {
-                                                            var setup = partialCreate.Invoke(null, new object[] { relicEntry });
-                                                            if (setup != null) addMeth.Invoke(setupList, new object[] { setup });
+                                                            var relicEntry = getRel.Invoke(relItems, new object[] { ri });
+                                                            if (relicEntry == null) continue;
+                                                            int rid = IntProp(relicEntry, "Id");
+                                                            if (!equippedIds.Contains(rid)) continue;
+                                                            try
+                                                            {
+                                                                var setup = partialCreate.Invoke(null, new object[] { relicEntry });
+                                                                if (setup != null) addMeth.Invoke(setupList, new object[] { setup });
+                                                            }
+                                                            catch { }
                                                         }
-                                                        catch { }
                                                     }
                                                 }
                                                 var formType4 = FindType("SharedModel.Meta.Heroes.HeroMetamorphForm");
@@ -1442,11 +1546,8 @@ namespace RaidAutomation
                                                 }
                                                 else
                                                 {
-                                                    sb.Append(",\"relic_bonus\":{");
-                                                    AppendFixed(sb, relicStats, "Health", "HP");
-                                                    sb.Append(","); AppendFixed(sb, relicStats, "Attack", "ATK");
-                                                    sb.Append(","); AppendFixed(sb, relicStats, "Defence", "DEF");
-                                                    sb.Append("}");
+                                                    sb.Append(",\"relic_bonus\":");
+                                                    AppendAllStats(sb, relicStats);
                                                 }
                                             }
                                         }
@@ -1478,16 +1579,8 @@ namespace RaidAutomation
                                 var mastStats = masteryMethod.Invoke(null, new object[] { hero, heroMasteries, form5 });
                                 if (mastStats != null)
                                 {
-                                    sb.Append(",\"mastery_bonus\":{");
-                                    AppendFixed(sb, mastStats, "Health", "HP");
-                                    sb.Append(","); AppendFixed(sb, mastStats, "Attack", "ATK");
-                                    sb.Append(","); AppendFixed(sb, mastStats, "Defence", "DEF");
-                                    sb.Append(","); AppendFixed(sb, mastStats, "Speed", "SPD");
-                                    sb.Append(","); AppendFixed(sb, mastStats, "Resistance", "RES");
-                                    sb.Append(","); AppendFixed(sb, mastStats, "Accuracy", "ACC");
-                                    sb.Append(","); AppendFixed(sb, mastStats, "CriticalChance", "CR");
-                                    sb.Append(","); AppendFixed(sb, mastStats, "CriticalDamage", "CD");
-                                    sb.Append("}");
+                                    sb.Append(",\"mastery_bonus\":");
+                                    AppendAllStats(sb, mastStats);
                                 }
                             }
                         }
@@ -1550,12 +1643,8 @@ namespace RaidAutomation
                                                 var acadStats = acadMethod.Invoke(null, new object[] { hero, acadSetup, form6 });
                                                 if (acadStats != null)
                                                 {
-                                                    sb.Append(",\"faction_guardians_bonus\":{");
-                                                    AppendFixed(sb, acadStats, "Health", "HP");
-                                                    sb.Append(","); AppendFixed(sb, acadStats, "Attack", "ATK");
-                                                    sb.Append(","); AppendFixed(sb, acadStats, "Defence", "DEF");
-                                                    sb.Append(","); AppendFixed(sb, acadStats, "Speed", "SPD");
-                                                    sb.Append("}");
+                                                    sb.Append(",\"faction_guardians_bonus\":");
+                                                    AppendAllStats(sb, acadStats);
                                                 }
                                             }
                                         }

@@ -273,6 +273,11 @@ def compute_hero_actual_stats(hero, *, base_computed: dict | None = None,
         # The mod's IL2CPP call has a bug we don't yet understand; our
         # static-derived calc (computed above into mastery_flat/pct) is
         # more accurate. Revisit if/when the mod call is fixed.
+        # NOT layering mod's artifact_bonus either — its IL2CPP dict
+        # enumeration on Dictionary<EnumKey, Int32> always returns
+        # empty for the equipped-artifact list, so CalcArtifactsBonus
+        # gets called with [] and returns zero. Our manual aggregation
+        # from primary+substats matches in-game HP exactly.
         column_to_field = {
             "affinity": "affinity_bonus",
             "classic_arena": "classic_arena_bonus",
