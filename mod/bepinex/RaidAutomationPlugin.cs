@@ -292,6 +292,34 @@ namespace RaidAutomation
                     catch (Exception ex) { lock (_hookPatchLog) { _hookPatchLog.Add(hookSuffix + ":err:" + ex.Message); } }
                 }
 
+                // Hook DamageCalculator.DamageReductionByDefence to capture
+                // (input, target_def, returned_factor) tuples per call. With
+                // many samples we can fit the literal C in damage = raw × C/(C+DEF)
+                // straight from game execution — no decompiler needed.
+                try
+                {
+                    var dcType = FindTypeStatic("SharedModel.Battle.Core.DamageCalculator");
+                    if (dcType != null)
+                    {
+                        var redM = dcType.GetMethod("DamageReductionByDefence",
+                            BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+                        if (redM != null)
+                        {
+                            var postfix = new HarmonyMethod(typeof(RaidAutomationPlugin)
+                                .GetMethod("BattleHook_DefReduction", BindingFlags.Static | BindingFlags.Public));
+                            if (postfix.method != null)
+                            {
+                                harmony.Patch(redM, postfix: postfix);
+                                lock (_hookPatchLog) { _hookPatchLog.Add("DefReduction:patched"); }
+                                Logger.LogInfo("Harmony: patched DefReduction");
+                            }
+                        }
+                        else { lock (_hookPatchLog) { _hookPatchLog.Add("DefReduction:no_method"); } }
+                    }
+                    else { lock (_hookPatchLog) { _hookPatchLog.Add("DefReduction:no_DamageCalculator_type"); } }
+                }
+                catch (Exception ex) { lock (_hookPatchLog) { _hookPatchLog.Add("DefReduction:err:" + ex.Message); } }
+
                 Logger.LogInfo("Harmony initialized");
             }
             catch (Exception ex)
@@ -1974,6 +2002,72 @@ namespace RaidAutomation
             return IntPtr.Zero;
         }
 
+        // Counter for diagnostic visibility in /battle-state output.
+        private static int _hookDiag_DefReduction = 0;
+
+        // Postfix for DamageCalculator.DamageReductionByDefence
+        // (EffectContext, BattleHero, Fixed) -> Fixed.
+        // Captures (input_value_raw, target_def_raw, returned_factor_raw)
+        // per call so we can fit the literal mitigation function from
+        // real game execution. Result type is Fixed (32.32 raw long).
+        public static void BattleHook_DefReduction(object[] __args, object __result)
+        {
+            _hookDiag_DefReduction++;
+            try
+            {
+                if (__args == null || __args.Length < 3) return;
+                long inputRaw  = -1;
+                long targetDef = -1;
+                long resultRaw = -1;
+                int targetId = 0;
+                int producerId = 0;
+                // arg[0] = EffectContext (has Producer/Target)
+                // arg[1] = BattleHero (the target whose DEF is used)
+                // arg[2] = Fixed (input value)
+                try
+                {
+                    var ctx = __args[0];
+                    if (ctx != null)
+                    {
+                        try { var p = Prop(ctx, "Producer"); if (p != null) producerId = IntProp(p, "Id"); } catch { }
+                        try { var t = Prop(ctx, "Target");   if (t != null) targetId   = IntProp(t, "Id"); } catch { }
+                    }
+                    var battleHero = __args[1];
+                    if (battleHero != null)
+                    {
+                        try
+                        {
+                            var stats = Prop(battleHero, "Stats");
+                            if (stats != null) targetDef = ReadFixedRaw(stats, "Defence");
+                        } catch { }
+                    }
+                    var fixedIn = __args[2];
+                    if (fixedIn != null)
+                    {
+                        try { var rv = Prop(fixedIn, "RawValue"); if (rv != null) inputRaw = Convert.ToInt64(rv); } catch { }
+                    }
+                    if (__result != null)
+                    {
+                        try { var rv = Prop(__result, "RawValue"); if (rv != null) resultRaw = Convert.ToInt64(rv); } catch { }
+                    }
+                }
+                catch { }
+
+                // Append a single tick-log entry. Fixed values are 32.32 —
+                // consumer scales by (>> 32) to get integer game value.
+                var sb = new StringBuilder();
+                sb.Append("{\"kind\":\"def_reduction\",\"tick\":").Append(_battleCommandCount);
+                sb.Append(",\"producer_id\":").Append(producerId);
+                sb.Append(",\"target_id\":").Append(targetId);
+                if (inputRaw  >= 0) sb.Append(",\"in_raw\":").Append(inputRaw);
+                if (targetDef >= 0) sb.Append(",\"t_def\":").Append(targetDef);
+                if (resultRaw >= 0) sb.Append(",\"out_raw\":").Append(resultRaw);
+                sb.Append("}");
+                lock (_tickLog) { _tickLog.Add(sb.ToString()); }
+            }
+            catch { }
+        }
+
         public static void BattleHook_DamageChange(object __instance, object[] __args)
         {
             _hookDiag_DamageChange++;
@@ -2683,7 +2777,8 @@ namespace RaidAutomation
                      + ",\"DurationChange\":" + _hookDiag_DurationChange
                      + ",\"TurnLeftSet\":" + _hookDiag_TurnLeftSet
                      + ",\"BeforeStartTurn\":" + _hookDiag_BeforeStartTurn
-                     + ",\"UnapplyExecute\":" + _hookDiag_UnapplyExecute + "}");
+                     + ",\"UnapplyExecute\":" + _hookDiag_UnapplyExecute
+                     + ",\"DefReduction\":" + _hookDiag_DefReduction + "}");
             sb.Append(",\"cmd_classes\":{");
             lock (_applyCmdClasses)
             {

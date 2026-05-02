@@ -1,0 +1,102 @@
+{
+  "source_tick_log": "tick_log_cb_def_reduction_20260502_160500.json",
+  "event_count": 426,
+  "row_count": 7,
+  "by_def": [
+    {
+      "t_def": 608,
+      "base_factor": 0.7213544000405818,
+      "base_out_raw": 3098193557,
+      "n_base": 116,
+      "n_total": 187,
+      "C_if_simple": 1574,
+      "variants": [
+        {
+          "out_raw": 4294967296,
+          "factor": 1.0,
+          "n": 58
+        },
+        {
+          "out_raw": 3415494714,
+          "factor": 0.7952318326570094,
+          "n": 9
+        },
+        {
+          "out_raw": 3649507873,
+          "factor": 0.8497172670904547,
+          "n": 4
+        }
+      ]
+    },
+    {
+      "t_def": 1520,
+      "base_factor": 0.46487309457734227,
+      "base_out_raw": 1996614738,
+      "n_base": 31,
+      "n_total": 47,
+      "C_if_simple": 1320,
+      "variants": [
+        {
+          "out_raw": 4294967296,
+          "factor": 1.0,
+          "n": 12
+        },
+        {
+          "out_raw": 2888839886,
+          "factor": 0.6726104500703514,
+          "n": 2
+        },
+        {
+          "out_raw": 2477069823,
+          "factor": 0.5767377612646669,
+          "n": 2
+        }
+      ]
+    },
+    {
+      "t_def": 1941,
+      "base_factor": 0.3829513620585203,
+      "base_out_raw": 1644763576,
+      "n_base": 37,
+      "n_total": 37,
+      "C_if_simple": 1205,
+      "variants": []
+    },
+    {
+      "t_def": 2023,
+      "base_factor": 0.3705011736601591,
+      "base_out_raw": 1591290424,
+      "n_base": 36,
+      "n_total": 36,
+      "C_if_simple": 1191,
+      "variants": []
+    },
+    {
+      "t_def": 2143,
+      "base_factor": 0.3536351036746055,
+      "base_out_raw": 1518851205,
+      "n_base": 47,
+      "n_total": 47,
+      "C_if_simple": 1172,
+      "variants": []
+    },
+    {
+      "t_def": 2429,
+      "base_factor": 0.3182632445823401,
+      "base_out_raw": 1366930227,
+      "n_base": 36,
+      "n_total": 36,
+      "C_if_simple": 1134,
+      "variants": []
+    },
+    {
+      "t_def": 2974,
+      "base_factor": 0.2670213447418064,
+      "base_out_raw": 1146847943,
+      "n_base": 36,
+      "n_total": 36,
+      "C_if_simple": 1083,
+      "variants": []
+    }
+  ]
+}
