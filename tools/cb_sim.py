@@ -1228,7 +1228,48 @@ class CBSimulator:
         if champ.has_buff("inc_cr_30"):
             effective_cr = min(100, effective_cr + 30)
 
-        crit_mult = 1 + (effective_cr / 100) * (effective_cd / 100)
+        # Phase C 2026-05-01 — full hit-type expected-value formula.
+        # Game-spec constants (GameplayData):
+        #   CriticalHitChanceAdvantage = 0.15  (strong-affinity +15% CR)
+        #   CrushingHitChance          = 0.50  (50% crush vs strong target,
+        #                                       only on Advantage)
+        #   GlancingHitChance          = 0.35  (35% glance, only on Disadvantage)
+        #   CrushingHitCoef            = +0.30 (crush damage = ×1.30)
+        #   GlancingHitCoef            = -0.30 (glance damage = ×0.70)
+        # Verified via /damage-calc-probe + extracted from GameplayData.
+        # Each hit's deterministic-expected damage:
+        #   Advantage:  P(crit) = (CR + 15) / 100, then 50/50 crush/normal
+        #   Disadvantage: P(crit) = CR / 100, then 35% glance / 65% normal
+        #   Neutral / Void: P(crit) = CR / 100, rest is Normal
+        is_advantage = (
+            champ.element and self.cb_element
+            and champ.element != 4 and self.cb_element != 4
+            and STRONG_AFFINITY.get(champ.element) == self.cb_element
+        )
+        is_disadvantage = (
+            champ.element and self.cb_element
+            and champ.element != 4 and self.cb_element != 4
+            and WEAK_AFFINITY.get(champ.element) == self.cb_element
+        )
+        cr_adj = effective_cr + 15 if is_advantage else effective_cr
+        cr_adj = min(100, max(0, cr_adj))
+        p_crit = cr_adj / 100.0
+        crit_dmg_mult = 1.0 + (effective_cd / 100.0)  # 200%CD → ×3.0 dmg on crit
+        if is_advantage:
+            # 50% crush, 50% normal among non-crits
+            crit_mult = (
+                p_crit * crit_dmg_mult
+                + (1 - p_crit) * (0.50 * 1.30 + 0.50 * 1.0)
+            )
+        elif is_disadvantage:
+            # 35% glance, 65% normal among non-crits
+            crit_mult = (
+                p_crit * crit_dmg_mult
+                + (1 - p_crit) * (0.35 * 0.70 + 0.65 * 1.0)
+            )
+        else:
+            # Neutral / Void — only crit vs normal
+            crit_mult = p_crit * crit_dmg_mult + (1 - p_crit) * 1.0
 
         # DEF reduction (game: DamageReductionByDefence)
         # Phase 4: IgnoreDefenceModifierProcessing — Savage, Helmsmasher modify DEF

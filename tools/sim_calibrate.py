@@ -54,6 +54,7 @@ _BOSS_TYPE_TO_AFFINITY = {
     22210: "void",   22220: "magic",  22230: "force",  22240: "spirit",
     22250: "void",   22260: "magic",  22270: "force",  22280: "spirit",
 }
+_AFFINITY_TO_INT = {"void": 4, "magic": 1, "force": 2, "spirit": 3}
 # Mapping from type id → difficulty is ambiguous because the same id is
 # reused across days. Best signal is the boss's hp_max field captured in
 # the battle log — match it against cb_constants.CB_HP_BY_DIFFICULTY.
@@ -135,9 +136,16 @@ def _run_sim(team: list[str], cb_difficulty: str, cb_element: int) -> dict:
                          cb_difficulty=cb_difficulty)
 
 
-def calibrate_one(log_path: str, cb_element: int = 4) -> dict:
+def calibrate_one(log_path: str, cb_element: int = 4,
+                  use_log_affinity: bool = True) -> dict:
     """Run one log through the sim and compute the delta. Returns a row
-    dict with all the comparison fields, suitable for tabulation."""
+    dict with all the comparison fields, suitable for tabulation.
+
+    If use_log_affinity is True (default), the boss's affinity is derived
+    from the captured boss type_id (rotates per day) — overrides
+    cb_element. Use cb_element only as a fallback when type id lookup
+    fails.
+    """
     log_data = _load_log(log_path)
     if not log_data:
         return {"file": os.path.basename(log_path), "error": "load_failed"}
@@ -150,7 +158,15 @@ def calibrate_one(log_path: str, cb_element: int = 4) -> dict:
     if not team_names or any(n.startswith("<typeid_") for n in team_names):
         return {"file": os.path.basename(log_path),
                 "error": f"team_unresolved: {team_names}"}
-    sim = _run_sim(team_names, cb_difficulty=diff_slug, cb_element=cb_element)
+    # Derive actual boss affinity from type id when possible — different
+    # battle logs were on different rotation days.
+    actual_element = cb_element
+    affinity_name = None
+    if use_log_affinity:
+        affinity_name = _BOSS_TYPE_TO_AFFINITY.get(summary["boss_type_id"])
+        if affinity_name:
+            actual_element = _AFFINITY_TO_INT.get(affinity_name, cb_element)
+    sim = _run_sim(team_names, cb_difficulty=diff_slug, cb_element=actual_element)
     if "error" in sim:
         return {"file": os.path.basename(log_path),
                 "error": f"sim: {sim['error']}",
@@ -161,6 +177,7 @@ def calibrate_one(log_path: str, cb_element: int = 4) -> dict:
     return {
         "file": os.path.basename(log_path),
         "boss": diff_label,
+        "affinity": affinity_name or "?",
         "team": ",".join(team_names),
         "real_dmg": real_dmg,
         "sim_dmg": sim_dmg,
@@ -199,14 +216,14 @@ def main() -> int:
     # Headline summary
     ok = [r for r in rows if "error" not in r]
     err = [r for r in rows if "error" in r]
-    print(f"=== sim calibration over {len(files)} battle logs (sim @ {args.cb_element}) ===\n")
-    print(f"  {'file':<40s} {'boss':<14s} {'real':>8s} {'sim':>8s} {'delta':>7s} {'real_T':>6s} {'sim_T':>5s}")
-    print(f"  {'-'*40} {'-'*14} {'-'*8} {'-'*8} {'-'*7} {'-'*6} {'-'*5}")
+    print(f"=== sim calibration over {len(files)} battle logs (boss affinity from log type id) ===\n")
+    print(f"  {'file':<40s} {'boss':<14s} {'aff':<6s} {'real':>8s} {'sim':>8s} {'delta':>7s} {'real_T':>6s} {'sim_T':>5s}")
+    print(f"  {'-'*40} {'-'*14} {'-'*6} {'-'*8} {'-'*8} {'-'*7} {'-'*6} {'-'*5}")
     for r in rows:
         if "error" in r:
             print(f"  {r['file']:<40s} ERR: {r['error']}")
             continue
-        print(f"  {r['file']:<40s} {r['boss']:<14s} "
+        print(f"  {r['file']:<40s} {r['boss']:<14s} {r.get('affinity', '?'):<6s} "
               f"{r['real_dmg']/1e6:>7.2f}M {r['sim_dmg']/1e6:>7.2f}M "
               f"{r['delta_pct']:>+6.1f}% {r['real_turns']:>6d} {r['sim_turns']:>5d}")
 
