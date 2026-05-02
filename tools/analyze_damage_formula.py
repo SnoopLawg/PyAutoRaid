@@ -54,7 +54,9 @@ def event_summary(events: list[dict]) -> None:
     # Field coverage
     fields = ("p_atk", "p_cd", "p_cr", "t_def", "t_hp_max", "t_hp",
               "calc_raw", "calc", "def_mod", "mul", "hit", "kind_id",
-              "skill", "crit", "blocked", "evaded")
+              "skill", "crit", "blocked", "evaded",
+              "p_elem", "t_elem", "p_typeid", "t_typeid",
+              "p_eff", "t_eff")
     print("Field coverage:")
     for f in fields:
         n = sum(1 for e in events if f in e and e[f] not in (None, -1))
@@ -64,6 +66,29 @@ def event_summary(events: list[dict]) -> None:
     # Hit-type distribution
     hits = Counter(e.get("hit") for e in events if e.get("hit"))
     print(f"\nHit type distribution: {dict(hits)}")
+
+    # Element-pair distribution
+    _elem = {1: "M", 2: "F", 3: "S", 4: "V"}
+    pairs = Counter(
+        f"{_elem.get(e['p_elem'], '?')}→{_elem.get(e['t_elem'], '?')}"
+        for e in events
+        if e.get("p_elem") and e.get("t_elem")
+    )
+    if pairs:
+        print(f"Element pairs (attacker→target): {dict(pairs.most_common(8))}")
+
+    # Effect-kind distribution (6000=Damage, 3007=ContinuousDamage,
+    # 3014=AoEContinuousDamage, etc.)
+    kinds = Counter(e.get("kind_id") for e in events if e.get("kind_id"))
+    if kinds:
+        # Map int -> name from data/static/effect_kind_id.json
+        try:
+            ek_map_path = Path(__file__).resolve().parent.parent / "data" / "static" / "effect_kind_id.json"
+            ek_map = {v["value"]: v["name"] for v in json.loads(ek_map_path.read_text(encoding="utf-8"))["values"]}
+            kind_named = {f"{ek_map.get(k, '?')} ({k})": v for k, v in kinds.most_common(10)}
+        except Exception:
+            kind_named = dict(kinds.most_common(10))
+        print(f"Effect kind_id distribution: {kind_named}")
 
     # Skill distribution
     sks = Counter(e.get("skill") for e in events if e.get("skill"))

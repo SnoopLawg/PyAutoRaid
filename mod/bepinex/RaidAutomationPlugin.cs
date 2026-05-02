@@ -524,6 +524,7 @@ namespace RaidAutomation
                     "/list-static-methods" => ListStaticMethods(QP(query, "type"), QP(query, "filter")),
                     "/static-field" => RunOnMainThread(() => GetStaticField(QP(query, "type"), QP(query, "name"), QP(query, "depth")), 30000),
                     "/effect-kind-group" => RunOnMainThread(() => GetEffectKindGroup(QP(query, "group")), 30000),
+                    "/damage-calc-probe" => RunOnMainThread(() => GetDamageCalcProbe(), 30000),
                     "/list-active" => RunOnMainThread(() => ListActive(QP(query, "path"), QP(query, "depth"), QP(query, "filter"))),
                     "/set-scroll" => RunOnMainThread(() => SetScroll(QP(query, "path"), QP(query, "v"), QP(query, "h"))),
                     "/list-components" => RunOnMainThread(() => ListComponents(QP(query, "path"))),
@@ -1911,6 +1912,58 @@ namespace RaidAutomation
             catch { return -1; }
         }
 
+        // Walk a BattleHero's HeroState.AppliedEffects and emit a compact
+        // string like "[470,151,80]" — list of EffectTypeIds currently
+        // active. Same memory layout pattern as the per-tick log walker
+        // (HeroState @ 0xC0, AppliedEffects @ 0x38, item EffectTypeId @ 0x38).
+        // Empty string on any read failure or empty list.
+        private static string ReadActiveEffects(object hero)
+        {
+            try
+            {
+                IntPtr heroPtr = IL2CPPHandleOf(hero);
+                if ((long)heroPtr <= 0x10000) return "";
+                IntPtr hstate = Marshal.ReadIntPtr(heroPtr + 0xC0);
+                if ((long)hstate <= 0x10000) return "";
+                IntPtr listObj = Marshal.ReadIntPtr(hstate + 0x38);
+                if ((long)listObj <= 0x10000) return "";
+                int sz = Marshal.ReadInt32(listObj + 0x18);
+                if (sz <= 0 || sz > 100) return "";
+                IntPtr items = Marshal.ReadIntPtr(listObj + 0x10);
+                if ((long)items <= 0x10000) return "";
+                var sb = new StringBuilder("[");
+                IntPtr basePtr = items + 0x20;
+                for (int i = 0; i < sz && i < 50; i++)
+                {
+                    IntPtr ae = Marshal.ReadIntPtr(basePtr + (i * 8));
+                    if ((long)ae <= 0x10000) continue;
+                    int etype = Marshal.ReadInt32(ae + 0x38);
+                    if (i > 0) sb.Append(",");
+                    sb.Append(etype);
+                }
+                sb.Append("]");
+                return sb.ToString();
+            }
+            catch { return ""; }
+        }
+
+        // Read a BattleHero's primary Element by walking
+        // BattleHero.Type.DefaultElement. Returns the Element enum int
+        // (1=Magic 2=Force 3=Spirit 4=Void) or -1 on read failure.
+        private static int ReadHeroElement(object hero)
+        {
+            try
+            {
+                if (hero == null) return -1;
+                var ht = Prop(hero, "Type");
+                if (ht == null) return -1;
+                var elem = Prop(ht, "DefaultElement");
+                if (elem == null) return -1;
+                return Convert.ToInt32(elem);
+            }
+            catch { return -1; }
+        }
+
         // Convert a managed wrapper object to its underlying IL2CPP IntPtr handle.
         // Most BepInEx Il2CppObjectBase derivatives have a `Pointer` property.
         private static IntPtr IL2CPPHandleOf(object o)
@@ -1947,6 +2000,10 @@ namespace RaidAutomation
                 long pAtk = -1, pCd = -1, pCr = -1;       // producer ATK / CritDmg / CritChance
                 long tDef = -1, tHpMax = -1, tHp = -1;    // target DEF / max HP / current HP
                 long calcDefMod = -1, calcMul = -1;       // DamageContext._defenceModifier and _multiplierValue
+                // Phase 5 (active effects + boss element).
+                int pElem = -1, tElem = -1;               // attacker/target Element (1=Magic 2=Force 3=Spirit 4=Void)
+                int pTypeId = -1, tTypeId = -1;           // attacker/target HeroType id
+                string pEff = null, tEff = null;          // active effect ID lists per side
                 try
                 {
                     if (__args != null && __args.Length > 0 && __args[0] != null)
@@ -1985,15 +2042,78 @@ namespace RaidAutomation
                                 tHpMax = ReadFixedRaw(tgtHero, "HealthMax");
                                 tHp = ReadFixedRaw(tgtHero, "Health");
                             }
+                            // Element + HeroType id for both sides — needed
+                            // to compute affinity advantage / disadvantage
+                            // per event without inferring it from skill IDs.
+                            // Magic boss (today's affinity) vs Force hero
+                            // gives the boss an Advantage; reading element
+                            // here makes it explicit per damage event.
+                            if (prodHero != null)
+                            {
+                                pElem = ReadHeroElement(prodHero);
+                                try { pTypeId = IntProp(prodHero, "TypeId"); } catch { }
+                                pEff = ReadActiveEffects(prodHero);
+                            }
+                            if (tgtHero != null)
+                            {
+                                tElem = ReadHeroElement(tgtHero);
+                                try { tTypeId = IntProp(tgtHero, "TypeId"); } catch { }
+                                tEff = ReadActiveEffects(tgtHero);
+                            }
                         }
                         catch { }
                         try { isEvaded = (bool)Prop(eff, "IsEvaded"); } catch { }
+                        // EffectContext exposes AppliedEffect + Effect (an
+                        // EffectType) directly — no need to go through the
+                        // ApplyContext path which returns null on damage events.
+                        try
+                        {
+                            var ae = Prop(eff, "AppliedEffect");
+                            if (ae != null)
+                            {
+                                skillTypeId = IntProp(ae, "SkillTypeId");
+                            }
+                            var et = Prop(eff, "Effect");
+                            if (et != null)
+                            {
+                                // EffectType.KindId is an enum (Damage=6000,
+                                // ApplyDebuff=5000, ContinuousDamage=3007,
+                                // AoEContinuousDamage=3014, ...).
+                                var kindObj = Prop(et, "KindId");
+                                if (kindObj != null)
+                                {
+                                    try { effectKind = Convert.ToInt32(kindObj); } catch { effectKind = 0; }
+                                }
+                            }
+                        }
+                        catch { }
                         var dctx = Prop(eff, "DamageContext");
                         if (dctx != null)
                         {
                             try { isBlocked = (bool)Prop(dctx, "IsBlocked"); } catch { }
-                            try { var ht = Prop(dctx, "HitType"); if (ht != null) hitType = ht.ToString(); } catch { }
-                            try { var ic = Prop(dctx, "IsCritical"); if (ic != null) isCrit = (bool)ic; } catch { }
+                            // HitType is Nullable<HitType>. Unwrap via HasValue/Value
+                            // — direct ToString() of a Nullable wrapper returns
+                            // the wrapper's type name, not the underlying enum.
+                            try
+                            {
+                                var ht = Prop(dctx, "HitType");
+                                if (ht != null)
+                                {
+                                    var hasValProp = ht.GetType().GetProperty("HasValue");
+                                    var valProp = ht.GetType().GetProperty("Value");
+                                    if (hasValProp != null && (bool)hasValProp.GetValue(ht))
+                                    {
+                                        var enumVal = valProp.GetValue(ht);
+                                        if (enumVal != null)
+                                        {
+                                            hitType = enumVal.ToString();
+                                            // HitType { Normal=0, Crushing=1, Critical=2, Glancing=3 }
+                                            try { isCrit = (Convert.ToInt32(enumVal) == 2); } catch { }
+                                        }
+                                    }
+                                }
+                            }
+                            catch { }
                             // DamageResult fields (per schema dump 2026-04-24):
                             //   ActualValue                = post-cap, post-mitigation damage applied
                             //   ValuePositive              = same as ActualValue (alias)
@@ -2018,23 +2138,6 @@ namespace RaidAutomation
                             // Trigger the schema dump on first hit (already wired).
                             try { var calc = Prop(dctx, "CalculatedDamage"); if (calc != null) DumpDamageResultOnce(calc, "CalculatedDamage"); } catch { }
                         }
-                        try
-                        {
-                            var actx = Prop(eff, "ApplyContext");
-                            if (actx != null)
-                            {
-                                var applied = Prop(actx, "AppliedEffect");
-                                if (applied != null)
-                                {
-                                    skillTypeId = IntProp(applied, "SkillTypeId");
-                                    // EffectKindId tells us if this is a 6000 (skill damage),
-                                    // 5000 (poison), 5002 (HP burn), 4017 (passive damage), etc.
-                                    // Lets us label every observed cluster precisely.
-                                    try { effectKind = IntProp(applied, "EffectKindId"); } catch { }
-                                }
-                            }
-                        }
-                        catch { }
                     }
                 }
                 catch { }
@@ -2064,6 +2167,12 @@ namespace RaidAutomation
                 if (tHp      >= 0) sb.Append(",\"t_hp\":").Append(tHp);
                 if (calcDefMod >= 0) sb.Append(",\"def_mod\":").Append(calcDefMod);
                 if (calcMul    >= 0) sb.Append(",\"mul\":").Append(calcMul);
+                if (pElem      >= 0) sb.Append(",\"p_elem\":").Append(pElem);
+                if (tElem      >= 0) sb.Append(",\"t_elem\":").Append(tElem);
+                if (pTypeId    >= 0) sb.Append(",\"p_typeid\":").Append(pTypeId);
+                if (tTypeId    >= 0) sb.Append(",\"t_typeid\":").Append(tTypeId);
+                if (!string.IsNullOrEmpty(pEff)) sb.Append(",\"p_eff\":").Append(pEff);
+                if (!string.IsNullOrEmpty(tEff)) sb.Append(",\"t_eff\":").Append(tEff);
                 sb.Append("}");
                 string entry = sb.ToString();
                 lock (_tickLog) { if (_tickLog.Count < 3000) _tickLog.Add(entry); }

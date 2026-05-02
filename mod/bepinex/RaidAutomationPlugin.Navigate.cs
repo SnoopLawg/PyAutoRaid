@@ -359,6 +359,72 @@ namespace RaidAutomation
             return sb.ToString();
         }
 
+        // /damage-calc-probe — invokes static helpers in DamageCalculator
+        // with synthetic args to extract the exact damage modifier per
+        // hit type and element relation. No battle needed; values come
+        // straight from the IL2CPP method bodies.
+        //
+        // For HitTypeBonus(BattleHero, HitType) we can't synthesise a
+        // BattleHero, so this endpoint focuses on ElementAdvantageBonus
+        // (single enum arg) which IS readable directly. For HitTypeBonus
+        // we capture observations from real damage events instead.
+        private string GetDamageCalcProbe()
+        {
+            var sb = new StringBuilder("{");
+            var dcType = FindType("SharedModel.Battle.Core.DamageCalculator");
+            if (dcType == null) return "{\"error\":\"DamageCalculator type not found\"}";
+
+            // ElementAdvantageBonus(ElementRelation) — returns Fixed
+            try
+            {
+                var erType = FindType("SharedModel.Meta.Heroes.ElementRelation");
+                var meth = dcType.GetMethod("ElementAdvantageBonus",
+                    BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+                sb.Append("\"ElementAdvantageBonus\":{");
+                bool first = true;
+                if (erType != null && meth != null)
+                {
+                    foreach (var name in Enum.GetNames(erType))
+                    {
+                        var enumVal = Enum.Parse(erType, name);
+                        try
+                        {
+                            var result = meth.Invoke(null, new object[] { enumVal });
+                            if (result == null) continue;
+                            // Result is Fixed; read RawValue.
+                            var raw = Prop(result, "RawValue");
+                            if (raw == null) continue;
+                            // Scale to 4 decimals: (raw * 10000) >> 32
+                            long r = Convert.ToInt64(raw);
+                            long scaled = (r * 10000) >> 32;
+                            if (!first) sb.Append(",");
+                            first = false;
+                            sb.Append("\"").Append(Esc(name)).Append("\":").Append(scaled / 10000.0);
+                        }
+                        catch (Exception ex)
+                        {
+                            if (!first) sb.Append(",");
+                            first = false;
+                            sb.Append("\"").Append(Esc(name)).Append("_err\":\"")
+                              .Append(Esc(ex.Message)).Append("\"");
+                        }
+                    }
+                }
+                sb.Append("}");
+            }
+            catch (Exception ex)
+            {
+                sb.Append("\"_eab_err\":\"").Append(Esc(ex.Message)).Append("\"");
+            }
+
+            // HitTypeBonus(BattleHero, HitType) — needs a BattleHero,
+            // can't synthesise. Document the constraint.
+            sb.Append(",\"HitTypeBonus_note\":\"requires live BattleHero arg, see GameplayData.{Crushing,Glancing,Critical}HitCoef instead\"");
+
+            sb.Append("}");
+            return sb.ToString();
+        }
+
         // /effect-kind-group?group=<groupName>
         // Walks every EffectKindId enum value and asks
         // EffectKindGroupExtensions.Contains(group, kindId) to figure
