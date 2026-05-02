@@ -283,21 +283,37 @@ sourced from skills_all.json for unowned heroes. Owned-hero CB sim
 unchanged (verified 31.4M total on the calibration team). New game
 release → re-run refresh_static_data + refresh_data → done.
 
-### Phase 5 — Sim damage calibration (the hardest one)
+### Phase 5 — Sim damage calibration (the hardest one) 🟡 (suite shipped; un-stacking pending user collab)
 
 **Goal**: sim damage numbers match real battle logs within ±5% per
 hero, not just team total. Per memory `project_cb_sim_calibration_state`,
-this is paused at 94% with 6 compensating wrongs.
+the survival model has compensating wrongs that mask each other —
+"don't tweak in isolation" is explicit user feedback.
 
-- [ ] Build a regression suite: every battle log in `battle_logs_cb_*.json`
-      becomes a test case (sim that team → assert per-hero damage within
-      5%)
-- [ ] Un-stack the 6 compensating wrongs *together*, tracking the
-      regression suite at every step (per memory: don't fix in isolation)
-- [ ] CLI: `python3 tools/sim_calibrate.py --logs battle_logs_*.json`
+- [x] Regression suite: `tools/sim_calibrate.py` reads every
+      `battle_logs_cb_*.json`, extracts team + final boss damage,
+      runs the sim with same team/difficulty, reports per-log error %
+      and difficulty-grouped summary. Filters to complete battles
+      (real_turns ≥ 48) for the headline metric.
+- [x] Calibration baseline doc: `docs/sim_calibration_baseline.md`
+      captures the 2026-05-01 snapshot:
+      - **Brutal**: 3 logs, mean -4.4%, ✅ within ±5% target
+      - **UNM**: 8 logs, mean -16.6%, range [-31.1%, -11.0%] ❌
+      - Cleanest reference: 2026-04-29 post-revert run is 31.36M sim
+        vs 42.85M real = 73.2% accuracy. Calibration hasn't drifted
+        since the survival fix paused the work.
+- [ ] **Bottom-up survival-model rewrite** (planned with user, not
+      autonomous): capture fresh CB run for `s_spd` ground truth +
+      buff-state-diff per CB turn → refactor shield absorption +
+      Demytha A2 heal + UK-clamp-to-1 + parity-correct CDs +
+      extend_buffs(NON_EXTENDABLE) *together*, with sim_calibrate.py
+      verifying team-total stays stable. Multi-day coordinated work
+      explicitly out-of-scope for autonomous execution.
 
-**Deliverable**: sim is trustworthy enough to test gear/team changes
-without spending CB keys.
+**Deliverable**: ✅ measurement framework + baseline shipped;
+⏳ the calibration un-stacking is now a measured, planable task
+instead of a "paused at 94%" black box. User runs the suite, picks
+the next chunk to tackle, regression-checks each step.
 
 ### Phase 6 — Optimizer per location
 
