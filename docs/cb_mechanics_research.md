@@ -688,6 +688,30 @@ Still open:
   tick log (Ninja A2 / Sicia A2 active) and inspect whether the boss
   has multiple AoEContinuousDamage applied effects via the
   AppliedEffectsByHeroes dict.
+
+## Internal name → in-game name mappings
+
+The mod's IL2CPP enum dumps use internal codenames that don't match
+the user-facing in-game language. Verified mappings:
+
+| Internal name | StatusEffectTypeId | EffectKindId | In-game name |
+|---|---:|---:|---|
+| `FireMark` | 740 | 3021 | **[Smite]** (placed by Brimstone blessing) |
+| `MagicFlame` | (blessing codename) | — | likely **Incinerate** (Epic Wisdom) — not Brimstone |
+| `AoEContinuousDamage` | 470 | 3014 | **[HP Burn]** |
+| `ContinuousDamage` (5%) | 80 | 3007 | **[Poison]** 5% |
+| `ContinuousDamage` (2.5%) | 81 | 3007 | **[Poison]** 2.5% |
+| `IncreaseDamageTaken25` | 350 | 3010 | **[Weaken]** |
+| `DecreaseDefence30` | 150 | 3102 | **[Decrease DEF 30%]** |
+| `DecreaseDefence60` | 151 | 3102 | **[Decrease DEF 60%]** |
+| `Brimstone` blessing | 4101 | — | **Brimstone** (Legendary Wisdom) |
+| `Polymorph` blessing | 4102 | — | **Polymorph** (Legendary Wisdom) |
+| `MagicFlame` blessing | 4201 (?) | — | **Incinerate** (Epic Wisdom) — TBC |
+| `Penetrator` blessing | 4202 (?) | — | **Crushing Rend** (Epic Wisdom) — TBC |
+
+The `*Mark` suffix in IL2CPP often maps to in-game "Mark of X" or
+specific debuff names (Smite, Mark of Madness, Mark of Death) — verify
+each in localization rather than assume.
 - [ ] **`HealOnStartRound`** behaviour in CB: CB has 1 round per fight.
   Does the 20% heal trigger on round start (i.e. battle start) only?
   Or every CB turn (no — that would be absurd)? Verify via tick log.

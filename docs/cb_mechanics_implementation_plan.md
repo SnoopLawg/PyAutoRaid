@@ -170,15 +170,26 @@ deterministic mechanics.
 
 ## Concrete remaining gaps with identified sources
 
-1. **Ninja FireMark damage 2.75M** (deterministic, 11 events × 250K cap)
-   - StatusEffectTypeId 740 placed on boss by Ninja
-   - NOT in Ninja's skill descriptions (Hailburn = HP Burn, not FireMark)
-   - NOT in his equipped sets (3-piece Speed, 2-piece Heal, accessory)
-   - NOT in his masteries (only conditional Warmaster/GS, no FireMark proc)
-   - Likely from **MagicFlame Epic Wisdom blessing** — Ninja is Magic
-     element so eligible for Wisdom blessings. Blessing's `skill_bonus`
-     effect (proc) isn't in our blessing data export — needs deeper
-     IL2CPP query of `BlessingByTypeId` + their hidden skill effects.
+1. **Ninja [Smite] damage 2.75M** (deterministic, 11 events × 250K cap)
+   - StatusEffectTypeId 740 (internal name "FireMark") = in-game **[Smite]** debuff
+   - Placed on boss by Ninja's **Brimstone** Legendary Wisdom blessing
+     (verified via localization: blessing 4101 description)
+   - Brimstone: "Whenever this Champion attacks, each hit has a chance
+     to place a [Smite] debuff for 2 turns. Champions under [Smite]
+     will be hit by a meteorite when they use an Active Skill. The
+     meteorite inflicts damage equal to 25% of the affected Champion's
+     MAX HP, and will also inflict damage to all other enemies equal
+     to 5% of their MAX HP. Only one [Smite] debuff can be active per
+     team at any point."
+   - Per blessing level: 15% / ... / 100% chance per hit. Ninja's grade
+     determines actual proc chance.
+   - Boss has Smite damage reduction (skill 200012 = -70%) but raw
+     damage (25% × 1.17B = 292.5M) still hits the 250K floor cap.
+   - Pattern in our captures: 11 events firing right after each boss
+     AOE = the boss's "active skill use" triggering the meteorite.
+   - **Sim modeling**: when a hero has Brimstone blessing and the team
+     places Smite on boss successfully, add a deterministic 250K
+     damage per boss-active-skill cast. Single Smite per team max.
 
 2. **Venomage poison over-prediction +2.0M** — sim's `activate_poisons`
    fires per-hit in A1; real game limits to per-cast (1-2 activations
