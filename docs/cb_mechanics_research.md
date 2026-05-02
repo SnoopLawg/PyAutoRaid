@@ -108,25 +108,72 @@ the values.
 the cycle direction matches sim's `WEAK_AFFINITY` / `STRONG_AFFINITY`
 maps.
 
-### 1.4 DEF Mitigation Formula
+### 1.4 DEF Mitigation Formula — ✅ EMPIRICAL CAPTURE
 
 `DamageCalculator.DamageReductionByDefence(EffectContext, BattleHero, Fixed)`
-— this is the actual mitigation function. Standard Raid formula
-(community-verified) is:
+is the actual mitigation function. Body lives inside the IL2CPP
+method.
 
-    final_damage = base_damage × DEF_FACTOR
-    DEF_FACTOR = ATK_HERO / (ATK_HERO + DEF_TARGET × DEF_COEF)
+**Captured 2026-05-01** via the upgraded damage hook (1210 events from
+a CB UNM Void run, ME/Demytha/Ninja/Geo/Venomage):
 
-where `DEF_COEF` is approximately **3.5** for level 60 hero vs CB
-(community estimate). The exact value lives inside the IL2CPP
-`DamageReductionByDefence` body — needs disassembly to extract. The
-mod's BepInEx hooks could read the post-mitigation `calc` value
-directly (see "Mod capabilities" in `project_cb_sim_calibration_state`),
-which is the source of truth for individual events.
+⚠️ **Boss UNM DEF = 1520** (not 4878 as `raid_data.UNM_DEF` had —
+that was a CALIBRATED back-fit). With Decrease Defence 60% the
+target DEF reads **608** (1520 × 0.4 ✓).
 
-🟡 **TODO**: get a tick-log capture with `calc_raw` and `calc` fields
-populated, back-out the DEF_COEF empirically from many events as a
-sanity check, then verify against the IL2CPP method via dnSpy.
+Empirical DEF mitigation factors (calc / mul on cap-procs WM at 75K
+and GS at 93.75K, where pre-DEF damage is the cap, no ATK
+dependency):
+
+| target DEF | observed factor | observed damage reduction |
+|---:|---:|---:|
+| 1520 (no DEF Down) | **0.4649** | 53.5% |
+| 608  (DEF Down 60%) | **0.7213** | 27.9% |
+
+⚠️ **Community formula `DR = DEF / (DEF + 600)` is wrong** for the
+boss:
+- DEF=1520: `DR = 1520/2120 = 71.7%` (predicted), 53.5% (observed)
+- DEF=608: `DR = 608/1208 = 50.3%` (predicted), 27.9% (observed)
+
+Tested formulas that DO NOT fit both data points:
+- `factor = ATK / (ATK + DEF × K)` — different K per DEF value
+- `factor = level / (level + DEF × K)` — different K per DEF
+- `factor = level² / (level² + DEF × K)` — different K per DEF
+- `factor = C / (C + DEF)` — different C per DEF
+
+The real game formula is more complex than any simple ratio. Likely
+involves both attacker level AND target level non-linearly.
+
+🟡 **Next**: capture a CB run with the rebuilt mod to get accurate
+`p_cd` / `p_cr` (the fixed-point reader was truncating to integer
+part, losing decimals). Also capture more DEF values (Stoneskin
+modifier, Newbie Defence, Decrease DEF 30%) to over-determine the
+formula. Plan: read `DamageReductionByDefence` body via a new mod
+endpoint that synthesizes test args.
+
+**Practical interim approach**: use a 2-point lookup
+`{1520: 0.4649, 608: 0.7213}` for CB UNM since DEF Down is the only
+real DEF modifier in CB. ✓ exact-match for the calc; need real
+formula for other locations.
+
+### 1.4b Damage caps in skill 200008 — ✅ confirmed
+
+The boss's passive applies multiple `ChangeDamageMultiplier` rules.
+What we observed in `mul` values (the post-cap multiplier):
+
+| Cap source | mul value | DEF mitigated? | Notes |
+|---|---:|:---:|---|
+| Poison 5% per tick (UNM) | 50,000 | ❌ no | calc=mul=50000 always; flat damage path |
+| Floor cap (skill 200008 line 5) | 250,000 | ❌ no | calc=mul=250000; absolute upper bound |
+| HP Burn legendary cap | 75,000 | ✅ yes | observed 0.4649× and 0.7213× factors |
+| Warmaster proc | (raw 0.04×TRG_HP, capped 75K) | ✅ yes | same DEF mitigation as HP Burn |
+| Giant Slayer proc | (raw 0.03×TRG_HP, capped 75K) → mul=93750 | ✅ yes | same factors |
+
+⚠️ Note: GS shows `mul=93750` in the data (= 75000 × 1.25), suggesting
+the cap path includes a +25% modifier somewhere (Weaken? Crushing
+hit?). On `mul=93750, DEF=1520`, calc=43581 → factor 0.4648 (same
+as 75K WM). So the same DEF mitigation applies regardless of the
+exact cap value — it's the `mul` field that differs.
 
 ### 1.5 Ignore-DEF (Ninja A3, OB A2)
 

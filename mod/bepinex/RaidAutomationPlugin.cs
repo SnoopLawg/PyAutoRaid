@@ -1889,6 +1889,28 @@ namespace RaidAutomation
             catch { return -1; }
         }
 
+        // Like ReadFixedRaw(obj, fieldName) but multiplies by 1000 before
+        // truncating, preserving 3 decimals. Use for percent stats
+        // (CritDamage, CritChance) where the actual value is < 10.0 so
+        // the integer-only reader loses the fractional bits.
+        private static long ReadFixedScaled(object obj, string fieldName, long scale)
+        {
+            try
+            {
+                if (obj == null) return -1;
+                var val = Prop(obj, fieldName);
+                if (val == null) return -1;
+                var raw = Prop(val, "RawValue");
+                if (raw == null) return -1;
+                long r = Convert.ToInt64(raw);
+                // Multiply first then shift, keeping precision. r is already
+                // 32.32 (raw bits), multiplying by `scale` and shifting >>32
+                // yields raw_value * scale.
+                return (r * scale) >> 32;
+            }
+            catch { return -1; }
+        }
+
         // Convert a managed wrapper object to its underlying IL2CPP IntPtr handle.
         // Most BepInEx Il2CppObjectBase derivatives have a `Pointer` property.
         private static IntPtr IL2CPPHandleOf(object o)
@@ -1946,8 +1968,14 @@ namespace RaidAutomation
                                 if (pStats != null)
                                 {
                                     pAtk = ReadFixedRaw(pStats, "Attack");
-                                    pCd  = ReadFixedRaw(pStats, "CriticalDamage");
-                                    pCr  = ReadFixedRaw(pStats, "CriticalChance");
+                                    // CritDamage / CritChance are stored as
+                                    // fractions (0.15 for 15%, 2.50 for 250%).
+                                    // Truncating to integer part loses
+                                    // everything below 1.0 — scale by 1000
+                                    // to preserve 3 decimals (so 2.500 → 2500
+                                    // in JSON; consumer divides by 1000).
+                                    pCd  = ReadFixedScaled(pStats, "CriticalDamage", 1000);
+                                    pCr  = ReadFixedScaled(pStats, "CriticalChance", 1000);
                                 }
                             }
                             if (tgtHero != null)

@@ -281,6 +281,27 @@ def save_battle_log(filename=None):
         json.dump(r, f)
     print(f"  Saved: {filepath.name}")
 
+    # Phase 5 (mechanics research) — also save the per-event tick log.
+    # The mod's BattleHook_DamageChange path captures attacker ATK / target
+    # DEF / pre-mitigation calc_raw / post-mitigation calc per damage event.
+    # Saving alongside lets us back-solve the game's DEF mitigation formula
+    # empirically (no more "community estimate"). Best-effort: skip if
+    # /tick-log isn't available or empty.
+    try:
+        tl = mod_get("/tick-log", timeout=15)
+        ticks = tl.get("ticks") or []
+        if ticks:
+            tick_filename = filename.replace("battle_logs_cb_", "tick_log_cb_")
+            if tick_filename == filename:
+                tick_filename = filename.replace(".json", "_tick.json")
+            tick_path = PROJECT_ROOT / tick_filename
+            with open(tick_path, "w") as f:
+                json.dump(tl, f)
+            damage_events = sum(1 for t in ticks if isinstance(t, dict) and t.get("kind") == "damage")
+            print(f"  Tick log: {len(ticks)} entries ({damage_events} damage), saved: {tick_path.name}")
+    except Exception as ex:
+        print(f"  [warn] tick-log save skipped: {ex}")
+
     return {
         "filepath": str(filepath),
         "filename": filepath.name,
