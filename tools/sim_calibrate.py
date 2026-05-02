@@ -41,17 +41,34 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT / "tools"))
 
 # Maps the live mod's boss type_id to (difficulty_slug, label).
+# CB boss type IDs encode BOTH difficulty AND day-of-week affinity. The
+# difficulty determines HP/ATK/DEF; the type-id-of-the-day determines
+# affinity (which is also stored in HeroType.DefaultElement). Verified
+# 2026-05-01 via /static-export HeroData.HeroTypeById:
+#   22210=Void, 22220=Magic, 22230=Force, 22240=Spirit
+#   22250=Void, 22260=Magic, 22270=Force, 22280=Spirit
+# All 22210/20/30/40 share Easy-Brutal HP profile; 22250/60/70/80 share
+# the Nightmare/UltraNightmare HP profile. The HP value distinguishes
+# difficulty within each affinity group, NOT the type id alone.
+_BOSS_TYPE_TO_AFFINITY = {
+    22210: "void",   22220: "magic",  22230: "force",  22240: "spirit",
+    22250: "void",   22260: "magic",  22270: "force",  22280: "spirit",
+}
+# Mapping from type id → difficulty is ambiguous because the same id is
+# reused across days. Best signal is the boss's hp_max field captured in
+# the battle log — match it against cb_constants.CB_HP_BY_DIFFICULTY.
 _BOSS_TYPE_TO_DIFFICULTY = {
+    # The original mapping below was wrong (treated 22260 as always UNM).
+    # Keep the difficulty inferred from boss HP at runtime; this dict
+    # is a fallback only.
     22210: ("easy",   "Easy"),
     22220: ("normal", "Normal"),
     22230: ("hard",   "Hard"),
     22240: ("brutal", "Brutal"),
     22250: ("nm",     "Nightmare"),
     22260: ("unm",    "UltraNightmare"),
-    # Some older logs reference 22270/22280 — those are the day-of
-    # boss variants exposed by the in-game UI; map empirically.
-    22270: ("nm",     "Nightmare(alt)"),
-    22280: ("brutal", "Brutal(alt)"),
+    22270: ("unm",    "UltraNightmare"),
+    22280: ("unm",    "UltraNightmare"),
 }
 
 

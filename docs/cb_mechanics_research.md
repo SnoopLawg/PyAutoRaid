@@ -91,22 +91,51 @@ expected damage but is NOT a flat 30% damage adder. The +30% feel
 comes from "more crits land" + the crit bonus. Sim should roll crit
 chance with the affinity bonus, not multiply final damage.
 
-### 1.3 Element / Affinity Relation
+### 1.3 Element / Affinity Relation — ✅ VERIFIED
 
 `DamageCalculator.CalculateElementRelation(EffectContext)` — reads the
 attacker / target elements and returns the relation (Strong / Weak /
 Neutral). `ElementAdvantageBonus(ElementRelation)` returns the damage
 multiplier.
 
-The Magic→Spirit→Force→Magic cycle (each strong vs the next, weak vs
-the previous) is the visible game rotation. **Void = neutral against
-all four elements** (no advantage either way). Need to verify the
-exact match-up table — the game's `ElementRelation` enum should have
-the values.
+✅ **Verified via direct invocation** (`/damage-calc-probe` endpoint):
+- `ElementAdvantageBonus(Neutral) = 0`
+- `ElementAdvantageBonus(Advantage) = 0` ← **STRONG-AFFINITY HEROES GET NO FLAT DAMAGE MULTIPLIER**
+- `ElementAdvantageBonus(Disadvantage) = -0.2` (-20% damage on weak hits)
 
-🟡 **TODO**: extract `ElementRelation` enum values via /types, verify
-the cycle direction matches sim's `WEAK_AFFINITY` / `STRONG_AFFINITY`
-maps.
+⚠️ Sim's `STRONG_HIT_DMG_MULT = 1.30` is **wrong**. The "+30% damage
+on strong" community lore is wrong too — the actual mechanic is:
+- Strong affinity → +15% crit chance (`CriticalHitChanceAdvantage`)
+- Strong affinity → 50% crushing chance (`CrushingHitChance`)
+- Crit damage = `1 + CD%`; Crushing damage = `+30%` (`CrushingHitCoef`)
+- Combined → strong heroes hit harder *only via more crits/crushes*.
+
+✅ ElementRelation enum: `Neutral=0, Advantage=1, Disadvantage=-1`.
+
+### 1.3b Boss type id → element
+
+✅ **CB boss type IDs encode the day's affinity rotation**:
+
+| Type ID | DefaultElement |
+|---:|---|
+| 22210 | Void |
+| 22220 | Magic |
+| 22230 | Force |
+| 22240 | Spirit |
+| 22250 | Void |
+| 22260 | **Magic** |
+| 22270 | Force |
+| 22280 | Spirit |
+
+Each fight, the boss's `Type.DefaultElement` tells us the actual
+affinity. The mod's damage hook now captures this per-event as
+`p_elem` (producer) and `t_elem` (target).
+
+⚠️ **Previous tick log re-classification**: the 2026-05-01 run with
+boss type 22260 was a **Magic UNM**, not Void as the run command
+assumed. That changes everything — Geo (Magic hero) had Neutral
+affinity, the other 4 had varying advantage states. Re-run analysis
+needs to stratify by element pair.
 
 ### 1.4 DEF Mitigation Formula — ✅ EMPIRICAL CAPTURE
 
