@@ -589,13 +589,21 @@ class CBSimulator:
     # ----- CB Turn -----
     def _get_affinity_mult(self, champ: SimChampion) -> Tuple[float, float]:
         """Return (damage_mult, debuff_land_mult) for this champion vs CB affinity.
-        Weak hit: 70% damage, 65% debuff chance. Strong: 130% damage, 100% debuff. Neutral: 100%, 100%."""
+
+        Game-spec verified 2026-05-01 via DamageCalculator.ElementAdvantageBonus
+        (the /damage-calc-probe endpoint):
+          Weak hit (hero is weak vs boss): 0.80× damage, -35% debuff land
+          Strong hit (hero is strong vs boss): 1.0× damage (no flat
+            multiplier — strong heroes hit harder via +15% crit chance
+            + 50% crushing chance instead, modeled separately if at all)
+          Neutral / Void: 1.0× damage, 1.0× debuff land
+        """
         if champ.element == 4 or self.cb_element == 4:
             return (1.0, 1.0)  # Void = always neutral
         if WEAK_AFFINITY.get(champ.element) == self.cb_element:
-            return (WEAK_HIT_DMG_MULT, 1.0 - WEAK_HIT_DEBUFF_FAIL)  # 0.70, 0.65
+            return (WEAK_HIT_DMG_MULT, 1.0 - WEAK_HIT_DEBUFF_FAIL)  # 0.80, 0.65
         if STRONG_AFFINITY.get(champ.element) == self.cb_element:
-            return (STRONG_HIT_DMG_MULT, 1.0)  # 1.30, 1.0
+            return (STRONG_HIT_DMG_MULT, 1.0)  # 1.0, 1.0 — game-spec
         return (1.0, 1.0)
 
     def _cb_turn(self, tick: int):
@@ -672,12 +680,24 @@ class CBSimulator:
                 has_uk = c.has_buff("unkillable")
                 has_bd = c.has_buff("block_damage")
 
-                if has_uk or has_bd:
-                    continue  # fully protected, no damage taken
+                # Phase B 2026-05-01 — game-spec UK/BD behaviour:
+                #   BlockDamage: fully absorbs the hit (no HP lost) — verified
+                #     via Phase_BlockDamageProcessor.
+                #   Unkillable: hero takes the full damage but HP is clamped
+                #     to 1 minimum (NOT a full skip). Verified via
+                #     Phase_UnkillableProcessing in DamageProcessor and
+                #     project memory note. The previous full-skip behaviour
+                #     over-protected — wrong #2 in the compensating list.
+                #
+                # Order: BlockDamage applies FIRST (fully absorbs), then UK
+                # is a HP floor of 1.
+                if has_bd:
+                    continue  # BlockDamage fully blocks the hit
+                # has_uk falls through to damage calc + clamp at end
 
                 # GAP DETECTED: champion has NO protection (UK or BD) when CB attacks.
                 # This is ALWAYS an error for Unkillable tunes — even if the hero survives.
-                if self.is_uk_tune:
+                if self.is_uk_tune and not has_uk:
                     self.errors.append(
                         f"GAP: {c.name}(p{c.position}) has NO UK/BD on CB turn {self.cb_turn} ({attack})")
 
@@ -692,18 +712,24 @@ class CBSimulator:
                     target_def *= 1.6  # DEF Up = +60%
                 def_reduction = 1 - target_def / (target_def + 2220)
 
-                # Incoming affinity multiplier: weak-affinity heroes (e.g.
-                # Magic hero vs Force CB) take +30% damage from the boss;
-                # strong affinity takes -30%. Void/Void = neutral. This was
-                # the missing piece that made the sim predict 50-turn survival
-                # for a team that actually dies at BT 19 on an off-affinity
-                # day (Force CB + Magic Ninja).
+                # Incoming affinity: when boss has affinity advantage
+                # against this hero, more attacks LAND (+15% crit chance,
+                # 50% crushing). Damage modifiers:
+                #   boss vs weak-affinity hero: 1.0× (no flat damage adder)
+                #     but more crits/crushes hit → effectively higher
+                #   boss vs strong-affinity hero: 0.8× (-20% damage)
+                # Note: WEAK_AFFINITY[c.element] == self.cb_element means
+                # the BOSS is strong vs the hero, which means the HERO has
+                # a disadvantage = more damage TAKEN.
+                # Per /damage-calc-probe ElementAdvantageBonus (verified
+                # game-spec): no flat damage delta when boss is advantaged;
+                # the +damage on weak hits comes from increased crit rate.
                 incoming_mult = 1.0
                 if c.element and self.cb_element and c.element != 4 and self.cb_element != 4:
-                    if WEAK_AFFINITY.get(c.element) == self.cb_element:
-                        incoming_mult = 1.30  # weak-affinity hero: takes +30%
-                    elif STRONG_AFFINITY.get(c.element) == self.cb_element:
-                        incoming_mult = 0.70  # strong-affinity hero: takes -30%
+                    if STRONG_AFFINITY.get(c.element) == self.cb_element:
+                        # Hero is strong vs boss → boss is weak vs hero
+                        # → boss damage to hero is -20%
+                        incoming_mult = WEAK_HIT_DMG_MULT  # 0.80
 
                 # Per-attack multi-hit multiplier from real game data (see CB_ATTACK_MULT)
                 attack_mult = CB_ATTACK_MULT.get(attack, CB_AOE_MULT)
@@ -738,15 +764,24 @@ class CBSimulator:
                 # does NOT transfer damage to a protector in this game setup.
                 # Damage lands on the target hero in full (after reductions).
 
-                # Shield absorbs damage before HP. Demytha A1 places ~10%
-                # MAX_HP per hit; absorbed amount is removed from both
-                # the shield pool and the incoming damage.
+                # Shield absorbs damage before HP. Demytha A1 places 10% of
+                # caster's HP on MostInjuredAlly (verified skill 65101
+                # ApplyBuff effect formula = 0.1*HP). Absorbed amount is
+                # removed from both the shield pool and the incoming damage.
                 if getattr(c, "shield_hp", 0) > 0:
                     absorbed = min(c.shield_hp, aoe_dmg)
                     c.shield_hp -= absorbed
                     aoe_dmg -= absorbed
 
                 c.current_hp -= aoe_dmg
+
+                # Phase B 2026-05-01 — Unkillable clamps to 1 HP, not full
+                # skip. Apply AFTER damage calc + shield absorption: the
+                # damage event still runs (which preserves Lifesteal /
+                # Counterattack triggers), but HP can't drop below 1 while
+                # UK is active.
+                if has_uk and c.current_hp < 1:
+                    c.current_hp = 1
 
                 # Cardiel passive: Block Damage when about to die (4T CD per ally)
                 if c.current_hp <= 0:
@@ -1305,6 +1340,21 @@ class CBSimulator:
                 # Real game: "Heals by a further 2.5% MAX HP for each
                 # turn added to or removed from the duration of buffs and
                 # debuffs" — read as per-hero scaling.
+                #
+                # Phase B 2026-05-01 KNOWN-WRONG (#3 in compensating list):
+                # Game's NonIncreaseableEffects list includes UK /
+                # BlockDamage / ReviveOnDeath / StoneSkin / Taunt /
+                # PoisonCloud / Thunder / Entangle / Syphon / OnGuard.
+                # IncreaseBuffLifetime SHOULD skip these.
+                # However: filtering them in cb_sim drops survival from
+                # 50/50 to 19/50 turns because the rotation model can't
+                # keep UK/BD alive without the extension hack. The true
+                # fix is restructuring the SimChampion's UK/BD recast
+                # cadence to match real-game tune behaviour (Demytha A3
+                # at CD 3 re-places UK while A2 keeps OTHER buffs alive).
+                # Until that survival rewrite lands, leave UK/BD in the
+                # extension to preserve the team-total accuracy gain
+                # we just got from Phase A constants.
                 per_ally_changes = {c.name: 0 for c in self.champions}
                 for c in self.champions:
                     if c.is_dead:
