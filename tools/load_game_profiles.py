@@ -782,6 +782,18 @@ def load_profiles():
     except Exception as ex:
         pass  # desc_profiler not available or failed — use game-data-only profiles
 
+    # Phase 4 — fill in heroes not present in hero_profiles_game.json
+    # (i.e. unowned ones) via the static-text desc parser. Owned heroes
+    # already in skill_data are NOT overwritten — their book-aware
+    # structured profiles always win. The augment is best-effort: if
+    # profile_resolver or its inputs are missing, skill_data is
+    # unchanged.
+    try:
+        from profile_resolver import augment_with_unowned
+        augment_with_unowned(skill_data, skill_effects, passive_data=passive_data)
+    except Exception:
+        pass
+
     return skill_data, skill_effects, passive_data
 
 

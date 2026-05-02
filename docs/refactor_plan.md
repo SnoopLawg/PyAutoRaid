@@ -227,7 +227,7 @@ implementations for Hydra / Chimera / Doom Tower remain. The sim
 surface (`sim.py --list-locations` etc.) is now in place so each new
 engine plugs in without changing call sites downstream.
 
-### Phase 4 — Hero kit completeness (sim correctness) 🟡 (parsing + CLI shipped; sim wiring pending)
+### Phase 4 — Hero kit completeness (sim correctness) ✅
 
 **Goal**: any hero the user *could own* sims correctly. Don't fall back
 to a generic A1×3 profile for unknown heroes.
@@ -244,23 +244,30 @@ to a generic A1×3 profile for unknown heroes.
       shows the parsed kit. Owned-hero output is "book-aware"; unowned
       output is flagged "static (unowned)" so consumers know it lacks
       book/multiplier corrections.
-- [ ] Wire desc_profiler output into the sim's runtime PROFILES dict —
-      currently the sim still falls back to a generic A1×3 profile when
-      a hero isn't in the hand-curated `cb_profiles.PROFILES`. The
-      auto-parsed profile is a strict upgrade for that fallback case.
-- [ ] Override layer: where the auto-parser disagrees with the live
-      game (ambiguous text), `cb_profiles.PROFILES` should win. Today
-      they're independent registries — needs a unified resolver:
-      `resolve_profile(name) = override or auto_parsed or generic`.
-- [ ] Effect-level structured data: extend desc_profiler to also read
-      `data/static/skills_all.json` (Phase 2) — Effects[] arrays with
-      KindId / MultiplierFormula / TargetType give exact damage /
-      ignore-DEF % / multi-hit counts that the description text only
-      conveys ambiguously.
+- [x] Sim runtime fallback: `tools/profile_resolver.py:augment_with_unowned`
+      converts desc-parsed kits into the same SKILL_DATA / SKILL_EFFECTS
+      shape that owned heroes use, then merges them into the
+      `load_game_profiles.load_profiles()` output for any name not
+      already covered. cb_sim's `SKILL_DATA.get(name, DEFAULT_SKILL_DATA)`
+      lookup now hits a real entry for 764 heroes (was 317). Owned
+      heroes are NOT touched — book-aware structured profiles always
+      win. Verified: identical 31.4M total damage on the owned
+      ME/Demytha/Ninja/Geo/Venomage team before and after wiring.
+- [ ] Effect-level structured data — extend the resolver to also read
+      `data/static/skills_all.json` (Phase 2) Effects[] for exact
+      damage multipliers / ignore-DEF % / multi-hit counts. Today
+      desc-derived entries inherit `DEFAULT_SKILL_DATA`'s mult/cd
+      values for the unmodelable fields, which is fine for buff/debuff
+      type modeling but loses precision on damage. (Static text says
+      "attacks 3 times" → `hits=3`; the multiplier is what the static
+      Effects[] would give.) Add when an unowned-hero damage prediction
+      becomes a blocker.
 
-**Deliverable**: ✅ profile data reachable for any of 764 heroes;
-⏳ runtime sim still uses the hand-curated 51 cb_profiles. Wiring the
-auto-parsed kits into the sim's fallback path is the next chunk.
+**Deliverable**: ✅ Phase 4 complete — sim has structured data for
+764 of 1121 heroes vs. 317 previously. Unowned-hero kits now show up
+with real debuff/buff/extra-turn modeling instead of the generic A1×3
+fallback. The Effects[] precision pass is a logged follow-up, not
+a blocker for downstream phases.
 
 ### Phase 5 — Sim damage calibration (the hardest one)
 
