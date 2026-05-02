@@ -122,8 +122,48 @@ phase if the current one moved team-total in the wrong direction.
 | B — survival | 🟡 partial | UNM -10.9% → -11.3% (commit 833a5f6) |
 | C — hit types + per-log affinity | 🟢 | -9.1% → -8.7% (commit ee698be) |
 | D — DoT caps | 🟢 | -11.3% → -9.1% (commit 8528858) |
-| E — boss skills | 🔴 | stun damage match |
-| F — research | 🔴 | TBD |
+| E — boss skills (stun base HP) | 🟢 | -8.7% → -8.7% (commit 5247882; correct but no leverage on this team) |
+| F — research | 🟡 | per-hero gap analyzed; FireMark + Geo reflect minor gaps |
+
+## Phase E — Done 2026-05-01 (commit 5247882)
+
+Stun damage now uses base HP (level-60 ungeared, ~19,650 for Cardiel)
+via skill 222601's `0.2 * TRG_B_HP` formula. Previously sim used
+gear-included max_hp (~45K) — over-predicted stun damage by ~2.3×.
+
+UK no longer skips stun damage entirely (Phase B clamp-to-1 rule).
+
+No regression suite movement because the calibration team's stun
+target (Ninja) is usually under UK protection — stun damage was
+being skipped before, gets clamped now. Same outcome.
+
+Will matter for non-UK tunes.
+
+## Per-hero gap analysis (post Phase A-E, 2026-05-01)
+
+On the most recent capture (Magic UNM, real 36.8M / sim 33.8M = -8.2%):
+
+| Hero | Real | Sim | Δ |
+|---|---:|---:|---:|
+| Maneater | 4.27M | 4.3M | ✓ match |
+| Demytha | 1.12M | 0.9M | -0.2M |
+| Ninja | 15.43M | 14.0M | -1.4M (sim under) |
+| Geomancer | 9.06M | 6.8M | -2.3M (sim under) |
+| Venomage | 5.82M | 7.8M | +2.0M (sim over) |
+
+**Identified contributors**:
+- Ninja FireMark damage 2.75M (11 events × 250K cap) — **sim doesn't
+  model FireMark**. Source unclear: not in Ninja's skill descriptions,
+  not in his equipped sets. Likely a relic effect or set bonus we
+  haven't identified.
+- Geomancer reflect 4.64M vs sim's ~3.8M passive aggregation — sim's
+  formula uses approximations; real per-event values are 250-400K each.
+- Venomage poison over-prediction — sim's `activate_poisons` likely
+  fires too often per A1 cast.
+
+Remaining gap is sub-9% and requires per-skill investigation.
+Recommend: run more CB battles on different affinity days to pin
+formulas before more constants tweaking.
 
 ## Phase B partial — Done 2026-05-01 (commit 833a5f6)
 
