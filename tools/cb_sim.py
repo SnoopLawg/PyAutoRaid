@@ -94,14 +94,17 @@ class DebuffBar:
     # and frees bar slots that were previously hogged by Venomage placing
     # the same def_down twice etc.
     #
-    # NOTE: HP burn is INTENTIONALLY NOT singular — ground-truth tick-log
-    # shows Ninja's 3-per-cast burns DO stack (his 80 burn ticks in 50 CB
-    # turns implies ~1.6 active simultaneously, not 1). Making HP burn
-    # singular dropped Ninja accuracy from 87% to 55%.
+    # HP Burn (effect Id 470) is `StackCount: 1` in data/static/effects.json
+    # — game-truth singular. Ninja A2 hitting 3 times still places one burn
+    # per target (refresh on re-place). Poison (Id 80, StackCount=10) does
+    # stack. Earlier ticklog (2026-04-24) suggested ~1.6 active stacks, but
+    # that was end-of-turn ticks PLUS A2 activation ticks combined; with
+    # singular burns and proper activation, today's 84 ticks/50 turns matches.
     SINGULAR_BY_TYPE = {"def_down", "def_down_30", "weaken", "weaken_15",
                         "dec_atk", "dec_atk_25", "poison_sensitivity",
                         "poison_sensitivity_50", "heal_reduction",
-                        "heal_reduction_50", "stun", "freeze"}
+                        "heal_reduction_50", "stun", "freeze",
+                        "hp_burn"}
 
     def add(self, debuff_type: str, duration: int, source: str = "") -> bool:
         """Add a debuff. Refresh existing slot if singular rules apply.
