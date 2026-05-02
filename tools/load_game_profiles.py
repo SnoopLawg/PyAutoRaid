@@ -766,12 +766,31 @@ def load_profiles():
                 if kind == 4018 or kind == 4010:
                     p_data['ally_protect'] = True
 
-                # Passive damage reduction (kind=7004 with -X*DMG_MUL)
+                # Passive damage reduction (kind=7004 with -X*DMG_MUL).
+                # Two flavors:
+                #   - "relationTargetIsAlly" cond: TEAM-wide reduction
+                #     (Geomancer Stoneguard -15% on all allies)
+                #   - "ownerIsRelatedEffectTarget" cond: SELF-only (only
+                #     the owner gets it, e.g. Geomancer -30% on self when
+                #     he himself is the damage target)
+                #   - no cond: SELF-only (e.g. Cardiel -20%)
+                # `dmg_reduction` (per-hero) gets the higher of self+team
+                # values for that hero; `team_dmg_reduction` propagates
+                # the team-wide value to all teammates at sim init.
                 if kind == 7004 and formula:
                     m = re.match(r'^-([\d.]+)\*DMG_MUL', formula)
                     if m:
                         val = float(m.group(1))
-                        p_data['dmg_reduction'] = max(p_data.get('dmg_reduction', 0), val)
+                        cond = (eff.get('condition') or '').lower()
+                        if 'relationtargetisally' in cond:
+                            p_data['team_dmg_reduction'] = max(
+                                p_data.get('team_dmg_reduction', 0), val)
+                            p_data['dmg_reduction'] = max(
+                                p_data.get('dmg_reduction', 0), val)
+                        else:
+                            # Self-only (no cond, or ownerIsRelatedEffectTarget)
+                            p_data['dmg_reduction'] = max(
+                                p_data.get('dmg_reduction', 0), val)
                     # Sicia burn scaling: DMG_MUL*(0.03*burn_count)
                     m2 = re.search(r'DMG_MUL\*\(([\d.]+)\*.*AoEContinuousDamage', formula)
                     if m2:

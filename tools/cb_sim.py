@@ -474,6 +474,16 @@ class CBSimulator:
         # boss_action, ...} entries in the order they occur. Used for side-by-
         # side comparison with real battle logs + the DWJ speed calculator.
         self.timeline = []
+        # Team-wide passive damage reduction propagation. Some heroes
+        # (Geomancer Stoneguard -15%, Sepulcher Sentinel -X%, etc.)
+        # provide damage reduction to ALL allies, not just themselves.
+        # Compute the team-wide pool here and stamp on each champion.
+        team_red = 0.0
+        for c in champions:
+            v = float(c.stats.get("team_dmg_reduction", 0) or 0)
+            team_red = max(team_red, v)
+        for c in champions:
+            c.team_dmg_reduction = team_red
         # Per-boss-turn protection snapshot: cb_turn -> {hero_name: {uk, bd, sh}}
         # Captured at the moment right before the boss's turn action lands.
         self.protection_by_turn = {}
@@ -815,9 +825,16 @@ class CBSimulator:
                 if c.has_buff("dmg_reduction"):
                     aoe_dmg *= 0.50
 
-                # Passive damage reduction (e.g., Cardiel -20%, Geomancer -15%)
-                if c.has_passive_dmg_reduction > 0:
-                    aoe_dmg *= (1 - c.has_passive_dmg_reduction)
+                # Passive damage reduction. Per-hero field (Cardiel -20%,
+                # Geomancer -30% self) takes precedence over team-wide
+                # (e.g. Geomancer Stoneguard -15% on all allies). Don't
+                # STACK — the bigger effect REPLACES the smaller, since
+                # the game's "Decreases damage" passives don't compose
+                # multiplicatively across the same source type.
+                team_dmg_red = getattr(c, "team_dmg_reduction", 0.0)
+                effective_red = max(c.has_passive_dmg_reduction, team_dmg_red)
+                if effective_red > 0:
+                    aoe_dmg *= (1 - effective_red)
 
                 # NOTE: removed an incorrect "Sicia -3% damage taken per HP
                 # Burn" interpretation. Real Metaphysics passive is "+3 SPD
@@ -1853,6 +1870,11 @@ def build_sim_champion(name: str, stats: dict, position: int,
     # All passive values from PASSIVE_DATA (pre-computed by load_game_profiles)
     passive_ally_protect = pd.get('ally_protect', False)
     passive_dmg_reduction = pd.get('dmg_reduction', 0.0)
+    # Team-wide reduction (e.g. Geomancer Stoneguard -15% to ALL allies).
+    # Stamped on stats so sim init can propagate to every champion.
+    if pd.get('team_dmg_reduction', 0):
+        stats = dict(stats)
+        stats['team_dmg_reduction'] = pd['team_dmg_reduction']
     passive_extra_turns = pd.get('extra_turns', False)
     passive_buff_extension = pd.get('buff_extension', False)
     a1_self_heal = pd.get('a1_self_heal_pct', 0.0)
