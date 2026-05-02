@@ -337,11 +337,62 @@ def derive_skill_data_from_desc(parsed_kit: dict, hero_name: str | None = None) 
     return sd, eff
 
 
+def derive_from_static_only(hero_name: str) -> tuple[dict, dict]:
+    """Build a skill_data + skill_effects entry from `hero_types.json`
+    × `skills_all.json` alone, without skill description text.
+
+    Used for heroes the localization dump doesn't cover (e.g. recently
+    added or unreleased). Effects[] gives us damage shape (mult, hits,
+    cd, group) directly from game data — buff/debuff *placement chance
+    and type* are NOT in the static dump (Chance / TargetParams come
+    back as `<Nullable>` / `<TargetParams>` placeholders), so the entry
+    only carries direct-damage shape. Sufficient for team-search /
+    DPS scoring; debuff modeling for these heroes is best-effort.
+
+    Returns ({}, {}) when the hero has no resolvable skill records.
+    """
+    ht = _load_hero_types().get(hero_name)
+    if not ht or not ht.get("skill_ids"):
+        return {}, {}
+    sk_idx = _load_static_skills()
+    sk_records = [sk_idx[sid] for sid in ht["skill_ids"] if sid in sk_idx]
+    if not sk_records:
+        return {}, {}
+    by_label = _categorize_static_skills(sk_records)
+
+    sd: dict = {}
+    eff: dict = {}
+    for label in ("A1", "A2", "A3"):
+        st = by_label.get(label)
+        if not st:
+            continue
+        sd[label] = {
+            "mult": st["mult"],
+            "stat": st["stat"],
+            "hits": st["hits"],
+            "cd": st["cd"],
+            "team_buffs": [],
+            "team_tm_fill": 0.0,
+            "self_tm_fill": 0.0,
+            "grants_extra_turn": False,
+        }
+        eff[label] = []
+    return sd, eff
+
+
 def augment_with_unowned(skill_data: dict, skill_effects: dict, *,
                          passive_data: Optional[dict] = None) -> tuple[int, int]:
     """Mutate `skill_data` and `skill_effects` in place to add entries
-    for heroes not already covered. Source: desc_profiler over the
-    static-text dump (covers all 1121 heroes).
+    for heroes not already covered.
+
+    Two passes, lower-precision-first:
+      1. desc-text derivation (mult/hits from Effects[] + buffs/debuffs
+         from desc text) — covers heroes whose names appear in the
+         static skill_descriptions dump.
+      2. static-data-only fallback for heroes the desc dump misses —
+         pulls damage shape from `hero_types.json` × `skills_all.json`
+         Effects[] directly. Buff/debuff modeling is empty until the
+         mod's static export grows to include Chance + TargetParams.
 
     Owned heroes (already keys in `skill_data`) are NOT touched —
     their book-aware structured profiles take precedence.
@@ -349,22 +400,35 @@ def augment_with_unowned(skill_data: dict, skill_effects: dict, *,
     Returns:
         (added, total_with_data) tuple — useful for one-line logging.
     """
+    added = 0
+
+    # Pass 1: desc-text derivation.
     try:
         from desc_profiler import parse_all_descriptions
+        parsed = parse_all_descriptions()
+        for hero_name, kit in parsed.items():
+            if hero_name in skill_data:
+                continue
+            sd_entry, eff_entry = derive_skill_data_from_desc(kit, hero_name=hero_name)
+            if not sd_entry:
+                continue
+            skill_data[hero_name] = sd_entry
+            skill_effects[hero_name] = eff_entry
+            added += 1
     except ImportError:
-        return 0, len(skill_data)
+        pass
 
-    parsed = parse_all_descriptions()
-    added = 0
-    for hero_name, kit in parsed.items():
+    # Pass 2: static-data-only fallback for heroes still uncovered.
+    for hero_name in _load_hero_types():
         if hero_name in skill_data:
-            continue  # Owned + structured wins.
-        sd_entry, eff_entry = derive_skill_data_from_desc(kit, hero_name=hero_name)
+            continue
+        sd_entry, eff_entry = derive_from_static_only(hero_name)
         if not sd_entry:
             continue
         skill_data[hero_name] = sd_entry
         skill_effects[hero_name] = eff_entry
         added += 1
+
     return added, len(skill_data)
 
 
