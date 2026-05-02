@@ -227,22 +227,40 @@ implementations for Hydra / Chimera / Doom Tower remain. The sim
 surface (`sim.py --list-locations` etc.) is now in place so each new
 engine plugs in without changing call sites downstream.
 
-### Phase 4 — Hero kit completeness (sim correctness)
+### Phase 4 — Hero kit completeness (sim correctness) 🟡 (parsing + CLI shipped; sim wiring pending)
 
 **Goal**: any hero the user *could own* sims correctly. Don't fall back
 to a generic A1×3 profile for unknown heroes.
 
-- [ ] Auto-derive hero profiles from `skill_descriptions.json` +
-      `effects.json` — buff/debuff types, damage multipliers, special
-      passives. (Already partly done by `desc_profiler.py`; finish it.)
-- [ ] Hand-corrected overrides for kits where text-parsing is ambiguous
-      (the current `cb_profiles.py` becomes the override layer, not
-      the primary source)
-- [ ] CLI: `python3 tools/sim.py --hero "Cardiel" --print-profile`
-      shows the derived profile + overrides
+- [x] All-hero skill descriptions via Phase 2 static data —
+      `data/static/skill_descriptions_all.json` filtered out of
+      StaticDataLocalization (2560 entries, all 1121 heroes).
+- [x] `desc_profiler.parse_all_descriptions()` augmented to fall
+      through to static descriptions for unowned heroes. Hero count
+      went from 317 owned → 764 with parseable kits (447 newly
+      derivable). Owned descriptions still take priority because they
+      reflect the user's book upgrades.
+- [x] CLI: `python3 tools/sim.py --hero <name> --print-profile`
+      shows the parsed kit. Owned-hero output is "book-aware"; unowned
+      output is flagged "static (unowned)" so consumers know it lacks
+      book/multiplier corrections.
+- [ ] Wire desc_profiler output into the sim's runtime PROFILES dict —
+      currently the sim still falls back to a generic A1×3 profile when
+      a hero isn't in the hand-curated `cb_profiles.PROFILES`. The
+      auto-parsed profile is a strict upgrade for that fallback case.
+- [ ] Override layer: where the auto-parser disagrees with the live
+      game (ambiguous text), `cb_profiles.PROFILES` should win. Today
+      they're independent registries — needs a unified resolver:
+      `resolve_profile(name) = override or auto_parsed or generic`.
+- [ ] Effect-level structured data: extend desc_profiler to also read
+      `data/static/skills_all.json` (Phase 2) — Effects[] arrays with
+      KindId / MultiplierFormula / TargetType give exact damage /
+      ignore-DEF % / multi-hit counts that the description text only
+      conveys ambiguously.
 
-**Deliverable**: sim accuracy not bottlenecked on "we don't have a
-profile for this hero". New game release → re-run desc_profiler → done.
+**Deliverable**: ✅ profile data reachable for any of 764 heroes;
+⏳ runtime sim still uses the hand-curated 51 cb_profiles. Wiring the
+auto-parsed kits into the sim's fallback path is the next chunk.
 
 ### Phase 5 — Sim damage calibration (the hardest one)
 

@@ -132,6 +132,15 @@ SECTIONS: dict = {
     # 792 DoomTower stages are inside StageData.Stages (filterable by
     # Area=DoomTower). If a dedicated DoomTowerData tree exists in a
     # different namespace we'll add it once located.
+
+    # Skill descriptions for ALL heroes (not just owned). 2060 entries
+    # filtered out of StaticDataLocalization's 6001-key map. Powers
+    # desc_profiler.py for heroes the user doesn't own — Phase 4
+    # foundation. Keyed by skill ID for quick lookup against
+    # hero_types.json's skill_ids[].
+    "skill_descriptions_all": ("skill_descriptions_all.json",
+        "/static-export?path=StaticDataLocalization&depth=1&max=6500",
+        "_skill_l10n_transform"),
 }
 
 
@@ -165,6 +174,32 @@ def _wrap_meta(payload: dict, mod_status: dict | None) -> dict:
     return {"_meta": meta, "data": payload}
 
 
+def _skill_l10n_transform(raw: dict) -> dict:
+    """Filter StaticDataLocalization down to skill descriptions only.
+
+    Input: ~6000-key map of l10n:<category>?id=N#static -> localized text.
+    Output: {"skill_descriptions": {<skill_id>: <text>}, "count": N} —
+    keyed by integer skill ID for quick lookup. Drops everything that
+    isn't a skill description (hero names, area names, etc.).
+    """
+    import re
+    pat = re.compile(r"l10n:skill/description\?id=(\d+)#")
+    desc_by_id: dict[str, str] = {}
+    for key, val in (raw or {}).items():
+        m = pat.match(key)
+        if not m:
+            continue
+        if not isinstance(val, str):
+            continue
+        desc_by_id[m.group(1)] = val
+    return {"skill_descriptions": desc_by_id, "count": len(desc_by_id)}
+
+
+_TRANSFORMS = {
+    "_skill_l10n_transform": _skill_l10n_transform,
+}
+
+
 def fetch_section(name: str, mod_status: dict | None) -> tuple[Path, dict] | None:
     if name not in SECTIONS:
         print(f"  [skip] unknown section {name!r}", file=sys.stderr)
@@ -184,6 +219,8 @@ def fetch_section(name: str, mod_status: dict | None) -> tuple[Path, dict] | Non
     if transform == "data_under_data":
         # /static-export returns a bare list/dict; wrap under "data" so _meta merges cleanly
         payload = {"data": raw}
+    elif isinstance(transform, str) and transform in _TRANSFORMS:
+        payload = _TRANSFORMS[transform](raw)
     elif callable(transform):
         payload = transform(raw)
     else:

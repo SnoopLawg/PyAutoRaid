@@ -101,6 +101,74 @@ def _run_stub(profile: BossProfile) -> int:
     return 3
 
 
+def _print_profile(hero_name: str) -> int:
+    """Show the auto-derived skill profile for any hero (owned or not).
+
+    Sources (in priority order):
+    - skill_descriptions.json — per-account, books-applied (owned heroes)
+    - data/static/skill_descriptions_all.json — static text for all 1121 heroes
+
+    Output is the desc_profiler structured kit: hits, debuffs (type +
+    chance + duration), buffs, extra_turn flag, ignore_def %, TM fills,
+    activate-DoT triggers, ally-attack flag, etc.
+    """
+    from desc_profiler import parse_all_descriptions
+    parsed = parse_all_descriptions()
+    # Case-insensitive substring match against canonical names.
+    matches = [n for n in parsed if hero_name.lower() in n.lower()]
+    if not matches:
+        print(f"ERR: no hero matching {hero_name!r}", file=sys.stderr)
+        print("Try: python3 tools/desc_profiler.py  (lists all parsed heroes)", file=sys.stderr)
+        return 1
+    # Prefer exact / shortest match if multiple.
+    matches.sort(key=lambda n: (hero_name.lower() != n.lower(), len(n)))
+    name = matches[0]
+    h = parsed[name]
+    is_static = any(p.get("_static") for p in h.values())
+    src = "static (unowned)" if is_static else "owned (book-aware)"
+    print(f"=== {name} ===  source: {src}")
+    for label in sorted(h.keys()):
+        p = h[label]
+        skill_name = p.get("name") or label
+        stid = p.get("skill_type_id") or ""
+        print(f"\n  {label}: {skill_name} [{stid}]")
+        print(f"    Hits: {p.get('hits', 1)}")
+        for db in p.get("debuffs", []):
+            self_str = " (SELF)" if db.get("on_self") else ""
+            print(f"    Debuff: {db['type']} dur={db['duration']} "
+                  f"chance={db['chance']*100:.0f}% x{db['count']}{self_str}")
+        for buf in p.get("buffs", []):
+            print(f"    Buff: {buf['type']} dur={buf['duration']} target={buf['target']}")
+        if p.get("extra_turn"):
+            print(f"    Extra Turn")
+        if p.get("ignore_def_pct"):
+            print(f"    Ignore DEF: {p['ignore_def_pct']*100:.0f}%")
+        if p.get("tm_fill_self"):
+            print(f"    TM fill self: {p['tm_fill_self']*100:.0f}%")
+        if p.get("tm_fill_team"):
+            print(f"    TM fill team: {p['tm_fill_team']*100:.0f}%")
+        if p.get("activate_burns"):
+            print(f"    Activate HP Burns")
+        if p.get("activate_poisons"):
+            print(f"    Activate Poisons")
+        if p.get("activate_dots"):
+            print(f"    Activate ALL DoTs")
+        if p.get("extend_debuffs"):
+            print(f"    Extend debuffs: {p['extend_debuffs']}")
+        if p.get("extend_buffs"):
+            print(f"    Extend buffs")
+        if p.get("ally_attack"):
+            print(f"    Ally Attack")
+        if p.get("cd_reduction"):
+            print(f"    CD Reduction: {p['cd_reduction']}")
+    if is_static:
+        print(f"\n  (Note: parsed from static localization. Owned-hero descriptions in")
+        print(f"  skill_descriptions.json reflect book upgrades + multipliers; this static")
+        print(f"  text doesn't. Sim consumers should overlay hand-curated cb_profiles.py")
+        print(f"  values when present.)")
+    return 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(
         description="Universal sim dispatcher — pick a battle, sim a team.")
@@ -109,6 +177,11 @@ def main() -> int:
     ap.add_argument("--location", "-l",
                     help="Profile slug (e.g. cb-unm-void). See --list-locations.")
     ap.add_argument("--team", help="Comma-separated hero names")
+    ap.add_argument("--hero",
+                    help="Hero name (with --print-profile)")
+    ap.add_argument("--print-profile", action="store_true",
+                    help="Print the auto-derived skill profile for the named hero. "
+                         "Requires --hero <name>.")
     ap.add_argument("--verbose", "-v", action="store_true")
     ap.add_argument("--no-force-affinity", action="store_true",
                     help="CB only: disable Force-Affinity per-skill damage caps.")
@@ -124,8 +197,13 @@ def main() -> int:
         _print_locations()
         return 0
 
+    if args.print_profile:
+        if not args.hero:
+            ap.error("--print-profile requires --hero <name>")
+        return _print_profile(args.hero)
+
     if not args.location:
-        ap.error("--location required (or pass --list-locations)")
+        ap.error("--location required (or pass --list-locations / --hero ... --print-profile)")
 
     try:
         profile = lookup(args.location)

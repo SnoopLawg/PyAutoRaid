@@ -263,8 +263,18 @@ def parse_skill_description(desc, skill_label="A1"):
     return result
 
 
-def parse_all_descriptions(descs_path=None):
-    """Parse all skill descriptions and return structured data per hero."""
+def parse_all_descriptions(descs_path=None, *, include_unowned: bool = True):
+    """Parse all skill descriptions and return structured data per hero.
+
+    Sources, in priority order:
+    1. `skill_descriptions.json` — per-account dump for the user's owned
+       heroes (book-aware, includes upgraded multipliers).
+    2. `data/static/skill_descriptions_all.json` + `data/static/hero_types.json`
+       — game-wide static dump for ALL 1121 heroes via the Phase 2 bulk
+       localization pull. Used when `include_unowned=True` to fill in
+       heroes the user doesn't yet own. Set False to keep behavior
+       identical to the pre-Phase-4 code.
+    """
     if descs_path is None:
         descs_path = PROJECT_ROOT / "skill_descriptions.json"
 
@@ -285,7 +295,63 @@ def parse_all_descriptions(descs_path=None):
 
         parsed[hero_name] = hero_parsed
 
+    if include_unowned:
+        _augment_with_static(parsed)
     return parsed
+
+
+def _augment_with_static(parsed: dict) -> None:
+    """Backfill the parsed map with hero kits sourced from static data,
+    for heroes not present in skill_descriptions.json. Mutates `parsed`
+    in place. Heroes already present (owned) are left untouched — owned
+    descriptions reflect the user's books / upgrades and are richer.
+    """
+    static_descs_path = PROJECT_ROOT / "data" / "static" / "skill_descriptions_all.json"
+    hero_types_path = PROJECT_ROOT / "data" / "static" / "hero_types.json"
+    if not static_descs_path.exists() or not hero_types_path.exists():
+        return  # Static data not pulled yet; no-op silently.
+
+    static_descs = json.loads(static_descs_path.read_text(encoding="utf-8")).get("skill_descriptions", {})
+    hero_types = json.loads(hero_types_path.read_text(encoding="utf-8")).get("hero_types", [])
+
+    # Pick one canonical record per hero name. Prefer Legendary / max-
+    # ascended rows when available; otherwise the first rarity-paired
+    # record we see. The skill IDs are stable across rarities so any
+    # row's skill_ids[] works for description lookup.
+    by_name: dict[str, dict] = {}
+    for h in hero_types:
+        name = h.get("name") or ""
+        if not name:
+            continue
+        if name in by_name:
+            # Prefer the higher rarity if a duplicate appears.
+            cur = by_name[name]
+            cur_score = (cur.get("rarity") == "Legendary", cur.get("is_max_ascended", False))
+            new_score = (h.get("rarity") == "Legendary", h.get("is_max_ascended", False))
+            if new_score > cur_score:
+                by_name[name] = h
+        else:
+            by_name[name] = h
+
+    for name, h in by_name.items():
+        if name in parsed:
+            continue  # User owns this one; their dump wins.
+        skill_ids = h.get("skill_ids") or []
+        if not skill_ids:
+            continue
+        hero_parsed: dict = {}
+        for i, sid in enumerate(skill_ids):
+            text = static_descs.get(str(sid))
+            if not text:
+                continue
+            label = f"A{i+1}"
+            p = parse_skill_description(text, label)
+            p["name"] = label
+            p["skill_type_id"] = sid
+            p["_static"] = True  # flag so consumers know it's text-derived (no books applied)
+            hero_parsed[label] = p
+        if hero_parsed:
+            parsed[name] = hero_parsed
 
 
 def compare_with_sim(hero_name, parsed, sd, se):
