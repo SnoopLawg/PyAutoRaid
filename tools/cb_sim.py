@@ -2570,9 +2570,12 @@ def main():
         elif name == "Maneater" and "Maneater_2" not in hero_by_name:
             hero_by_name["Maneater_2"] = h
 
-    # Resolve team heroes
+    # Resolve team heroes. Owned heroes win; unowned names fall back to
+    # a synthetic record built from hero_types.json (no gear → ungeared
+    # baseline damage). Honest "what if" sim without faking gear.
     team_h, team_p = [], []
     me_count = 0
+    synthetic_used = []
     for tname in team_names:
         if tname == "Maneater":
             me_count += 1
@@ -2580,12 +2583,18 @@ def main():
         else:
             key = tname
         h = hero_by_name.get(key)
-        p = PROFILES.get(tname)
         if not h:
-            print(f"Hero not found: {tname}")
-            return
+            from profile_resolver import make_synthetic_hero_record
+            h = make_synthetic_hero_record(tname)
+            if not h:
+                print(f"Hero not found: {tname}")
+                return
+            synthetic_used.append(tname)
+        p = PROFILES.get(tname)
         team_h.append(h)
         team_p.append(p)
+    if synthetic_used:
+        print(f"  (ungeared baseline for: {', '.join(synthetic_used)})")
 
     # If validating against real run, auto-detect the real boss turn count for fair comparison
     if args.validate_against and args.max_cb_turns == 50:
@@ -2698,6 +2707,12 @@ def main():
         (3 if i == stun_idx else (1 if team_p[i] and team_p[i].needs_acc else 2))
     ))
     for pi in priority:
+        # Synthetic (unowned) heroes are simmed at ungeared baseline —
+        # skip the artifact optimizer (no profile to score against, and
+        # the user doesn't have gear for them anyway).
+        if team_h[pi].get("_synthetic"):
+            assigned_arts[pi] = []
+            continue
         avail = [a for a in all_arts if a.get("id") not in used and a.get("rank", 0) >= 5]
         spd_max = UK_ME_SPD_RANGE[1] if (has_uk and team_p[pi] and team_p[pi].unkillable) else None
         is_stun = has_uk and pi == stun_idx

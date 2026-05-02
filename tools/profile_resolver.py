@@ -337,6 +337,68 @@ def derive_skill_data_from_desc(parsed_kit: dict, hero_name: str | None = None) 
     return sd, eff
 
 
+_STAT_KEY_REMAP = {"hp": "HP", "atk": "ATK", "def": "DEF", "spd": "SPD",
+                    "res": "RES", "acc": "ACC", "cr": "CR", "cd": "CD"}
+
+# Rarity name → numeric code used by cb_optimizer/cb_sim. Matches Raid's
+# in-game ordering (Common=1 .. Mythical=6).
+_RARITY_CODE = {"Common": 1, "Uncommon": 2, "Rare": 3, "Epic": 4,
+                 "Legendary": 5, "Mythical": 6}
+
+# Element name → numeric code used by sim affinity logic. The mod / live
+# data already returns ints (1=Magic 2=Force 3=Spirit 4=Void), but
+# hero_types.json carries the string form.
+_ELEMENT_CODE = {"Magic": 1, "Force": 2, "Spirit": 3, "Void": 4}
+
+
+def make_synthetic_hero_record(hero_name: str) -> dict | None:
+    """Build a minimal hero record from hero_types.json static data,
+    shaped like the owned-hero records in heroes_6star.json so it can
+    flow through cb_optimizer.calc_stats unchanged.
+
+    Used when simming a *potential* team that includes heroes the user
+    doesn't own. The record carries:
+      - max-ascended base_stats (uppercase keys, matching owned shape)
+      - element + rarity codes
+      - empty artifacts / masteries (no gear assumption)
+
+    No gear means cb_sim damage will be ungeared-baseline only — that's
+    honest. A future "default-build" overlay can be added on top
+    without changing this function.
+
+    Returns None when the name isn't in hero_types.json.
+    """
+    ht = _load_hero_types().get(hero_name)
+    if not ht:
+        return None
+    raw_stats = ht.get("base_stats") or {}
+    base_upper: dict = {}
+    for k, v in raw_stats.items():
+        mapped = _STAT_KEY_REMAP.get(k)
+        if mapped:
+            base_upper[mapped] = float(v)
+    elem_raw = ht.get("element")
+    element = elem_raw if isinstance(elem_raw, int) else _ELEMENT_CODE.get(elem_raw, -1)
+    rarity_raw = ht.get("rarity")
+    rarity = rarity_raw if isinstance(rarity_raw, int) else _RARITY_CODE.get(rarity_raw, 4)
+    return {
+        "id": -ht.get("id", 0),  # negative id distinguishes synthetic from owned
+        "type_id": ht.get("id"),
+        "name": hero_name,
+        "element": element,
+        "rarity": rarity,
+        "fraction": ht.get("fraction"),
+        "grade": 6,           # max-ascended
+        "level": 60,
+        "empower": 0,
+        "base_stats": base_upper,
+        "artifacts": [],
+        "masteries": [],
+        "skills": [],
+        "_synthetic": True,
+    }
+
+
 def derive_from_static_only(hero_name: str) -> tuple[dict, dict]:
     """Build a skill_data + skill_effects entry from `hero_types.json`
     × `skills_all.json` alone, without skill description text.
