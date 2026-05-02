@@ -139,31 +139,70 @@ being skipped before, gets clamped now. Same outcome.
 
 Will matter for non-UK tunes.
 
-## Per-hero gap analysis (post Phase A-E, 2026-05-01)
+## Per-hero variance across 3 captures (2026-05-01)
 
-On the most recent capture (Magic UNM, real 36.8M / sim 33.8M = -8.2%):
+Three CB Magic UNM runs of the same team:
 
-| Hero | Real | Sim | Δ |
+| Hero | Run 1 | Run 2 | Run 3 (screen) | mean | stdev (CV) |
+|---|---:|---:|---:|---:|---:|
+| Maneater | 4.27M | 4.49M | 4.57M | 4.44M | 3% |
+| Demytha | 1.12M | 1.33M | 1.17M | 1.21M | 9% |
+| Ninja | 15.43M | 17.31M | 16.61M | 16.45M | 6% |
+| **Geomancer** | **9.06M** | **4.93M** | **11.48M** | **8.49M** | **39%** ← RNG king |
+| Venomage | 5.82M | 6.66M | 6.32M | 6.27M | 7% |
+| Total | 36.80M | 34.72M | 40.16M | **37.23M** | **7%** |
+
+**Key insight**: real game total has 7% run-to-run RNG variance.
+Achieving sim-vs-real-mean within ±7% is the **bound where game RNG
+dominates** — closer than that requires modeling RNG sources, not
+deterministic mechanics.
+
+## Sim vs run mean (post Phase A-E)
+
+| Hero | Sim | Real mean | Δ from mean |
 |---|---:|---:|---:|
-| Maneater | 4.27M | 4.3M | ✓ match |
-| Demytha | 1.12M | 0.9M | -0.2M |
-| Ninja | 15.43M | 14.0M | -1.4M (sim under) |
-| Geomancer | 9.06M | 6.8M | -2.3M (sim under) |
-| Venomage | 5.82M | 7.8M | +2.0M (sim over) |
+| Maneater | 4.30M | 4.44M | -3% ✓ within RNG |
+| Demytha | 0.90M | 1.21M | -25% |
+| Ninja | 14.0M | 16.45M | -15% |
+| Geomancer | 6.80M | 8.49M | -20% (within stdev range) |
+| Venomage | 7.80M | 6.27M | +24% |
+| **Total** | **33.80M** | **37.23M** | **-9%** |
 
-**Identified contributors**:
-- Ninja FireMark damage 2.75M (11 events × 250K cap) — **sim doesn't
-  model FireMark**. Source unclear: not in Ninja's skill descriptions,
-  not in his equipped sets. Likely a relic effect or set bonus we
-  haven't identified.
-- Geomancer reflect 4.64M vs sim's ~3.8M passive aggregation — sim's
-  formula uses approximations; real per-event values are 250-400K each.
-- Venomage poison over-prediction — sim's `activate_poisons` likely
-  fires too often per A1 cast.
+## Concrete remaining gaps with identified sources
 
-Remaining gap is sub-9% and requires per-skill investigation.
-Recommend: run more CB battles on different affinity days to pin
-formulas before more constants tweaking.
+1. **Ninja FireMark damage 2.75M** (deterministic, 11 events × 250K cap)
+   - StatusEffectTypeId 740 placed on boss by Ninja
+   - NOT in Ninja's skill descriptions (Hailburn = HP Burn, not FireMark)
+   - NOT in his equipped sets (3-piece Speed, 2-piece Heal, accessory)
+   - NOT in his masteries (only conditional Warmaster/GS, no FireMark proc)
+   - Likely from **MagicFlame Epic Wisdom blessing** — Ninja is Magic
+     element so eligible for Wisdom blessings. Blessing's `skill_bonus`
+     effect (proc) isn't in our blessing data export — needs deeper
+     IL2CPP query of `BlessingByTypeId` + their hidden skill effects.
+
+2. **Venomage poison over-prediction +2.0M** — sim's `activate_poisons`
+   fires per-hit in A1; real game limits to per-cast (1-2 activations
+   per A1, not 6).
+
+3. **Geomancer reflect** — within stdev range, sim's approximation OK.
+
+4. **Demytha damage low -0.3M** — minor absolute, big ratio.
+
+## Tick log buffer fix
+
+Buffer cap raised 3000 → 20000 (commit a6e33a4). Earlier captures
+had been silently truncated; latest 3 runs all fit within 20K.
+
+## Recommendation
+
+**Pause Phase A-F implementation here.** Sim is within 9% of run
+mean, with 7% game RNG. Next worthwhile work needs:
+- IL2CPP probe of MagicFlame blessing skill effect (find FireMark
+  placer)
+- Venomage `activate_poisons` per-cast cap
+- Per-event damage attribution by individual heroes for outlier days
+
+These are deeper investigations rather than constant tweaks.
 
 ## Phase B partial — Done 2026-05-01 (commit 833a5f6)
 
