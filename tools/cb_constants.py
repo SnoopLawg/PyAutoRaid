@@ -168,18 +168,14 @@ CB_ATK: int = 3950          # CALIBRATED 2026-04-23
 
 
 # ============================================================================
-# CB boss DEF / RES — CALIBRATED
+# CB boss DEF / RES — GAME-SPEC (verified 2026-05-01)
 # ============================================================================
-# Re-exported from raid_data so consumers have one import surface.
-# Static-derived values would need per-stat verification before flipping.
-try:
-    try:
-        from tools.raid_data import UNM_DEF, UNM_RES
-    except ImportError:
-        from raid_data import UNM_DEF, UNM_RES
-except Exception:
-    UNM_DEF = 4878
-    UNM_RES = 250
+# Empirical capture from CB UNM Magic 2026-05-01 (1334 damage events):
+# t_def = 1520 with no DEF Down, 608 with DEF Down 60% (1520*0.4 = 608 ✓).
+# The previous 4878 was a back-fit. The new value lives here as the
+# authoritative source; raid_data still imports for backward-compat.
+UNM_DEF: int = 1520        # GAME-SPEC (verified via mod damage hook)
+UNM_RES: int = 250         # CALIBRATED (no live capture yet)
 
 
 # ============================================================================
@@ -194,27 +190,42 @@ GS_PROC_RATE: float = 0.30   # Giant Slayer: 30% per hit
 
 
 # ============================================================================
-# Affinity damage multipliers — GAME-SPEC
+# Affinity damage multipliers — GAME-SPEC (verified 2026-05-01)
 # ============================================================================
-# Plarium's affinity rules: weak hit = -30% damage and -35% debuff land
-# rate; strong hit = +30% damage. Same/neutral affinity = 1.0x.
+# Verified via DamageCalculator.ElementAdvantageBonus IL2CPP invocation
+# (the /damage-calc-probe endpoint):
+#   Neutral      = 0     → 1.0× damage
+#   Advantage    = 0     → 1.0× damage (NO flat damage bonus on strong hits)
+#   Disadvantage = -0.2  → 0.8× damage (-20% on weak hits, NOT -30%)
+#
+# Strong-affinity heroes hit harder ONLY because of:
+#   +15% crit chance (CriticalHitChanceAdvantage) → more crits = more damage
+#   +50% crushing chance (CrushingHitChance vs the 35% glancing on weak)
+#   crushing hit = +30% damage (CrushingHitCoef)
+#
+# So previous WEAK=0.7 and STRONG=1.3 were both wrong. Sim should roll the
+# crit chance with the affinity bonus, not multiply final damage.
 
-WEAK_HIT_DMG_MULT: float = 0.70
-WEAK_HIT_DEBUFF_FAIL: float = 0.35
-STRONG_HIT_DMG_MULT: float = 1.30
+WEAK_HIT_DMG_MULT: float = 0.80               # GAME-SPEC (1.0 + ElementDisadvantageCoef -0.2)
+WEAK_HIT_DEBUFF_FAIL: float = 0.35            # GAME-SPEC (Plarium official "35% chance")
+STRONG_HIT_DMG_MULT: float = 1.0              # GAME-SPEC (advantage adds CRIT chance, not flat damage)
 
 
 # ============================================================================
-# Gathering Fury / enrage — CALIBRATED + GAME-SPEC
+# Gathering Fury / enrage — GAME-SPEC (verified 2026-05-01)
 # ============================================================================
-# Skill 222904 effect 2229041 formula: DMG_MUL*0.75*(OWNERS_TURN_NUMBER-9)
-# for turns 10-19. The cb_sim uses 0.85 per turn — overcorrects to match
-# observed BT-14 damage. Don't flip to 0.75 in isolation.
+# Skill 222904 effect MultiplierFormula:
+#   T10-T19: DMG_MUL × 0.75 × (OWNERS_TURN_NUMBER - 9)
+#   T20+:   DMG_MUL × 7.5 + DMG_MUL × (OWNERS_TURN_NUMBER - 19)
+#   T50+:   AddIgnoredEffects (enrage — ignores Block Damage / UK)
+# Verified directly from skills_all.json. The previous 0.85 was a back-fit
+# to mask other damage gaps; flipping to 0.75 will reduce sim damage in
+# T10-T19 specifically — Phase B survival fixes should compensate.
 
-GATHERING_FURY_START_TURN: int = 10           # GAME-SPEC (skill 222904)
-GATHERING_FURY_RATE_PER_TURN: float = 0.85    # CALIBRATED (game spec is 0.75)
-GATHERING_FURY_CLIFF_TURN: int = 20           # GAME-SPEC
-ENRAGE_TURN: int = 50                         # GAME-SPEC
+GATHERING_FURY_START_TURN: int = 10           # GAME-SPEC (skill 222904 cond)
+GATHERING_FURY_RATE_PER_TURN: float = 0.75    # GAME-SPEC (skill 222904 formula)
+GATHERING_FURY_CLIFF_TURN: int = 20           # GAME-SPEC (skill 222904 cond)
+ENRAGE_TURN: int = 50                         # GAME-SPEC (skill 222904 cond)
 
 
 # ============================================================================

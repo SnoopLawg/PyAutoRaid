@@ -36,7 +36,11 @@ Effect Kind IDs (from game):
 # directly comparable. Do not auto-migrate without per-stat verification.
 UNM_HP = 1_171_204_485
 UNM_SPD = 190
-UNM_DEF = 4878
+# UNM_DEF: GAME-SPEC verified 2026-05-01 via mod damage hook capture.
+# Boss DEF reads as 1520 native; with DEF Down 60% applied, t_def captured
+# as 608 (1520 × 0.4 ✓). The previous 4878 was a back-fit calibration
+# value that compensated for missing damage modifiers in the sim.
+UNM_DEF = 1520
 UNM_RES = 250
 try:
     try:
