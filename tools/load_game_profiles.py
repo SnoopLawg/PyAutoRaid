@@ -12,6 +12,8 @@ import json
 import re
 from pathlib import Path
 
+import effect_engine as _ee  # local module — same dir as this file
+
 # StatusEffectTypeId -> sim debuff/buff name
 SE_TO_SIM = {
     80: "poison_5pct",
@@ -75,6 +77,312 @@ DEBUFF_SES = {
 def _eff(effect_type, **params):
     """Helper to build effect dicts matching cb_sim's expected format."""
     return {"effect_type": effect_type, "params": params}
+
+
+def _classify_extend_debuff_for_skill(skill_id: int) -> dict | None:
+    """Look up a skill's IncreaseDebuffLifetime classification.
+
+    Returns the first (skill_id is one skill) IncreaseDebuffLifetime
+    classification from `effect_engine`, or None if the skill has none.
+    """
+    if not skill_id:
+        return None
+    for ge in _ee.normalize_skill_effects(skill_id):
+        c = _ee.classify_extend_debuff(ge)
+        if c is not None:
+            return c
+    return None
+
+
+def _classify_activate_dots_for_skill(skill_id: int, eff_index: int = 0) -> dict | None:
+    """Look up a skill's ForceStatusEffectTick classification.
+
+    Multi-hit skills (Ninja A2) have multiple kind=9002 effects — but
+    they all have the same routing. This helper just returns one
+    classification; the caller emits per occurrence.
+    """
+    if not skill_id:
+        return None
+    for ge in _ee.normalize_skill_effects(skill_id):
+        c = _ee.classify_activate_dots(ge)
+        if c is not None:
+            return c
+    return None
+
+
+# Regex for extend-chance parsing from localized text. Matches both
+# "Each hit has a 15% chance of increasing the duration of [HP Burn]"
+# and "Has a 35% chance to extend the duration of any [HP Burn]".
+_RE_EXTEND_CHANCE = re.compile(
+    r'(\d+)% chance (?:to extend|of (?:increasing|extending)) the duration',
+    re.IGNORECASE,
+)
+
+# "Each hit has a 35% chance of activating up to two [Poison] debuffs"
+# "has a 50% chance of activating any [HP Burn]"
+_RE_ACTIVATE_CHANCE = re.compile(
+    r'(\d+)% chance of activating',
+    re.IGNORECASE,
+)
+
+# "Has a 75% chance of placing a [HP Burn] debuff"
+# "Has an 80% chance of placing a 25% [Weaken] debuff"
+_RE_PLACE_CHANCE = re.compile(
+    r'(\d+)% chance of placing',
+    re.IGNORECASE,
+)
+
+
+def _parse_chance_from_desc(desc: str, regex: re.Pattern,
+                            level_bonus_pct: float = 0.0) -> float:
+    """Generic chance extractor: matches `regex`, returns base+book or 1.0."""
+    if not desc:
+        return 1.0
+    m = regex.search(desc)
+    if not m:
+        return 1.0
+    try:
+        return min(1.0, int(m.group(1)) / 100.0 + level_bonus_pct)
+    except ValueError:
+        return 1.0
+
+
+def _parse_extend_chance_from_desc(desc: str, level_bonus_pct: float = 0.0) -> float:
+    """Return base extend chance + EffectChance book bonus, or 1.0 if not found."""
+    return _parse_chance_from_desc(desc, _RE_EXTEND_CHANCE, level_bonus_pct)
+
+
+_DESC_CACHE: dict[str, dict] | None = None
+
+
+def _load_descriptions() -> dict[str, dict]:
+    """Lazy-load skill_descriptions.json, return {hero_name: {A1/A2/.../skill_dict}}."""
+    global _DESC_CACHE
+    if _DESC_CACHE is not None:
+        return _DESC_CACHE
+    p = Path(__file__).parent.parent / "skill_descriptions.json"
+    if not p.exists():
+        _DESC_CACHE = {}
+        return _DESC_CACHE
+    _DESC_CACHE = json.loads(p.read_text(encoding="utf-8"))
+    return _DESC_CACHE
+
+
+def _sum_effect_chance_book_bonus(skill_dict: dict) -> float:
+    """Sum 'EffectChance' SkillLevelBonuses (the books that boost chance).
+
+    Reads from the static `skills_d4` / `skills_all` cache via effect_engine.
+    Returns 0.0 if the skill is not in the static export.
+    """
+    sid = skill_dict.get('id', 0) or 0
+    s = _ee.skills_by_id().get(sid)
+    if not isinstance(s, dict):
+        return 0.0
+    bonuses = s.get('SkillLevelBonuses') or []
+    total = 0.0
+    for b in bonuses:
+        if not isinstance(b, dict):
+            continue
+        if b.get('SkillBonusType') == 'EffectChance':
+            try:
+                total += float(b.get('Value', 0) or 0)
+            except (TypeError, ValueError):
+                pass
+    return total
+
+
+def _hero_skill_desc(hero_name: str, label: str) -> str:
+    """Return the localized description text for a hero/label, or ''."""
+    descs = _load_descriptions()
+    hero = descs.get(hero_name)
+    if not isinstance(hero, dict):
+        return ""
+    sk_desc = hero.get(label)
+    if not isinstance(sk_desc, dict):
+        return ""
+    return sk_desc.get('desc', '') or ""
+
+
+def _resolve_extend_chance(hero_name: str, label: str, skill_dict: dict) -> float:
+    """Get extend-debuffs chance from description text + book bonuses."""
+    desc_text = _hero_skill_desc(hero_name, label)
+    book_bonus = _sum_effect_chance_book_bonus(skill_dict)
+    return _parse_extend_chance_from_desc(desc_text, level_bonus_pct=book_bonus)
+
+
+def _resolve_activate_chance(hero_name: str, label: str, skill_dict: dict) -> float:
+    """Get activate-DoT chance from description text + book bonuses.
+
+    For "Each hit has a 35% chance of activating up to two [Poison]"
+    plus EffectChance books summing to 0.12 → 0.47. Returns 1.0 when
+    the description has no per-hit chance phrase (unconditional).
+    """
+    desc_text = _hero_skill_desc(hero_name, label)
+    book_bonus = _sum_effect_chance_book_bonus(skill_dict)
+    return _parse_chance_from_desc(desc_text, _RE_ACTIVATE_CHANCE,
+                                   level_bonus_pct=book_bonus)
+
+
+def _resolve_apply_chance(hero_name: str, label: str, skill_dict: dict) -> float:
+    """Get apply-debuff/apply-buff chance from description.
+
+    Returns 1.0 (always applies) when no "X% chance of placing" phrase
+    matches — covers guaranteed effects. Note: this catches the FIRST
+    chance in the description; multi-effect skills that use different
+    chances per effect (e.g. "75% chance of A, 80% chance of B") will
+    use the first match for all subsequent debuffs. That's a known
+    limitation — caught by the regression suite if it bites the sim.
+    """
+    if not hero_name:
+        return 1.0
+    desc_text = _hero_skill_desc(hero_name, label)
+    book_bonus = _sum_effect_chance_book_bonus(skill_dict)
+    return _parse_chance_from_desc(desc_text, _RE_PLACE_CHANCE,
+                                   level_bonus_pct=book_bonus)
+
+
+def _condition_fires_vs_cb_boss(condition: str) -> bool:
+    """Return False when the effect's gating condition can't trigger in CB.
+
+    CB-immutable conditions:
+      - kill-only ("killedEnemiesCount", "deathOf*"): boss has 1.17B HP,
+        never killed by any single hero — these effects are no-ops.
+      - "!targetIsBoss": explicitly NOT vs boss.
+    Everything else is treated as eligible; the per-tick state of
+    debuffs / HP / etc. is the sim's concern, not ours here.
+    """
+    cond = (condition or "").strip()
+    if not cond:
+        return True
+    low = cond.lower()
+    if "killed" in low or "deathof" in low or "death_of" in low:
+        return False
+    if "!targetisboss" in low.replace(" ", ""):
+        return False
+    return True
+
+
+def _supplement_skill_from_static(skill_id: int, label: str, hero_eff: dict,
+                                   hero_sd: dict, hero_name: str = "") -> None:
+    """Merge effects the legacy parser missed, using static data via effect_engine.
+
+    `hero_profiles_game.json` (the legacy effect source) sometimes drops
+    `status_effects[]` entries — costing the sim the relevant
+    debuff/buff. Static `ApplyStatusEffectParams.StatusEffectInfos`
+    (depth=5) has the truth: TypeId + Duration.
+
+    This function adds missing entries idempotently — won't duplicate
+    what the legacy pass already produced. Routing is by SE TypeId
+    via `SE_TO_SIM` + buff/debuff bucket, so adding new heroes is
+    a no-op (their data flows through this same path).
+    """
+    if not skill_id or label not in hero_sd:
+        return
+    effs = hero_eff.setdefault(label, [])
+    sd_entry = hero_sd[label]
+    team_buffs = list(sd_entry.get("team_buffs") or [])
+    team_buff_names = {b[0] for b in team_buffs if isinstance(b, tuple)}
+    existing_debuff_names = {
+        e.get("params", {}).get("debuff")
+        for e in effs
+        if e.get("effect_type") == "debuff"
+    }
+    # Collect DefenceModifier from Damage effects that fire vs the CB
+    # boss. Conditions encode "targetIsBoss" for boss-gated damage and
+    # "!targetIsBoss" for the inverse — we take the MIN (most negative)
+    # def_modifier across boss-applicable effects to set ignore_def.
+    boss_def_modifier = 0.0
+    # Per-skill chance lookup from description text. Already includes
+    # EffectChance book bonus — don't add it again at the use site.
+    desc_chance = _resolve_apply_chance(hero_name, label, {"id": skill_id})
+    for ge in _ee.normalize_skill_effects(skill_id):
+        if not _condition_fires_vs_cb_boss(ge.condition):
+            continue
+        if ge.kind_id in ("ApplyBuff", "ApplyOrProlongBuff"):
+            for tid, dur in ge.applied_status_effects:
+                sim_name = SE_TO_SIM.get(tid)
+                if not sim_name or sim_name not in BUFF_SES or dur <= 0:
+                    continue
+                if sim_name in team_buff_names:
+                    continue
+                team_buffs.append((sim_name, dur))
+                team_buff_names.add(sim_name)
+        elif ge.kind_id in ("ApplyDebuff", "ApplyOrProlongDebuff"):
+            for tid, dur in ge.applied_status_effects:
+                sim_name = SE_TO_SIM.get(tid)
+                if not sim_name or sim_name not in DEBUFF_SES or dur <= 0:
+                    continue
+                if sim_name in existing_debuff_names:
+                    continue
+                # Chance: `desc_chance` already includes book bonus.
+                # Self-targeted debuffs (rare — e.g. Sicia A3 self-burn)
+                # are unconditional regardless of the description's
+                # "X% chance" clause (which gates only the enemy effect).
+                self_targeted = ge.target_type in (
+                    "Producer", "RelationProducer", "Owner",
+                )
+                effs.append(_eff("debuff", debuff=sim_name, duration=dur,
+                                 chance=1.0 if self_targeted else desc_chance))
+                existing_debuff_names.add(sim_name)
+        elif ge.kind_id == "ReduceCooldown":
+            # ReduceCooldown affects the producer's *next* skill (A3 etc.)
+            # by 1 turn per Count. The classic case is Geomancer A2 ->
+            # A3 cooldown drop, but Geomancer's is kill-gated and
+            # thus already filtered above by _condition_fires_vs_cb_boss.
+            target = "A3" if label == "A2" else "A2"
+            if not any(e.get("effect_type") == "cd_reduce_skill"
+                       for e in effs):
+                effs.append(_eff("cd_reduce_skill",
+                                  target_skill=target, turns=ge.count or 1))
+        elif ge.kind_id == "Damage":
+            if ge.damage_def_modifier < boss_def_modifier:
+                boss_def_modifier = ge.damage_def_modifier
+    if boss_def_modifier < 0:
+        # ignore_def is stored as positive fraction (0.5 = "ignore 50%")
+        existing = sd_entry.get("ignore_def", 0.0)
+        sd_entry["ignore_def"] = max(existing, -boss_def_modifier)
+    sd_entry["team_buffs"] = team_buffs
+
+
+def _detect_compound_extend_buff(skill_id: int) -> dict | None:
+    """Detect the extend-buffs+shrink-debuffs+heal compound pattern.
+
+    Returns kwargs for _eff("extend_buffs", **kwargs) when the skill has
+    ALL of: IncreaseBuffLifetime, ReduceDebuffLifetime, and a Heal whose
+    formula references totalIncreased/totalDecreased counts. Otherwise
+    None (caller emits a plain extend_buffs).
+
+    Demytha A2 is the canonical case but the detection is structural,
+    not name-based — any future hero with this kit shape Just Works.
+    """
+    if not skill_id:
+        return None
+    effects = _ee.normalize_skill_effects(skill_id)
+    has_extend = any(e.kind_id == _ee.KIND_INCREASE_BUFF_LIFETIME for e in effects)
+    has_shrink = any(e.kind_id == _ee.KIND_REDUCE_DEBUFF_LIFETIME for e in effects)
+    if not (has_extend and has_shrink):
+        return None
+    heal_effect = next(
+        (e for e in effects if e.kind_id == "Heal"
+         and "totalIncreasedTurnsCount" in (e.multiplier_formula or "")),
+        None,
+    )
+    if heal_effect is None:
+        return None
+    # Parse "(0.025*TRG_HP)+((0.025*TRG_HP)*(totalIncreased+totalDecreased))"
+    f = heal_effect.multiplier_formula
+    base = re.search(r'\(([\d.]+)\*TRG_HP\)\s*\+\s*\(\(([\d.]+)\*TRG_HP\)', f)
+    if not base:
+        return None
+    try:
+        return {
+            "turns": 1,
+            "shrink_debuffs": 1,
+            "heal_pct": float(base.group(1)),
+            "heal_per_change_pct": float(base.group(2)),
+        }
+    except ValueError:
+        return None
 
 
 def _get_book_cd_reductions(skills_db_path):
@@ -325,86 +633,56 @@ def load_profiles():
                 # elif kind == 5002:
                 #     effects_list.append(_eff("debuff", debuff="hp_burn", duration=2, chance=1.0))
 
-                # Extend debuffs (kind=5008)
-                # Per skill descriptions:
-                #   Sicia A1 (57701): extends [HP Burn] only, 15% chance per hit
-                #     (+15% from type=2 books → 30% effective per hit)
-                #   Teodor A3 (36003): extends [Poison] and [HP Burn] all-or-none
-                #   Artak A1 (78601): extends [HP Burn] only, 35% chance per
-                #     target (+10% books → 45%) — single AoE pass, not per-hit
-                #   Others: extends all debuffs
+                # Extend debuffs (kind=5008 = IncreaseDebuffLifetime).
+                # Family routing comes from `effect_engine` reading
+                # `ChangeEffectLifetimeParams.EffectTypeIds` — no skill_id
+                # branching. Per-hit vs per-target distinction stays here:
+                # multi-hit damage skills extend per-hit (verified for
+                # Sicia A1 / Artak A1). Chance comes from description
+                # text + book bonuses (static Effect.Chance unreliable).
                 elif kind == 5008:
                     per_hit = (actual_hits > 1)
-                    skill_id = sk.get('id', 0)
-                    if skill_id == 57701:  # Sicia A1: HP Burn only, chance per hit
-                        effects_list.append(_eff("extend_debuffs_hp_burn",
-                                                 turns=1, per_hit=True,
-                                                 chance=0.30))
-                    elif skill_id == 78601:  # Artak A1: HP Burn only, 45% chance per target
-                        effects_list.append(_eff("extend_debuffs_hp_burn",
-                                                 turns=1, per_hit=False,
-                                                 chance=0.45))
-                    elif skill_id == 36003:  # Teodor A3: poison + HP burn (no chance)
-                        effects_list.append(_eff("extend_debuffs_poison_burn",
-                                                 turns=1, per_hit=per_hit))
-                    else:
-                        effects_list.append(_eff("extend_debuffs",
-                                                 turns=1, per_hit=per_hit))
+                    classified = _classify_extend_debuff_for_skill(sk.get('id', 0))
+                    chance = _resolve_extend_chance(name, label, sk)
+                    sim_type = (classified["sim_type"] if classified
+                                else "extend_debuffs")
+                    turns = classified["turns"] if classified else 1
+                    effects_list.append(_eff(
+                        sim_type, turns=turns, per_hit=per_hit, chance=chance,
+                    ))
 
-                # Extend buffs (kind=4011). Demytha A2 (skill_id 65102)
-                # has the unique compound shape: extends ally buffs +1,
-                # shrinks ally debuffs -1, AND heals 2.5% MAX_HP per ally
-                # PLUS 2.5% per buff/debuff modified. Verified against real
-                # battle log: Maneater HP recovers from 25673 → 34025 at
-                # tick 12 (her A2 cast time) — 21% MAX_HP heal matches the
-                # 2.5% × (1 base + 7 changes) formula. Other heroes with
-                # 4011 are pure extenders.
+                # Extend buffs (kind=4011 = IncreaseBuffLifetime).
+                # When the same skill ALSO has ReduceDebuffLifetime AND a
+                # Heal effect with the totalIncreased+totalDecreased
+                # formula, it's a compound extend+shrink+heal — Demytha
+                # A2's Light of the Deep is the canonical case but the
+                # mechanic is data-driven, not hero-specific.
                 elif kind == 4011:
-                    skill_id = sk.get('id', 0)
-                    if skill_id == 65102:  # Demytha A2 Light of the Deep
-                        effects_list.append(_eff(
-                            "extend_buffs", turns=1, shrink_debuffs=1,
-                            heal_pct=0.025, heal_per_change_pct=0.025,
-                        ))
+                    compound = _detect_compound_extend_buff(sk.get('id', 0))
+                    if compound is not None:
+                        effects_list.append(_eff("extend_buffs", **compound))
                     else:
                         effects_list.append(_eff("extend_buffs", turns=1))
 
-                # Activate DoTs (kind=9002) — mechanic varies by hero/skill.
-                # Verified from in-game skill descriptions:
-                #   Ninja A2 (62002): "instantly activate any [HP Burn] debuffs" vs Bosses
-                #   Sicia A2 (57702): "instantly activates one tick of [HP Burn] debuffs"
-                #   Teodor A3 (36003): "instantly activates one tick of all [Poison] and [HP Burn]"
-                #   Venomage A1 (62801): "activating up to two [Poison] debuffs"
-                #   Artak A2 (78602): activates HP Burns
+                # Activate DoTs (kind=9002 = ForceStatusEffectTick).
+                # Family routing comes from `effect_engine` reading
+                # `ForceTickParams.EffectTypeIds`:
+                #   ['Burn']            → activate_hp_burns
+                #   ['ContinuousDamage*'] → activate_poisons (cap from EffectCount)
+                #   ['Burn','Continuous*'] → activate_dots (all)
+                # Game data emits one kind=9002 per hit on multi-hit
+                # damage skills (Ninja A2 has 3) — emit one effect each
+                # so the sim activates per hit (verified 2026-04 against
+                # real Ninja burn-attributed damage).
                 elif kind == 9002:
-                    skill_id = sk.get('id', 0)
-                    # Ninja A2 (62002): "will instantly activate any [HP Burn]
-                    # debuffs, including ones placed by this Skill". Game data
-                    # has 3× kind=9002 (one per hit). The activation fires per
-                    # hit — confirmed by back-solving real damage: per-cast
-                    # activation only produces ~2.5M of attributed burn damage,
-                    # but real Ninja's burn-attributed damage requires ~7M of
-                    # activation contribution, matching 3 activations per
-                    # cast (one per hit).
-                    if skill_id == 62002:  # Ninja A2 — emit per kind=9002 occurrence
-                        effects_list.append(_eff("activate_hp_burns"))
-                    elif skill_id == 57702:  # Sicia A2: activate HP Burns (1 tick)
-                        effects_list.append(_eff("activate_hp_burns"))
-                    elif skill_id == 78602:  # Artak A2: activate HP Burns
-                        effects_list.append(_eff("activate_hp_burns"))
-                    elif skill_id == 36003:  # Teodor A3: activate all DoTs (poison + burn)
-                        effects_list.append(_eff("activate_dots"))
-                    elif skill_id == 62801:  # Venomage A1: activate up to 2 Poisons per hit
-                        # Real game: "Each hit has a 35% chance of activating
-                        # up to two [Poison] debuffs". Books type=2 sum to
-                        # ~12% → 47% effective per-hit chance. Verified
-                        # 2026-05-01 from skill 62801's Effect.Chance value
-                        # (0.469195 ≈ 0.47). Previous 0.50 was a guess at
-                        # 35%+15%; real bonus is 35% + ~12% = 47%.
-                        chance = 0.47
-                        effects_list.append(_eff("activate_poisons",
-                                                 max_count=2, chance=chance))
-                    # Other heroes with 9002: skip (unknown mechanic)
+                    classified = _classify_activate_dots_for_skill(sk.get('id', 0))
+                    if classified is not None:
+                        params: dict = {}
+                        if classified.get("max_count"):
+                            params["max_count"] = classified["max_count"]
+                            params["chance"] = _resolve_activate_chance(name, label, sk)
+                        effects_list.append(_eff(classified["sim_type"], **params))
+                    # Effects we couldn't classify: skip (unknown mechanic)
 
                 # Detonate poisons (kind=5018)
                 elif kind == 5018:
@@ -460,93 +738,16 @@ def load_profiles():
             hero_eff[label] = effects_list
 
         # =====================================================================
-        # Per-hero fixes from verified skill descriptions.
-        # These correct effects that the generic parser can't extract from
-        # the game's effect kind/formula encoding.
-        # Source: skill_descriptions.json (game-localized text via mod API)
+        # Static-data supplementation pass: for every labeled skill, fill
+        # in any ApplyBuff/ApplyDebuff/ReduceCooldown/Damage-DefMod that
+        # the legacy effect array missed. This pass is data-driven via
+        # `effect_engine` (depth=5 SEI) — no per-hero conditionals.
+        # Adding a new hero is a no-op (their skills flow through here).
         # =====================================================================
-
-        # Ninja A3 (62003): vs Boss, ignores 50% DEF + reduces A2 CD by 1
-        if name == "Ninja" and "A3" in hero_sd:
-            hero_sd["A3"]["ignore_def"] = 0.5
-
-        # OB A2 (33002): ignores 30% DEF when under debuffs (kind=7001 already captured)
-        # (already handled by generic kind=7001 parser — no fix needed)
-
-        # Venus A3 (35003): places HP Burn (was incorrectly getting extra_turn from A3 data)
-        # The game data for Venus has skill 35005 as A3 which is wrong; real A3 is 35003
-        if name == "Venus" and "A3" in hero_sd:
-            hero_sd["A3"]["grants_extra_turn"] = False
-            if not any(e.get('params', {}).get('debuff') == 'hp_burn' for e in hero_eff.get("A3", [])):
-                hero_eff.setdefault("A3", []).append(_eff("debuff", debuff="hp_burn", duration=2, chance=1.0))
-
-        # Fahrakin A3 (56603): places Inc CR 30% + Inc CD 30% on allies BEFORE ally attack
-        if name == "Fahrakin the Fat" and "A3" in hero_sd:
-            buffs = hero_sd["A3"].get("team_buffs", [])
-            if not any(b[0] == "inc_cr_30" for b in buffs if isinstance(b, tuple)):
-                hero_sd["A3"]["team_buffs"] = [("inc_cr_30", 3), ("inc_cd_30", 3)] + buffs
-
-        # Cardiel A3 (57603): places Inc CR 30% + Inc CD 30% on allies BEFORE ally attack
-        if name == "Cardiel" and "A3" in hero_sd:
-            buffs = hero_sd["A3"].get("team_buffs", [])
-            if not any(b[0] == "inc_cr_30" for b in buffs if isinstance(b, tuple)):
-                hero_sd["A3"]["team_buffs"] = [("inc_cr_30", 2), ("inc_cd_30", 2)] + buffs
-
-        # Teodor A2 (36002): places Poison Sensitivity (already captured via kind=5000+type=500)
-        # Verify it's there:
-        if name == "Teodor the Savant" and "A2" in hero_eff:
-            has_psens = any(e.get('params', {}).get('debuff') == 'poison_sensitivity' for e in hero_eff["A2"])
-            if not has_psens:
-                hero_eff["A2"].append(_eff("debuff", debuff="poison_sensitivity", duration=2, chance=1.0))
-
-        # Ma'Shalled A2 (9304): Inc SPD + Inc CD buffs on team
-        if name == "Ma'Shalled" and "A2" in hero_sd:
-            buffs = hero_sd["A2"].get("team_buffs", [])
-            if not any(b[0] == "inc_cd_30" for b in buffs if isinstance(b, tuple)):
-                buffs.append(("inc_cd_30", 2))
-                hero_sd["A2"]["team_buffs"] = buffs
-
-        # Ma'Shalled A2: also places True Fear + Leech on enemies
-        if name == "Ma'Shalled" and "A2" in hero_eff:
-            has_leech = any(e.get('params', {}).get('debuff') == 'leech' for e in hero_eff["A2"])
-            if not has_leech:
-                hero_eff["A2"].append(_eff("debuff", debuff="leech", duration=2, chance=1.0))
-
-        # Venomage A3 (62803): places Heal Reduction (type=70) — enables passive dmg reduction
-        if name == "Venomage" and "A3" in hero_eff:
-            has_hr = any(e.get('params', {}).get('debuff') == 'heal_reduction' for e in hero_eff["A3"])
-            if not has_hr:
-                hero_eff["A3"].append(_eff("debuff", debuff="heal_reduction", duration=3, chance=1.0))
-
-        # Sepulcher Sentinel A2 (38802): Inc DEF 60% + Block Debuffs on team
-        if name == "Sepulcher Sentinel" and "A2" in hero_sd:
-            buffs = hero_sd["A2"].get("team_buffs", [])
-            if not any(b[0].startswith("inc_def") for b in buffs if isinstance(b, tuple)):
-                hero_sd["A2"]["team_buffs"] = [("inc_def", 2), ("block_debuffs", 2)] + buffs
-
-        # Drexthar Passive: HP Burn when attacked (passive debuff on attacker)
-        # Already detected by passive processor via kind=5000+type=470
-
-        # Artak A1 (78601): extends HP Burn duration. Real game: 35% chance
-        # per target + 10% books = 45% effective. Per-target on AoE attack
-        # (single boss in CB = single roll per cast).
-        if name == "Artak" and "A1" in hero_eff:
-            has_extend = any('extend' in e.get('effect_type', '') for e in hero_eff["A1"])
-            if not has_extend:
-                hero_eff["A1"].append(_eff("extend_debuffs_hp_burn",
-                                           turns=1, per_hit=False,
-                                           chance=0.45))
-
-        # Geomancer A2 (Creeping Petrify, 48802) reduces Quicksand Grasp's
-        # cooldown by 2 turns. Without this, A3 fires every ~4 actions; with
-        # it, A3 cycles much faster (A2 → A3 → A2 → A3) and burn placement
-        # roughly doubles. Verified from in-game skill description.
-        if name == "Geomancer" and "A2" in hero_eff:
-            has_cdr = any(e.get('effect_type') == 'cd_reduce_skill'
-                          for e in hero_eff["A2"])
-            if not has_cdr:
-                hero_eff["A2"].append(_eff("cd_reduce_skill",
-                                           target_skill="A3", turns=2))
+        for label_, sk_ in labeled.items():
+            _supplement_skill_from_static(sk_.get('id', 0), label_,
+                                           hero_eff, hero_sd,
+                                           hero_name=name)
 
         if hero_sd:
             skill_data[name] = hero_sd

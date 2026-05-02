@@ -1725,6 +1725,39 @@ def apply_leader_aura(stats: dict, leader_skill: dict) -> dict:
 
 
 # =============================================================================
+# Blessing → sim attribute resolution
+# =============================================================================
+
+# Brimstone Legendary Wisdom blessing — per-hit Smite chance by grade.
+# Grade 0/1 = 15%, scales linearly to grade 6 = 100%. Source: in-game
+# l10n:blessing-level/description?id=410101..6 (verified visually).
+_BRIMSTONE_BLESSING_ID = 4101
+_BRIMSTONE_CHANCE_BY_GRADE = {
+    1: 0.15, 2: 0.225, 3: 0.30, 4: 0.45, 5: 0.60, 6: 1.0,
+}
+
+
+def _resolve_brimstone(stats: dict) -> tuple[bool, float]:
+    """Read blessing data from `stats` and return (has_brimstone, chance).
+
+    `stats` is the per-hero dict produced by the data pipeline; if the
+    `blessing` key is present (id + grade from the live mod read), the
+    Brimstone chance is derived from grade. Falls back to (False, 0.0)
+    when no Brimstone blessing is set on this hero.
+    """
+    bl = stats.get("blessing")
+    if not isinstance(bl, dict):
+        # Backward compat — old stats dicts might preset has_brimstone.
+        if stats.get("has_brimstone"):
+            return True, float(stats.get("brimstone_chance", 0.30))
+        return False, 0.0
+    if int(bl.get("id", 0)) != _BRIMSTONE_BLESSING_ID:
+        return False, 0.0
+    grade = int(bl.get("grade", 1))
+    return True, _BRIMSTONE_CHANCE_BY_GRADE.get(grade, 0.15)
+
+
+# =============================================================================
 # Champion Builder
 # =============================================================================
 def build_sim_champion(name: str, stats: dict, position: int,
@@ -1802,27 +1835,11 @@ def build_sim_champion(name: str, stats: dict, position: int,
 
     # Brimstone Legendary Wisdom blessing (id 4101) — places [Smite]
     # debuff on attack. Per-hit chance scales with blessing grade:
-    # level 1 = 15%, level 3 = 30%, level 5 = 60% protected,
-    # level 6 = 100% guaranteed protected.
-    # The mod's BlessingId reflection currently fails (Nullable<enum>
-    # unwrapping issue), so brimstone heroes are listed manually until
-    # blessing data is reliably extracted. Stored on stats dict so
-    # consumers can pre-populate per-hero (e.g. from a heroes_blessings
-    # config file).
-    has_brimstone = stats.get("has_brimstone", False)
-    brimstone_chance = stats.get("brimstone_chance", 0.30)
-    # Empirical fallback: heroes known to use Brimstone in CB tunes
-    # (manually verified by observing [Smite] damage events on boss
-    # in tick log captures — all attribute to Ninja in the user's
-    # roster as of 2026-05-01).
-    if not has_brimstone and name == "Ninja":
-        has_brimstone = True
-        # Calibrated to observed 11 Smite events per 50 CB turns
-        # (22% boss-action uptime). Per-hit chance 0.15 corresponds to
-        # blessing level 1 (l10n:blessing-level/description?id=410101).
-        # Empirically matches observed event count given Ninja's hit
-        # cadence (A1×1, A2×3, A3×1, fired ~30 times in 50 boss turns).
-        brimstone_chance = 0.15
+    # grade 1 = 15%, grade 2 = 22.5%, grade 3 = 30%, grade 4 = 45%,
+    # grade 5 = 60%, grade 6 = 100% (guaranteed). Source: in-game
+    # blessing description l10n:blessing-level/description?id=410101..6.
+    # Read directly from hero's BlessingId/Grade via the static cache.
+    has_brimstone, brimstone_chance = _resolve_brimstone(stats)
 
     champ = SimChampion(
         name=name,

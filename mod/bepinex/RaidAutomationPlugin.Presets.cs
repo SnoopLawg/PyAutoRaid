@@ -141,29 +141,29 @@ namespace RaidAutomation
                                     {
                                         if (ri > 0) sb.Append(",");
                                         sb.Append("{");
+                                        // Track whether any field has been written so the
+                                        // next field's leading comma is conditional.
+                                        // Prevents `{,"priorities":...}` malformed JSON
+                                        // when StarterSkillId is null.
+                                        bool roundHasField = false;
 
-                                        // StarterSkillId for this round
-                                        try
+                                        // StarterSkillId for this round (Nullable<SkillTypeId>).
+                                        // The .Value property returns marshaled garbage on
+                                        // IL2Cpp wrappers — use NullableEnumInt (reads native
+                                        // Pointer+16 directly).
+                                        int starter = NullableEnumInt(Prop(seq, "StarterSkillId"));
+                                        if (starter > 0)
                                         {
-                                            var rStarter = Prop(seq, "StarterSkillId");
-                                            if (rStarter != null)
-                                            {
-                                                var hasVal = Prop(rStarter, "HasValue");
-                                                if (hasVal != null && (bool)hasVal)
-                                                {
-                                                    var val = Prop(rStarter, "Value");
-                                                    if (val != null)
-                                                        sb.Append("\"starter\":" + Convert.ToInt32(val));
-                                                }
-                                            }
+                                            sb.Append("\"starter\":" + starter);
+                                            roundHasField = true;
                                         }
-                                        catch { }
 
                                         // StarterSkillIds list
                                         var rStarterIds = Prop(seq, "StarterSkillIds");
                                         if (rStarterIds != null)
                                         {
-                                            sb.Append(",\"starter_ids\":[");
+                                            if (roundHasField) sb.Append(",");
+                                            sb.Append("\"starter_ids\":[");
                                             int sti = 0;
                                             foreach (var sid in ListItems(rStarterIds))
                                             {
@@ -172,13 +172,15 @@ namespace RaidAutomation
                                                 sti++;
                                             }
                                             sb.Append("]");
+                                            roundHasField = true;
                                         }
 
                                         // PriorityBySkillId for this round
                                         var rPrios = Prop(seq, "PriorityBySkillId");
                                         if (rPrios != null)
                                         {
-                                            sb.Append(",\"priorities\":{");
+                                            if (roundHasField) sb.Append(",");
+                                            sb.Append("\"priorities\":{");
                                             int rpi = 0;
                                             foreach (var (skillId, prioObj) in DictEntries(rPrios))
                                             {
@@ -189,6 +191,7 @@ namespace RaidAutomation
                                                 rpi++;
                                             }
                                             sb.Append("}");
+                                            roundHasField = true;
                                         }
 
                                         sb.Append("}");

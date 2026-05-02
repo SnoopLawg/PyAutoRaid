@@ -132,6 +132,15 @@ def cb_profile(difficulty: str, element: str) -> BossProfile:
         difficulty=diff,
         hp=CB_HP_BY_DIFFICULTY[diff],
         atk=CB_ATK,
+        # Boss DEF / RES / ACC / CR / CD — game-truth from
+        # /alliance-bosses (verified UNM 2026-05-02: DEF 1520, RES 250,
+        # ACC 330, CR 15%, CD 50%). Per-difficulty CR/CD/ACC don't vary
+        # in static data — only HP/SPD scale.
+        def_=1520 if diff == "unm" else 0,
+        res=250 if diff == "unm" else 30,
+        acc=330 if diff == "unm" else 0,
+        cr=0.15,
+        cd=0.50,
         speed=CB_SPEED_BY_DIFFICULTY[diff],
         element=ELEMENT_ID_BY_NAME[elem],
         skill_pattern=_cb_skill_pattern(elem),

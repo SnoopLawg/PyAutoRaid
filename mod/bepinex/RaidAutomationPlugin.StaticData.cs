@@ -124,26 +124,104 @@ namespace RaidAutomation
                 return;
             }
             if (t.IsEnum) { sb.Append("\"").Append(v.ToString()).Append("\""); return; }
-            // Plarium "Fixed" stat type — has a Value or RawValue property
-            if (t.Name == "Fixed" || t.Name == "Fixed64")
+            // Nullable<T> wrapper — both .NET System.Nullable<T> AND
+            // IL2CPP's Il2CppSystem.Nullable<T> appear here. Match by
+            // type name "Nullable`1" since the generic-type-definition
+            // check fails for IL2CPP wrappers (different identity).
+            // Read the lowercase backing fields `hasValue` / `value`
+            // directly — IL2CPP's `Value` property getter returns a
+            // default value (zeroed Fixed) due to runtime marshaling.
+            if (t.Name == "Nullable`1")
             {
                 try
                 {
-                    var raw = Convert.ToDouble(v);
-                    sb.Append(raw.ToString("R", System.Globalization.CultureInfo.InvariantCulture));
+                    // IL2CPP wrappers expose backing fields directly.
+                    var hvField = t.GetField("hasValue",
+                        BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                    var valField = t.GetField("value",
+                        BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                    bool? hasValue = null;
+                    object inner = null;
+                    if (hvField != null) hasValue = (bool)hvField.GetValue(v);
+                    if (valField != null) inner = valField.GetValue(v);
+                    // Fallback to managed Property access if fields unavailable
+                    if (hasValue == null)
+                    {
+                        var hvProp = t.GetProperty("HasValue");
+                        if (hvProp != null) hasValue = (bool)hvProp.GetValue(v);
+                    }
+                    if (inner == null)
+                    {
+                        var valProp = t.GetProperty("Value");
+                        if (valProp != null) inner = valProp.GetValue(v);
+                    }
+                    if (hasValue == false) { sb.Append("null"); return; }
+                    if (hasValue == true && inner != null)
+                    {
+                        SerializeValue(sb, inner, depth, max, seen);
+                        return;
+                    }
+                    // hasValue couldn't be determined — emit null defensively
+                    sb.Append("null");
                     return;
                 }
-                catch
+                catch { }
+            }
+            // Plarium "Fixed" stat type — read via RawValue (Int64 backing)
+            // and divide by 2^32. Convert.ToDouble() returns garbage for
+            // Fixed wrappers that don't override IConvertible — in static
+            // data context produces stale values from Nullable<Fixed>
+            // backing fields whose HasValue=false (uninitialized memory).
+            if (t.Name == "Fixed" || t.Name == "Fixed64")
+            {
+                // PREFER ToString() over RawValue field — when a Fixed is
+                // unboxed from a Nullable<Fixed>.value backing field via
+                // FieldInfo.GetValue, the resulting boxed copy's RawValue
+                // field reads stale memory (returns garbage long). The
+                // type's overridden ToString() goes through IL2CPP managed
+                // call and returns the correct decimal text.
+                try
                 {
-                    if (double.TryParse(v.ToString(),
+                    string str = v.ToString();
+                    if (double.TryParse(str,
                         System.Globalization.NumberStyles.Any,
                         System.Globalization.CultureInfo.InvariantCulture,
-                        out var dd))
+                        out var dd) && !double.IsNaN(dd) && !double.IsInfinity(dd))
                     {
                         sb.Append(dd.ToString("R", System.Globalization.CultureInfo.InvariantCulture));
                         return;
                     }
                 }
+                catch { }
+                // Fallback: try RawValue / m_value / _value / Value field/property
+                try
+                {
+                    foreach (var fname in new[] { "RawValue", "m_value", "_value", "Value" })
+                    {
+                        var f = t.GetField(fname, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                        if (f != null && f.FieldType == typeof(long))
+                        {
+                            long raw = (long)f.GetValue(v);
+                            double dval = raw / 4294967296.0;
+                            sb.Append(dval.ToString("R", System.Globalization.CultureInfo.InvariantCulture));
+                            return;
+                        }
+                        var p = t.GetProperty(fname);
+                        if (p != null)
+                        {
+                            var pv = p.GetValue(v);
+                            if (pv is long l)
+                            {
+                                double dval = l / 4294967296.0;
+                                sb.Append(dval.ToString("R", System.Globalization.CultureInfo.InvariantCulture));
+                                return;
+                            }
+                        }
+                    }
+                }
+                catch { }
+                sb.Append("0");
+                return;
             }
             // Cycle / depth guard
             if (depth < 0 || seen.Contains(v))
@@ -1526,20 +1604,54 @@ namespace RaidAutomation
             return dflt;
         }
 
-        // Il2Cpp Nullable<TEnum> exposes HasValue + Value. Returns 0 if null.
+        // Il2Cpp Nullable<TEnum> — the .Value / .HasValue / GetValueOrDefault
+        // accessors all return 0 due to IL2Cpp marshaling. The actual enum
+        // int lives in native IL2Cpp memory at offset 16 from the object's
+        // Pointer (verified empirically 2026-05-02 with BlessingTypeId on
+        // a Brimstone hero — read returned 4101 = Brimstone).
+        // Returns 0 when null or HasValue=false.
         private static int NullableEnumInt(object nullable)
         {
             if (nullable == null) return 0;
             try
             {
-                var hv = nullable.GetType().GetProperty("HasValue");
-                if (hv != null && hv.GetValue(nullable) is bool hasVal && !hasVal) return 0;
-                var v = nullable.GetType().GetProperty("Value")?.GetValue(nullable);
-                if (v == null) return 0;
-                return ExtractEnumInt(v);
+                // Bail early if HasValue=false (the property reads correctly
+                // for the bool even when Value is broken).
+                var t = nullable.GetType();
+                var hvProp = t.GetProperty("HasValue");
+                if (hvProp != null)
+                {
+                    var hv = hvProp.GetValue(nullable);
+                    if (hv is bool hb && !hb) return 0;
+                }
+                var ptrProp = t.GetProperty("Pointer");
+                if (ptrProp != null)
+                {
+                    var ptrVal = ptrProp.GetValue(nullable);
+                    if (ptrVal is System.IntPtr ptr && ptr != System.IntPtr.Zero)
+                    {
+                        return System.Runtime.InteropServices
+                            .Marshal.ReadInt32(ptr, 16);
+                    }
+                }
+                // Fallback for non-IL2Cpp Nullables (managed System.Nullable):
+                // backing fields work directly.
+                var valField = t.GetField("value",
+                    BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                if (valField != null)
+                {
+                    var inner = valField.GetValue(nullable);
+                    if (inner != null) return ExtractEnumInt(inner);
+                }
             }
-            catch { return 0; }
+            catch { }
+            return 0;
         }
+
+        // Public alias for cross-partial-file callers (LiveData, Battle).
+        // Same semantics as NullableEnumInt; named for clarity at call sites.
+        private static int ReadIl2CppNullableEnumInt(object nullable) =>
+            NullableEnumInt(nullable);
 
         private static void AggregateProbs(object reward, string propName,
             Dictionary<int,int> count, Dictionary<int,double> maxProb, int maxKey = 100)

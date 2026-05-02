@@ -86,8 +86,15 @@ def extract_real_data(log_path: Path) -> dict:
 
 
 def run_sim_for_team(team_names, cb_element, force_affinity, max_cb_turns,
-                     use_current_gear=True, bugfix_buff_tick=False):
-    """Run the CB sim and return result with turn snapshots."""
+                     use_current_gear=True, bugfix_buff_tick=False,
+                     use_preset=True):
+    """Run the CB sim and return result with turn snapshots.
+
+    `use_preset`: when True (default), loads the saved game preset
+    matching `team_names` (via `tools/preset_loader`) and applies its
+    starter_ids + skill priorities to each champion. Mirrors the
+    in-game tune the user has saved — no hardcoded openers.
+    """
     base = PROJECT_ROOT
 
     with open(base / "heroes_6star.json") as f:
@@ -134,6 +141,24 @@ def run_sim_for_team(team_names, cb_element, force_affinity, max_cb_turns,
         element = hero.get("element", 4)
         champ = build_sim_champion(name, stats, idx, element=element)
         sim_champs.append(champ)
+
+    # Apply saved game preset (starter_ids + skill priorities) to the
+    # champions when available. Data-driven from the live mod via
+    # /presets — no hardcoded if-hero overrides.
+    if use_preset:
+        try:
+            from preset_loader import load_preset_for_team
+            plan = load_preset_for_team(team_names)
+        except Exception:
+            plan = {}
+        for champ in sim_champs:
+            entry = plan.get(champ.name) or {}
+            opening = entry.get("opening") or []
+            priority = entry.get("priority") or []
+            if opening:
+                champ.opening = list(opening)
+            if priority:
+                champ.skill_priority = list(priority)
 
     sim = CBSimulator(
         sim_champs,
@@ -235,6 +260,8 @@ def main():
     parser.add_argument("--no-force-affinity", action="store_true",
                         help="Disable FA damage caps (pre-defeat CB)")
     parser.add_argument("--max-cb-turns", type=int, default=50)
+    parser.add_argument("--no-preset", action="store_true",
+                        help="Disable preset-driven openers + skill priorities (reverts to default sim AI).")
     args = parser.parse_args()
 
     log_path = Path(args.log)
@@ -259,6 +286,7 @@ def main():
         team_names, cb_element, force_affinity,
         max_cb_turns=args.max_cb_turns,
         use_current_gear=True,
+        use_preset=not args.no_preset,
     )
 
     calibrate(real_data, sim_result)

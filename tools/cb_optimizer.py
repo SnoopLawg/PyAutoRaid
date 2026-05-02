@@ -207,10 +207,6 @@ def calc_stats(hero, artifacts, account):
         computed = None  # grade mismatch — hero is being modeled at different grade
     if computed:
         bc = computed.get("base_computed", {})
-        bl = computed.get("blessing_bonus", {})
-        emp_b = computed.get("empower_bonus", {})
-        arena_b = computed.get("arena_bonus", {})
-        gh_b = computed.get("great_hall_bonus", {})
 
         # Base stats from game's GetBaseStats (includes level scaling + ascension)
         scaled = {
@@ -229,39 +225,57 @@ def calc_stats(hero, artifacts, account):
             # over-predicting stun damage by ~2×.
             "base_HP": bc.get("HP", 0),
         }
-        # Add blessing bonus (from game's CalcBlessingBonus)
-        for stat in (HP, ATK, DEF):
-            stat_name = {HP: "HP", ATK: "ATK", DEF: "DEF"}[stat]
-            scaled[stat] += bl.get(stat_name, 0)
-        # Add empowerment bonus for HP/ATK/DEF from game's CalcEmpowerBonus.
-        for stat in (HP, ATK, DEF):
-            stat_name = {HP: "HP", ATK: "ATK", DEF: "DEF"}[stat]
-            scaled[stat] += emp_b.get(stat_name, 0)
-        # BUT the game's CalcEmpowerBonus only returns HP/ATK/DEF — it does NOT include
-        # the SPD/ACC/RES/CR/CD bonuses that empowerment also provides. We add those
-        # from our EMPOWERMENT_BONUSES table. (Verified empirically: Geomancer emp3 Epic
-        # shows 183 SPD in-game which requires +5 SPD empower bonus NOT in emp_b.)
+
+        # Sum every column-bonus the mod returns. The mod's
+        # /hero-computed-stats endpoint exposes the GAME's exact column
+        # breakdown (Basic | Artifacts | Affinity | Classic Arena |
+        # Masteries | Faction Guardians | Empowerment | Blessing | Relic
+        # | Area Bonuses) — verified column-by-column against in-game
+        # Total Stats screen 2026-05-02 (Ninja ATK 1509+1685+91+45=3330,
+        # Demytha 749+1474+45+22+75+75=2440). Adding ALL columns from
+        # the mod is game-truth — sim shouldn't recompute what the mod
+        # already provides exactly. (DRY.)
+        bonus_columns = (
+            "blessing_bonus",
+            "empower_bonus",
+            "classic_arena_bonus",
+            "great_hall_bonus",
+            "relic_bonus",
+            "affinity_bonus",
+            "faction_guardians_bonus",
+            "mastery_bonus",
+            "artifact_bonus",
+        )
+        # Skip the manual artifact computation + mastery loop below
+        # when the mod has provided artifact_bonus/mastery_bonus —
+        # those are GAME TRUTH and re-computing introduces drift.
+        skip_manual_artifacts = "artifact_bonus" in computed
+        skip_manual_masteries = "mastery_bonus" in computed
+        stat_field_names = {HP: "HP", ATK: "ATK", DEF: "DEF", SPD: "SPD",
+                             CR: "CR", CD: "CD", RES: "RES", ACC: "ACC"}
+        for col in bonus_columns:
+            block = computed.get(col)
+            if not isinstance(block, dict):
+                continue
+            for stat_id, name in stat_field_names.items():
+                v = block.get(name, 0) or 0
+                if not v:
+                    continue
+                # CR/CD come back as Fixed (0..1) sometimes; rescale to %.
+                if stat_id in (CR, CD) and 0 < v < 5:
+                    v *= 100
+                scaled[stat_id] += v
+
+        # Empowerment SPD/ACC/RES/CR/CD aren't in `empower_bonus` (mod
+        # only returns HP/ATK/DEF for that column) — add from table.
         emp_table = EMPOWERMENT_BONUSES.get("legendary" if rarity >= 5 else "epic", [])
         if emp_level < len(emp_table):
             _, emp_acc, emp_res, emp_spd, emp_cd, emp_cr = emp_table[emp_level]
-            scaled[SPD] = scaled.get(SPD, 0) + emp_spd
-            scaled[ACC] = scaled.get(ACC, 0) + emp_acc
-            scaled[RES] = scaled.get(RES, 0) + emp_res
-            scaled[CD]  = scaled.get(CD, 0)  + emp_cd
-            scaled[CR]  = scaled.get(CR, 0)  + emp_cr
-        # Add arena bonus if computed (currently 0 due to param issue)
-        for stat in (HP, ATK, DEF):
-            stat_name = {HP: "HP", ATK: "ATK", DEF: "DEF"}[stat]
-            scaled[stat] += arena_b.get(stat_name, 0)
-        # Add Great Hall bonus
-        for stat in (HP, ATK, DEF, ACC, RES, CD):
-            stat_name = {HP: "HP", ATK: "ATK", DEF: "DEF", ACC: "ACC", RES: "RES", CD: "CD"}[stat]
-            scaled[stat] += gh_b.get(stat_name, 0)
-        # Add relic bonus
-        rl_b = computed.get("relic_bonus", {})
-        for stat in (HP, ATK, DEF):
-            stat_name = {HP: "HP", ATK: "ATK", DEF: "DEF"}[stat]
-            scaled[stat] += rl_b.get(stat_name, 0)
+            scaled[SPD] += emp_spd
+            scaled[ACC] += emp_acc
+            scaled[RES] += emp_res
+            scaled[CD]  += emp_cd
+            scaled[CR]  += emp_cr
     else:
         # Fallback: estimated multipliers for heroes not in computed stats
         # Raid rarity codes: 1=Common, 2=Uncommon, 3=Rare, 4=Epic, 5=Legendary.
@@ -282,15 +296,25 @@ def calc_stats(hero, artifacts, account):
     # the mastery_ids the user has actually selected. Projection mode (set
     # via hero["_project_full_masteries"] = True by run_potential_team) treats
     # the hero as having every stat-bonus mastery, regardless of selection.
+    # SKIP when computed.mastery_bonus is present — the mod has already
+    # summed the user's actual mastery bonuses (game truth, DRY).
     if hero.get("_project_full_masteries"):
         _apply_mastery_stat_bonuses(scaled, _ALL_STAT_BONUS_MASTERY_IDS)
-    else:
+    elif not (computed and "mastery_bonus" in computed):
         _apply_mastery_stat_bonuses(scaled, hero.get("masteries", []) or [])
     project_glyph = hero.get("_project_max_glyphs", False)
     flat_b, pct_b, sets = {s:0 for s in range(1,9)}, {s:0 for s in range(1,9)}, {}
+    # When the mod has computed artifact_bonus for the hero's CURRENT
+    # gear, skip the manual sum (game truth wins). Set bonuses still
+    # need detection for "has_lifesteal" etc. flags below, so we still
+    # iterate `artifacts` to populate `sets` — just skip the flat/pct
+    # accumulation.
+    use_mod_artifact_bonus = bool(computed and "artifact_bonus" in computed)
     for art in artifacts:
         s_id = art.get("set", 0)
         sets[s_id] = sets.get(s_id, 0) + 1
+        if use_mod_artifact_bonus:
+            continue  # set count tracked, mod's artifact_bonus has the rest
         # HYBRID: the mod's flat_bonus only aggregates HP/ATK/DEF/SPD and includes Divine
         # enhancement bonuses (extra flat on 6★ rank-6 artifacts). For those 4 stats, prefer
         # flat_bonus (catches hidden Divine). For ACC/RES/CR/CD (which flat_bonus doesn't
@@ -331,21 +355,44 @@ def calc_stats(hero, artifacts, account):
                     pct_b[stat] += delta
 
     set_pct = {s:0 for s in range(1,9)}
+    set_flat = {s:0 for s in range(1,9)}
     active_sets = set()
     for s_id, cnt in sets.items():
         info = SET_BONUSES.get(s_id)
         if info and cnt >= info[0]:
             active_sets.add(s_id)
-            num_complete = cnt // info[0]  # e.g., 6 speed pieces = 3 complete sets
+            num_complete = cnt // info[0]
             for stat, val in info[1].items():
-                if stat in (ACC, RES): flat_b[stat] += val * num_complete
-                else: set_pct[stat] += val * num_complete
+                if stat in (ACC, RES):
+                    set_flat[stat] += val * num_complete
+                    if not use_mod_artifact_bonus:
+                        flat_b[stat] += val * num_complete
+                else:
+                    set_pct[stat] += val * num_complete
 
-    # Lore of Steel mastery (500343, Support T4 col 3 per raid_data.MASTERY_IDS):
-    # +15% to ALL basic set bonuses. Confirmed empirically against live in-game speeds.
+    # Lore of Steel (mastery 500343, Support tree): +15% to all set
+    # bonuses. The mod's CalcArtifactsBonus returns substats + set
+    # bonuses WITHOUT the LoS multiplier (verified against Ninja
+    # 2026-05-02: artifact_bonus.SPD=103 = 91 substat + 12 from
+    # 2-piece Speed set, with LoS the game shows total 205 = +2
+    # extra). Game UI attributes that delta to the "Masteries"
+    # column. Compute the delta here so totals match game-truth.
     hero_masteries = hero.get("masteries", []) or []
     has_lore_of_steel = MASTERY_IDS["lore_of_steel"] in hero_masteries  # 500343
-    if has_lore_of_steel:
+    if use_mod_artifact_bonus and has_lore_of_steel:
+        # LoS multiplies the SET portion of the artifact bonus by 15%.
+        # Set bonuses scale BASE stats — so the LoS delta = base * set% * 0.15.
+        # base_computed (the bare unscaled base) is the reference, NOT
+        # the cumulative `scaled` total.
+        bc_for_los = computed.get("base_computed", {}) if computed else {}
+        bc_lookup = {HP: bc_for_los.get("HP", 0), ATK: bc_for_los.get("ATK", 0),
+                     DEF: bc_for_los.get("DEF", 0), SPD: bc_for_los.get("SPD", 0)}
+        for s in (HP, ATK, DEF, SPD):
+            delta = bc_lookup[s] * (set_pct[s] / 100.0) * 0.15
+            scaled[s] += delta
+        for s in (ACC, RES):
+            scaled[s] += set_flat[s] * 0.15
+    elif not use_mod_artifact_bonus and has_lore_of_steel:
         for s in range(1, 9):
             set_pct[s] = round(set_pct[s] * 1.15, 2)
 
@@ -353,13 +400,24 @@ def calc_stats(hero, artifacts, account):
     def gh_flat(stat): return GH_BONUSES.get(stat,[0]*11)[min(gh.get(str(stat),0), 10)]
 
     stats = {}
-    for s in (HP, ATK, DEF):
-        stats[s] = scaled[s] * (1 + (pct_b[s] + set_pct.get(s,0) + ARENA_PCT)/100) + flat_b[s] + gh_flat(s)
-    stats[SPD] = scaled[SPD] * (1 + (pct_b[SPD] + set_pct.get(SPD,0))/100) + flat_b[SPD]
-    stats[CR] = min(100, scaled[CR] + pct_b[CR] + set_pct.get(CR,0) + flat_b[CR])
-    stats[CD] = scaled[CD] + pct_b[CD] + set_pct.get(CD,0) + flat_b[CD] + gh_flat(CD)
-    stats[RES] = scaled[RES] + flat_b[RES] + pct_b[RES] + gh_flat(RES)
-    stats[ACC] = scaled[ACC] + flat_b[ACC] + pct_b[ACC] + gh_flat(ACC)
+    if use_mod_artifact_bonus:
+        # `scaled` already contains base + every column-bonus from the
+        # mod (artifact_bonus, mastery_bonus, affinity_bonus, etc.).
+        # Just copy through — no extra math, no double-counting.
+        for s in (HP, ATK, DEF, SPD, CR, CD, RES, ACC):
+            stats[s] = scaled[s]
+        # CR is NOT clamped here — game shows raw CR (e.g. 119%) in the
+        # Total Stats panel; the per-roll cap (100%) is enforced inside
+        # the sim's hit loop. Useful to retain for builds where excess
+        # CR offsets debuff "Decrease C. RATE" or RES-based crit RNG.
+    else:
+        for s in (HP, ATK, DEF):
+            stats[s] = scaled[s] * (1 + (pct_b[s] + set_pct.get(s,0) + ARENA_PCT)/100) + flat_b[s] + gh_flat(s)
+        stats[SPD] = scaled[SPD] * (1 + (pct_b[SPD] + set_pct.get(SPD,0))/100) + flat_b[SPD]
+        stats[CR] = scaled[CR] + pct_b[CR] + set_pct.get(CR,0) + flat_b[CR]
+        stats[CD] = scaled[CD] + pct_b[CD] + set_pct.get(CD,0) + flat_b[CD] + gh_flat(CD)
+        stats[RES] = scaled[RES] + flat_b[RES] + pct_b[RES] + gh_flat(RES)
+        stats[ACC] = scaled[ACC] + flat_b[ACC] + pct_b[ACC] + gh_flat(ACC)
     stats["sets"] = active_sets
     stats["has_toxic"] = 16 in active_sets      # Toxic: 2.5% poison chance
     stats["has_savage"] = 10 in active_sets      # Savage: ignore 25% DEF
@@ -368,6 +426,12 @@ def calc_stats(hero, artifacts, account):
     stats["has_stalwart"] = 26 in active_sets    # Stalwart: -30% AoE dmg (FIXED: was 22)
     stats["has_regen"] = 30 in active_sets       # Regeneration: 15% HP/turn
     stats["has_immortal"] = 36 in active_sets    # Immortal: 3% HP/turn + 15% HP
+
+    # Pass through blessing data (id + grade) so the sim can resolve
+    # per-hero effects like Brimstone Smite chance from grade.
+    bl = hero.get("blessing")
+    if isinstance(bl, dict):
+        stats["blessing"] = bl
 
     return stats
 

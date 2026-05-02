@@ -298,107 +298,17 @@ namespace RaidAutomation
                     int ascendGrade = IntProp(dblAscend, "Grade");
                     int blessingId = 0;
 
-                    // BlessingId is Nullable<BlessingTypeId> (IL2CPP nullable enum)
-                    // Try multiple approaches to read it:
-                    try
-                    {
-                        // Approach 1: Direct property with HasValue/Value
-                        var blessingProp = dblAscend.GetType().GetProperty("BlessingId");
-                        if (blessingProp != null)
-                        {
-                            var rawVal = blessingProp.GetValue(dblAscend);
-                            if (rawVal != null)
-                            {
-                                // IL2CPP Nullable<T> has HasValue and Value properties
-                                var hasValueProp = rawVal.GetType().GetProperty("HasValue");
-                                var valueProp = rawVal.GetType().GetProperty("Value");
-                                if (hasValueProp != null && valueProp != null)
-                                {
-                                    bool hasValue = (bool)hasValueProp.GetValue(rawVal);
-                                    if (hasValue)
-                                    {
-                                        var val = valueProp.GetValue(rawVal);
-                                        try { blessingId = Convert.ToInt32(val); } catch { }
-                                    }
-                                }
-                                else
-                                {
-                                    // Fallback: try direct ToString → parse
-                                    string s = rawVal.ToString();
-                                    if (!string.IsNullOrEmpty(s) && s != "0" && !s.Contains("Null"))
-                                        int.TryParse(s, out blessingId);
-                                }
-                            }
-                        }
-                    }
-                    catch { }
-
-                    // Approach 2: Try reading the backing field directly
-                    if (blessingId == 0)
-                    {
-                        try
-                        {
-                            var field = dblAscend.GetType().GetField("_blessingId",
-                                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                            if (field != null)
-                            {
-                                var val = field.GetValue(dblAscend);
-                                if (val != null) try { blessingId = Convert.ToInt32(val); } catch { }
-                            }
-                        }
-                        catch { }
-                    }
-
-                    // Approach 3: Enumerate all properties and try to find blessing-like values
-                    if (blessingId == 0)
-                    {
-                        try
-                        {
-                            foreach (var prop in dblAscend.GetType().GetProperties())
-                            {
-                                string pname = prop.Name.ToLower();
-                                if (pname.Contains("blessing") && pname != "blessingid")
-                                {
-                                    try
-                                    {
-                                        var val = prop.GetValue(dblAscend);
-                                        if (val != null)
-                                        {
-                                            int tryId = 0;
-                                            try { tryId = Convert.ToInt32(val); } catch { }
-                                            if (tryId > 0) { blessingId = tryId; break; }
-                                        }
-                                    }
-                                    catch { }
-                                }
-                            }
-                        }
-                        catch { }
-                    }
+                    // BlessingId is Nullable<BlessingTypeId> (IL2CPP nullable enum).
+                    // The .Value property getter returns marshaled garbage for
+                    // IL2CPP Nullable wrappers — read the lowercase backing
+                    // fields `hasValue` and `value` directly. Same pattern as
+                    // StaticData.cs SerializeValue's Nullable handling.
+                    blessingId = ReadIl2CppNullableEnumInt(
+                        Prop(dblAscend, "BlessingId"));
 
                     if (blessingId > 0)
-                        sb.Append(",\"blessing\":{\"id\":" + blessingId + ",\"grade\":" + ascendGrade + "}");
-                    else
-                    {
-                        // Debug: output all DoubleAscendData properties for diagnosis
-                        sb.Append(",\"_dbl_ascend_debug\":{\"grade\":" + ascendGrade);
-                        try
-                        {
-                            foreach (var prop in dblAscend.GetType().GetProperties())
-                            {
-                                try
-                                {
-                                    var val = prop.GetValue(dblAscend);
-                                    string vs = val != null ? val.ToString() : "null";
-                                    if (vs.Length < 50)
-                                        sb.Append(",\"" + prop.Name + "\":\"" + vs.Replace("\"", "'") + "\"");
-                                }
-                                catch { }
-                            }
-                        }
-                        catch { }
-                        sb.Append("}");
-                    }
+                        sb.Append(",\"blessing\":{\"id\":" + blessingId +
+                                  ",\"grade\":" + ascendGrade + "}");
                 }
             }
             catch { }
