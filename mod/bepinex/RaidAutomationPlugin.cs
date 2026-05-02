@@ -2078,20 +2078,53 @@ namespace RaidAutomation
                             if (ae != null)
                             {
                                 skillTypeId = IntProp(ae, "SkillTypeId");
-                                // Fallback: managed property returns 0 for some
-                                // damage events (boss-source AppliedEffects).
-                                // Read raw IL2CPP memory at AppliedEffect+0x28
-                                // (SkillTypeId field per Il2CppDumper layout).
-                                if (skillTypeId == 0 && ae is Il2CppSystem.Object il2obj)
+                            }
+                            // Fallback: native memory walk via EffectContext.
+                            // Boss-source events have AppliedEffect=null at
+                            // the EffectContext+0x40 offset; the actual skill
+                            // info lives in SkillContext+SomeField. Try the
+                            // top-level AppliedEffect first, then walk
+                            // SkillContext (offset 0x98) for the boss path.
+                            if (skillTypeId == 0 && eff is Il2CppSystem.Object il2eff)
+                            {
+                                try
                                 {
-                                    try
+                                    IntPtr effPtr = il2eff.Pointer;
+                                    if ((long)effPtr > 0x10000)
                                     {
-                                        IntPtr aePtr = il2obj.Pointer;
+                                        // EffectContext.AppliedEffect @0x40
+                                        IntPtr aePtr = Marshal.ReadIntPtr(effPtr + 0x40);
                                         if ((long)aePtr > 0x10000)
+                                        {
                                             skillTypeId = Marshal.ReadInt32(aePtr + 0x28);
+                                        }
+                                        // SkillContext path: offset 0x98 →
+                                        // walk to find skill TypeId. Per the
+                                        // diag schema dump 2026-04-13: EffectContext.
+                                        // SkillContext:0x98 → BattleSkill → Type:0x10
+                                        // → SkillType.Id:0x10
+                                        if (skillTypeId == 0)
+                                        {
+                                            IntPtr skCtx = Marshal.ReadIntPtr(effPtr + 0x98);
+                                            if ((long)skCtx > 0x10000)
+                                            {
+                                                // SkillContext.Skill (BattleSkill) @0x28 typically
+                                                IntPtr battleSk = Marshal.ReadIntPtr(skCtx + 0x28);
+                                                if ((long)battleSk > 0x10000)
+                                                {
+                                                    // BattleSkill.Type (SkillType) @0x10
+                                                    IntPtr skType = Marshal.ReadIntPtr(battleSk + 0x10);
+                                                    if ((long)skType > 0x10000)
+                                                    {
+                                                        // SkillType.Id @0x10
+                                                        skillTypeId = Marshal.ReadInt32(skType + 0x10);
+                                                    }
+                                                }
+                                            }
+                                        }
                                     }
-                                    catch { }
                                 }
+                                catch { }
                             }
                             var et = Prop(eff, "Effect");
                             if (et != null)
