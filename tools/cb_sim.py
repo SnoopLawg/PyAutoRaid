@@ -776,17 +776,24 @@ class CBSimulator:
                     continue
 
                 # Calculate base damage taken.
-                # Formula: damage = raw × C / (C + DEF), where C is the
-                # boss's "level constant" derived from captured events.
-                # Median C across all 5 team members from real CB UNM
-                # battle: 1100 (range 800-1200 by element). Force heroes
-                # (strong vs Magic boss) get C≈800; Void/Magic ~1100.
-                # Sim's previous C=2220 was 2× too high — heroes took
-                # 50% more damage than real, killing sim survival.
+                # Formula: damage = raw × C / (C + DEF). Per-hero/hit-type
+                # analysis from 1209 captured events 2026-05-02:
+                #   Normal hit, Void/Magic hero: C ≈ 2200
+                #   Normal hit, Force hero (strong vs Magic): C ≈ 540
+                #   Unspec (mixed hit types): C ≈ 1100 — DOMINANT (85%
+                #     of hits don't have explicit hit_type captured)
+                # Population-weighted median = 1100. Use this until sim
+                # rolls hit types per-attack, when per-hit-type C should
+                # apply.
                 target_def = c.stats.get(DEF, 1000)
                 if c.has_buff("inc_def"):
                     target_def *= 1.6  # DEF Up = +60%
-                C_DEF = 1100  # GAME-DERIVED 2026-05-02
+                # Force heroes get extra mitigation (boss WEAK vs Force):
+                # captured Force C ≈ 850 vs neutral ≈ 1100. The 0.80
+                # affinity is ALREADY in calc_raw, so this delta is on
+                # top of that.
+                FORCE_ELEM = 2
+                C_DEF = 850 if c.element == FORCE_ELEM else 1100
                 def_reduction = C_DEF / (C_DEF + target_def)
 
                 # Incoming affinity: when boss has affinity advantage
