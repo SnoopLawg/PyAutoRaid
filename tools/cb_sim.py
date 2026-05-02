@@ -45,7 +45,7 @@ from cb_constants import (
     WM_PROC_RATE, GS_PROC_RATE, LIFESTEAL_RATE, CONT_HEAL_RATE,
     LEECH_HEAL_RATE,
     WEAK_HIT_DMG_MULT, WEAK_HIT_DEBUFF_FAIL, STRONG_HIT_DMG_MULT,
-    CB_ATTACK_MULT, CB_STUN_HP_FRACTION,
+    CB_ATTACK_MULT, CB_STUN_HP_FRACTION, NORMAL_HIT_BASE_FACTOR,
     CB_HP_BY_DIFFICULTY, CB_SPEED_BY_DIFFICULTY,
     CB_ATK,
     FA_CAP_BIG, FA_CAP_MEDIUM, FA_CAP_SMALL, FA_CAP_DOT,
@@ -775,11 +775,19 @@ class CBSimulator:
                     c.death_turn = self.cb_turn
                     continue
 
-                # Calculate base damage taken
+                # Calculate base damage taken.
+                # Formula: damage = raw × C / (C + DEF), where C is the
+                # boss's "level constant" derived from captured events.
+                # Median C across all 5 team members from real CB UNM
+                # battle: 1100 (range 800-1200 by element). Force heroes
+                # (strong vs Magic boss) get C≈800; Void/Magic ~1100.
+                # Sim's previous C=2220 was 2× too high — heroes took
+                # 50% more damage than real, killing sim survival.
                 target_def = c.stats.get(DEF, 1000)
                 if c.has_buff("inc_def"):
                     target_def *= 1.6  # DEF Up = +60%
-                def_reduction = 1 - target_def / (target_def + 2220)
+                C_DEF = 1100  # GAME-DERIVED 2026-05-02
+                def_reduction = C_DEF / (C_DEF + target_def)
 
                 # Incoming affinity: when boss has affinity advantage
                 # against this hero, more attacks LAND (+15% crit chance,
@@ -818,7 +826,13 @@ class CBSimulator:
                     crit_factor = 1.0 + cb_cr * cb_cd_mult
                 else:
                     crit_factor = (1.0 + cb_cd_mult) if self.rng.random() < cb_cr else 1.0
-                aoe_dmg = (CB_ATK * attack_mult * def_reduction * dec_atk_mult
+                # Apply Normal-hit base factor (0.85) — derived from
+                # captured calc_raw/p_atk = 0.85 across all boss events.
+                # Already includes any "scrub" factor the game applies
+                # to all incoming damage; do NOT also apply a separate
+                # 1.0 multiplier.
+                aoe_dmg = (CB_ATK * attack_mult * NORMAL_HIT_BASE_FACTOR
+                           * def_reduction * dec_atk_mult
                            * fury_mult * incoming_mult * crit_factor)
 
                 # Damage reduction buff (e.g., Ma'Shalled A3: 50% reduction)

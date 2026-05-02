@@ -166,14 +166,17 @@ CB_SPEED_BY_DIFFICULTY: dict[str, float] = {
 
 # Game-truth boss ATK = 6993 (verified 2026-05-02 from captured
 # `p_atk` in damage events; matches HellHades's screenshot exactly).
-# However sim's DEF formula `1 - DEF/(DEF+2220)` is too weak at this
-# ATK level: Maneater takes 1975 in real but 7062 in sim with 6993.
-# Real per-hit damage ≈ ATK × 0.85 × def_factor where the constants
-# need re-derivation from clean events with no DEF Down/Inc DEF.
-# Until that's done, use 3950 (= 6993 × 0.565, empirically calibrated
-# against observed real damage to Maneater) — this is a calibration
-# hack pending DEF formula derivation. See tools/derive_damage_formula.py.
-CB_ATK: int = 3950          # CALIBRATED — game ATK is 6993, formula factor 0.565
+# Combined with Normal-hit base factor 0.85 (also derived from
+# captured `calc_raw / p_atk` ratios), the per-hit pre-mitigation
+# damage is: ATK × skill_mult × 0.85.
+CB_ATK: int = 6993          # GAME-TRUTH (verified via /damage hooks 2026-05-02)
+
+# Normal-hit base damage factor — derived empirically 2026-05-02.
+# Every boss damage event with hit="Normal" shows calc_raw/p_atk ≈ 0.85
+# (regardless of affinity, target, skill). Suggests the game applies
+# a base 0.85 factor to all damage before crit/crush/glance modifiers.
+# Sim was implicitly using 1.0, over-predicting damage by 18%.
+NORMAL_HIT_BASE_FACTOR: float = 0.85   # GAME-EMPIRICAL
 
 
 # ============================================================================

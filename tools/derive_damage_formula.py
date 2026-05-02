@@ -109,32 +109,35 @@ def analyze_boss_atk(events: list[dict]) -> None:
 
 
 def analyze_hit_type_factors(events: list[dict]) -> None:
-    """Derive crit/crush/glance damage factors from captured events.
+    """Derive Normal/Crushing/Critical/Glancing factors from captured events.
 
-    For events with the same producer/skill but different hit types,
-    the calc_raw ratio reveals the hit-type multiplier.
+    For each hit type, calc_raw / (p_atk * skill_multiplier) reveals
+    the hit-type damage factor. Group by (skill, hit_type) and look
+    at the calc_raw distribution.
     """
-    # Group by skill, find tuples of {hit: damage_for_this_hit}
-    by_skill_atk = defaultdict(list)
+    by_skill_hit = defaultdict(list)
     for e in events:
-        sk = e.get("skill_type_id") or e.get("skill_id") or 0
+        sk = e.get("skill_type_id") or 0
         atk = e.get("p_atk", 0)
         cr = e.get("calc_raw", 0)
-        hit = e.get("hit", "Normal")
-        if sk and atk and cr > 0:
-            by_skill_atk[(sk, atk)].append((hit, cr))
-    # For each (skill, atk) group, find mean calc_raw per hit type
-    by_hit = defaultdict(list)
-    for (sk, atk), pairs in by_skill_atk.items():
-        for hit, cr in pairs:
-            by_hit[hit].append(cr / atk)
+        hit = e.get("hit") or "_unspecified"
+        if atk > 0 and cr > 0:
+            by_skill_hit[(sk, hit)].append(cr / atk)
+
     print("=== Hit-type damage factors (calc_raw / p_atk) ===")
-    print("  Each hit type's average ratio reveals the skill multiplier × hit factor.")
-    for hit, ratios in sorted(by_hit.items()):
-        if len(ratios) < 5:
-            continue
-        print(f"  hit={hit}  n={len(ratios)}  mean ratio={mean(ratios):.4f}, "
-              f"median={median(ratios):.4f}")
+    print("  groups by (skill_id, hit_type). The ratio = skill_mult * hit_factor.")
+    print("  Compare ratios across hit types of the SAME skill to extract pure hit factor.")
+    by_hit_overall = defaultdict(list)
+    for (sk, hit), ratios in sorted(by_skill_hit.items()):
+        if len(ratios) >= 3:
+            by_hit_overall[hit].extend(ratios)
+            print(f"  skill={sk:>6}  hit={hit:<14s}  n={len(ratios):>3}  "
+                  f"mean={mean(ratios):.4f}  median={median(ratios):.4f}")
+    print()
+    print("  Aggregated per hit type:")
+    for hit, ratios in sorted(by_hit_overall.items()):
+        print(f"  hit={hit:<14s}  n={len(ratios):>4}  mean={mean(ratios):.4f}  "
+              f"median={median(ratios):.4f}  min={min(ratios):.4f}  max={max(ratios):.4f}")
 
 
 def main() -> int:

@@ -262,6 +262,23 @@ def _condition_fires_vs_cb_boss(condition: str) -> bool:
     return True
 
 
+def _condition_modifies_chance(condition: str, hero_cr: float) -> float:
+    """Return a chance multiplier for conditional effects that gate on
+    hit-roll outcomes (e.g. `isCritical` only fires when the attack
+    crits). Returns 1.0 when no such condition is detected.
+
+    Maneater A1 places DEC ATK 50% only on crit hits. With his CR ~32%,
+    the effective debuff land rate is 0.32 × 1.0 = 0.32 (not 1.0).
+    """
+    cond = (condition or "").strip().lower()
+    if not cond:
+        return 1.0
+    if "iscritical" in cond:
+        # Skill places its debuff only when the attack crits.
+        return max(0.0, min(1.0, hero_cr))
+    return 1.0
+
+
 def _supplement_skill_from_static(skill_id: int, label: str, hero_eff: dict,
                                    hero_sd: dict, hero_name: str = "") -> None:
     """Merge effects the legacy parser missed, using static data via effect_engine.
