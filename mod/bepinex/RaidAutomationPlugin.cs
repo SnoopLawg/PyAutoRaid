@@ -1850,7 +1850,7 @@ namespace RaidAutomation
                 }
                 catch (Exception ex) { sb.Append(",\"il2cpp_err\":\"").Append(Esc(ex.Message)).Append("\""); }
                 sb.Append("}");
-                lock (_tickLog) { if (_tickLog.Count < 3000) _tickLog.Add(sb.ToString()); }
+                lock (_tickLog) { if (_tickLog.Count < 20000) _tickLog.Add(sb.ToString()); }
             }
             catch { }
         }
@@ -2175,7 +2175,7 @@ namespace RaidAutomation
                 if (!string.IsNullOrEmpty(tEff)) sb.Append(",\"t_eff\":").Append(tEff);
                 sb.Append("}");
                 string entry = sb.ToString();
-                lock (_tickLog) { if (_tickLog.Count < 3000) _tickLog.Add(entry); }
+                lock (_tickLog) { if (_tickLog.Count < 20000) _tickLog.Add(entry); }
             }
             catch { }
         }
@@ -2271,7 +2271,7 @@ namespace RaidAutomation
             {
                 string ae = ExtractAppliedEffectFromCx(__args);
                 string entry = "{\"kind\":\"apply_status\",\"tick\":" + _battleCommandCount + ae + ",\"args\":" + DumpEventArgs(__args ?? new object[0]) + "}";
-                lock (_tickLog) { if (_tickLog.Count < 3000) _tickLog.Add(entry); }
+                lock (_tickLog) { if (_tickLog.Count < 20000) _tickLog.Add(entry); }
             }
             catch { }
         }
@@ -2283,7 +2283,7 @@ namespace RaidAutomation
             {
                 string ae = ExtractAppliedEffectFromCx(__args);
                 string entry = "{\"kind\":\"remove_status\",\"tick\":" + _battleCommandCount + ae + ",\"args\":" + DumpEventArgs(__args ?? new object[0]) + "}";
-                lock (_tickLog) { if (_tickLog.Count < 3000) _tickLog.Add(entry); }
+                lock (_tickLog) { if (_tickLog.Count < 20000) _tickLog.Add(entry); }
             }
             catch { }
         }
@@ -2295,7 +2295,7 @@ namespace RaidAutomation
             {
                 string ae = ExtractAppliedEffectFromCx(__args);
                 string entry = "{\"kind\":\"duration_change\",\"tick\":" + _battleCommandCount + ae + ",\"args\":" + DumpEventArgs(__args ?? new object[0]) + "}";
-                lock (_tickLog) { if (_tickLog.Count < 3000) _tickLog.Add(entry); }
+                lock (_tickLog) { if (_tickLog.Count < 20000) _tickLog.Add(entry); }
             }
             catch { }
         }
@@ -2351,7 +2351,7 @@ namespace RaidAutomation
                 }
                 catch { }
                 sb.Append("]}");
-                lock (_tickLog) { if (_tickLog.Count < 3000) _tickLog.Add(sb.ToString()); }
+                lock (_tickLog) { if (_tickLog.Count < 20000) _tickLog.Add(sb.ToString()); }
             }
             catch { }
         }
@@ -2431,7 +2431,7 @@ namespace RaidAutomation
                 }
                 catch { }
                 sb.Append("]}");
-                lock (_tickLog) { if (_tickLog.Count < 3000) _tickLog.Add(sb.ToString()); }
+                lock (_tickLog) { if (_tickLog.Count < 20000) _tickLog.Add(sb.ToString()); }
             }
             catch { }
         }
@@ -2451,7 +2451,7 @@ namespace RaidAutomation
                               + ",\"new_turn_left\":" + __0
                               + ",\"lifetime\":" + lifetime
                               + ",\"skill_type_id\":" + skillTypeId + "}";
-                lock (_tickLog) { if (_tickLog.Count < 3000) _tickLog.Add(entry); }
+                lock (_tickLog) { if (_tickLog.Count < 20000) _tickLog.Add(entry); }
             }
             catch { }
         }
@@ -2502,7 +2502,7 @@ namespace RaidAutomation
                 if (sc == null)
                 {
                     string d = "{\"kind\":\"diag_cmd\",\"tick\":" + _battleCommandCount + ",\"bc_type\":" + bcType + ",\"err\":\"sc_null\"}";
-                    lock (_tickLog) { if (_tickLog.Count < 3000) _tickLog.Add(d); }
+                    lock (_tickLog) { if (_tickLog.Count < 20000) _tickLog.Add(d); }
                     return;
                 }
                 int skillId = IntProp(sc, "SkillTypeId");
@@ -2518,12 +2518,12 @@ namespace RaidAutomation
                               + ",\"target_id\":" + tgtId
                               + ",\"skill_type_id\":" + skillId
                               + ",\"source\":" + source + "}";
-                lock (_tickLog) { if (_tickLog.Count < 3000) _tickLog.Add(entry); }
+                lock (_tickLog) { if (_tickLog.Count < 20000) _tickLog.Add(entry); }
             }
             catch (Exception ex)
             {
                 string d = "{\"kind\":\"diag_cmd\",\"tick\":" + _battleCommandCount + ",\"err\":\"" + Esc(ex.Message) + "\"}";
-                lock (_tickLog) { if (_tickLog.Count < 3000) _tickLog.Add(d); }
+                lock (_tickLog) { if (_tickLog.Count < 20000) _tickLog.Add(d); }
             }
 
             try
@@ -2862,7 +2862,7 @@ namespace RaidAutomation
                         sbtl.Append("]}");
                         lock (_tickLog)
                         {
-                            if (_tickLog.Count < 3000)
+                            if (_tickLog.Count < 20000)
                                 _tickLog.Add(sbtl.ToString());
                         }
                     }
@@ -2977,7 +2977,7 @@ namespace RaidAutomation
                     }
                 }
                 sbe.Append("]}");
-                lock (_tickLog) { if (_tickLog.Count < 3000) _tickLog.Add(sbe.ToString()); }
+                lock (_tickLog) { if (_tickLog.Count < 20000) _tickLog.Add(sbe.ToString()); }
             }
             catch { }
 
