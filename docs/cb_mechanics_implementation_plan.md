@@ -118,12 +118,27 @@ phase if the current one moved team-total in the wrong direction.
 
 | Phase | Status | Expected delta |
 |---|---|---|
-| A — constants | 🔴 | UNM -16.6% → ?? |
+| A — constants | 🟢 | UNM -15.3% → -10.9% (commit 2bfc223) |
 | B — survival | 🔴 | per-hero attribution convergence |
 | C — damage formula | 🔴 | per-event ±2% |
 | D — DoT caps | 🔴 | per-tick ±1% |
 | E — boss skills | 🔴 | stun damage match |
 | F — research | 🔴 | TBD |
+
+## Phase A — Done 2026-05-01 (commit 2bfc223)
+
+Landed 4 constants:
+- `WEAK_HIT_DMG_MULT: 0.70 → 0.80`
+- `STRONG_HIT_DMG_MULT: 1.30 → 1.0`
+- `GATHERING_FURY_RATE_PER_TURN: 0.85 → 0.75`
+- `UNM_DEF: 4878 → 1520`
+
+Regression delta: UNM mean -15.3% → -10.9%, abs_mean 15.3% → 11.5%.
+
+GS_DMG and HP_BURN_DMG were already at the correct 75K cap value
+(matched skill 200008's Legendary-rarity cap rule), so no change
+needed. Per-difficulty Poison cap mapping also wasn't changed since
+sim only runs UNM and the UNM cap (50K) was already correct.
 
 The goal is **1:1 game calculation** per the user's directive. Only
 RNG remains is weak hits, debuff land, crit chance.
