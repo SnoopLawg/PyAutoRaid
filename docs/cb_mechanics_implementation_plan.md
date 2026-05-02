@@ -120,7 +120,7 @@ phase if the current one moved team-total in the wrong direction.
 |---|---|---|
 | A — constants | 🟢 | UNM -15.3% → -10.9% (commit 2bfc223) |
 | B — survival | 🟡 partial | UNM -10.9% → -11.3% (commit 833a5f6) |
-| C — damage formula | 🔴 | per-event ±2% |
+| C — hit types + per-log affinity | 🟢 | -9.1% → -8.7% (commit ee698be) |
 | D — DoT caps | 🟢 | -11.3% → -9.1% (commit 8528858) |
 | E — boss skills | 🔴 | stun damage match |
 | F — research | 🔴 | TBD |
