@@ -1,0 +1,4248 @@
+{
+  "_meta": {
+    "fetched_at": "2026-05-02T00:18:35.049404+00:00",
+    "scene": "Village",
+    "mod_version": "2.0-bepinex",
+    "unity": "6000.0.60f1"
+  },
+  "data": [
+    {
+      "Id": "Region1",
+      "Name": {
+        "DefaultValue": "Castle",
+        "Key": "l10n:region/name?id=101#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 0
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          1014001,
+          1014002,
+          1014003,
+          1014004,
+          1014005,
+          1014006,
+          1014007
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "Region2",
+      "Name": {
+        "DefaultValue": "Palace",
+        "Key": "l10n:region/name?id=102#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 0
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          1024001,
+          1024002,
+          1024003,
+          1024004,
+          1024005,
+          1024006,
+          1024007
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "Region3",
+      "Name": {
+        "DefaultValue": "Catacombs",
+        "Key": "l10n:region/name?id=103#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 0
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          1034001,
+          1034002,
+          1034003,
+          1034004,
+          1034005,
+          1034006,
+          1034007
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "Region4",
+      "Name": {
+        "DefaultValue": "Region4",
+        "Key": "l10n:region/name?id=104#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 0
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          1044001,
+          1044002,
+          1044003,
+          1044004,
+          1044005,
+          1044006,
+          1044007
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "Region5",
+      "Name": {
+        "DefaultValue": "Region5",
+        "Key": "l10n:region/name?id=105#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 0
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          1054001,
+          1054002,
+          1054003,
+          1054004,
+          1054005,
+          1054006,
+          1054007
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "Region6",
+      "Name": {
+        "DefaultValue": "Region6",
+        "Key": "l10n:region/name?id=106#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 0
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          1064001,
+          1064002,
+          1064003,
+          1064004,
+          1064005,
+          1064006,
+          1064007
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "Region7",
+      "Name": {
+        "DefaultValue": "Region7",
+        "Key": "l10n:region/name?id=107#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 0
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          1074001,
+          1074002,
+          1074003,
+          1074004,
+          1074005,
+          1074006,
+          1074007
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "Region8",
+      "Name": {
+        "DefaultValue": "Region8",
+        "Key": "l10n:region/name?id=108#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 0
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          1084001,
+          1084002,
+          1084003,
+          1084004,
+          1084005,
+          1084006,
+          1084007
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "Region9",
+      "Name": {
+        "DefaultValue": "Region9",
+        "Key": "l10n:region/name?id=109#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 0
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          1094001,
+          1094002,
+          1094003,
+          1094004,
+          1094005,
+          1094006,
+          1094007
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "Region10",
+      "Name": {
+        "DefaultValue": "Region10",
+        "Key": "l10n:region/name?id=110#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 0
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          1104001,
+          1104002,
+          1104003,
+          1104004,
+          1104005,
+          1104006,
+          1104007
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "Region11",
+      "Name": {
+        "DefaultValue": "Region11",
+        "Key": "l10n:region/name?id=111#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 0
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          1114001,
+          1114002,
+          1114003,
+          1114004,
+          1114005,
+          1114006,
+          1114007
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "Region12",
+      "Name": {
+        "DefaultValue": "Region12",
+        "Key": "l10n:region/name?id=112#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 0
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          1124001,
+          1124002,
+          1124003,
+          1124004,
+          1124005,
+          1124006,
+          1124007
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "VoidKeep",
+      "Name": {
+        "DefaultValue": "VoidKeep",
+        "Key": "l10n:region/name?id=201#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenDays": [
+          "Sunday"
+        ],
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 6
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          2019001,
+          2019002,
+          2019003,
+          2019004,
+          2019005,
+          2019006,
+          2019007,
+          2019008,
+          2019009,
+          2019010,
+          2019011,
+          2019012,
+          2019013,
+          2019014,
+          2019015,
+          2019016,
+          2019017,
+          2019018,
+          2019019,
+          2019020
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "SpiritKeep",
+      "Name": {
+        "DefaultValue": "SpiritKeep",
+        "Key": "l10n:region/name?id=202#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenDays": [
+          "Monday",
+          "Thursday"
+        ],
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 6
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          2029001,
+          2029002,
+          2029003,
+          2029004,
+          2029005,
+          2029006,
+          2029007,
+          2029008,
+          2029009,
+          2029010,
+          2029011,
+          2029012,
+          2029013,
+          2029014,
+          2029015,
+          2029016,
+          2029017,
+          2029018,
+          2029019,
+          2029020
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "MagicKeep",
+      "Name": {
+        "DefaultValue": "MagicKeep",
+        "Key": "l10n:region/name?id=203#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenDays": [
+          "Wednesday",
+          "Saturday"
+        ],
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 6
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          2039001,
+          2039002,
+          2039003,
+          2039004,
+          2039005,
+          2039006,
+          2039007,
+          2039008,
+          2039009,
+          2039010,
+          2039011,
+          2039012,
+          2039013,
+          2039014,
+          2039015,
+          2039016,
+          2039017,
+          2039018,
+          2039019,
+          2039020
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "ForceKeep",
+      "Name": {
+        "DefaultValue": "ForceKeep",
+        "Key": "l10n:region/name?id=204#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenDays": [
+          "Tuesday",
+          "Friday"
+        ],
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 6
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          2049001,
+          2049002,
+          2049003,
+          2049004,
+          2049005,
+          2049006,
+          2049007,
+          2049008,
+          2049009,
+          2049010,
+          2049011,
+          2049012,
+          2049013,
+          2049014,
+          2049015,
+          2049016,
+          2049017,
+          2049018,
+          2049019,
+          2049020
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "ArcaneKeep",
+      "Name": {
+        "DefaultValue": "ArcaneKeep",
+        "Key": "l10n:region/name?id=205#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 6
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          2059001,
+          2059002,
+          2059003,
+          2059004,
+          2059005,
+          2059006,
+          2059007,
+          2059008,
+          2059009,
+          2059010,
+          2059011,
+          2059012,
+          2059013,
+          2059014,
+          2059015,
+          2059016,
+          2059017,
+          2059018,
+          2059019,
+          2059020
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "DragonsLair",
+      "Name": {
+        "DefaultValue": "Dragons Lair",
+        "Key": "l10n:region/name?id=206#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 6
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          2062001,
+          2062002,
+          2062003,
+          2062004,
+          2062005,
+          2062006,
+          2062007,
+          2062008,
+          2062009,
+          2062010
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "IceGolemCave",
+      "Name": {
+        "DefaultValue": "Ice Golem Cave",
+        "Key": "l10n:region/name?id=207#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 6
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          2072001,
+          2072002,
+          2072003,
+          2072004,
+          2072005,
+          2072006,
+          2072007,
+          2072008,
+          2072009,
+          2072010
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "FireGolemCave",
+      "Name": {
+        "DefaultValue": "Fire Golem Cave",
+        "Key": "l10n:region/name?id=208#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 6
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          2082001,
+          2082002,
+          2082003,
+          2082004,
+          2082005,
+          2082006,
+          2082007,
+          2082008,
+          2082009,
+          2082010
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "SpiderCave",
+      "Name": {
+        "DefaultValue": "Spider Cave",
+        "Key": "l10n:region/name?id=209#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 6
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          2092001,
+          2092002,
+          2092003,
+          2092004,
+          2092005,
+          2092006,
+          2092007,
+          2092008,
+          2092009,
+          2092010
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "MinotaurCave",
+      "Name": {
+        "DefaultValue": "MinotaurCave",
+        "Key": "l10n:region/name?id=210#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 6
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          2109001,
+          2109002,
+          2109003,
+          2109004,
+          2109005,
+          2109006,
+          2109007,
+          2109008,
+          2109009,
+          2109010,
+          2109011,
+          2109012,
+          2109013,
+          2109014,
+          2109015
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "VoidDoubleAscendDungeon",
+      "Name": {
+        "DefaultValue": "VoidDoubleAscendDungeon",
+        "Key": "l10n:region/name?id=211#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenDays": [
+          "Sunday"
+        ],
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 42
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          2119001,
+          2119002,
+          2119003,
+          2119004,
+          2119005,
+          2119006,
+          2119007,
+          2119008,
+          2119009,
+          2119010,
+          2119011,
+          2119012,
+          2119013,
+          2119014,
+          2119015
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "SpiritDoubleAscendDungeon",
+      "Name": {
+        "DefaultValue": "SpiritDoubleAscendDungeon",
+        "Key": "l10n:region/name?id=212#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenDays": [
+          "Monday",
+          "Thursday"
+        ],
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 42
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          2129001,
+          2129002,
+          2129003,
+          2129004,
+          2129005,
+          2129006,
+          2129007,
+          2129008,
+          2129009,
+          2129010,
+          2129011,
+          2129012,
+          2129013,
+          2129014,
+          2129015
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "MagicDoubleAscendDungeon",
+      "Name": {
+        "DefaultValue": "MagicDoubleAscendDungeon",
+        "Key": "l10n:region/name?id=213#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenDays": [
+          "Wednesday",
+          "Saturday"
+        ],
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 42
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          2139001,
+          2139002,
+          2139003,
+          2139004,
+          2139005,
+          2139006,
+          2139007,
+          2139008,
+          2139009,
+          2139010,
+          2139011,
+          2139012,
+          2139013,
+          2139014,
+          2139015
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "ForceDoubleAscendDungeon",
+      "Name": {
+        "DefaultValue": "ForceDoubleAscendDungeon",
+        "Key": "l10n:region/name?id=214#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenDays": [
+          "Tuesday",
+          "Friday"
+        ],
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 42
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          2149001,
+          2149002,
+          2149003,
+          2149004,
+          2149005,
+          2149006,
+          2149007,
+          2149008,
+          2149009,
+          2149010,
+          2149011,
+          2149012,
+          2149013,
+          2149014,
+          2149015
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "ArtifactAscendDungeon",
+      "Name": {
+        "DefaultValue": "ArtifactAscendDungeon",
+        "Key": "l10n:region/name?id=216#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenDays": [
+          "Sunday",
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday"
+        ],
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 38
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          2169001,
+          2169002,
+          2169003,
+          2169004,
+          2169005,
+          2169006,
+          2169007,
+          2169008,
+          2169009,
+          2169010,
+          2169011,
+          2169012,
+          2169013,
+          2169014,
+          2169015,
+          2169016,
+          2169017,
+          2169018,
+          2169019,
+          2169020,
+          2169021,
+          2169022,
+          2169023,
+          2169024,
+          2169025
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "AccessoryAscendDungeon",
+      "Name": {
+        "DefaultValue": "AccessoryAscendDungeon",
+        "Key": "l10n:region/name?id=217#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenDays": [
+          "Sunday",
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday"
+        ],
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 38
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          2179001,
+          2179002,
+          2179003,
+          2179004,
+          2179005,
+          2179006,
+          2179007,
+          2179008,
+          2179009,
+          2179010,
+          2179011,
+          2179012,
+          2179013,
+          2179014,
+          2179015,
+          2179016,
+          2179017,
+          2179018,
+          2179019,
+          2179020,
+          2179021,
+          2179022,
+          2179023,
+          2179024,
+          2179025
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "EventDungeon",
+      "Name": {
+        "DefaultValue": "EventDungeon",
+        "Key": "l10n:region/name?id=218#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 6
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          2189001,
+          2189002,
+          2189003,
+          2189004,
+          2189005,
+          2189006,
+          2189007,
+          2189008,
+          2189009,
+          2189010,
+          2189011,
+          2189012,
+          2189013,
+          2189014,
+          2189015,
+          2189016,
+          2189017,
+          2189018,
+          2189019,
+          2189020,
+          2189021,
+          2189022,
+          2189023,
+          2189024,
+          2189025,
+          2189026,
+          2189027,
+          2189028,
+          2189029,
+          2189030,
+          2189031,
+          2189032,
+          2189033,
+          2189034,
+          2189035
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "Arena",
+      "Name": {
+        "DefaultValue": "BronzeArena",
+        "Key": "l10n:region/name?id=301#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 6
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          3019001,
+          3019002,
+          3019003,
+          3019004
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "AllianceBoss",
+      "Name": {
+        "DefaultValue": "AllianceBoss",
+        "Key": "l10n:region/name?id=401#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 0
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          4019001,
+          4019002,
+          4019003,
+          4019004,
+          4019005,
+          4019006,
+          4019007,
+          4019008,
+          4019009,
+          4019010,
+          4019011,
+          4019012,
+          4019013,
+          4019014,
+          4019015,
+          4019016,
+          4019017,
+          4019018,
+          4019019,
+          4019020,
+          4019021,
+          4019022,
+          4019023,
+          4019024
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "Fraction_BannerLords",
+      "Name": {
+        "DefaultValue": "Fraction_BannerLords",
+        "Key": "l10n:region/name?id=501#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 0
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          5012001,
+          5012002,
+          5012003,
+          5012004,
+          5012005,
+          5012006,
+          5012007,
+          5012008,
+          5012009,
+          5012010,
+          5012011,
+          5012012,
+          5012013,
+          5012014,
+          5012015,
+          5012016,
+          5012017,
+          5012018,
+          5012019,
+          5012020,
+          5012021
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "Fraction_HighElves",
+      "Name": {
+        "DefaultValue": "Fraction_HighElves",
+        "Key": "l10n:region/name?id=502#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 0
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          5022001,
+          5022002,
+          5022003,
+          5022004,
+          5022005,
+          5022006,
+          5022007,
+          5022008,
+          5022009,
+          5022010,
+          5022011,
+          5022012,
+          5022013,
+          5022014,
+          5022015,
+          5022016,
+          5022017,
+          5022018,
+          5022019,
+          5022020,
+          5022021
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "Fraction_SacredOrder",
+      "Name": {
+        "DefaultValue": "Fraction_SacredOrder",
+        "Key": "l10n:region/name?id=503#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 0
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          5032001,
+          5032002,
+          5032003,
+          5032004,
+          5032005,
+          5032006,
+          5032007,
+          5032008,
+          5032009,
+          5032010,
+          5032011,
+          5032012,
+          5032013,
+          5032014,
+          5032015,
+          5032016,
+          5032017,
+          5032018,
+          5032019,
+          5032020,
+          5032021
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "Fraction_OgrynTribes",
+      "Name": {
+        "DefaultValue": "Fraction_OgrynTribes",
+        "Key": "l10n:region/name?id=505#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 0
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          5052001,
+          5052002,
+          5052003,
+          5052004,
+          5052005,
+          5052006,
+          5052007,
+          5052008,
+          5052009,
+          5052010,
+          5052011,
+          5052012,
+          5052013,
+          5052014,
+          5052015,
+          5052016,
+          5052017,
+          5052018,
+          5052019,
+          5052020,
+          5052021
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "Fraction_LizardMen",
+      "Name": {
+        "DefaultValue": "Fraction_LizardMen",
+        "Key": "l10n:region/name?id=506#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 0
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          5062001,
+          5062002,
+          5062003,
+          5062004,
+          5062005,
+          5062006,
+          5062007,
+          5062008,
+          5062009,
+          5062010,
+          5062011,
+          5062012,
+          5062013,
+          5062014,
+          5062015,
+          5062016,
+          5062017,
+          5062018,
+          5062019,
+          5062020,
+          5062021
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "Fraction_Skinwalkers",
+      "Name": {
+        "DefaultValue": "Fraction_Skinwalkers",
+        "Key": "l10n:region/name?id=507#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 0
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          5072001,
+          5072002,
+          5072003,
+          5072004,
+          5072005,
+          5072006,
+          5072007,
+          5072008,
+          5072009,
+          5072010,
+          5072011,
+          5072012,
+          5072013,
+          5072014,
+          5072015,
+          5072016,
+          5072017,
+          5072018,
+          5072019,
+          5072020,
+          5072021
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "Fraction_Orcs",
+      "Name": {
+        "DefaultValue": "Fraction_Orcs",
+        "Key": "l10n:region/name?id=508#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 0
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          5082001,
+          5082002,
+          5082003,
+          5082004,
+          5082005,
+          5082006,
+          5082007,
+          5082008,
+          5082009,
+          5082010,
+          5082011,
+          5082012,
+          5082013,
+          5082014,
+          5082015,
+          5082016,
+          5082017,
+          5082018,
+          5082019,
+          5082020,
+          5082021
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "Fraction_Demonspawn",
+      "Name": {
+        "DefaultValue": "Fraction_Demonspawn",
+        "Key": "l10n:region/name?id=509#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 0
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          5092001,
+          5092002,
+          5092003,
+          5092004,
+          5092005,
+          5092006,
+          5092007,
+          5092008,
+          5092009,
+          5092010,
+          5092011,
+          5092012,
+          5092013,
+          5092014,
+          5092015,
+          5092016,
+          5092017,
+          5092018,
+          5092019,
+          5092020,
+          5092021
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "Fraction_UndeadHordes",
+      "Name": {
+        "DefaultValue": "Fraction_UndeadHordes",
+        "Key": "l10n:region/name?id=510#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 0
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          5102001,
+          5102002,
+          5102003,
+          5102004,
+          5102005,
+          5102006,
+          5102007,
+          5102008,
+          5102009,
+          5102010,
+          5102011,
+          5102012,
+          5102013,
+          5102014,
+          5102015,
+          5102016,
+          5102017,
+          5102018,
+          5102019,
+          5102020,
+          5102021
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "Fraction_DarkElves",
+      "Name": {
+        "DefaultValue": "Fraction_DarkElves",
+        "Key": "l10n:region/name?id=511#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 0
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          5112001,
+          5112002,
+          5112003,
+          5112004,
+          5112005,
+          5112006,
+          5112007,
+          5112008,
+          5112009,
+          5112010,
+          5112011,
+          5112012,
+          5112013,
+          5112014,
+          5112015,
+          5112016,
+          5112017,
+          5112018,
+          5112019,
+          5112020,
+          5112021
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "Fraction_KnightsRevenant",
+      "Name": {
+        "DefaultValue": "Fraction_KnightsRevenant",
+        "Key": "l10n:region/name?id=512#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 0
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          5122001,
+          5122002,
+          5122003,
+          5122004,
+          5122005,
+          5122006,
+          5122007,
+          5122008,
+          5122009,
+          5122010,
+          5122011,
+          5122012,
+          5122013,
+          5122014,
+          5122015,
+          5122016,
+          5122017,
+          5122018,
+          5122019,
+          5122020,
+          5122021
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "Fraction_Barbarians",
+      "Name": {
+        "DefaultValue": "Fraction_Barbarians",
+        "Key": "l10n:region/name?id=513#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 0
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          5132001,
+          5132002,
+          5132003,
+          5132004,
+          5132005,
+          5132006,
+          5132007,
+          5132008,
+          5132009,
+          5132010,
+          5132011,
+          5132012,
+          5132013,
+          5132014,
+          5132015,
+          5132016,
+          5132017,
+          5132018,
+          5132019,
+          5132020,
+          5132021
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "Fraction_Dwarves",
+      "Name": {
+        "DefaultValue": "Fraction_Dwarves",
+        "Key": "l10n:region/name?id=516#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 0
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          5162001,
+          5162002,
+          5162003,
+          5162004,
+          5162005,
+          5162006,
+          5162007,
+          5162008,
+          5162009,
+          5162010,
+          5162011,
+          5162012,
+          5162013,
+          5162014,
+          5162015,
+          5162016,
+          5162017,
+          5162018,
+          5162019,
+          5162020,
+          5162021
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "Fraction_Samurai",
+      "Name": {
+        "DefaultValue": "Fraction_Samurai",
+        "Key": "l10n:region/name?id=515#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 0
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          5152001,
+          5152002,
+          5152003,
+          5152004,
+          5152005,
+          5152006,
+          5152007,
+          5152008,
+          5152009,
+          5152010,
+          5152011,
+          5152012,
+          5152013,
+          5152014,
+          5152015,
+          5152016,
+          5152017,
+          5152018,
+          5152019,
+          5152020,
+          5152021
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "Fraction_SylvanWatchers",
+      "Name": {
+        "DefaultValue": "Fraction_SylvanWatchers",
+        "Key": "l10n:region/name?id=514#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 0
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          5142001,
+          5142002,
+          5142003,
+          5142004,
+          5142005,
+          5142006,
+          5142007,
+          5142008,
+          5142009,
+          5142010,
+          5142011,
+          5142012,
+          5142013,
+          5142014,
+          5142015,
+          5142016,
+          5142017,
+          5142018,
+          5142019,
+          5142020,
+          5142021
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "Arena3x3",
+      "Name": {
+        "DefaultValue": "BronzeArena3X3",
+        "Key": "l10n:region/name?id=601#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 35
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          6019001,
+          6019002,
+          6019003
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "DoomTower1",
+      "Name": {
+        "DefaultValue": "DoomTower1",
+        "Key": "l10n:region/name?id=701#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 40
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          7012001,
+          7012002,
+          7012003,
+          7012004,
+          7012005,
+          7012006,
+          7012007,
+          7012008,
+          7012009,
+          7012010,
+          7012011,
+          7012012,
+          7012013,
+          7012014,
+          7012015,
+          7012016,
+          7012017,
+          7012018,
+          7012019,
+          7012020,
+          7012021,
+          7012022,
+          7012023,
+          7012024,
+          7012025,
+          7012026,
+          7012027,
+          7012028,
+          7012029,
+          7012030,
+          7012031,
+          7012032,
+          7012033,
+          7012034,
+          7012035,
+          7012036,
+          7012037,
+          7012038,
+          7012039,
+          7012040,
+          7012041,
+          7012042,
+          7012043,
+          7012044,
+          7012045,
+          7012046,
+          7012047,
+          7012048,
+          7012049,
+          7012050,
+          7012051,
+          7012052,
+          7012053,
+          7012054,
+          7012055,
+          7012056,
+          7012057,
+          7012058,
+          7012059,
+          7012060,
+          7012061,
+          7012062,
+          7012063,
+          7012064,
+          7012065,
+          7012066,
+          7012067,
+          7012068,
+          7012069,
+          7012070,
+          7012071,
+          7012072,
+          7012073,
+          7012074,
+          7012075,
+          7012076,
+          7012077,
+          7012078,
+          7012079,
+          7012080,
+          7012081,
+          7012082,
+          7012083,
+          7012084,
+          7012085,
+          7012086,
+          7012087,
+          7012088,
+          7012089,
+          7012090,
+          7012091,
+          7012092,
+          7012093,
+          7012094,
+          7012095,
+          7012096,
+          7012097,
+          7012098,
+          7012099,
+          7012100,
+          "<truncated_at_100_of_132>"
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<truncated_at_100_of_132>"
+        ]
+      }
+    },
+    {
+      "Id": "DoomTower2",
+      "Name": {
+        "DefaultValue": "DoomTower2",
+        "Key": "l10n:region/name?id=702#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 40
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          7022001,
+          7022002,
+          7022003,
+          7022004,
+          7022005,
+          7022006,
+          7022007,
+          7022008,
+          7022009,
+          7022010,
+          7022011,
+          7022012,
+          7022013,
+          7022014,
+          7022015,
+          7022016,
+          7022017,
+          7022018,
+          7022019,
+          7022020,
+          7022021,
+          7022022,
+          7022023,
+          7022024,
+          7022025,
+          7022026,
+          7022027,
+          7022028,
+          7022029,
+          7022030,
+          7022031,
+          7022032,
+          7022033,
+          7022034,
+          7022035,
+          7022036,
+          7022037,
+          7022038,
+          7022039,
+          7022040,
+          7022041,
+          7022042,
+          7022043,
+          7022044,
+          7022045,
+          7022046,
+          7022047,
+          7022048,
+          7022049,
+          7022050,
+          7022051,
+          7022052,
+          7022053,
+          7022054,
+          7022055,
+          7022056,
+          7022057,
+          7022058,
+          7022059,
+          7022060,
+          7022061,
+          7022062,
+          7022063,
+          7022064,
+          7022065,
+          7022066,
+          7022067,
+          7022068,
+          7022069,
+          7022070,
+          7022071,
+          7022072,
+          7022073,
+          7022074,
+          7022075,
+          7022076,
+          7022077,
+          7022078,
+          7022079,
+          7022080,
+          7022081,
+          7022082,
+          7022083,
+          7022084,
+          7022085,
+          7022086,
+          7022087,
+          7022088,
+          7022089,
+          7022090,
+          7022091,
+          7022092,
+          7022093,
+          7022094,
+          7022095,
+          7022096,
+          7022097,
+          7022098,
+          7022099,
+          7022100,
+          "<truncated_at_100_of_132>"
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<truncated_at_100_of_132>"
+        ]
+      }
+    },
+    {
+      "Id": "DoomTower3",
+      "Name": {
+        "DefaultValue": "DoomTower3",
+        "Key": "l10n:region/name?id=703#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 40
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          7032001,
+          7032002,
+          7032003,
+          7032004,
+          7032005,
+          7032006,
+          7032007,
+          7032008,
+          7032009,
+          7032010,
+          7032011,
+          7032012,
+          7032013,
+          7032014,
+          7032015,
+          7032016,
+          7032017,
+          7032018,
+          7032019,
+          7032020,
+          7032021,
+          7032022,
+          7032023,
+          7032024,
+          7032025,
+          7032026,
+          7032027,
+          7032028,
+          7032029,
+          7032030,
+          7032031,
+          7032032,
+          7032033,
+          7032034,
+          7032035,
+          7032036,
+          7032037,
+          7032038,
+          7032039,
+          7032040,
+          7032041,
+          7032042,
+          7032043,
+          7032044,
+          7032045,
+          7032046,
+          7032047,
+          7032048,
+          7032049,
+          7032050,
+          7032051,
+          7032052,
+          7032053,
+          7032054,
+          7032055,
+          7032056,
+          7032057,
+          7032058,
+          7032059,
+          7032060,
+          7032061,
+          7032062,
+          7032063,
+          7032064,
+          7032065,
+          7032066,
+          7032067,
+          7032068,
+          7032069,
+          7032070,
+          7032071,
+          7032072,
+          7032073,
+          7032074,
+          7032075,
+          7032076,
+          7032077,
+          7032078,
+          7032079,
+          7032080,
+          7032081,
+          7032082,
+          7032083,
+          7032084,
+          7032085,
+          7032086,
+          7032087,
+          7032088,
+          7032089,
+          7032090,
+          7032091,
+          7032092,
+          7032093,
+          7032094,
+          7032095,
+          7032096,
+          7032097,
+          7032098,
+          7032099,
+          7032100,
+          "<truncated_at_100_of_132>"
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<truncated_at_100_of_132>"
+        ]
+      }
+    },
+    {
+      "Id": "AllianceHydraSeason1",
+      "Name": {
+        "DefaultValue": "HydraSeason1",
+        "Key": "l10n:region/name?id=801#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 45
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          8019001,
+          8019002,
+          8019003,
+          8019004
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "AllianceHydraSeason2",
+      "Name": {
+        "DefaultValue": "HydraSeason2",
+        "Key": "l10n:region/name?id=802#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 45
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          8029001,
+          8029002,
+          8029003,
+          8029004
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "AllianceHydraSeason3",
+      "Name": {
+        "DefaultValue": "HydraSeason3",
+        "Key": "l10n:region/name?id=803#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 45
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          8039001,
+          8039002,
+          8039003,
+          8039004
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "AllianceHydraSeason4",
+      "Name": {
+        "DefaultValue": "HydraSeason4",
+        "Key": "l10n:region/name?id=804#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 45
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          8049001,
+          8049002,
+          8049003,
+          8049004
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "AllianceHydraSeason5",
+      "Name": {
+        "DefaultValue": "HydraSeason5",
+        "Key": "l10n:region/name?id=805#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 45
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          8059001,
+          8059002,
+          8059003,
+          8059004
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "AllianceHydraSeason6",
+      "Name": {
+        "DefaultValue": "HydraSeason6",
+        "Key": "l10n:region/name?id=806#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 45
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          8069001,
+          8069002,
+          8069003,
+          8069004
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "LiveArena",
+      "Name": {
+        "DefaultValue": "LiveArena",
+        "Key": "l10n:region/name?id=901#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 50
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          9019001,
+          9019002,
+          9019003,
+          9019004
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "CursedCityDistrict1",
+      "Name": {
+        "DefaultValue": "CursedCityDistrict1",
+        "Key": "l10n:region/name?id=1001#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 52
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          10012001,
+          10012002,
+          10012003,
+          10012004,
+          10012005,
+          10012006,
+          10012007,
+          10012008,
+          10012009,
+          10012010,
+          10012011,
+          10012012,
+          10012013,
+          10012014,
+          10012015,
+          10012016,
+          10012017,
+          10012018,
+          10012019,
+          10012020,
+          10012021,
+          10012022,
+          10012023,
+          10012024,
+          10012025
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "CursedCityDistrict2",
+      "Name": {
+        "DefaultValue": "CursedCityDistrict2",
+        "Key": "l10n:region/name?id=1002#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 52
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          10022001,
+          10022002,
+          10022003,
+          10022004,
+          10022005,
+          10022006,
+          10022007,
+          10022008,
+          10022009,
+          10022010,
+          10022011,
+          10022012,
+          10022013,
+          10022014,
+          10022015,
+          10022016,
+          10022017,
+          10022018,
+          10022019,
+          10022020,
+          10022021,
+          10022022,
+          10022023,
+          10022024,
+          10022025
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "CursedCityDistrict3",
+      "Name": {
+        "DefaultValue": "CursedCityDistrict3",
+        "Key": "l10n:region/name?id=1003#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 52
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          10032001,
+          10032002,
+          10032003,
+          10032004,
+          10032005,
+          10032006,
+          10032007,
+          10032008,
+          10032009,
+          10032010,
+          10032011,
+          10032012,
+          10032013,
+          10032014,
+          10032015,
+          10032016,
+          10032017,
+          10032018,
+          10032019,
+          10032020,
+          10032021,
+          10032022,
+          10032023,
+          10032024,
+          10032025
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "CursedCityDistrict4",
+      "Name": {
+        "DefaultValue": "CursedCityDistrict4",
+        "Key": "l10n:region/name?id=1004#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 52
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          10042001,
+          10042002,
+          10042003,
+          10042004,
+          10042005,
+          10042006,
+          10042007,
+          10042008,
+          10042009,
+          10042010,
+          10042011,
+          10042012,
+          10042013,
+          10042014,
+          10042015,
+          10042016,
+          10042017,
+          10042018,
+          10042019,
+          10042020,
+          10042021,
+          10042022,
+          10042023,
+          10042024,
+          10042025
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "CursedCityMainBoss",
+      "Name": {
+        "DefaultValue": "CursedCityMainBoss",
+        "Key": "l10n:region/name?id=1005#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 52
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          10052001
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "SiegeLayer1",
+      "Name": {
+        "DefaultValue": "SiegeLayer1",
+        "Key": "l10n:region/name?id=1101#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 45
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          11019001,
+          11019002,
+          11019003
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "ChimeraRotation1",
+      "Name": {
+        "DefaultValue": "Chimera",
+        "Key": "l10n:region/name?id=1301#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 0
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          13019001,
+          13019002,
+          13019003,
+          13019004,
+          13019005,
+          13019006
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "ChimeraRotation2",
+      "Name": {
+        "DefaultValue": "Chimera",
+        "Key": "l10n:region/name?id=1302#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 0
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          13029001,
+          13029002,
+          13029003,
+          13029004,
+          13029005,
+          13029006
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "ChimeraRotation3",
+      "Name": {
+        "DefaultValue": "Chimera",
+        "Key": "l10n:region/name?id=1303#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 0
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          13039001,
+          13039002,
+          13039003,
+          13039004,
+          13039005,
+          13039006
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "ChimeraRotation4",
+      "Name": {
+        "DefaultValue": "Chimera",
+        "Key": "l10n:region/name?id=1304#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 0
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          13049001,
+          13049002,
+          13049003,
+          13049004,
+          13049005,
+          13049006
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "FoggyForestEasyZone",
+      "Name": {
+        "DefaultValue": "FoggyForest",
+        "Key": "l10n:region/name?id=1401#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 0
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          14012001,
+          14012002,
+          14012003,
+          14012004,
+          14012005,
+          14012006,
+          14012007,
+          14012008,
+          14012009,
+          14012010,
+          14012011,
+          14012012,
+          14012013,
+          14012014,
+          14012015,
+          14012016,
+          14012017,
+          14012018,
+          14012019,
+          14012020,
+          14012101,
+          14012102,
+          14012103,
+          14012104,
+          14012105,
+          14012106,
+          14012107,
+          14012108,
+          14012109,
+          14012110,
+          14012201,
+          14012301,
+          14012302,
+          14012303,
+          14012401
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "FoggyForestMiddleZone",
+      "Name": {
+        "DefaultValue": "FoggyForest",
+        "Key": "l10n:region/name?id=1402#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 0
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          14022001,
+          14022002,
+          14022003,
+          14022004,
+          14022005,
+          14022006,
+          14022007,
+          14022008,
+          14022009,
+          14022010,
+          14022011,
+          14022012,
+          14022013,
+          14022014,
+          14022015,
+          14022016,
+          14022017,
+          14022018,
+          14022019,
+          14022020,
+          14022021,
+          14022022,
+          14022023,
+          14022024,
+          14022025,
+          14022026,
+          14022027,
+          14022028,
+          14022029,
+          14022030,
+          14022031,
+          14022032,
+          14022033,
+          14022034,
+          14022035,
+          14022036,
+          14022037,
+          14022038,
+          14022039,
+          14022040,
+          14022041,
+          14022042,
+          14022043,
+          14022044,
+          14022045,
+          14022046,
+          14022047,
+          14022048,
+          14022049,
+          14022050,
+          14022101,
+          14022102,
+          14022103,
+          14022104,
+          14022105,
+          14022106,
+          14022107,
+          14022108,
+          14022109,
+          14022110,
+          14022111,
+          14022112,
+          14022113,
+          14022114,
+          14022115,
+          14022116,
+          14022117,
+          14022118,
+          14022119,
+          14022120,
+          14022121,
+          14022122,
+          14022123,
+          14022124,
+          14022125,
+          14022126,
+          14022127,
+          14022128,
+          14022129,
+          14022130,
+          14022201,
+          14022202,
+          14022203,
+          14022204,
+          14022301,
+          14022302,
+          14022303,
+          14022304,
+          14022305,
+          14022306,
+          14022307,
+          14022308,
+          14022309,
+          14022310,
+          14022401,
+          14022402,
+          14022403,
+          14022404,
+          14022405,
+          14022406,
+          "<truncated_at_100_of_131>"
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<truncated_at_100_of_131>"
+        ]
+      }
+    },
+    {
+      "Id": "FoggyForestHardZone",
+      "Name": {
+        "DefaultValue": "FoggyForest",
+        "Key": "l10n:region/name?id=1403#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 0
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          14032001,
+          14032002,
+          14032003,
+          14032004,
+          14032005,
+          14032006,
+          14032007,
+          14032008,
+          14032009,
+          14032010,
+          14032011,
+          14032012,
+          14032101,
+          14032102,
+          14032103,
+          14032104,
+          14032105,
+          14032106,
+          14032107,
+          14032108,
+          14032109,
+          14032110,
+          14032111,
+          14032112,
+          14032201,
+          14032301,
+          14032302,
+          14032303,
+          14032304,
+          14032401,
+          14032402,
+          14032403,
+          14032404,
+          14032501,
+          14032502
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "FoggyForestExtraHardZone",
+      "Name": {
+        "DefaultValue": "FoggyForest",
+        "Key": "l10n:region/name?id=1404#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 0
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          14042001,
+          14042002,
+          14042003,
+          14042004,
+          14042005,
+          14042006,
+          14042101,
+          14042102,
+          14042103,
+          14042104
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    },
+    {
+      "Id": "CooperationEventWorldBoss",
+      "Name": {
+        "DefaultValue": "CoopEventWorldBoss",
+        "Key": "l10n:region/name?id=1501#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "OpenHoursCount": 0,
+        "UserLevelRequired": 0
+      },
+      "StageIdsByDifficulty": {
+        "-486394928": [
+          15019001,
+          15019002,
+          15019003,
+          15019004,
+          15019005
+        ]
+      },
+      "StagesByDifficulty": {
+        "-486394928": [
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>",
+          "<Stage>"
+        ]
+      }
+    }
+  ]
+}

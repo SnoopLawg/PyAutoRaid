@@ -35,3 +35,10 @@ myth_eater_gear*.txt
 data/dwj/raw/
 probe/
 data/hh/raw/
+
+# Phase 2 static reference dumps — regen via:
+#   python3 tools/refresh_static_data.py --section skills_all stages
+# Game-wide (not account-specific) but ~35MB each — too large for VCS.
+# The _meta.fetched_at field lets `--check` flag staleness.
+data/static/skills_all.json
+data/static/stages.json

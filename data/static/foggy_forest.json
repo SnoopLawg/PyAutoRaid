@@ -1,0 +1,8703 @@
+{
+  "_meta": {
+    "fetched_at": "2026-05-02T00:18:49.462866+00:00",
+    "scene": "Village",
+    "mod_version": "2.0-bepinex",
+    "unity": "6000.0.60f1"
+  },
+  "DifficultyData": [
+    {
+      "DifficultyId": "Normal",
+      "ShopData": {
+        "Items": [
+          "<FoggyForestStaticShopItem>",
+          "<FoggyForestStaticShopItem>",
+          "<FoggyForestStaticShopItem>",
+          "<FoggyForestStaticShopItem>",
+          "<FoggyForestStaticShopItem>",
+          "<FoggyForestStaticShopItem>",
+          "<FoggyForestStaticShopItem>",
+          "<FoggyForestStaticShopItem>",
+          "<FoggyForestStaticShopItem>",
+          "<FoggyForestStaticShopItem>"
+        ]
+      },
+      "RewardsData": {
+        "ChestRewardByType": {
+          "-487121744": "<UserPrize>"
+        },
+        "AdditionalSlotRewards": [
+          "<StaticFoggyForestRewardInfo>",
+          "<StaticFoggyForestRewardInfo>",
+          "<StaticFoggyForestRewardInfo>",
+          "<StaticFoggyForestRewardInfo>",
+          "<StaticFoggyForestRewardInfo>",
+          "<StaticFoggyForestRewardInfo>",
+          "<StaticFoggyForestRewardInfo>",
+          "<StaticFoggyForestRewardInfo>",
+          "<StaticFoggyForestRewardInfo>",
+          "<StaticFoggyForestRewardInfo>",
+          "<StaticFoggyForestRewardInfo>",
+          "<StaticFoggyForestRewardInfo>",
+          "<StaticFoggyForestRewardInfo>",
+          "<StaticFoggyForestRewardInfo>",
+          "<StaticFoggyForestRewardInfo>",
+          "<StaticFoggyForestRewardInfo>",
+          "<StaticFoggyForestRewardInfo>",
+          "<StaticFoggyForestRewardInfo>",
+          "<StaticFoggyForestRewardInfo>",
+          "<StaticFoggyForestRewardInfo>",
+          "<StaticFoggyForestRewardInfo>",
+          "<StaticFoggyForestRewardInfo>",
+          "<StaticFoggyForestRewardInfo>",
+          "<StaticFoggyForestRewardInfo>",
+          "<StaticFoggyForestRewardInfo>",
+          "<StaticFoggyForestRewardInfo>"
+        ],
+        "TreasureHuntOpenPrice": {
+          "RawValues": "<Dictionary`2>",
+          "ToRawValues": "<Dictionary`2>",
+          "Energy": 0,
+          "Silver": 0,
+          "Tokens": 0,
+          "Arena3X3ShopCurrency": 0,
+          "Arena3X3Tokens": 0,
+          "LiveArenaTokens": 0,
+          "Gems": 0,
+          "AutoBattleTickets": 0,
+          "MedalBronze": 0,
+          "MedalSilver": 0,
+          "MedalGold": 0,
+          "AllianceBossKey": 0,
+          "AllianceHydraKeys": 0,
+          "AllianceChimeraKeys": 0,
+          "FoggyForestEnergy": 0,
+          "FoggyForestMainBossKeysNormal": 0,
+          "FoggyForestMainBossKeysHard": 0,
+          "ForgeMaterials": "<Dictionary`2>",
+          "DoubleAscend": "<Dictionary`2>",
+          "Magisteel": 0,
+          "Corehammer": 0,
+          "SoulstoneRare": 0,
+          "SoulstoneEpic": 0,
+          "SoulstoneLeg": 0,
+          "BloodstoneRare": 0,
+          "BloodstoneEpic": 0,
+          "BloodstoneLeg": 0,
+          "NetherSpiderRare": 0,
+          "NetherSpiderEpic": 0,
+          "NetherSpiderLeg": 0,
+          "ScarabClawsRare": 0,
+          "ScarabClawsEpic": 0,
+          "ScarabClawsLeg": 0,
+          "MagmaDragonCoresRare": 0,
+          "MagmaDragonCoresEpic": 0,
+          "MagmaDragonCoresLeg": 0,
+          "FrostSpiderSpinesRare": 0,
+          "FrostSpiderSpinesEpic": 0,
+          "FrostSpiderSpinesLeg": 0,
+          "DragonBoneRare": 0,
+          "DragonBoneEpic": 0,
+          "DragonBoneLeg": 0,
+          "GriffinFeatherRare": 0,
+          "GriffinFeatherEpic": 0,
+          "GriffinFeatherLeg": 0,
+          "DreadhornPlatesRare": 0,
+          "DreadhornPlatesEpic": 0,
+          "DreadhornPlatesLeg": 0,
+          "FaeSpheresRare": 0,
+          "FaeSpheresEpic": 0,
+          "FaeSpheresLeg": 0,
+          "InstinctStonesRare": 0,
+          "InstinctStonesEpic": 0,
+          "InstinctStonesLeg": 0,
+          "DoomTowerGoldKeys": 0,
+          "DoomTowerSilverKeys": 0,
+          "AllianceCoin": 0,
+          "FortressKeys": 0,
+          "EternalSoulCoin": 0,
+          "ImmortalSoulCoin": 0,
+          "MortalSoulCoin": 0,
+          "EternalSoulEssence": 0,
+          "ImmortalSoulEssence": 0,
+          "LifeTokens": 0,
+          "LiveArenaMedalBronze": 0,
+          "LiveArenaMedalSilver": 0,
+          "LiveArenaMedalGold": 0,
+          "PlariumPoints": 0,
+          "MythicalDust": 0,
+          "BrokenHeroParts": 0,
+          "CursedCityKeys": 0,
+          "CursedCityHardQuestPoints": 0,
+          "CursedCityNormalQuestPoints": 0,
+          "ParticleSummon": 0,
+          "SiegeStones": 0,
+          "SiegeMana": 0,
+          "SiegeDefenseScrolls": 0,
+          "SiegeBattleScrolls": 0,
+          "SiegeRematchScrolls": 0,
+          "Meteors": 0,
+          "FoggyForestNormalCoins": 0,
+          "FoggyForestNormalGold": 0,
+          "FoggyForestNormalMainBossKeys": 0,
+          "FoggyForestNormalRollRefreshes": 0,
+          "FoggyForestNormalTreasureHuntParts": 15,
+          "FoggyForestHardCoins": 0,
+          "FoggyForestHardGold": 0,
+          "FoggyForestHardMainBossKeys": 0,
+          "FoggyForestHardRollRefreshes": 0,
+          "FoggyForestHardTreasureHuntParts": 0
+        },
+        "TreasureHuntPartsPrize": {
+          "Experience": 0,
+          "ArenaPoints": 0,
+          "Resources": "<Resources>",
+          "ArtifactDropSettingsProcessed": false,
+          "HasExperience": false,
+          "HasAllianceExperience": false,
+          "HasMythicalDust": false,
+          "HasResources": true,
+          "HasHeroParts": false,
+          "HasHeroSouls": false,
+          "HasHeroPartsChainReward": false,
+          "HasHeroPartsChest": false,
+          "HasRewardIfHeroPartsChestTaken": false,
+          "HasBmis": false,
+          "HasHeroes": false,
+          "HasArtifactsOrAccessories": false,
+          "HasArtifacts": false,
+          "HasAccessory": false,
+          "HasEffects": false,
+          "HasArtifactDropSettings": false,
+          "HasSetOfArtifacts": false,
+          "HasAvatars": false,
+          "HasBadges": false,
+          "HasFrames": false,
+          "HasHeroSkins": false,
+          "HasSelectableHeroes": false,
+          "HasFoggyForestPrizes": false,
+          "HasFoggyForestCurios": false,
+          "HasFoggyForestCurioChests": false,
+          "HasBingoCurrency": false,
+          "HasThreelineCurrency": false,
+          "HasClassicCooperationEventPoints": false,
+          "HasCooperationEventWorldsBossPoints": false,
+          "HasXpBooster": false,
+          "HasSummonParticles": false,
+          "GemsCount": 0,
+          "HasRelics": false,
+          "HasRelicStone": false,
+          "HasRandomRelicStone": false,
+          "HasRelicStoneBoxes": false
+        },
+        "TreasureHuntReward": {
+          "Count": 4,
+          "Rewards": "<List`1>",
+          "CompareArtifactsByItsProperties": false,
+          "RewardProbsByIndex": "<Dictionary`2>"
+        },
+        "RefreshAltarResources": {
+          "RawValues": "<Dictionary`2>",
+          "ToRawValues": "<Dictionary`2>",
+          "Energy": 0,
+          "Silver": 0,
+          "Tokens": 0,
+          "Arena3X3ShopCurrency": 0,
+          "Arena3X3Tokens": 0,
+          "LiveArenaTokens": 0,
+          "Gems": 0,
+          "AutoBattleTickets": 0,
+          "MedalBronze": 0,
+          "MedalSilver": 0,
+          "MedalGold": 0,
+          "AllianceBossKey": 0,
+          "AllianceHydraKeys": 0,
+          "AllianceChimeraKeys": 0,
+          "FoggyForestEnergy": 0,
+          "FoggyForestMainBossKeysNormal": 0,
+          "FoggyForestMainBossKeysHard": 0,
+          "ForgeMaterials": "<Dictionary`2>",
+          "DoubleAscend": "<Dictionary`2>",
+          "Magisteel": 0,
+          "Corehammer": 0,
+          "SoulstoneRare": 0,
+          "SoulstoneEpic": 0,
+          "SoulstoneLeg": 0,
+          "BloodstoneRare": 0,
+          "BloodstoneEpic": 0,
+          "BloodstoneLeg": 0,
+          "NetherSpiderRare": 0,
+          "NetherSpiderEpic": 0,
+          "NetherSpiderLeg": 0,
+          "ScarabClawsRare": 0,
+          "ScarabClawsEpic": 0,
+          "ScarabClawsLeg": 0,
+          "MagmaDragonCoresRare": 0,
+          "MagmaDragonCoresEpic": 0,
+          "MagmaDragonCoresLeg": 0,
+          "FrostSpiderSpinesRare": 0,
+          "FrostSpiderSpinesEpic": 0,
+          "FrostSpiderSpinesLeg": 0,
+          "DragonBoneRare": 0,
+          "DragonBoneEpic": 0,
+          "DragonBoneLeg": 0,
+          "GriffinFeatherRare": 0,
+          "GriffinFeatherEpic": 0,
+          "GriffinFeatherLeg": 0,
+          "DreadhornPlatesRare": 0,
+          "DreadhornPlatesEpic": 0,
+          "DreadhornPlatesLeg": 0,
+          "FaeSpheresRare": 0,
+          "FaeSpheresEpic": 0,
+          "FaeSpheresLeg": 0,
+          "InstinctStonesRare": 0,
+          "InstinctStonesEpic": 0,
+          "InstinctStonesLeg": 0,
+          "DoomTowerGoldKeys": 0,
+          "DoomTowerSilverKeys": 0,
+          "AllianceCoin": 0,
+          "FortressKeys": 0,
+          "EternalSoulCoin": 0,
+          "ImmortalSoulCoin": 0,
+          "MortalSoulCoin": 0,
+          "EternalSoulEssence": 0,
+          "ImmortalSoulEssence": 0,
+          "LifeTokens": 0,
+          "LiveArenaMedalBronze": 0,
+          "LiveArenaMedalSilver": 0,
+          "LiveArenaMedalGold": 0,
+          "PlariumPoints": 0,
+          "MythicalDust": 0,
+          "BrokenHeroParts": 0,
+          "CursedCityKeys": 0,
+          "CursedCityHardQuestPoints": 0,
+          "CursedCityNormalQuestPoints": 0,
+          "ParticleSummon": 0,
+          "SiegeStones": 0,
+          "SiegeMana": 0,
+          "SiegeDefenseScrolls": 0,
+          "SiegeBattleScrolls": 0,
+          "SiegeRematchScrolls": 0,
+          "Meteors": 0,
+          "FoggyForestNormalCoins": 0,
+          "FoggyForestNormalGold": 0,
+          "FoggyForestNormalMainBossKeys": 0,
+          "FoggyForestNormalRollRefreshes": 1,
+          "FoggyForestNormalTreasureHuntParts": 0,
+          "FoggyForestHardCoins": 0,
+          "FoggyForestHardGold": 0,
+          "FoggyForestHardMainBossKeys": 0,
+          "FoggyForestHardRollRefreshes": 0,
+          "FoggyForestHardTreasureHuntParts": 0
+        },
+        "RollDeckPrice": {
+          "RawValues": "<Dictionary`2>",
+          "ToRawValues": "<Dictionary`2>",
+          "Energy": 0,
+          "Silver": 0,
+          "Tokens": 0,
+          "Arena3X3ShopCurrency": 0,
+          "Arena3X3Tokens": 0,
+          "LiveArenaTokens": 0,
+          "Gems": 0,
+          "AutoBattleTickets": 0,
+          "MedalBronze": 0,
+          "MedalSilver": 0,
+          "MedalGold": 0,
+          "AllianceBossKey": 0,
+          "AllianceHydraKeys": 0,
+          "AllianceChimeraKeys": 0,
+          "FoggyForestEnergy": 0,
+          "FoggyForestMainBossKeysNormal": 0,
+          "FoggyForestMainBossKeysHard": 0,
+          "ForgeMaterials": "<Dictionary`2>",
+          "DoubleAscend": "<Dictionary`2>",
+          "Magisteel": 0,
+          "Corehammer": 0,
+          "SoulstoneRare": 0,
+          "SoulstoneEpic": 0,
+          "SoulstoneLeg": 0,
+          "BloodstoneRare": 0,
+          "BloodstoneEpic": 0,
+          "BloodstoneLeg": 0,
+          "NetherSpiderRare": 0,
+          "NetherSpiderEpic": 0,
+          "NetherSpiderLeg": 0,
+          "ScarabClawsRare": 0,
+          "ScarabClawsEpic": 0,
+          "ScarabClawsLeg": 0,
+          "MagmaDragonCoresRare": 0,
+          "MagmaDragonCoresEpic": 0,
+          "MagmaDragonCoresLeg": 0,
+          "FrostSpiderSpinesRare": 0,
+          "FrostSpiderSpinesEpic": 0,
+          "FrostSpiderSpinesLeg": 0,
+          "DragonBoneRare": 0,
+          "DragonBoneEpic": 0,
+          "DragonBoneLeg": 0,
+          "GriffinFeatherRare": 0,
+          "GriffinFeatherEpic": 0,
+          "GriffinFeatherLeg": 0,
+          "DreadhornPlatesRare": 0,
+          "DreadhornPlatesEpic": 0,
+          "DreadhornPlatesLeg": 0,
+          "FaeSpheresRare": 0,
+          "FaeSpheresEpic": 0,
+          "FaeSpheresLeg": 0,
+          "InstinctStonesRare": 0,
+          "InstinctStonesEpic": 0,
+          "InstinctStonesLeg": 0,
+          "DoomTowerGoldKeys": 0,
+          "DoomTowerSilverKeys": 0,
+          "AllianceCoin": 0,
+          "FortressKeys": 0,
+          "EternalSoulCoin": 0,
+          "ImmortalSoulCoin": 0,
+          "MortalSoulCoin": 0,
+          "EternalSoulEssence": 0,
+          "ImmortalSoulEssence": 0,
+          "LifeTokens": 0,
+          "LiveArenaMedalBronze": 0,
+          "LiveArenaMedalSilver": 0,
+          "LiveArenaMedalGold": 0,
+          "PlariumPoints": 0,
+          "MythicalDust": 0,
+          "BrokenHeroParts": 0,
+          "CursedCityKeys": 0,
+          "CursedCityHardQuestPoints": 0,
+          "CursedCityNormalQuestPoints": 0,
+          "ParticleSummon": 0,
+          "SiegeStones": 0,
+          "SiegeMana": 0,
+          "SiegeDefenseScrolls": 0,
+          "SiegeBattleScrolls": 0,
+          "SiegeRematchScrolls": 0,
+          "Meteors": 0,
+          "FoggyForestNormalCoins": 0,
+          "FoggyForestNormalGold": 0,
+          "FoggyForestNormalMainBossKeys": 0,
+          "FoggyForestNormalRollRefreshes": 1,
+          "FoggyForestNormalTreasureHuntParts": 0,
+          "FoggyForestHardCoins": 0,
+          "FoggyForestHardGold": 0,
+          "FoggyForestHardMainBossKeys": 0,
+          "FoggyForestHardRollRefreshes": 0,
+          "FoggyForestHardTreasureHuntParts": 0
+        },
+        "GoldenGoblinRewardData": [
+          "<StaticGoldenGoblinRewardData>",
+          "<StaticGoldenGoblinRewardData>",
+          "<StaticGoldenGoblinRewardData>"
+        ]
+      },
+      "RegionData": {
+        "-486392864": {
+          "ElementPools": "<Dictionary`2>"
+        }
+      }
+    },
+    {
+      "DifficultyId": "Hard",
+      "ShopData": {
+        "Items": [
+          "<FoggyForestStaticShopItem>",
+          "<FoggyForestStaticShopItem>",
+          "<FoggyForestStaticShopItem>",
+          "<FoggyForestStaticShopItem>",
+          "<FoggyForestStaticShopItem>",
+          "<FoggyForestStaticShopItem>",
+          "<FoggyForestStaticShopItem>",
+          "<FoggyForestStaticShopItem>",
+          "<FoggyForestStaticShopItem>",
+          "<FoggyForestStaticShopItem>"
+        ]
+      },
+      "RewardsData": {
+        "ChestRewardByType": {
+          "-487121744": "<UserPrize>"
+        },
+        "AdditionalSlotRewards": [
+          "<StaticFoggyForestRewardInfo>",
+          "<StaticFoggyForestRewardInfo>",
+          "<StaticFoggyForestRewardInfo>",
+          "<StaticFoggyForestRewardInfo>",
+          "<StaticFoggyForestRewardInfo>",
+          "<StaticFoggyForestRewardInfo>",
+          "<StaticFoggyForestRewardInfo>",
+          "<StaticFoggyForestRewardInfo>",
+          "<StaticFoggyForestRewardInfo>",
+          "<StaticFoggyForestRewardInfo>",
+          "<StaticFoggyForestRewardInfo>",
+          "<StaticFoggyForestRewardInfo>",
+          "<StaticFoggyForestRewardInfo>",
+          "<StaticFoggyForestRewardInfo>",
+          "<StaticFoggyForestRewardInfo>",
+          "<StaticFoggyForestRewardInfo>",
+          "<StaticFoggyForestRewardInfo>",
+          "<StaticFoggyForestRewardInfo>",
+          "<StaticFoggyForestRewardInfo>",
+          "<StaticFoggyForestRewardInfo>",
+          "<StaticFoggyForestRewardInfo>",
+          "<StaticFoggyForestRewardInfo>",
+          "<StaticFoggyForestRewardInfo>",
+          "<StaticFoggyForestRewardInfo>",
+          "<StaticFoggyForestRewardInfo>",
+          "<StaticFoggyForestRewardInfo>"
+        ],
+        "TreasureHuntOpenPrice": {
+          "RawValues": "<Dictionary`2>",
+          "ToRawValues": "<Dictionary`2>",
+          "Energy": 0,
+          "Silver": 0,
+          "Tokens": 0,
+          "Arena3X3ShopCurrency": 0,
+          "Arena3X3Tokens": 0,
+          "LiveArenaTokens": 0,
+          "Gems": 0,
+          "AutoBattleTickets": 0,
+          "MedalBronze": 0,
+          "MedalSilver": 0,
+          "MedalGold": 0,
+          "AllianceBossKey": 0,
+          "AllianceHydraKeys": 0,
+          "AllianceChimeraKeys": 0,
+          "FoggyForestEnergy": 0,
+          "FoggyForestMainBossKeysNormal": 0,
+          "FoggyForestMainBossKeysHard": 0,
+          "ForgeMaterials": "<Dictionary`2>",
+          "DoubleAscend": "<Dictionary`2>",
+          "Magisteel": 0,
+          "Corehammer": 0,
+          "SoulstoneRare": 0,
+          "SoulstoneEpic": 0,
+          "SoulstoneLeg": 0,
+          "BloodstoneRare": 0,
+          "BloodstoneEpic": 0,
+          "BloodstoneLeg": 0,
+          "NetherSpiderRare": 0,
+          "NetherSpiderEpic": 0,
+          "NetherSpiderLeg": 0,
+          "ScarabClawsRare": 0,
+          "ScarabClawsEpic": 0,
+          "ScarabClawsLeg": 0,
+          "MagmaDragonCoresRare": 0,
+          "MagmaDragonCoresEpic": 0,
+          "MagmaDragonCoresLeg": 0,
+          "FrostSpiderSpinesRare": 0,
+          "FrostSpiderSpinesEpic": 0,
+          "FrostSpiderSpinesLeg": 0,
+          "DragonBoneRare": 0,
+          "DragonBoneEpic": 0,
+          "DragonBoneLeg": 0,
+          "GriffinFeatherRare": 0,
+          "GriffinFeatherEpic": 0,
+          "GriffinFeatherLeg": 0,
+          "DreadhornPlatesRare": 0,
+          "DreadhornPlatesEpic": 0,
+          "DreadhornPlatesLeg": 0,
+          "FaeSpheresRare": 0,
+          "FaeSpheresEpic": 0,
+          "FaeSpheresLeg": 0,
+          "InstinctStonesRare": 0,
+          "InstinctStonesEpic": 0,
+          "InstinctStonesLeg": 0,
+          "DoomTowerGoldKeys": 0,
+          "DoomTowerSilverKeys": 0,
+          "AllianceCoin": 0,
+          "FortressKeys": 0,
+          "EternalSoulCoin": 0,
+          "ImmortalSoulCoin": 0,
+          "MortalSoulCoin": 0,
+          "EternalSoulEssence": 0,
+          "ImmortalSoulEssence": 0,
+          "LifeTokens": 0,
+          "LiveArenaMedalBronze": 0,
+          "LiveArenaMedalSilver": 0,
+          "LiveArenaMedalGold": 0,
+          "PlariumPoints": 0,
+          "MythicalDust": 0,
+          "BrokenHeroParts": 0,
+          "CursedCityKeys": 0,
+          "CursedCityHardQuestPoints": 0,
+          "CursedCityNormalQuestPoints": 0,
+          "ParticleSummon": 0,
+          "SiegeStones": 0,
+          "SiegeMana": 0,
+          "SiegeDefenseScrolls": 0,
+          "SiegeBattleScrolls": 0,
+          "SiegeRematchScrolls": 0,
+          "Meteors": 0,
+          "FoggyForestNormalCoins": 0,
+          "FoggyForestNormalGold": 0,
+          "FoggyForestNormalMainBossKeys": 0,
+          "FoggyForestNormalRollRefreshes": 0,
+          "FoggyForestNormalTreasureHuntParts": 0,
+          "FoggyForestHardCoins": 0,
+          "FoggyForestHardGold": 0,
+          "FoggyForestHardMainBossKeys": 0,
+          "FoggyForestHardRollRefreshes": 0,
+          "FoggyForestHardTreasureHuntParts": 15
+        },
+        "TreasureHuntPartsPrize": {
+          "Experience": 0,
+          "ArenaPoints": 0,
+          "Resources": "<Resources>",
+          "ArtifactDropSettingsProcessed": false,
+          "HasExperience": false,
+          "HasAllianceExperience": false,
+          "HasMythicalDust": false,
+          "HasResources": true,
+          "HasHeroParts": false,
+          "HasHeroSouls": false,
+          "HasHeroPartsChainReward": false,
+          "HasHeroPartsChest": false,
+          "HasRewardIfHeroPartsChestTaken": false,
+          "HasBmis": false,
+          "HasHeroes": false,
+          "HasArtifactsOrAccessories": false,
+          "HasArtifacts": false,
+          "HasAccessory": false,
+          "HasEffects": false,
+          "HasArtifactDropSettings": false,
+          "HasSetOfArtifacts": false,
+          "HasAvatars": false,
+          "HasBadges": false,
+          "HasFrames": false,
+          "HasHeroSkins": false,
+          "HasSelectableHeroes": false,
+          "HasFoggyForestPrizes": false,
+          "HasFoggyForestCurios": false,
+          "HasFoggyForestCurioChests": false,
+          "HasBingoCurrency": false,
+          "HasThreelineCurrency": false,
+          "HasClassicCooperationEventPoints": false,
+          "HasCooperationEventWorldsBossPoints": false,
+          "HasXpBooster": false,
+          "HasSummonParticles": false,
+          "GemsCount": 0,
+          "HasRelics": false,
+          "HasRelicStone": false,
+          "HasRandomRelicStone": false,
+          "HasRelicStoneBoxes": false
+        },
+        "TreasureHuntReward": {
+          "Count": 5,
+          "Rewards": "<List`1>",
+          "CompareArtifactsByItsProperties": false,
+          "RewardProbsByIndex": "<Dictionary`2>"
+        },
+        "RefreshAltarResources": {
+          "RawValues": "<Dictionary`2>",
+          "ToRawValues": "<Dictionary`2>",
+          "Energy": 0,
+          "Silver": 0,
+          "Tokens": 0,
+          "Arena3X3ShopCurrency": 0,
+          "Arena3X3Tokens": 0,
+          "LiveArenaTokens": 0,
+          "Gems": 0,
+          "AutoBattleTickets": 0,
+          "MedalBronze": 0,
+          "MedalSilver": 0,
+          "MedalGold": 0,
+          "AllianceBossKey": 0,
+          "AllianceHydraKeys": 0,
+          "AllianceChimeraKeys": 0,
+          "FoggyForestEnergy": 0,
+          "FoggyForestMainBossKeysNormal": 0,
+          "FoggyForestMainBossKeysHard": 0,
+          "ForgeMaterials": "<Dictionary`2>",
+          "DoubleAscend": "<Dictionary`2>",
+          "Magisteel": 0,
+          "Corehammer": 0,
+          "SoulstoneRare": 0,
+          "SoulstoneEpic": 0,
+          "SoulstoneLeg": 0,
+          "BloodstoneRare": 0,
+          "BloodstoneEpic": 0,
+          "BloodstoneLeg": 0,
+          "NetherSpiderRare": 0,
+          "NetherSpiderEpic": 0,
+          "NetherSpiderLeg": 0,
+          "ScarabClawsRare": 0,
+          "ScarabClawsEpic": 0,
+          "ScarabClawsLeg": 0,
+          "MagmaDragonCoresRare": 0,
+          "MagmaDragonCoresEpic": 0,
+          "MagmaDragonCoresLeg": 0,
+          "FrostSpiderSpinesRare": 0,
+          "FrostSpiderSpinesEpic": 0,
+          "FrostSpiderSpinesLeg": 0,
+          "DragonBoneRare": 0,
+          "DragonBoneEpic": 0,
+          "DragonBoneLeg": 0,
+          "GriffinFeatherRare": 0,
+          "GriffinFeatherEpic": 0,
+          "GriffinFeatherLeg": 0,
+          "DreadhornPlatesRare": 0,
+          "DreadhornPlatesEpic": 0,
+          "DreadhornPlatesLeg": 0,
+          "FaeSpheresRare": 0,
+          "FaeSpheresEpic": 0,
+          "FaeSpheresLeg": 0,
+          "InstinctStonesRare": 0,
+          "InstinctStonesEpic": 0,
+          "InstinctStonesLeg": 0,
+          "DoomTowerGoldKeys": 0,
+          "DoomTowerSilverKeys": 0,
+          "AllianceCoin": 0,
+          "FortressKeys": 0,
+          "EternalSoulCoin": 0,
+          "ImmortalSoulCoin": 0,
+          "MortalSoulCoin": 0,
+          "EternalSoulEssence": 0,
+          "ImmortalSoulEssence": 0,
+          "LifeTokens": 0,
+          "LiveArenaMedalBronze": 0,
+          "LiveArenaMedalSilver": 0,
+          "LiveArenaMedalGold": 0,
+          "PlariumPoints": 0,
+          "MythicalDust": 0,
+          "BrokenHeroParts": 0,
+          "CursedCityKeys": 0,
+          "CursedCityHardQuestPoints": 0,
+          "CursedCityNormalQuestPoints": 0,
+          "ParticleSummon": 0,
+          "SiegeStones": 0,
+          "SiegeMana": 0,
+          "SiegeDefenseScrolls": 0,
+          "SiegeBattleScrolls": 0,
+          "SiegeRematchScrolls": 0,
+          "Meteors": 0,
+          "FoggyForestNormalCoins": 0,
+          "FoggyForestNormalGold": 0,
+          "FoggyForestNormalMainBossKeys": 0,
+          "FoggyForestNormalRollRefreshes": 0,
+          "FoggyForestNormalTreasureHuntParts": 0,
+          "FoggyForestHardCoins": 0,
+          "FoggyForestHardGold": 0,
+          "FoggyForestHardMainBossKeys": 0,
+          "FoggyForestHardRollRefreshes": 1,
+          "FoggyForestHardTreasureHuntParts": 0
+        },
+        "RollDeckPrice": {
+          "RawValues": "<Dictionary`2>",
+          "ToRawValues": "<Dictionary`2>",
+          "Energy": 0,
+          "Silver": 0,
+          "Tokens": 0,
+          "Arena3X3ShopCurrency": 0,
+          "Arena3X3Tokens": 0,
+          "LiveArenaTokens": 0,
+          "Gems": 0,
+          "AutoBattleTickets": 0,
+          "MedalBronze": 0,
+          "MedalSilver": 0,
+          "MedalGold": 0,
+          "AllianceBossKey": 0,
+          "AllianceHydraKeys": 0,
+          "AllianceChimeraKeys": 0,
+          "FoggyForestEnergy": 0,
+          "FoggyForestMainBossKeysNormal": 0,
+          "FoggyForestMainBossKeysHard": 0,
+          "ForgeMaterials": "<Dictionary`2>",
+          "DoubleAscend": "<Dictionary`2>",
+          "Magisteel": 0,
+          "Corehammer": 0,
+          "SoulstoneRare": 0,
+          "SoulstoneEpic": 0,
+          "SoulstoneLeg": 0,
+          "BloodstoneRare": 0,
+          "BloodstoneEpic": 0,
+          "BloodstoneLeg": 0,
+          "NetherSpiderRare": 0,
+          "NetherSpiderEpic": 0,
+          "NetherSpiderLeg": 0,
+          "ScarabClawsRare": 0,
+          "ScarabClawsEpic": 0,
+          "ScarabClawsLeg": 0,
+          "MagmaDragonCoresRare": 0,
+          "MagmaDragonCoresEpic": 0,
+          "MagmaDragonCoresLeg": 0,
+          "FrostSpiderSpinesRare": 0,
+          "FrostSpiderSpinesEpic": 0,
+          "FrostSpiderSpinesLeg": 0,
+          "DragonBoneRare": 0,
+          "DragonBoneEpic": 0,
+          "DragonBoneLeg": 0,
+          "GriffinFeatherRare": 0,
+          "GriffinFeatherEpic": 0,
+          "GriffinFeatherLeg": 0,
+          "DreadhornPlatesRare": 0,
+          "DreadhornPlatesEpic": 0,
+          "DreadhornPlatesLeg": 0,
+          "FaeSpheresRare": 0,
+          "FaeSpheresEpic": 0,
+          "FaeSpheresLeg": 0,
+          "InstinctStonesRare": 0,
+          "InstinctStonesEpic": 0,
+          "InstinctStonesLeg": 0,
+          "DoomTowerGoldKeys": 0,
+          "DoomTowerSilverKeys": 0,
+          "AllianceCoin": 0,
+          "FortressKeys": 0,
+          "EternalSoulCoin": 0,
+          "ImmortalSoulCoin": 0,
+          "MortalSoulCoin": 0,
+          "EternalSoulEssence": 0,
+          "ImmortalSoulEssence": 0,
+          "LifeTokens": 0,
+          "LiveArenaMedalBronze": 0,
+          "LiveArenaMedalSilver": 0,
+          "LiveArenaMedalGold": 0,
+          "PlariumPoints": 0,
+          "MythicalDust": 0,
+          "BrokenHeroParts": 0,
+          "CursedCityKeys": 0,
+          "CursedCityHardQuestPoints": 0,
+          "CursedCityNormalQuestPoints": 0,
+          "ParticleSummon": 0,
+          "SiegeStones": 0,
+          "SiegeMana": 0,
+          "SiegeDefenseScrolls": 0,
+          "SiegeBattleScrolls": 0,
+          "SiegeRematchScrolls": 0,
+          "Meteors": 0,
+          "FoggyForestNormalCoins": 0,
+          "FoggyForestNormalGold": 0,
+          "FoggyForestNormalMainBossKeys": 0,
+          "FoggyForestNormalRollRefreshes": 0,
+          "FoggyForestNormalTreasureHuntParts": 0,
+          "FoggyForestHardCoins": 0,
+          "FoggyForestHardGold": 0,
+          "FoggyForestHardMainBossKeys": 0,
+          "FoggyForestHardRollRefreshes": 1,
+          "FoggyForestHardTreasureHuntParts": 0
+        },
+        "GoldenGoblinRewardData": [
+          "<StaticGoldenGoblinRewardData>",
+          "<StaticGoldenGoblinRewardData>",
+          "<StaticGoldenGoblinRewardData>"
+        ]
+      },
+      "RegionData": {
+        "-486392864": {
+          "ElementPools": "<Dictionary`2>"
+        }
+      }
+    }
+  ],
+  "MapData": {
+    "StageSlotsData": [
+      {
+        "StageSlot": "ST1",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "EE18",
+          "EE29"
+        ],
+        "VisibleStages": [
+          "EE17",
+          "EE19",
+          "EE28",
+          "EE30"
+        ]
+      },
+      {
+        "StageSlot": "E1",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "E2"
+        ],
+        "VisibleStages": [
+          "EE1",
+          "EE6",
+          "EE7",
+          "M12",
+          "EMA18",
+          "EH2"
+        ]
+      },
+      {
+        "StageSlot": "E2",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "E1",
+          "EE1",
+          "EE6",
+          "EE7"
+        ],
+        "VisibleStages": [
+          "EE2",
+          "EE8",
+          "EE11",
+          "EMA19",
+          "EH3"
+        ]
+      },
+      {
+        "StageSlot": "E3",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "EE3",
+          "EMB7"
+        ],
+        "VisibleStages": [
+          "EE2",
+          "EE4"
+        ]
+      },
+      {
+        "StageSlot": "E4",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "EE5",
+          "EE10"
+        ],
+        "VisibleStages": [
+          "EE4",
+          "EE14",
+          "EE15",
+          "EMB13"
+        ]
+      },
+      {
+        "StageSlot": "E5",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "EE2",
+          "EE4",
+          "EE13"
+        ],
+        "VisibleStages": [
+          "EE1",
+          "EE3",
+          "EE5",
+          "EE9",
+          "EE18"
+        ]
+      },
+      {
+        "StageSlot": "E6",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "EE15"
+        ],
+        "VisibleStages": [
+          "EE10",
+          "EE14",
+          "EE20",
+          "M39",
+          "EMB18",
+          "EMB19",
+          "EMB27"
+        ]
+      },
+      {
+        "StageSlot": "E7",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "EE11"
+        ],
+        "VisibleStages": [
+          "E10",
+          "EE6",
+          "EE12",
+          "EMA27"
+        ]
+      },
+      {
+        "StageSlot": "E8",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "EE8",
+          "EE12",
+          "EE17"
+        ],
+        "VisibleStages": [
+          "EE7",
+          "EE11",
+          "EE16",
+          "EE18",
+          "EE22"
+        ]
+      },
+      {
+        "StageSlot": "E9",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "EE9",
+          "EE14",
+          "EE19",
+          "EE23"
+        ],
+        "VisibleStages": [
+          "E11",
+          "EE4",
+          "EE10",
+          "EE15",
+          "EE18",
+          "EE24",
+          "EE27"
+        ]
+      },
+      {
+        "StageSlot": "E10",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "EE11",
+          "EE21"
+        ],
+        "VisibleStages": [
+          "E7",
+          "E13",
+          "E14",
+          "EE6",
+          "EE12"
+        ]
+      },
+      {
+        "StageSlot": "E11",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "EE23",
+          "EE27"
+        ],
+        "VisibleStages": [
+          "E9",
+          "E17"
+        ]
+      },
+      {
+        "StageSlot": "E12",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "EE20",
+          "EE24"
+        ],
+        "VisibleStages": [
+          "EE15",
+          "EE23",
+          "EE27",
+          "EMB31"
+        ]
+      },
+      {
+        "StageSlot": "E13",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "EE21"
+        ],
+        "VisibleStages": [
+          "E10",
+          "E14",
+          "EMA38"
+        ]
+      },
+      {
+        "StageSlot": "E14",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "EE16",
+          "EE21",
+          "EE22",
+          "EE25",
+          "EE26"
+        ],
+        "VisibleStages": [
+          "E10",
+          "E13",
+          "E15",
+          "E16",
+          "EE12",
+          "EE17",
+          "EE31"
+        ]
+      },
+      {
+        "StageSlot": "E15",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "EE25"
+        ],
+        "VisibleStages": [
+          "E14",
+          "EE31",
+          "EMD5"
+        ]
+      },
+      {
+        "StageSlot": "E16",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "EE26",
+          "EE28",
+          "EE31",
+          "EE35",
+          "EE36"
+        ],
+        "VisibleStages": [
+          "E14",
+          "E21",
+          "EE22",
+          "EE25",
+          "EE29",
+          "EE34",
+          "EE37"
+        ]
+      },
+      {
+        "StageSlot": "E17",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "EE27",
+          "EE30",
+          "EE32",
+          "EE38"
+        ],
+        "VisibleStages": [
+          "E11",
+          "E20",
+          "EE23",
+          "EE24",
+          "EE29",
+          "EE33",
+          "EE39"
+        ]
+      },
+      {
+        "StageSlot": "E18",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "EE33"
+        ],
+        "VisibleStages": [
+          "EE32",
+          "EE39",
+          "M50",
+          "EMC6",
+          "EMC12"
+        ]
+      },
+      {
+        "StageSlot": "E19",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "EE34"
+        ],
+        "VisibleStages": [
+          "EE31",
+          "EE40",
+          "EMD8",
+          "EMD17",
+          "EMD18"
+        ]
+      },
+      {
+        "StageSlot": "E20",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "EE37",
+          "EE38",
+          "EE42",
+          "EE43"
+        ],
+        "VisibleStages": [
+          "E17",
+          "E22",
+          "E23",
+          "EE36",
+          "EE39",
+          "EMD13"
+        ]
+      },
+      {
+        "StageSlot": "E21",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "EE35",
+          "EE40",
+          "EE41"
+        ],
+        "VisibleStages": [
+          "E16",
+          "E22",
+          "EE34",
+          "EMD19",
+          "EMD20"
+        ]
+      },
+      {
+        "StageSlot": "E22",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "EE41",
+          "EE42"
+        ],
+        "VisibleStages": [
+          "E20",
+          "E21",
+          "EMD13"
+        ]
+      },
+      {
+        "StageSlot": "E23",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "EE43"
+        ],
+        "VisibleStages": [
+          "E20",
+          "EE39",
+          "M58"
+        ]
+      },
+      {
+        "StageSlot": "EE1",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "E2",
+          "EE2"
+        ],
+        "VisibleStages": [
+          "E1",
+          "E5",
+          "EE3",
+          "EE6",
+          "EE7"
+        ]
+      },
+      {
+        "StageSlot": "EE2",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "EE1",
+          "EE3",
+          "E5"
+        ],
+        "VisibleStages": [
+          "E2",
+          "E3",
+          "EE4",
+          "EE13"
+        ]
+      },
+      {
+        "StageSlot": "EE3",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "E3",
+          "EE2",
+          "EE4"
+        ],
+        "VisibleStages": [
+          "E5",
+          "EE1",
+          "EE5",
+          "EE9"
+        ]
+      },
+      {
+        "StageSlot": "EE4",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "EE3",
+          "EE5",
+          "EE9",
+          "E5"
+        ],
+        "VisibleStages": [
+          "E3",
+          "E4",
+          "E9",
+          "EE2",
+          "EE13"
+        ]
+      },
+      {
+        "StageSlot": "EE5",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "E4",
+          "EE4"
+        ],
+        "VisibleStages": [
+          "E5",
+          "EE3",
+          "EE9",
+          "EE10",
+          "EMB12"
+        ]
+      },
+      {
+        "StageSlot": "EE6",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "E2",
+          "EE11"
+        ],
+        "VisibleStages": [
+          "E1",
+          "E7",
+          "E10",
+          "EE1",
+          "EE7",
+          "EE12"
+        ]
+      },
+      {
+        "StageSlot": "EE7",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "E2",
+          "EE8"
+        ],
+        "VisibleStages": [
+          "E8",
+          "EE1",
+          "EE6"
+        ]
+      },
+      {
+        "StageSlot": "EE8",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "EE7",
+          "E8"
+        ],
+        "VisibleStages": [
+          "E2",
+          "EE12",
+          "EE17"
+        ]
+      },
+      {
+        "StageSlot": "EE9",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "EE4",
+          "E9"
+        ],
+        "VisibleStages": [
+          "EE3",
+          "EE5",
+          "EE14",
+          "EE19",
+          "EE23"
+        ]
+      },
+      {
+        "StageSlot": "EE10",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "E4",
+          "EE14",
+          "EE15"
+        ],
+        "VisibleStages": [
+          "E6",
+          "E9",
+          "EE5",
+          "EE20",
+          "M39",
+          "EMB12"
+        ]
+      },
+      {
+        "StageSlot": "EE11",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "EE6",
+          "E7",
+          "E10",
+          "EE12"
+        ],
+        "VisibleStages": [
+          "E2",
+          "E8",
+          "EE16",
+          "EE21",
+          "EMA28"
+        ]
+      },
+      {
+        "StageSlot": "EE12",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "EE11",
+          "E8",
+          "EE16"
+        ],
+        "VisibleStages": [
+          "E7",
+          "E10",
+          "E14",
+          "EE6",
+          "EE8",
+          "EE17"
+        ]
+      },
+      {
+        "StageSlot": "EE13",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "E5",
+          "EE18"
+        ],
+        "VisibleStages": [
+          "ST1",
+          "EE2",
+          "EE4",
+          "EE17",
+          "EE19"
+        ]
+      },
+      {
+        "StageSlot": "EE14",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "E9",
+          "EE10",
+          "EE15"
+        ],
+        "VisibleStages": [
+          "E4",
+          "E6",
+          "EE9",
+          "EE19",
+          "EE20",
+          "EE23"
+        ]
+      },
+      {
+        "StageSlot": "EE15",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "EE10",
+          "EE14",
+          "E6",
+          "EE20"
+        ],
+        "VisibleStages": [
+          "E4",
+          "E9",
+          "E12",
+          "EMB23"
+        ]
+      },
+      {
+        "StageSlot": "EE16",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "EE12",
+          "E14"
+        ],
+        "VisibleStages": [
+          "E8",
+          "EE11",
+          "EE21",
+          "EE22",
+          "EE25",
+          "EE26"
+        ]
+      },
+      {
+        "StageSlot": "EE17",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "E8",
+          "EE18",
+          "EE22"
+        ],
+        "VisibleStages": [
+          "ST1",
+          "E14",
+          "EE8",
+          "EE12",
+          "EE13",
+          "EE19",
+          "EE26"
+        ]
+      },
+      {
+        "StageSlot": "EE18",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "EE13",
+          "EE17",
+          "EE19",
+          "ST1"
+        ],
+        "VisibleStages": [
+          "E5",
+          "E8",
+          "E9",
+          "EE22",
+          "EE29"
+        ]
+      },
+      {
+        "StageSlot": "EE19",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "EE18",
+          "E9"
+        ],
+        "VisibleStages": [
+          "ST1",
+          "EE9",
+          "EE13",
+          "EE14",
+          "EE17",
+          "EE23"
+        ]
+      },
+      {
+        "StageSlot": "EE20",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "EE15",
+          "E12"
+        ],
+        "VisibleStages": [
+          "E6",
+          "EE10",
+          "EE14",
+          "EE24",
+          "EMB30"
+        ]
+      },
+      {
+        "StageSlot": "EE21",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "E10",
+          "E13",
+          "E14"
+        ],
+        "VisibleStages": [
+          "EE11",
+          "EE16",
+          "EE22",
+          "EE25",
+          "EE26",
+          "EMA39"
+        ]
+      },
+      {
+        "StageSlot": "EE22",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "EE17",
+          "E14",
+          "EE26"
+        ],
+        "VisibleStages": [
+          "E8",
+          "E16",
+          "EE16",
+          "EE18",
+          "EE21",
+          "EE25"
+        ]
+      },
+      {
+        "StageSlot": "EE23",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "E9",
+          "E11",
+          "EE24",
+          "EE27"
+        ],
+        "VisibleStages": [
+          "E12",
+          "E17",
+          "EE9",
+          "EE14",
+          "EE19"
+        ]
+      },
+      {
+        "StageSlot": "EE24",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "EE23",
+          "E12",
+          "EE27"
+        ],
+        "VisibleStages": [
+          "E9",
+          "E11",
+          "E17",
+          "EE20",
+          "EMB30"
+        ]
+      },
+      {
+        "StageSlot": "EE25",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "E14",
+          "E15",
+          "EE31"
+        ],
+        "VisibleStages": [
+          "E16",
+          "EE16",
+          "EE21",
+          "EE22",
+          "EE34",
+          "M76"
+        ]
+      },
+      {
+        "StageSlot": "EE26",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "E14",
+          "EE22",
+          "E16"
+        ],
+        "VisibleStages": [
+          "EE16",
+          "EE17",
+          "EE21",
+          "EE25",
+          "EE28",
+          "EE35",
+          "EE36"
+        ]
+      },
+      {
+        "StageSlot": "EE27",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "E11",
+          "EE23",
+          "EE24",
+          "E17"
+        ],
+        "VisibleStages": [
+          "E12",
+          "EE30",
+          "EE32",
+          "EE38"
+        ]
+      },
+      {
+        "StageSlot": "EE28",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "E16",
+          "EE29"
+        ],
+        "VisibleStages": [
+          "ST1",
+          "EE26",
+          "EE31",
+          "EE35",
+          "EE36"
+        ]
+      },
+      {
+        "StageSlot": "EE29",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "EE28",
+          "EE30",
+          "ST1"
+        ],
+        "VisibleStages": [
+          "E16",
+          "E17"
+        ]
+      },
+      {
+        "StageSlot": "EE30",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "EE29",
+          "E17"
+        ],
+        "VisibleStages": [
+          "ST1",
+          "EE27",
+          "EE28",
+          "EE32",
+          "EE38"
+        ]
+      },
+      {
+        "StageSlot": "EE31",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "EE25",
+          "EE34",
+          "E16"
+        ],
+        "VisibleStages": [
+          "E14",
+          "E15",
+          "E19",
+          "EE26",
+          "EE28",
+          "EE35",
+          "EE36",
+          "EE40"
+        ]
+      },
+      {
+        "StageSlot": "EE32",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "E17",
+          "EE33",
+          "EE39"
+        ],
+        "VisibleStages": [
+          "E18",
+          "EE27",
+          "EE30",
+          "EE38",
+          "EE43"
+        ]
+      },
+      {
+        "StageSlot": "EE33",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "EE32",
+          "E18",
+          "EE39"
+        ],
+        "VisibleStages": [
+          "E17",
+          "EE43",
+          "EMC5",
+          "EMC10"
+        ]
+      },
+      {
+        "StageSlot": "EE34",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "EE31",
+          "E19",
+          "EE40"
+        ],
+        "VisibleStages": [
+          "E16",
+          "E21",
+          "EE25",
+          "EMD11"
+        ]
+      },
+      {
+        "StageSlot": "EE35",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "E16",
+          "E21"
+        ],
+        "VisibleStages": [
+          "EE26",
+          "EE28",
+          "EE31",
+          "EE36",
+          "EE40",
+          "EE41",
+          "EMD12"
+        ]
+      },
+      {
+        "StageSlot": "EE36",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "E16",
+          "EE37"
+        ],
+        "VisibleStages": [
+          "E20",
+          "EE26",
+          "EE28",
+          "EE31",
+          "EE35"
+        ]
+      },
+      {
+        "StageSlot": "EE37",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "EE36",
+          "E20"
+        ],
+        "VisibleStages": [
+          "E16",
+          "EE38",
+          "EE42",
+          "EE43"
+        ]
+      },
+      {
+        "StageSlot": "EE38",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "E17",
+          "E20"
+        ],
+        "VisibleStages": [
+          "EE27",
+          "EE30",
+          "EE32",
+          "EE37",
+          "EE42",
+          "EE43"
+        ]
+      },
+      {
+        "StageSlot": "EE39",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "EE32",
+          "EE33",
+          "EE43"
+        ],
+        "VisibleStages": [
+          "E17",
+          "E18",
+          "E20",
+          "E23"
+        ]
+      },
+      {
+        "StageSlot": "EE40",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "EE34",
+          "E21"
+        ],
+        "VisibleStages": [
+          "E19",
+          "EE31",
+          "EE35",
+          "EE41",
+          "EMD12"
+        ]
+      },
+      {
+        "StageSlot": "EE41",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "E21",
+          "E22"
+        ],
+        "VisibleStages": [
+          "EE35",
+          "EE40",
+          "EE42",
+          "EMD12"
+        ]
+      },
+      {
+        "StageSlot": "EE42",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "E20",
+          "E22",
+          "EMD13"
+        ],
+        "VisibleStages": [
+          "EE37",
+          "EE38",
+          "EE41",
+          "EE43",
+          "M84"
+        ]
+      },
+      {
+        "StageSlot": "EE43",
+        "Zone": "FoggyForestEasyZone",
+        "ConnectedStages": [
+          "E20",
+          "E23",
+          "EE39"
+        ],
+        "VisibleStages": [
+          "EE32",
+          "EE33",
+          "EE37",
+          "EE38",
+          "EE42",
+          "EMC15"
+        ]
+      },
+      {
+        "StageSlot": "M1",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMA2"
+        ],
+        "VisibleStages": [
+          "EMA7"
+        ]
+      },
+      {
+        "StageSlot": "M2",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMA3"
+        ],
+        "VisibleStages": [
+          "EMA4",
+          "EMA8"
+        ]
+      },
+      {
+        "StageSlot": "M3",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMA4"
+        ],
+        "VisibleStages": [
+          "EMA3",
+          "EMA9"
+        ]
+      },
+      {
+        "StageSlot": "M4",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMA1",
+          "M5"
+        ],
+        "VisibleStages": [
+          "M6"
+        ]
+      },
+      {
+        "StageSlot": "M5",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M4"
+        ],
+        "VisibleStages": [
+          "EMA1"
+        ]
+      },
+      {
+        "StageSlot": "M6",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMA1",
+          "M11",
+          "EMA5"
+        ],
+        "VisibleStages": [
+          "M4",
+          "EMA10",
+          "EMA12",
+          "EMA13"
+        ]
+      },
+      {
+        "StageSlot": "M7",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMA6"
+        ],
+        "VisibleStages": [
+          "EMA7",
+          "EMA14"
+        ]
+      },
+      {
+        "StageSlot": "M8",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMA14"
+        ],
+        "VisibleStages": [
+          "EMA6",
+          "EMA15",
+          "EMA22"
+        ]
+      },
+      {
+        "StageSlot": "M9",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMA7",
+          "EMA8",
+          "EMA15",
+          "EMA16"
+        ],
+        "VisibleStages": [
+          "EMA2",
+          "EMA3",
+          "EMA6",
+          "EMA9",
+          "EMA14",
+          "EMA20",
+          "EMA23",
+          "EH12"
+        ]
+      },
+      {
+        "StageSlot": "M10",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMA9"
+        ],
+        "VisibleStages": [
+          "EMA4",
+          "EMA8",
+          "EMA10"
+        ]
+      },
+      {
+        "StageSlot": "M11",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M6",
+          "EMA10"
+        ],
+        "VisibleStages": [
+          "EMA1",
+          "EMA5",
+          "EMA9",
+          "EMA11",
+          "EMA17"
+        ]
+      },
+      {
+        "StageSlot": "M12",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMA13",
+          "EMA19"
+        ],
+        "VisibleStages": [
+          "E1",
+          "EMA5",
+          "EMA12",
+          "EMA18",
+          "EH2"
+        ]
+      },
+      {
+        "StageSlot": "M13",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMA11",
+          "EMA12",
+          "EMA18",
+          "EMA21"
+        ],
+        "VisibleStages": [
+          "M18",
+          "EMA5",
+          "EMA10",
+          "EMA13",
+          "EMA19",
+          "EMA27"
+        ]
+      },
+      {
+        "StageSlot": "M14",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M15"
+        ],
+        "VisibleStages": [
+          "EMA22",
+          "EMA24",
+          "EMA29"
+        ]
+      },
+      {
+        "StageSlot": "M15",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M14",
+          "EMA22",
+          "EMA24",
+          "EMA29"
+        ],
+        "VisibleStages": [
+          "EMA14",
+          "EMA25",
+          "EMA32"
+        ]
+      },
+      {
+        "StageSlot": "M16",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMA23",
+          "EMA25"
+        ],
+        "VisibleStages": [
+          "EMA15",
+          "EMA24",
+          "EMA30",
+          "EH12"
+        ]
+      },
+      {
+        "StageSlot": "M17",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMA17",
+          "EMA20",
+          "EMA27"
+        ],
+        "VisibleStages": [
+          "EMA10",
+          "EMA16",
+          "EMA21",
+          "EMA26",
+          "EMA28"
+        ]
+      },
+      {
+        "StageSlot": "M18",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMA21"
+        ],
+        "VisibleStages": [
+          "M13",
+          "EMA27"
+        ]
+      },
+      {
+        "StageSlot": "M19",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMA32"
+        ],
+        "VisibleStages": [
+          "EMA29",
+          "EMA33"
+        ]
+      },
+      {
+        "StageSlot": "M20",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMA30"
+        ],
+        "VisibleStages": [
+          "M21",
+          "EMA25",
+          "EMA33"
+        ]
+      },
+      {
+        "StageSlot": "M21",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMA30",
+          "EMA35"
+        ],
+        "VisibleStages": [
+          "EMA25",
+          "EMA33",
+          "EMA34",
+          "EMA36"
+        ]
+      },
+      {
+        "StageSlot": "M22",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMA31",
+          "EMA36",
+          "EMA37"
+        ],
+        "VisibleStages": [
+          "M23",
+          "M25",
+          "EMA35",
+          "EMA38"
+        ]
+      },
+      {
+        "StageSlot": "M23",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMA26",
+          "EMA31",
+          "EMA38"
+        ],
+        "VisibleStages": [
+          "M22",
+          "EMA27",
+          "EMA37",
+          "EMA39",
+          "EH14"
+        ]
+      },
+      {
+        "StageSlot": "M24",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMA35"
+        ],
+        "VisibleStages": [
+          "M21",
+          "EMA34",
+          "EMA36"
+        ]
+      },
+      {
+        "StageSlot": "M25",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMA37"
+        ],
+        "VisibleStages": [
+          "M22",
+          "EMA38"
+        ]
+      },
+      {
+        "StageSlot": "EMA1",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M4",
+          "M6"
+        ],
+        "VisibleStages": [
+          "M5",
+          "M11",
+          "EMA5"
+        ]
+      },
+      {
+        "StageSlot": "EMA2",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M1",
+          "EMA7"
+        ],
+        "VisibleStages": [
+          "M9",
+          "EMA6"
+        ]
+      },
+      {
+        "StageSlot": "EMA3",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M2",
+          "EMA4",
+          "EMA8"
+        ],
+        "VisibleStages": [
+          "M3",
+          "M9",
+          "EMA9"
+        ]
+      },
+      {
+        "StageSlot": "EMA4",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M3",
+          "EMA3",
+          "EMA9"
+        ],
+        "VisibleStages": [
+          "M2",
+          "EMA8",
+          "EMA10"
+        ]
+      },
+      {
+        "StageSlot": "EMA5",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M6",
+          "EMA12",
+          "EMA13"
+        ],
+        "VisibleStages": [
+          "M11",
+          "M12",
+          "M13",
+          "EMA1"
+        ]
+      },
+      {
+        "StageSlot": "EMA6",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M7",
+          "EMA7",
+          "EMA14"
+        ],
+        "VisibleStages": [
+          "M8",
+          "M9",
+          "EMA2",
+          "EMA15",
+          "EMA22"
+        ]
+      },
+      {
+        "StageSlot": "EMA7",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMA2",
+          "EMA6",
+          "M9"
+        ],
+        "VisibleStages": [
+          "M1",
+          "M7",
+          "EMA8",
+          "EMA14",
+          "EMA15",
+          "EMA16"
+        ]
+      },
+      {
+        "StageSlot": "EMA8",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMA3",
+          "EMA9",
+          "M9"
+        ],
+        "VisibleStages": [
+          "M2",
+          "M10",
+          "EMA4",
+          "EMA7",
+          "EMA10",
+          "EMA15",
+          "EMA16"
+        ]
+      },
+      {
+        "StageSlot": "EMA9",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMA4",
+          "EMA8",
+          "EMA10",
+          "M10"
+        ],
+        "VisibleStages": [
+          "M3",
+          "M9",
+          "M11",
+          "EMA3",
+          "EMA11",
+          "EMA17"
+        ]
+      },
+      {
+        "StageSlot": "EMA10",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M11",
+          "EMA9",
+          "EMA11",
+          "EMA17"
+        ],
+        "VisibleStages": [
+          "M6",
+          "M10",
+          "M13",
+          "M17",
+          "EMA4",
+          "EMA8"
+        ]
+      },
+      {
+        "StageSlot": "EMA11",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMA10",
+          "M13"
+        ],
+        "VisibleStages": [
+          "M11",
+          "EMA9",
+          "EMA12",
+          "EMA17",
+          "EMA18",
+          "EMA21"
+        ]
+      },
+      {
+        "StageSlot": "EMA12",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMA5",
+          "EMA13",
+          "M13"
+        ],
+        "VisibleStages": [
+          "M6",
+          "M12",
+          "EMA11",
+          "EMA18",
+          "EMA21"
+        ]
+      },
+      {
+        "StageSlot": "EMA13",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMA5",
+          "EMA12",
+          "M12"
+        ],
+        "VisibleStages": [
+          "M6",
+          "M13",
+          "EMA19",
+          "EH1"
+        ]
+      },
+      {
+        "StageSlot": "EMA14",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M8",
+          "EMA6",
+          "EMA15",
+          "EMA22"
+        ],
+        "VisibleStages": [
+          "M7",
+          "M9",
+          "M15",
+          "EMA7",
+          "EMA23"
+        ]
+      },
+      {
+        "StageSlot": "EMA15",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMA14",
+          "M9",
+          "EMA23"
+        ],
+        "VisibleStages": [
+          "M8",
+          "M16",
+          "EMA6",
+          "EMA7",
+          "EMA8",
+          "EMA16",
+          "EMA22"
+        ]
+      },
+      {
+        "StageSlot": "EMA16",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M9",
+          "EMA20"
+        ],
+        "VisibleStages": [
+          "M17",
+          "EMA7",
+          "EMA8",
+          "EMA15",
+          "H8",
+          "EH13"
+        ]
+      },
+      {
+        "StageSlot": "EMA17",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMA10",
+          "M17"
+        ],
+        "VisibleStages": [
+          "M11",
+          "EMA9",
+          "EMA11",
+          "EMA20",
+          "EMA27"
+        ]
+      },
+      {
+        "StageSlot": "EMA18",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M13",
+          "EMA19"
+        ],
+        "VisibleStages": [
+          "E1",
+          "M12",
+          "EMA11",
+          "EMA12",
+          "EMA21"
+        ]
+      },
+      {
+        "StageSlot": "EMA19",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMA18",
+          "M12"
+        ],
+        "VisibleStages": [
+          "E2",
+          "M13",
+          "EMA13",
+          "EH1",
+          "EH3"
+        ]
+      },
+      {
+        "StageSlot": "EMA20",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMA16",
+          "M17"
+        ],
+        "VisibleStages": [
+          "M9",
+          "EMA17",
+          "EMA27",
+          "EH12"
+        ]
+      },
+      {
+        "StageSlot": "EMA21",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M13",
+          "M18",
+          "EMA27"
+        ],
+        "VisibleStages": [
+          "M17",
+          "EMA11",
+          "EMA12",
+          "EMA18",
+          "EMA26",
+          "EMA28"
+        ]
+      },
+      {
+        "StageSlot": "EMA22",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMA14",
+          "M15"
+        ],
+        "VisibleStages": [
+          "M8",
+          "M14",
+          "EMA6",
+          "EMA15",
+          "EMA24",
+          "EMA29"
+        ]
+      },
+      {
+        "StageSlot": "EMA23",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMA15",
+          "M16"
+        ],
+        "VisibleStages": [
+          "M9",
+          "EMA14",
+          "EMA25",
+          "EH13"
+        ]
+      },
+      {
+        "StageSlot": "EMA24",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M15",
+          "EMA25"
+        ],
+        "VisibleStages": [
+          "M14",
+          "M16",
+          "EMA22",
+          "EMA29",
+          "EMA30"
+        ]
+      },
+      {
+        "StageSlot": "EMA25",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMA24",
+          "M16",
+          "EMA30"
+        ],
+        "VisibleStages": [
+          "M15",
+          "M20",
+          "M21",
+          "EMA23",
+          "EMA33",
+          "EH13"
+        ]
+      },
+      {
+        "StageSlot": "EMA26",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMA27",
+          "M23"
+        ],
+        "VisibleStages": [
+          "M17",
+          "EMA21",
+          "EMA28",
+          "EMA31",
+          "EMA38",
+          "H8"
+        ]
+      },
+      {
+        "StageSlot": "EMA27",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M17",
+          "EMA21",
+          "EMA28",
+          "EMA26"
+        ],
+        "VisibleStages": [
+          "E7",
+          "M13",
+          "M18",
+          "M23",
+          "EMA17",
+          "EMA20",
+          "EH14"
+        ]
+      },
+      {
+        "StageSlot": "EMA28",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMA27"
+        ],
+        "VisibleStages": [
+          "EE11",
+          "M17",
+          "EMA21",
+          "EMA26"
+        ]
+      },
+      {
+        "StageSlot": "EMA29",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M15",
+          "EMA32"
+        ],
+        "VisibleStages": [
+          "M14",
+          "M19",
+          "EMA22",
+          "EMA24",
+          "EMA33"
+        ]
+      },
+      {
+        "StageSlot": "EMA30",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMA25",
+          "M20",
+          "M21",
+          "EMA33"
+        ],
+        "VisibleStages": [
+          "M16",
+          "EMA24",
+          "EMA32",
+          "EMA34",
+          "EMA35",
+          "EH15"
+        ]
+      },
+      {
+        "StageSlot": "EMA31",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M22",
+          "M23"
+        ],
+        "VisibleStages": [
+          "EMA26",
+          "EMA36",
+          "EMA37",
+          "EMA38"
+        ]
+      },
+      {
+        "StageSlot": "EMA32",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMA29",
+          "M19",
+          "EMA33"
+        ],
+        "VisibleStages": [
+          "M15",
+          "EMA30",
+          "EMA34",
+          "EH15"
+        ]
+      },
+      {
+        "StageSlot": "EMA33",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMA32",
+          "EMA34",
+          "EMA30",
+          "EH15"
+        ],
+        "VisibleStages": [
+          "M19",
+          "M20",
+          "M21",
+          "EMA25",
+          "EMA29",
+          "EMA35",
+          "H10"
+        ]
+      },
+      {
+        "StageSlot": "EMA34",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMA33",
+          "EMA35"
+        ],
+        "VisibleStages": [
+          "M21",
+          "M24",
+          "EMA30",
+          "EMA32",
+          "EMA36",
+          "EH15"
+        ]
+      },
+      {
+        "StageSlot": "EMA35",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMA34",
+          "M24",
+          "EMA36",
+          "M21"
+        ],
+        "VisibleStages": [
+          "M22",
+          "EMA30",
+          "EMA33"
+        ]
+      },
+      {
+        "StageSlot": "EMA36",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMA35",
+          "M22"
+        ],
+        "VisibleStages": [
+          "M21",
+          "M24",
+          "EMA31",
+          "EMA34",
+          "EMA37"
+        ]
+      },
+      {
+        "StageSlot": "EMA37",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M22",
+          "M25",
+          "EMA38"
+        ],
+        "VisibleStages": [
+          "M23",
+          "EMA31",
+          "EMA36",
+          "EMA39"
+        ]
+      },
+      {
+        "StageSlot": "EMA38",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMA37",
+          "M23",
+          "EMA39"
+        ],
+        "VisibleStages": [
+          "E13",
+          "M22",
+          "M25",
+          "EMA26",
+          "EMA31"
+        ]
+      },
+      {
+        "StageSlot": "EMA39",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMA38"
+        ],
+        "VisibleStages": [
+          "EE21",
+          "M23",
+          "EMA37"
+        ]
+      },
+      {
+        "StageSlot": "M26",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMB1"
+        ],
+        "VisibleStages": [
+          "M28",
+          "EMB3"
+        ]
+      },
+      {
+        "StageSlot": "M27",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M28"
+        ],
+        "VisibleStages": [
+          "EMB1",
+          "EMB4"
+        ]
+      },
+      {
+        "StageSlot": "M28",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M27",
+          "EMB1",
+          "EMB4"
+        ],
+        "VisibleStages": [
+          "EMB3",
+          "EMB5",
+          "EMB9"
+        ]
+      },
+      {
+        "StageSlot": "M29",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMB6"
+        ],
+        "VisibleStages": [
+          "M30",
+          "EMB10",
+          "EH4",
+          "EH7"
+        ]
+      },
+      {
+        "StageSlot": "M30",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMB6",
+          "EMB11"
+        ],
+        "VisibleStages": [
+          "M29",
+          "EMB10",
+          "EMB16",
+          "H6",
+          "EH11"
+        ]
+      },
+      {
+        "StageSlot": "M31",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMB7"
+        ],
+        "VisibleStages": [
+          "E3"
+        ]
+      },
+      {
+        "StageSlot": "M32",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M33"
+        ],
+        "VisibleStages": [
+          "EMB3",
+          "EMB8"
+        ]
+      },
+      {
+        "StageSlot": "M33",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M32",
+          "EMB3",
+          "EMB8"
+        ],
+        "VisibleStages": [
+          "EMB1",
+          "EMB4",
+          "EMB9",
+          "EMB13"
+        ]
+      },
+      {
+        "StageSlot": "M34",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMB5",
+          "EMB10",
+          "EMB14",
+          "EMB15"
+        ],
+        "VisibleStages": [
+          "M36",
+          "M37",
+          "M40",
+          "EMB2",
+          "EMB4",
+          "EMB6",
+          "EMB19",
+          "EMB20"
+        ]
+      },
+      {
+        "StageSlot": "M35",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMB17"
+        ],
+        "VisibleStages": [
+          "EMB16"
+        ]
+      },
+      {
+        "StageSlot": "M36",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMB9",
+          "EMB13",
+          "EMB14",
+          "EMB18"
+        ],
+        "VisibleStages": [
+          "M34",
+          "M40",
+          "EMB3",
+          "EMB4",
+          "EMB8",
+          "EMB12",
+          "EMB19",
+          "EMB23"
+        ]
+      },
+      {
+        "StageSlot": "M37",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMB10",
+          "EMB16",
+          "EMB21"
+        ],
+        "VisibleStages": [
+          "M34",
+          "EMB6",
+          "EMB11",
+          "EMB20",
+          "EMB22",
+          "EMB25"
+        ]
+      },
+      {
+        "StageSlot": "M38",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMB22"
+        ],
+        "VisibleStages": [
+          "EMB16",
+          "EMB26"
+        ]
+      },
+      {
+        "StageSlot": "M39",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMB13"
+        ],
+        "VisibleStages": [
+          "M36",
+          "EMB8",
+          "EMB12"
+        ]
+      },
+      {
+        "StageSlot": "M40",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMB14",
+          "EMB19",
+          "EMB20",
+          "M43"
+        ],
+        "VisibleStages": [
+          "M34",
+          "M36",
+          "EMB15",
+          "EMB21",
+          "EMB23",
+          "EMB24",
+          "EMB27",
+          "EMB32"
+        ]
+      },
+      {
+        "StageSlot": "M41",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMB26",
+          "M42",
+          "EMB29"
+        ],
+        "VisibleStages": [
+          "EMB22",
+          "EMB28",
+          "EMB36"
+        ]
+      },
+      {
+        "StageSlot": "M42",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M41"
+        ],
+        "VisibleStages": [
+          "EMB26",
+          "EMB29"
+        ]
+      },
+      {
+        "StageSlot": "M43",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M40",
+          "EMB27",
+          "EMB24",
+          "EMB32"
+        ],
+        "VisibleStages": [
+          "M46",
+          "EMB14",
+          "EMB19",
+          "EMB20",
+          "EMB23",
+          "EMB33",
+          "EMB34"
+        ]
+      },
+      {
+        "StageSlot": "M44",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMB25",
+          "EMB28",
+          "EMB33",
+          "EMB34"
+        ],
+        "VisibleStages": [
+          "M47",
+          "EMB21",
+          "EMB24",
+          "EMB26",
+          "EMB32",
+          "EMB35"
+        ]
+      },
+      {
+        "StageSlot": "M45",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMB36"
+        ],
+        "VisibleStages": [
+          "EMB29",
+          "EMB35",
+          "EH25"
+        ]
+      },
+      {
+        "StageSlot": "M46",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMB27",
+          "EMB31",
+          "EMB32"
+        ],
+        "VisibleStages": [
+          "M43",
+          "EMB23",
+          "EMB30",
+          "EMB33",
+          "EMB34"
+        ]
+      },
+      {
+        "StageSlot": "M47",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMB34"
+        ],
+        "VisibleStages": [
+          "M44",
+          "M48",
+          "EMB32",
+          "EH27"
+        ]
+      },
+      {
+        "StageSlot": "M48",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMB35"
+        ],
+        "VisibleStages": [
+          "M47",
+          "EMB28",
+          "EMB36",
+          "EH27"
+        ]
+      },
+      {
+        "StageSlot": "EMB1",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M26",
+          "M28",
+          "EMB3"
+        ],
+        "VisibleStages": [
+          "M33",
+          "EMB4",
+          "EMB9"
+        ]
+      },
+      {
+        "StageSlot": "EMB2",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMB5"
+        ],
+        "VisibleStages": [
+          "M34",
+          "EMB4",
+          "EH4"
+        ]
+      },
+      {
+        "StageSlot": "EMB3",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMB1",
+          "M33",
+          "EMB4",
+          "EMB9"
+        ],
+        "VisibleStages": [
+          "M28",
+          "M36",
+          "EMB5",
+          "EMB8"
+        ]
+      },
+      {
+        "StageSlot": "EMB4",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M28",
+          "EMB3",
+          "EMB5",
+          "EMB9"
+        ],
+        "VisibleStages": [
+          "M33",
+          "M34",
+          "M36",
+          "EMB2"
+        ]
+      },
+      {
+        "StageSlot": "EMB5",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMB2",
+          "EMB4",
+          "M34"
+        ],
+        "VisibleStages": [
+          "M28",
+          "EMB3",
+          "EMB9",
+          "EMB10",
+          "EMB14",
+          "EMB15",
+          "EH8"
+        ]
+      },
+      {
+        "StageSlot": "EMB6",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M29",
+          "M30",
+          "EMB10"
+        ],
+        "VisibleStages": [
+          "M34",
+          "M37",
+          "EMB11",
+          "EH9",
+          "EH10"
+        ]
+      },
+      {
+        "StageSlot": "EMB7",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M31",
+          "E3"
+        ],
+        "VisibleStages": [
+          "EE3"
+        ]
+      },
+      {
+        "StageSlot": "EMB8",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M33",
+          "EMB13"
+        ],
+        "VisibleStages": [
+          "M36",
+          "EMB3",
+          "EMB12"
+        ]
+      },
+      {
+        "StageSlot": "EMB9",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMB3",
+          "EMB4",
+          "M36"
+        ],
+        "VisibleStages": [
+          "M28",
+          "M33",
+          "EMB5",
+          "EMB13",
+          "EMB14",
+          "EMB18"
+        ]
+      },
+      {
+        "StageSlot": "EMB10",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMB6",
+          "M34",
+          "M37"
+        ],
+        "VisibleStages": [
+          "M29",
+          "M30",
+          "EMB5",
+          "EMB14",
+          "EMB15",
+          "EMB16",
+          "EMB21"
+        ]
+      },
+      {
+        "StageSlot": "EMB11",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M30",
+          "EMB16"
+        ],
+        "VisibleStages": [
+          "M37",
+          "EMB6",
+          "EMB22",
+          "EH10"
+        ]
+      },
+      {
+        "StageSlot": "EMB12",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMB13"
+        ],
+        "VisibleStages": [
+          "EE5",
+          "EE10",
+          "M36",
+          "EMB8"
+        ]
+      },
+      {
+        "StageSlot": "EMB13",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMB8",
+          "EMB12",
+          "M36",
+          "M39"
+        ],
+        "VisibleStages": [
+          "E4",
+          "M33",
+          "EMB9",
+          "EMB14",
+          "EMB18"
+        ]
+      },
+      {
+        "StageSlot": "EMB14",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M34",
+          "M36",
+          "M40",
+          "EMB19"
+        ],
+        "VisibleStages": [
+          "M43",
+          "EMB5",
+          "EMB9",
+          "EMB10",
+          "EMB13",
+          "EMB15",
+          "EMB18",
+          "EMB20",
+          "EMB23"
+        ]
+      },
+      {
+        "StageSlot": "EMB15",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M34",
+          "EMB20"
+        ],
+        "VisibleStages": [
+          "M40",
+          "EMB5",
+          "EMB10",
+          "EMB14",
+          "EMB21"
+        ]
+      },
+      {
+        "StageSlot": "EMB16",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMB11",
+          "M37",
+          "EMB17",
+          "EMB22"
+        ],
+        "VisibleStages": [
+          "M30",
+          "EMB10",
+          "EMB21",
+          "EMB26"
+        ]
+      },
+      {
+        "StageSlot": "EMB17",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M35",
+          "EMB16"
+        ],
+        "VisibleStages": [
+          "M37",
+          "EMB11",
+          "EMB22"
+        ]
+      },
+      {
+        "StageSlot": "EMB18",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M36",
+          "EMB23"
+        ],
+        "VisibleStages": [
+          "E6",
+          "M39",
+          "EMB9",
+          "EMB13",
+          "EMB14",
+          "EMB19",
+          "EMB27"
+        ]
+      },
+      {
+        "StageSlot": "EMB19",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMB14",
+          "M40",
+          "EMB23"
+        ],
+        "VisibleStages": [
+          "E6",
+          "M34",
+          "M36",
+          "M43",
+          "EMB18",
+          "EMB20",
+          "EMB27"
+        ]
+      },
+      {
+        "StageSlot": "EMB20",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMB15",
+          "M40",
+          "EMB21"
+        ],
+        "VisibleStages": [
+          "M34",
+          "M37",
+          "M43",
+          "EMB14",
+          "EMB19",
+          "EMB25"
+        ]
+      },
+      {
+        "StageSlot": "EMB21",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMB20",
+          "M37",
+          "EMB25"
+        ],
+        "VisibleStages": [
+          "M40",
+          "M44",
+          "EMB10",
+          "EMB15",
+          "EMB16",
+          "EMB24"
+        ]
+      },
+      {
+        "StageSlot": "EMB22",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMB16",
+          "M38",
+          "EMB26"
+        ],
+        "VisibleStages": [
+          "M37",
+          "M41",
+          "EMB11",
+          "EMB28"
+        ]
+      },
+      {
+        "StageSlot": "EMB23",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMB18",
+          "EMB19",
+          "EMB27"
+        ],
+        "VisibleStages": [
+          "EE15",
+          "M36",
+          "M40",
+          "M43",
+          "M46",
+          "EMB14"
+        ]
+      },
+      {
+        "StageSlot": "EMB24",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M43",
+          "EMB25"
+        ],
+        "VisibleStages": [
+          "M40",
+          "M44",
+          "EMB21",
+          "EMB27",
+          "EMB32"
+        ]
+      },
+      {
+        "StageSlot": "EMB25",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMB21",
+          "EMB24",
+          "M44"
+        ],
+        "VisibleStages": [
+          "M37",
+          "M43",
+          "EMB20",
+          "EMB33",
+          "EMB34"
+        ]
+      },
+      {
+        "StageSlot": "EMB26",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMB22",
+          "M41",
+          "EMB28"
+        ],
+        "VisibleStages": [
+          "M44",
+          "EMB16",
+          "EMB29",
+          "EMB35"
+        ]
+      },
+      {
+        "StageSlot": "EMB27",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMB23",
+          "M43",
+          "M46"
+        ],
+        "VisibleStages": [
+          "E6",
+          "M40",
+          "EMB18",
+          "EMB19",
+          "EMB24",
+          "EMB31",
+          "EMB32"
+        ]
+      },
+      {
+        "StageSlot": "EMB28",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMB26",
+          "M44",
+          "EMB35"
+        ],
+        "VisibleStages": [
+          "M41",
+          "M48",
+          "EMB22",
+          "EMB25",
+          "EMB33",
+          "EMB34",
+          "EMB36"
+        ]
+      },
+      {
+        "StageSlot": "EMB29",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M41",
+          "EMB36"
+        ],
+        "VisibleStages": [
+          "EMB26",
+          "EMB35",
+          "EH25"
+        ]
+      },
+      {
+        "StageSlot": "EMB30",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMB31"
+        ],
+        "VisibleStages": [
+          "EE20",
+          "EE24",
+          "M46"
+        ]
+      },
+      {
+        "StageSlot": "EMB31",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMB30",
+          "M46"
+        ],
+        "VisibleStages": [
+          "E12",
+          "EMB27",
+          "EMB32"
+        ]
+      },
+      {
+        "StageSlot": "EMB32",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M43",
+          "M46",
+          "EMB33",
+          "EMB34"
+        ],
+        "VisibleStages": [
+          "M40",
+          "M44",
+          "M47",
+          "EMB24",
+          "EMB27",
+          "EMB31"
+        ]
+      },
+      {
+        "StageSlot": "EMB33",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMB32",
+          "M44"
+        ],
+        "VisibleStages": [
+          "M43",
+          "M46",
+          "EMB25",
+          "EMB28",
+          "EMB34"
+        ]
+      },
+      {
+        "StageSlot": "EMB34",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMB32",
+          "M44",
+          "M47"
+        ],
+        "VisibleStages": [
+          "M43",
+          "M46",
+          "EMB25",
+          "EMB28",
+          "EMB33",
+          "EH24"
+        ]
+      },
+      {
+        "StageSlot": "EMB35",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMB28",
+          "EMB36",
+          "M48"
+        ],
+        "VisibleStages": [
+          "M44",
+          "EMB26",
+          "EMB29",
+          "EH24",
+          "EH25"
+        ]
+      },
+      {
+        "StageSlot": "EMB36",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMB29",
+          "EMB35",
+          "M45"
+        ],
+        "VisibleStages": [
+          "M41",
+          "M48",
+          "EMB28",
+          "H15",
+          "EH26"
+        ]
+      },
+      {
+        "StageSlot": "M49",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMC1"
+        ],
+        "VisibleStages": [
+          "M50"
+        ]
+      },
+      {
+        "StageSlot": "M50",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMC1",
+          "EMC2",
+          "EMC5"
+        ],
+        "VisibleStages": [
+          "E18",
+          "M51",
+          "EMC6"
+        ]
+      },
+      {
+        "StageSlot": "M51",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMC2",
+          "EMC3"
+        ],
+        "VisibleStages": [
+          "M50",
+          "EMC6",
+          "EMC7"
+        ]
+      },
+      {
+        "StageSlot": "M52",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMC4"
+        ],
+        "VisibleStages": [
+          "M53",
+          "H15",
+          "EH24"
+        ]
+      },
+      {
+        "StageSlot": "M53",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMC4",
+          "EMC7",
+          "EMC8",
+          "EMC11"
+        ],
+        "VisibleStages": [
+          "M52",
+          "M56",
+          "EMC3",
+          "EMC6",
+          "EMC9",
+          "EMC13",
+          "EMC14"
+        ]
+      },
+      {
+        "StageSlot": "M54",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMC9"
+        ],
+        "VisibleStages": [
+          "EMC8",
+          "EH28"
+        ]
+      },
+      {
+        "StageSlot": "M55",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMC12",
+          "EMC13",
+          "EMC17"
+        ],
+        "VisibleStages": [
+          "EMC10",
+          "EMC11",
+          "EMC16",
+          "EMC18",
+          "EMC23"
+        ]
+      },
+      {
+        "StageSlot": "M56",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMC8",
+          "EMC14",
+          "M57",
+          "EMC20"
+        ],
+        "VisibleStages": [
+          "M53",
+          "EMC9",
+          "EMC11",
+          "EMC19",
+          "EMC24",
+          "EH31",
+          "EH33"
+        ]
+      },
+      {
+        "StageSlot": "M57",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M56",
+          "EH31"
+        ],
+        "VisibleStages": [
+          "EMC8",
+          "EMC14",
+          "EMC20",
+          "H17"
+        ]
+      },
+      {
+        "StageSlot": "M58",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMC15",
+          "EMC21",
+          "EMC25",
+          "M60"
+        ],
+        "VisibleStages": [
+          "E23",
+          "M59",
+          "M67"
+        ]
+      },
+      {
+        "StageSlot": "M59",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMC16",
+          "EMC21",
+          "EMC22",
+          "EMC26"
+        ],
+        "VisibleStages": [
+          "M58",
+          "EMC12",
+          "EMC23",
+          "EMC27"
+        ]
+      },
+      {
+        "StageSlot": "M60",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M58"
+        ],
+        "VisibleStages": [
+          "EMC15",
+          "EMC21",
+          "EMC25"
+        ]
+      },
+      {
+        "StageSlot": "M61",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMC23",
+          "EMC28",
+          "EMC30",
+          "EMC29"
+        ],
+        "VisibleStages": [
+          "M62",
+          "EMC17",
+          "EMC22",
+          "EMC27",
+          "EMC31",
+          "EMC34"
+        ]
+      },
+      {
+        "StageSlot": "M62",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMC18",
+          "EMC19",
+          "EMC30"
+        ],
+        "VisibleStages": [
+          "M61",
+          "EMC14",
+          "EMC17",
+          "EMC20",
+          "EMC31"
+        ]
+      },
+      {
+        "StageSlot": "M63",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMC24",
+          "EH33"
+        ],
+        "VisibleStages": [
+          "EMC20",
+          "EMC31",
+          "H17"
+        ]
+      },
+      {
+        "StageSlot": "M64",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMC25"
+        ],
+        "VisibleStages": [
+          "M58",
+          "M67"
+        ]
+      },
+      {
+        "StageSlot": "M65",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMC27"
+        ],
+        "VisibleStages": [
+          "EMC26",
+          "EMC28",
+          "EMC33"
+        ]
+      },
+      {
+        "StageSlot": "M66",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMC31"
+        ],
+        "VisibleStages": [
+          "EMC24",
+          "EMC30"
+        ]
+      },
+      {
+        "StageSlot": "M67",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMC25",
+          "EMC32",
+          "M68"
+        ],
+        "VisibleStages": [
+          "M58",
+          "EMC33",
+          "EH41"
+        ]
+      },
+      {
+        "StageSlot": "M68",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M67"
+        ],
+        "VisibleStages": [
+          "EMC25",
+          "EMC32",
+          "H25",
+          "EH40"
+        ]
+      },
+      {
+        "StageSlot": "M69",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMC33",
+          "EMC36"
+        ],
+        "VisibleStages": [
+          "EMC27",
+          "EMC32",
+          "EMC34",
+          "EH41"
+        ]
+      },
+      {
+        "StageSlot": "M70",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMC36"
+        ],
+        "VisibleStages": [
+          "M69",
+          "EMC34"
+        ]
+      },
+      {
+        "StageSlot": "M71",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMC34"
+        ],
+        "VisibleStages": [
+          "EMC29",
+          "EMC33",
+          "EMC36"
+        ]
+      },
+      {
+        "StageSlot": "M72",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMC35"
+        ],
+        "VisibleStages": [
+          "EMC30"
+        ]
+      },
+      {
+        "StageSlot": "EMC1",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M49",
+          "M50"
+        ],
+        "VisibleStages": [
+          "EMC2",
+          "EMC5"
+        ]
+      },
+      {
+        "StageSlot": "EMC2",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M50",
+          "M51",
+          "EMC6"
+        ],
+        "VisibleStages": [
+          "EMC3",
+          "EMC5",
+          "EMC7"
+        ]
+      },
+      {
+        "StageSlot": "EMC3",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M51",
+          "EMC7"
+        ],
+        "VisibleStages": [
+          "M53",
+          "EMC2",
+          "EMC6",
+          "EMC11"
+        ]
+      },
+      {
+        "StageSlot": "EMC4",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M52",
+          "M53"
+        ],
+        "VisibleStages": [
+          "EMC7",
+          "EMC8",
+          "EMC11",
+          "EH27"
+        ]
+      },
+      {
+        "StageSlot": "EMC5",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M50",
+          "EMC6"
+        ],
+        "VisibleStages": [
+          "EE33",
+          "EMC2",
+          "EMC7",
+          "EMC10"
+        ]
+      },
+      {
+        "StageSlot": "EMC6",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMC2",
+          "EMC5",
+          "EMC7"
+        ],
+        "VisibleStages": [
+          "E18",
+          "M50",
+          "M51",
+          "M53",
+          "EMC3",
+          "EMC11"
+        ]
+      },
+      {
+        "StageSlot": "EMC7",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMC3",
+          "EMC6",
+          "M53",
+          "EMC11"
+        ],
+        "VisibleStages": [
+          "M51",
+          "EMC2",
+          "EMC4",
+          "EMC5",
+          "EMC8",
+          "EMC13",
+          "EMC14"
+        ]
+      },
+      {
+        "StageSlot": "EMC8",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M53",
+          "EMC9",
+          "M56"
+        ],
+        "VisibleStages": [
+          "M54",
+          "M57",
+          "EMC4",
+          "EMC7",
+          "EMC11",
+          "EMC14",
+          "EMC20"
+        ]
+      },
+      {
+        "StageSlot": "EMC9",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M54",
+          "EMC8"
+        ],
+        "VisibleStages": [
+          "M53",
+          "M56",
+          "EH30"
+        ]
+      },
+      {
+        "StageSlot": "EMC10",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMC12"
+        ],
+        "VisibleStages": [
+          "EE33",
+          "M55",
+          "EMC5",
+          "EMC16"
+        ]
+      },
+      {
+        "StageSlot": "EMC11",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMC7",
+          "M53",
+          "EMC13",
+          "EMC14"
+        ],
+        "VisibleStages": [
+          "M55",
+          "M56",
+          "EMC3",
+          "EMC4",
+          "EMC6",
+          "EMC8",
+          "EMC19"
+        ]
+      },
+      {
+        "StageSlot": "EMC12",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMC10",
+          "M55",
+          "EMC16"
+        ],
+        "VisibleStages": [
+          "E18",
+          "M59",
+          "EMC13",
+          "EMC17"
+        ]
+      },
+      {
+        "StageSlot": "EMC13",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMC11",
+          "M55"
+        ],
+        "VisibleStages": [
+          "M53",
+          "EMC7",
+          "EMC12",
+          "EMC14",
+          "EMC17"
+        ]
+      },
+      {
+        "StageSlot": "EMC14",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMC11",
+          "M56",
+          "EMC19"
+        ],
+        "VisibleStages": [
+          "M53",
+          "M57",
+          "M62",
+          "EMC7",
+          "EMC8",
+          "EMC13",
+          "EMC20"
+        ]
+      },
+      {
+        "StageSlot": "EMC15",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M58"
+        ],
+        "VisibleStages": [
+          "EE43",
+          "EMC21",
+          "EMC25"
+        ]
+      },
+      {
+        "StageSlot": "EMC16",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMC12",
+          "M59"
+        ],
+        "VisibleStages": [
+          "M55",
+          "EMC10",
+          "EMC21",
+          "EMC22",
+          "EMC26"
+        ]
+      },
+      {
+        "StageSlot": "EMC17",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M55",
+          "EMC18",
+          "EMC23"
+        ],
+        "VisibleStages": [
+          "M61",
+          "M62",
+          "EMC12",
+          "EMC13",
+          "EMC22"
+        ]
+      },
+      {
+        "StageSlot": "EMC18",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMC17",
+          "M62"
+        ],
+        "VisibleStages": [
+          "M55",
+          "EMC19",
+          "EMC23",
+          "EMC30"
+        ]
+      },
+      {
+        "StageSlot": "EMC19",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMC14",
+          "EMC20",
+          "M62"
+        ],
+        "VisibleStages": [
+          "M56",
+          "EMC11",
+          "EMC18",
+          "EMC24",
+          "EMC30",
+          "EH33"
+        ]
+      },
+      {
+        "StageSlot": "EMC20",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M56",
+          "EMC19",
+          "EMC24",
+          "EH33"
+        ],
+        "VisibleStages": [
+          "M57",
+          "M62",
+          "M63",
+          "EMC8",
+          "EMC14",
+          "EMC31",
+          "H17"
+        ]
+      },
+      {
+        "StageSlot": "EMC21",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M58",
+          "M59",
+          "EH23"
+        ],
+        "VisibleStages": [
+          "EMC15",
+          "EMC16",
+          "EMC22",
+          "EMC25",
+          "EMC26"
+        ]
+      },
+      {
+        "StageSlot": "EMC22",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M59",
+          "EMC23"
+        ],
+        "VisibleStages": [
+          "M61",
+          "EMC16",
+          "EMC17",
+          "EMC21",
+          "EMC26"
+        ]
+      },
+      {
+        "StageSlot": "EMC23",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMC22",
+          "EMC17",
+          "M61"
+        ],
+        "VisibleStages": [
+          "M55",
+          "M59",
+          "EMC18",
+          "EMC28",
+          "EMC29",
+          "EMC30"
+        ]
+      },
+      {
+        "StageSlot": "EMC24",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMC20",
+          "M63",
+          "EMC31"
+        ],
+        "VisibleStages": [
+          "M56",
+          "EMC19",
+          "EMC30",
+          "EH33"
+        ]
+      },
+      {
+        "StageSlot": "EMC25",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M58",
+          "M64",
+          "M67"
+        ],
+        "VisibleStages": [
+          "M68",
+          "EMC15",
+          "EMC21",
+          "EMC32"
+        ]
+      },
+      {
+        "StageSlot": "EMC26",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M59",
+          "EMC27"
+        ],
+        "VisibleStages": [
+          "EMC16",
+          "EMC21",
+          "EMC22",
+          "EMC28",
+          "EMC33"
+        ]
+      },
+      {
+        "StageSlot": "EMC27",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMC26",
+          "EMC28",
+          "EMC33",
+          "M65"
+        ],
+        "VisibleStages": [
+          "M59",
+          "M61",
+          "M69",
+          "EMC32",
+          "EMC34"
+        ]
+      },
+      {
+        "StageSlot": "EMC28",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMC27",
+          "M61"
+        ],
+        "VisibleStages": [
+          "EMC23",
+          "EMC26",
+          "EMC29",
+          "EMC30",
+          "EMC33"
+        ]
+      },
+      {
+        "StageSlot": "EMC29",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M61",
+          "EMC34"
+        ],
+        "VisibleStages": [
+          "EMC23",
+          "EMC28",
+          "EMC30",
+          "EMC33",
+          "EMC36"
+        ]
+      },
+      {
+        "StageSlot": "EMC30",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M62",
+          "M61",
+          "EMC31",
+          "EMC35"
+        ],
+        "VisibleStages": [
+          "EMC18",
+          "EMC19",
+          "EMC23",
+          "EMC24",
+          "EMC28",
+          "EMC29"
+        ]
+      },
+      {
+        "StageSlot": "EMC31",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMC24",
+          "EMC30",
+          "M66"
+        ],
+        "VisibleStages": [
+          "M61",
+          "M62",
+          "M63",
+          "EMC20"
+        ]
+      },
+      {
+        "StageSlot": "EMC32",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M67",
+          "EMC33"
+        ],
+        "VisibleStages": [
+          "M68",
+          "M69",
+          "EMC25",
+          "EMC27",
+          "EMC34"
+        ]
+      },
+      {
+        "StageSlot": "EMC33",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMC32",
+          "EMC27",
+          "EMC34",
+          "M69"
+        ],
+        "VisibleStages": [
+          "M67",
+          "EMC26",
+          "EMC28",
+          "EMC29",
+          "EMC36",
+          "EH42"
+        ]
+      },
+      {
+        "StageSlot": "EMC34",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMC29",
+          "EMC33",
+          "EMC36",
+          "M71"
+        ],
+        "VisibleStages": [
+          "M61",
+          "M69",
+          "EMC27",
+          "EMC32"
+        ]
+      },
+      {
+        "StageSlot": "EMC35",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMC30",
+          "M72"
+        ],
+        "VisibleStages": [
+          "M61",
+          "M62",
+          "EMC31"
+        ]
+      },
+      {
+        "StageSlot": "EMC36",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMC34",
+          "M69",
+          "M70"
+        ],
+        "VisibleStages": [
+          "EMC29",
+          "EMC33",
+          "EH42"
+        ]
+      },
+      {
+        "StageSlot": "M73",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMD1"
+        ],
+        "VisibleStages": [
+          "M75",
+          "EH18"
+        ]
+      },
+      {
+        "StageSlot": "M74",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMD3"
+        ],
+        "VisibleStages": [
+          "EMD2",
+          "EMD4"
+        ]
+      },
+      {
+        "StageSlot": "M75",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMD1",
+          "EMD2",
+          "EMD6"
+        ],
+        "VisibleStages": [
+          "EMD3",
+          "EMD7",
+          "EMD9",
+          "EH18"
+        ]
+      },
+      {
+        "StageSlot": "M76",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMD5"
+        ],
+        "VisibleStages": [
+          "EE25",
+          "EMD4"
+        ]
+      },
+      {
+        "StageSlot": "M77",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMD9"
+        ],
+        "VisibleStages": [
+          "EMD6",
+          "EMD10",
+          "EMD15"
+        ]
+      },
+      {
+        "StageSlot": "M78",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMD4",
+          "EMD7",
+          "EMD8",
+          "EMD10"
+        ],
+        "VisibleStages": [
+          "EMD3",
+          "EMD5",
+          "EMD6",
+          "EMD9",
+          "EMD11",
+          "EMD16"
+        ]
+      },
+      {
+        "StageSlot": "M79",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMD14"
+        ],
+        "VisibleStages": [
+          "M86",
+          "EMD15",
+          "EH21"
+        ]
+      },
+      {
+        "StageSlot": "M80",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMD16",
+          "EMD17",
+          "EMD24",
+          "EMD30"
+        ],
+        "VisibleStages": [
+          "M87",
+          "M88",
+          "EMD10",
+          "EMD11",
+          "EMD25"
+        ]
+      },
+      {
+        "StageSlot": "M81",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMD18"
+        ],
+        "VisibleStages": [
+          "M82",
+          "EMD11"
+        ]
+      },
+      {
+        "StageSlot": "M82",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMD18",
+          "EMD19",
+          "EMD25",
+          "EMD26"
+        ],
+        "VisibleStages": [
+          "EMD11",
+          "EMD12",
+          "EMD27",
+          "EMD30",
+          "EMD31"
+        ]
+      },
+      {
+        "StageSlot": "M83",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMD20"
+        ],
+        "VisibleStages": [
+          "EMD12",
+          "EMD27"
+        ]
+      },
+      {
+        "StageSlot": "M84",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMD13",
+          "EMD28"
+        ],
+        "VisibleStages": [
+          "EE42",
+          "M90"
+        ]
+      },
+      {
+        "StageSlot": "M85",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M86"
+        ],
+        "VisibleStages": [
+          "EMD14",
+          "EMD21"
+        ]
+      },
+      {
+        "StageSlot": "M86",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M85",
+          "EMD14",
+          "EMD21"
+        ],
+        "VisibleStages": [
+          "M79",
+          "M87",
+          "EMD15"
+        ]
+      },
+      {
+        "StageSlot": "M87",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMD21",
+          "EMD23",
+          "EMD24",
+          "EMD29"
+        ],
+        "VisibleStages": [
+          "M80",
+          "M86",
+          "EMD15",
+          "EMD33"
+        ]
+      },
+      {
+        "StageSlot": "M88",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMD30",
+          "EMD31",
+          "EMD34"
+        ],
+        "VisibleStages": [
+          "M80",
+          "EMD25",
+          "EMD26",
+          "EMD32",
+          "EMD38",
+          "EMD39"
+        ]
+      },
+      {
+        "StageSlot": "M89",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMD27"
+        ],
+        "VisibleStages": [
+          "EMD20",
+          "EMD26",
+          "EMD32"
+        ]
+      },
+      {
+        "StageSlot": "M90",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMD28",
+          "EMD37"
+        ],
+        "VisibleStages": [
+          "M84",
+          "M98",
+          "EH39"
+        ]
+      },
+      {
+        "StageSlot": "M91",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMD22"
+        ],
+        "VisibleStages": [
+          "EMD23"
+        ]
+      },
+      {
+        "StageSlot": "M92",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMD33",
+          "EH35"
+        ],
+        "VisibleStages": [
+          "M93",
+          "EMD29"
+        ]
+      },
+      {
+        "StageSlot": "M93",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMD33",
+          "EMD38"
+        ],
+        "VisibleStages": [
+          "EMD29",
+          "EMD34",
+          "EMD40"
+        ]
+      },
+      {
+        "StageSlot": "M94",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMD33",
+          "EH36"
+        ],
+        "VisibleStages": [
+          "M93",
+          "EMD29"
+        ]
+      },
+      {
+        "StageSlot": "M95",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMD38",
+          "EMD40"
+        ],
+        "VisibleStages": [
+          "M93",
+          "M96",
+          "EMD34"
+        ]
+      },
+      {
+        "StageSlot": "M96",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMD40",
+          "EMD35",
+          "EMD39",
+          "EMD41"
+        ],
+        "VisibleStages": [
+          "M97",
+          "EMD32",
+          "EMD34",
+          "EMD38",
+          "EMD42"
+        ]
+      },
+      {
+        "StageSlot": "M97",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMD32",
+          "EMD35",
+          "EMD36"
+        ],
+        "VisibleStages": [
+          "M96",
+          "M98",
+          "EMD27",
+          "EMD31"
+        ]
+      },
+      {
+        "StageSlot": "M98",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "VisibleStages": [
+          "M90",
+          "M97"
+        ]
+      },
+      {
+        "StageSlot": "M99",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMD42"
+        ],
+        "VisibleStages": [
+          "EMD41",
+          "EH38"
+        ]
+      },
+      {
+        "StageSlot": "EMD1",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M73",
+          "M75"
+        ],
+        "VisibleStages": [
+          "EMD2",
+          "EMD6",
+          "EH17"
+        ]
+      },
+      {
+        "StageSlot": "EMD2",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M75",
+          "EMD3"
+        ],
+        "VisibleStages": [
+          "EMD1",
+          "EMD4",
+          "EMD6"
+        ]
+      },
+      {
+        "StageSlot": "EMD3",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMD2",
+          "M74",
+          "EMD4"
+        ],
+        "VisibleStages": [
+          "M75",
+          "M78",
+          "EMD5"
+        ]
+      },
+      {
+        "StageSlot": "EMD4",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMD3",
+          "EMD5",
+          "M78"
+        ],
+        "VisibleStages": [
+          "M76",
+          "EMD2",
+          "EMD7",
+          "EMD8",
+          "EMD10"
+        ]
+      },
+      {
+        "StageSlot": "EMD5",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M76",
+          "EMD4"
+        ],
+        "VisibleStages": [
+          "E15",
+          "M78",
+          "EMD3"
+        ]
+      },
+      {
+        "StageSlot": "EMD6",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M75",
+          "EMD7",
+          "EMD9"
+        ],
+        "VisibleStages": [
+          "M78",
+          "EMD1",
+          "EMD2",
+          "EMD10",
+          "EMD15"
+        ]
+      },
+      {
+        "StageSlot": "EMD7",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMD6",
+          "M78"
+        ],
+        "VisibleStages": [
+          "M75",
+          "EMD4",
+          "EMD8",
+          "EMD9",
+          "EMD10"
+        ]
+      },
+      {
+        "StageSlot": "EMD8",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M78",
+          "EMD11"
+        ],
+        "VisibleStages": [
+          "E19",
+          "EMD4",
+          "EMD7",
+          "EMD10",
+          "EMD17",
+          "EMD18"
+        ]
+      },
+      {
+        "StageSlot": "EMD9",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M77",
+          "EMD6",
+          "EMD10",
+          "EMD15"
+        ],
+        "VisibleStages": [
+          "M75",
+          "M78",
+          "EMD7",
+          "EMD14",
+          "EMD16",
+          "EMD21"
+        ]
+      },
+      {
+        "StageSlot": "EMD10",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M78",
+          "EMD9",
+          "EMD16"
+        ],
+        "VisibleStages": [
+          "M80",
+          "EMD4",
+          "EMD6",
+          "EMD7",
+          "EMD8",
+          "EMD15"
+        ]
+      },
+      {
+        "StageSlot": "EMD11",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMD8",
+          "EMD17",
+          "EMD18"
+        ],
+        "VisibleStages": [
+          "EE34",
+          "M78",
+          "M80",
+          "M82"
+        ]
+      },
+      {
+        "StageSlot": "EMD12",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMD19",
+          "EMD20"
+        ],
+        "VisibleStages": [
+          "EE35",
+          "EE40",
+          "EE41",
+          "M82",
+          "EMD27"
+        ]
+      },
+      {
+        "StageSlot": "EMD13",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M84",
+          "EE42"
+        ],
+        "VisibleStages": [
+          "E20",
+          "E22",
+          "EMD28"
+        ]
+      },
+      {
+        "StageSlot": "EMD14",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M79",
+          "EMD15",
+          "M86"
+        ],
+        "VisibleStages": [
+          "EMD9",
+          "EMD21",
+          "EH22"
+        ]
+      },
+      {
+        "StageSlot": "EMD15",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMD9",
+          "EMD14",
+          "EMD21"
+        ],
+        "VisibleStages": [
+          "M79",
+          "M86",
+          "M87",
+          "EMD6",
+          "EMD10"
+        ]
+      },
+      {
+        "StageSlot": "EMD16",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMD10",
+          "M80"
+        ],
+        "VisibleStages": [
+          "M78",
+          "EMD9",
+          "EMD17",
+          "EMD24",
+          "EMD30"
+        ]
+      },
+      {
+        "StageSlot": "EMD17",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMD11",
+          "M80"
+        ],
+        "VisibleStages": [
+          "E19",
+          "EMD8",
+          "EMD16",
+          "EMD18",
+          "EMD24",
+          "EMD30"
+        ]
+      },
+      {
+        "StageSlot": "EMD18",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMD11",
+          "M81",
+          "M82"
+        ],
+        "VisibleStages": [
+          "E19",
+          "EMD8",
+          "EMD17",
+          "EMD19",
+          "EMD25",
+          "EMD26"
+        ]
+      },
+      {
+        "StageSlot": "EMD19",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMD12",
+          "M82"
+        ],
+        "VisibleStages": [
+          "E21",
+          "EMD18",
+          "EMD20",
+          "EMD25",
+          "EMD26"
+        ]
+      },
+      {
+        "StageSlot": "EMD20",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMD12",
+          "M83",
+          "EMD27"
+        ],
+        "VisibleStages": [
+          "E21",
+          "EMD19",
+          "EMD26",
+          "EMD32"
+        ]
+      },
+      {
+        "StageSlot": "EMD21",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMD15",
+          "M86",
+          "M87"
+        ],
+        "VisibleStages": [
+          "EMD9",
+          "EMD14",
+          "EMD24",
+          "EMD29"
+        ]
+      },
+      {
+        "StageSlot": "EMD22",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M91",
+          "EMD23"
+        ],
+        "VisibleStages": [
+          "M87"
+        ]
+      },
+      {
+        "StageSlot": "EMD23",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M87",
+          "EMD22"
+        ],
+        "VisibleStages": [
+          "EMD21",
+          "EMD24",
+          "EMD29"
+        ]
+      },
+      {
+        "StageSlot": "EMD24",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M87",
+          "M80"
+        ],
+        "VisibleStages": [
+          "EMD16",
+          "EMD17",
+          "EMD21",
+          "EMD29",
+          "EMD30"
+        ]
+      },
+      {
+        "StageSlot": "EMD25",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M82",
+          "EMD30"
+        ],
+        "VisibleStages": [
+          "M80",
+          "M88",
+          "EMD18",
+          "EMD19",
+          "EMD26"
+        ]
+      },
+      {
+        "StageSlot": "EMD26",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M82",
+          "EMD27",
+          "EMD31"
+        ],
+        "VisibleStages": [
+          "M88",
+          "EMD18",
+          "EMD19",
+          "EMD20",
+          "EMD25",
+          "EMD32"
+        ]
+      },
+      {
+        "StageSlot": "EMD27",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMD20",
+          "EMD26",
+          "M89",
+          "EMD32"
+        ],
+        "VisibleStages": [
+          "M82",
+          "M97",
+          "EMD12",
+          "EMD31",
+          "EMD35"
+        ]
+      },
+      {
+        "StageSlot": "EMD28",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M84",
+          "M90"
+        ],
+        "VisibleStages": [
+          "EMD13",
+          "EMD37",
+          "EH37"
+        ]
+      },
+      {
+        "StageSlot": "EMD29",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M87",
+          "EMD33"
+        ],
+        "VisibleStages": [
+          "M93",
+          "EMD21",
+          "EMD24"
+        ]
+      },
+      {
+        "StageSlot": "EMD30",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M80",
+          "EMD25",
+          "M88"
+        ],
+        "VisibleStages": [
+          "M82",
+          "EMD16",
+          "EMD17",
+          "EMD24",
+          "EMD31",
+          "EMD34"
+        ]
+      },
+      {
+        "StageSlot": "EMD31",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMD26",
+          "M88",
+          "EMD32"
+        ],
+        "VisibleStages": [
+          "M82",
+          "M97",
+          "EMD27",
+          "EMD30",
+          "EMD34",
+          "EMD35"
+        ]
+      },
+      {
+        "StageSlot": "EMD32",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMD27",
+          "EMD31",
+          "EMD35",
+          "M97"
+        ],
+        "VisibleStages": [
+          "M88",
+          "M96",
+          "EMD20",
+          "EMD26",
+          "EMD36"
+        ]
+      },
+      {
+        "StageSlot": "EMD33",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMD29",
+          "M92",
+          "M93",
+          "M94"
+        ],
+        "VisibleStages": [
+          "M87",
+          "EMD38"
+        ]
+      },
+      {
+        "StageSlot": "EMD34",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M88",
+          "EMD39"
+        ],
+        "VisibleStages": [
+          "M93",
+          "M96",
+          "EMD30",
+          "EMD31",
+          "EMD40"
+        ]
+      },
+      {
+        "StageSlot": "EMD35",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMD32",
+          "M97",
+          "M96"
+        ],
+        "VisibleStages": [
+          "EMD27",
+          "EMD31",
+          "EMD36",
+          "EMD39",
+          "EMD40",
+          "EMD41"
+        ]
+      },
+      {
+        "StageSlot": "EMD36",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M97"
+        ],
+        "VisibleStages": [
+          "EMD32",
+          "EMD35",
+          "EMD37"
+        ]
+      },
+      {
+        "StageSlot": "EMD37",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M90"
+        ],
+        "VisibleStages": [
+          "EMD28",
+          "EMD36",
+          "EH37"
+        ]
+      },
+      {
+        "StageSlot": "EMD38",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M93",
+          "M95",
+          "EMD40"
+        ],
+        "VisibleStages": [
+          "M88",
+          "EMD33",
+          "EMD39"
+        ]
+      },
+      {
+        "StageSlot": "EMD39",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMD34",
+          "M96"
+        ],
+        "VisibleStages": [
+          "M88",
+          "EMD35",
+          "EMD38",
+          "EMD40",
+          "EMD41"
+        ]
+      },
+      {
+        "StageSlot": "EMD40",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMD38",
+          "M95",
+          "M96"
+        ],
+        "VisibleStages": [
+          "M93",
+          "EMD34",
+          "EMD35",
+          "EMD39",
+          "EMD41"
+        ]
+      },
+      {
+        "StageSlot": "EMD41",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "M96",
+          "EMD42"
+        ],
+        "VisibleStages": [
+          "EMD35",
+          "EMD39",
+          "EMD40",
+          "EH38"
+        ]
+      },
+      {
+        "StageSlot": "EMD42",
+        "Zone": "FoggyForestMiddleZone",
+        "SubZone": {
+          "hasValue": true,
+          "value": "-487118704",
+          "HasValue": true,
+          "Value": "0"
+        },
+        "ConnectedStages": [
+          "EMD41",
+          "M99"
+        ],
+        "VisibleStages": [
+          "M96",
+          "H20"
+        ]
+      },
+      {
+        "StageSlot": "H1",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "H2"
+        ],
+        "VisibleStages": [
+          "EH2"
+        ]
+      },
+      {
+        "StageSlot": "H2",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "H1",
+          "EH2"
+        ],
+        "VisibleStages": [
+          "EH1",
+          "EH3"
+        ]
+      },
+      {
+        "StageSlot": "H3",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "H4"
+        ],
+        "VisibleStages": [
+          "EH4",
+          "EH5",
+          "EH7"
+        ]
+      },
+      {
+        "StageSlot": "H4",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "H3",
+          "EH4",
+          "EH5",
+          "EH7"
+        ],
+        "VisibleStages": [
+          "H6",
+          "EH6",
+          "EH8",
+          "EH9"
+        ]
+      },
+      {
+        "StageSlot": "H5",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "EH6"
+        ],
+        "VisibleStages": [
+          "H7",
+          "EH5"
+        ]
+      },
+      {
+        "StageSlot": "H6",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "EH7",
+          "EH10"
+        ],
+        "VisibleStages": [
+          "M30",
+          "H4",
+          "EH9",
+          "EH11"
+        ]
+      },
+      {
+        "StageSlot": "H7",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "EH6",
+          "EH11"
+        ],
+        "VisibleStages": [
+          "EH5",
+          "EH10"
+        ]
+      },
+      {
+        "StageSlot": "H8",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "H9",
+          "EH12",
+          "EH14"
+        ],
+        "VisibleStages": [
+          "EMA16",
+          "EMA26",
+          "EH13"
+        ]
+      },
+      {
+        "StageSlot": "H9",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "H8"
+        ],
+        "VisibleStages": [
+          "EH12",
+          "EH14"
+        ]
+      },
+      {
+        "StageSlot": "H10",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "EH15",
+          "EH17"
+        ],
+        "VisibleStages": [
+          "EMA33",
+          "H13",
+          "EH16",
+          "EH18"
+        ]
+      },
+      {
+        "StageSlot": "H11",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "EH16",
+          "EH19"
+        ],
+        "VisibleStages": [
+          "EH17",
+          "EH20"
+        ]
+      },
+      {
+        "StageSlot": "H12",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "EH20"
+        ],
+        "VisibleStages": [
+          "H13",
+          "EH19"
+        ]
+      },
+      {
+        "StageSlot": "H13",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "EH17",
+          "EH20",
+          "EH21"
+        ],
+        "VisibleStages": [
+          "H10",
+          "EH16",
+          "EH18",
+          "EH19",
+          "EH22"
+        ]
+      },
+      {
+        "StageSlot": "H14",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "EH23"
+        ],
+        "VisibleStages": [
+          "EMC21"
+        ]
+      },
+      {
+        "StageSlot": "H15",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "EH25",
+          "EH27",
+          "EH28"
+        ],
+        "VisibleStages": [
+          "EMB36",
+          "M52",
+          "EH24",
+          "EH26",
+          "EH29",
+          "EH30"
+        ]
+      },
+      {
+        "StageSlot": "H16",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "EH26",
+          "EH29"
+        ],
+        "VisibleStages": [
+          "EH25",
+          "EH28"
+        ]
+      },
+      {
+        "StageSlot": "H17",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "EH31",
+          "EH33",
+          "EH34"
+        ],
+        "VisibleStages": [
+          "M57",
+          "M63",
+          "EMC20"
+        ]
+      },
+      {
+        "StageSlot": "H18",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "EH32",
+          "EH34"
+        ],
+        "VisibleStages": [
+          "H17",
+          "EH31"
+        ]
+      },
+      {
+        "StageSlot": "H19",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "EH35",
+          "EH36"
+        ],
+        "VisibleStages": [
+          "M92",
+          "M94"
+        ]
+      },
+      {
+        "StageSlot": "H20",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "EH38",
+          "EH39",
+          "EH43"
+        ],
+        "VisibleStages": [
+          "EMD42",
+          "H21",
+          "EH37",
+          "EH44"
+        ]
+      },
+      {
+        "StageSlot": "H21",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "EH39",
+          "EH40"
+        ],
+        "VisibleStages": [
+          "H20",
+          "H25",
+          "EH37",
+          "EH41"
+        ]
+      },
+      {
+        "StageSlot": "H22",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "EH43"
+        ],
+        "VisibleStages": [
+          "H20",
+          "EH44"
+        ]
+      },
+      {
+        "StageSlot": "H23",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "EH44",
+          "H24"
+        ],
+        "VisibleStages": [
+          "EH43",
+          "EH45"
+        ]
+      },
+      {
+        "StageSlot": "H24",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "H23",
+          "EH45"
+        ],
+        "VisibleStages": [
+          "H25",
+          "EH44"
+        ]
+      },
+      {
+        "StageSlot": "H25",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "EH40",
+          "EH41",
+          "EH45"
+        ],
+        "VisibleStages": [
+          "M68",
+          "H21",
+          "EH42",
+          "EH44"
+        ]
+      },
+      {
+        "StageSlot": "EH1",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "EH2"
+        ],
+        "VisibleStages": [
+          "EMA13",
+          "EMA19",
+          "H2",
+          "EH3"
+        ]
+      },
+      {
+        "StageSlot": "EH2",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "H2",
+          "EH1",
+          "EH3"
+        ],
+        "VisibleStages": [
+          "E1",
+          "M12",
+          "H1"
+        ]
+      },
+      {
+        "StageSlot": "EH3",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "EH2"
+        ],
+        "VisibleStages": [
+          "E2",
+          "EMA19",
+          "H2",
+          "EH1"
+        ]
+      },
+      {
+        "StageSlot": "EH4",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "H4",
+          "EH8",
+          "EH9"
+        ],
+        "VisibleStages": [
+          "M29",
+          "EMB2",
+          "EH5",
+          "EH7"
+        ]
+      },
+      {
+        "StageSlot": "EH5",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "H4",
+          "EH6"
+        ],
+        "VisibleStages": [
+          "H7",
+          "EH4",
+          "EH7"
+        ]
+      },
+      {
+        "StageSlot": "EH6",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "EH5",
+          "H5",
+          "H7"
+        ],
+        "VisibleStages": [
+          "H4",
+          "EH11"
+        ]
+      },
+      {
+        "StageSlot": "EH7",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "H4",
+          "EH9",
+          "H6"
+        ],
+        "VisibleStages": [
+          "M29",
+          "EH4",
+          "EH5",
+          "EH10"
+        ]
+      },
+      {
+        "StageSlot": "EH8",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "EH4"
+        ],
+        "VisibleStages": [
+          "EMB5",
+          "H4",
+          "EH9"
+        ]
+      },
+      {
+        "StageSlot": "EH9",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "EH4",
+          "EH7"
+        ],
+        "VisibleStages": [
+          "EMB6",
+          "H4",
+          "H6",
+          "EH8"
+        ]
+      },
+      {
+        "StageSlot": "EH10",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "H6",
+          "EH11"
+        ],
+        "VisibleStages": [
+          "EMB6",
+          "EMB11",
+          "H7",
+          "EH7"
+        ]
+      },
+      {
+        "StageSlot": "EH11",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "H7",
+          "EH10"
+        ],
+        "VisibleStages": [
+          "M30",
+          "H6",
+          "EH6"
+        ]
+      },
+      {
+        "StageSlot": "EH12",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "EH13",
+          "H8"
+        ],
+        "VisibleStages": [
+          "M9",
+          "M16",
+          "EMA20",
+          "EH14"
+        ]
+      },
+      {
+        "StageSlot": "EH13",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "EH12"
+        ],
+        "VisibleStages": [
+          "EMA16",
+          "EMA23",
+          "EMA25",
+          "H8"
+        ]
+      },
+      {
+        "StageSlot": "EH14",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "H8"
+        ],
+        "VisibleStages": [
+          "M23",
+          "EMA27",
+          "EH12"
+        ]
+      },
+      {
+        "StageSlot": "EH15",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "H10",
+          "EMA33"
+        ],
+        "VisibleStages": [
+          "EMA30",
+          "EMA32",
+          "EMA34",
+          "EH17"
+        ]
+      },
+      {
+        "StageSlot": "EH16",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "H11",
+          "EH17"
+        ],
+        "VisibleStages": [
+          "H10",
+          "H13",
+          "EH18",
+          "EH19"
+        ]
+      },
+      {
+        "StageSlot": "EH17",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "H10",
+          "EH16",
+          "EH18",
+          "H13"
+        ],
+        "VisibleStages": [
+          "EMD1",
+          "H11",
+          "EH15",
+          "EH20",
+          "EH21"
+        ]
+      },
+      {
+        "StageSlot": "EH18",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "EH17"
+        ],
+        "VisibleStages": [
+          "M75",
+          "H10",
+          "H13",
+          "EH16"
+        ]
+      },
+      {
+        "StageSlot": "EH19",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "H11",
+          "EH20"
+        ],
+        "VisibleStages": [
+          "H13",
+          "EH16"
+        ]
+      },
+      {
+        "StageSlot": "EH20",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "EH19",
+          "H13",
+          "H12"
+        ],
+        "VisibleStages": [
+          "H11",
+          "EH17",
+          "EH21"
+        ]
+      },
+      {
+        "StageSlot": "EH21",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "H13",
+          "EH22"
+        ],
+        "VisibleStages": [
+          "M79",
+          "EH17",
+          "EH20"
+        ]
+      },
+      {
+        "StageSlot": "EH22",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "EH21"
+        ],
+        "VisibleStages": [
+          "EMD14",
+          "H13"
+        ]
+      },
+      {
+        "StageSlot": "EH23",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "H14",
+          "EMC21"
+        ],
+        "VisibleStages": [
+          "M58",
+          "M59"
+        ]
+      },
+      {
+        "StageSlot": "EH24",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "EH27"
+        ],
+        "VisibleStages": [
+          "EMB34",
+          "EMB35",
+          "M52",
+          "H15"
+        ]
+      },
+      {
+        "StageSlot": "EH25",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "EH26",
+          "H15"
+        ],
+        "VisibleStages": [
+          "EMB29",
+          "EMB35",
+          "H16",
+          "EH27",
+          "EH28"
+        ]
+      },
+      {
+        "StageSlot": "EH26",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "EH25",
+          "H16"
+        ],
+        "VisibleStages": [
+          "EMB36",
+          "H15",
+          "EH29"
+        ]
+      },
+      {
+        "StageSlot": "EH27",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "EH24",
+          "H15"
+        ],
+        "VisibleStages": [
+          "M47",
+          "M48",
+          "EMC4",
+          "EH25",
+          "EH28"
+        ]
+      },
+      {
+        "StageSlot": "EH28",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "H15",
+          "EH29",
+          "EH30"
+        ],
+        "VisibleStages": [
+          "M54",
+          "H16",
+          "EH25",
+          "EH27"
+        ]
+      },
+      {
+        "StageSlot": "EH29",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "H16",
+          "EH28"
+        ],
+        "VisibleStages": [
+          "H15",
+          "EH26",
+          "EH30"
+        ]
+      },
+      {
+        "StageSlot": "EH30",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "EH28"
+        ],
+        "VisibleStages": [
+          "EMC9",
+          "H15",
+          "EH29"
+        ]
+      },
+      {
+        "StageSlot": "EH31",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "EH32",
+          "H17",
+          "M57"
+        ],
+        "VisibleStages": [
+          "M56",
+          "EH33"
+        ]
+      },
+      {
+        "StageSlot": "EH32",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "EH31",
+          "H18"
+        ],
+        "VisibleStages": [
+          "M57",
+          "H17"
+        ]
+      },
+      {
+        "StageSlot": "EH33",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "H17",
+          "EMC20",
+          "M63"
+        ],
+        "VisibleStages": [
+          "M56",
+          "EMC19",
+          "EMC24",
+          "EH31"
+        ]
+      },
+      {
+        "StageSlot": "EH34",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "H17",
+          "H18"
+        ],
+        "VisibleStages": [
+          "EH31",
+          "EH33"
+        ]
+      },
+      {
+        "StageSlot": "EH35",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "H19",
+          "M92"
+        ],
+        "VisibleStages": [
+          "EMD33"
+        ]
+      },
+      {
+        "StageSlot": "EH36",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "H19",
+          "M94"
+        ],
+        "VisibleStages": [
+          "EMD33"
+        ]
+      },
+      {
+        "StageSlot": "EH37",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "EH39"
+        ],
+        "VisibleStages": [
+          "EMD28",
+          "H20",
+          "H21"
+        ]
+      },
+      {
+        "StageSlot": "EH38",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "H20"
+        ],
+        "VisibleStages": [
+          "EMD41",
+          "EH39",
+          "EH43"
+        ]
+      },
+      {
+        "StageSlot": "EH39",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "EH37",
+          "H20",
+          "H21"
+        ],
+        "VisibleStages": [
+          "M90",
+          "EH38",
+          "EH40",
+          "EH43"
+        ]
+      },
+      {
+        "StageSlot": "EH40",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "H21",
+          "EH41",
+          "H25"
+        ],
+        "VisibleStages": [
+          "M68",
+          "EH39",
+          "EH42",
+          "EH45"
+        ]
+      },
+      {
+        "StageSlot": "EH41",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "EH40",
+          "EH42",
+          "H25"
+        ],
+        "VisibleStages": [
+          "M67",
+          "M69",
+          "H21",
+          "EH45"
+        ]
+      },
+      {
+        "StageSlot": "EH42",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "EH41"
+        ],
+        "VisibleStages": [
+          "M68",
+          "EMC33",
+          "EMC36",
+          "H25",
+          "EH40"
+        ]
+      },
+      {
+        "StageSlot": "EH43",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "H20",
+          "H22",
+          "EH44"
+        ],
+        "VisibleStages": [
+          "EH38",
+          "EH39",
+          "EH45"
+        ]
+      },
+      {
+        "StageSlot": "EH44",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "EH43",
+          "EH45",
+          "H23"
+        ],
+        "VisibleStages": [
+          "H20",
+          "H25"
+        ]
+      },
+      {
+        "StageSlot": "EH45",
+        "Zone": "FoggyForestHardZone",
+        "ConnectedStages": [
+          "H25",
+          "EH44",
+          "H24"
+        ],
+        "VisibleStages": [
+          "EH40",
+          "EH41",
+          "EH43"
+        ]
+      },
+      {
+        "StageSlot": "ST2",
+        "Zone": "FoggyForestExtraHardZone",
+        "ConnectedStages": [
+          "EX7"
+        ]
+      },
+      {
+        "StageSlot": "X1",
+        "Zone": "FoggyForestExtraHardZone",
+        "ConnectedStages": [
+          "EX1"
+        ],
+        "VisibleStages": [
+          "X4",
+          "EX2"
+        ]
+      },
+      {
+        "StageSlot": "X2",
+        "Zone": "FoggyForestExtraHardZone",
+        "ConnectedStages": [
+          "EX2",
+          "EX3",
+          "EX5"
+        ],
+        "VisibleStages": [
+          "EX1",
+          "EX4",
+          "EX7"
+        ]
+      },
+      {
+        "StageSlot": "X3",
+        "Zone": "FoggyForestExtraHardZone",
+        "ConnectedStages": [
+          "EX4"
+        ],
+        "VisibleStages": [
+          "X5",
+          "EX3"
+        ]
+      },
+      {
+        "StageSlot": "X4",
+        "Zone": "FoggyForestExtraHardZone",
+        "ConnectedStages": [
+          "EX1",
+          "EX6"
+        ],
+        "VisibleStages": [
+          "X1",
+          "EX2",
+          "EX7"
+        ]
+      },
+      {
+        "StageSlot": "X5",
+        "Zone": "FoggyForestExtraHardZone",
+        "ConnectedStages": [
+          "EX4",
+          "EX8"
+        ],
+        "VisibleStages": [
+          "X3",
+          "EX3",
+          "EX7"
+        ]
+      },
+      {
+        "StageSlot": "EX1",
+        "Zone": "FoggyForestExtraHardZone",
+        "ConnectedStages": [
+          "X1",
+          "EX2",
+          "X4"
+        ],
+        "VisibleStages": [
+          "X2",
+          "EX6"
+        ]
+      },
+      {
+        "StageSlot": "EX2",
+        "Zone": "FoggyForestExtraHardZone",
+        "ConnectedStages": [
+          "EX1",
+          "X2"
+        ],
+        "VisibleStages": [
+          "X1",
+          "X4",
+          "EX3",
+          "EX5"
+        ]
+      },
+      {
+        "StageSlot": "EX3",
+        "Zone": "FoggyForestExtraHardZone",
+        "ConnectedStages": [
+          "X2",
+          "EX4"
+        ],
+        "VisibleStages": [
+          "X3",
+          "X5",
+          "EX2",
+          "EX5"
+        ]
+      },
+      {
+        "StageSlot": "EX4",
+        "Zone": "FoggyForestExtraHardZone",
+        "ConnectedStages": [
+          "EX3",
+          "X3",
+          "X5"
+        ],
+        "VisibleStages": [
+          "X2",
+          "EX8"
+        ]
+      },
+      {
+        "StageSlot": "EX5",
+        "Zone": "FoggyForestExtraHardZone",
+        "ConnectedStages": [
+          "X2",
+          "EX7"
+        ],
+        "VisibleStages": [
+          "ST2",
+          "EX2",
+          "EX6",
+          "EX8"
+        ]
+      },
+      {
+        "StageSlot": "EX6",
+        "Zone": "FoggyForestExtraHardZone",
+        "ConnectedStages": [
+          "X4",
+          "EX7"
+        ],
+        "VisibleStages": [
+          "ST2",
+          "EX1",
+          "EX5",
+          "EX8"
+        ]
+      },
+      {
+        "StageSlot": "EX7",
+        "Zone": "FoggyForestExtraHardZone",
+        "ConnectedStages": [
+          "EX6",
+          "EX5",
+          "EX8",
+          "ST2"
+        ],
+        "VisibleStages": [
+          "X2",
+          "X4",
+          "X5"
+        ]
+      },
+      {
+        "StageSlot": "EX8",
+        "Zone": "FoggyForestExtraHardZone",
+        "ConnectedStages": [
+          "EX7",
+          "X5"
+        ],
+        "VisibleStages": [
+          "ST2",
+          "EX4",
+          "EX5",
+          "EX6"
+        ]
+      }
+    ],
+    "RandomElementsByKindId": {
+      "-487120896": [
+        "SimpleEnemy",
+        "SideBoss"
+      ]
+    },
+    "MapElementByRandomElement": {
+      "-487120160": "-487121744"
+    },
+    "StagesSlotsDataBySlot": {
+      "-487119392": {
+        "StageSlot": "EX8",
+        "Zone": "FoggyForestExtraHardZone",
+        "ConnectedStages": [
+          "EX7",
+          "X5"
+        ],
+        "VisibleStages": [
+          "ST2",
+          "EX4",
+          "EX5",
+          "EX6"
+        ]
+      }
+    }
+  },
+  "ProgressionData": {
+    "InfoByLevel": {
+      "-534389536": {
+        "RequiredXp": 11650,
+        "CardRarityDropChances": {
+          "-487104096": 5.917728043973e-312
+        },
+        "CardCount": 2
+      }
+    },
+    "DefaultLevel": 1,
+    "MaxLevel": 30,
+    "Cards": [
+      {
+        "Id": 101,
+        "Rarity": "Uncommon",
+        "BonusByStatKind": {
+          "-487158432": "<BonusValue>"
+        }
+      },
+      {
+        "Id": 102,
+        "Rarity": "Uncommon",
+        "BonusByStatKind": {
+          "-487158432": "<BonusValue>"
+        }
+      },
+      {
+        "Id": 103,
+        "Rarity": "Uncommon",
+        "BonusByStatKind": {
+          "-487158432": "<BonusValue>"
+        }
+      },
+      {
+        "Id": 104,
+        "Rarity": "Uncommon",
+        "BonusByStatKind": {
+          "-487158432": "<BonusValue>"
+        }
+      },
+      {
+        "Id": 105,
+        "Rarity": "Uncommon",
+        "BonusByStatKind": {
+          "-487158432": "<BonusValue>"
+        }
+      },
+      {
+        "Id": 106,
+        "Rarity": "Uncommon",
+        "BonusByStatKind": {
+          "-487158432": "<BonusValue>"
+        }
+      },
+      {
+        "Id": 107,
+        "Rarity": "Uncommon",
+        "BonusByStatKind": {
+          "-487158432": "<BonusValue>"
+        }
+      },
+      {
+        "Id": 108,
+        "Rarity": "Uncommon",
+        "BonusByStatKind": {
+          "-487158432": "<BonusValue>"
+        }
+      },
+      {
+        "Id": 109,
+        "Rarity": "Uncommon",
+        "BonusByStatKind": {
+          "-487158432": "<BonusValue>"
+        }
+      },
+      {
+        "Id": 110,
+        "Rarity": "Uncommon",
+        "BonusByStatKind": {
+          "-487158432": "<BonusValue>"
+        }
+      },
+      {
+        "Id": 111,
+        "Rarity": "Uncommon",
+        "BonusByStatKind": {
+          "-487158432": "<BonusValue>"
+        }
+      },
+      {
+        "Id": 112,
+        "Rarity": "Uncommon",
+        "BonusByStatKind": {
+          "-487158432": "<BonusValue>"
+        }
+      },
+      {
+        "Id": 201,
+        "Rarity": "Rare",
+        "BonusByStatKind": {
+          "-487158432": "<BonusValue>"
+        }
+      },
+      {
+        "Id": 202,
+        "Rarity": "Rare",
+        "BonusByStatKind": {
+          "-487158432": "<BonusValue>"
+        }
+      },
+      {
+        "Id": 203,
+        "Rarity": "Rare",
+        "BonusByStatKind": {
+          "-487158432": "<BonusValue>"
+        }
+      },
+      {
+        "Id": 204,
+        "Rarity": "Rare",
+        "BonusByStatKind": {
+          "-487158432": "<BonusValue>"
+        }
+      },
+      {
+        "Id": 205,
+        "Rarity": "Rare",
+        "BonusByStatKind": {
+          "-487158432": "<BonusValue>"
+        }
+      },
+      {
+        "Id": 206,
+        "Rarity": "Rare",
+        "BonusByStatKind": {
+          "-487158432": "<BonusValue>"
+        }
+      },
+      {
+        "Id": 207,
+        "Rarity": "Rare",
+        "BonusByStatKind": {
+          "-487158432": "<BonusValue>"
+        }
+      },
+      {
+        "Id": 208,
+        "Rarity": "Rare",
+        "BonusByStatKind": {
+          "-487158432": "<BonusValue>"
+        }
+      },
+      {
+        "Id": 209,
+        "Rarity": "Rare",
+        "BonusByStatKind": {
+          "-487158432": "<BonusValue>"
+        }
+      },
+      {
+        "Id": 210,
+        "Rarity": "Rare",
+        "BonusByStatKind": {
+          "-487158432": "<BonusValue>"
+        }
+      },
+      {
+        "Id": 211,
+        "Rarity": "Rare",
+        "BonusByStatKind": {
+          "-487158432": "<BonusValue>"
+        }
+      },
+      {
+        "Id": 212,
+        "Rarity": "Rare",
+        "BonusByStatKind": {
+          "-487158432": "<BonusValue>"
+        }
+      },
+      {
+        "Id": 301,
+        "Rarity": "Epic",
+        "BonusByStatKind": {
+          "-487158432": "<BonusValue>"
+        }
+      },
+      {
+        "Id": 302,
+        "Rarity": "Epic",
+        "BonusByStatKind": {
+          "-487158432": "<BonusValue>"
+        }
+      },
+      {
+        "Id": 303,
+        "Rarity": "Epic",
+        "BonusByStatKind": {
+          "-487158432": "<BonusValue>"
+        }
+      },
+      {
+        "Id": 304,
+        "Rarity": "Epic",
+        "BonusByStatKind": {
+          "-487158432": "<BonusValue>"
+        }
+      },
+      {
+        "Id": 305,
+        "Rarity": "Epic",
+        "BonusByStatKind": {
+          "-487158432": "<BonusValue>"
+        }
+      },
+      {
+        "Id": 306,
+        "Rarity": "Epic",
+        "BonusByStatKind": {
+          "-487158432": "<BonusValue>"
+        }
+      },
+      {
+        "Id": 307,
+        "Rarity": "Epic",
+        "BonusByStatKind": {
+          "-487158432": "<BonusValue>"
+        }
+      },
+      {
+        "Id": 308,
+        "Rarity": "Epic",
+        "BonusByStatKind": {
+          "-487158432": "<BonusValue>"
+        }
+      },
+      {
+        "Id": 309,
+        "Rarity": "Epic",
+        "BonusByStatKind": {
+          "-487158432": "<BonusValue>"
+        }
+      },
+      {
+        "Id": 310,
+        "Rarity": "Epic",
+        "BonusByStatKind": {
+          "-487158432": "<BonusValue>"
+        }
+      },
+      {
+        "Id": 311,
+        "Rarity": "Epic",
+        "BonusByStatKind": {
+          "-487158432": "<BonusValue>"
+        }
+      },
+      {
+        "Id": 312,
+        "Rarity": "Epic",
+        "BonusByStatKind": {
+          "-487158432": "<BonusValue>"
+        }
+      },
+      {
+        "Id": 401,
+        "Rarity": "Legendary",
+        "BonusByStatKind": {
+          "-487158432": "<BonusValue>"
+        }
+      },
+      {
+        "Id": 402,
+        "Rarity": "Legendary",
+        "BonusByStatKind": {
+          "-487158432": "<BonusValue>"
+        }
+      },
+      {
+        "Id": 403,
+        "Rarity": "Legendary",
+        "BonusByStatKind": {
+          "-487158432": "<BonusValue>"
+        }
+      },
+      {
+        "Id": 404,
+        "Rarity": "Legendary",
+        "BonusByStatKind": {
+          "-487158432": "<BonusValue>"
+        }
+      },
+      {
+        "Id": 405,
+        "Rarity": "Legendary",
+        "BonusByStatKind": {
+          "-487158432": "<BonusValue>"
+        }
+      },
+      {
+        "Id": 406,
+        "Rarity": "Legendary",
+        "BonusByStatKind": {
+          "-487158432": "<BonusValue>"
+        }
+      }
+    ],
+    "MaxCardRankByRarity": {
+      "-487104096": "-487122432"
+    },
+    "Curios": [
+      {
+        "Id": 1,
+        "Type": "Battle",
+        "SkillId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        },
+        "IsBattleCurio": true
+      },
+      {
+        "Id": 2,
+        "Type": "Battle",
+        "SkillId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        },
+        "IsBattleCurio": true
+      },
+      {
+        "Id": 3,
+        "Type": "Battle",
+        "SkillId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        },
+        "IsBattleCurio": true
+      },
+      {
+        "Id": 4,
+        "Type": "Battle",
+        "SkillId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        },
+        "IsBattleCurio": true
+      },
+      {
+        "Id": 5,
+        "Type": "Battle",
+        "SkillId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        },
+        "IsBattleCurio": true
+      },
+      {
+        "Id": 6,
+        "Type": "Battle",
+        "SkillId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        },
+        "IsBattleCurio": true
+      },
+      {
+        "Id": 7,
+        "Type": "Battle",
+        "SkillId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        },
+        "IsBattleCurio": true
+      },
+      {
+        "Id": 8,
+        "Type": "Battle",
+        "SkillId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        },
+        "IsBattleCurio": true
+      },
+      {
+        "Id": 9,
+        "Type": "Battle",
+        "SkillId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        },
+        "IsBattleCurio": true
+      },
+      {
+        "Id": 10,
+        "Type": "Battle",
+        "SkillId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        },
+        "IsBattleCurio": true
+      },
+      {
+        "Id": 11,
+        "Type": "Battle",
+        "SkillId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        },
+        "IsBattleCurio": true
+      },
+      {
+        "Id": 12,
+        "Type": "Battle",
+        "SkillId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        },
+        "IsBattleCurio": true
+      },
+      {
+        "Id": 13,
+        "Type": "Battle",
+        "SkillId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        },
+        "IsBattleCurio": true
+      },
+      {
+        "Id": 14,
+        "Type": "Battle",
+        "SkillId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        },
+        "IsBattleCurio": true
+      },
+      {
+        "Id": 15,
+        "Type": "Battle",
+        "SkillId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        },
+        "IsBattleCurio": true
+      },
+      {
+        "Id": 16,
+        "Type": "Battle",
+        "SkillId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        },
+        "IsBattleCurio": true
+      },
+      {
+        "Id": 17,
+        "Type": "Xp",
+        "ValuesForRanks": [
+          0.05,
+          0.1,
+          0.15
+        ],
+        "IsBattleCurio": false
+      },
+      {
+        "Id": 18,
+        "Type": "Coins",
+        "ValuesForRanks": [
+          0.05,
+          0.1,
+          0.15
+        ],
+        "IsBattleCurio": false
+      }
+    ],
+    "MaxCurioRank": "Rank3",
+    "DefaultCurioSlots": 1,
+    "MaxCurioSlots": 6,
+    "MaxCuriosCount": 48,
+    "MaxXp": 11650,
+    "CardById": {
+      "-534389536": {
+        "Id": 406,
+        "Rarity": "Legendary",
+        "BonusByStatKind": {
+          "-487158432": "<BonusValue>"
+        }
+      }
+    },
+    "CurioById": {
+      "-534389536": {
+        "Id": 18,
+        "Type": "Coins",
+        "ValuesForRanks": [
+          0.05,
+          0.1,
+          0.15
+        ],
+        "IsBattleCurio": false
+      }
+    }
+  },
+  "DifficultyIds": [
+    "Normal",
+    "Hard"
+  ]
+}

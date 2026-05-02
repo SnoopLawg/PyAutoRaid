@@ -126,41 +126,71 @@ ends with a working game on user's machine.
 
 **Deliverable**: cleaner baseline. Behavior unchanged. ✅ Phase 0 complete.
 
-### Phase 1 — Computed Stats parity (the trust foundation)
+### Phase 1 — Computed Stats parity (the trust foundation) ✅
 
 **Goal**: PyAutoRaid's per-hero stat numbers match the in-game *Total
 Stats* screen exactly. Nothing else can be trusted until this is.
 
-- [ ] Add `tools/hero_stats.py` columns: Arena (from `account_data.json`),
-      Blessing (`/all-heroes[].blessing`), Faction Guardians (mod read,
-      data exists), Relic (`/all-heroes[].relic`), Area Bonuses (per-
-      location modifiers from `data/static/`)
-- [ ] Cross-check tool: `python3 tools/hero_stats.py "<name>" --vs-mod`
-      shows our calc vs `/hero-computed-stats` for the same hero, flags
-      any column that disagrees
-- [ ] Wire dashboard `compute_hero_actual_stats` to use the full
-      breakdown (currently only feeds the partial calc)
+- [x] Mod-side `/hero-computed-stats` returns every column (Basic,
+      Artifacts, Affinity, Classic Arena, Masteries, Faction Guardians,
+      Empowerment, Blessing, Relic) via the game's own `Calc*Bonus`
+      methods.
+- [x] Cross-check tool: `python3 tools/hero_stats.py "<name>" --vs-mod`
+      diffs our calc against the mod's payload.
+- [x] **EXACT match 16/16** verified vs in-game screenshots for Cardiel
+      L60 6★ + Gnut L60 6★ (different elements/factions/roles).
+- [ ] Area Bonuses column — per-location buffs (CB / Dungeon / Hydra
+      modifiers). Not in the default Total Stats view; deferred until a
+      caller needs per-area accuracy.
 
-**Deliverable**: dashboard hero rows show stats matching the game. Sim
-inputs become trustworthy.
+**Deliverable**: dashboard hero rows show stats matching the game.
+Sim inputs become trustworthy. ✅ Phase 1 complete (commit `b7fdf69`).
 
-### Phase 2 — All-locations static data (scope expansion)
+### Phase 2 — All-locations static data (scope expansion) ✅
 
 **Goal**: stage list, enemy stats, and reward profile for *every* battle
 location, not just CB + dungeons.
 
-- [ ] Mod endpoint `/stage-rewards?stage_id=N` → reward composition
-      (artifact/shard/scroll/potion drop probabilities) for any stage.
-- [ ] Mod endpoint `/all-skill-data` → per-skill effect dump for ALL
-      heroes (not just owned). Powers sim of teams the user doesn't have yet.
-- [ ] Mod endpoint `/cursed-city-stages`, `/doom-tower-floors`,
-      `/hydra-config`, `/chimera-config`, `/siege-config` (one new
-      partial-class file: `RaidAutomationPlugin.AltLocations.cs`)
-- [ ] Add to `tools/refresh_static_data.py` SECTIONS dict; outputs land
-      in `data/static/<location>.json`
+Realized via the existing generic `/static-export` endpoint instead of
+new dedicated mod endpoints — DRY/KISS. The mod already exposes every
+top-level `StaticData.*Data` tree at any depth, so Phase 2 became new
+sections in `refresh_static_data.py` rather than C# code.
 
-**Deliverable**: PyAutoRaid knows the full game's reward + enemy data.
-Sim and optimizer can target any location.
+- [x] All-skills dump (was: `/all-skill-data`). New section
+      `skills_all` → `data/static/skills_all.json` (5368 skills with
+      Effects[] / KindId / MultiplierFormula / TargetType / Condition /
+      Category). Replaces the per-account `skills_db.json` for unowned
+      heroes — Phase 4 dependency.
+- [x] Master stage list (was: `/stage-rewards?stage_id=N`). New section
+      `stages` → `data/static/stages.json` (2873 stages × Area /
+      Region / Difficulty / Number / Modifiers / FirstTimeReward).
+      Covers every battle location: DoomTower(792) + Fractions(630) +
+      FoggyForest(422) + Dungeon(400) + Story(336) + CursedCity(202) +
+      Chimera(24) + AllianceBoss(24) + Hydra(24) + Coop(5) + Arena(4) +
+      LiveArena(4) + Siege(3) + Arena3X3(3).
+- [x] Per-location config blocks (was: `/cursed-city-stages` etc.):
+      - `hydra` → `HydraCompetitionData` (Settings, RewardRanges, MilestoneRewardByPoints)
+      - `chimera` → `ChimeraCompetitionData` (same shape as hydra)
+      - `siege` → `SiegeData` (Layers, Modifiers, Bonuses, Tiers, Traps)
+      - `cursed_city` → `StageData.CursedCityData` (DifficultyData)
+      - `foggy_forest` → `StageData.FoggyForestData` (Map, Progression, DifficultyIds)
+      - `stage_areas` → `StageData.Areas` (the 14 location types)
+      - `stage_regions` → `StageData.Regions` (campaign chapters / dungeon tiers)
+- [x] Doom Tower coverage: 792 stages live in `stages.json` filtered by
+      `Area=DoomTower`. No separate `DoomTowerData` tree exists.
+
+**Deliverable**: ✅ Phase 2 complete. PyAutoRaid has the full game's
+stage/skill universe in `data/static/`. Total: 16 sections, ~71MB
+canonical reference (skills_all 35MB + stages 35MB + the rest <2MB).
+
+**Known follow-up** (deferred — not blocking Phase 3):
+- Stage `FirstTimeReward.Resources` and `Formations.HeroesByRound`
+  contain IL2CPP-wrapped `Dictionary<,>` placeholders (`<Dictionary\`2>`)
+  that the generic `/static-export` reflection can't enumerate. Same
+  fix pattern as the Cardiel `ArtifactIdByKind` block (use
+  `GetEnumerator + MoveNext + Current` instead of indexer). Add when
+  the sim or optimizer needs per-stage reward lookups beyond the
+  scalar fields (XP, IsBoss, Modifiers).
 
 ### Phase 3 — Universal sim (not just CB)
 

@@ -1,0 +1,6203 @@
+{
+  "_meta": {
+    "fetched_at": "2026-05-02T00:18:49.215830+00:00",
+    "scene": "Village",
+    "mod_version": "2.0-bepinex",
+    "unity": "6000.0.60f1"
+  },
+  "Layers": [
+    {
+      "LayerId": "Layer1",
+      "BuildingTypes": [
+        {
+          "Id": "Bastion",
+          "KindId": "Bastion",
+          "IsPathStart": false,
+          "Neighbors": "<Il2CppStructArray`1>"
+        },
+        {
+          "Id": "Def1",
+          "KindId": "DefenseTower",
+          "IsPathStart": false,
+          "Neighbors": "<Il2CppStructArray`1>"
+        },
+        {
+          "Id": "Def2",
+          "KindId": "DefenseTower",
+          "IsPathStart": false,
+          "Neighbors": "<Il2CppStructArray`1>"
+        },
+        {
+          "Id": "Def3",
+          "KindId": "DefenseTower",
+          "IsPathStart": false,
+          "Neighbors": "<Il2CppStructArray`1>"
+        },
+        {
+          "Id": "Def4",
+          "KindId": "DefenseTower",
+          "IsPathStart": false,
+          "Neighbors": "<Il2CppStructArray`1>"
+        },
+        {
+          "Id": "Def5",
+          "KindId": "DefenseTower",
+          "IsPathStart": false,
+          "Neighbors": "<Il2CppStructArray`1>"
+        },
+        {
+          "Id": "Magic1",
+          "KindId": "MagicTower",
+          "IsPathStart": false,
+          "Neighbors": "<Il2CppStructArray`1>"
+        },
+        {
+          "Id": "Magic2",
+          "KindId": "MagicTower",
+          "IsPathStart": false,
+          "Neighbors": "<Il2CppStructArray`1>"
+        },
+        {
+          "Id": "Magic3",
+          "KindId": "MagicTower",
+          "IsPathStart": false,
+          "Neighbors": "<Il2CppStructArray`1>"
+        },
+        {
+          "Id": "Magic4",
+          "KindId": "MagicTower",
+          "IsPathStart": false,
+          "Neighbors": "<Il2CppStructArray`1>"
+        },
+        {
+          "Id": "Shrine1",
+          "KindId": "Shrine",
+          "IsPathStart": false,
+          "Neighbors": "<Il2CppStructArray`1>"
+        },
+        {
+          "Id": "Shrine2",
+          "KindId": "Shrine",
+          "IsPathStart": false,
+          "Neighbors": "<Il2CppStructArray`1>"
+        },
+        {
+          "Id": "Spot1",
+          "KindId": "Spot",
+          "IsPathStart": false,
+          "Neighbors": "<Il2CppStructArray`1>"
+        },
+        {
+          "Id": "Spot2",
+          "KindId": "Spot",
+          "IsPathStart": true,
+          "Neighbors": "<Il2CppStructArray`1>"
+        },
+        {
+          "Id": "Spot3",
+          "KindId": "Spot",
+          "IsPathStart": true,
+          "Neighbors": "<Il2CppStructArray`1>"
+        },
+        {
+          "Id": "Spot4",
+          "KindId": "Spot",
+          "IsPathStart": false,
+          "Neighbors": "<Il2CppStructArray`1>"
+        },
+        {
+          "Id": "Spot5",
+          "KindId": "Spot",
+          "IsPathStart": true,
+          "Neighbors": "<Il2CppStructArray`1>"
+        },
+        {
+          "Id": "Spot6",
+          "KindId": "Spot",
+          "IsPathStart": false,
+          "Neighbors": "<Il2CppStructArray`1>"
+        },
+        {
+          "Id": "Spot7",
+          "KindId": "Spot",
+          "IsPathStart": false,
+          "Neighbors": "<Il2CppStructArray`1>"
+        },
+        {
+          "Id": "Spot8",
+          "KindId": "Spot",
+          "IsPathStart": false,
+          "Neighbors": "<Il2CppStructArray`1>"
+        },
+        {
+          "Id": "Spot9",
+          "KindId": "Spot",
+          "IsPathStart": false,
+          "Neighbors": "<Il2CppStructArray`1>"
+        },
+        {
+          "Id": "Spot10",
+          "KindId": "Spot",
+          "IsPathStart": false,
+          "Neighbors": "<Il2CppStructArray`1>"
+        },
+        {
+          "Id": "Spot11",
+          "KindId": "Spot",
+          "IsPathStart": false,
+          "Neighbors": "<Il2CppStructArray`1>"
+        },
+        {
+          "Id": "Spot12",
+          "KindId": "Spot",
+          "IsPathStart": false,
+          "Neighbors": "<Il2CppStructArray`1>"
+        },
+        {
+          "Id": "Spot13",
+          "KindId": "Spot",
+          "IsPathStart": false,
+          "Neighbors": "<Il2CppStructArray`1>"
+        },
+        {
+          "Id": "Spot14",
+          "KindId": "Spot",
+          "IsPathStart": false,
+          "Neighbors": "<Il2CppStructArray`1>"
+        },
+        {
+          "Id": "Spot15",
+          "KindId": "Spot",
+          "IsPathStart": false,
+          "Neighbors": "<Il2CppStructArray`1>"
+        },
+        {
+          "Id": "Spot16",
+          "KindId": "Spot",
+          "IsPathStart": false,
+          "Neighbors": "<Il2CppStructArray`1>"
+        },
+        {
+          "Id": "Spot17",
+          "KindId": "Spot",
+          "IsPathStart": false,
+          "Neighbors": "<Il2CppStructArray`1>"
+        },
+        {
+          "Id": "Spot18",
+          "KindId": "Spot",
+          "IsPathStart": false,
+          "Neighbors": "<Il2CppStructArray`1>"
+        }
+      ],
+      "DataByBuildingKindId": {
+        "-485474048": {
+          "StonesForAttack": "<List`1>",
+          "StonesForDefense": "<List`1>",
+          "MedalsForDefense": 50,
+          "MedalsForAttack": 50,
+          "SlotsByGateIdAndLevel": "<Dictionary`2>"
+        }
+      },
+      "BuildingTypeById": {
+        "-486400432": {
+          "Id": "Spot18",
+          "KindId": "Spot",
+          "IsPathStart": false,
+          "Neighbors": "<Il2CppStructArray`1>"
+        }
+      }
+    }
+  ],
+  "Modifiers": [
+    {
+      "Id": 710001,
+      "Category": 1,
+      "ManaRequired": 165,
+      "RequiredBastionLevel": 1,
+      "HeroCondition": {
+        "Races": [
+          "Telarians"
+        ]
+      },
+      "Description": {
+        "DefaultValue": "710001",
+        "Key": "l10n:siege-modifier/description?id=710001#static",
+        "HasBreakSymbol": false
+      }
+    },
+    {
+      "Id": 710002,
+      "Category": 1,
+      "ManaRequired": 165,
+      "RequiredBastionLevel": 1,
+      "HeroCondition": {
+        "Races": [
+          "GaellenPact"
+        ]
+      },
+      "Description": {
+        "DefaultValue": "710002",
+        "Key": "l10n:siege-modifier/description?id=710002#static",
+        "HasBreakSymbol": false
+      }
+    },
+    {
+      "Id": 710003,
+      "Category": 1,
+      "ManaRequired": 165,
+      "RequiredBastionLevel": 1,
+      "HeroCondition": {
+        "Races": [
+          "Corrupted"
+        ]
+      },
+      "Description": {
+        "DefaultValue": "710003",
+        "Key": "l10n:siege-modifier/description?id=710003#static",
+        "HasBreakSymbol": false
+      }
+    },
+    {
+      "Id": 710004,
+      "Category": 1,
+      "ManaRequired": 165,
+      "RequiredBastionLevel": 1,
+      "HeroCondition": {
+        "Races": [
+          "NyresanUnion"
+        ]
+      },
+      "Description": {
+        "DefaultValue": "710004",
+        "Key": "l10n:siege-modifier/description?id=710004#static",
+        "HasBreakSymbol": false
+      }
+    },
+    {
+      "Id": 710005,
+      "Category": 1,
+      "ManaRequired": 165,
+      "RequiredBastionLevel": 1,
+      "HeroCondition": {
+        "Roles": [
+          "Health"
+        ]
+      },
+      "Description": {
+        "DefaultValue": "710005",
+        "Key": "l10n:siege-modifier/description?id=710005#static",
+        "HasBreakSymbol": false
+      }
+    },
+    {
+      "Id": 710006,
+      "Category": 1,
+      "ManaRequired": 165,
+      "RequiredBastionLevel": 1,
+      "HeroCondition": {
+        "Roles": [
+          "Defense"
+        ]
+      },
+      "Description": {
+        "DefaultValue": "710006",
+        "Key": "l10n:siege-modifier/description?id=710006#static",
+        "HasBreakSymbol": false
+      }
+    },
+    {
+      "Id": 710007,
+      "Category": 1,
+      "ManaRequired": 165,
+      "RequiredBastionLevel": 1,
+      "HeroCondition": {
+        "Roles": [
+          "Support"
+        ]
+      },
+      "Description": {
+        "DefaultValue": "710007",
+        "Key": "l10n:siege-modifier/description?id=710007#static",
+        "HasBreakSymbol": false
+      }
+    },
+    {
+      "Id": 710008,
+      "Category": 1,
+      "ManaRequired": 165,
+      "RequiredBastionLevel": 1,
+      "HeroCondition": {
+        "Roles": [
+          "Attack"
+        ]
+      },
+      "Description": {
+        "DefaultValue": "710008",
+        "Key": "l10n:siege-modifier/description?id=710008#static",
+        "HasBreakSymbol": false
+      }
+    },
+    {
+      "Id": 710009,
+      "Category": 1,
+      "ManaRequired": 165,
+      "RequiredBastionLevel": 2,
+      "HeroCondition": {
+        "Elements": [
+          "Void"
+        ]
+      },
+      "Description": {
+        "DefaultValue": "710009",
+        "Key": "l10n:siege-modifier/description?id=710009#static",
+        "HasBreakSymbol": false
+      }
+    },
+    {
+      "Id": 710010,
+      "Category": 1,
+      "ManaRequired": 165,
+      "RequiredBastionLevel": 2,
+      "HeroCondition": {
+        "Elements": [
+          "Force"
+        ]
+      },
+      "Description": {
+        "DefaultValue": "710010",
+        "Key": "l10n:siege-modifier/description?id=710010#static",
+        "HasBreakSymbol": false
+      }
+    },
+    {
+      "Id": 710011,
+      "Category": 1,
+      "ManaRequired": 165,
+      "RequiredBastionLevel": 2,
+      "HeroCondition": {
+        "Elements": [
+          "Magic"
+        ]
+      },
+      "Description": {
+        "DefaultValue": "710011",
+        "Key": "l10n:siege-modifier/description?id=710011#static",
+        "HasBreakSymbol": false
+      }
+    },
+    {
+      "Id": 710012,
+      "Category": 1,
+      "ManaRequired": 165,
+      "RequiredBastionLevel": 2,
+      "HeroCondition": {
+        "Elements": [
+          "Spirit"
+        ]
+      },
+      "Description": {
+        "DefaultValue": "710012",
+        "Key": "l10n:siege-modifier/description?id=710012#static",
+        "HasBreakSymbol": false
+      }
+    },
+    {
+      "Id": 710013,
+      "Category": 1,
+      "ManaRequired": 165,
+      "RequiredBastionLevel": 3,
+      "HeroCondition": {
+        "Rarities": [
+          "Legendary"
+        ]
+      },
+      "Description": {
+        "DefaultValue": "710013",
+        "Key": "l10n:siege-modifier/description?id=710013#static",
+        "HasBreakSymbol": false
+      }
+    },
+    {
+      "Id": 710014,
+      "Category": 1,
+      "ManaRequired": 165,
+      "RequiredBastionLevel": 3,
+      "HeroCondition": {
+        "Rarities": [
+          "Epic"
+        ]
+      },
+      "Description": {
+        "DefaultValue": "710014",
+        "Key": "l10n:siege-modifier/description?id=710014#static",
+        "HasBreakSymbol": false
+      }
+    },
+    {
+      "Id": 710015,
+      "Category": 1,
+      "ManaRequired": 165,
+      "RequiredBastionLevel": 3,
+      "HeroCondition": {
+        "Rarities": [
+          "Rare"
+        ]
+      },
+      "Description": {
+        "DefaultValue": "710015",
+        "Key": "l10n:siege-modifier/description?id=710015#static",
+        "HasBreakSymbol": false
+      }
+    },
+    {
+      "Id": 710016,
+      "Category": 2,
+      "ManaRequired": 230,
+      "RequiredBastionLevel": 1,
+      "HeroCondition": {
+        "Fractions": [
+          "BannerLords"
+        ]
+      },
+      "Description": {
+        "DefaultValue": "710016",
+        "Key": "l10n:siege-modifier/description?id=710016#static",
+        "HasBreakSymbol": false
+      }
+    },
+    {
+      "Id": 710017,
+      "Category": 2,
+      "ManaRequired": 230,
+      "RequiredBastionLevel": 1,
+      "HeroCondition": {
+        "Fractions": [
+          "HighElves"
+        ]
+      },
+      "Description": {
+        "DefaultValue": "710017",
+        "Key": "l10n:siege-modifier/description?id=710017#static",
+        "HasBreakSymbol": false
+      }
+    },
+    {
+      "Id": 710018,
+      "Category": 2,
+      "ManaRequired": 230,
+      "RequiredBastionLevel": 1,
+      "HeroCondition": {
+        "Fractions": [
+          "SacredOrder"
+        ]
+      },
+      "Description": {
+        "DefaultValue": "710018",
+        "Key": "l10n:siege-modifier/description?id=710018#static",
+        "HasBreakSymbol": false
+      }
+    },
+    {
+      "Id": 710019,
+      "Category": 2,
+      "ManaRequired": 230,
+      "RequiredBastionLevel": 1,
+      "HeroCondition": {
+        "Fractions": [
+          "Barbarians"
+        ]
+      },
+      "Description": {
+        "DefaultValue": "710019",
+        "Key": "l10n:siege-modifier/description?id=710019#static",
+        "HasBreakSymbol": false
+      }
+    },
+    {
+      "Id": 710020,
+      "Category": 2,
+      "ManaRequired": 230,
+      "RequiredBastionLevel": 1,
+      "HeroCondition": {
+        "Fractions": [
+          "OgrynTribes"
+        ]
+      },
+      "Description": {
+        "DefaultValue": "710020",
+        "Key": "l10n:siege-modifier/description?id=710020#static",
+        "HasBreakSymbol": false
+      }
+    },
+    {
+      "Id": 710021,
+      "Category": 2,
+      "ManaRequired": 230,
+      "RequiredBastionLevel": 1,
+      "HeroCondition": {
+        "Fractions": [
+          "LizardMen"
+        ]
+      },
+      "Description": {
+        "DefaultValue": "710021",
+        "Key": "l10n:siege-modifier/description?id=710021#static",
+        "HasBreakSymbol": false
+      }
+    },
+    {
+      "Id": 710022,
+      "Category": 2,
+      "ManaRequired": 230,
+      "RequiredBastionLevel": 1,
+      "HeroCondition": {
+        "Fractions": [
+          "Skinwalkers"
+        ]
+      },
+      "Description": {
+        "DefaultValue": "710022",
+        "Key": "l10n:siege-modifier/description?id=710022#static",
+        "HasBreakSymbol": false
+      }
+    },
+    {
+      "Id": 710023,
+      "Category": 2,
+      "ManaRequired": 230,
+      "RequiredBastionLevel": 1,
+      "HeroCondition": {
+        "Fractions": [
+          "Orcs"
+        ]
+      },
+      "Description": {
+        "DefaultValue": "710023",
+        "Key": "l10n:siege-modifier/description?id=710023#static",
+        "HasBreakSymbol": false
+      }
+    },
+    {
+      "Id": 710024,
+      "Category": 2,
+      "ManaRequired": 230,
+      "RequiredBastionLevel": 2,
+      "HeroCondition": {
+        "Fractions": [
+          "Demonspawn"
+        ]
+      },
+      "Description": {
+        "DefaultValue": "710024",
+        "Key": "l10n:siege-modifier/description?id=710024#static",
+        "HasBreakSymbol": false
+      }
+    },
+    {
+      "Id": 710025,
+      "Category": 2,
+      "ManaRequired": 230,
+      "RequiredBastionLevel": 2,
+      "HeroCondition": {
+        "Fractions": [
+          "UndeadHordes"
+        ]
+      },
+      "Description": {
+        "DefaultValue": "710025",
+        "Key": "l10n:siege-modifier/description?id=710025#static",
+        "HasBreakSymbol": false
+      }
+    },
+    {
+      "Id": 710026,
+      "Category": 2,
+      "ManaRequired": 230,
+      "RequiredBastionLevel": 2,
+      "HeroCondition": {
+        "Fractions": [
+          "DarkElves"
+        ]
+      },
+      "Description": {
+        "DefaultValue": "710026",
+        "Key": "l10n:siege-modifier/description?id=710026#static",
+        "HasBreakSymbol": false
+      }
+    },
+    {
+      "Id": 710027,
+      "Category": 2,
+      "ManaRequired": 230,
+      "RequiredBastionLevel": 2,
+      "HeroCondition": {
+        "Fractions": [
+          "KnightsRevenant"
+        ]
+      },
+      "Description": {
+        "DefaultValue": "710027",
+        "Key": "l10n:siege-modifier/description?id=710027#static",
+        "HasBreakSymbol": false
+      }
+    },
+    {
+      "Id": 710028,
+      "Category": 2,
+      "ManaRequired": 230,
+      "RequiredBastionLevel": 3,
+      "HeroCondition": {
+        "Fractions": [
+          "Dwarves"
+        ]
+      },
+      "Description": {
+        "DefaultValue": "710028",
+        "Key": "l10n:siege-modifier/description?id=710028#static",
+        "HasBreakSymbol": false
+      }
+    },
+    {
+      "Id": 710029,
+      "Category": 2,
+      "ManaRequired": 230,
+      "RequiredBastionLevel": 3,
+      "HeroCondition": {
+        "Fractions": [
+          "Samurai"
+        ]
+      },
+      "Description": {
+        "DefaultValue": "710029",
+        "Key": "l10n:siege-modifier/description?id=710029#static",
+        "HasBreakSymbol": false
+      }
+    },
+    {
+      "Id": 710030,
+      "Category": 2,
+      "ManaRequired": 230,
+      "RequiredBastionLevel": 3,
+      "HeroCondition": {
+        "Fractions": [
+          "SylvanWatchers"
+        ]
+      },
+      "Description": {
+        "DefaultValue": "710030",
+        "Key": "l10n:siege-modifier/description?id=710030#static",
+        "HasBreakSymbol": false
+      }
+    },
+    {
+      "Id": 710031,
+      "Category": 3,
+      "ManaRequired": 300,
+      "RequiredBastionLevel": 1,
+      "DisabledEffects": [
+        "ReduceStamina"
+      ],
+      "Description": {
+        "DefaultValue": "710031",
+        "Key": "l10n:siege-modifier/description?id=710031#static",
+        "HasBreakSymbol": false
+      }
+    },
+    {
+      "Id": 710032,
+      "Category": 3,
+      "ManaRequired": 300,
+      "RequiredBastionLevel": 1,
+      "DisabledEffects": [
+        "IncreaseStamina"
+      ],
+      "Description": {
+        "DefaultValue": "710032",
+        "Key": "l10n:siege-modifier/description?id=710032#static",
+        "HasBreakSymbol": false
+      }
+    },
+    {
+      "Id": 710033,
+      "Category": 3,
+      "ManaRequired": 300,
+      "RequiredBastionLevel": 2,
+      "DisabledEffects": [
+        "IncreaseCooldown"
+      ],
+      "Description": {
+        "DefaultValue": "710033",
+        "Key": "l10n:siege-modifier/description?id=710033#static",
+        "HasBreakSymbol": false
+      }
+    },
+    {
+      "Id": 710034,
+      "Category": 3,
+      "ManaRequired": 300,
+      "RequiredBastionLevel": 2,
+      "DisabledEffects": [
+        "ReduceCooldown"
+      ],
+      "Description": {
+        "DefaultValue": "710034",
+        "Key": "l10n:siege-modifier/description?id=710034#static",
+        "HasBreakSymbol": false
+      }
+    },
+    {
+      "Id": 710035,
+      "Category": 3,
+      "ManaRequired": 300,
+      "RequiredBastionLevel": 3,
+      "DisabledEffects": [
+        "Transformation",
+        "SheepTransformation"
+      ],
+      "Description": {
+        "DefaultValue": "710035",
+        "Key": "l10n:siege-modifier/description?id=710035#static",
+        "HasBreakSymbol": false
+      }
+    },
+    {
+      "Id": 710036,
+      "Category": 3,
+      "ManaRequired": 300,
+      "RequiredBastionLevel": 3,
+      "DisabledEffects": [
+        "Revive",
+        "ReviveOnDeath"
+      ],
+      "Description": {
+        "DefaultValue": "710036",
+        "Key": "l10n:siege-modifier/description?id=710036#static",
+        "HasBreakSymbol": false
+      }
+    }
+  ],
+  "Bonuses": [
+    {
+      "Id": 7000011,
+      "Category": 1,
+      "ManaRequired": 7500,
+      "BuildingKindId": "Bastion",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7000011",
+        "Key": "l10n:siege-bonus/description?id=7000011#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 1
+    },
+    {
+      "Id": 7000021,
+      "Category": 1,
+      "ManaRequired": 7500,
+      "BuildingKindId": "Bastion",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7000021",
+        "Key": "l10n:siege-bonus/description?id=7000021#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 1
+    },
+    {
+      "Id": 7000031,
+      "Category": 1,
+      "ManaRequired": 7500,
+      "BuildingKindId": "Bastion",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7000031",
+        "Key": "l10n:siege-bonus/description?id=7000031#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 1
+    },
+    {
+      "Id": 7000041,
+      "Category": 1,
+      "ManaRequired": 7500,
+      "BuildingKindId": "Bastion",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7000041",
+        "Key": "l10n:siege-bonus/description?id=7000041#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 1
+    },
+    {
+      "Id": 7000051,
+      "Category": 1,
+      "ManaRequired": 7500,
+      "BuildingKindId": "Bastion",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7000051",
+        "Key": "l10n:siege-bonus/description?id=7000051#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 1
+    },
+    {
+      "Id": 7000061,
+      "Category": 1,
+      "ManaRequired": 7500,
+      "BuildingKindId": "Bastion",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7000061",
+        "Key": "l10n:siege-bonus/description?id=7000061#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 1
+    },
+    {
+      "Id": 7000012,
+      "Category": 2,
+      "ManaRequired": 10500,
+      "BuildingKindId": "Bastion",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7000012",
+        "Key": "l10n:siege-bonus/description?id=7000012#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 2
+    },
+    {
+      "Id": 7000022,
+      "Category": 2,
+      "ManaRequired": 10500,
+      "BuildingKindId": "Bastion",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7000022",
+        "Key": "l10n:siege-bonus/description?id=7000022#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 2
+    },
+    {
+      "Id": 7000032,
+      "Category": 2,
+      "ManaRequired": 10500,
+      "BuildingKindId": "Bastion",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7000032",
+        "Key": "l10n:siege-bonus/description?id=7000032#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 2
+    },
+    {
+      "Id": 7000042,
+      "Category": 2,
+      "ManaRequired": 10500,
+      "BuildingKindId": "Bastion",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7000042",
+        "Key": "l10n:siege-bonus/description?id=7000042#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 2
+    },
+    {
+      "Id": 7000052,
+      "Category": 2,
+      "ManaRequired": 10500,
+      "BuildingKindId": "Bastion",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7000052",
+        "Key": "l10n:siege-bonus/description?id=7000052#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 2
+    },
+    {
+      "Id": 7000062,
+      "Category": 2,
+      "ManaRequired": 10500,
+      "BuildingKindId": "Bastion",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7000062",
+        "Key": "l10n:siege-bonus/description?id=7000062#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 2
+    },
+    {
+      "Id": 7000013,
+      "Category": 3,
+      "ManaRequired": 15000,
+      "BuildingKindId": "Bastion",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7000013",
+        "Key": "l10n:siege-bonus/description?id=7000013#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 3
+    },
+    {
+      "Id": 7000023,
+      "Category": 3,
+      "ManaRequired": 15000,
+      "BuildingKindId": "Bastion",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7000023",
+        "Key": "l10n:siege-bonus/description?id=7000023#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 3
+    },
+    {
+      "Id": 7000033,
+      "Category": 3,
+      "ManaRequired": 15000,
+      "BuildingKindId": "Bastion",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7000033",
+        "Key": "l10n:siege-bonus/description?id=7000033#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 3
+    },
+    {
+      "Id": 7000043,
+      "Category": 3,
+      "ManaRequired": 15000,
+      "BuildingKindId": "Bastion",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7000043",
+        "Key": "l10n:siege-bonus/description?id=7000043#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 3
+    },
+    {
+      "Id": 7000053,
+      "Category": 3,
+      "ManaRequired": 15000,
+      "BuildingKindId": "Bastion",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7000053",
+        "Key": "l10n:siege-bonus/description?id=7000053#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 3
+    },
+    {
+      "Id": 7000063,
+      "Category": 3,
+      "ManaRequired": 15000,
+      "BuildingKindId": "Bastion",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7000063",
+        "Key": "l10n:siege-bonus/description?id=7000063#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 3
+    },
+    {
+      "Id": 7001011,
+      "Category": 1,
+      "ManaRequired": 675,
+      "BuildingKindId": "MagicTower",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7001011",
+        "Key": "l10n:siege-bonus/description?id=7001011#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "HeroElementConditions": [
+          "Force",
+          "Magic"
+        ],
+        "Bonus": {
+          "StatKindId": "CriticalDamage",
+          "Value": 0.2,
+          "IsAbsolute": false
+        }
+      },
+      "RequiredLevel": 1
+    },
+    {
+      "Id": 7001021,
+      "Category": 1,
+      "ManaRequired": 675,
+      "BuildingKindId": "MagicTower",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7001021",
+        "Key": "l10n:siege-bonus/description?id=7001021#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "HeroElementConditions": [
+          "Force",
+          "Magic"
+        ],
+        "Bonus": {
+          "StatKindId": "Resistance",
+          "Value": 60,
+          "IsAbsolute": true
+        }
+      },
+      "RequiredLevel": 1
+    },
+    {
+      "Id": 7001031,
+      "Category": 1,
+      "ManaRequired": 675,
+      "BuildingKindId": "MagicTower",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7001031",
+        "Key": "l10n:siege-bonus/description?id=7001031#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "HeroElementConditions": [
+          "Force",
+          "Magic"
+        ],
+        "Bonus": {
+          "StatKindId": "Accuracy",
+          "Value": 60,
+          "IsAbsolute": true
+        }
+      },
+      "RequiredLevel": 1
+    },
+    {
+      "Id": 7001041,
+      "Category": 1,
+      "ManaRequired": 675,
+      "BuildingKindId": "MagicTower",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7001041",
+        "Key": "l10n:siege-bonus/description?id=7001041#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 1
+    },
+    {
+      "Id": 7001051,
+      "Category": 1,
+      "ManaRequired": 675,
+      "BuildingKindId": "MagicTower",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7001051",
+        "Key": "l10n:siege-bonus/description?id=7001051#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 1
+    },
+    {
+      "Id": 7001061,
+      "Category": 1,
+      "ManaRequired": 675,
+      "BuildingKindId": "MagicTower",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7001061",
+        "Key": "l10n:siege-bonus/description?id=7001061#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 1
+    },
+    {
+      "Id": 7001071,
+      "Category": 1,
+      "ManaRequired": 675,
+      "BuildingKindId": "MagicTower",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7001071",
+        "Key": "l10n:siege-bonus/description?id=7001071#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 1
+    },
+    {
+      "Id": 7001081,
+      "Category": 1,
+      "ManaRequired": 675,
+      "BuildingKindId": "MagicTower",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7001081",
+        "Key": "l10n:siege-bonus/description?id=7001081#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 1
+    },
+    {
+      "Id": 7001091,
+      "Category": 1,
+      "ManaRequired": 675,
+      "BuildingKindId": "MagicTower",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7001091",
+        "Key": "l10n:siege-bonus/description?id=7001091#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 1
+    },
+    {
+      "Id": 7001012,
+      "Category": 2,
+      "ManaRequired": 950,
+      "BuildingKindId": "MagicTower",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7001012",
+        "Key": "l10n:siege-bonus/description?id=7001012#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "HeroElementConditions": [
+          "Spirit",
+          "Void"
+        ],
+        "Bonus": {
+          "StatKindId": "CriticalDamage",
+          "Value": 0.2,
+          "IsAbsolute": false
+        }
+      },
+      "RequiredLevel": 2
+    },
+    {
+      "Id": 7001022,
+      "Category": 2,
+      "ManaRequired": 950,
+      "BuildingKindId": "MagicTower",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7001022",
+        "Key": "l10n:siege-bonus/description?id=7001022#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "HeroElementConditions": [
+          "Spirit",
+          "Void"
+        ],
+        "Bonus": {
+          "StatKindId": "Resistance",
+          "Value": 60,
+          "IsAbsolute": true
+        }
+      },
+      "RequiredLevel": 2
+    },
+    {
+      "Id": 7001032,
+      "Category": 2,
+      "ManaRequired": 950,
+      "BuildingKindId": "MagicTower",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7001032",
+        "Key": "l10n:siege-bonus/description?id=7001032#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "HeroElementConditions": [
+          "Spirit",
+          "Void"
+        ],
+        "Bonus": {
+          "StatKindId": "Accuracy",
+          "Value": 60,
+          "IsAbsolute": true
+        }
+      },
+      "RequiredLevel": 2
+    },
+    {
+      "Id": 7001042,
+      "Category": 2,
+      "ManaRequired": 950,
+      "BuildingKindId": "MagicTower",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7001042",
+        "Key": "l10n:siege-bonus/description?id=7001042#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 2
+    },
+    {
+      "Id": 7001052,
+      "Category": 2,
+      "ManaRequired": 950,
+      "BuildingKindId": "MagicTower",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7001052",
+        "Key": "l10n:siege-bonus/description?id=7001052#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 2
+    },
+    {
+      "Id": 7001062,
+      "Category": 2,
+      "ManaRequired": 950,
+      "BuildingKindId": "MagicTower",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7001062",
+        "Key": "l10n:siege-bonus/description?id=7001062#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 2
+    },
+    {
+      "Id": 7001072,
+      "Category": 2,
+      "ManaRequired": 950,
+      "BuildingKindId": "MagicTower",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7001072",
+        "Key": "l10n:siege-bonus/description?id=7001072#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 2
+    },
+    {
+      "Id": 7001082,
+      "Category": 2,
+      "ManaRequired": 950,
+      "BuildingKindId": "MagicTower",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7001082",
+        "Key": "l10n:siege-bonus/description?id=7001082#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 2
+    },
+    {
+      "Id": 7001092,
+      "Category": 2,
+      "ManaRequired": 950,
+      "BuildingKindId": "MagicTower",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7001092",
+        "Key": "l10n:siege-bonus/description?id=7001092#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 2
+    },
+    {
+      "Id": 7001013,
+      "Category": 3,
+      "ManaRequired": 1250,
+      "BuildingKindId": "MagicTower",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7001013",
+        "Key": "l10n:siege-bonus/description?id=7001013#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "Bonus": {
+          "StatKindId": "CriticalDamage",
+          "Value": 0.2,
+          "IsAbsolute": false
+        }
+      },
+      "RequiredLevel": 3
+    },
+    {
+      "Id": 7001023,
+      "Category": 3,
+      "ManaRequired": 1250,
+      "BuildingKindId": "MagicTower",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7001023",
+        "Key": "l10n:siege-bonus/description?id=7001023#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "Bonus": {
+          "StatKindId": "Resistance",
+          "Value": 60,
+          "IsAbsolute": true
+        }
+      },
+      "RequiredLevel": 3
+    },
+    {
+      "Id": 7001033,
+      "Category": 3,
+      "ManaRequired": 1250,
+      "BuildingKindId": "MagicTower",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7001033",
+        "Key": "l10n:siege-bonus/description?id=7001033#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "Bonus": {
+          "StatKindId": "Accuracy",
+          "Value": 60,
+          "IsAbsolute": true
+        }
+      },
+      "RequiredLevel": 3
+    },
+    {
+      "Id": 7001043,
+      "Category": 3,
+      "ManaRequired": 1250,
+      "BuildingKindId": "MagicTower",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7001043",
+        "Key": "l10n:siege-bonus/description?id=7001043#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 3
+    },
+    {
+      "Id": 7001053,
+      "Category": 3,
+      "ManaRequired": 1250,
+      "BuildingKindId": "MagicTower",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7001053",
+        "Key": "l10n:siege-bonus/description?id=7001053#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 3
+    },
+    {
+      "Id": 7001063,
+      "Category": 3,
+      "ManaRequired": 1250,
+      "BuildingKindId": "MagicTower",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7001063",
+        "Key": "l10n:siege-bonus/description?id=7001063#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 3
+    },
+    {
+      "Id": 7001073,
+      "Category": 3,
+      "ManaRequired": 1250,
+      "BuildingKindId": "MagicTower",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7001073",
+        "Key": "l10n:siege-bonus/description?id=7001073#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 3
+    },
+    {
+      "Id": 7001083,
+      "Category": 3,
+      "ManaRequired": 1250,
+      "BuildingKindId": "MagicTower",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7001083",
+        "Key": "l10n:siege-bonus/description?id=7001083#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 3
+    },
+    {
+      "Id": 7001093,
+      "Category": 3,
+      "ManaRequired": 1250,
+      "BuildingKindId": "MagicTower",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7001093",
+        "Key": "l10n:siege-bonus/description?id=7001093#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 3
+    },
+    {
+      "Id": 7010011,
+      "Category": 1,
+      "ManaRequired": 360,
+      "BuildingKindId": "DefenseTower",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7010011",
+        "Key": "l10n:siege-bonus/description?id=7010011#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "HeroElementConditions": [
+          "Force",
+          "Magic"
+        ],
+        "Bonus": {
+          "StatKindId": "CriticalDamage",
+          "Value": 0.15,
+          "IsAbsolute": false
+        }
+      },
+      "RequiredLevel": 1
+    },
+    {
+      "Id": 7020011,
+      "Category": 1,
+      "ManaRequired": 360,
+      "BuildingKindId": "DefenseTower",
+      "ForEnemy": true,
+      "Description": {
+        "DefaultValue": "7020011",
+        "Key": "l10n:siege-bonus/description?id=7020011#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "HeroElementConditions": [
+          "Force",
+          "Magic"
+        ],
+        "Bonus": {
+          "StatKindId": "CriticalDamage",
+          "Value": -0.15,
+          "IsAbsolute": false
+        }
+      },
+      "RequiredLevel": 1
+    },
+    {
+      "Id": 7010021,
+      "Category": 1,
+      "ManaRequired": 360,
+      "BuildingKindId": "DefenseTower",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7010021",
+        "Key": "l10n:siege-bonus/description?id=7010021#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "HeroElementConditions": [
+          "Force",
+          "Magic"
+        ],
+        "Bonus": {
+          "StatKindId": "Resistance",
+          "Value": 50,
+          "IsAbsolute": true
+        }
+      },
+      "RequiredLevel": 1
+    },
+    {
+      "Id": 7020021,
+      "Category": 1,
+      "ManaRequired": 360,
+      "BuildingKindId": "DefenseTower",
+      "ForEnemy": true,
+      "Description": {
+        "DefaultValue": "7020021",
+        "Key": "l10n:siege-bonus/description?id=7020021#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "HeroElementConditions": [
+          "Force",
+          "Magic"
+        ],
+        "Bonus": {
+          "StatKindId": "Resistance",
+          "Value": -50,
+          "IsAbsolute": true
+        }
+      },
+      "RequiredLevel": 1
+    },
+    {
+      "Id": 7010031,
+      "Category": 1,
+      "ManaRequired": 360,
+      "BuildingKindId": "DefenseTower",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7010031",
+        "Key": "l10n:siege-bonus/description?id=7010031#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "HeroElementConditions": [
+          "Force",
+          "Magic"
+        ],
+        "Bonus": {
+          "StatKindId": "Accuracy",
+          "Value": 50,
+          "IsAbsolute": true
+        }
+      },
+      "RequiredLevel": 1
+    },
+    {
+      "Id": 7020031,
+      "Category": 1,
+      "ManaRequired": 360,
+      "BuildingKindId": "DefenseTower",
+      "ForEnemy": true,
+      "Description": {
+        "DefaultValue": "7020031",
+        "Key": "l10n:siege-bonus/description?id=7020031#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "HeroElementConditions": [
+          "Force",
+          "Magic"
+        ],
+        "Bonus": {
+          "StatKindId": "Accuracy",
+          "Value": -50,
+          "IsAbsolute": true
+        }
+      },
+      "RequiredLevel": 1
+    },
+    {
+      "Id": 7010041,
+      "Category": 1,
+      "ManaRequired": 360,
+      "BuildingKindId": "DefenseTower",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7010041",
+        "Key": "l10n:siege-bonus/description?id=7010041#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 1
+    },
+    {
+      "Id": 7020041,
+      "Category": 1,
+      "ManaRequired": 360,
+      "BuildingKindId": "DefenseTower",
+      "ForEnemy": true,
+      "Description": {
+        "DefaultValue": "7020041",
+        "Key": "l10n:siege-bonus/description?id=7020041#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 1
+    },
+    {
+      "Id": 7010051,
+      "Category": 1,
+      "ManaRequired": 360,
+      "BuildingKindId": "DefenseTower",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7010051",
+        "Key": "l10n:siege-bonus/description?id=7010051#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 1
+    },
+    {
+      "Id": 7020051,
+      "Category": 1,
+      "ManaRequired": 360,
+      "BuildingKindId": "DefenseTower",
+      "ForEnemy": true,
+      "Description": {
+        "DefaultValue": "7020051",
+        "Key": "l10n:siege-bonus/description?id=7020051#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 1
+    },
+    {
+      "Id": 7010061,
+      "Category": 1,
+      "ManaRequired": 360,
+      "BuildingKindId": "DefenseTower",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7010061",
+        "Key": "l10n:siege-bonus/description?id=7010061#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 1
+    },
+    {
+      "Id": 7020061,
+      "Category": 1,
+      "ManaRequired": 360,
+      "BuildingKindId": "DefenseTower",
+      "ForEnemy": true,
+      "Description": {
+        "DefaultValue": "7020061",
+        "Key": "l10n:siege-bonus/description?id=7020061#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 1
+    },
+    {
+      "Id": 7010071,
+      "Category": 1,
+      "ManaRequired": 360,
+      "BuildingKindId": "DefenseTower",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7010071",
+        "Key": "l10n:siege-bonus/description?id=7010071#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 1
+    },
+    {
+      "Id": 7020071,
+      "Category": 1,
+      "ManaRequired": 360,
+      "BuildingKindId": "DefenseTower",
+      "ForEnemy": true,
+      "Description": {
+        "DefaultValue": "7020071",
+        "Key": "l10n:siege-bonus/description?id=7020071#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 1
+    },
+    {
+      "Id": 7010081,
+      "Category": 1,
+      "ManaRequired": 360,
+      "BuildingKindId": "DefenseTower",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7010081",
+        "Key": "l10n:siege-bonus/description?id=7010081#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 1
+    },
+    {
+      "Id": 7020081,
+      "Category": 1,
+      "ManaRequired": 360,
+      "BuildingKindId": "DefenseTower",
+      "ForEnemy": true,
+      "Description": {
+        "DefaultValue": "7020081",
+        "Key": "l10n:siege-bonus/description?id=7020081#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 1
+    },
+    {
+      "Id": 7010091,
+      "Category": 1,
+      "ManaRequired": 360,
+      "BuildingKindId": "DefenseTower",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7010091",
+        "Key": "l10n:siege-bonus/description?id=7010091#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 1
+    },
+    {
+      "Id": 7020091,
+      "Category": 1,
+      "ManaRequired": 360,
+      "BuildingKindId": "DefenseTower",
+      "ForEnemy": true,
+      "Description": {
+        "DefaultValue": "7020091",
+        "Key": "l10n:siege-bonus/description?id=7020091#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 1
+    },
+    {
+      "Id": 7010012,
+      "Category": 2,
+      "ManaRequired": 500,
+      "BuildingKindId": "DefenseTower",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7010012",
+        "Key": "l10n:siege-bonus/description?id=7010012#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "HeroElementConditions": [
+          "Spirit",
+          "Void"
+        ],
+        "Bonus": {
+          "StatKindId": "CriticalDamage",
+          "Value": 0.15,
+          "IsAbsolute": false
+        }
+      },
+      "RequiredLevel": 2
+    },
+    {
+      "Id": 7020012,
+      "Category": 2,
+      "ManaRequired": 500,
+      "BuildingKindId": "DefenseTower",
+      "ForEnemy": true,
+      "Description": {
+        "DefaultValue": "7020012",
+        "Key": "l10n:siege-bonus/description?id=7020012#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "HeroElementConditions": [
+          "Spirit",
+          "Void"
+        ],
+        "Bonus": {
+          "StatKindId": "CriticalDamage",
+          "Value": -0.15,
+          "IsAbsolute": false
+        }
+      },
+      "RequiredLevel": 2
+    },
+    {
+      "Id": 7010022,
+      "Category": 2,
+      "ManaRequired": 500,
+      "BuildingKindId": "DefenseTower",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7010022",
+        "Key": "l10n:siege-bonus/description?id=7010022#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "HeroElementConditions": [
+          "Spirit",
+          "Void"
+        ],
+        "Bonus": {
+          "StatKindId": "Resistance",
+          "Value": 50,
+          "IsAbsolute": true
+        }
+      },
+      "RequiredLevel": 2
+    },
+    {
+      "Id": 7020022,
+      "Category": 2,
+      "ManaRequired": 500,
+      "BuildingKindId": "DefenseTower",
+      "ForEnemy": true,
+      "Description": {
+        "DefaultValue": "7020022",
+        "Key": "l10n:siege-bonus/description?id=7020022#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "HeroElementConditions": [
+          "Spirit",
+          "Void"
+        ],
+        "Bonus": {
+          "StatKindId": "Resistance",
+          "Value": -50,
+          "IsAbsolute": true
+        }
+      },
+      "RequiredLevel": 2
+    },
+    {
+      "Id": 7010032,
+      "Category": 2,
+      "ManaRequired": 500,
+      "BuildingKindId": "DefenseTower",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7010032",
+        "Key": "l10n:siege-bonus/description?id=7010032#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "HeroElementConditions": [
+          "Spirit",
+          "Void"
+        ],
+        "Bonus": {
+          "StatKindId": "Accuracy",
+          "Value": 50,
+          "IsAbsolute": true
+        }
+      },
+      "RequiredLevel": 2
+    },
+    {
+      "Id": 7020032,
+      "Category": 2,
+      "ManaRequired": 500,
+      "BuildingKindId": "DefenseTower",
+      "ForEnemy": true,
+      "Description": {
+        "DefaultValue": "7020032",
+        "Key": "l10n:siege-bonus/description?id=7020032#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "HeroElementConditions": [
+          "Spirit",
+          "Void"
+        ],
+        "Bonus": {
+          "StatKindId": "Accuracy",
+          "Value": -50,
+          "IsAbsolute": true
+        }
+      },
+      "RequiredLevel": 2
+    },
+    {
+      "Id": 7010042,
+      "Category": 2,
+      "ManaRequired": 500,
+      "BuildingKindId": "DefenseTower",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7010042",
+        "Key": "l10n:siege-bonus/description?id=7010042#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 2
+    },
+    {
+      "Id": 7020042,
+      "Category": 2,
+      "ManaRequired": 500,
+      "BuildingKindId": "DefenseTower",
+      "ForEnemy": true,
+      "Description": {
+        "DefaultValue": "7020042",
+        "Key": "l10n:siege-bonus/description?id=7020042#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 2
+    },
+    {
+      "Id": 7010052,
+      "Category": 2,
+      "ManaRequired": 500,
+      "BuildingKindId": "DefenseTower",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7010052",
+        "Key": "l10n:siege-bonus/description?id=7010052#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 2
+    },
+    {
+      "Id": 7020052,
+      "Category": 2,
+      "ManaRequired": 500,
+      "BuildingKindId": "DefenseTower",
+      "ForEnemy": true,
+      "Description": {
+        "DefaultValue": "7020052",
+        "Key": "l10n:siege-bonus/description?id=7020052#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 2
+    },
+    {
+      "Id": 7010062,
+      "Category": 2,
+      "ManaRequired": 500,
+      "BuildingKindId": "DefenseTower",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7010062",
+        "Key": "l10n:siege-bonus/description?id=7010062#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 2
+    },
+    {
+      "Id": 7020062,
+      "Category": 2,
+      "ManaRequired": 500,
+      "BuildingKindId": "DefenseTower",
+      "ForEnemy": true,
+      "Description": {
+        "DefaultValue": "7020062",
+        "Key": "l10n:siege-bonus/description?id=7020062#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 2
+    },
+    {
+      "Id": 7010072,
+      "Category": 2,
+      "ManaRequired": 500,
+      "BuildingKindId": "DefenseTower",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7010072",
+        "Key": "l10n:siege-bonus/description?id=7010072#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 2
+    },
+    {
+      "Id": 7020072,
+      "Category": 2,
+      "ManaRequired": 500,
+      "BuildingKindId": "DefenseTower",
+      "ForEnemy": true,
+      "Description": {
+        "DefaultValue": "7020072",
+        "Key": "l10n:siege-bonus/description?id=7020072#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 2
+    },
+    {
+      "Id": 7010082,
+      "Category": 2,
+      "ManaRequired": 500,
+      "BuildingKindId": "DefenseTower",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7010082",
+        "Key": "l10n:siege-bonus/description?id=7010082#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 2
+    },
+    {
+      "Id": 7020082,
+      "Category": 2,
+      "ManaRequired": 500,
+      "BuildingKindId": "DefenseTower",
+      "ForEnemy": true,
+      "Description": {
+        "DefaultValue": "7020082",
+        "Key": "l10n:siege-bonus/description?id=7020082#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 2
+    },
+    {
+      "Id": 7010092,
+      "Category": 2,
+      "ManaRequired": 500,
+      "BuildingKindId": "DefenseTower",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7010092",
+        "Key": "l10n:siege-bonus/description?id=7010092#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 2
+    },
+    {
+      "Id": 7020092,
+      "Category": 2,
+      "ManaRequired": 500,
+      "BuildingKindId": "DefenseTower",
+      "ForEnemy": true,
+      "Description": {
+        "DefaultValue": "7020092",
+        "Key": "l10n:siege-bonus/description?id=7020092#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 2
+    },
+    {
+      "Id": 7010013,
+      "Category": 3,
+      "ManaRequired": 800,
+      "BuildingKindId": "DefenseTower",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7010013",
+        "Key": "l10n:siege-bonus/description?id=7010013#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "Bonus": {
+          "StatKindId": "CriticalDamage",
+          "Value": 0.15,
+          "IsAbsolute": false
+        }
+      },
+      "RequiredLevel": 3
+    },
+    {
+      "Id": 7020013,
+      "Category": 3,
+      "ManaRequired": 800,
+      "BuildingKindId": "DefenseTower",
+      "ForEnemy": true,
+      "Description": {
+        "DefaultValue": "7020013",
+        "Key": "l10n:siege-bonus/description?id=7020013#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "Bonus": {
+          "StatKindId": "CriticalDamage",
+          "Value": -0.15,
+          "IsAbsolute": false
+        }
+      },
+      "RequiredLevel": 3
+    },
+    {
+      "Id": 7010023,
+      "Category": 3,
+      "ManaRequired": 800,
+      "BuildingKindId": "DefenseTower",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7010023",
+        "Key": "l10n:siege-bonus/description?id=7010023#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "Bonus": {
+          "StatKindId": "Resistance",
+          "Value": 50,
+          "IsAbsolute": true
+        }
+      },
+      "RequiredLevel": 3
+    },
+    {
+      "Id": 7020023,
+      "Category": 3,
+      "ManaRequired": 800,
+      "BuildingKindId": "DefenseTower",
+      "ForEnemy": true,
+      "Description": {
+        "DefaultValue": "7020023",
+        "Key": "l10n:siege-bonus/description?id=7020023#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "Bonus": {
+          "StatKindId": "Resistance",
+          "Value": -50,
+          "IsAbsolute": true
+        }
+      },
+      "RequiredLevel": 3
+    },
+    {
+      "Id": 7010033,
+      "Category": 3,
+      "ManaRequired": 800,
+      "BuildingKindId": "DefenseTower",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7010033",
+        "Key": "l10n:siege-bonus/description?id=7010033#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "Bonus": {
+          "StatKindId": "Accuracy",
+          "Value": 50,
+          "IsAbsolute": true
+        }
+      },
+      "RequiredLevel": 3
+    },
+    {
+      "Id": 7020033,
+      "Category": 3,
+      "ManaRequired": 800,
+      "BuildingKindId": "DefenseTower",
+      "ForEnemy": true,
+      "Description": {
+        "DefaultValue": "7020033",
+        "Key": "l10n:siege-bonus/description?id=7020033#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "Bonus": {
+          "StatKindId": "Accuracy",
+          "Value": -50,
+          "IsAbsolute": true
+        }
+      },
+      "RequiredLevel": 3
+    },
+    {
+      "Id": 7010043,
+      "Category": 3,
+      "ManaRequired": 800,
+      "BuildingKindId": "DefenseTower",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7010043",
+        "Key": "l10n:siege-bonus/description?id=7010043#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 3
+    },
+    {
+      "Id": 7020043,
+      "Category": 3,
+      "ManaRequired": 800,
+      "BuildingKindId": "DefenseTower",
+      "ForEnemy": true,
+      "Description": {
+        "DefaultValue": "7020043",
+        "Key": "l10n:siege-bonus/description?id=7020043#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 3
+    },
+    {
+      "Id": 7010053,
+      "Category": 3,
+      "ManaRequired": 800,
+      "BuildingKindId": "DefenseTower",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7010053",
+        "Key": "l10n:siege-bonus/description?id=7010053#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 3
+    },
+    {
+      "Id": 7020053,
+      "Category": 3,
+      "ManaRequired": 800,
+      "BuildingKindId": "DefenseTower",
+      "ForEnemy": true,
+      "Description": {
+        "DefaultValue": "7020053",
+        "Key": "l10n:siege-bonus/description?id=7020053#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 3
+    },
+    {
+      "Id": 7010063,
+      "Category": 3,
+      "ManaRequired": 800,
+      "BuildingKindId": "DefenseTower",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7010063",
+        "Key": "l10n:siege-bonus/description?id=7010063#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 3
+    },
+    {
+      "Id": 7020063,
+      "Category": 3,
+      "ManaRequired": 800,
+      "BuildingKindId": "DefenseTower",
+      "ForEnemy": true,
+      "Description": {
+        "DefaultValue": "7020063",
+        "Key": "l10n:siege-bonus/description?id=7020063#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 3
+    },
+    {
+      "Id": 7010073,
+      "Category": 3,
+      "ManaRequired": 800,
+      "BuildingKindId": "DefenseTower",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7010073",
+        "Key": "l10n:siege-bonus/description?id=7010073#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 3
+    },
+    {
+      "Id": 7020073,
+      "Category": 3,
+      "ManaRequired": 800,
+      "BuildingKindId": "DefenseTower",
+      "ForEnemy": true,
+      "Description": {
+        "DefaultValue": "7020073",
+        "Key": "l10n:siege-bonus/description?id=7020073#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 3
+    },
+    {
+      "Id": 7010083,
+      "Category": 3,
+      "ManaRequired": 800,
+      "BuildingKindId": "DefenseTower",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7010083",
+        "Key": "l10n:siege-bonus/description?id=7010083#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 3
+    },
+    {
+      "Id": 7020083,
+      "Category": 3,
+      "ManaRequired": 800,
+      "BuildingKindId": "DefenseTower",
+      "ForEnemy": true,
+      "Description": {
+        "DefaultValue": "7020083",
+        "Key": "l10n:siege-bonus/description?id=7020083#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 3
+    },
+    {
+      "Id": 7010093,
+      "Category": 3,
+      "ManaRequired": 800,
+      "BuildingKindId": "DefenseTower",
+      "ForEnemy": false,
+      "Description": {
+        "DefaultValue": "7010093",
+        "Key": "l10n:siege-bonus/description?id=7010093#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 3
+    },
+    {
+      "Id": 7020093,
+      "Category": 3,
+      "ManaRequired": 800,
+      "BuildingKindId": "DefenseTower",
+      "ForEnemy": true,
+      "Description": {
+        "DefaultValue": "7020093",
+        "Key": "l10n:siege-bonus/description?id=7020093#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 3
+    }
+  ],
+  "Tiers": {
+    "-486399744": {
+      "Id": "Tier8",
+      "MinPoints": 5000,
+      "PointsForBattleVictory": 8,
+      "PointsForBattleDefeat": -10,
+      "PointsForSiegeVictory": 0,
+      "VictoryReward": {
+        "Experience": 0,
+        "ArenaPoints": 0,
+        "AllianceExperience": {
+          "hasValue": true,
+          "value": 1197761488352,
+          "HasValue": true,
+          "Value": 30399761348886606
+        },
+        "Resources": {
+          "RawValues": "<Dictionary`2>",
+          "ToRawValues": "<Dictionary`2>",
+          "Energy": 0,
+          "Silver": 0,
+          "Tokens": 0,
+          "Arena3X3ShopCurrency": 0,
+          "Arena3X3Tokens": 0,
+          "LiveArenaTokens": 0,
+          "Gems": 0,
+          "AutoBattleTickets": 0,
+          "MedalBronze": 0,
+          "MedalSilver": 0,
+          "MedalGold": 0,
+          "AllianceBossKey": 0,
+          "AllianceHydraKeys": 0,
+          "AllianceChimeraKeys": 0,
+          "FoggyForestEnergy": 0,
+          "FoggyForestMainBossKeysNormal": 0,
+          "FoggyForestMainBossKeysHard": 0,
+          "ForgeMaterials": "<Dictionary`2>",
+          "DoubleAscend": "<Dictionary`2>",
+          "Magisteel": 0,
+          "Corehammer": 0,
+          "SoulstoneRare": 0,
+          "SoulstoneEpic": 0,
+          "SoulstoneLeg": 0,
+          "BloodstoneRare": 0,
+          "BloodstoneEpic": 0,
+          "BloodstoneLeg": 0,
+          "NetherSpiderRare": 0,
+          "NetherSpiderEpic": 0,
+          "NetherSpiderLeg": 0,
+          "ScarabClawsRare": 0,
+          "ScarabClawsEpic": 0,
+          "ScarabClawsLeg": 0,
+          "MagmaDragonCoresRare": 0,
+          "MagmaDragonCoresEpic": 0,
+          "MagmaDragonCoresLeg": 0,
+          "FrostSpiderSpinesRare": 0,
+          "FrostSpiderSpinesEpic": 0,
+          "FrostSpiderSpinesLeg": 0,
+          "DragonBoneRare": 0,
+          "DragonBoneEpic": 0,
+          "DragonBoneLeg": 0,
+          "GriffinFeatherRare": 0,
+          "GriffinFeatherEpic": 0,
+          "GriffinFeatherLeg": 0,
+          "DreadhornPlatesRare": 0,
+          "DreadhornPlatesEpic": 0,
+          "DreadhornPlatesLeg": 0,
+          "FaeSpheresRare": 0,
+          "FaeSpheresEpic": 0,
+          "FaeSpheresLeg": 0,
+          "InstinctStonesRare": 0,
+          "InstinctStonesEpic": 0,
+          "InstinctStonesLeg": 0,
+          "DoomTowerGoldKeys": 0,
+          "DoomTowerSilverKeys": 0,
+          "AllianceCoin": 700,
+          "FortressKeys": 0,
+          "EternalSoulCoin": 0,
+          "ImmortalSoulCoin": 0,
+          "MortalSoulCoin": 0,
+          "EternalSoulEssence": 0,
+          "ImmortalSoulEssence": 0,
+          "LifeTokens": 0,
+          "LiveArenaMedalBronze": 0,
+          "LiveArenaMedalSilver": 0,
+          "LiveArenaMedalGold": 0,
+          "PlariumPoints": 0,
+          "MythicalDust": 100,
+          "BrokenHeroParts": 0,
+          "CursedCityKeys": 0,
+          "CursedCityHardQuestPoints": 0,
+          "CursedCityNormalQuestPoints": 0,
+          "ParticleSummon": 0,
+          "SiegeStones": 0,
+          "SiegeMana": 0,
+          "SiegeDefenseScrolls": 0,
+          "SiegeBattleScrolls": 0,
+          "SiegeRematchScrolls": 0,
+          "Meteors": 0,
+          "FoggyForestNormalCoins": 0,
+          "FoggyForestNormalGold": 0,
+          "FoggyForestNormalMainBossKeys": 0,
+          "FoggyForestNormalRollRefreshes": 0,
+          "FoggyForestNormalTreasureHuntParts": 0,
+          "FoggyForestHardCoins": 0,
+          "FoggyForestHardGold": 0,
+          "FoggyForestHardMainBossKeys": 0,
+          "FoggyForestHardRollRefreshes": 0,
+          "FoggyForestHardTreasureHuntParts": 0
+        },
+        "HeroPartsChest": {
+          "-534389536": -534389536
+        },
+        "BlackMarketItems": {
+          "-487129536": -534389536
+        },
+        "Artifacts": [
+          "<Artifact>",
+          "<Artifact>",
+          "<Artifact>",
+          "<Artifact>",
+          "<Artifact>",
+          "<Artifact>",
+          "<Artifact>",
+          "<Artifact>",
+          "<Artifact>"
+        ],
+        "Frames": [
+          "SiegeF8"
+        ],
+        "ArtifactDropSettingsProcessed": false,
+        "HasExperience": false,
+        "HasAllianceExperience": true,
+        "HasMythicalDust": true,
+        "HasResources": true,
+        "HasHeroParts": false,
+        "HasHeroSouls": false,
+        "HasHeroPartsChainReward": false,
+        "HasHeroPartsChest": true,
+        "HasRewardIfHeroPartsChestTaken": false,
+        "HasBmis": true,
+        "HasHeroes": false,
+        "HasArtifactsOrAccessories": true,
+        "HasArtifacts": false,
+        "HasAccessory": true,
+        "HasEffects": false,
+        "HasArtifactDropSettings": false,
+        "HasSetOfArtifacts": false,
+        "HasAvatars": false,
+        "HasBadges": false,
+        "HasFrames": true,
+        "HasHeroSkins": false,
+        "HasSelectableHeroes": false,
+        "HasFoggyForestPrizes": false,
+        "HasFoggyForestCurios": false,
+        "HasFoggyForestCurioChests": false,
+        "HasBingoCurrency": false,
+        "HasThreelineCurrency": false,
+        "HasClassicCooperationEventPoints": false,
+        "HasCooperationEventWorldsBossPoints": false,
+        "HasXpBooster": false,
+        "HasSummonParticles": false,
+        "GemsCount": 0,
+        "HasRelics": false,
+        "HasRelicStone": false,
+        "HasRandomRelicStone": false,
+        "HasRelicStoneBoxes": false
+      },
+      "MilestoneRewards": [
+        {
+          "RequiredMedals": 1000,
+          "UserPrize": "<UserPrize>"
+        },
+        {
+          "RequiredMedals": 3000,
+          "UserPrize": "<UserPrize>"
+        },
+        {
+          "RequiredMedals": 5000,
+          "UserPrize": "<UserPrize>"
+        },
+        {
+          "RequiredMedals": 7000,
+          "UserPrize": "<UserPrize>"
+        }
+      ]
+    }
+  },
+  "SetTeamSetupPrice": {
+    "RawValues": {
+      "-487148272": 5.917728043973e-312
+    },
+    "ToRawValues": {
+      "-487148272": 5.917728043973e-312
+    },
+    "Energy": 0,
+    "Silver": 0,
+    "Tokens": 0,
+    "Arena3X3ShopCurrency": 0,
+    "Arena3X3Tokens": 0,
+    "LiveArenaTokens": 0,
+    "Gems": 0,
+    "AutoBattleTickets": 0,
+    "MedalBronze": 0,
+    "MedalSilver": 0,
+    "MedalGold": 0,
+    "AllianceBossKey": 0,
+    "AllianceHydraKeys": 0,
+    "AllianceChimeraKeys": 0,
+    "FoggyForestEnergy": 0,
+    "FoggyForestMainBossKeysNormal": 0,
+    "FoggyForestMainBossKeysHard": 0,
+    "ForgeMaterials": {
+      "Count": 0,
+      "Keys": {
+        "Count": 0,
+        "System.Collections.Generic.ICollection<TKey>.IsReadOnly": true,
+        "System.Collections.ICollection.IsSynchronized": false,
+        "System.Collections.ICollection.SyncRoot": {}
+      },
+      "prop_ICollection_1_TKey_0": {
+        "Count": 0,
+        "IsReadOnly": true
+      },
+      "prop_IEnumerable_1_TKey_0": {},
+      "Values": {
+        "Count": 0,
+        "System.Collections.Generic.ICollection<TValue>.IsReadOnly": true,
+        "System.Collections.ICollection.IsSynchronized": false,
+        "System.Collections.ICollection.SyncRoot": {}
+      },
+      "prop_ICollection_1_TValue_0": {
+        "Count": 0,
+        "IsReadOnly": true
+      },
+      "prop_IEnumerable_1_TValue_0": {},
+      "prop_Boolean_0": false,
+      "System.Collections.ICollection.IsSynchronized": false,
+      "System.Collections.ICollection.SyncRoot": {},
+      "System.Collections.IDictionary.IsFixedSize": false,
+      "System.Collections.IDictionary.IsReadOnly": false,
+      "System.Collections.IDictionary.Keys": {
+        "Count": 0,
+        "SyncRoot": {},
+        "IsSynchronized": false
+      },
+      "System.Collections.IDictionary.Values": {
+        "Count": 0,
+        "SyncRoot": {},
+        "IsSynchronized": false
+      }
+    },
+    "DoubleAscend": {
+      "Count": 0,
+      "Keys": {
+        "Count": 0,
+        "System.Collections.Generic.ICollection<TKey>.IsReadOnly": true,
+        "System.Collections.ICollection.IsSynchronized": false,
+        "System.Collections.ICollection.SyncRoot": {}
+      },
+      "prop_ICollection_1_TKey_0": {
+        "Count": 0,
+        "IsReadOnly": true
+      },
+      "prop_IEnumerable_1_TKey_0": {},
+      "Values": {
+        "Count": 0,
+        "System.Collections.Generic.ICollection<TValue>.IsReadOnly": true,
+        "System.Collections.ICollection.IsSynchronized": false,
+        "System.Collections.ICollection.SyncRoot": {}
+      },
+      "prop_ICollection_1_TValue_0": {
+        "Count": 0,
+        "IsReadOnly": true
+      },
+      "prop_IEnumerable_1_TValue_0": {},
+      "prop_Boolean_0": false,
+      "System.Collections.ICollection.IsSynchronized": false,
+      "System.Collections.ICollection.SyncRoot": {},
+      "System.Collections.IDictionary.IsFixedSize": false,
+      "System.Collections.IDictionary.IsReadOnly": false,
+      "System.Collections.IDictionary.Keys": {
+        "Count": 0,
+        "SyncRoot": {},
+        "IsSynchronized": false
+      },
+      "System.Collections.IDictionary.Values": {
+        "Count": 0,
+        "SyncRoot": {},
+        "IsSynchronized": false
+      }
+    },
+    "Magisteel": 0,
+    "Corehammer": 0,
+    "SoulstoneRare": 0,
+    "SoulstoneEpic": 0,
+    "SoulstoneLeg": 0,
+    "BloodstoneRare": 0,
+    "BloodstoneEpic": 0,
+    "BloodstoneLeg": 0,
+    "NetherSpiderRare": 0,
+    "NetherSpiderEpic": 0,
+    "NetherSpiderLeg": 0,
+    "ScarabClawsRare": 0,
+    "ScarabClawsEpic": 0,
+    "ScarabClawsLeg": 0,
+    "MagmaDragonCoresRare": 0,
+    "MagmaDragonCoresEpic": 0,
+    "MagmaDragonCoresLeg": 0,
+    "FrostSpiderSpinesRare": 0,
+    "FrostSpiderSpinesEpic": 0,
+    "FrostSpiderSpinesLeg": 0,
+    "DragonBoneRare": 0,
+    "DragonBoneEpic": 0,
+    "DragonBoneLeg": 0,
+    "GriffinFeatherRare": 0,
+    "GriffinFeatherEpic": 0,
+    "GriffinFeatherLeg": 0,
+    "DreadhornPlatesRare": 0,
+    "DreadhornPlatesEpic": 0,
+    "DreadhornPlatesLeg": 0,
+    "FaeSpheresRare": 0,
+    "FaeSpheresEpic": 0,
+    "FaeSpheresLeg": 0,
+    "InstinctStonesRare": 0,
+    "InstinctStonesEpic": 0,
+    "InstinctStonesLeg": 0,
+    "DoomTowerGoldKeys": 0,
+    "DoomTowerSilverKeys": 0,
+    "AllianceCoin": 0,
+    "FortressKeys": 0,
+    "EternalSoulCoin": 0,
+    "ImmortalSoulCoin": 0,
+    "MortalSoulCoin": 0,
+    "EternalSoulEssence": 0,
+    "ImmortalSoulEssence": 0,
+    "LifeTokens": 0,
+    "LiveArenaMedalBronze": 0,
+    "LiveArenaMedalSilver": 0,
+    "LiveArenaMedalGold": 0,
+    "PlariumPoints": 0,
+    "MythicalDust": 0,
+    "BrokenHeroParts": 0,
+    "CursedCityKeys": 0,
+    "CursedCityHardQuestPoints": 0,
+    "CursedCityNormalQuestPoints": 0,
+    "ParticleSummon": 0,
+    "SiegeStones": 0,
+    "SiegeMana": 0,
+    "SiegeDefenseScrolls": 1,
+    "SiegeBattleScrolls": 0,
+    "SiegeRematchScrolls": 0,
+    "Meteors": 0,
+    "FoggyForestNormalCoins": 0,
+    "FoggyForestNormalGold": 0,
+    "FoggyForestNormalMainBossKeys": 0,
+    "FoggyForestNormalRollRefreshes": 0,
+    "FoggyForestNormalTreasureHuntParts": 0,
+    "FoggyForestHardCoins": 0,
+    "FoggyForestHardGold": 0,
+    "FoggyForestHardMainBossKeys": 0,
+    "FoggyForestHardRollRefreshes": 0,
+    "FoggyForestHardTreasureHuntParts": 0
+  },
+  "AttackPrice": {
+    "RawValues": {
+      "-487148272": 5.917728043973e-312
+    },
+    "ToRawValues": {
+      "-487148272": 5.917728043973e-312
+    },
+    "Energy": 0,
+    "Silver": 0,
+    "Tokens": 0,
+    "Arena3X3ShopCurrency": 0,
+    "Arena3X3Tokens": 0,
+    "LiveArenaTokens": 0,
+    "Gems": 0,
+    "AutoBattleTickets": 0,
+    "MedalBronze": 0,
+    "MedalSilver": 0,
+    "MedalGold": 0,
+    "AllianceBossKey": 0,
+    "AllianceHydraKeys": 0,
+    "AllianceChimeraKeys": 0,
+    "FoggyForestEnergy": 0,
+    "FoggyForestMainBossKeysNormal": 0,
+    "FoggyForestMainBossKeysHard": 0,
+    "ForgeMaterials": {
+      "Count": 0,
+      "Keys": {
+        "Count": 0,
+        "System.Collections.Generic.ICollection<TKey>.IsReadOnly": true,
+        "System.Collections.ICollection.IsSynchronized": false,
+        "System.Collections.ICollection.SyncRoot": {}
+      },
+      "prop_ICollection_1_TKey_0": {
+        "Count": 0,
+        "IsReadOnly": true
+      },
+      "prop_IEnumerable_1_TKey_0": {},
+      "Values": {
+        "Count": 0,
+        "System.Collections.Generic.ICollection<TValue>.IsReadOnly": true,
+        "System.Collections.ICollection.IsSynchronized": false,
+        "System.Collections.ICollection.SyncRoot": {}
+      },
+      "prop_ICollection_1_TValue_0": {
+        "Count": 0,
+        "IsReadOnly": true
+      },
+      "prop_IEnumerable_1_TValue_0": {},
+      "prop_Boolean_0": false,
+      "System.Collections.ICollection.IsSynchronized": false,
+      "System.Collections.ICollection.SyncRoot": {},
+      "System.Collections.IDictionary.IsFixedSize": false,
+      "System.Collections.IDictionary.IsReadOnly": false,
+      "System.Collections.IDictionary.Keys": {
+        "Count": 0,
+        "SyncRoot": {},
+        "IsSynchronized": false
+      },
+      "System.Collections.IDictionary.Values": {
+        "Count": 0,
+        "SyncRoot": {},
+        "IsSynchronized": false
+      }
+    },
+    "DoubleAscend": {
+      "Count": 0,
+      "Keys": {
+        "Count": 0,
+        "System.Collections.Generic.ICollection<TKey>.IsReadOnly": true,
+        "System.Collections.ICollection.IsSynchronized": false,
+        "System.Collections.ICollection.SyncRoot": {}
+      },
+      "prop_ICollection_1_TKey_0": {
+        "Count": 0,
+        "IsReadOnly": true
+      },
+      "prop_IEnumerable_1_TKey_0": {},
+      "Values": {
+        "Count": 0,
+        "System.Collections.Generic.ICollection<TValue>.IsReadOnly": true,
+        "System.Collections.ICollection.IsSynchronized": false,
+        "System.Collections.ICollection.SyncRoot": {}
+      },
+      "prop_ICollection_1_TValue_0": {
+        "Count": 0,
+        "IsReadOnly": true
+      },
+      "prop_IEnumerable_1_TValue_0": {},
+      "prop_Boolean_0": false,
+      "System.Collections.ICollection.IsSynchronized": false,
+      "System.Collections.ICollection.SyncRoot": {},
+      "System.Collections.IDictionary.IsFixedSize": false,
+      "System.Collections.IDictionary.IsReadOnly": false,
+      "System.Collections.IDictionary.Keys": {
+        "Count": 0,
+        "SyncRoot": {},
+        "IsSynchronized": false
+      },
+      "System.Collections.IDictionary.Values": {
+        "Count": 0,
+        "SyncRoot": {},
+        "IsSynchronized": false
+      }
+    },
+    "Magisteel": 0,
+    "Corehammer": 0,
+    "SoulstoneRare": 0,
+    "SoulstoneEpic": 0,
+    "SoulstoneLeg": 0,
+    "BloodstoneRare": 0,
+    "BloodstoneEpic": 0,
+    "BloodstoneLeg": 0,
+    "NetherSpiderRare": 0,
+    "NetherSpiderEpic": 0,
+    "NetherSpiderLeg": 0,
+    "ScarabClawsRare": 0,
+    "ScarabClawsEpic": 0,
+    "ScarabClawsLeg": 0,
+    "MagmaDragonCoresRare": 0,
+    "MagmaDragonCoresEpic": 0,
+    "MagmaDragonCoresLeg": 0,
+    "FrostSpiderSpinesRare": 0,
+    "FrostSpiderSpinesEpic": 0,
+    "FrostSpiderSpinesLeg": 0,
+    "DragonBoneRare": 0,
+    "DragonBoneEpic": 0,
+    "DragonBoneLeg": 0,
+    "GriffinFeatherRare": 0,
+    "GriffinFeatherEpic": 0,
+    "GriffinFeatherLeg": 0,
+    "DreadhornPlatesRare": 0,
+    "DreadhornPlatesEpic": 0,
+    "DreadhornPlatesLeg": 0,
+    "FaeSpheresRare": 0,
+    "FaeSpheresEpic": 0,
+    "FaeSpheresLeg": 0,
+    "InstinctStonesRare": 0,
+    "InstinctStonesEpic": 0,
+    "InstinctStonesLeg": 0,
+    "DoomTowerGoldKeys": 0,
+    "DoomTowerSilverKeys": 0,
+    "AllianceCoin": 0,
+    "FortressKeys": 0,
+    "EternalSoulCoin": 0,
+    "ImmortalSoulCoin": 0,
+    "MortalSoulCoin": 0,
+    "EternalSoulEssence": 0,
+    "ImmortalSoulEssence": 0,
+    "LifeTokens": 0,
+    "LiveArenaMedalBronze": 0,
+    "LiveArenaMedalSilver": 0,
+    "LiveArenaMedalGold": 0,
+    "PlariumPoints": 0,
+    "MythicalDust": 0,
+    "BrokenHeroParts": 0,
+    "CursedCityKeys": 0,
+    "CursedCityHardQuestPoints": 0,
+    "CursedCityNormalQuestPoints": 0,
+    "ParticleSummon": 0,
+    "SiegeStones": 0,
+    "SiegeMana": 0,
+    "SiegeDefenseScrolls": 0,
+    "SiegeBattleScrolls": 1,
+    "SiegeRematchScrolls": 0,
+    "Meteors": 0,
+    "FoggyForestNormalCoins": 0,
+    "FoggyForestNormalGold": 0,
+    "FoggyForestNormalMainBossKeys": 0,
+    "FoggyForestNormalRollRefreshes": 0,
+    "FoggyForestNormalTreasureHuntParts": 0,
+    "FoggyForestHardCoins": 0,
+    "FoggyForestHardGold": 0,
+    "FoggyForestHardMainBossKeys": 0,
+    "FoggyForestHardRollRefreshes": 0,
+    "FoggyForestHardTreasureHuntParts": 0
+  },
+  "RematchPrice": {
+    "RawValues": {
+      "-487148272": 5.917728043973e-312
+    },
+    "ToRawValues": {
+      "-487148272": 5.917728043973e-312
+    },
+    "Energy": 0,
+    "Silver": 0,
+    "Tokens": 0,
+    "Arena3X3ShopCurrency": 0,
+    "Arena3X3Tokens": 0,
+    "LiveArenaTokens": 0,
+    "Gems": 0,
+    "AutoBattleTickets": 0,
+    "MedalBronze": 0,
+    "MedalSilver": 0,
+    "MedalGold": 0,
+    "AllianceBossKey": 0,
+    "AllianceHydraKeys": 0,
+    "AllianceChimeraKeys": 0,
+    "FoggyForestEnergy": 0,
+    "FoggyForestMainBossKeysNormal": 0,
+    "FoggyForestMainBossKeysHard": 0,
+    "ForgeMaterials": {
+      "Count": 0,
+      "Keys": {
+        "Count": 0,
+        "System.Collections.Generic.ICollection<TKey>.IsReadOnly": true,
+        "System.Collections.ICollection.IsSynchronized": false,
+        "System.Collections.ICollection.SyncRoot": {}
+      },
+      "prop_ICollection_1_TKey_0": {
+        "Count": 0,
+        "IsReadOnly": true
+      },
+      "prop_IEnumerable_1_TKey_0": {},
+      "Values": {
+        "Count": 0,
+        "System.Collections.Generic.ICollection<TValue>.IsReadOnly": true,
+        "System.Collections.ICollection.IsSynchronized": false,
+        "System.Collections.ICollection.SyncRoot": {}
+      },
+      "prop_ICollection_1_TValue_0": {
+        "Count": 0,
+        "IsReadOnly": true
+      },
+      "prop_IEnumerable_1_TValue_0": {},
+      "prop_Boolean_0": false,
+      "System.Collections.ICollection.IsSynchronized": false,
+      "System.Collections.ICollection.SyncRoot": {},
+      "System.Collections.IDictionary.IsFixedSize": false,
+      "System.Collections.IDictionary.IsReadOnly": false,
+      "System.Collections.IDictionary.Keys": {
+        "Count": 0,
+        "SyncRoot": {},
+        "IsSynchronized": false
+      },
+      "System.Collections.IDictionary.Values": {
+        "Count": 0,
+        "SyncRoot": {},
+        "IsSynchronized": false
+      }
+    },
+    "DoubleAscend": {
+      "Count": 0,
+      "Keys": {
+        "Count": 0,
+        "System.Collections.Generic.ICollection<TKey>.IsReadOnly": true,
+        "System.Collections.ICollection.IsSynchronized": false,
+        "System.Collections.ICollection.SyncRoot": {}
+      },
+      "prop_ICollection_1_TKey_0": {
+        "Count": 0,
+        "IsReadOnly": true
+      },
+      "prop_IEnumerable_1_TKey_0": {},
+      "Values": {
+        "Count": 0,
+        "System.Collections.Generic.ICollection<TValue>.IsReadOnly": true,
+        "System.Collections.ICollection.IsSynchronized": false,
+        "System.Collections.ICollection.SyncRoot": {}
+      },
+      "prop_ICollection_1_TValue_0": {
+        "Count": 0,
+        "IsReadOnly": true
+      },
+      "prop_IEnumerable_1_TValue_0": {},
+      "prop_Boolean_0": false,
+      "System.Collections.ICollection.IsSynchronized": false,
+      "System.Collections.ICollection.SyncRoot": {},
+      "System.Collections.IDictionary.IsFixedSize": false,
+      "System.Collections.IDictionary.IsReadOnly": false,
+      "System.Collections.IDictionary.Keys": {
+        "Count": 0,
+        "SyncRoot": {},
+        "IsSynchronized": false
+      },
+      "System.Collections.IDictionary.Values": {
+        "Count": 0,
+        "SyncRoot": {},
+        "IsSynchronized": false
+      }
+    },
+    "Magisteel": 0,
+    "Corehammer": 0,
+    "SoulstoneRare": 0,
+    "SoulstoneEpic": 0,
+    "SoulstoneLeg": 0,
+    "BloodstoneRare": 0,
+    "BloodstoneEpic": 0,
+    "BloodstoneLeg": 0,
+    "NetherSpiderRare": 0,
+    "NetherSpiderEpic": 0,
+    "NetherSpiderLeg": 0,
+    "ScarabClawsRare": 0,
+    "ScarabClawsEpic": 0,
+    "ScarabClawsLeg": 0,
+    "MagmaDragonCoresRare": 0,
+    "MagmaDragonCoresEpic": 0,
+    "MagmaDragonCoresLeg": 0,
+    "FrostSpiderSpinesRare": 0,
+    "FrostSpiderSpinesEpic": 0,
+    "FrostSpiderSpinesLeg": 0,
+    "DragonBoneRare": 0,
+    "DragonBoneEpic": 0,
+    "DragonBoneLeg": 0,
+    "GriffinFeatherRare": 0,
+    "GriffinFeatherEpic": 0,
+    "GriffinFeatherLeg": 0,
+    "DreadhornPlatesRare": 0,
+    "DreadhornPlatesEpic": 0,
+    "DreadhornPlatesLeg": 0,
+    "FaeSpheresRare": 0,
+    "FaeSpheresEpic": 0,
+    "FaeSpheresLeg": 0,
+    "InstinctStonesRare": 0,
+    "InstinctStonesEpic": 0,
+    "InstinctStonesLeg": 0,
+    "DoomTowerGoldKeys": 0,
+    "DoomTowerSilverKeys": 0,
+    "AllianceCoin": 0,
+    "FortressKeys": 0,
+    "EternalSoulCoin": 0,
+    "ImmortalSoulCoin": 0,
+    "MortalSoulCoin": 0,
+    "EternalSoulEssence": 0,
+    "ImmortalSoulEssence": 0,
+    "LifeTokens": 0,
+    "LiveArenaMedalBronze": 0,
+    "LiveArenaMedalSilver": 0,
+    "LiveArenaMedalGold": 0,
+    "PlariumPoints": 0,
+    "MythicalDust": 0,
+    "BrokenHeroParts": 0,
+    "CursedCityKeys": 0,
+    "CursedCityHardQuestPoints": 0,
+    "CursedCityNormalQuestPoints": 0,
+    "ParticleSummon": 0,
+    "SiegeStones": 0,
+    "SiegeMana": 0,
+    "SiegeDefenseScrolls": 0,
+    "SiegeBattleScrolls": 0,
+    "SiegeRematchScrolls": 1,
+    "Meteors": 0,
+    "FoggyForestNormalCoins": 0,
+    "FoggyForestNormalGold": 0,
+    "FoggyForestNormalMainBossKeys": 0,
+    "FoggyForestNormalRollRefreshes": 0,
+    "FoggyForestNormalTreasureHuntParts": 0,
+    "FoggyForestHardCoins": 0,
+    "FoggyForestHardGold": 0,
+    "FoggyForestHardMainBossKeys": 0,
+    "FoggyForestHardRollRefreshes": 0,
+    "FoggyForestHardTreasureHuntParts": 0
+  },
+  "Traps": [
+    {
+      "Id": 0,
+      "AppliedToEnemy": false,
+      "Price": {
+        "RawValues": {
+          "-487148272": 5.917728043973e-312
+        },
+        "ToRawValues": {
+          "-487148272": 5.917728043973e-312
+        },
+        "Energy": 0,
+        "Silver": 0,
+        "Tokens": 0,
+        "Arena3X3ShopCurrency": 0,
+        "Arena3X3Tokens": 0,
+        "LiveArenaTokens": 0,
+        "Gems": 0,
+        "AutoBattleTickets": 0,
+        "MedalBronze": 0,
+        "MedalSilver": 0,
+        "MedalGold": 0,
+        "AllianceBossKey": 0,
+        "AllianceHydraKeys": 0,
+        "AllianceChimeraKeys": 0,
+        "FoggyForestEnergy": 0,
+        "FoggyForestMainBossKeysNormal": 0,
+        "FoggyForestMainBossKeysHard": 0,
+        "ForgeMaterials": {
+          "Count": 0,
+          "Keys": "<KeyCollection>",
+          "prop_ICollection_1_TKey_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TKey_0": "<IEnumerable`1>",
+          "Values": "<ValueCollection>",
+          "prop_ICollection_1_TValue_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TValue_0": "<IEnumerable`1>",
+          "prop_Boolean_0": false,
+          "System.Collections.ICollection.IsSynchronized": false,
+          "System.Collections.ICollection.SyncRoot": "<Object>",
+          "System.Collections.IDictionary.IsFixedSize": false,
+          "System.Collections.IDictionary.IsReadOnly": false,
+          "System.Collections.IDictionary.Keys": "<ICollection>",
+          "System.Collections.IDictionary.Values": "<ICollection>"
+        },
+        "DoubleAscend": {
+          "Count": 0,
+          "Keys": "<KeyCollection>",
+          "prop_ICollection_1_TKey_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TKey_0": "<IEnumerable`1>",
+          "Values": "<ValueCollection>",
+          "prop_ICollection_1_TValue_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TValue_0": "<IEnumerable`1>",
+          "prop_Boolean_0": false,
+          "System.Collections.ICollection.IsSynchronized": false,
+          "System.Collections.ICollection.SyncRoot": "<Object>",
+          "System.Collections.IDictionary.IsFixedSize": false,
+          "System.Collections.IDictionary.IsReadOnly": false,
+          "System.Collections.IDictionary.Keys": "<ICollection>",
+          "System.Collections.IDictionary.Values": "<ICollection>"
+        },
+        "Magisteel": 0,
+        "Corehammer": 0,
+        "SoulstoneRare": 0,
+        "SoulstoneEpic": 0,
+        "SoulstoneLeg": 0,
+        "BloodstoneRare": 0,
+        "BloodstoneEpic": 0,
+        "BloodstoneLeg": 0,
+        "NetherSpiderRare": 0,
+        "NetherSpiderEpic": 0,
+        "NetherSpiderLeg": 0,
+        "ScarabClawsRare": 0,
+        "ScarabClawsEpic": 0,
+        "ScarabClawsLeg": 0,
+        "MagmaDragonCoresRare": 0,
+        "MagmaDragonCoresEpic": 0,
+        "MagmaDragonCoresLeg": 0,
+        "FrostSpiderSpinesRare": 0,
+        "FrostSpiderSpinesEpic": 0,
+        "FrostSpiderSpinesLeg": 0,
+        "DragonBoneRare": 0,
+        "DragonBoneEpic": 0,
+        "DragonBoneLeg": 0,
+        "GriffinFeatherRare": 0,
+        "GriffinFeatherEpic": 0,
+        "GriffinFeatherLeg": 0,
+        "DreadhornPlatesRare": 0,
+        "DreadhornPlatesEpic": 0,
+        "DreadhornPlatesLeg": 0,
+        "FaeSpheresRare": 0,
+        "FaeSpheresEpic": 0,
+        "FaeSpheresLeg": 0,
+        "InstinctStonesRare": 0,
+        "InstinctStonesEpic": 0,
+        "InstinctStonesLeg": 0,
+        "DoomTowerGoldKeys": 0,
+        "DoomTowerSilverKeys": 0,
+        "AllianceCoin": 0,
+        "FortressKeys": 0,
+        "EternalSoulCoin": 0,
+        "ImmortalSoulCoin": 0,
+        "MortalSoulCoin": 0,
+        "EternalSoulEssence": 0,
+        "ImmortalSoulEssence": 0,
+        "LifeTokens": 0,
+        "LiveArenaMedalBronze": 0,
+        "LiveArenaMedalSilver": 0,
+        "LiveArenaMedalGold": 0,
+        "PlariumPoints": 0,
+        "MythicalDust": 0,
+        "BrokenHeroParts": 0,
+        "CursedCityKeys": 0,
+        "CursedCityHardQuestPoints": 0,
+        "CursedCityNormalQuestPoints": 0,
+        "ParticleSummon": 0,
+        "SiegeStones": 500,
+        "SiegeMana": 250,
+        "SiegeDefenseScrolls": 0,
+        "SiegeBattleScrolls": 0,
+        "SiegeRematchScrolls": 0,
+        "Meteors": 0,
+        "FoggyForestNormalCoins": 0,
+        "FoggyForestNormalGold": 0,
+        "FoggyForestNormalMainBossKeys": 0,
+        "FoggyForestNormalRollRefreshes": 0,
+        "FoggyForestNormalTreasureHuntParts": 0,
+        "FoggyForestHardCoins": 0,
+        "FoggyForestHardGold": 0,
+        "FoggyForestHardMainBossKeys": 0,
+        "FoggyForestHardRollRefreshes": 0,
+        "FoggyForestHardTreasureHuntParts": 0
+      },
+      "RequiredBastionLevel": 1,
+      "HiddenHeroesCount": {
+        "hasValue": true,
+        "value": -534389536,
+        "HasValue": true,
+        "Value": 0
+      },
+      "Name": {
+        "DefaultValue": "0",
+        "Key": "l10n:siege-trap/name?id=0#static",
+        "HasBreakSymbol": false
+      },
+      "Description": {
+        "DefaultValue": "0",
+        "Key": "l10n:siege-trap/description?id=0#static",
+        "HasBreakSymbol": false
+      }
+    },
+    {
+      "Id": 1,
+      "AppliedToEnemy": true,
+      "Price": {
+        "RawValues": {
+          "-487148272": 5.917728043973e-312
+        },
+        "ToRawValues": {
+          "-487148272": 5.917728043973e-312
+        },
+        "Energy": 0,
+        "Silver": 0,
+        "Tokens": 0,
+        "Arena3X3ShopCurrency": 0,
+        "Arena3X3Tokens": 0,
+        "LiveArenaTokens": 0,
+        "Gems": 0,
+        "AutoBattleTickets": 0,
+        "MedalBronze": 0,
+        "MedalSilver": 0,
+        "MedalGold": 0,
+        "AllianceBossKey": 0,
+        "AllianceHydraKeys": 0,
+        "AllianceChimeraKeys": 0,
+        "FoggyForestEnergy": 0,
+        "FoggyForestMainBossKeysNormal": 0,
+        "FoggyForestMainBossKeysHard": 0,
+        "ForgeMaterials": {
+          "Count": 0,
+          "Keys": "<KeyCollection>",
+          "prop_ICollection_1_TKey_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TKey_0": "<IEnumerable`1>",
+          "Values": "<ValueCollection>",
+          "prop_ICollection_1_TValue_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TValue_0": "<IEnumerable`1>",
+          "prop_Boolean_0": false,
+          "System.Collections.ICollection.IsSynchronized": false,
+          "System.Collections.ICollection.SyncRoot": "<Object>",
+          "System.Collections.IDictionary.IsFixedSize": false,
+          "System.Collections.IDictionary.IsReadOnly": false,
+          "System.Collections.IDictionary.Keys": "<ICollection>",
+          "System.Collections.IDictionary.Values": "<ICollection>"
+        },
+        "DoubleAscend": {
+          "Count": 0,
+          "Keys": "<KeyCollection>",
+          "prop_ICollection_1_TKey_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TKey_0": "<IEnumerable`1>",
+          "Values": "<ValueCollection>",
+          "prop_ICollection_1_TValue_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TValue_0": "<IEnumerable`1>",
+          "prop_Boolean_0": false,
+          "System.Collections.ICollection.IsSynchronized": false,
+          "System.Collections.ICollection.SyncRoot": "<Object>",
+          "System.Collections.IDictionary.IsFixedSize": false,
+          "System.Collections.IDictionary.IsReadOnly": false,
+          "System.Collections.IDictionary.Keys": "<ICollection>",
+          "System.Collections.IDictionary.Values": "<ICollection>"
+        },
+        "Magisteel": 0,
+        "Corehammer": 0,
+        "SoulstoneRare": 0,
+        "SoulstoneEpic": 0,
+        "SoulstoneLeg": 0,
+        "BloodstoneRare": 0,
+        "BloodstoneEpic": 0,
+        "BloodstoneLeg": 0,
+        "NetherSpiderRare": 0,
+        "NetherSpiderEpic": 0,
+        "NetherSpiderLeg": 0,
+        "ScarabClawsRare": 0,
+        "ScarabClawsEpic": 0,
+        "ScarabClawsLeg": 0,
+        "MagmaDragonCoresRare": 0,
+        "MagmaDragonCoresEpic": 0,
+        "MagmaDragonCoresLeg": 0,
+        "FrostSpiderSpinesRare": 0,
+        "FrostSpiderSpinesEpic": 0,
+        "FrostSpiderSpinesLeg": 0,
+        "DragonBoneRare": 0,
+        "DragonBoneEpic": 0,
+        "DragonBoneLeg": 0,
+        "GriffinFeatherRare": 0,
+        "GriffinFeatherEpic": 0,
+        "GriffinFeatherLeg": 0,
+        "DreadhornPlatesRare": 0,
+        "DreadhornPlatesEpic": 0,
+        "DreadhornPlatesLeg": 0,
+        "FaeSpheresRare": 0,
+        "FaeSpheresEpic": 0,
+        "FaeSpheresLeg": 0,
+        "InstinctStonesRare": 0,
+        "InstinctStonesEpic": 0,
+        "InstinctStonesLeg": 0,
+        "DoomTowerGoldKeys": 0,
+        "DoomTowerSilverKeys": 0,
+        "AllianceCoin": 0,
+        "FortressKeys": 0,
+        "EternalSoulCoin": 0,
+        "ImmortalSoulCoin": 0,
+        "MortalSoulCoin": 0,
+        "EternalSoulEssence": 0,
+        "ImmortalSoulEssence": 0,
+        "LifeTokens": 0,
+        "LiveArenaMedalBronze": 0,
+        "LiveArenaMedalSilver": 0,
+        "LiveArenaMedalGold": 0,
+        "PlariumPoints": 0,
+        "MythicalDust": 0,
+        "BrokenHeroParts": 0,
+        "CursedCityKeys": 0,
+        "CursedCityHardQuestPoints": 0,
+        "CursedCityNormalQuestPoints": 0,
+        "ParticleSummon": 0,
+        "SiegeStones": 500,
+        "SiegeMana": 250,
+        "SiegeDefenseScrolls": 0,
+        "SiegeBattleScrolls": 0,
+        "SiegeRematchScrolls": 0,
+        "Meteors": 0,
+        "FoggyForestNormalCoins": 0,
+        "FoggyForestNormalGold": 0,
+        "FoggyForestNormalMainBossKeys": 0,
+        "FoggyForestNormalRollRefreshes": 0,
+        "FoggyForestNormalTreasureHuntParts": 0,
+        "FoggyForestHardCoins": 0,
+        "FoggyForestHardGold": 0,
+        "FoggyForestHardMainBossKeys": 0,
+        "FoggyForestHardRollRefreshes": 0,
+        "FoggyForestHardTreasureHuntParts": 0
+      },
+      "RequiredBastionLevel": 1,
+      "SkillId": {
+        "hasValue": true,
+        "value": -534389536,
+        "HasValue": true,
+        "Value": 0
+      },
+      "Name": {
+        "DefaultValue": "1",
+        "Key": "l10n:siege-trap/name?id=1#static",
+        "HasBreakSymbol": false
+      },
+      "Description": {
+        "DefaultValue": "1",
+        "Key": "l10n:siege-trap/description?id=1#static",
+        "HasBreakSymbol": false
+      }
+    },
+    {
+      "Id": 2,
+      "AppliedToEnemy": false,
+      "Price": {
+        "RawValues": {
+          "-487148272": 5.917728043973e-312
+        },
+        "ToRawValues": {
+          "-487148272": 5.917728043973e-312
+        },
+        "Energy": 0,
+        "Silver": 0,
+        "Tokens": 0,
+        "Arena3X3ShopCurrency": 0,
+        "Arena3X3Tokens": 0,
+        "LiveArenaTokens": 0,
+        "Gems": 0,
+        "AutoBattleTickets": 0,
+        "MedalBronze": 0,
+        "MedalSilver": 0,
+        "MedalGold": 0,
+        "AllianceBossKey": 0,
+        "AllianceHydraKeys": 0,
+        "AllianceChimeraKeys": 0,
+        "FoggyForestEnergy": 0,
+        "FoggyForestMainBossKeysNormal": 0,
+        "FoggyForestMainBossKeysHard": 0,
+        "ForgeMaterials": {
+          "Count": 0,
+          "Keys": "<KeyCollection>",
+          "prop_ICollection_1_TKey_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TKey_0": "<IEnumerable`1>",
+          "Values": "<ValueCollection>",
+          "prop_ICollection_1_TValue_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TValue_0": "<IEnumerable`1>",
+          "prop_Boolean_0": false,
+          "System.Collections.ICollection.IsSynchronized": false,
+          "System.Collections.ICollection.SyncRoot": "<Object>",
+          "System.Collections.IDictionary.IsFixedSize": false,
+          "System.Collections.IDictionary.IsReadOnly": false,
+          "System.Collections.IDictionary.Keys": "<ICollection>",
+          "System.Collections.IDictionary.Values": "<ICollection>"
+        },
+        "DoubleAscend": {
+          "Count": 0,
+          "Keys": "<KeyCollection>",
+          "prop_ICollection_1_TKey_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TKey_0": "<IEnumerable`1>",
+          "Values": "<ValueCollection>",
+          "prop_ICollection_1_TValue_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TValue_0": "<IEnumerable`1>",
+          "prop_Boolean_0": false,
+          "System.Collections.ICollection.IsSynchronized": false,
+          "System.Collections.ICollection.SyncRoot": "<Object>",
+          "System.Collections.IDictionary.IsFixedSize": false,
+          "System.Collections.IDictionary.IsReadOnly": false,
+          "System.Collections.IDictionary.Keys": "<ICollection>",
+          "System.Collections.IDictionary.Values": "<ICollection>"
+        },
+        "Magisteel": 0,
+        "Corehammer": 0,
+        "SoulstoneRare": 0,
+        "SoulstoneEpic": 0,
+        "SoulstoneLeg": 0,
+        "BloodstoneRare": 0,
+        "BloodstoneEpic": 0,
+        "BloodstoneLeg": 0,
+        "NetherSpiderRare": 0,
+        "NetherSpiderEpic": 0,
+        "NetherSpiderLeg": 0,
+        "ScarabClawsRare": 0,
+        "ScarabClawsEpic": 0,
+        "ScarabClawsLeg": 0,
+        "MagmaDragonCoresRare": 0,
+        "MagmaDragonCoresEpic": 0,
+        "MagmaDragonCoresLeg": 0,
+        "FrostSpiderSpinesRare": 0,
+        "FrostSpiderSpinesEpic": 0,
+        "FrostSpiderSpinesLeg": 0,
+        "DragonBoneRare": 0,
+        "DragonBoneEpic": 0,
+        "DragonBoneLeg": 0,
+        "GriffinFeatherRare": 0,
+        "GriffinFeatherEpic": 0,
+        "GriffinFeatherLeg": 0,
+        "DreadhornPlatesRare": 0,
+        "DreadhornPlatesEpic": 0,
+        "DreadhornPlatesLeg": 0,
+        "FaeSpheresRare": 0,
+        "FaeSpheresEpic": 0,
+        "FaeSpheresLeg": 0,
+        "InstinctStonesRare": 0,
+        "InstinctStonesEpic": 0,
+        "InstinctStonesLeg": 0,
+        "DoomTowerGoldKeys": 0,
+        "DoomTowerSilverKeys": 0,
+        "AllianceCoin": 0,
+        "FortressKeys": 0,
+        "EternalSoulCoin": 0,
+        "ImmortalSoulCoin": 0,
+        "MortalSoulCoin": 0,
+        "EternalSoulEssence": 0,
+        "ImmortalSoulEssence": 0,
+        "LifeTokens": 0,
+        "LiveArenaMedalBronze": 0,
+        "LiveArenaMedalSilver": 0,
+        "LiveArenaMedalGold": 0,
+        "PlariumPoints": 0,
+        "MythicalDust": 0,
+        "BrokenHeroParts": 0,
+        "CursedCityKeys": 0,
+        "CursedCityHardQuestPoints": 0,
+        "CursedCityNormalQuestPoints": 0,
+        "ParticleSummon": 0,
+        "SiegeStones": 500,
+        "SiegeMana": 250,
+        "SiegeDefenseScrolls": 0,
+        "SiegeBattleScrolls": 0,
+        "SiegeRematchScrolls": 0,
+        "Meteors": 0,
+        "FoggyForestNormalCoins": 0,
+        "FoggyForestNormalGold": 0,
+        "FoggyForestNormalMainBossKeys": 0,
+        "FoggyForestNormalRollRefreshes": 0,
+        "FoggyForestNormalTreasureHuntParts": 0,
+        "FoggyForestHardCoins": 0,
+        "FoggyForestHardGold": 0,
+        "FoggyForestHardMainBossKeys": 0,
+        "FoggyForestHardRollRefreshes": 0,
+        "FoggyForestHardTreasureHuntParts": 0
+      },
+      "RequiredBastionLevel": 1,
+      "SkillId": {
+        "hasValue": true,
+        "value": -534389536,
+        "HasValue": true,
+        "Value": 0
+      },
+      "Name": {
+        "DefaultValue": "2",
+        "Key": "l10n:siege-trap/name?id=2#static",
+        "HasBreakSymbol": false
+      },
+      "Description": {
+        "DefaultValue": "2",
+        "Key": "l10n:siege-trap/description?id=2#static",
+        "HasBreakSymbol": false
+      }
+    },
+    {
+      "Id": 3,
+      "AppliedToEnemy": true,
+      "Price": {
+        "RawValues": {
+          "-487148272": 5.917728043973e-312
+        },
+        "ToRawValues": {
+          "-487148272": 5.917728043973e-312
+        },
+        "Energy": 0,
+        "Silver": 0,
+        "Tokens": 0,
+        "Arena3X3ShopCurrency": 0,
+        "Arena3X3Tokens": 0,
+        "LiveArenaTokens": 0,
+        "Gems": 0,
+        "AutoBattleTickets": 0,
+        "MedalBronze": 0,
+        "MedalSilver": 0,
+        "MedalGold": 0,
+        "AllianceBossKey": 0,
+        "AllianceHydraKeys": 0,
+        "AllianceChimeraKeys": 0,
+        "FoggyForestEnergy": 0,
+        "FoggyForestMainBossKeysNormal": 0,
+        "FoggyForestMainBossKeysHard": 0,
+        "ForgeMaterials": {
+          "Count": 0,
+          "Keys": "<KeyCollection>",
+          "prop_ICollection_1_TKey_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TKey_0": "<IEnumerable`1>",
+          "Values": "<ValueCollection>",
+          "prop_ICollection_1_TValue_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TValue_0": "<IEnumerable`1>",
+          "prop_Boolean_0": false,
+          "System.Collections.ICollection.IsSynchronized": false,
+          "System.Collections.ICollection.SyncRoot": "<Object>",
+          "System.Collections.IDictionary.IsFixedSize": false,
+          "System.Collections.IDictionary.IsReadOnly": false,
+          "System.Collections.IDictionary.Keys": "<ICollection>",
+          "System.Collections.IDictionary.Values": "<ICollection>"
+        },
+        "DoubleAscend": {
+          "Count": 0,
+          "Keys": "<KeyCollection>",
+          "prop_ICollection_1_TKey_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TKey_0": "<IEnumerable`1>",
+          "Values": "<ValueCollection>",
+          "prop_ICollection_1_TValue_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TValue_0": "<IEnumerable`1>",
+          "prop_Boolean_0": false,
+          "System.Collections.ICollection.IsSynchronized": false,
+          "System.Collections.ICollection.SyncRoot": "<Object>",
+          "System.Collections.IDictionary.IsFixedSize": false,
+          "System.Collections.IDictionary.IsReadOnly": false,
+          "System.Collections.IDictionary.Keys": "<ICollection>",
+          "System.Collections.IDictionary.Values": "<ICollection>"
+        },
+        "Magisteel": 0,
+        "Corehammer": 0,
+        "SoulstoneRare": 0,
+        "SoulstoneEpic": 0,
+        "SoulstoneLeg": 0,
+        "BloodstoneRare": 0,
+        "BloodstoneEpic": 0,
+        "BloodstoneLeg": 0,
+        "NetherSpiderRare": 0,
+        "NetherSpiderEpic": 0,
+        "NetherSpiderLeg": 0,
+        "ScarabClawsRare": 0,
+        "ScarabClawsEpic": 0,
+        "ScarabClawsLeg": 0,
+        "MagmaDragonCoresRare": 0,
+        "MagmaDragonCoresEpic": 0,
+        "MagmaDragonCoresLeg": 0,
+        "FrostSpiderSpinesRare": 0,
+        "FrostSpiderSpinesEpic": 0,
+        "FrostSpiderSpinesLeg": 0,
+        "DragonBoneRare": 0,
+        "DragonBoneEpic": 0,
+        "DragonBoneLeg": 0,
+        "GriffinFeatherRare": 0,
+        "GriffinFeatherEpic": 0,
+        "GriffinFeatherLeg": 0,
+        "DreadhornPlatesRare": 0,
+        "DreadhornPlatesEpic": 0,
+        "DreadhornPlatesLeg": 0,
+        "FaeSpheresRare": 0,
+        "FaeSpheresEpic": 0,
+        "FaeSpheresLeg": 0,
+        "InstinctStonesRare": 0,
+        "InstinctStonesEpic": 0,
+        "InstinctStonesLeg": 0,
+        "DoomTowerGoldKeys": 0,
+        "DoomTowerSilverKeys": 0,
+        "AllianceCoin": 0,
+        "FortressKeys": 0,
+        "EternalSoulCoin": 0,
+        "ImmortalSoulCoin": 0,
+        "MortalSoulCoin": 0,
+        "EternalSoulEssence": 0,
+        "ImmortalSoulEssence": 0,
+        "LifeTokens": 0,
+        "LiveArenaMedalBronze": 0,
+        "LiveArenaMedalSilver": 0,
+        "LiveArenaMedalGold": 0,
+        "PlariumPoints": 0,
+        "MythicalDust": 0,
+        "BrokenHeroParts": 0,
+        "CursedCityKeys": 0,
+        "CursedCityHardQuestPoints": 0,
+        "CursedCityNormalQuestPoints": 0,
+        "ParticleSummon": 0,
+        "SiegeStones": 500,
+        "SiegeMana": 250,
+        "SiegeDefenseScrolls": 0,
+        "SiegeBattleScrolls": 0,
+        "SiegeRematchScrolls": 0,
+        "Meteors": 0,
+        "FoggyForestNormalCoins": 0,
+        "FoggyForestNormalGold": 0,
+        "FoggyForestNormalMainBossKeys": 0,
+        "FoggyForestNormalRollRefreshes": 0,
+        "FoggyForestNormalTreasureHuntParts": 0,
+        "FoggyForestHardCoins": 0,
+        "FoggyForestHardGold": 0,
+        "FoggyForestHardMainBossKeys": 0,
+        "FoggyForestHardRollRefreshes": 0,
+        "FoggyForestHardTreasureHuntParts": 0
+      },
+      "RequiredBastionLevel": 1,
+      "SkillId": {
+        "hasValue": true,
+        "value": -534389536,
+        "HasValue": true,
+        "Value": 0
+      },
+      "Name": {
+        "DefaultValue": "3",
+        "Key": "l10n:siege-trap/name?id=3#static",
+        "HasBreakSymbol": false
+      },
+      "Description": {
+        "DefaultValue": "3",
+        "Key": "l10n:siege-trap/description?id=3#static",
+        "HasBreakSymbol": false
+      }
+    },
+    {
+      "Id": 4,
+      "AppliedToEnemy": true,
+      "Price": {
+        "RawValues": {
+          "-487148272": 5.917728043973e-312
+        },
+        "ToRawValues": {
+          "-487148272": 5.917728043973e-312
+        },
+        "Energy": 0,
+        "Silver": 0,
+        "Tokens": 0,
+        "Arena3X3ShopCurrency": 0,
+        "Arena3X3Tokens": 0,
+        "LiveArenaTokens": 0,
+        "Gems": 0,
+        "AutoBattleTickets": 0,
+        "MedalBronze": 0,
+        "MedalSilver": 0,
+        "MedalGold": 0,
+        "AllianceBossKey": 0,
+        "AllianceHydraKeys": 0,
+        "AllianceChimeraKeys": 0,
+        "FoggyForestEnergy": 0,
+        "FoggyForestMainBossKeysNormal": 0,
+        "FoggyForestMainBossKeysHard": 0,
+        "ForgeMaterials": {
+          "Count": 0,
+          "Keys": "<KeyCollection>",
+          "prop_ICollection_1_TKey_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TKey_0": "<IEnumerable`1>",
+          "Values": "<ValueCollection>",
+          "prop_ICollection_1_TValue_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TValue_0": "<IEnumerable`1>",
+          "prop_Boolean_0": false,
+          "System.Collections.ICollection.IsSynchronized": false,
+          "System.Collections.ICollection.SyncRoot": "<Object>",
+          "System.Collections.IDictionary.IsFixedSize": false,
+          "System.Collections.IDictionary.IsReadOnly": false,
+          "System.Collections.IDictionary.Keys": "<ICollection>",
+          "System.Collections.IDictionary.Values": "<ICollection>"
+        },
+        "DoubleAscend": {
+          "Count": 0,
+          "Keys": "<KeyCollection>",
+          "prop_ICollection_1_TKey_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TKey_0": "<IEnumerable`1>",
+          "Values": "<ValueCollection>",
+          "prop_ICollection_1_TValue_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TValue_0": "<IEnumerable`1>",
+          "prop_Boolean_0": false,
+          "System.Collections.ICollection.IsSynchronized": false,
+          "System.Collections.ICollection.SyncRoot": "<Object>",
+          "System.Collections.IDictionary.IsFixedSize": false,
+          "System.Collections.IDictionary.IsReadOnly": false,
+          "System.Collections.IDictionary.Keys": "<ICollection>",
+          "System.Collections.IDictionary.Values": "<ICollection>"
+        },
+        "Magisteel": 0,
+        "Corehammer": 0,
+        "SoulstoneRare": 0,
+        "SoulstoneEpic": 0,
+        "SoulstoneLeg": 0,
+        "BloodstoneRare": 0,
+        "BloodstoneEpic": 0,
+        "BloodstoneLeg": 0,
+        "NetherSpiderRare": 0,
+        "NetherSpiderEpic": 0,
+        "NetherSpiderLeg": 0,
+        "ScarabClawsRare": 0,
+        "ScarabClawsEpic": 0,
+        "ScarabClawsLeg": 0,
+        "MagmaDragonCoresRare": 0,
+        "MagmaDragonCoresEpic": 0,
+        "MagmaDragonCoresLeg": 0,
+        "FrostSpiderSpinesRare": 0,
+        "FrostSpiderSpinesEpic": 0,
+        "FrostSpiderSpinesLeg": 0,
+        "DragonBoneRare": 0,
+        "DragonBoneEpic": 0,
+        "DragonBoneLeg": 0,
+        "GriffinFeatherRare": 0,
+        "GriffinFeatherEpic": 0,
+        "GriffinFeatherLeg": 0,
+        "DreadhornPlatesRare": 0,
+        "DreadhornPlatesEpic": 0,
+        "DreadhornPlatesLeg": 0,
+        "FaeSpheresRare": 0,
+        "FaeSpheresEpic": 0,
+        "FaeSpheresLeg": 0,
+        "InstinctStonesRare": 0,
+        "InstinctStonesEpic": 0,
+        "InstinctStonesLeg": 0,
+        "DoomTowerGoldKeys": 0,
+        "DoomTowerSilverKeys": 0,
+        "AllianceCoin": 0,
+        "FortressKeys": 0,
+        "EternalSoulCoin": 0,
+        "ImmortalSoulCoin": 0,
+        "MortalSoulCoin": 0,
+        "EternalSoulEssence": 0,
+        "ImmortalSoulEssence": 0,
+        "LifeTokens": 0,
+        "LiveArenaMedalBronze": 0,
+        "LiveArenaMedalSilver": 0,
+        "LiveArenaMedalGold": 0,
+        "PlariumPoints": 0,
+        "MythicalDust": 0,
+        "BrokenHeroParts": 0,
+        "CursedCityKeys": 0,
+        "CursedCityHardQuestPoints": 0,
+        "CursedCityNormalQuestPoints": 0,
+        "ParticleSummon": 0,
+        "SiegeStones": 500,
+        "SiegeMana": 250,
+        "SiegeDefenseScrolls": 0,
+        "SiegeBattleScrolls": 0,
+        "SiegeRematchScrolls": 0,
+        "Meteors": 0,
+        "FoggyForestNormalCoins": 0,
+        "FoggyForestNormalGold": 0,
+        "FoggyForestNormalMainBossKeys": 0,
+        "FoggyForestNormalRollRefreshes": 0,
+        "FoggyForestNormalTreasureHuntParts": 0,
+        "FoggyForestHardCoins": 0,
+        "FoggyForestHardGold": 0,
+        "FoggyForestHardMainBossKeys": 0,
+        "FoggyForestHardRollRefreshes": 0,
+        "FoggyForestHardTreasureHuntParts": 0
+      },
+      "RequiredBastionLevel": 1,
+      "SkillId": {
+        "hasValue": true,
+        "value": -534389536,
+        "HasValue": true,
+        "Value": 0
+      },
+      "Name": {
+        "DefaultValue": "4",
+        "Key": "l10n:siege-trap/name?id=4#static",
+        "HasBreakSymbol": false
+      },
+      "Description": {
+        "DefaultValue": "4",
+        "Key": "l10n:siege-trap/description?id=4#static",
+        "HasBreakSymbol": false
+      }
+    },
+    {
+      "Id": 5,
+      "AppliedToEnemy": true,
+      "Price": {
+        "RawValues": {
+          "-487148272": 5.917728043973e-312
+        },
+        "ToRawValues": {
+          "-487148272": 5.917728043973e-312
+        },
+        "Energy": 0,
+        "Silver": 0,
+        "Tokens": 0,
+        "Arena3X3ShopCurrency": 0,
+        "Arena3X3Tokens": 0,
+        "LiveArenaTokens": 0,
+        "Gems": 0,
+        "AutoBattleTickets": 0,
+        "MedalBronze": 0,
+        "MedalSilver": 0,
+        "MedalGold": 0,
+        "AllianceBossKey": 0,
+        "AllianceHydraKeys": 0,
+        "AllianceChimeraKeys": 0,
+        "FoggyForestEnergy": 0,
+        "FoggyForestMainBossKeysNormal": 0,
+        "FoggyForestMainBossKeysHard": 0,
+        "ForgeMaterials": {
+          "Count": 0,
+          "Keys": "<KeyCollection>",
+          "prop_ICollection_1_TKey_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TKey_0": "<IEnumerable`1>",
+          "Values": "<ValueCollection>",
+          "prop_ICollection_1_TValue_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TValue_0": "<IEnumerable`1>",
+          "prop_Boolean_0": false,
+          "System.Collections.ICollection.IsSynchronized": false,
+          "System.Collections.ICollection.SyncRoot": "<Object>",
+          "System.Collections.IDictionary.IsFixedSize": false,
+          "System.Collections.IDictionary.IsReadOnly": false,
+          "System.Collections.IDictionary.Keys": "<ICollection>",
+          "System.Collections.IDictionary.Values": "<ICollection>"
+        },
+        "DoubleAscend": {
+          "Count": 0,
+          "Keys": "<KeyCollection>",
+          "prop_ICollection_1_TKey_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TKey_0": "<IEnumerable`1>",
+          "Values": "<ValueCollection>",
+          "prop_ICollection_1_TValue_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TValue_0": "<IEnumerable`1>",
+          "prop_Boolean_0": false,
+          "System.Collections.ICollection.IsSynchronized": false,
+          "System.Collections.ICollection.SyncRoot": "<Object>",
+          "System.Collections.IDictionary.IsFixedSize": false,
+          "System.Collections.IDictionary.IsReadOnly": false,
+          "System.Collections.IDictionary.Keys": "<ICollection>",
+          "System.Collections.IDictionary.Values": "<ICollection>"
+        },
+        "Magisteel": 0,
+        "Corehammer": 0,
+        "SoulstoneRare": 0,
+        "SoulstoneEpic": 0,
+        "SoulstoneLeg": 0,
+        "BloodstoneRare": 0,
+        "BloodstoneEpic": 0,
+        "BloodstoneLeg": 0,
+        "NetherSpiderRare": 0,
+        "NetherSpiderEpic": 0,
+        "NetherSpiderLeg": 0,
+        "ScarabClawsRare": 0,
+        "ScarabClawsEpic": 0,
+        "ScarabClawsLeg": 0,
+        "MagmaDragonCoresRare": 0,
+        "MagmaDragonCoresEpic": 0,
+        "MagmaDragonCoresLeg": 0,
+        "FrostSpiderSpinesRare": 0,
+        "FrostSpiderSpinesEpic": 0,
+        "FrostSpiderSpinesLeg": 0,
+        "DragonBoneRare": 0,
+        "DragonBoneEpic": 0,
+        "DragonBoneLeg": 0,
+        "GriffinFeatherRare": 0,
+        "GriffinFeatherEpic": 0,
+        "GriffinFeatherLeg": 0,
+        "DreadhornPlatesRare": 0,
+        "DreadhornPlatesEpic": 0,
+        "DreadhornPlatesLeg": 0,
+        "FaeSpheresRare": 0,
+        "FaeSpheresEpic": 0,
+        "FaeSpheresLeg": 0,
+        "InstinctStonesRare": 0,
+        "InstinctStonesEpic": 0,
+        "InstinctStonesLeg": 0,
+        "DoomTowerGoldKeys": 0,
+        "DoomTowerSilverKeys": 0,
+        "AllianceCoin": 0,
+        "FortressKeys": 0,
+        "EternalSoulCoin": 0,
+        "ImmortalSoulCoin": 0,
+        "MortalSoulCoin": 0,
+        "EternalSoulEssence": 0,
+        "ImmortalSoulEssence": 0,
+        "LifeTokens": 0,
+        "LiveArenaMedalBronze": 0,
+        "LiveArenaMedalSilver": 0,
+        "LiveArenaMedalGold": 0,
+        "PlariumPoints": 0,
+        "MythicalDust": 0,
+        "BrokenHeroParts": 0,
+        "CursedCityKeys": 0,
+        "CursedCityHardQuestPoints": 0,
+        "CursedCityNormalQuestPoints": 0,
+        "ParticleSummon": 0,
+        "SiegeStones": 500,
+        "SiegeMana": 250,
+        "SiegeDefenseScrolls": 0,
+        "SiegeBattleScrolls": 0,
+        "SiegeRematchScrolls": 0,
+        "Meteors": 0,
+        "FoggyForestNormalCoins": 0,
+        "FoggyForestNormalGold": 0,
+        "FoggyForestNormalMainBossKeys": 0,
+        "FoggyForestNormalRollRefreshes": 0,
+        "FoggyForestNormalTreasureHuntParts": 0,
+        "FoggyForestHardCoins": 0,
+        "FoggyForestHardGold": 0,
+        "FoggyForestHardMainBossKeys": 0,
+        "FoggyForestHardRollRefreshes": 0,
+        "FoggyForestHardTreasureHuntParts": 0
+      },
+      "RequiredBastionLevel": 1,
+      "SkillId": {
+        "hasValue": true,
+        "value": -534389536,
+        "HasValue": true,
+        "Value": 0
+      },
+      "Name": {
+        "DefaultValue": "5",
+        "Key": "l10n:siege-trap/name?id=5#static",
+        "HasBreakSymbol": false
+      },
+      "Description": {
+        "DefaultValue": "5",
+        "Key": "l10n:siege-trap/description?id=5#static",
+        "HasBreakSymbol": false
+      }
+    },
+    {
+      "Id": 6,
+      "AppliedToEnemy": true,
+      "Price": {
+        "RawValues": {
+          "-487148272": 5.917728043973e-312
+        },
+        "ToRawValues": {
+          "-487148272": 5.917728043973e-312
+        },
+        "Energy": 0,
+        "Silver": 0,
+        "Tokens": 0,
+        "Arena3X3ShopCurrency": 0,
+        "Arena3X3Tokens": 0,
+        "LiveArenaTokens": 0,
+        "Gems": 0,
+        "AutoBattleTickets": 0,
+        "MedalBronze": 0,
+        "MedalSilver": 0,
+        "MedalGold": 0,
+        "AllianceBossKey": 0,
+        "AllianceHydraKeys": 0,
+        "AllianceChimeraKeys": 0,
+        "FoggyForestEnergy": 0,
+        "FoggyForestMainBossKeysNormal": 0,
+        "FoggyForestMainBossKeysHard": 0,
+        "ForgeMaterials": {
+          "Count": 0,
+          "Keys": "<KeyCollection>",
+          "prop_ICollection_1_TKey_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TKey_0": "<IEnumerable`1>",
+          "Values": "<ValueCollection>",
+          "prop_ICollection_1_TValue_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TValue_0": "<IEnumerable`1>",
+          "prop_Boolean_0": false,
+          "System.Collections.ICollection.IsSynchronized": false,
+          "System.Collections.ICollection.SyncRoot": "<Object>",
+          "System.Collections.IDictionary.IsFixedSize": false,
+          "System.Collections.IDictionary.IsReadOnly": false,
+          "System.Collections.IDictionary.Keys": "<ICollection>",
+          "System.Collections.IDictionary.Values": "<ICollection>"
+        },
+        "DoubleAscend": {
+          "Count": 0,
+          "Keys": "<KeyCollection>",
+          "prop_ICollection_1_TKey_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TKey_0": "<IEnumerable`1>",
+          "Values": "<ValueCollection>",
+          "prop_ICollection_1_TValue_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TValue_0": "<IEnumerable`1>",
+          "prop_Boolean_0": false,
+          "System.Collections.ICollection.IsSynchronized": false,
+          "System.Collections.ICollection.SyncRoot": "<Object>",
+          "System.Collections.IDictionary.IsFixedSize": false,
+          "System.Collections.IDictionary.IsReadOnly": false,
+          "System.Collections.IDictionary.Keys": "<ICollection>",
+          "System.Collections.IDictionary.Values": "<ICollection>"
+        },
+        "Magisteel": 0,
+        "Corehammer": 0,
+        "SoulstoneRare": 0,
+        "SoulstoneEpic": 0,
+        "SoulstoneLeg": 0,
+        "BloodstoneRare": 0,
+        "BloodstoneEpic": 0,
+        "BloodstoneLeg": 0,
+        "NetherSpiderRare": 0,
+        "NetherSpiderEpic": 0,
+        "NetherSpiderLeg": 0,
+        "ScarabClawsRare": 0,
+        "ScarabClawsEpic": 0,
+        "ScarabClawsLeg": 0,
+        "MagmaDragonCoresRare": 0,
+        "MagmaDragonCoresEpic": 0,
+        "MagmaDragonCoresLeg": 0,
+        "FrostSpiderSpinesRare": 0,
+        "FrostSpiderSpinesEpic": 0,
+        "FrostSpiderSpinesLeg": 0,
+        "DragonBoneRare": 0,
+        "DragonBoneEpic": 0,
+        "DragonBoneLeg": 0,
+        "GriffinFeatherRare": 0,
+        "GriffinFeatherEpic": 0,
+        "GriffinFeatherLeg": 0,
+        "DreadhornPlatesRare": 0,
+        "DreadhornPlatesEpic": 0,
+        "DreadhornPlatesLeg": 0,
+        "FaeSpheresRare": 0,
+        "FaeSpheresEpic": 0,
+        "FaeSpheresLeg": 0,
+        "InstinctStonesRare": 0,
+        "InstinctStonesEpic": 0,
+        "InstinctStonesLeg": 0,
+        "DoomTowerGoldKeys": 0,
+        "DoomTowerSilverKeys": 0,
+        "AllianceCoin": 0,
+        "FortressKeys": 0,
+        "EternalSoulCoin": 0,
+        "ImmortalSoulCoin": 0,
+        "MortalSoulCoin": 0,
+        "EternalSoulEssence": 0,
+        "ImmortalSoulEssence": 0,
+        "LifeTokens": 0,
+        "LiveArenaMedalBronze": 0,
+        "LiveArenaMedalSilver": 0,
+        "LiveArenaMedalGold": 0,
+        "PlariumPoints": 0,
+        "MythicalDust": 0,
+        "BrokenHeroParts": 0,
+        "CursedCityKeys": 0,
+        "CursedCityHardQuestPoints": 0,
+        "CursedCityNormalQuestPoints": 0,
+        "ParticleSummon": 0,
+        "SiegeStones": 500,
+        "SiegeMana": 250,
+        "SiegeDefenseScrolls": 0,
+        "SiegeBattleScrolls": 0,
+        "SiegeRematchScrolls": 0,
+        "Meteors": 0,
+        "FoggyForestNormalCoins": 0,
+        "FoggyForestNormalGold": 0,
+        "FoggyForestNormalMainBossKeys": 0,
+        "FoggyForestNormalRollRefreshes": 0,
+        "FoggyForestNormalTreasureHuntParts": 0,
+        "FoggyForestHardCoins": 0,
+        "FoggyForestHardGold": 0,
+        "FoggyForestHardMainBossKeys": 0,
+        "FoggyForestHardRollRefreshes": 0,
+        "FoggyForestHardTreasureHuntParts": 0
+      },
+      "RequiredBastionLevel": 1,
+      "SkillId": {
+        "hasValue": true,
+        "value": -534389536,
+        "HasValue": true,
+        "Value": 0
+      },
+      "Name": {
+        "DefaultValue": "6",
+        "Key": "l10n:siege-trap/name?id=6#static",
+        "HasBreakSymbol": false
+      },
+      "Description": {
+        "DefaultValue": "6",
+        "Key": "l10n:siege-trap/description?id=6#static",
+        "HasBreakSymbol": false
+      }
+    },
+    {
+      "Id": 7,
+      "AppliedToEnemy": true,
+      "Price": {
+        "RawValues": {
+          "-487148272": 5.917728043973e-312
+        },
+        "ToRawValues": {
+          "-487148272": 5.917728043973e-312
+        },
+        "Energy": 0,
+        "Silver": 0,
+        "Tokens": 0,
+        "Arena3X3ShopCurrency": 0,
+        "Arena3X3Tokens": 0,
+        "LiveArenaTokens": 0,
+        "Gems": 0,
+        "AutoBattleTickets": 0,
+        "MedalBronze": 0,
+        "MedalSilver": 0,
+        "MedalGold": 0,
+        "AllianceBossKey": 0,
+        "AllianceHydraKeys": 0,
+        "AllianceChimeraKeys": 0,
+        "FoggyForestEnergy": 0,
+        "FoggyForestMainBossKeysNormal": 0,
+        "FoggyForestMainBossKeysHard": 0,
+        "ForgeMaterials": {
+          "Count": 0,
+          "Keys": "<KeyCollection>",
+          "prop_ICollection_1_TKey_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TKey_0": "<IEnumerable`1>",
+          "Values": "<ValueCollection>",
+          "prop_ICollection_1_TValue_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TValue_0": "<IEnumerable`1>",
+          "prop_Boolean_0": false,
+          "System.Collections.ICollection.IsSynchronized": false,
+          "System.Collections.ICollection.SyncRoot": "<Object>",
+          "System.Collections.IDictionary.IsFixedSize": false,
+          "System.Collections.IDictionary.IsReadOnly": false,
+          "System.Collections.IDictionary.Keys": "<ICollection>",
+          "System.Collections.IDictionary.Values": "<ICollection>"
+        },
+        "DoubleAscend": {
+          "Count": 0,
+          "Keys": "<KeyCollection>",
+          "prop_ICollection_1_TKey_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TKey_0": "<IEnumerable`1>",
+          "Values": "<ValueCollection>",
+          "prop_ICollection_1_TValue_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TValue_0": "<IEnumerable`1>",
+          "prop_Boolean_0": false,
+          "System.Collections.ICollection.IsSynchronized": false,
+          "System.Collections.ICollection.SyncRoot": "<Object>",
+          "System.Collections.IDictionary.IsFixedSize": false,
+          "System.Collections.IDictionary.IsReadOnly": false,
+          "System.Collections.IDictionary.Keys": "<ICollection>",
+          "System.Collections.IDictionary.Values": "<ICollection>"
+        },
+        "Magisteel": 0,
+        "Corehammer": 0,
+        "SoulstoneRare": 0,
+        "SoulstoneEpic": 0,
+        "SoulstoneLeg": 0,
+        "BloodstoneRare": 0,
+        "BloodstoneEpic": 0,
+        "BloodstoneLeg": 0,
+        "NetherSpiderRare": 0,
+        "NetherSpiderEpic": 0,
+        "NetherSpiderLeg": 0,
+        "ScarabClawsRare": 0,
+        "ScarabClawsEpic": 0,
+        "ScarabClawsLeg": 0,
+        "MagmaDragonCoresRare": 0,
+        "MagmaDragonCoresEpic": 0,
+        "MagmaDragonCoresLeg": 0,
+        "FrostSpiderSpinesRare": 0,
+        "FrostSpiderSpinesEpic": 0,
+        "FrostSpiderSpinesLeg": 0,
+        "DragonBoneRare": 0,
+        "DragonBoneEpic": 0,
+        "DragonBoneLeg": 0,
+        "GriffinFeatherRare": 0,
+        "GriffinFeatherEpic": 0,
+        "GriffinFeatherLeg": 0,
+        "DreadhornPlatesRare": 0,
+        "DreadhornPlatesEpic": 0,
+        "DreadhornPlatesLeg": 0,
+        "FaeSpheresRare": 0,
+        "FaeSpheresEpic": 0,
+        "FaeSpheresLeg": 0,
+        "InstinctStonesRare": 0,
+        "InstinctStonesEpic": 0,
+        "InstinctStonesLeg": 0,
+        "DoomTowerGoldKeys": 0,
+        "DoomTowerSilverKeys": 0,
+        "AllianceCoin": 0,
+        "FortressKeys": 0,
+        "EternalSoulCoin": 0,
+        "ImmortalSoulCoin": 0,
+        "MortalSoulCoin": 0,
+        "EternalSoulEssence": 0,
+        "ImmortalSoulEssence": 0,
+        "LifeTokens": 0,
+        "LiveArenaMedalBronze": 0,
+        "LiveArenaMedalSilver": 0,
+        "LiveArenaMedalGold": 0,
+        "PlariumPoints": 0,
+        "MythicalDust": 0,
+        "BrokenHeroParts": 0,
+        "CursedCityKeys": 0,
+        "CursedCityHardQuestPoints": 0,
+        "CursedCityNormalQuestPoints": 0,
+        "ParticleSummon": 0,
+        "SiegeStones": 500,
+        "SiegeMana": 250,
+        "SiegeDefenseScrolls": 0,
+        "SiegeBattleScrolls": 0,
+        "SiegeRematchScrolls": 0,
+        "Meteors": 0,
+        "FoggyForestNormalCoins": 0,
+        "FoggyForestNormalGold": 0,
+        "FoggyForestNormalMainBossKeys": 0,
+        "FoggyForestNormalRollRefreshes": 0,
+        "FoggyForestNormalTreasureHuntParts": 0,
+        "FoggyForestHardCoins": 0,
+        "FoggyForestHardGold": 0,
+        "FoggyForestHardMainBossKeys": 0,
+        "FoggyForestHardRollRefreshes": 0,
+        "FoggyForestHardTreasureHuntParts": 0
+      },
+      "RequiredBastionLevel": 1,
+      "SkillId": {
+        "hasValue": true,
+        "value": -534389536,
+        "HasValue": true,
+        "Value": 0
+      },
+      "Name": {
+        "DefaultValue": "7",
+        "Key": "l10n:siege-trap/name?id=7#static",
+        "HasBreakSymbol": false
+      },
+      "Description": {
+        "DefaultValue": "7",
+        "Key": "l10n:siege-trap/description?id=7#static",
+        "HasBreakSymbol": false
+      }
+    },
+    {
+      "Id": 8,
+      "AppliedToEnemy": true,
+      "Price": {
+        "RawValues": {
+          "-487148272": 5.917728043973e-312
+        },
+        "ToRawValues": {
+          "-487148272": 5.917728043973e-312
+        },
+        "Energy": 0,
+        "Silver": 0,
+        "Tokens": 0,
+        "Arena3X3ShopCurrency": 0,
+        "Arena3X3Tokens": 0,
+        "LiveArenaTokens": 0,
+        "Gems": 0,
+        "AutoBattleTickets": 0,
+        "MedalBronze": 0,
+        "MedalSilver": 0,
+        "MedalGold": 0,
+        "AllianceBossKey": 0,
+        "AllianceHydraKeys": 0,
+        "AllianceChimeraKeys": 0,
+        "FoggyForestEnergy": 0,
+        "FoggyForestMainBossKeysNormal": 0,
+        "FoggyForestMainBossKeysHard": 0,
+        "ForgeMaterials": {
+          "Count": 0,
+          "Keys": "<KeyCollection>",
+          "prop_ICollection_1_TKey_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TKey_0": "<IEnumerable`1>",
+          "Values": "<ValueCollection>",
+          "prop_ICollection_1_TValue_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TValue_0": "<IEnumerable`1>",
+          "prop_Boolean_0": false,
+          "System.Collections.ICollection.IsSynchronized": false,
+          "System.Collections.ICollection.SyncRoot": "<Object>",
+          "System.Collections.IDictionary.IsFixedSize": false,
+          "System.Collections.IDictionary.IsReadOnly": false,
+          "System.Collections.IDictionary.Keys": "<ICollection>",
+          "System.Collections.IDictionary.Values": "<ICollection>"
+        },
+        "DoubleAscend": {
+          "Count": 0,
+          "Keys": "<KeyCollection>",
+          "prop_ICollection_1_TKey_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TKey_0": "<IEnumerable`1>",
+          "Values": "<ValueCollection>",
+          "prop_ICollection_1_TValue_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TValue_0": "<IEnumerable`1>",
+          "prop_Boolean_0": false,
+          "System.Collections.ICollection.IsSynchronized": false,
+          "System.Collections.ICollection.SyncRoot": "<Object>",
+          "System.Collections.IDictionary.IsFixedSize": false,
+          "System.Collections.IDictionary.IsReadOnly": false,
+          "System.Collections.IDictionary.Keys": "<ICollection>",
+          "System.Collections.IDictionary.Values": "<ICollection>"
+        },
+        "Magisteel": 0,
+        "Corehammer": 0,
+        "SoulstoneRare": 0,
+        "SoulstoneEpic": 0,
+        "SoulstoneLeg": 0,
+        "BloodstoneRare": 0,
+        "BloodstoneEpic": 0,
+        "BloodstoneLeg": 0,
+        "NetherSpiderRare": 0,
+        "NetherSpiderEpic": 0,
+        "NetherSpiderLeg": 0,
+        "ScarabClawsRare": 0,
+        "ScarabClawsEpic": 0,
+        "ScarabClawsLeg": 0,
+        "MagmaDragonCoresRare": 0,
+        "MagmaDragonCoresEpic": 0,
+        "MagmaDragonCoresLeg": 0,
+        "FrostSpiderSpinesRare": 0,
+        "FrostSpiderSpinesEpic": 0,
+        "FrostSpiderSpinesLeg": 0,
+        "DragonBoneRare": 0,
+        "DragonBoneEpic": 0,
+        "DragonBoneLeg": 0,
+        "GriffinFeatherRare": 0,
+        "GriffinFeatherEpic": 0,
+        "GriffinFeatherLeg": 0,
+        "DreadhornPlatesRare": 0,
+        "DreadhornPlatesEpic": 0,
+        "DreadhornPlatesLeg": 0,
+        "FaeSpheresRare": 0,
+        "FaeSpheresEpic": 0,
+        "FaeSpheresLeg": 0,
+        "InstinctStonesRare": 0,
+        "InstinctStonesEpic": 0,
+        "InstinctStonesLeg": 0,
+        "DoomTowerGoldKeys": 0,
+        "DoomTowerSilverKeys": 0,
+        "AllianceCoin": 0,
+        "FortressKeys": 0,
+        "EternalSoulCoin": 0,
+        "ImmortalSoulCoin": 0,
+        "MortalSoulCoin": 0,
+        "EternalSoulEssence": 0,
+        "ImmortalSoulEssence": 0,
+        "LifeTokens": 0,
+        "LiveArenaMedalBronze": 0,
+        "LiveArenaMedalSilver": 0,
+        "LiveArenaMedalGold": 0,
+        "PlariumPoints": 0,
+        "MythicalDust": 0,
+        "BrokenHeroParts": 0,
+        "CursedCityKeys": 0,
+        "CursedCityHardQuestPoints": 0,
+        "CursedCityNormalQuestPoints": 0,
+        "ParticleSummon": 0,
+        "SiegeStones": 500,
+        "SiegeMana": 250,
+        "SiegeDefenseScrolls": 0,
+        "SiegeBattleScrolls": 0,
+        "SiegeRematchScrolls": 0,
+        "Meteors": 0,
+        "FoggyForestNormalCoins": 0,
+        "FoggyForestNormalGold": 0,
+        "FoggyForestNormalMainBossKeys": 0,
+        "FoggyForestNormalRollRefreshes": 0,
+        "FoggyForestNormalTreasureHuntParts": 0,
+        "FoggyForestHardCoins": 0,
+        "FoggyForestHardGold": 0,
+        "FoggyForestHardMainBossKeys": 0,
+        "FoggyForestHardRollRefreshes": 0,
+        "FoggyForestHardTreasureHuntParts": 0
+      },
+      "RequiredBastionLevel": 1,
+      "SkillId": {
+        "hasValue": true,
+        "value": -534389536,
+        "HasValue": true,
+        "Value": 0
+      },
+      "Name": {
+        "DefaultValue": "8",
+        "Key": "l10n:siege-trap/name?id=8#static",
+        "HasBreakSymbol": false
+      },
+      "Description": {
+        "DefaultValue": "8",
+        "Key": "l10n:siege-trap/description?id=8#static",
+        "HasBreakSymbol": false
+      }
+    },
+    {
+      "Id": 9,
+      "AppliedToEnemy": true,
+      "Price": {
+        "RawValues": {
+          "-487148272": 5.917728043973e-312
+        },
+        "ToRawValues": {
+          "-487148272": 5.917728043973e-312
+        },
+        "Energy": 0,
+        "Silver": 0,
+        "Tokens": 0,
+        "Arena3X3ShopCurrency": 0,
+        "Arena3X3Tokens": 0,
+        "LiveArenaTokens": 0,
+        "Gems": 0,
+        "AutoBattleTickets": 0,
+        "MedalBronze": 0,
+        "MedalSilver": 0,
+        "MedalGold": 0,
+        "AllianceBossKey": 0,
+        "AllianceHydraKeys": 0,
+        "AllianceChimeraKeys": 0,
+        "FoggyForestEnergy": 0,
+        "FoggyForestMainBossKeysNormal": 0,
+        "FoggyForestMainBossKeysHard": 0,
+        "ForgeMaterials": {
+          "Count": 0,
+          "Keys": "<KeyCollection>",
+          "prop_ICollection_1_TKey_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TKey_0": "<IEnumerable`1>",
+          "Values": "<ValueCollection>",
+          "prop_ICollection_1_TValue_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TValue_0": "<IEnumerable`1>",
+          "prop_Boolean_0": false,
+          "System.Collections.ICollection.IsSynchronized": false,
+          "System.Collections.ICollection.SyncRoot": "<Object>",
+          "System.Collections.IDictionary.IsFixedSize": false,
+          "System.Collections.IDictionary.IsReadOnly": false,
+          "System.Collections.IDictionary.Keys": "<ICollection>",
+          "System.Collections.IDictionary.Values": "<ICollection>"
+        },
+        "DoubleAscend": {
+          "Count": 0,
+          "Keys": "<KeyCollection>",
+          "prop_ICollection_1_TKey_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TKey_0": "<IEnumerable`1>",
+          "Values": "<ValueCollection>",
+          "prop_ICollection_1_TValue_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TValue_0": "<IEnumerable`1>",
+          "prop_Boolean_0": false,
+          "System.Collections.ICollection.IsSynchronized": false,
+          "System.Collections.ICollection.SyncRoot": "<Object>",
+          "System.Collections.IDictionary.IsFixedSize": false,
+          "System.Collections.IDictionary.IsReadOnly": false,
+          "System.Collections.IDictionary.Keys": "<ICollection>",
+          "System.Collections.IDictionary.Values": "<ICollection>"
+        },
+        "Magisteel": 0,
+        "Corehammer": 0,
+        "SoulstoneRare": 0,
+        "SoulstoneEpic": 0,
+        "SoulstoneLeg": 0,
+        "BloodstoneRare": 0,
+        "BloodstoneEpic": 0,
+        "BloodstoneLeg": 0,
+        "NetherSpiderRare": 0,
+        "NetherSpiderEpic": 0,
+        "NetherSpiderLeg": 0,
+        "ScarabClawsRare": 0,
+        "ScarabClawsEpic": 0,
+        "ScarabClawsLeg": 0,
+        "MagmaDragonCoresRare": 0,
+        "MagmaDragonCoresEpic": 0,
+        "MagmaDragonCoresLeg": 0,
+        "FrostSpiderSpinesRare": 0,
+        "FrostSpiderSpinesEpic": 0,
+        "FrostSpiderSpinesLeg": 0,
+        "DragonBoneRare": 0,
+        "DragonBoneEpic": 0,
+        "DragonBoneLeg": 0,
+        "GriffinFeatherRare": 0,
+        "GriffinFeatherEpic": 0,
+        "GriffinFeatherLeg": 0,
+        "DreadhornPlatesRare": 0,
+        "DreadhornPlatesEpic": 0,
+        "DreadhornPlatesLeg": 0,
+        "FaeSpheresRare": 0,
+        "FaeSpheresEpic": 0,
+        "FaeSpheresLeg": 0,
+        "InstinctStonesRare": 0,
+        "InstinctStonesEpic": 0,
+        "InstinctStonesLeg": 0,
+        "DoomTowerGoldKeys": 0,
+        "DoomTowerSilverKeys": 0,
+        "AllianceCoin": 0,
+        "FortressKeys": 0,
+        "EternalSoulCoin": 0,
+        "ImmortalSoulCoin": 0,
+        "MortalSoulCoin": 0,
+        "EternalSoulEssence": 0,
+        "ImmortalSoulEssence": 0,
+        "LifeTokens": 0,
+        "LiveArenaMedalBronze": 0,
+        "LiveArenaMedalSilver": 0,
+        "LiveArenaMedalGold": 0,
+        "PlariumPoints": 0,
+        "MythicalDust": 0,
+        "BrokenHeroParts": 0,
+        "CursedCityKeys": 0,
+        "CursedCityHardQuestPoints": 0,
+        "CursedCityNormalQuestPoints": 0,
+        "ParticleSummon": 0,
+        "SiegeStones": 500,
+        "SiegeMana": 250,
+        "SiegeDefenseScrolls": 0,
+        "SiegeBattleScrolls": 0,
+        "SiegeRematchScrolls": 0,
+        "Meteors": 0,
+        "FoggyForestNormalCoins": 0,
+        "FoggyForestNormalGold": 0,
+        "FoggyForestNormalMainBossKeys": 0,
+        "FoggyForestNormalRollRefreshes": 0,
+        "FoggyForestNormalTreasureHuntParts": 0,
+        "FoggyForestHardCoins": 0,
+        "FoggyForestHardGold": 0,
+        "FoggyForestHardMainBossKeys": 0,
+        "FoggyForestHardRollRefreshes": 0,
+        "FoggyForestHardTreasureHuntParts": 0
+      },
+      "RequiredBastionLevel": 1,
+      "SkillId": {
+        "hasValue": true,
+        "value": -534389536,
+        "HasValue": true,
+        "Value": 0
+      },
+      "Name": {
+        "DefaultValue": "9",
+        "Key": "l10n:siege-trap/name?id=9#static",
+        "HasBreakSymbol": false
+      },
+      "Description": {
+        "DefaultValue": "9",
+        "Key": "l10n:siege-trap/description?id=9#static",
+        "HasBreakSymbol": false
+      }
+    },
+    {
+      "Id": 10,
+      "AppliedToEnemy": true,
+      "Price": {
+        "RawValues": {
+          "-487148272": 5.917728043973e-312
+        },
+        "ToRawValues": {
+          "-487148272": 5.917728043973e-312
+        },
+        "Energy": 0,
+        "Silver": 0,
+        "Tokens": 0,
+        "Arena3X3ShopCurrency": 0,
+        "Arena3X3Tokens": 0,
+        "LiveArenaTokens": 0,
+        "Gems": 0,
+        "AutoBattleTickets": 0,
+        "MedalBronze": 0,
+        "MedalSilver": 0,
+        "MedalGold": 0,
+        "AllianceBossKey": 0,
+        "AllianceHydraKeys": 0,
+        "AllianceChimeraKeys": 0,
+        "FoggyForestEnergy": 0,
+        "FoggyForestMainBossKeysNormal": 0,
+        "FoggyForestMainBossKeysHard": 0,
+        "ForgeMaterials": {
+          "Count": 0,
+          "Keys": "<KeyCollection>",
+          "prop_ICollection_1_TKey_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TKey_0": "<IEnumerable`1>",
+          "Values": "<ValueCollection>",
+          "prop_ICollection_1_TValue_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TValue_0": "<IEnumerable`1>",
+          "prop_Boolean_0": false,
+          "System.Collections.ICollection.IsSynchronized": false,
+          "System.Collections.ICollection.SyncRoot": "<Object>",
+          "System.Collections.IDictionary.IsFixedSize": false,
+          "System.Collections.IDictionary.IsReadOnly": false,
+          "System.Collections.IDictionary.Keys": "<ICollection>",
+          "System.Collections.IDictionary.Values": "<ICollection>"
+        },
+        "DoubleAscend": {
+          "Count": 0,
+          "Keys": "<KeyCollection>",
+          "prop_ICollection_1_TKey_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TKey_0": "<IEnumerable`1>",
+          "Values": "<ValueCollection>",
+          "prop_ICollection_1_TValue_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TValue_0": "<IEnumerable`1>",
+          "prop_Boolean_0": false,
+          "System.Collections.ICollection.IsSynchronized": false,
+          "System.Collections.ICollection.SyncRoot": "<Object>",
+          "System.Collections.IDictionary.IsFixedSize": false,
+          "System.Collections.IDictionary.IsReadOnly": false,
+          "System.Collections.IDictionary.Keys": "<ICollection>",
+          "System.Collections.IDictionary.Values": "<ICollection>"
+        },
+        "Magisteel": 0,
+        "Corehammer": 0,
+        "SoulstoneRare": 0,
+        "SoulstoneEpic": 0,
+        "SoulstoneLeg": 0,
+        "BloodstoneRare": 0,
+        "BloodstoneEpic": 0,
+        "BloodstoneLeg": 0,
+        "NetherSpiderRare": 0,
+        "NetherSpiderEpic": 0,
+        "NetherSpiderLeg": 0,
+        "ScarabClawsRare": 0,
+        "ScarabClawsEpic": 0,
+        "ScarabClawsLeg": 0,
+        "MagmaDragonCoresRare": 0,
+        "MagmaDragonCoresEpic": 0,
+        "MagmaDragonCoresLeg": 0,
+        "FrostSpiderSpinesRare": 0,
+        "FrostSpiderSpinesEpic": 0,
+        "FrostSpiderSpinesLeg": 0,
+        "DragonBoneRare": 0,
+        "DragonBoneEpic": 0,
+        "DragonBoneLeg": 0,
+        "GriffinFeatherRare": 0,
+        "GriffinFeatherEpic": 0,
+        "GriffinFeatherLeg": 0,
+        "DreadhornPlatesRare": 0,
+        "DreadhornPlatesEpic": 0,
+        "DreadhornPlatesLeg": 0,
+        "FaeSpheresRare": 0,
+        "FaeSpheresEpic": 0,
+        "FaeSpheresLeg": 0,
+        "InstinctStonesRare": 0,
+        "InstinctStonesEpic": 0,
+        "InstinctStonesLeg": 0,
+        "DoomTowerGoldKeys": 0,
+        "DoomTowerSilverKeys": 0,
+        "AllianceCoin": 0,
+        "FortressKeys": 0,
+        "EternalSoulCoin": 0,
+        "ImmortalSoulCoin": 0,
+        "MortalSoulCoin": 0,
+        "EternalSoulEssence": 0,
+        "ImmortalSoulEssence": 0,
+        "LifeTokens": 0,
+        "LiveArenaMedalBronze": 0,
+        "LiveArenaMedalSilver": 0,
+        "LiveArenaMedalGold": 0,
+        "PlariumPoints": 0,
+        "MythicalDust": 0,
+        "BrokenHeroParts": 0,
+        "CursedCityKeys": 0,
+        "CursedCityHardQuestPoints": 0,
+        "CursedCityNormalQuestPoints": 0,
+        "ParticleSummon": 0,
+        "SiegeStones": 500,
+        "SiegeMana": 250,
+        "SiegeDefenseScrolls": 0,
+        "SiegeBattleScrolls": 0,
+        "SiegeRematchScrolls": 0,
+        "Meteors": 0,
+        "FoggyForestNormalCoins": 0,
+        "FoggyForestNormalGold": 0,
+        "FoggyForestNormalMainBossKeys": 0,
+        "FoggyForestNormalRollRefreshes": 0,
+        "FoggyForestNormalTreasureHuntParts": 0,
+        "FoggyForestHardCoins": 0,
+        "FoggyForestHardGold": 0,
+        "FoggyForestHardMainBossKeys": 0,
+        "FoggyForestHardRollRefreshes": 0,
+        "FoggyForestHardTreasureHuntParts": 0
+      },
+      "RequiredBastionLevel": 1,
+      "SkillId": {
+        "hasValue": true,
+        "value": -534389536,
+        "HasValue": true,
+        "Value": 0
+      },
+      "Name": {
+        "DefaultValue": "10",
+        "Key": "l10n:siege-trap/name?id=10#static",
+        "HasBreakSymbol": false
+      },
+      "Description": {
+        "DefaultValue": "10",
+        "Key": "l10n:siege-trap/description?id=10#static",
+        "HasBreakSymbol": false
+      }
+    },
+    {
+      "Id": 11,
+      "AppliedToEnemy": true,
+      "Price": {
+        "RawValues": {
+          "-487148272": 5.917728043973e-312
+        },
+        "ToRawValues": {
+          "-487148272": 5.917728043973e-312
+        },
+        "Energy": 0,
+        "Silver": 0,
+        "Tokens": 0,
+        "Arena3X3ShopCurrency": 0,
+        "Arena3X3Tokens": 0,
+        "LiveArenaTokens": 0,
+        "Gems": 0,
+        "AutoBattleTickets": 0,
+        "MedalBronze": 0,
+        "MedalSilver": 0,
+        "MedalGold": 0,
+        "AllianceBossKey": 0,
+        "AllianceHydraKeys": 0,
+        "AllianceChimeraKeys": 0,
+        "FoggyForestEnergy": 0,
+        "FoggyForestMainBossKeysNormal": 0,
+        "FoggyForestMainBossKeysHard": 0,
+        "ForgeMaterials": {
+          "Count": 0,
+          "Keys": "<KeyCollection>",
+          "prop_ICollection_1_TKey_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TKey_0": "<IEnumerable`1>",
+          "Values": "<ValueCollection>",
+          "prop_ICollection_1_TValue_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TValue_0": "<IEnumerable`1>",
+          "prop_Boolean_0": false,
+          "System.Collections.ICollection.IsSynchronized": false,
+          "System.Collections.ICollection.SyncRoot": "<Object>",
+          "System.Collections.IDictionary.IsFixedSize": false,
+          "System.Collections.IDictionary.IsReadOnly": false,
+          "System.Collections.IDictionary.Keys": "<ICollection>",
+          "System.Collections.IDictionary.Values": "<ICollection>"
+        },
+        "DoubleAscend": {
+          "Count": 0,
+          "Keys": "<KeyCollection>",
+          "prop_ICollection_1_TKey_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TKey_0": "<IEnumerable`1>",
+          "Values": "<ValueCollection>",
+          "prop_ICollection_1_TValue_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TValue_0": "<IEnumerable`1>",
+          "prop_Boolean_0": false,
+          "System.Collections.ICollection.IsSynchronized": false,
+          "System.Collections.ICollection.SyncRoot": "<Object>",
+          "System.Collections.IDictionary.IsFixedSize": false,
+          "System.Collections.IDictionary.IsReadOnly": false,
+          "System.Collections.IDictionary.Keys": "<ICollection>",
+          "System.Collections.IDictionary.Values": "<ICollection>"
+        },
+        "Magisteel": 0,
+        "Corehammer": 0,
+        "SoulstoneRare": 0,
+        "SoulstoneEpic": 0,
+        "SoulstoneLeg": 0,
+        "BloodstoneRare": 0,
+        "BloodstoneEpic": 0,
+        "BloodstoneLeg": 0,
+        "NetherSpiderRare": 0,
+        "NetherSpiderEpic": 0,
+        "NetherSpiderLeg": 0,
+        "ScarabClawsRare": 0,
+        "ScarabClawsEpic": 0,
+        "ScarabClawsLeg": 0,
+        "MagmaDragonCoresRare": 0,
+        "MagmaDragonCoresEpic": 0,
+        "MagmaDragonCoresLeg": 0,
+        "FrostSpiderSpinesRare": 0,
+        "FrostSpiderSpinesEpic": 0,
+        "FrostSpiderSpinesLeg": 0,
+        "DragonBoneRare": 0,
+        "DragonBoneEpic": 0,
+        "DragonBoneLeg": 0,
+        "GriffinFeatherRare": 0,
+        "GriffinFeatherEpic": 0,
+        "GriffinFeatherLeg": 0,
+        "DreadhornPlatesRare": 0,
+        "DreadhornPlatesEpic": 0,
+        "DreadhornPlatesLeg": 0,
+        "FaeSpheresRare": 0,
+        "FaeSpheresEpic": 0,
+        "FaeSpheresLeg": 0,
+        "InstinctStonesRare": 0,
+        "InstinctStonesEpic": 0,
+        "InstinctStonesLeg": 0,
+        "DoomTowerGoldKeys": 0,
+        "DoomTowerSilverKeys": 0,
+        "AllianceCoin": 0,
+        "FortressKeys": 0,
+        "EternalSoulCoin": 0,
+        "ImmortalSoulCoin": 0,
+        "MortalSoulCoin": 0,
+        "EternalSoulEssence": 0,
+        "ImmortalSoulEssence": 0,
+        "LifeTokens": 0,
+        "LiveArenaMedalBronze": 0,
+        "LiveArenaMedalSilver": 0,
+        "LiveArenaMedalGold": 0,
+        "PlariumPoints": 0,
+        "MythicalDust": 0,
+        "BrokenHeroParts": 0,
+        "CursedCityKeys": 0,
+        "CursedCityHardQuestPoints": 0,
+        "CursedCityNormalQuestPoints": 0,
+        "ParticleSummon": 0,
+        "SiegeStones": 500,
+        "SiegeMana": 250,
+        "SiegeDefenseScrolls": 0,
+        "SiegeBattleScrolls": 0,
+        "SiegeRematchScrolls": 0,
+        "Meteors": 0,
+        "FoggyForestNormalCoins": 0,
+        "FoggyForestNormalGold": 0,
+        "FoggyForestNormalMainBossKeys": 0,
+        "FoggyForestNormalRollRefreshes": 0,
+        "FoggyForestNormalTreasureHuntParts": 0,
+        "FoggyForestHardCoins": 0,
+        "FoggyForestHardGold": 0,
+        "FoggyForestHardMainBossKeys": 0,
+        "FoggyForestHardRollRefreshes": 0,
+        "FoggyForestHardTreasureHuntParts": 0
+      },
+      "RequiredBastionLevel": 1,
+      "SkillId": {
+        "hasValue": true,
+        "value": -534389536,
+        "HasValue": true,
+        "Value": 0
+      },
+      "Name": {
+        "DefaultValue": "11",
+        "Key": "l10n:siege-trap/name?id=11#static",
+        "HasBreakSymbol": false
+      },
+      "Description": {
+        "DefaultValue": "11",
+        "Key": "l10n:siege-trap/description?id=11#static",
+        "HasBreakSymbol": false
+      }
+    },
+    {
+      "Id": 12,
+      "AppliedToEnemy": true,
+      "Price": {
+        "RawValues": {
+          "-487148272": 5.917728043973e-312
+        },
+        "ToRawValues": {
+          "-487148272": 5.917728043973e-312
+        },
+        "Energy": 0,
+        "Silver": 0,
+        "Tokens": 0,
+        "Arena3X3ShopCurrency": 0,
+        "Arena3X3Tokens": 0,
+        "LiveArenaTokens": 0,
+        "Gems": 0,
+        "AutoBattleTickets": 0,
+        "MedalBronze": 0,
+        "MedalSilver": 0,
+        "MedalGold": 0,
+        "AllianceBossKey": 0,
+        "AllianceHydraKeys": 0,
+        "AllianceChimeraKeys": 0,
+        "FoggyForestEnergy": 0,
+        "FoggyForestMainBossKeysNormal": 0,
+        "FoggyForestMainBossKeysHard": 0,
+        "ForgeMaterials": {
+          "Count": 0,
+          "Keys": "<KeyCollection>",
+          "prop_ICollection_1_TKey_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TKey_0": "<IEnumerable`1>",
+          "Values": "<ValueCollection>",
+          "prop_ICollection_1_TValue_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TValue_0": "<IEnumerable`1>",
+          "prop_Boolean_0": false,
+          "System.Collections.ICollection.IsSynchronized": false,
+          "System.Collections.ICollection.SyncRoot": "<Object>",
+          "System.Collections.IDictionary.IsFixedSize": false,
+          "System.Collections.IDictionary.IsReadOnly": false,
+          "System.Collections.IDictionary.Keys": "<ICollection>",
+          "System.Collections.IDictionary.Values": "<ICollection>"
+        },
+        "DoubleAscend": {
+          "Count": 0,
+          "Keys": "<KeyCollection>",
+          "prop_ICollection_1_TKey_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TKey_0": "<IEnumerable`1>",
+          "Values": "<ValueCollection>",
+          "prop_ICollection_1_TValue_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TValue_0": "<IEnumerable`1>",
+          "prop_Boolean_0": false,
+          "System.Collections.ICollection.IsSynchronized": false,
+          "System.Collections.ICollection.SyncRoot": "<Object>",
+          "System.Collections.IDictionary.IsFixedSize": false,
+          "System.Collections.IDictionary.IsReadOnly": false,
+          "System.Collections.IDictionary.Keys": "<ICollection>",
+          "System.Collections.IDictionary.Values": "<ICollection>"
+        },
+        "Magisteel": 0,
+        "Corehammer": 0,
+        "SoulstoneRare": 0,
+        "SoulstoneEpic": 0,
+        "SoulstoneLeg": 0,
+        "BloodstoneRare": 0,
+        "BloodstoneEpic": 0,
+        "BloodstoneLeg": 0,
+        "NetherSpiderRare": 0,
+        "NetherSpiderEpic": 0,
+        "NetherSpiderLeg": 0,
+        "ScarabClawsRare": 0,
+        "ScarabClawsEpic": 0,
+        "ScarabClawsLeg": 0,
+        "MagmaDragonCoresRare": 0,
+        "MagmaDragonCoresEpic": 0,
+        "MagmaDragonCoresLeg": 0,
+        "FrostSpiderSpinesRare": 0,
+        "FrostSpiderSpinesEpic": 0,
+        "FrostSpiderSpinesLeg": 0,
+        "DragonBoneRare": 0,
+        "DragonBoneEpic": 0,
+        "DragonBoneLeg": 0,
+        "GriffinFeatherRare": 0,
+        "GriffinFeatherEpic": 0,
+        "GriffinFeatherLeg": 0,
+        "DreadhornPlatesRare": 0,
+        "DreadhornPlatesEpic": 0,
+        "DreadhornPlatesLeg": 0,
+        "FaeSpheresRare": 0,
+        "FaeSpheresEpic": 0,
+        "FaeSpheresLeg": 0,
+        "InstinctStonesRare": 0,
+        "InstinctStonesEpic": 0,
+        "InstinctStonesLeg": 0,
+        "DoomTowerGoldKeys": 0,
+        "DoomTowerSilverKeys": 0,
+        "AllianceCoin": 0,
+        "FortressKeys": 0,
+        "EternalSoulCoin": 0,
+        "ImmortalSoulCoin": 0,
+        "MortalSoulCoin": 0,
+        "EternalSoulEssence": 0,
+        "ImmortalSoulEssence": 0,
+        "LifeTokens": 0,
+        "LiveArenaMedalBronze": 0,
+        "LiveArenaMedalSilver": 0,
+        "LiveArenaMedalGold": 0,
+        "PlariumPoints": 0,
+        "MythicalDust": 0,
+        "BrokenHeroParts": 0,
+        "CursedCityKeys": 0,
+        "CursedCityHardQuestPoints": 0,
+        "CursedCityNormalQuestPoints": 0,
+        "ParticleSummon": 0,
+        "SiegeStones": 500,
+        "SiegeMana": 250,
+        "SiegeDefenseScrolls": 0,
+        "SiegeBattleScrolls": 0,
+        "SiegeRematchScrolls": 0,
+        "Meteors": 0,
+        "FoggyForestNormalCoins": 0,
+        "FoggyForestNormalGold": 0,
+        "FoggyForestNormalMainBossKeys": 0,
+        "FoggyForestNormalRollRefreshes": 0,
+        "FoggyForestNormalTreasureHuntParts": 0,
+        "FoggyForestHardCoins": 0,
+        "FoggyForestHardGold": 0,
+        "FoggyForestHardMainBossKeys": 0,
+        "FoggyForestHardRollRefreshes": 0,
+        "FoggyForestHardTreasureHuntParts": 0
+      },
+      "RequiredBastionLevel": 1,
+      "SkillId": {
+        "hasValue": true,
+        "value": -534389536,
+        "HasValue": true,
+        "Value": 0
+      },
+      "Name": {
+        "DefaultValue": "12",
+        "Key": "l10n:siege-trap/name?id=12#static",
+        "HasBreakSymbol": false
+      },
+      "Description": {
+        "DefaultValue": "12",
+        "Key": "l10n:siege-trap/description?id=12#static",
+        "HasBreakSymbol": false
+      }
+    },
+    {
+      "Id": 13,
+      "AppliedToEnemy": true,
+      "Price": {
+        "RawValues": {
+          "-487148272": 5.917728043973e-312
+        },
+        "ToRawValues": {
+          "-487148272": 5.917728043973e-312
+        },
+        "Energy": 0,
+        "Silver": 0,
+        "Tokens": 0,
+        "Arena3X3ShopCurrency": 0,
+        "Arena3X3Tokens": 0,
+        "LiveArenaTokens": 0,
+        "Gems": 0,
+        "AutoBattleTickets": 0,
+        "MedalBronze": 0,
+        "MedalSilver": 0,
+        "MedalGold": 0,
+        "AllianceBossKey": 0,
+        "AllianceHydraKeys": 0,
+        "AllianceChimeraKeys": 0,
+        "FoggyForestEnergy": 0,
+        "FoggyForestMainBossKeysNormal": 0,
+        "FoggyForestMainBossKeysHard": 0,
+        "ForgeMaterials": {
+          "Count": 0,
+          "Keys": "<KeyCollection>",
+          "prop_ICollection_1_TKey_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TKey_0": "<IEnumerable`1>",
+          "Values": "<ValueCollection>",
+          "prop_ICollection_1_TValue_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TValue_0": "<IEnumerable`1>",
+          "prop_Boolean_0": false,
+          "System.Collections.ICollection.IsSynchronized": false,
+          "System.Collections.ICollection.SyncRoot": "<Object>",
+          "System.Collections.IDictionary.IsFixedSize": false,
+          "System.Collections.IDictionary.IsReadOnly": false,
+          "System.Collections.IDictionary.Keys": "<ICollection>",
+          "System.Collections.IDictionary.Values": "<ICollection>"
+        },
+        "DoubleAscend": {
+          "Count": 0,
+          "Keys": "<KeyCollection>",
+          "prop_ICollection_1_TKey_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TKey_0": "<IEnumerable`1>",
+          "Values": "<ValueCollection>",
+          "prop_ICollection_1_TValue_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TValue_0": "<IEnumerable`1>",
+          "prop_Boolean_0": false,
+          "System.Collections.ICollection.IsSynchronized": false,
+          "System.Collections.ICollection.SyncRoot": "<Object>",
+          "System.Collections.IDictionary.IsFixedSize": false,
+          "System.Collections.IDictionary.IsReadOnly": false,
+          "System.Collections.IDictionary.Keys": "<ICollection>",
+          "System.Collections.IDictionary.Values": "<ICollection>"
+        },
+        "Magisteel": 0,
+        "Corehammer": 0,
+        "SoulstoneRare": 0,
+        "SoulstoneEpic": 0,
+        "SoulstoneLeg": 0,
+        "BloodstoneRare": 0,
+        "BloodstoneEpic": 0,
+        "BloodstoneLeg": 0,
+        "NetherSpiderRare": 0,
+        "NetherSpiderEpic": 0,
+        "NetherSpiderLeg": 0,
+        "ScarabClawsRare": 0,
+        "ScarabClawsEpic": 0,
+        "ScarabClawsLeg": 0,
+        "MagmaDragonCoresRare": 0,
+        "MagmaDragonCoresEpic": 0,
+        "MagmaDragonCoresLeg": 0,
+        "FrostSpiderSpinesRare": 0,
+        "FrostSpiderSpinesEpic": 0,
+        "FrostSpiderSpinesLeg": 0,
+        "DragonBoneRare": 0,
+        "DragonBoneEpic": 0,
+        "DragonBoneLeg": 0,
+        "GriffinFeatherRare": 0,
+        "GriffinFeatherEpic": 0,
+        "GriffinFeatherLeg": 0,
+        "DreadhornPlatesRare": 0,
+        "DreadhornPlatesEpic": 0,
+        "DreadhornPlatesLeg": 0,
+        "FaeSpheresRare": 0,
+        "FaeSpheresEpic": 0,
+        "FaeSpheresLeg": 0,
+        "InstinctStonesRare": 0,
+        "InstinctStonesEpic": 0,
+        "InstinctStonesLeg": 0,
+        "DoomTowerGoldKeys": 0,
+        "DoomTowerSilverKeys": 0,
+        "AllianceCoin": 0,
+        "FortressKeys": 0,
+        "EternalSoulCoin": 0,
+        "ImmortalSoulCoin": 0,
+        "MortalSoulCoin": 0,
+        "EternalSoulEssence": 0,
+        "ImmortalSoulEssence": 0,
+        "LifeTokens": 0,
+        "LiveArenaMedalBronze": 0,
+        "LiveArenaMedalSilver": 0,
+        "LiveArenaMedalGold": 0,
+        "PlariumPoints": 0,
+        "MythicalDust": 0,
+        "BrokenHeroParts": 0,
+        "CursedCityKeys": 0,
+        "CursedCityHardQuestPoints": 0,
+        "CursedCityNormalQuestPoints": 0,
+        "ParticleSummon": 0,
+        "SiegeStones": 500,
+        "SiegeMana": 250,
+        "SiegeDefenseScrolls": 0,
+        "SiegeBattleScrolls": 0,
+        "SiegeRematchScrolls": 0,
+        "Meteors": 0,
+        "FoggyForestNormalCoins": 0,
+        "FoggyForestNormalGold": 0,
+        "FoggyForestNormalMainBossKeys": 0,
+        "FoggyForestNormalRollRefreshes": 0,
+        "FoggyForestNormalTreasureHuntParts": 0,
+        "FoggyForestHardCoins": 0,
+        "FoggyForestHardGold": 0,
+        "FoggyForestHardMainBossKeys": 0,
+        "FoggyForestHardRollRefreshes": 0,
+        "FoggyForestHardTreasureHuntParts": 0
+      },
+      "RequiredBastionLevel": 1,
+      "SkillId": {
+        "hasValue": true,
+        "value": -534389536,
+        "HasValue": true,
+        "Value": 0
+      },
+      "Name": {
+        "DefaultValue": "13",
+        "Key": "l10n:siege-trap/name?id=13#static",
+        "HasBreakSymbol": false
+      },
+      "Description": {
+        "DefaultValue": "13",
+        "Key": "l10n:siege-trap/description?id=13#static",
+        "HasBreakSymbol": false
+      }
+    },
+    {
+      "Id": 14,
+      "AppliedToEnemy": true,
+      "Price": {
+        "RawValues": {
+          "-487148272": 5.917728043973e-312
+        },
+        "ToRawValues": {
+          "-487148272": 5.917728043973e-312
+        },
+        "Energy": 0,
+        "Silver": 0,
+        "Tokens": 0,
+        "Arena3X3ShopCurrency": 0,
+        "Arena3X3Tokens": 0,
+        "LiveArenaTokens": 0,
+        "Gems": 0,
+        "AutoBattleTickets": 0,
+        "MedalBronze": 0,
+        "MedalSilver": 0,
+        "MedalGold": 0,
+        "AllianceBossKey": 0,
+        "AllianceHydraKeys": 0,
+        "AllianceChimeraKeys": 0,
+        "FoggyForestEnergy": 0,
+        "FoggyForestMainBossKeysNormal": 0,
+        "FoggyForestMainBossKeysHard": 0,
+        "ForgeMaterials": {
+          "Count": 0,
+          "Keys": "<KeyCollection>",
+          "prop_ICollection_1_TKey_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TKey_0": "<IEnumerable`1>",
+          "Values": "<ValueCollection>",
+          "prop_ICollection_1_TValue_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TValue_0": "<IEnumerable`1>",
+          "prop_Boolean_0": false,
+          "System.Collections.ICollection.IsSynchronized": false,
+          "System.Collections.ICollection.SyncRoot": "<Object>",
+          "System.Collections.IDictionary.IsFixedSize": false,
+          "System.Collections.IDictionary.IsReadOnly": false,
+          "System.Collections.IDictionary.Keys": "<ICollection>",
+          "System.Collections.IDictionary.Values": "<ICollection>"
+        },
+        "DoubleAscend": {
+          "Count": 0,
+          "Keys": "<KeyCollection>",
+          "prop_ICollection_1_TKey_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TKey_0": "<IEnumerable`1>",
+          "Values": "<ValueCollection>",
+          "prop_ICollection_1_TValue_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TValue_0": "<IEnumerable`1>",
+          "prop_Boolean_0": false,
+          "System.Collections.ICollection.IsSynchronized": false,
+          "System.Collections.ICollection.SyncRoot": "<Object>",
+          "System.Collections.IDictionary.IsFixedSize": false,
+          "System.Collections.IDictionary.IsReadOnly": false,
+          "System.Collections.IDictionary.Keys": "<ICollection>",
+          "System.Collections.IDictionary.Values": "<ICollection>"
+        },
+        "Magisteel": 0,
+        "Corehammer": 0,
+        "SoulstoneRare": 0,
+        "SoulstoneEpic": 0,
+        "SoulstoneLeg": 0,
+        "BloodstoneRare": 0,
+        "BloodstoneEpic": 0,
+        "BloodstoneLeg": 0,
+        "NetherSpiderRare": 0,
+        "NetherSpiderEpic": 0,
+        "NetherSpiderLeg": 0,
+        "ScarabClawsRare": 0,
+        "ScarabClawsEpic": 0,
+        "ScarabClawsLeg": 0,
+        "MagmaDragonCoresRare": 0,
+        "MagmaDragonCoresEpic": 0,
+        "MagmaDragonCoresLeg": 0,
+        "FrostSpiderSpinesRare": 0,
+        "FrostSpiderSpinesEpic": 0,
+        "FrostSpiderSpinesLeg": 0,
+        "DragonBoneRare": 0,
+        "DragonBoneEpic": 0,
+        "DragonBoneLeg": 0,
+        "GriffinFeatherRare": 0,
+        "GriffinFeatherEpic": 0,
+        "GriffinFeatherLeg": 0,
+        "DreadhornPlatesRare": 0,
+        "DreadhornPlatesEpic": 0,
+        "DreadhornPlatesLeg": 0,
+        "FaeSpheresRare": 0,
+        "FaeSpheresEpic": 0,
+        "FaeSpheresLeg": 0,
+        "InstinctStonesRare": 0,
+        "InstinctStonesEpic": 0,
+        "InstinctStonesLeg": 0,
+        "DoomTowerGoldKeys": 0,
+        "DoomTowerSilverKeys": 0,
+        "AllianceCoin": 0,
+        "FortressKeys": 0,
+        "EternalSoulCoin": 0,
+        "ImmortalSoulCoin": 0,
+        "MortalSoulCoin": 0,
+        "EternalSoulEssence": 0,
+        "ImmortalSoulEssence": 0,
+        "LifeTokens": 0,
+        "LiveArenaMedalBronze": 0,
+        "LiveArenaMedalSilver": 0,
+        "LiveArenaMedalGold": 0,
+        "PlariumPoints": 0,
+        "MythicalDust": 0,
+        "BrokenHeroParts": 0,
+        "CursedCityKeys": 0,
+        "CursedCityHardQuestPoints": 0,
+        "CursedCityNormalQuestPoints": 0,
+        "ParticleSummon": 0,
+        "SiegeStones": 500,
+        "SiegeMana": 250,
+        "SiegeDefenseScrolls": 0,
+        "SiegeBattleScrolls": 0,
+        "SiegeRematchScrolls": 0,
+        "Meteors": 0,
+        "FoggyForestNormalCoins": 0,
+        "FoggyForestNormalGold": 0,
+        "FoggyForestNormalMainBossKeys": 0,
+        "FoggyForestNormalRollRefreshes": 0,
+        "FoggyForestNormalTreasureHuntParts": 0,
+        "FoggyForestHardCoins": 0,
+        "FoggyForestHardGold": 0,
+        "FoggyForestHardMainBossKeys": 0,
+        "FoggyForestHardRollRefreshes": 0,
+        "FoggyForestHardTreasureHuntParts": 0
+      },
+      "RequiredBastionLevel": 1,
+      "SkillId": {
+        "hasValue": true,
+        "value": -534389536,
+        "HasValue": true,
+        "Value": 0
+      },
+      "Name": {
+        "DefaultValue": "14",
+        "Key": "l10n:siege-trap/name?id=14#static",
+        "HasBreakSymbol": false
+      },
+      "Description": {
+        "DefaultValue": "14",
+        "Key": "l10n:siege-trap/description?id=14#static",
+        "HasBreakSymbol": false
+      }
+    },
+    {
+      "Id": 15,
+      "AppliedToEnemy": true,
+      "Price": {
+        "RawValues": {
+          "-487148272": 5.917728043973e-312
+        },
+        "ToRawValues": {
+          "-487148272": 5.917728043973e-312
+        },
+        "Energy": 0,
+        "Silver": 0,
+        "Tokens": 0,
+        "Arena3X3ShopCurrency": 0,
+        "Arena3X3Tokens": 0,
+        "LiveArenaTokens": 0,
+        "Gems": 0,
+        "AutoBattleTickets": 0,
+        "MedalBronze": 0,
+        "MedalSilver": 0,
+        "MedalGold": 0,
+        "AllianceBossKey": 0,
+        "AllianceHydraKeys": 0,
+        "AllianceChimeraKeys": 0,
+        "FoggyForestEnergy": 0,
+        "FoggyForestMainBossKeysNormal": 0,
+        "FoggyForestMainBossKeysHard": 0,
+        "ForgeMaterials": {
+          "Count": 0,
+          "Keys": "<KeyCollection>",
+          "prop_ICollection_1_TKey_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TKey_0": "<IEnumerable`1>",
+          "Values": "<ValueCollection>",
+          "prop_ICollection_1_TValue_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TValue_0": "<IEnumerable`1>",
+          "prop_Boolean_0": false,
+          "System.Collections.ICollection.IsSynchronized": false,
+          "System.Collections.ICollection.SyncRoot": "<Object>",
+          "System.Collections.IDictionary.IsFixedSize": false,
+          "System.Collections.IDictionary.IsReadOnly": false,
+          "System.Collections.IDictionary.Keys": "<ICollection>",
+          "System.Collections.IDictionary.Values": "<ICollection>"
+        },
+        "DoubleAscend": {
+          "Count": 0,
+          "Keys": "<KeyCollection>",
+          "prop_ICollection_1_TKey_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TKey_0": "<IEnumerable`1>",
+          "Values": "<ValueCollection>",
+          "prop_ICollection_1_TValue_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TValue_0": "<IEnumerable`1>",
+          "prop_Boolean_0": false,
+          "System.Collections.ICollection.IsSynchronized": false,
+          "System.Collections.ICollection.SyncRoot": "<Object>",
+          "System.Collections.IDictionary.IsFixedSize": false,
+          "System.Collections.IDictionary.IsReadOnly": false,
+          "System.Collections.IDictionary.Keys": "<ICollection>",
+          "System.Collections.IDictionary.Values": "<ICollection>"
+        },
+        "Magisteel": 0,
+        "Corehammer": 0,
+        "SoulstoneRare": 0,
+        "SoulstoneEpic": 0,
+        "SoulstoneLeg": 0,
+        "BloodstoneRare": 0,
+        "BloodstoneEpic": 0,
+        "BloodstoneLeg": 0,
+        "NetherSpiderRare": 0,
+        "NetherSpiderEpic": 0,
+        "NetherSpiderLeg": 0,
+        "ScarabClawsRare": 0,
+        "ScarabClawsEpic": 0,
+        "ScarabClawsLeg": 0,
+        "MagmaDragonCoresRare": 0,
+        "MagmaDragonCoresEpic": 0,
+        "MagmaDragonCoresLeg": 0,
+        "FrostSpiderSpinesRare": 0,
+        "FrostSpiderSpinesEpic": 0,
+        "FrostSpiderSpinesLeg": 0,
+        "DragonBoneRare": 0,
+        "DragonBoneEpic": 0,
+        "DragonBoneLeg": 0,
+        "GriffinFeatherRare": 0,
+        "GriffinFeatherEpic": 0,
+        "GriffinFeatherLeg": 0,
+        "DreadhornPlatesRare": 0,
+        "DreadhornPlatesEpic": 0,
+        "DreadhornPlatesLeg": 0,
+        "FaeSpheresRare": 0,
+        "FaeSpheresEpic": 0,
+        "FaeSpheresLeg": 0,
+        "InstinctStonesRare": 0,
+        "InstinctStonesEpic": 0,
+        "InstinctStonesLeg": 0,
+        "DoomTowerGoldKeys": 0,
+        "DoomTowerSilverKeys": 0,
+        "AllianceCoin": 0,
+        "FortressKeys": 0,
+        "EternalSoulCoin": 0,
+        "ImmortalSoulCoin": 0,
+        "MortalSoulCoin": 0,
+        "EternalSoulEssence": 0,
+        "ImmortalSoulEssence": 0,
+        "LifeTokens": 0,
+        "LiveArenaMedalBronze": 0,
+        "LiveArenaMedalSilver": 0,
+        "LiveArenaMedalGold": 0,
+        "PlariumPoints": 0,
+        "MythicalDust": 0,
+        "BrokenHeroParts": 0,
+        "CursedCityKeys": 0,
+        "CursedCityHardQuestPoints": 0,
+        "CursedCityNormalQuestPoints": 0,
+        "ParticleSummon": 0,
+        "SiegeStones": 500,
+        "SiegeMana": 250,
+        "SiegeDefenseScrolls": 0,
+        "SiegeBattleScrolls": 0,
+        "SiegeRematchScrolls": 0,
+        "Meteors": 0,
+        "FoggyForestNormalCoins": 0,
+        "FoggyForestNormalGold": 0,
+        "FoggyForestNormalMainBossKeys": 0,
+        "FoggyForestNormalRollRefreshes": 0,
+        "FoggyForestNormalTreasureHuntParts": 0,
+        "FoggyForestHardCoins": 0,
+        "FoggyForestHardGold": 0,
+        "FoggyForestHardMainBossKeys": 0,
+        "FoggyForestHardRollRefreshes": 0,
+        "FoggyForestHardTreasureHuntParts": 0
+      },
+      "RequiredBastionLevel": 1,
+      "SkillId": {
+        "hasValue": true,
+        "value": -534389536,
+        "HasValue": true,
+        "Value": 0
+      },
+      "Name": {
+        "DefaultValue": "15",
+        "Key": "l10n:siege-trap/name?id=15#static",
+        "HasBreakSymbol": false
+      },
+      "Description": {
+        "DefaultValue": "15",
+        "Key": "l10n:siege-trap/description?id=15#static",
+        "HasBreakSymbol": false
+      }
+    }
+  ],
+  "TrapsCountByBastionLevel": {
+    "-534389536": -534389536
+  },
+  "SiegeModifierById": {
+    "-534389536": {
+      "Id": 710036,
+      "Category": 3,
+      "ManaRequired": 300,
+      "RequiredBastionLevel": 3,
+      "DisabledEffects": [
+        "Revive",
+        "ReviveOnDeath"
+      ],
+      "Description": {
+        "DefaultValue": "710036",
+        "Key": "l10n:siege-modifier/description?id=710036#static",
+        "HasBreakSymbol": false
+      }
+    }
+  },
+  "SiegeTrapById": {
+    "-534389536": {
+      "Id": 15,
+      "AppliedToEnemy": true,
+      "Price": {
+        "RawValues": {
+          "-487148272": 5.917728043973e-312
+        },
+        "ToRawValues": {
+          "-487148272": 5.917728043973e-312
+        },
+        "Energy": 0,
+        "Silver": 0,
+        "Tokens": 0,
+        "Arena3X3ShopCurrency": 0,
+        "Arena3X3Tokens": 0,
+        "LiveArenaTokens": 0,
+        "Gems": 0,
+        "AutoBattleTickets": 0,
+        "MedalBronze": 0,
+        "MedalSilver": 0,
+        "MedalGold": 0,
+        "AllianceBossKey": 0,
+        "AllianceHydraKeys": 0,
+        "AllianceChimeraKeys": 0,
+        "FoggyForestEnergy": 0,
+        "FoggyForestMainBossKeysNormal": 0,
+        "FoggyForestMainBossKeysHard": 0,
+        "ForgeMaterials": {
+          "Count": 0,
+          "Keys": "<KeyCollection>",
+          "prop_ICollection_1_TKey_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TKey_0": "<IEnumerable`1>",
+          "Values": "<ValueCollection>",
+          "prop_ICollection_1_TValue_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TValue_0": "<IEnumerable`1>",
+          "prop_Boolean_0": false,
+          "System.Collections.ICollection.IsSynchronized": false,
+          "System.Collections.ICollection.SyncRoot": "<Object>",
+          "System.Collections.IDictionary.IsFixedSize": false,
+          "System.Collections.IDictionary.IsReadOnly": false,
+          "System.Collections.IDictionary.Keys": "<ICollection>",
+          "System.Collections.IDictionary.Values": "<ICollection>"
+        },
+        "DoubleAscend": {
+          "Count": 0,
+          "Keys": "<KeyCollection>",
+          "prop_ICollection_1_TKey_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TKey_0": "<IEnumerable`1>",
+          "Values": "<ValueCollection>",
+          "prop_ICollection_1_TValue_0": "<ICollection`1>",
+          "prop_IEnumerable_1_TValue_0": "<IEnumerable`1>",
+          "prop_Boolean_0": false,
+          "System.Collections.ICollection.IsSynchronized": false,
+          "System.Collections.ICollection.SyncRoot": "<Object>",
+          "System.Collections.IDictionary.IsFixedSize": false,
+          "System.Collections.IDictionary.IsReadOnly": false,
+          "System.Collections.IDictionary.Keys": "<ICollection>",
+          "System.Collections.IDictionary.Values": "<ICollection>"
+        },
+        "Magisteel": 0,
+        "Corehammer": 0,
+        "SoulstoneRare": 0,
+        "SoulstoneEpic": 0,
+        "SoulstoneLeg": 0,
+        "BloodstoneRare": 0,
+        "BloodstoneEpic": 0,
+        "BloodstoneLeg": 0,
+        "NetherSpiderRare": 0,
+        "NetherSpiderEpic": 0,
+        "NetherSpiderLeg": 0,
+        "ScarabClawsRare": 0,
+        "ScarabClawsEpic": 0,
+        "ScarabClawsLeg": 0,
+        "MagmaDragonCoresRare": 0,
+        "MagmaDragonCoresEpic": 0,
+        "MagmaDragonCoresLeg": 0,
+        "FrostSpiderSpinesRare": 0,
+        "FrostSpiderSpinesEpic": 0,
+        "FrostSpiderSpinesLeg": 0,
+        "DragonBoneRare": 0,
+        "DragonBoneEpic": 0,
+        "DragonBoneLeg": 0,
+        "GriffinFeatherRare": 0,
+        "GriffinFeatherEpic": 0,
+        "GriffinFeatherLeg": 0,
+        "DreadhornPlatesRare": 0,
+        "DreadhornPlatesEpic": 0,
+        "DreadhornPlatesLeg": 0,
+        "FaeSpheresRare": 0,
+        "FaeSpheresEpic": 0,
+        "FaeSpheresLeg": 0,
+        "InstinctStonesRare": 0,
+        "InstinctStonesEpic": 0,
+        "InstinctStonesLeg": 0,
+        "DoomTowerGoldKeys": 0,
+        "DoomTowerSilverKeys": 0,
+        "AllianceCoin": 0,
+        "FortressKeys": 0,
+        "EternalSoulCoin": 0,
+        "ImmortalSoulCoin": 0,
+        "MortalSoulCoin": 0,
+        "EternalSoulEssence": 0,
+        "ImmortalSoulEssence": 0,
+        "LifeTokens": 0,
+        "LiveArenaMedalBronze": 0,
+        "LiveArenaMedalSilver": 0,
+        "LiveArenaMedalGold": 0,
+        "PlariumPoints": 0,
+        "MythicalDust": 0,
+        "BrokenHeroParts": 0,
+        "CursedCityKeys": 0,
+        "CursedCityHardQuestPoints": 0,
+        "CursedCityNormalQuestPoints": 0,
+        "ParticleSummon": 0,
+        "SiegeStones": 500,
+        "SiegeMana": 250,
+        "SiegeDefenseScrolls": 0,
+        "SiegeBattleScrolls": 0,
+        "SiegeRematchScrolls": 0,
+        "Meteors": 0,
+        "FoggyForestNormalCoins": 0,
+        "FoggyForestNormalGold": 0,
+        "FoggyForestNormalMainBossKeys": 0,
+        "FoggyForestNormalRollRefreshes": 0,
+        "FoggyForestNormalTreasureHuntParts": 0,
+        "FoggyForestHardCoins": 0,
+        "FoggyForestHardGold": 0,
+        "FoggyForestHardMainBossKeys": 0,
+        "FoggyForestHardRollRefreshes": 0,
+        "FoggyForestHardTreasureHuntParts": 0
+      },
+      "RequiredBastionLevel": 1,
+      "SkillId": {
+        "hasValue": true,
+        "value": -534389536,
+        "HasValue": true,
+        "Value": 0
+      },
+      "Name": {
+        "DefaultValue": "15",
+        "Key": "l10n:siege-trap/name?id=15#static",
+        "HasBreakSymbol": false
+      },
+      "Description": {
+        "DefaultValue": "15",
+        "Key": "l10n:siege-trap/description?id=15#static",
+        "HasBreakSymbol": false
+      }
+    }
+  },
+  "SiegeBonusById": {
+    "-534389536": {
+      "Id": 7020093,
+      "Category": 3,
+      "ManaRequired": 800,
+      "BuildingKindId": "DefenseTower",
+      "ForEnemy": true,
+      "Description": {
+        "DefaultValue": "7020093",
+        "Key": "l10n:siege-bonus/description?id=7020093#static",
+        "HasBreakSymbol": false
+      },
+      "BonusEffect": {
+        "SkillTypeId": {
+          "hasValue": true,
+          "value": -534389536,
+          "HasValue": true,
+          "Value": 0
+        }
+      },
+      "RequiredLevel": 3
+    }
+  },
+  "MedalsMaxValue": 10000
+}

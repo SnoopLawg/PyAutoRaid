@@ -1,0 +1,177 @@
+{
+  "_meta": {
+    "fetched_at": "2026-05-02T00:18:49.029465+00:00",
+    "scene": "Village",
+    "mod_version": "2.0-bepinex",
+    "unity": "6000.0.60f1"
+  },
+  "Settings": {
+    "MatchMakingWorkerId": 40,
+    "RefreshIntervalMinutes": 1,
+    "GroupSize": 5,
+    "MatchMakingPreviousAverageNumber": 4,
+    "MatchMakingPreviousCompetitorsNumber": 2,
+    "StartDelayHours": 24,
+    "ResetDelayHours": 23,
+    "RewardAvailabilityDelayHours": 19.5,
+    "DurationHours": 168,
+    "StorageLifetimeHours": 840,
+    "KeepHistoryRecords": 5,
+    "RequirementsUsers": 10,
+    "RequirementsActivityStars": 50,
+    "RequirementsUserLevel": 33,
+    "DbReadBlockSize": 1000
+  },
+  "RewardRanges": [
+    {
+      "MinPoints": 220000000,
+      "MaxPoints": 880000000,
+      "AlliancePlace": 1,
+      "TypeId": "M"
+    },
+    {
+      "MinPoints": 220000000,
+      "MaxPoints": 880000000,
+      "AlliancePlace": 2,
+      "TypeId": "SPlus"
+    },
+    {
+      "MinPoints": 220000000,
+      "MaxPoints": 880000000,
+      "AlliancePlace": 3,
+      "TypeId": "S"
+    },
+    {
+      "MinPoints": 880000000,
+      "MaxPoints": 2200000000,
+      "AlliancePlace": 1,
+      "TypeId": "MPlus"
+    },
+    {
+      "MinPoints": 880000000,
+      "MaxPoints": 2200000000,
+      "AlliancePlace": 2,
+      "TypeId": "M"
+    },
+    {
+      "MinPoints": 880000000,
+      "MaxPoints": 2200000000,
+      "AlliancePlace": 3,
+      "TypeId": "SPlus"
+    },
+    {
+      "MinPoints": 2200000000,
+      "MaxPoints": 3200000000,
+      "AlliancePlace": 1,
+      "TypeId": "L"
+    },
+    {
+      "MinPoints": 2200000000,
+      "MaxPoints": 3200000000,
+      "AlliancePlace": 2,
+      "TypeId": "MPlus"
+    },
+    {
+      "MinPoints": 2200000000,
+      "MaxPoints": 3200000000,
+      "AlliancePlace": 3,
+      "TypeId": "M"
+    },
+    {
+      "MinPoints": 3200000000,
+      "MaxPoints": 9223372036854775807,
+      "AlliancePlace": 1,
+      "TypeId": "LPlus"
+    },
+    {
+      "MinPoints": 3200000000,
+      "MaxPoints": 9223372036854775807,
+      "AlliancePlace": 2,
+      "TypeId": "L"
+    },
+    {
+      "MinPoints": 3200000000,
+      "MaxPoints": 9223372036854775807,
+      "AlliancePlace": 3,
+      "TypeId": "MPlus"
+    }
+  ],
+  "RewardInfoByTypeId": {
+    "-487142768": {
+      "FlexibleReward": {
+        "Count": 6,
+        "Rewards": [
+          "<FlexibleRewardInfo>",
+          "<FlexibleRewardInfo>",
+          "<FlexibleRewardInfo>",
+          "<FlexibleRewardInfo>",
+          "<FlexibleRewardInfo>",
+          "<FlexibleRewardInfo>",
+          "<FlexibleRewardInfo>",
+          "<FlexibleRewardInfo>",
+          "<FlexibleRewardInfo>",
+          "<FlexibleRewardInfo>",
+          "<FlexibleRewardInfo>",
+          "<FlexibleRewardInfo>"
+        ],
+        "CompareArtifactsByItsProperties": false,
+        "RollAvailableTimesPerType": {
+          "-485467168": -534389536
+        },
+        "RewardProbsByIndex": {
+          "-534389536": 5.917728043973e-312
+        }
+      }
+    }
+  },
+  "MilestoneRewardByPoints": {
+    "1197761488352": {
+      "Experience": 0,
+      "ArenaPoints": 0,
+      "ArtifactDropSettingsProcessed": false,
+      "RandomRelicStonesPrizes": [
+        {
+          "Count": 1,
+          "Rarities": "<List`1>",
+          "ExcludedShapes": "<List`1>"
+        }
+      ],
+      "HasExperience": false,
+      "HasAllianceExperience": false,
+      "HasMythicalDust": false,
+      "HasResources": false,
+      "HasHeroParts": false,
+      "HasHeroSouls": false,
+      "HasHeroPartsChainReward": false,
+      "HasHeroPartsChest": false,
+      "HasRewardIfHeroPartsChestTaken": false,
+      "HasBmis": false,
+      "HasHeroes": false,
+      "HasArtifactsOrAccessories": false,
+      "HasArtifacts": false,
+      "HasAccessory": false,
+      "HasEffects": false,
+      "HasArtifactDropSettings": false,
+      "HasSetOfArtifacts": false,
+      "HasAvatars": false,
+      "HasBadges": false,
+      "HasFrames": false,
+      "HasHeroSkins": false,
+      "HasSelectableHeroes": false,
+      "HasFoggyForestPrizes": false,
+      "HasFoggyForestCurios": false,
+      "HasFoggyForestCurioChests": false,
+      "HasBingoCurrency": false,
+      "HasThreelineCurrency": false,
+      "HasClassicCooperationEventPoints": false,
+      "HasCooperationEventWorldsBossPoints": false,
+      "HasXpBooster": false,
+      "HasSummonParticles": false,
+      "GemsCount": 0,
+      "HasRelics": false,
+      "HasRelicStone": false,
+      "HasRandomRelicStone": true,
+      "HasRelicStoneBoxes": false
+    }
+  }
+}

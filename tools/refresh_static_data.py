@@ -85,6 +85,53 @@ SECTIONS: dict = {
     "factions": ("factions.json",
         "/static-export?path=HeroData.FractionsByRace&depth=3&max=50",
         "data_under_data"),
+    # ALL skills, not just owned. ~5400 entries with KindId/Multiplier/Target.
+    # Powers sim of teams the user doesn't own yet (Phase 4 dependency).
+    # depth=3 max=5500 takes ~30s on the main thread — biggest static fetch.
+    "skills_all": ("skills_all.json",
+        "/static-export?path=SkillData.SkillTypes&depth=3&max=5500",
+        "data_under_data"),
+    # Master stage list — every battle the game knows about (~2873 entries).
+    # Includes Modifiers, FirstTimeReward, Area, Region, Difficulty, Number.
+    # depth=3 captures Modifiers & rewards; deeper formations stay shallow.
+    "stages": ("stages.json",
+        "/static-export?path=StageData.Stages&depth=3&max=3000",
+        "data_under_data"),
+    # Per-location config blocks. Each has its own structure (regions,
+    # tiers, reward tables, modifiers) — pulled raw and consumed by the
+    # location-specific sim/optimizer modules.
+    "hydra": ("hydra.json",
+        "/static-export?path=HydraCompetitionData&depth=4&max=200",
+        None),
+    "chimera": ("chimera.json",
+        "/static-export?path=ChimeraCompetitionData&depth=4&max=200",
+        None),
+    "siege": ("siege.json",
+        "/static-export?path=SiegeData&depth=4&max=200",
+        None),
+    "cursed_city": ("cursed_city.json",
+        "/static-export?path=StageData.CursedCityData&depth=4&max=300",
+        None),
+    "foggy_forest": ("foggy_forest.json",
+        "/static-export?path=StageData.FoggyForestData&depth=4&max=500",
+        None),
+    # Stage-area metadata (the 14 area types: Story, Dungeon, Hydra, etc.)
+    "stage_areas": ("stage_areas.json",
+        "/static-export?path=StageData.Areas&depth=3&max=20",
+        "data_under_data"),
+    # Stage regions (campaign chapters, dungeon difficulty tiers, etc.)
+    "stage_regions": ("stage_regions.json",
+        "/static-export?path=StageData.Regions&depth=3&max=100",
+        "data_under_data"),
+    # Reward tables: campaign first-time / faction-war / quick-jump etc.
+    "stage_rewards": ("stage_rewards.json",
+        "/static-export?path=StageData.StoryRewardsByStarsByDifficulty&depth=4&max=100",
+        None),
+    # Doom Tower lives in a sibling top-level — not StageData.
+    # NOTE: there's no "DoomTowerData" at /static-export top level. The
+    # 792 DoomTower stages are inside StageData.Stages (filterable by
+    # Area=DoomTower). If a dedicated DoomTowerData tree exists in a
+    # different namespace we'll add it once located.
 }
 
 

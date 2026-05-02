@@ -1,0 +1,133 @@
+{
+  "_meta": {
+    "fetched_at": "2026-05-02T00:18:49.275830+00:00",
+    "scene": "Village",
+    "mod_version": "2.0-bepinex",
+    "unity": "6000.0.60f1"
+  },
+  "DifficultyData": [
+    {
+      "DifficultyId": "Normal",
+      "QuestData": {
+        "PointsTypeId": "CursedCity_QuestPoint_Normal",
+        "RewardByPassedStages": {
+          "-534389536": "<UserPrize>"
+        },
+        "RewardByPassedDoubleAscendStages": {
+          "-534389536": "<UserPrize>"
+        },
+        "MainBossStageReward": {
+          "Experience": 0,
+          "ArenaPoints": 0,
+          "Resources": "<Resources>",
+          "ArtifactDropSettingsProcessed": false,
+          "HasExperience": false,
+          "HasAllianceExperience": false,
+          "HasMythicalDust": false,
+          "HasResources": true,
+          "HasHeroParts": false,
+          "HasHeroSouls": false,
+          "HasHeroPartsChainReward": false,
+          "HasHeroPartsChest": false,
+          "HasRewardIfHeroPartsChestTaken": false,
+          "HasBmis": false,
+          "HasHeroes": false,
+          "HasArtifactsOrAccessories": false,
+          "HasArtifacts": false,
+          "HasAccessory": false,
+          "HasEffects": false,
+          "HasArtifactDropSettings": false,
+          "HasSetOfArtifacts": false,
+          "HasAvatars": false,
+          "HasBadges": false,
+          "HasFrames": false,
+          "HasHeroSkins": false,
+          "HasSelectableHeroes": false,
+          "HasFoggyForestPrizes": false,
+          "HasFoggyForestCurios": false,
+          "HasFoggyForestCurioChests": false,
+          "HasBingoCurrency": false,
+          "HasThreelineCurrency": false,
+          "HasClassicCooperationEventPoints": false,
+          "HasCooperationEventWorldsBossPoints": false,
+          "HasXpBooster": false,
+          "HasSummonParticles": false,
+          "GemsCount": 0,
+          "HasRelics": false,
+          "HasRelicStone": false,
+          "HasRandomRelicStone": false,
+          "HasRelicStoneBoxes": false
+        }
+      },
+      "MilestoneData": {
+        "ChestData": {
+          "Reward": "<FlexibleReward>",
+          "Price": "<Resources>"
+        }
+      }
+    },
+    {
+      "DifficultyId": "Hard",
+      "QuestData": {
+        "PointsTypeId": "CursedCity_QuestPoint_Hard",
+        "RewardByPassedStages": {
+          "-534389536": "<UserPrize>"
+        },
+        "RewardByPassedDoubleAscendStages": {
+          "-534389536": "<UserPrize>"
+        },
+        "MainBossStageReward": {
+          "Experience": 0,
+          "ArenaPoints": 0,
+          "Resources": "<Resources>",
+          "ArtifactDropSettingsProcessed": false,
+          "HasExperience": false,
+          "HasAllianceExperience": false,
+          "HasMythicalDust": false,
+          "HasResources": true,
+          "HasHeroParts": false,
+          "HasHeroSouls": false,
+          "HasHeroPartsChainReward": false,
+          "HasHeroPartsChest": false,
+          "HasRewardIfHeroPartsChestTaken": false,
+          "HasBmis": false,
+          "HasHeroes": false,
+          "HasArtifactsOrAccessories": false,
+          "HasArtifacts": false,
+          "HasAccessory": false,
+          "HasEffects": false,
+          "HasArtifactDropSettings": false,
+          "HasSetOfArtifacts": false,
+          "HasAvatars": false,
+          "HasBadges": false,
+          "HasFrames": false,
+          "HasHeroSkins": false,
+          "HasSelectableHeroes": false,
+          "HasFoggyForestPrizes": false,
+          "HasFoggyForestCurios": false,
+          "HasFoggyForestCurioChests": false,
+          "HasBingoCurrency": false,
+          "HasThreelineCurrency": false,
+          "HasClassicCooperationEventPoints": false,
+          "HasCooperationEventWorldsBossPoints": false,
+          "HasXpBooster": false,
+          "HasSummonParticles": false,
+          "GemsCount": 0,
+          "HasRelics": false,
+          "HasRelicStone": false,
+          "HasRandomRelicStone": false,
+          "HasRelicStoneBoxes": false
+        }
+      },
+      "MilestoneData": {
+        "RewardByPoints": {
+          "-534389536": "<UserPrize>"
+        },
+        "ChestData": {
+          "Reward": "<FlexibleReward>",
+          "Price": "<Resources>"
+        }
+      }
+    }
+  ]
+}

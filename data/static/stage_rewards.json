@@ -1,0 +1,54 @@
+{
+  "_meta": {
+    "fetched_at": "2026-05-02T00:18:49.789818+00:00",
+    "scene": "Village",
+    "mod_version": "2.0-bepinex",
+    "unity": "6000.0.60f1"
+  },
+  "-486394928": {
+    "-534389536": {
+      "Experience": 0,
+      "ArenaPoints": 0,
+      "BlackMarketItems": {
+        "-487129536": -534389536
+      },
+      "ArtifactDropSettingsProcessed": false,
+      "HasExperience": false,
+      "HasAllianceExperience": false,
+      "HasMythicalDust": false,
+      "HasResources": false,
+      "HasHeroParts": false,
+      "HasHeroSouls": false,
+      "HasHeroPartsChainReward": false,
+      "HasHeroPartsChest": false,
+      "HasRewardIfHeroPartsChestTaken": false,
+      "HasBmis": true,
+      "HasHeroes": false,
+      "HasArtifactsOrAccessories": false,
+      "HasArtifacts": false,
+      "HasAccessory": false,
+      "HasEffects": false,
+      "HasArtifactDropSettings": false,
+      "HasSetOfArtifacts": false,
+      "HasAvatars": false,
+      "HasBadges": false,
+      "HasFrames": false,
+      "HasHeroSkins": false,
+      "HasSelectableHeroes": false,
+      "HasFoggyForestPrizes": false,
+      "HasFoggyForestCurios": false,
+      "HasFoggyForestCurioChests": false,
+      "HasBingoCurrency": false,
+      "HasThreelineCurrency": false,
+      "HasClassicCooperationEventPoints": false,
+      "HasCooperationEventWorldsBossPoints": false,
+      "HasXpBooster": false,
+      "HasSummonParticles": false,
+      "GemsCount": 0,
+      "HasRelics": false,
+      "HasRelicStone": false,
+      "HasRandomRelicStone": false,
+      "HasRelicStoneBoxes": false
+    }
+  }
+}

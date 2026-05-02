@@ -1,0 +1,822 @@
+{
+  "_meta": {
+    "fetched_at": "2026-05-02T00:18:34.996000+00:00",
+    "scene": "Village",
+    "mod_version": "2.0-bepinex",
+    "unity": "6000.0.60f1"
+  },
+  "data": [
+    {
+      "Id": "Story",
+      "Name": {
+        "DefaultValue": "Story",
+        "Key": "l10n:area/name?id=1#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "UserLevelRequired": 1
+      },
+      "Regions": [
+        {
+          "Id": "Region1",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        },
+        {
+          "Id": "Region2",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        },
+        {
+          "Id": "Region3",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        },
+        {
+          "Id": "Region4",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        },
+        {
+          "Id": "Region5",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        },
+        {
+          "Id": "Region6",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        },
+        {
+          "Id": "Region7",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        },
+        {
+          "Id": "Region8",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        },
+        {
+          "Id": "Region9",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        },
+        {
+          "Id": "Region10",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        },
+        {
+          "Id": "Region11",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        },
+        {
+          "Id": "Region12",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        }
+      ],
+      "RegionsById": {
+        "-486392864": {
+          "Id": "Region12",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        }
+      }
+    },
+    {
+      "Id": "Dungeon",
+      "Name": {
+        "DefaultValue": "Dungeon",
+        "Key": "l10n:area/name?id=2#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "UserLevelRequired": 6
+      },
+      "Regions": [
+        {
+          "Id": "VoidKeep",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        },
+        {
+          "Id": "SpiritKeep",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        },
+        {
+          "Id": "MagicKeep",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        },
+        {
+          "Id": "ForceKeep",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        },
+        {
+          "Id": "ArcaneKeep",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        },
+        {
+          "Id": "DragonsLair",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        },
+        {
+          "Id": "IceGolemCave",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        },
+        {
+          "Id": "FireGolemCave",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        },
+        {
+          "Id": "SpiderCave",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        },
+        {
+          "Id": "MinotaurCave",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        },
+        {
+          "Id": "VoidDoubleAscendDungeon",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        },
+        {
+          "Id": "SpiritDoubleAscendDungeon",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        },
+        {
+          "Id": "MagicDoubleAscendDungeon",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        },
+        {
+          "Id": "ForceDoubleAscendDungeon",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        },
+        {
+          "Id": "ArtifactAscendDungeon",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        },
+        {
+          "Id": "AccessoryAscendDungeon",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        },
+        {
+          "Id": "EventDungeon",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        }
+      ],
+      "RegionsById": {
+        "-486392864": {
+          "Id": "EventDungeon",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        }
+      }
+    },
+    {
+      "Id": "Arena",
+      "Name": {
+        "DefaultValue": "Arena",
+        "Key": "l10n:area/name?id=3#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "UserLevelRequired": 6
+      },
+      "Regions": [
+        {
+          "Id": "Arena",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        }
+      ],
+      "RegionsById": {
+        "-486392864": {
+          "Id": "Arena",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        }
+      }
+    },
+    {
+      "Id": "AllianceBoss",
+      "Name": {
+        "DefaultValue": "AllianceBoss",
+        "Key": "l10n:area/name?id=4#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "UserLevelRequired": 17
+      },
+      "Regions": [
+        {
+          "Id": "AllianceBoss",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        }
+      ],
+      "RegionsById": {
+        "-486392864": {
+          "Id": "AllianceBoss",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        }
+      }
+    },
+    {
+      "Id": "Fractions",
+      "Name": {
+        "DefaultValue": "Fractions",
+        "Key": "l10n:area/name?id=5#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "UserLevelRequired": 20
+      },
+      "Regions": [
+        {
+          "Id": "Fraction_BannerLords",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        },
+        {
+          "Id": "Fraction_HighElves",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        },
+        {
+          "Id": "Fraction_SacredOrder",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        },
+        {
+          "Id": "Fraction_OgrynTribes",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        },
+        {
+          "Id": "Fraction_LizardMen",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        },
+        {
+          "Id": "Fraction_Skinwalkers",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        },
+        {
+          "Id": "Fraction_Orcs",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        },
+        {
+          "Id": "Fraction_Demonspawn",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        },
+        {
+          "Id": "Fraction_UndeadHordes",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        },
+        {
+          "Id": "Fraction_DarkElves",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        },
+        {
+          "Id": "Fraction_KnightsRevenant",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        },
+        {
+          "Id": "Fraction_Barbarians",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        },
+        {
+          "Id": "Fraction_Dwarves",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        },
+        {
+          "Id": "Fraction_Samurai",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        },
+        {
+          "Id": "Fraction_SylvanWatchers",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        }
+      ],
+      "RegionsById": {
+        "-486392864": {
+          "Id": "Fraction_SylvanWatchers",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        }
+      }
+    },
+    {
+      "Id": "Arena3X3",
+      "Name": {
+        "DefaultValue": "Arena3X3",
+        "Key": "l10n:area/name?id=6#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "UserLevelRequired": 35
+      },
+      "Regions": [
+        {
+          "Id": "Arena3x3",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        }
+      ],
+      "RegionsById": {
+        "-486392864": {
+          "Id": "Arena3x3",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        }
+      }
+    },
+    {
+      "Id": "DoomTower",
+      "Name": {
+        "DefaultValue": "DoomTower",
+        "Key": "l10n:area/name?id=7#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "UserLevelRequired": 40
+      },
+      "Regions": [
+        {
+          "Id": "DoomTower1",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        },
+        {
+          "Id": "DoomTower2",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        },
+        {
+          "Id": "DoomTower3",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        }
+      ],
+      "RegionsById": {
+        "-486392864": {
+          "Id": "DoomTower3",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        }
+      }
+    },
+    {
+      "Id": "Hydra",
+      "Name": {
+        "DefaultValue": "Hydra",
+        "Key": "l10n:area/name?id=8#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "UserLevelRequired": 6
+      },
+      "Regions": [
+        {
+          "Id": "AllianceHydraSeason1",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        },
+        {
+          "Id": "AllianceHydraSeason2",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        },
+        {
+          "Id": "AllianceHydraSeason3",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        },
+        {
+          "Id": "AllianceHydraSeason4",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        },
+        {
+          "Id": "AllianceHydraSeason5",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        },
+        {
+          "Id": "AllianceHydraSeason6",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        }
+      ],
+      "RegionsById": {
+        "-486392864": {
+          "Id": "AllianceHydraSeason6",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        }
+      }
+    },
+    {
+      "Id": "LiveArena",
+      "Name": {
+        "DefaultValue": "LiveArena",
+        "Key": "l10n:area/name?id=9#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "UserLevelRequired": 50
+      },
+      "Regions": [
+        {
+          "Id": "LiveArena",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        }
+      ],
+      "RegionsById": {
+        "-486392864": {
+          "Id": "LiveArena",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        }
+      }
+    },
+    {
+      "Id": "CursedCity",
+      "Name": {
+        "DefaultValue": "CursedCity",
+        "Key": "l10n:area/name?id=10#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "UserLevelRequired": 52
+      },
+      "Regions": [
+        {
+          "Id": "CursedCityDistrict1",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        },
+        {
+          "Id": "CursedCityDistrict2",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        },
+        {
+          "Id": "CursedCityDistrict3",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        },
+        {
+          "Id": "CursedCityDistrict4",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        },
+        {
+          "Id": "CursedCityMainBoss",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        }
+      ],
+      "RegionsById": {
+        "-486392864": {
+          "Id": "CursedCityMainBoss",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        }
+      }
+    },
+    {
+      "Id": "Siege",
+      "Name": {
+        "DefaultValue": "Siege",
+        "Key": "l10n:area/name?id=11#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "UserLevelRequired": 45
+      },
+      "Regions": [
+        {
+          "Id": "SiegeLayer1",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        }
+      ],
+      "RegionsById": {
+        "-486392864": {
+          "Id": "SiegeLayer1",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        }
+      }
+    },
+    {
+      "Id": "Chimera",
+      "Name": {
+        "DefaultValue": "Chimera",
+        "Key": "l10n:area/name?id=13#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "UserLevelRequired": 33
+      },
+      "Regions": [
+        {
+          "Id": "ChimeraRotation1",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        },
+        {
+          "Id": "ChimeraRotation2",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        },
+        {
+          "Id": "ChimeraRotation3",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        },
+        {
+          "Id": "ChimeraRotation4",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        }
+      ],
+      "RegionsById": {
+        "-486392864": {
+          "Id": "ChimeraRotation4",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        }
+      }
+    },
+    {
+      "Id": "FoggyForest",
+      "Name": {
+        "DefaultValue": "FoggyForest",
+        "Key": "l10n:area/name?id=14#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "UserLevelRequired": 55
+      },
+      "Regions": [
+        {
+          "Id": "FoggyForestEasyZone",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        },
+        {
+          "Id": "FoggyForestMiddleZone",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        },
+        {
+          "Id": "FoggyForestHardZone",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        },
+        {
+          "Id": "FoggyForestExtraHardZone",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        }
+      ],
+      "RegionsById": {
+        "-486392864": {
+          "Id": "FoggyForestExtraHardZone",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        }
+      }
+    },
+    {
+      "Id": "CooperationEventWorldBoss",
+      "Name": {
+        "DefaultValue": "CoopEventWorldBoss",
+        "Key": "l10n:area/name?id=15#static",
+        "HasBreakSymbol": false
+      },
+      "Condition": {
+        "UserLevelRequired": 30
+      },
+      "Regions": [
+        {
+          "Id": "CooperationEventWorldBoss",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        }
+      ],
+      "RegionsById": {
+        "-486392864": {
+          "Id": "CooperationEventWorldBoss",
+          "Name": "<SharedLTextKey>",
+          "Condition": "<RegionOpenCondition>",
+          "StageIdsByDifficulty": "<Dictionary`2>",
+          "StagesByDifficulty": "<Dictionary`2>"
+        }
+      }
+    }
+  ]
+}
