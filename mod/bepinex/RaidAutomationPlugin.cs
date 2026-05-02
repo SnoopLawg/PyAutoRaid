@@ -1999,6 +1999,8 @@ namespace RaidAutomation
                 // mitigation formula can be back-solved from real events.
                 long pAtk = -1, pCd = -1, pCr = -1;       // producer ATK / CritDmg / CritChance
                 long tDef = -1, tHpMax = -1, tHp = -1;    // target DEF / max HP / current HP
+                long pStamina = -1, tStamina = -1;        // turn meter at attack moment
+                int pLevel = -1, tLevel = -1;             // level (boss=250, heroes=60)
                 long calcDefMod = -1, calcMul = -1;       // DamageContext._defenceModifier and _multiplierValue
                 // Phase 5 (active effects + boss element).
                 int pElem = -1, tElem = -1;               // attacker/target Element (1=Magic 2=Force 3=Spirit 4=Void)
@@ -2053,12 +2055,16 @@ namespace RaidAutomation
                                 pElem = ReadHeroElement(prodHero);
                                 try { pTypeId = IntProp(prodHero, "TypeId"); } catch { }
                                 pEff = ReadActiveEffects(prodHero);
+                                try { pStamina = ReadFixedRaw(prodHero, "Stamina"); } catch { }
+                                try { pLevel = IntProp(prodHero, "Level"); } catch { }
                             }
                             if (tgtHero != null)
                             {
                                 tElem = ReadHeroElement(tgtHero);
                                 try { tTypeId = IntProp(tgtHero, "TypeId"); } catch { }
                                 tEff = ReadActiveEffects(tgtHero);
+                                try { tStamina = ReadFixedRaw(tgtHero, "Stamina"); } catch { }
+                                try { tLevel = IntProp(tgtHero, "Level"); } catch { }
                             }
                         }
                         catch { }
@@ -2179,6 +2185,10 @@ namespace RaidAutomation
                 if (tDef     >= 0) sb.Append(",\"t_def\":").Append(tDef);
                 if (tHpMax   >= 0) sb.Append(",\"t_hp_max\":").Append(tHpMax);
                 if (tHp      >= 0) sb.Append(",\"t_hp\":").Append(tHp);
+                if (pStamina >= 0) sb.Append(",\"p_tm\":").Append(pStamina);
+                if (tStamina >= 0) sb.Append(",\"t_tm\":").Append(tStamina);
+                if (pLevel   >= 0) sb.Append(",\"p_lvl\":").Append(pLevel);
+                if (tLevel   >= 0) sb.Append(",\"t_lvl\":").Append(tLevel);
                 if (calcDefMod >= 0) sb.Append(",\"def_mod\":").Append(calcDefMod);
                 if (calcMul    >= 0) sb.Append(",\"mul\":").Append(calcMul);
                 if (pElem      >= 0) sb.Append(",\"p_elem\":").Append(pElem);

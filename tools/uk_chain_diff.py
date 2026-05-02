@@ -36,14 +36,18 @@ EFFECT_NAMES = {
 }
 
 
-def extract_real_hero_buffs(log_path: Path) -> dict[int, dict[int, set[int]]]:
-    """Read the battle log polls and return per-(boss_turn, hero_id) buff sets.
+def extract_real_hero_buffs(log_path: Path) -> dict[int, dict[int, dict[int, int]]]:
+    """Read the battle log polls and return per-(boss_turn, hero_id) buff state.
 
-    Returns: {boss_turn: {hero_id: {effect_id, ...}}}
+    Returns: {boss_turn: {hero_id: {status_effect_type_id: duration_remaining}}}
+
+    Each hero's `buffs` field is a list of {t: type_id, d: duration,
+    src: source_hero_idx}. This is the GAME's authoritative buff list
+    (e.g. UK = type_id 320, BD = 60, Shield = 280).
     """
     d = json.loads(log_path.read_text(encoding="utf-8"))
     log = d.get("log", [])
-    by_turn: dict[int, dict[int, set[int]]] = {}
+    by_turn: dict[int, dict[int, dict[int, int]]] = {}
     for e in log:
         if "poll" not in e or "heroes" not in e:
             continue
@@ -56,20 +60,18 @@ def extract_real_hero_buffs(log_path: Path) -> dict[int, dict[int, set[int]]]:
             if h.get("side") != "player":
                 continue
             hid = h.get("id")
-            buffs: set[int] = set()
-            # `eff` is a list of {ph, e: [{id, k, c}]} blocks
-            for ph_block in h.get("eff", []) or []:
-                for ent in ph_block.get("e", []) or []:
-                    eff_id = ent.get("k") or 0
-                    # eff_id is StatusEffectKindId; not the same as type_id.
-                    # We capture both id and k — typical buffs we care about
-                    # are identified by `k` (kind).
-                    buffs.add(eff_id)
-                    type_id = ent.get("id") or 0
-                    buffs.add(type_id)
-            # Update OR-merge across multiple polls in the same boss turn
-            existing = by_turn[bt].get(hid, set())
-            by_turn[bt][hid] = existing | buffs
+            buffs: dict[int, int] = {}
+            for b in h.get("buffs") or []:
+                if isinstance(b, dict) and "t" in b:
+                    tid = b.get("t")
+                    dur = b.get("d", 0) or 0
+                    # Keep MAX duration if multiple polls hit same buff
+                    buffs[tid] = max(buffs.get(tid, 0), dur)
+            # Merge across polls in same turn (OR by max duration)
+            existing = by_turn[bt].get(hid, {})
+            for tid, dur in buffs.items():
+                existing[tid] = max(existing.get(tid, 0), dur)
+            by_turn[bt][hid] = existing
     return by_turn
 
 
@@ -124,19 +126,20 @@ def main() -> int:
             continue
         s_h = s_snap.get("hero_buffs", {})
         for hid_real, name in zip(sorted(r_h.keys())[:5], team):
-            real_set = r_h.get(hid_real, set())
+            real_buffs = r_h.get(hid_real, {})
             sim_buffs = s_h.get(name, {})
-            # Map sim buff names to canonical
-            sim_buffs_set = set(sim_buffs.keys())
-            # Care about UK/BD coverage
-            r_uk = 320 in real_set
-            r_bd = 60 in real_set
-            s_uk = "unkillable" in sim_buffs_set
-            s_bd = "block_damage" in sim_buffs_set
-            match = "OK" if (r_uk == s_uk and r_bd == s_bd) else "DIFF"
-            r_str = f"UK={'Y' if r_uk else 'N'} BD={'Y' if r_bd else 'N'} ({len(real_set)} effs)"
-            s_str = f"UK={'Y' if s_uk else 'N'} BD={'Y' if s_bd else 'N'} ({len(sim_buffs_set)} buffs)"
-            print(f"{bt:>3}  {name:<10}  {r_str:<35}  {s_str:<35}  {match}")
+            # UK = type_id 320, BD = 60, Shield = 280 in real
+            r_uk = real_buffs.get(320, 0)
+            r_bd = real_buffs.get(60, 0)
+            r_sh = real_buffs.get(280, 0)
+            s_uk = sim_buffs.get("unkillable", 0)
+            s_bd = sim_buffs.get("block_damage", 0)
+            s_sh = sim_buffs.get("shield", 0)
+            match = "OK" if (bool(r_uk) == bool(s_uk) and bool(r_bd) == bool(s_bd)
+                              and bool(r_sh) == bool(s_sh)) else "DIFF"
+            r_str = f"UK={r_uk} BD={r_bd} SH={r_sh}"
+            s_str = f"UK={s_uk} BD={s_bd} SH={s_sh}"
+            print(f"{bt:>3}  {name:<10}  {r_str:<25}  {s_str:<25}  {match}")
     return 0
 
 
