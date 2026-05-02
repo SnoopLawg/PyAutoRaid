@@ -1,0 +1,1 @@
+{"group":"EffectThatApplyStatusDebuffs","kinds":[{"name":"ReturnDebuffs","id":4021},{"name":"TransferDebuff","id":4022},{"name":"ApplyDebuff","id":5000},{"name":"MultiplyDebuff","id":5011},{"name":"ApplyOrProlongDebuff","id":5015},{"name":"ConvertStatusBuffToDebuff","id":5016},{"name":"SheepTransformation","id":9052},{"name":"ThunderStunApplier","id":13000}],"count":8}

@@ -522,6 +522,8 @@ namespace RaidAutomation
                     "/view-contexts" => RunOnMainThread(() => GetViewContexts(QP(query, "path"))),
                     "/invoke-context" => RunOnMainThread(() => InvokeOnContext(QP(query, "type"), QP(query, "method"))),
                     "/list-static-methods" => ListStaticMethods(QP(query, "type"), QP(query, "filter")),
+                    "/static-field" => RunOnMainThread(() => GetStaticField(QP(query, "type"), QP(query, "name"), QP(query, "depth")), 30000),
+                    "/effect-kind-group" => RunOnMainThread(() => GetEffectKindGroup(QP(query, "group")), 30000),
                     "/list-active" => RunOnMainThread(() => ListActive(QP(query, "path"), QP(query, "depth"), QP(query, "filter"))),
                     "/set-scroll" => RunOnMainThread(() => SetScroll(QP(query, "path"), QP(query, "v"), QP(query, "h"))),
                     "/list-components" => RunOnMainThread(() => ListComponents(QP(query, "path"))),
@@ -1870,6 +1872,23 @@ namespace RaidAutomation
             catch { return -1; }
         }
 
+        // Single-arg overload — read a Fixed-typed property directly off `obj`.
+        // Used by the damage hook to capture stats (e.g. Stats.Attack,
+        // BattleHero.HealthMax) where we already have the immediate parent.
+        private static long ReadFixedRaw(object obj, string fieldName)
+        {
+            try
+            {
+                if (obj == null) return -1;
+                var val = Prop(obj, fieldName);
+                if (val == null) return -1;
+                var raw = Prop(val, "RawValue");
+                if (raw == null) return -1;
+                return Convert.ToInt64(raw) >> 32;
+            }
+            catch { return -1; }
+        }
+
         // Convert a managed wrapper object to its underlying IL2CPP IntPtr handle.
         // Most BepInEx Il2CppObjectBase derivatives have a `Pointer` property.
         private static IntPtr IL2CPPHandleOf(object o)
@@ -1901,13 +1920,45 @@ namespace RaidAutomation
                 int effectKind = 0;          // 6000=damage, 5000=poison, 5002=hp_burn, etc.
                 string hitType = null;
                 bool isCrit = false, isBlocked = false, isEvaded = false;
+                // Phase 5 (research) — capture in-battle ATK/DEF/HP_max so DEF
+                // mitigation formula can be back-solved from real events.
+                long pAtk = -1, pCd = -1, pCr = -1;       // producer ATK / CritDmg / CritChance
+                long tDef = -1, tHpMax = -1, tHp = -1;    // target DEF / max HP / current HP
+                long calcDefMod = -1, calcMul = -1;       // DamageContext._defenceModifier and _multiplierValue
                 try
                 {
                     if (__args != null && __args.Length > 0 && __args[0] != null)
                     {
                         var eff = __args[0];
-                        try { var prod = Prop(eff, "Producer"); if (prod != null) producerId = IntProp(prod, "Id"); } catch { }
-                        try { var tgt = Prop(eff, "Target"); if (tgt != null) targetId = IntProp(tgt, "Id"); } catch { }
+                        object prodHero = null, tgtHero = null;
+                        try { prodHero = Prop(eff, "Producer"); if (prodHero != null) producerId = IntProp(prodHero, "Id"); } catch { }
+                        try { tgtHero = Prop(eff, "Target"); if (tgtHero != null) targetId = IntProp(tgtHero, "Id"); } catch { }
+                        // Stat snapshot at damage time. We only need ATK/CD/CR
+                        // from the producer and DEF/HP from the target — those
+                        // are sufficient to back-solve the DEF mitigation
+                        // formula's hidden coefficient. Soft-fail: captures
+                        // are -1 if any read throws.
+                        try
+                        {
+                            if (prodHero != null)
+                            {
+                                var pStats = Prop(prodHero, "Stats");
+                                if (pStats != null)
+                                {
+                                    pAtk = ReadFixedRaw(pStats, "Attack");
+                                    pCd  = ReadFixedRaw(pStats, "CriticalDamage");
+                                    pCr  = ReadFixedRaw(pStats, "CriticalChance");
+                                }
+                            }
+                            if (tgtHero != null)
+                            {
+                                var tStats = Prop(tgtHero, "Stats");
+                                if (tStats != null) tDef = ReadFixedRaw(tStats, "Defence");
+                                tHpMax = ReadFixedRaw(tgtHero, "HealthMax");
+                                tHp = ReadFixedRaw(tgtHero, "Health");
+                            }
+                        }
+                        catch { }
                         try { isEvaded = (bool)Prop(eff, "IsEvaded"); } catch { }
                         var dctx = Prop(eff, "DamageContext");
                         if (dctx != null)
@@ -1929,6 +1980,13 @@ namespace RaidAutomation
                             dealtAmt   = ReadFixedRaw(dctx, "DealtDamage", "ActualValue");
                             dealtRaw   = ReadFixedRaw(dctx, "DealtDamage", "MultiplierValuePositive");
                             dealtMitig = ReadFixedRaw(dctx, "DealtDamage", "DamageAbsorbedByBlockAndUnkillable");
+                            // DamageContext exposes the resolved DEF modifier
+                            // (post DEF-Down, Weaken, IgnoreDef etc.) and the
+                            // raw multiplier value used in the calc. Capturing
+                            // both means we can verify each stage of the
+                            // pipeline against the IL2CPP method behaviour.
+                            try { calcDefMod = ReadFixedRaw(dctx, "DefenceModifier"); } catch { }
+                            try { calcMul    = ReadFixedRaw(dctx, "MultiplierValuePositive"); } catch { }
                             // Trigger the schema dump on first hit (already wired).
                             try { var calc = Prop(dctx, "CalculatedDamage"); if (calc != null) DumpDamageResultOnce(calc, "CalculatedDamage"); } catch { }
                         }
@@ -1969,6 +2027,15 @@ namespace RaidAutomation
                 if (isCrit) sb.Append(",\"crit\":true");
                 if (isBlocked) sb.Append(",\"blocked\":true");
                 if (isEvaded) sb.Append(",\"evaded\":true");
+                // Phase 5 stat snapshot — only emit when read succeeded.
+                if (pAtk     >= 0) sb.Append(",\"p_atk\":").Append(pAtk);
+                if (pCd      >= 0) sb.Append(",\"p_cd\":").Append(pCd);
+                if (pCr      >= 0) sb.Append(",\"p_cr\":").Append(pCr);
+                if (tDef     >= 0) sb.Append(",\"t_def\":").Append(tDef);
+                if (tHpMax   >= 0) sb.Append(",\"t_hp_max\":").Append(tHpMax);
+                if (tHp      >= 0) sb.Append(",\"t_hp\":").Append(tHp);
+                if (calcDefMod >= 0) sb.Append(",\"def_mod\":").Append(calcDefMod);
+                if (calcMul    >= 0) sb.Append(",\"mul\":").Append(calcMul);
                 sb.Append("}");
                 string entry = sb.ToString();
                 lock (_tickLog) { if (_tickLog.Count < 3000) _tickLog.Add(entry); }

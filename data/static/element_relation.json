@@ -1,0 +1,1 @@
+{"type":"SharedModel.Meta.Heroes.ElementRelation","is_enum":true,"count":3,"values":[{"name":"Neutral","value":0},{"name":"Advantage","value":1},{"name":"Disadvantage","value":-1}]}

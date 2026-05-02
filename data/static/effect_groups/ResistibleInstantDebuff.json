@@ -1,0 +1,1 @@
+{"group":"ResistibleInstantDebuff","kinds":[{"name":"ReduceStamina","id":5001},{"name":"StealBuff","id":5002},{"name":"RemoveBuff","id":5003},{"name":"IncreaseCooldown","id":5004},{"name":"ReduceBuffLifetime","id":5005},{"name":"IncreaseDebuffLifetime","id":5008},{"name":"ReduceShield","id":5012},{"name":"ReduceStoneSkin","id":5019}],"count":8}

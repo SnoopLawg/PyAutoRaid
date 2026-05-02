@@ -1,0 +1,1 @@
+{"type":"SharedModel.Battle.Core.Skill.EffectProcessing.Processors.ChangeEffectLifetimeProcessor","name":"NonIncreaseableEffects","source":"property","value":["BlockDamage","Unkillable","ReviveOnDeath","StoneSkin","Taunt","PoisonCloud","Thunder","Entangle","Syphon","OnGuard"]}

@@ -294,6 +294,129 @@ namespace RaidAutomation
                    ",\"methods\":[" + string.Join(",", rows) + "]}";
         }
 
+        // /static-field?type=<typeName>&name=<fieldName>[&depth=N]
+        // Reads a static field or property by name from the given type.
+        // Walks the result up to `depth` levels (default 3) and returns
+        // a JSON dump using the same SerializeValue logic as
+        // /static-export. Useful for inspecting hardcoded game-side
+        // tables that aren't on `ClientStaticData` (e.g.
+        // ChangeEffectLifetimeProcessor.NonIncreaseableEffects).
+        private string GetStaticField(string typeName, string fieldName, string depthArg)
+        {
+            if (string.IsNullOrEmpty(typeName) || string.IsNullOrEmpty(fieldName))
+                return "{\"error\":\"type and name required\"}";
+
+            int depth = 3;
+            if (!string.IsNullOrEmpty(depthArg)) int.TryParse(depthArg, out depth);
+
+            Type t = FindType(typeName);
+            if (t == null) return "{\"error\":\"type not found: " + Esc(typeName) + "\"}";
+
+            object value = null;
+            string source = null;
+            try
+            {
+                // Try public static field
+                var f = t.GetField(fieldName, BindingFlags.Public | BindingFlags.Static |
+                                              BindingFlags.NonPublic | BindingFlags.FlattenHierarchy);
+                if (f != null) { value = f.GetValue(null); source = "field"; }
+                else
+                {
+                    var p = t.GetProperty(fieldName, BindingFlags.Public | BindingFlags.Static |
+                                                     BindingFlags.NonPublic | BindingFlags.FlattenHierarchy);
+                    if (p != null) { value = p.GetValue(null); source = "property"; }
+                    else
+                    {
+                        // Try get_Name accessor for IL2CPP-style properties
+                        var m = t.GetMethod("get_" + fieldName,
+                            BindingFlags.Public | BindingFlags.Static |
+                            BindingFlags.NonPublic | BindingFlags.FlattenHierarchy);
+                        if (m != null) { value = m.Invoke(null, null); source = "getter"; }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return "{\"error\":\"read failed: " + Esc(ex.Message) + "\"}";
+            }
+
+            if (value == null && source == null)
+                return "{\"error\":\"no static field/property/getter named " + Esc(fieldName) + " on " + Esc(t.FullName) + "\"}";
+
+            var sb = new StringBuilder();
+            sb.Append("{\"type\":\"").Append(Esc(t.FullName)).Append("\",\"name\":\"")
+              .Append(Esc(fieldName)).Append("\",\"source\":\"")
+              .Append(Esc(source ?? "null")).Append("\",\"value\":");
+            try
+            {
+                SerializeValue(sb, value, depth, 5000, new HashSet<object>());
+            }
+            catch (Exception ex)
+            {
+                sb.Append("null,\"err\":\"").Append(Esc(ex.Message)).Append("\"");
+            }
+            sb.Append("}");
+            return sb.ToString();
+        }
+
+        // /effect-kind-group?group=<groupName>
+        // Walks every EffectKindId enum value and asks
+        // EffectKindGroupExtensions.Contains(group, kindId) to figure
+        // out which kinds belong to the named group. Surfaces the
+        // BossImmunitiesEffects / ControlEffects / EffectThatApplyStatusDebuffs
+        // groups as flat ID lists for the sim.
+        private string GetEffectKindGroup(string groupName)
+        {
+            if (string.IsNullOrEmpty(groupName))
+                return "{\"error\":\"group required\"}";
+            var groupType = FindType("SharedModel.Battle.Effects.EffectKindGroup");
+            if (groupType == null)
+                return "{\"error\":\"EffectKindGroup type not found\"}";
+            var kindType = FindType("SharedModel.Battle.Effects.EffectKindId");
+            if (kindType == null)
+                return "{\"error\":\"EffectKindId type not found\"}";
+            var extType = FindType("SharedModel.Battle.Effects.EffectKindGroupExtensions");
+            if (extType == null)
+                return "{\"error\":\"EffectKindGroupExtensions type not found\"}";
+
+            object groupVal;
+            try { groupVal = Enum.Parse(groupType, groupName, true); }
+            catch (Exception ex)
+            {
+                return "{\"error\":\"unknown group: " + Esc(groupName) + " (" + Esc(ex.Message) + ")\"}";
+            }
+
+            var containsMethod = extType.GetMethod("Contains",
+                new[] { groupType, kindType });
+            if (containsMethod == null)
+                return "{\"error\":\"Contains(EffectKindGroup, EffectKindId) not found\"}";
+
+            var sb = new StringBuilder();
+            sb.Append("{\"group\":\"").Append(Esc(groupName)).Append("\",\"kinds\":[");
+            int n = 0;
+            try
+            {
+                foreach (var name in Enum.GetNames(kindType))
+                {
+                    var kindVal = Enum.Parse(kindType, name);
+                    bool contained = false;
+                    try { contained = (bool)containsMethod.Invoke(null, new object[] { groupVal, kindVal }); }
+                    catch { continue; }
+                    if (!contained) continue;
+                    long iv = Convert.ToInt64(kindVal);
+                    if (n > 0) sb.Append(",");
+                    sb.Append("{\"name\":\"").Append(Esc(name)).Append("\",\"id\":").Append(iv).Append("}");
+                    n++;
+                }
+            }
+            catch (Exception ex)
+            {
+                return "{\"error\":\"enum walk failed: " + Esc(ex.Message) + "\"}";
+            }
+            sb.Append("],\"count\":").Append(n).Append("}");
+            return sb.ToString();
+        }
+
         // /list-active?path=X[&depth=N&filter=substr]
         // Walks GameObjects under path and returns active ones by name. Used
         // for UI state inspection (e.g. is "VictoryHeader" active vs

@@ -1,0 +1,1 @@
+{"type":"SharedModel.Battle.Effects.HitType","is_enum":true,"count":4,"values":[{"name":"Normal","value":0},{"name":"Crushing","value":1},{"name":"Critical","value":2},{"name":"Glancing","value":3}]}

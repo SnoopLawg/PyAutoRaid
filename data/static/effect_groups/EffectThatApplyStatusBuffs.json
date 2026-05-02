@@ -1,0 +1,1 @@
+{"group":"EffectThatApplyStatusBuffs","kinds":[{"name":"ApplyBuff","id":4000},{"name":"MultiplyBuff","id":4016},{"name":"ConvertStatusDebuffToBuff","id":4027},{"name":"CopyStatusBuff","id":4029},{"name":"StealBuff","id":5002}],"count":5}
