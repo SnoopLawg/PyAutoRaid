@@ -468,6 +468,55 @@ def _format_breakdown_full(name: str, hero_meta: dict, mod_computed: dict | None
     return "\n".join(out)
 
 
+def get_area_modifiers(area_slug: str) -> list[dict]:
+    """Return per-round modifiers for an area's stage.
+
+    Example: get_area_modifiers("dt-hard-f120") returns the per-round
+    Accuracy/Resistance/Speed deltas the boss + player team experience
+    on that floor. Empty list when no stage-level modifiers exist
+    (e.g. CB Easy through UNM apply HP/SPD scaling at the difficulty
+    level rather than per round).
+
+    Modifier shape: {Round, KindId, Value, IsAbsolute, BossOnly}.
+    Phase 1 deferred deliverable — the in-game "Area Bonuses" toggle
+    is exactly this data.
+    """
+    import json
+    import os
+    p = os.path.join(os.path.dirname(__file__), "..", "data", "static", "stages.json")
+    if not os.path.exists(p):
+        return []
+    with open(p, encoding="utf-8") as f:
+        stages = json.load(f).get("data") or []
+
+    # Routing: each engine slug maps to a stage-area filter.
+    s = (area_slug or "").lower()
+    if s.startswith("dt-"):
+        # dt-{normal|hard}-fNNN
+        try:
+            _, diff, fnum = s.split("-")
+            assert fnum.startswith("f")
+            floor = int(fnum[1:])
+        except (ValueError, AssertionError):
+            return []
+        for st in stages:
+            area = st.get("Area")
+            if not isinstance(area, dict) or area.get("Id") != "DoomTower":
+                continue
+            if (st.get("Difficulty") or "").lower() != diff:
+                continue
+            if st.get("Number") != floor:
+                continue
+            return st.get("Modifiers") or []
+    elif s.startswith("cb-"):
+        # CB difficulty modifiers come from the difficulty's hp/spd
+        # multipliers, not per-round stage modifiers. CB stages have
+        # no Modifiers field. Return empty so the caller can fall back
+        # to cb_constants tables.
+        return []
+    return []
+
+
 def _main() -> int:
     """CLI: print gear-inclusive stats for a named hero from the live mod."""
     import argparse
@@ -483,6 +532,10 @@ def _main() -> int:
     ap.add_argument("--vs-mod", action="store_true",
                     help="diff our calc against the mod's /hero-computed-stats "
                          "(surfaces missing columns / mismatches)")
+    ap.add_argument("--area", default=None,
+                    help="Show per-round Area Bonus modifiers for the given "
+                         "location slug (e.g. dt-hard-f120). Phase 1 "
+                         "deferred deliverable — overlay onto base stats.")
     args = ap.parse_args()
 
     heroes = fetch_heroes_from_mod(args.mod_url)
@@ -509,9 +562,25 @@ def _main() -> int:
 
     stats = compute_hero_actual_stats(hero)
     if args.json:
-        print(_json.dumps({"name": hero.get("name"), "id": hero.get("id"), "stats": stats}, indent=2))
+        out_dict = {"name": hero.get("name"), "id": hero.get("id"), "stats": stats}
+        if args.area:
+            out_dict["area_modifiers"] = get_area_modifiers(args.area)
+        print(_json.dumps(out_dict, indent=2))
     else:
         print(_format_breakdown(hero.get("name", "?"), stats))
+        if args.area:
+            mods = get_area_modifiers(args.area)
+            if not mods:
+                print(f"\n  (no per-round modifiers for area {args.area!r})")
+            else:
+                print(f"\n  Area Bonuses ({args.area}) — per-round modifier overlay:")
+                for m in mods:
+                    rnd = m.get("Round", "?")
+                    kind = m.get("KindId", "?")
+                    val = m.get("Value", "?")
+                    abs_str = "abs" if m.get("IsAbsolute") else "%"
+                    target = "boss" if m.get("BossOnly") else "all"
+                    print(f"    R{rnd}: {kind} +{val}{abs_str} ({target})")
     return 0
 
 

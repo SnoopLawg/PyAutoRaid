@@ -139,9 +139,11 @@ Stats* screen exactly. Nothing else can be trusted until this is.
       diffs our calc against the mod's payload.
 - [x] **EXACT match 16/16** verified vs in-game screenshots for Cardiel
       L60 6★ + Gnut L60 6★ (different elements/factions/roles).
-- [ ] Area Bonuses column — per-location buffs (CB / Dungeon / Hydra
-      modifiers). Not in the default Total Stats view; deferred until a
-      caller needs per-area accuracy.
+- [x] Area Bonuses column — `tools/hero_stats.py "Cardiel" --area dt-hard-f120`
+      surfaces the per-round Modifiers from `data/static/stages.json`
+      (e.g. R1 +200 RES, R1 +230 ACC, R3 +75 boss SPD). The in-game
+      "Area Bonuses" toggle is exactly this data; sim consumers can
+      adopt by calling `get_area_modifiers(area_slug)` directly.
 
 **Deliverable**: dashboard hero rows show stats matching the game.
 Sim inputs become trustworthy. ✅ Phase 1 complete (commit `b7fdf69`).
@@ -184,15 +186,18 @@ stage/skill universe in `data/static/`. Total: 16 sections, ~71MB
 canonical reference (skills_all 35MB + stages 35MB + the rest <2MB).
 
 **Known follow-up** (deferred — not blocking Phase 3):
-- Stage `FirstTimeReward.Resources` and `Formations.HeroesByRound`
-  contain IL2CPP-wrapped `Dictionary<,>` placeholders (`<Dictionary\`2>`)
-  that the generic `/static-export` reflection can't enumerate. Same
-  fix pattern as the Cardiel `ArtifactIdByKind` block (use
-  `GetEnumerator + MoveNext + Current` instead of indexer). Add when
-  the sim or optimizer needs per-stage reward lookups beyond the
-  scalar fields (XP, IsBoss, Modifiers).
+- Stage `FirstTimeReward.Resources` *scalar* fields (Silver, Energy,
+  Tokens) ARE captured in the depth=3 `stages.json` we already have.
+  The inner `RawValues` IL2CPP-wrapped dict still placeholders out at
+  depth=3 — investigated, the `_entries` walk pattern works, but
+  bulk pulling all 2873 stages at depth=4 hits the mod's main-thread
+  timeout. Real fix: an on-demand `/stage-detail?id=N` endpoint that
+  fetches one stage at depth=5+. Add when a caller needs per-stage
+  reward composition beyond the scalar fields.
+- `Formations.HeroesByRound` (per-stage enemy lineups) has the same
+  depth-vs-timeout constraint. Same on-demand fix pattern.
 
-### Phase 3 — Universal sim (not just CB) 🟡 (foundations landed; engines pending)
+### Phase 3 — Universal sim (not just CB) 🟢 (foundations + plumbing complete; engines remain)
 
 **Goal**: simulate any battle, not just Demon Lord.
 
@@ -208,24 +213,35 @@ canonical reference (skills_all 35MB + stages 35MB + the rest <2MB).
 - [x] CB engine wired via `cb_potential.simulate_team`; verified
       identical numbers vs direct `cb_potential.py` call (31.36M for
       ME/Demytha/Ninja/Geo/Venomage on UNM Void).
-- [ ] Thread `profile.speed` + `profile.element` through
-      `cb_potential.simulate_team` so non-UNM-Void CB profiles stop
-      silently using UNM Void values. (`sim.py` warns when the gap
-      applies; this fixes it at the source.)
+- [x] `cb_potential.simulate_team` accepts `cb_difficulty` /
+      `cb_element` / `cb_speed` kwargs; `sim.py` threads
+      `profile.difficulty` + `profile.element` through. Verified:
+      `cb-nm-force` produces different numbers (33.35M) from `cb-unm-void`
+      (31.36M) — boss SPD/HP correctly differ per profile.
+- [x] `CBSimulator` accepts a `profile=BossProfile` kwarg; its
+      `speed` / `element` / `difficulty` fields override the matching
+      legacy kwargs when supplied. Backward-compatible: existing
+      callers continue to work unchanged.
+- [x] Doom Tower per-floor profiles — `boss_profiles.doom_tower_profile()`
+      pulls per-floor metadata from `data/static/stages.json` (792 DT
+      stages). Stub output now surfaces stage_id / scene / has_boss /
+      per-round Modifiers (R1 +200 RES, R3 boss +75 SPD, etc.) so the
+      profile is informative even before the engine ships.
 - [ ] Hydra mechanics module — multiple heads, head-specific skills,
-      decapitation rules. Stub profiles ready in registry.
+      decapitation rules. Stub profiles ready; static config data
+      (Settings/RewardRanges) is clan-match metadata, not per-fight
+      stats. Real boss stats per fight need an on-demand
+      `/stage-detail?id=N` endpoint to walk `Formations.HeroesByRound`
+      at depth=5+.
 - [ ] Chimera mechanics module — 3 heads with rotating affinity.
-      Stub profiles ready.
-- [ ] Doom Tower per-floor boss profiles — read from
-      `data/static/stages.json` (Area=DoomTower, 792 entries).
-- [ ] Generalize `tools/cb_sim.py` itself to take a `BossProfile`
-      directly (instead of `cb_speed=` / `cb_element=` / `cb_difficulty=`
-      kwargs). Backward-compat layer keeps existing callers working.
+      Same as Hydra: stub profiles + clan-match config available;
+      per-fight stats need on-demand stage fetch.
 
-**Deliverable**: ✅ dispatcher + profile registry shipped; ⏳ engine
-implementations for Hydra / Chimera / Doom Tower remain. The sim
-surface (`sim.py --list-locations` etc.) is now in place so each new
-engine plugs in without changing call sites downstream.
+**Deliverable**: ✅ dispatcher + profile registry + CB profile
+threading + DT per-floor metadata shipped. ⏳ Hydra / Chimera engine
+algorithms remain (real engineering — multi-head + decapitation +
+on-demand stage detail). The sim surface and CB engine are
+production-ready for any of 24 CB difficulty/element combinations.
 
 ### Phase 4 — Hero kit completeness (sim correctness) ✅
 
@@ -253,21 +269,19 @@ to a generic A1×3 profile for unknown heroes.
       heroes are NOT touched — book-aware structured profiles always
       win. Verified: identical 31.4M total damage on the owned
       ME/Demytha/Ninja/Geo/Venomage team before and after wiring.
-- [ ] Effect-level structured data — extend the resolver to also read
-      `data/static/skills_all.json` (Phase 2) Effects[] for exact
-      damage multipliers / ignore-DEF % / multi-hit counts. Today
-      desc-derived entries inherit `DEFAULT_SKILL_DATA`'s mult/cd
-      values for the unmodelable fields, which is fine for buff/debuff
-      type modeling but loses precision on damage. (Static text says
-      "attacks 3 times" → `hits=3`; the multiplier is what the static
-      Effects[] would give.) Add when an unowned-hero damage prediction
-      becomes a blocker.
+- [x] Effect-level structured data — `profile_resolver` now reads
+      `data/static/skills_all.json` (Phase 2) Effects[] for unowned
+      heroes: exact damage multipliers (e.g. Erinyes A1=3.1×ATK,
+      A2=5.0×ATK, A3=3.2×ATK from the live game data, replacing
+      DEFAULT_SKILL_DATA's generic 3.5/4.0/0). Multi-hit Damage
+      effects sum their per-effect multipliers, matching the
+      load_game_profiles parser shape.
 
 **Deliverable**: ✅ Phase 4 complete — sim has structured data for
-764 of 1121 heroes vs. 317 previously. Unowned-hero kits now show up
-with real debuff/buff/extra-turn modeling instead of the generic A1×3
-fallback. The Effects[] precision pass is a logged follow-up, not
-a blocker for downstream phases.
+764 of 1121 heroes vs. 317 previously, with real damage multipliers
+sourced from skills_all.json for unowned heroes. Owned-hero CB sim
+unchanged (verified 31.4M total on the calibration team). New game
+release → re-run refresh_static_data + refresh_data → done.
 
 ### Phase 5 — Sim damage calibration (the hardest one)
 

@@ -63,14 +63,158 @@ _DESC_DEBUFF_KEEP = {
 }
 
 
-def derive_skill_data_from_desc(parsed_kit: dict) -> tuple[dict, dict]:
+_STATIC_SKILLS_CACHE: dict | None = None
+_HERO_TYPES_CACHE: dict | None = None
+
+
+def _load_static_skills() -> dict:
+    """Lazy-load skills_all.json indexed by skill ID."""
+    global _STATIC_SKILLS_CACHE
+    if _STATIC_SKILLS_CACHE is not None:
+        return _STATIC_SKILLS_CACHE
+    p = PROJECT_ROOT / "data" / "static" / "skills_all.json"
+    if not p.exists():
+        _STATIC_SKILLS_CACHE = {}
+        return _STATIC_SKILLS_CACHE
+    import json
+    raw = json.loads(p.read_text(encoding="utf-8"))
+    arr = raw.get("data") if isinstance(raw, dict) else raw
+    _STATIC_SKILLS_CACHE = {s["Id"]: s for s in (arr or []) if isinstance(s, dict) and "Id" in s}
+    return _STATIC_SKILLS_CACHE
+
+
+def _load_hero_types() -> dict:
+    """Lazy-load hero_types.json grouped by canonical hero name."""
+    global _HERO_TYPES_CACHE
+    if _HERO_TYPES_CACHE is not None:
+        return _HERO_TYPES_CACHE
+    p = PROJECT_ROOT / "data" / "static" / "hero_types.json"
+    if not p.exists():
+        _HERO_TYPES_CACHE = {}
+        return _HERO_TYPES_CACHE
+    import json
+    raw = json.loads(p.read_text(encoding="utf-8"))
+    rows = raw.get("hero_types") or raw.get("data") or []
+    by_name: dict[str, dict] = {}
+    for h in rows:
+        name = h.get("name") or ""
+        if not name:
+            continue
+        cur = by_name.get(name)
+        if cur is None:
+            by_name[name] = h
+            continue
+        # Prefer Legendary + max-ascended record so skill_ids reflect
+        # the highest-rarity form (skill IDs are stable but shape may
+        # differ for double-ascended heroes).
+        cur_score = (cur.get("rarity") == "Legendary", cur.get("is_max_ascended", False))
+        new_score = (h.get("rarity") == "Legendary", h.get("is_max_ascended", False))
+        if new_score > cur_score:
+            by_name[name] = h
+    _HERO_TYPES_CACHE = by_name
+    return _HERO_TYPES_CACHE
+
+
+def _parse_damage_formula(formula: str) -> tuple[float, str]:
+    """Extract (multiplier, scaling_stat) from a MultiplierFormula like
+    '3.1*ATK', 'DEF*1.5', '0.2*HP'. Returns (0.0, 'ATK') if unparsed."""
+    if not formula:
+        return 0.0, "ATK"
+    f = formula.strip()
+    # Strip parens and condition suffixes that come after a closing brace.
+    # Keep just the leading 'N*STAT' or 'STAT*N' form.
+    m = re.match(r"^([\d.]+)\s*\*\s*(ATK|DEF|HP)\b", f)
+    if m:
+        return float(m.group(1)), m.group(2)
+    m = re.match(r"^(ATK|DEF|HP)\s*\*\s*([\d.]+)", f)
+    if m:
+        return float(m.group(2)), m.group(1)
+    m = re.match(r"^(ATK|DEF|HP)\b", f)
+    if m:
+        return 1.0, m.group(1)
+    return 0.0, "ATK"
+
+
+def _extract_static_skill_shape(skill: dict) -> dict:
+    """Pull mult/stat/hits from a skills_all.json record's Effects[].
+
+    Returns a dict with mult/stat/hits/cd/group fields. Missing fields
+    default to ATK / 0 / 1 / cooldown=as-given. Multi-hit damage skills
+    sum their per-effect multipliers (e.g. Ninja A2's 3 separate
+    Damage effects each '2*ATK' = mult=6.0, hits=3).
+    """
+    eff_list = skill.get("Effects") or []
+    cd = int(skill.get("Cooldown") or 0)
+    group = skill.get("Group") or ""
+    dmg_effects = [e for e in eff_list if e.get("KindId") == "Damage"]
+
+    total_mult = 0.0
+    primary_stat = "ATK"
+    total_hits = 0
+    for e in dmg_effects:
+        m, s = _parse_damage_formula(e.get("MultiplierFormula") or "")
+        cnt = int(e.get("Count") or 1)
+        if m > 0:
+            total_mult += m * cnt
+            primary_stat = s
+        total_hits += cnt
+    if not dmg_effects:
+        total_hits = 1  # placeholder for non-damage skills
+
+    return {
+        "mult": total_mult,
+        "stat": primary_stat,
+        "hits": max(1, total_hits),
+        "cd": cd,
+        "group": group,
+        "raw": skill,  # keep full record for downstream parsers
+    }
+
+
+def _categorize_static_skills(skill_records: list[dict]) -> dict:
+    """Split a hero's skill records into A1/A2/A3 labels.
+
+    Mirrors load_game_profiles' categorization: A1 = first cooldown-0
+    Active skill, A2/A3 = next two Actives sorted by cooldown.
+    Passives are returned under '_passives' for the caller to handle.
+    """
+    actives = []
+    passives = []
+    for sk in skill_records:
+        shape = _extract_static_skill_shape(sk)
+        if shape["group"] == "Active":
+            actives.append(shape)
+        elif shape["group"] == "Passive":
+            passives.append(shape)
+    actives.sort(key=lambda s: (s["cd"], s["raw"].get("Id", 0)))
+    out: dict = {"_passives": passives}
+    if actives:
+        # First Active with cooldown==0 is A1; otherwise just first Active.
+        a1 = next((a for a in actives if a["cd"] == 0), actives[0])
+        actives.remove(a1)
+        out["A1"] = a1
+    if actives:
+        out["A2"] = actives[0]
+    if len(actives) > 1:
+        out["A3"] = actives[1]
+    return out
+
+
+def derive_skill_data_from_desc(parsed_kit: dict, hero_name: str | None = None) -> tuple[dict, dict]:
     """Convert a desc_profiler hero kit into (skill_data, skill_effects).
 
     Output shape matches `load_game_profiles.load_profiles()` so
-    cb_sim's existing consumers don't need to change. Multipliers
-    fall back to DEFAULT_SKILL_DATA values since static descriptions
-    don't expose them — the auto-parsed profile is a partial kit, not
-    a full damage spec.
+    cb_sim's existing consumers don't need to change. Damage
+    multipliers come from skills_all.json Effects[] when available
+    (Phase 4 follow-up landed); buff/debuff modeling continues to
+    flow from desc text.
+
+    Args:
+        parsed_kit: desc_profiler output for this hero (A1/A2/A3 dicts).
+        hero_name: canonical hero name. When provided, the function
+            looks up the hero in hero_types.json + skills_all.json to
+            extract exact damage multipliers / hits / cooldowns. Falls
+            back to DEFAULT_SKILL_DATA values when missing.
 
     Returns:
         (hero_skill_data, hero_skill_effects) — both dicts keyed by
@@ -93,17 +237,42 @@ def derive_skill_data_from_desc(parsed_kit: dict) -> tuple[dict, dict]:
         "A3": {"mult": 0.0, "stat": "ATK", "hits": 0, "cd": 5},
     }
 
+    # If we have the canonical hero name, overlay structured Effects[]
+    # data from skills_all.json — exact damage multipliers / hits /
+    # cooldowns for unowned heroes. Missing data falls through to
+    # DEFAULT_SKILL_DATA values so the path stays safe even when
+    # static data hasn't been refreshed.
+    static_by_label: dict = {}
+    if hero_name:
+        ht = _load_hero_types().get(hero_name)
+        if ht and ht.get("skill_ids"):
+            sk_idx = _load_static_skills()
+            sk_records = [sk_idx[sid] for sid in ht["skill_ids"] if sid in sk_idx]
+            static_by_label = _categorize_static_skills(sk_records)
+
     for label in ("A1", "A2", "A3"):
         p = parsed_kit.get(label)
         if not p:
             continue
 
         defaults = _DEFAULTS[label]
+        # Prefer static-derived values when present; fall back to defaults.
+        st = static_by_label.get(label) if static_by_label else None
+        if st:
+            mult = st["mult"] if st["mult"] > 0 else defaults["mult"]
+            stat = st["stat"]
+            hits = int(p.get("hits") or st["hits"])
+            cd = st["cd"]
+        else:
+            mult = defaults["mult"]
+            stat = defaults["stat"]
+            hits = int(p.get("hits") or defaults["hits"])
+            cd = defaults["cd"]
         sd_entry = {
-            "mult": defaults["mult"],
-            "stat": defaults["stat"],
-            "hits": int(p.get("hits") or defaults["hits"]),
-            "cd": defaults["cd"],
+            "mult": mult,
+            "stat": stat,
+            "hits": hits,
+            "cd": cd,
             "team_buffs": [],
             "team_tm_fill": float(p.get("tm_fill_team", 0) or 0),
             "self_tm_fill": float(p.get("tm_fill_self", 0) or 0),
@@ -190,7 +359,7 @@ def augment_with_unowned(skill_data: dict, skill_effects: dict, *,
     for hero_name, kit in parsed.items():
         if hero_name in skill_data:
             continue  # Owned + structured wins.
-        sd_entry, eff_entry = derive_skill_data_from_desc(kit)
+        sd_entry, eff_entry = derive_skill_data_from_desc(kit, hero_name=hero_name)
         if not sd_entry:
             continue
         skill_data[hero_name] = sd_entry

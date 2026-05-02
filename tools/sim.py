@@ -46,7 +46,7 @@ def _print_locations() -> None:
         print(f"  {p.slug:30s} {p.engine:12s} {(p.difficulty or '-'):10s} {hp_s:>14s} {spd_s:>6s}")
 
 
-_CB_DIFFICULTY_TO_CLI = {
+_CB_DIFFICULTY_SLUG_TO_CLI = {
     "easy": "easy", "normal": "normal", "hard": "hard",
     "brutal": "brutal", "nm": "nightmare", "unm": "ultra-nightmare",
 }
@@ -56,24 +56,19 @@ _CB_ELEMENT_NAME = {1: "magic", 2: "force", 3: "spirit", 4: "void"}
 def _run_cb(profile: BossProfile, team: list[str], *, verbose: bool,
             force_affinity: bool, max_cb_turns: int, speed_aura: float,
             use_current_gear: bool) -> int:
-    """Delegate to the existing CB sim's `simulate_team` (full-potential
-    team builder) and adapt the BossProfile fields to its parameters.
-
-    `simulate_team` does not yet take a difficulty/element knob — that's
-    a separate refactor target. For now, profiles below UNM still route
-    here but the underlying sim runs at UNM. Listed as a follow-up below.
+    """Dispatch to cb_potential.simulate_team with the BossProfile's
+    difficulty + element threaded through. After the Phase 3 follow-up
+    landed, simulate_team accepts cb_difficulty/cb_element kwargs and
+    cb_constants.CB_HP_BY_DIFFICULTY / CB_SPEED_BY_DIFFICULTY do the
+    rest.
     """
-    if profile.difficulty != "unm" or profile.element != 4:
-        # The full-potential team builder in cb_potential currently
-        # hardcodes UNM Void. We accept the profile so the dispatcher
-        # surface is right; flag the gap rather than silently misreport.
-        print(f"NOTE: simulate_team currently hardcodes UNM Void; this run will use those values, not "
-              f"{profile.difficulty}/{_CB_ELEMENT_NAME.get(profile.element, '?')}.", file=sys.stderr)
-        print("      Tracked as Phase 3 follow-up: thread profile.speed + profile.element through "
-              "cb_potential.simulate_team / cb_sim.run_potential_team.\n", file=sys.stderr)
-
     from cb_potential import simulate_team
-    result = simulate_team(team, verbose=verbose)
+    result = simulate_team(
+        team,
+        verbose=verbose,
+        cb_element=profile.element if profile.element else 4,
+        cb_difficulty=_CB_DIFFICULTY_SLUG_TO_CLI.get(profile.difficulty or "unm"),
+    )
     if "error" in result:
         print(f"ERR: {result['error']}", file=sys.stderr)
         return 1
@@ -92,11 +87,41 @@ def _run_cb(profile: BossProfile, team: list[str], *, verbose: bool,
 
 
 def _run_stub(profile: BossProfile) -> int:
-    """Placeholder for engines whose sim isn't built yet."""
+    """Placeholder for engines whose sim isn't built yet — but surface
+    whatever metadata we already have for the profile, so the user
+    sees stage IDs / modifiers / element / etc. without needing the
+    engine to land."""
     print(f"=== {profile.name} ===")
     print(f"slug={profile.slug}  engine={profile.engine}  location={profile.location}")
-    print(f"\nThis sim engine is not yet implemented.")
-    print(f"Profile loaded successfully — when the {profile.engine} engine ships,")
+    if profile.difficulty:
+        print(f"difficulty={profile.difficulty}")
+    if profile.element:
+        from boss_profiles import ELEMENT_NAME_BY_ID
+        print(f"element={ELEMENT_NAME_BY_ID.get(profile.element, profile.element)}")
+    if profile.head_count > 1:
+        print(f"head_count={profile.head_count}")
+    # Doom Tower stashes stage metadata in head_specific_skills for now.
+    meta = profile.head_specific_skills if isinstance(profile.head_specific_skills, dict) else {}
+    if meta:
+        print()
+        for k in ("stage_id", "scene", "has_boss", "has_double_boss",
+                  "is_secret_chamber", "region_variants"):
+            if k in meta:
+                print(f"{k}: {meta[k]}")
+        modifiers = meta.get("modifiers") or []
+        if modifiers:
+            print(f"\nPer-round modifiers ({len(modifiers)}):")
+            for m in modifiers[:12]:
+                rnd = m.get("Round", "?")
+                kind = m.get("KindId", "?")
+                val = m.get("Value", "?")
+                abs_str = "abs" if m.get("IsAbsolute") else "%"
+                target = "boss" if m.get("BossOnly") else "all"
+                print(f"  R{rnd}: {kind} +{val}{abs_str} ({target})")
+            if len(modifiers) > 12:
+                print(f"  ... +{len(modifiers) - 12} more")
+    print(f"\nThe {profile.engine} sim engine is not yet implemented.")
+    print(f"Profile loaded successfully — when the engine ships,")
     print(f"`python3 tools/sim.py --location {profile.slug}` will route to it.")
     return 3
 

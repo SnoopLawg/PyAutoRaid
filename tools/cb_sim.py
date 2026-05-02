@@ -400,13 +400,31 @@ class CBSimulator:
                  rng_seed: int = None, verbose: bool = False,
                  model_survival: bool = True, force_affinity: bool = False,
                  cb_difficulty: str = None, speed_aura_pct: float = 0.0,
-                 bugfix_buff_tick: bool = True):
+                 bugfix_buff_tick: bool = True,
+                 profile=None):
+        """`profile` (Phase 3 deferred): a `boss_profiles.BossProfile` —
+        when supplied, its `speed`, `element`, and `difficulty` fields
+        override the matching kwargs. Other kwargs are still respected
+        for fields the profile doesn't carry (force_affinity,
+        speed_aura_pct, etc.). Backward compatible: existing callers
+        continue to work unchanged.
+        """
         self.champions = champions
+        if profile is not None:
+            # Map profile fields onto the legacy kwargs. The cb_difficulty
+            # branch below still runs, so HP/SPD lookups stay consistent.
+            if profile.speed:
+                cb_speed = profile.speed
+            if profile.element:
+                cb_element = profile.element
+            if profile.difficulty and not cb_difficulty:
+                cb_difficulty = profile.difficulty
         # cb_difficulty overrides cb_speed if provided (matches DWJ dropdown).
         # Keeps backwards-compat with direct cb_speed=190 callers.
         if cb_difficulty:
             cb_speed = CB_SPEED_BY_DIFFICULTY.get(cb_difficulty.lower(), cb_speed)
         self.cb_speed = cb_speed
+        self.profile = profile
         # Apply team-wide speed aura. leader_skills with stat=4 (SPD) give a
         # percentage boost to all hero base speeds. DWJ calc exposes this as
         # a "Speed aura" input; the same mechanic is just leader-skill-driven

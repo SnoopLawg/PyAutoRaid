@@ -186,20 +186,84 @@ def chimera_profile(difficulty: str) -> BossProfile:
     )
 
 
+_DT_STAGES_CACHE: dict | None = None
+
+
+def _load_dt_stages() -> dict:
+    """Lazy-load DoomTower stages from data/static/stages.json keyed by
+    (difficulty, floor_number) → list of stage records (DT has 3 region
+    variants per floor: DoomTower1/2/3)."""
+    global _DT_STAGES_CACHE
+    if _DT_STAGES_CACHE is not None:
+        return _DT_STAGES_CACHE
+    import json
+    from pathlib import Path
+    p = Path(__file__).resolve().parent.parent / "data" / "static" / "stages.json"
+    if not p.exists():
+        _DT_STAGES_CACHE = {}
+        return _DT_STAGES_CACHE
+    raw = json.loads(p.read_text(encoding="utf-8"))
+    stages = raw.get("data") or []
+    out: dict = {}
+    for s in stages:
+        area = s.get("Area")
+        if not isinstance(area, dict) or area.get("Id") != "DoomTower":
+            continue
+        diff = (s.get("Difficulty") or "").lower()
+        num = s.get("Number")
+        if not diff or not num:
+            continue
+        out.setdefault((diff, num), []).append(s)
+    _DT_STAGES_CACHE = out
+    return _DT_STAGES_CACHE
+
+
 def doom_tower_profile(floor: int, difficulty: str = "normal") -> BossProfile:
-    """Doom Tower per-floor profile — sim engine NOT IMPLEMENTED yet.
-    Floor data lives in data/static/stages.json (Area=DoomTower)."""
+    """Doom Tower per-floor profile.
+
+    Pulls per-floor metadata from data/static/stages.json (792 DT stages
+    landed in Phase 2). Each floor has 3 region variants (DoomTower1/2/3
+    visual scenes); we surface modifiers from the first one and tag the
+    profile with the stage id so consumers can fetch deeper details on
+    demand.
+
+    The sim engine itself is NOT yet implemented — this populates the
+    BossProfile with floor metadata + per-round Modifiers (ACC/RES
+    floors etc.) for `--list-locations` to surface and downstream
+    callers to consume when the engine ships.
+    """
+    diff = difficulty.lower()
     if not 1 <= floor <= 120:
         raise ValueError(f"Doom Tower floor must be 1..120, got {floor}")
-    if difficulty.lower() not in ("normal", "hard"):
+    if diff not in ("normal", "hard"):
         raise ValueError(f"Doom Tower difficulty must be normal/hard, got {difficulty!r}")
-    return BossProfile(
-        slug=f"dt-{difficulty.lower()}-f{floor:03d}",
-        name=f"Doom Tower {difficulty.title()} Floor {floor}",
+
+    stages_by_floor = _load_dt_stages()
+    matches = stages_by_floor.get((diff, floor)) or []
+    profile = BossProfile(
+        slug=f"dt-{diff}-f{floor:03d}",
+        name=f"Doom Tower {diff.title()} Floor {floor}",
         engine="doom_tower",
         location="DoomTower",
-        difficulty=difficulty.lower(),
+        difficulty=diff,
     )
+
+    if matches:
+        # Use the first region variant; all three share modifiers.
+        s = matches[0]
+        # Stash stage metadata in the profile via a side dict so the
+        # dispatcher / engine can load deeper details on demand without
+        # bloating BossProfile fields.
+        profile.head_specific_skills = {  # repurpose existing field for now
+            "stage_id": s.get("Id"),
+            "scene": s.get("SceneName"),
+            "has_boss": bool(s.get("HasBoss")),
+            "has_double_boss": bool(s.get("HasDoubleBoss")),
+            "is_secret_chamber": bool(s.get("IsSecretChamber")),
+            "modifiers": s.get("Modifiers") or [],
+            "region_variants": [m.get("Region", {}).get("Id") for m in matches],
+        }
+    return profile
 
 
 # =============================================================================

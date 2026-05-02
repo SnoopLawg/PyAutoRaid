@@ -177,8 +177,23 @@ def stun_priority(p):
 # =============================================================================
 # Run a single team through the sim
 # =============================================================================
-def simulate_team(team_names: list, verbose: bool = False) -> dict:
-    """Simulate a team with full potential (6★, booked, mastered, optimal gear)."""
+def simulate_team(team_names: list, verbose: bool = False,
+                  cb_element: int = 4, cb_difficulty: str | None = None,
+                  cb_speed: float | None = None) -> dict:
+    """Simulate a team with full potential (6★, booked, mastered, optimal gear).
+
+    Args:
+        team_names: list of 5 hero names.
+        verbose: print sim log.
+        cb_element: 1=Magic, 2=Force, 3=Spirit, 4=Void. Default Void.
+        cb_difficulty: easy / normal / hard / brutal / nm / unm. None = UNM.
+            Sets boss HP and SPD via cb_constants.
+        cb_speed: explicit boss SPD override (rarely needed; prefer
+            cb_difficulty so HP gets set correctly too).
+
+    Defaults preserve the historical UNM Void behaviour so existing
+    callers don't shift numbers.
+    """
     # Build heroes
     team_h = []
     team_p = []
@@ -257,10 +272,13 @@ def simulate_team(team_names: list, verbose: bool = False) -> dict:
     has_uk = sum(1 for p in team_p if p and p.unkillable) >= 2
     max_turns = 50 if has_uk else 0  # UK: 50 turn cap, non-UK: run until all dead
 
-    # Default to Void CB (best case). Use cb_element param to test specific affinities.
-    cb_element = 4  # Void
-    sim = CBSimulator(deepcopy(sim_champs), deterministic=True, verbose=verbose,
-                      model_survival=True, cb_element=cb_element)
+    sim_kwargs: dict = {"deterministic": True, "verbose": verbose,
+                        "model_survival": True, "cb_element": cb_element}
+    if cb_difficulty:
+        sim_kwargs["cb_difficulty"] = cb_difficulty
+    if cb_speed is not None:
+        sim_kwargs["cb_speed"] = cb_speed
+    sim = CBSimulator(deepcopy(sim_champs), **sim_kwargs)
     result = sim.run(max_cb_turns=max_turns)
 
     stun_name = team_names[stun_idx] if stun_idx >= 0 else "?"
