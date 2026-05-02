@@ -435,6 +435,10 @@ class CBSimulator:
         if cb_difficulty:
             cb_speed = CB_SPEED_BY_DIFFICULTY.get(cb_difficulty.lower(), cb_speed)
         self.cb_speed = cb_speed
+        # Boss CR/CD (verified game-spec UNM 2026-05-02: CR=0.15, CD=0.50).
+        # Pulled from profile if supplied, else default to UNM values.
+        self.cb_cr = float(getattr(profile, "cr", 0.15) or 0.15)
+        self.cb_cd = float(getattr(profile, "cd", 0.50) or 0.50)
         self.profile = profile
         # Apply team-wide speed aura. leader_skills with stat=4 (SPD) give a
         # percentage boost to all hero base speeds. DWJ calc exposes this as
@@ -788,7 +792,24 @@ class CBSimulator:
 
                 # Per-attack multi-hit multiplier from real game data (see CB_ATTACK_MULT)
                 attack_mult = CB_ATTACK_MULT.get(attack, CB_AOE_MULT)
-                aoe_dmg = CB_ATK * attack_mult * def_reduction * dec_atk_mult * fury_mult * incoming_mult
+                # Boss crit modeling: UNM has CR=15%, CD=50% per static
+                # data. Crits do 1.0 + CD × CR_rate average damage. In
+                # deterministic mode, apply expected value (1 + 0.5 × 0.15
+                # = 1.075). In Monte Carlo, the sim's RNG rolls per hit.
+                # Boss crit chance includes affinity bonus (+15% if boss
+                # is strong vs hero).
+                cb_cr = self.cb_cr if hasattr(self, "cb_cr") else 0.15
+                cb_cd_mult = self.cb_cd if hasattr(self, "cb_cd") else 0.50
+                # Affinity advantage gives boss +15% crit chance vs weak hero
+                if c.element and self.cb_element and c.element != 4 and self.cb_element != 4:
+                    if STRONG_AFFINITY.get(self.cb_element) == c.element:
+                        cb_cr = min(1.0, cb_cr + 0.15)
+                if self.deterministic:
+                    crit_factor = 1.0 + cb_cr * cb_cd_mult
+                else:
+                    crit_factor = (1.0 + cb_cd_mult) if self.rng.random() < cb_cr else 1.0
+                aoe_dmg = (CB_ATK * attack_mult * def_reduction * dec_atk_mult
+                           * fury_mult * incoming_mult * crit_factor)
 
                 # Damage reduction buff (e.g., Ma'Shalled A3: 50% reduction)
                 if c.has_buff("dmg_reduction"):
@@ -1458,25 +1479,29 @@ class CBSimulator:
                 # turn added to or removed from the duration of buffs and
                 # debuffs" — read as per-hero scaling.
                 #
-                # Phase B 2026-05-01 KNOWN-WRONG (#3 in compensating list):
-                # Game's NonIncreaseableEffects list includes UK /
-                # BlockDamage / ReviveOnDeath / StoneSkin / Taunt /
-                # PoisonCloud / Thunder / Entangle / Syphon / OnGuard.
-                # IncreaseBuffLifetime SHOULD skip these.
-                # However: filtering them in cb_sim drops survival from
-                # 50/50 to 19/50 turns because the rotation model can't
-                # keep UK/BD alive without the extension hack. The true
-                # fix is restructuring the SimChampion's UK/BD recast
-                # cadence to match real-game tune behaviour (Demytha A3
-                # at CD 3 re-places UK while A2 keeps OTHER buffs alive).
-                # Until that survival rewrite lands, leave UK/BD in the
-                # extension to preserve the team-total accuracy gain
-                # we just got from Phase A constants.
+                # Game's NonIncreaseableEffects list (verified 2026-05-02):
+                # IncreaseBuffLifetime DOESN'T extend these — they're
+                # designed to be one-shot defensive cooldowns, not
+                # perpetually maintained buffs.
+                NON_EXTENDABLE_BUFFS = frozenset({
+                    "unkillable",       # UK clamp-to-1
+                    "block_damage",     # BD absorbs 100%
+                    "revive_on_death",  # one-shot revive
+                    "stone_skin",       # damage reduction passive
+                    "taunt",            # forces attacks
+                    "poison_cloud",     # damage-on-attacker
+                    "thunder",          # damage retaliation
+                    "entangle",         # one-shot CC
+                    "syphon",           # one-shot drain
+                    "on_guard",         # crit prevention
+                })
                 per_ally_changes = {c.name: 0 for c in self.champions}
                 for c in self.champions:
                     if c.is_dead:
                         continue
                     for b in list(c.buffs.keys()):
+                        if b in NON_EXTENDABLE_BUFFS:
+                            continue  # game-correct: these don't extend
                         c.buffs[b] += turns
                         # Mark extended buffs as "modified this turn" so
                         # the end-of-turn tick on the casting hero doesn't
