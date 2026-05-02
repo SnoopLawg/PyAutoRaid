@@ -396,11 +396,12 @@ def load_profiles():
                         effects_list.append(_eff("activate_dots"))
                     elif skill_id == 62801:  # Venomage A1: activate up to 2 Poisons per hit
                         # Real game: "Each hit has a 35% chance of activating
-                        # up to two [Poison] debuffs". Books type=2 sum to +15
-                        # → 50% effective per-hit chance. Without the chance,
-                        # sim activates every cast (over-attributes Venomage
-                        # by ~50%).
-                        chance = 0.50  # 35% base + 15% books (verified Toxicity bonuses)
+                        # up to two [Poison] debuffs". Books type=2 sum to
+                        # ~12% → 47% effective per-hit chance. Verified
+                        # 2026-05-01 from skill 62801's Effect.Chance value
+                        # (0.469195 ≈ 0.47). Previous 0.50 was a guess at
+                        # 35%+15%; real bonus is 35% + ~12% = 47%.
+                        chance = 0.47
                         effects_list.append(_eff("activate_poisons",
                                                  max_count=2, chance=chance))
                     # Other heroes with 9002: skip (unknown mechanic)
