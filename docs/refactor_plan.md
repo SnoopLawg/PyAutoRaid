@@ -192,21 +192,40 @@ canonical reference (skills_all 35MB + stages 35MB + the rest <2MB).
   the sim or optimizer needs per-stage reward lookups beyond the
   scalar fields (XP, IsBoss, Modifiers).
 
-### Phase 3 — Universal sim (not just CB)
+### Phase 3 — Universal sim (not just CB) 🟡 (foundations landed; engines pending)
 
 **Goal**: simulate any battle, not just Demon Lord.
 
-- [ ] Generalize `tools/cb_sim.py` to take a *boss profile* (HP, ATK,
-      DEF, SPD, skill rotation) from `data/static/` rather than
-      hardcoded UNM Demon Lord values
+- [x] BossProfile abstraction — `tools/boss_profiles.py` with a
+      dataclass holding HP/ATK/DEF/SPD/element/skill_pattern/immunities/
+      dot_caps/enrage_turn. Profiles auto-generate for CB Easy→UNM ×
+      Magic/Force/Spirit/Void (24), plus stub profiles for Hydra (6),
+      Chimera (6), and Doom Tower (on-demand via `dt-{normal|hard}-fNNN`).
+- [x] CLI: `python3 tools/sim.py --list-locations` enumerates every
+      battle slug; `--location <slug> --team "..."` routes to the
+      right engine. Stub engines print "not yet implemented" without
+      crashing — keeps the surface honest.
+- [x] CB engine wired via `cb_potential.simulate_team`; verified
+      identical numbers vs direct `cb_potential.py` call (31.36M for
+      ME/Demytha/Ninja/Geo/Venomage on UNM Void).
+- [ ] Thread `profile.speed` + `profile.element` through
+      `cb_potential.simulate_team` so non-UNM-Void CB profiles stop
+      silently using UNM Void values. (`sim.py` warns when the gap
+      applies; this fixes it at the source.)
 - [ ] Hydra mechanics module — multiple heads, head-specific skills,
-      decapitation rules
-- [ ] Doom Tower bosses module — per-floor boss profiles
-- [ ] CLI: `python3 tools/sim.py --location hydra-unm --team "..."`
-      (single dispatcher, current `cb_sim.py` becomes one backend)
+      decapitation rules. Stub profiles ready in registry.
+- [ ] Chimera mechanics module — 3 heads with rotating affinity.
+      Stub profiles ready.
+- [ ] Doom Tower per-floor boss profiles — read from
+      `data/static/stages.json` (Area=DoomTower, 792 entries).
+- [ ] Generalize `tools/cb_sim.py` itself to take a `BossProfile`
+      directly (instead of `cb_speed=` / `cb_element=` / `cb_difficulty=`
+      kwargs). Backward-compat layer keeps existing callers working.
 
-**Deliverable**: any battle the user might run can be simmed before
-spending energy/keys.
+**Deliverable**: ✅ dispatcher + profile registry shipped; ⏳ engine
+implementations for Hydra / Chimera / Doom Tower remain. The sim
+surface (`sim.py --list-locations` etc.) is now in place so each new
+engine plugs in without changing call sites downstream.
 
 ### Phase 4 — Hero kit completeness (sim correctness)
 

@@ -1,0 +1,154 @@
+"""Universal sim dispatcher — pick a battle, sim a team.
+
+Front door for any battle PyAutoRaid can simulate. Backed by per-engine
+implementations:
+- engine=cb        → tools/cb_sim.py (CBSimulator) — fully implemented
+- engine=hydra     → not yet implemented (multi-head + decapitation)
+- engine=chimera   → not yet implemented
+- engine=doom_tower → not yet implemented
+
+Usage:
+    python3 tools/sim.py --list-locations
+    python3 tools/sim.py --location cb-unm-void --team "ME,Demytha,Ninja,Geo,Venomage"
+    python3 tools/sim.py --location cb-nm-force --team "..." --verbose
+
+The --location slug shape comes from boss_profiles.py (e.g. cb-unm-void,
+hydra-unm, chimera-brutal, dt-hard-f120). New engines plug in by adding
+a dispatch arm below.
+"""
+from __future__ import annotations
+
+import argparse
+import os
+import sys
+from pathlib import Path
+
+# Make `from boss_profiles import ...` work when running this directly.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from boss_profiles import BossProfile, list_locations, lookup
+
+
+def _print_locations() -> None:
+    """Tabular listing of every profile in the registry."""
+    profiles = list_locations()
+    print(f"=== {len(profiles)} battle profiles ===\n")
+    print(f"  {'slug':30s} {'engine':12s} {'difficulty':10s} {'hp':>14s} {'speed':>6s}")
+    print(f"  {'-'*30} {'-'*12} {'-'*10} {'-'*14} {'-'*6}")
+    cur_engine = None
+    for p in profiles:
+        if p.engine != cur_engine:
+            cur_engine = p.engine
+            status = "" if p.engine == "cb" else "  (not yet implemented)"
+            print(f"\n  -- engine={p.engine}{status} --")
+        hp_s = f"{p.hp:,}" if p.hp else "-"
+        spd_s = f"{p.speed:g}" if p.speed else "-"
+        print(f"  {p.slug:30s} {p.engine:12s} {(p.difficulty or '-'):10s} {hp_s:>14s} {spd_s:>6s}")
+
+
+_CB_DIFFICULTY_TO_CLI = {
+    "easy": "easy", "normal": "normal", "hard": "hard",
+    "brutal": "brutal", "nm": "nightmare", "unm": "ultra-nightmare",
+}
+_CB_ELEMENT_NAME = {1: "magic", 2: "force", 3: "spirit", 4: "void"}
+
+
+def _run_cb(profile: BossProfile, team: list[str], *, verbose: bool,
+            force_affinity: bool, max_cb_turns: int, speed_aura: float,
+            use_current_gear: bool) -> int:
+    """Delegate to the existing CB sim's `simulate_team` (full-potential
+    team builder) and adapt the BossProfile fields to its parameters.
+
+    `simulate_team` does not yet take a difficulty/element knob — that's
+    a separate refactor target. For now, profiles below UNM still route
+    here but the underlying sim runs at UNM. Listed as a follow-up below.
+    """
+    if profile.difficulty != "unm" or profile.element != 4:
+        # The full-potential team builder in cb_potential currently
+        # hardcodes UNM Void. We accept the profile so the dispatcher
+        # surface is right; flag the gap rather than silently misreport.
+        print(f"NOTE: simulate_team currently hardcodes UNM Void; this run will use those values, not "
+              f"{profile.difficulty}/{_CB_ELEMENT_NAME.get(profile.element, '?')}.", file=sys.stderr)
+        print("      Tracked as Phase 3 follow-up: thread profile.speed + profile.element through "
+              "cb_potential.simulate_team / cb_sim.run_potential_team.\n", file=sys.stderr)
+
+    from cb_potential import simulate_team
+    result = simulate_team(team, verbose=verbose)
+    if "error" in result:
+        print(f"ERR: {result['error']}", file=sys.stderr)
+        return 1
+
+    print(f"\n=== {profile.name} ===")
+    print(f"Team: {', '.join(team)}")
+    total_m = result.get("total", 0) / 1e6
+    cb_turns = result.get("cb_turns", "?")
+    print(f"Total damage: {total_m:.2f}M over {cb_turns} CB turns\n")
+    print(f"  {'Hero':20s} {'Total':>10s} {'Direct':>10s} {'Poison':>10s} {'Burn':>10s} {'WM/GS':>10s} {'Pass':>10s}")
+    for h in result.get("heroes", []):
+        print(f"  {h['name']:20s} {h.get('total', 0):>10,.0f} {h.get('direct', 0):>10,.0f} "
+              f"{h.get('poison', 0):>10,.0f} {h.get('hp_burn', 0):>10,.0f} {h.get('wm_gs', 0):>10,.0f} "
+              f"{h.get('passive', 0):>10,.0f}")
+    return 0
+
+
+def _run_stub(profile: BossProfile) -> int:
+    """Placeholder for engines whose sim isn't built yet."""
+    print(f"=== {profile.name} ===")
+    print(f"slug={profile.slug}  engine={profile.engine}  location={profile.location}")
+    print(f"\nThis sim engine is not yet implemented.")
+    print(f"Profile loaded successfully — when the {profile.engine} engine ships,")
+    print(f"`python3 tools/sim.py --location {profile.slug}` will route to it.")
+    return 3
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser(
+        description="Universal sim dispatcher — pick a battle, sim a team.")
+    ap.add_argument("--list-locations", action="store_true",
+                    help="Print all known battle profiles and exit.")
+    ap.add_argument("--location", "-l",
+                    help="Profile slug (e.g. cb-unm-void). See --list-locations.")
+    ap.add_argument("--team", help="Comma-separated hero names")
+    ap.add_argument("--verbose", "-v", action="store_true")
+    ap.add_argument("--no-force-affinity", action="store_true",
+                    help="CB only: disable Force-Affinity per-skill damage caps.")
+    ap.add_argument("--max-cb-turns", type=int, default=50,
+                    help="CB only: cap simulation at N CB turns. Default 50.")
+    ap.add_argument("--speed-aura", type=float, default=0.0,
+                    help="CB only: team-wide SPD aura percentage.")
+    ap.add_argument("--use-current-gear", action="store_true",
+                    help="CB only: use currently-equipped artifacts (no re-optimize).")
+    args = ap.parse_args()
+
+    if args.list_locations:
+        _print_locations()
+        return 0
+
+    if not args.location:
+        ap.error("--location required (or pass --list-locations)")
+
+    try:
+        profile = lookup(args.location)
+    except KeyError as e:
+        print(f"ERR: {e}", file=sys.stderr)
+        print("Try --list-locations to see all available profiles.", file=sys.stderr)
+        return 1
+
+    if profile.engine == "cb":
+        if not args.team:
+            ap.error("--team required for CB profiles")
+        team = [n.strip() for n in args.team.split(",") if n.strip()]
+        return _run_cb(
+            profile, team,
+            verbose=args.verbose,
+            force_affinity=not args.no_force_affinity,
+            max_cb_turns=args.max_cb_turns,
+            speed_aura=args.speed_aura,
+            use_current_gear=args.use_current_gear,
+        )
+
+    return _run_stub(profile)
+
+
+if __name__ == "__main__":
+    sys.exit(main())
