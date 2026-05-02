@@ -119,11 +119,37 @@ phase if the current one moved team-total in the wrong direction.
 | Phase | Status | Expected delta |
 |---|---|---|
 | A — constants | 🟢 | UNM -15.3% → -10.9% (commit 2bfc223) |
-| B — survival | 🔴 | per-hero attribution convergence |
+| B — survival | 🟡 partial | UNM -10.9% → -11.3% (commit 833a5f6) |
 | C — damage formula | 🔴 | per-event ±2% |
 | D — DoT caps | 🔴 | per-tick ±1% |
 | E — boss skills | 🔴 | stun damage match |
 | F — research | 🔴 | TBD |
+
+## Phase B partial — Done 2026-05-01 (commit 833a5f6)
+
+**Audit revealed 3 of the 6 compensating wrongs already fixed**:
+- Off-by-one CD hack: already removed
+- Demytha A1 shield: already placed via team_buffs
+- Demytha A2 heal: already modeled in extend_buffs
+
+**This commit fixed**:
+- UK = full skip → UK clamps to 1 HP (game-spec
+  Phase_UnkillableProcessing). BlockDamage still fully blocks.
+- Incoming affinity multiplier: 1.30/0.70 → 1.0/0.80 to match
+  ElementDisadvantageCoef ground truth.
+
+**Still wrong (not fixed)**:
+- extend_buffs extending UK/BD: trying to fix it drops sim UNM
+  survival from 50/50 to 19/50 because the sim's rotation can't
+  keep UK alive without the extension hack. True fix needs the
+  rotation model rewritten so Demytha A3 + Maneater A3 re-place UK
+  at the right cadence. Multi-day work.
+- SPD discrepancy: needs s_spd capture validation (deployed
+  2026-04-29, captured in 2026-05-01 tick logs but not yet diffed
+  against sim's calc_stats output).
+
+Slight regression (-10.9% → -11.3%) because UK full-skip was masking
+a damage-modifier gap that Phase C will close.
 
 ## Phase A — Done 2026-05-01 (commit 2bfc223)
 
