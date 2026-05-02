@@ -280,6 +280,17 @@ class SimChampion:
     # damage before HP. Cleared when the shield buff expires.
     shield_hp: float = 0.0
 
+    # Brimstone blessing — places [Smite] debuff on attack. When boss
+    # uses Active Skill, Smite triggers a meteorite for 25% MAX_HP +
+    # 5% to all other enemies. Verified game-spec: blessing 4101.
+    # Effect StatusEffectTypeId 740 (internal name "FireMark"), kind 3021.
+    # Damage caps at the absolute floor 250,000 on UNM (skill 200008).
+    has_brimstone: bool = False
+    # Brimstone proc chance per hit (varies by blessing grade):
+    # level 1 (410101) = 15%, level 3 = 30%, level 5 = 60%, level 6 = 100%.
+    # Default 30% — typical mid-grade. Override via build_sim_champion.
+    brimstone_chance: float = 0.30
+
     # Passive abilities (detected from game data)
     has_passive_ally_protect: bool = False   # Skullcrusher: permanent Ally Protect
     has_passive_dmg_reduction: float = 0.0  # Cardiel: -20%, Geomancer: -15%/-30%
@@ -470,6 +481,19 @@ class CBSimulator:
             for skill in (c.skills or [])
         )
 
+        # Brimstone [Smite] tracking: when a Brimstone hero hits the
+        # boss, per-hit chance to refresh a 2-turn Smite debuff. When
+        # the boss uses an Active Skill (any CB turn = AOE1/AOE2/Stun),
+        # the meteorite triggers for 250K cap damage attributed to
+        # whichever Brimstone hero placed the Smite. Single-Smite-on-
+        # boss rule (per blessing description "Only one [Smite] debuff
+        # can be active per team").
+        self.smite_holder: Optional[str] = None
+        self.smite_turns_left: int = 0
+        # Smite damage cap on UNM (skill 200008 floor cap for
+        # ScalesByTargetHp effects with raw >= 250K).
+        self.SMITE_CAP_DMG: int = 250_000
+
         # Initialize HP for survival mode
         for c in self.champions:
             c.max_hp = c.stats.get(HP, 30000)
@@ -606,10 +630,41 @@ class CBSimulator:
             return (STRONG_HIT_DMG_MULT, 1.0)  # 1.0, 1.0 — game-spec
         return (1.0, 1.0)
 
+    def _try_place_smite(self, champ: SimChampion, hit_count: int) -> None:
+        """Brimstone blessing: each of `hit_count` hits has
+        `champ.brimstone_chance` chance to refresh Smite on boss.
+        Single-Smite rule means later procs refresh duration to 2
+        turns and reassign holder to the latest placer.
+
+        Use the same RNG path in deterministic and Monte Carlo modes —
+        the simulator's rng is seedable so deterministic still produces
+        a fixed result. Refreshing on every cast (the previous bug)
+        forced 100% Smite uptime → ~5× over-prediction of Smite damage.
+        """
+        chance = champ.brimstone_chance
+        # Probability at least one of `hit_count` rolls procs:
+        # 1 - (1 - chance)^hit_count
+        p_any = 1.0 - (1.0 - chance) ** max(1, hit_count)
+        if self.rng.random() < p_any:
+            self.smite_holder = champ.name
+            self.smite_turns_left = 2
+
     def _cb_turn(self, tick: int):
         self.cb_tm -= TM_THRESHOLD
         self.cb_turn += 1
         attack = self.cb_pattern[(self.cb_turn - 1) % 3]
+
+        # Brimstone [Smite] meteorite — fires when the boss uses an
+        # Active Skill (every CB turn = AOE1 / AOE2 / Stun, all are
+        # active). Damage = 25% MAX_HP capped at 250K floor (skill
+        # 200008 ScalesByTargetHp >= 250000 path). Boss has skill
+        # 200012 = -70% Smite damage reduction, but raw still exceeds
+        # the cap so observed damage = 250K flat.
+        if self.smite_turns_left > 0 and self.smite_holder:
+            holder = next((c for c in self.champions if c.name == self.smite_holder), None)
+            if holder is not None and not holder.is_dead:
+                holder.damage.passive += self.SMITE_CAP_DMG
+            self.smite_turns_left -= 1
 
         # Capture per-hero protection snapshot at the moment of CB action
         # (BEFORE any ticks / damage are applied this turn). Matches the
@@ -1108,6 +1163,12 @@ class CBSimulator:
             wm_gs = self._roll_wm_gs(champ, chosen.hit_count)
             wm_gs = self._cap_fa(wm_gs, kind="wm_gs", hits=chosen.hit_count)
             champ.damage.wm_gs += wm_gs
+
+            # Brimstone [Smite] placement — per hit, brimstone_chance
+            # to refresh Smite on boss. Single-Smite-on-team rule per
+            # blessing description.
+            if champ.has_brimstone:
+                self._try_place_smite(champ, chosen.hit_count)
 
             # Healing from damage dealt
             if self.model_survival:
@@ -1739,6 +1800,30 @@ def build_sim_champion(name: str, stats: dict, position: int,
     if raw_base_speed <= 0:
         raw_base_speed = stats.get(SPD, 100)  # fallback: use total speed
 
+    # Brimstone Legendary Wisdom blessing (id 4101) — places [Smite]
+    # debuff on attack. Per-hit chance scales with blessing grade:
+    # level 1 = 15%, level 3 = 30%, level 5 = 60% protected,
+    # level 6 = 100% guaranteed protected.
+    # The mod's BlessingId reflection currently fails (Nullable<enum>
+    # unwrapping issue), so brimstone heroes are listed manually until
+    # blessing data is reliably extracted. Stored on stats dict so
+    # consumers can pre-populate per-hero (e.g. from a heroes_blessings
+    # config file).
+    has_brimstone = stats.get("has_brimstone", False)
+    brimstone_chance = stats.get("brimstone_chance", 0.30)
+    # Empirical fallback: heroes known to use Brimstone in CB tunes
+    # (manually verified by observing [Smite] damage events on boss
+    # in tick log captures — all attribute to Ninja in the user's
+    # roster as of 2026-05-01).
+    if not has_brimstone and name == "Ninja":
+        has_brimstone = True
+        # Calibrated to observed 11 Smite events per 50 CB turns
+        # (22% boss-action uptime). Per-hit chance 0.15 corresponds to
+        # blessing level 1 (l10n:blessing-level/description?id=410101).
+        # Empirically matches observed event count given Ninja's hit
+        # cadence (A1×1, A2×3, A3×1, fired ~30 times in 50 boss turns).
+        brimstone_chance = 0.15
+
     champ = SimChampion(
         name=name,
         speed=stats.get(SPD, 100),
@@ -1749,6 +1834,8 @@ def build_sim_champion(name: str, stats: dict, position: int,
         skills=skills,
         opening=list(opening) if opening else [],
         has_lifesteal=stats.get("has_lifesteal", False),
+        has_brimstone=has_brimstone,
+        brimstone_chance=brimstone_chance,
         has_passive_ally_protect=passive_ally_protect,
         has_passive_dmg_reduction=passive_dmg_reduction,
         has_passive_extra_turns=passive_extra_turns,
