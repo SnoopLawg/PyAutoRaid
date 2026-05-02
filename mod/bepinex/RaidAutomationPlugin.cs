@@ -2072,6 +2072,20 @@ namespace RaidAutomation
                             if (ae != null)
                             {
                                 skillTypeId = IntProp(ae, "SkillTypeId");
+                                // Fallback: managed property returns 0 for some
+                                // damage events (boss-source AppliedEffects).
+                                // Read raw IL2CPP memory at AppliedEffect+0x28
+                                // (SkillTypeId field per Il2CppDumper layout).
+                                if (skillTypeId == 0 && ae is Il2CppSystem.Object il2obj)
+                                {
+                                    try
+                                    {
+                                        IntPtr aePtr = il2obj.Pointer;
+                                        if ((long)aePtr > 0x10000)
+                                            skillTypeId = Marshal.ReadInt32(aePtr + 0x28);
+                                    }
+                                    catch { }
+                                }
                             }
                             var et = Prop(eff, "Effect");
                             if (et != null)
