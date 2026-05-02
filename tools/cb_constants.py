@@ -268,3 +268,33 @@ FA_CAP_DOT:    int =  75_000   # per-tick DoT cap (HP Burn / Poison tick)
 # Leech debuff: attackers heal 10% of damage dealt. Skill-induced (Sicia,
 # Cardiel A3) — distinct from the LifeDrain artifact set proc.
 LEECH_HEAL_RATE: float = 0.10
+
+
+# ============================================================================
+# DEF mitigation coefficients — CALIBRATED (game shape, captured C)
+# ============================================================================
+# Plarium's documented damage formula (verified shape):
+#   damage = raw × C / (C + DEF)
+# equivalently: damage = raw × (1 - DEF / (DEF + C))
+#
+# C is a level-scaled "armor coefficient". Direct extraction from
+# `GameAssembly.dll` would give the literal constant; in the meantime
+# these values are derived from `dealt / calc_raw` ratios captured by
+# the mod's DamageProcessor hook over real CB battles.
+#
+# Capture source: tick_log_cb_*.json damage events (kind_id == 6000,
+# excludes DoT ticks which bypass DEF). Per-direction medians:
+#   hero→boss   : C_HERO_TO_BOSS = 2220 (matches sim's empirical fit)
+#   boss→hero   : C_BOSS_TO_HERO = 1100 (Magic/Void/Spirit attacker)
+#                  Force attacker: C_BOSS_TO_HERO_FORCE = 850 (boss is
+#                  weak vs Force, takes more damage from Force heroes)
+#
+# Re-derive any time with: tools/derive_damage_formula.py <ticklog>
+# Output goes to data/derived/damage_formula.json (when refreshed) for
+# downstream tools that want per-tick-log granularity instead of these
+# medians.
+
+C_HERO_TO_BOSS: int = 2220              # boss DEF armor coefficient
+C_BOSS_TO_HERO: int = 1100              # hero DEF coefficient, neutral attacker
+C_BOSS_TO_HERO_FORCE: int = 850         # hero DEF coefficient, Force attacker
+FORCE_ELEM: int = 2                     # element id used by sim affinity logic

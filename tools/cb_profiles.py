@@ -289,3 +289,38 @@ PROFILES: dict[str, HeroProfile] = {
 def get(name: str) -> HeroProfile | None:
     """Lookup by name. Returns None if unknown."""
     return PROFILES.get(name)
+
+
+def derive_from_skill_data(name: str, skill_data: dict | None) -> HeroProfile:
+    """Build a generic CB profile from `skill_data[name]` when there's
+    no hand-curated PROFILES entry. Used by the gear optimizer when
+    simming an unowned hero — needs enough fields to score artifacts
+    (a1 mult / hits / scaling stat, debuff flags from team_buffs and
+    effect_type strings).
+
+    The derived profile is intentionally minimal: it captures only what
+    skill_data actually exposes. Hand-curated PROFILES entries
+    (poison_on_counter, breaks_speed_tune, etc.) cannot be inferred
+    from skill_data alone; those keep coming from the curated table
+    when a name is in PROFILES.
+    """
+    if not skill_data:
+        return HeroProfile(name=name)
+    a1 = skill_data.get("A1") or {}
+    return HeroProfile(
+        name=name,
+        a1_hits=int(a1.get("hits", 1)),
+        a1_mult=float(a1.get("mult", 3.5)),
+        a1_stat=str(a1.get("stat", "ATK")),
+    )
+
+
+def resolve(name: str, skill_data: dict | None = None) -> HeroProfile:
+    """Hand-curated PROFILES wins; otherwise derive from skill_data;
+    last resort = HeroProfile defaults. Always returns a usable profile
+    (never None), so callers don't need a `or PROFILES["DPS1"]` dance.
+    """
+    p = PROFILES.get(name)
+    if p is not None:
+        return p
+    return derive_from_skill_data(name, skill_data)

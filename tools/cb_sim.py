@@ -51,6 +51,7 @@ from cb_constants import (
     FA_CAP_BIG, FA_CAP_MEDIUM, FA_CAP_SMALL, FA_CAP_DOT,
     GATHERING_FURY_START_TURN, GATHERING_FURY_RATE_PER_TURN,
     GATHERING_FURY_CLIFF_TURN, ENRAGE_TURN,
+    C_HERO_TO_BOSS, C_BOSS_TO_HERO, C_BOSS_TO_HERO_FORCE, FORCE_ELEM,
 )
 
 TM_THRESHOLD = 1000
@@ -778,25 +779,12 @@ class CBSimulator:
                     c.death_turn = self.cb_turn
                     continue
 
-                # Calculate base damage taken.
-                # Formula: damage = raw × C / (C + DEF). Per-hero/hit-type
-                # analysis from 1209 captured events 2026-05-02:
-                #   Normal hit, Void/Magic hero: C ≈ 2200
-                #   Normal hit, Force hero (strong vs Magic): C ≈ 540
-                #   Unspec (mixed hit types): C ≈ 1100 — DOMINANT (85%
-                #     of hits don't have explicit hit_type captured)
-                # Population-weighted median = 1100. Use this until sim
-                # rolls hit types per-attack, when per-hit-type C should
-                # apply.
+                # Boss → hero damage: damage = raw × C / (C + DEF).
+                # C constants live in cb_constants.py with provenance.
                 target_def = c.stats.get(DEF, 1000)
                 if c.has_buff("inc_def"):
                     target_def *= 1.6  # DEF Up = +60%
-                # Force heroes get extra mitigation (boss WEAK vs Force):
-                # captured Force C ≈ 850 vs neutral ≈ 1100. The 0.80
-                # affinity is ALREADY in calc_raw, so this delta is on
-                # top of that.
-                FORCE_ELEM = 2
-                C_DEF = 850 if c.element == FORCE_ELEM else 1100
+                C_DEF = C_BOSS_TO_HERO_FORCE if c.element == FORCE_ELEM else C_BOSS_TO_HERO
                 def_reduction = C_DEF / (C_DEF + target_def)
 
                 # Incoming affinity: when boss has affinity advantage
@@ -1438,7 +1426,7 @@ class CBSimulator:
         if champ.has_helmsmasher:
             effective_def *= 0.875
 
-        def_mult = max(0.05, 1 - effective_def / (effective_def + 2220))
+        def_mult = max(0.05, 1 - effective_def / (effective_def + C_HERO_TO_BOSS))
 
         wk = 1.25 if self.debuff_bar.has("weaken") else 1.0
         str_mult = 1.25 if champ.has_buff("strengthen") else 1.0
@@ -2571,8 +2559,15 @@ def main():
             hero_by_name["Maneater_2"] = h
 
     # Resolve team heroes. Owned heroes win; unowned names fall back to
-    # a synthetic record built from hero_types.json (no gear → ungeared
-    # baseline damage). Honest "what if" sim without faking gear.
+    # a synthetic record built from hero_types.json (max-ascended,
+    # level 60, no equipped gear). The artifact optimizer below assigns
+    # them best-available gear from the user's vault — so simming a
+    # potential hero reflects "what would happen if I pulled them today
+    # with my current account".
+    from cb_profiles import resolve as _resolve_profile
+    from profile_resolver import make_synthetic_hero_record
+    from load_game_profiles import load_profiles as _lgp
+    _SKILL_DATA, _, _ = _lgp()
     team_h, team_p = [], []
     me_count = 0
     synthetic_used = []
@@ -2584,17 +2579,16 @@ def main():
             key = tname
         h = hero_by_name.get(key)
         if not h:
-            from profile_resolver import make_synthetic_hero_record
             h = make_synthetic_hero_record(tname)
             if not h:
                 print(f"Hero not found: {tname}")
                 return
             synthetic_used.append(tname)
-        p = PROFILES.get(tname)
+        p = _resolve_profile(tname, _SKILL_DATA.get(tname))
         team_h.append(h)
         team_p.append(p)
     if synthetic_used:
-        print(f"  (ungeared baseline for: {', '.join(synthetic_used)})")
+        print(f"  (potential heroes — gearing from vault: {', '.join(synthetic_used)})")
 
     # If validating against real run, auto-detect the real boss turn count for fair comparison
     if args.validate_against and args.max_cb_turns == 50:
@@ -2707,17 +2701,11 @@ def main():
         (3 if i == stun_idx else (1 if team_p[i] and team_p[i].needs_acc else 2))
     ))
     for pi in priority:
-        # Synthetic (unowned) heroes are simmed at ungeared baseline —
-        # skip the artifact optimizer (no profile to score against, and
-        # the user doesn't have gear for them anyway).
-        if team_h[pi].get("_synthetic"):
-            assigned_arts[pi] = []
-            continue
         avail = [a for a in all_arts if a.get("id") not in used and a.get("rank", 0) >= 5]
         spd_max = UK_ME_SPD_RANGE[1] if (has_uk and team_p[pi] and team_p[pi].unkillable) else None
         is_stun = has_uk and pi == stun_idx
         arts, _ = optimal_artifacts_for_hero(
-            team_h[pi], team_p[pi] or PROFILES.get("DPS1"), avail, account,
+            team_h[pi], team_p[pi], avail, account,
             spd_max=spd_max, is_stun_target=is_stun)
         assigned_arts[pi] = arts
         for a in arts:

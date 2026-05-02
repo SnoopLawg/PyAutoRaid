@@ -1,0 +1,46 @@
+{
+  "source_tick_log": "tick_log_cb_20260502_141115.json",
+  "event_count": 1209,
+  "by_bucket": {
+    "hero_to_boss/p_elem=4": {
+      "n": 124,
+      "C_median": 2174,
+      "C_mean": 2947,
+      "C_stdev": 2119
+    },
+    "hero_to_boss/p_elem=1": {
+      "n": 93,
+      "C_median": 1574,
+      "C_mean": 3140,
+      "C_stdev": 5615
+    },
+    "boss_to_hero/p_elem=1": {
+      "n": 203,
+      "C_median": 797,
+      "C_mean": 745,
+      "C_stdev": 528
+    },
+    "boss_to_hero/p_elem=4": {
+      "n": 17,
+      "C_median": 1172,
+      "C_mean": 1172,
+      "C_stdev": 0
+    },
+    "hero_to_boss/p_elem=2": {
+      "n": 18,
+      "C_median": 1574,
+      "C_mean": 1574,
+      "C_stdev": 0
+    }
+  },
+  "summary": {
+    "C_HERO_TO_BOSS": {
+      "n": 235,
+      "median": 1574
+    },
+    "C_BOSS_TO_HERO": {
+      "n": 220,
+      "median": 892
+    }
+  }
+}

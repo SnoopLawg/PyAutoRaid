@@ -140,10 +140,72 @@ def analyze_hit_type_factors(events: list[dict]) -> None:
               f"median={median(ratios):.4f}  min={min(ratios):.4f}  max={max(ratios):.4f}")
 
 
+def derive_def_coefficients(events: list[dict]) -> dict:
+    """Per-direction DEF C extraction. Filters to direct attacks only
+    (kind_id 6000) — DoTs (3007/3014/3021) bypass DEF; Geo deflect
+    (4017) is too small a sample to be reliable.
+
+    For each event with valid (calc_raw, dealt, t_def):
+        f = dealt / calc_raw  -- pass-through after DEF mitigation
+        C = t_def × f / (1 - f)
+    Group by (direction, attacker_element). Output per-bucket median
+    plus sample count + variance.
+
+    Direction key: "hero_to_boss" when t_typeid == CB_BOSS_TYPE_ID,
+    else "boss_to_hero".
+    """
+    CB_BOSS_TYPE_ID = 22266
+    direct = [e for e in events if e.get("kind_id") == 6000]
+    buckets: dict[tuple, list[float]] = defaultdict(list)
+    for e in direct:
+        cr, dl, td = e.get("calc_raw", 0), e.get("dealt", 0), e.get("t_def", 0)
+        if cr <= 0 or dl <= 0 or dl >= cr or td <= 0:
+            continue
+        f = dl / cr
+        if not (0 < f < 1):
+            continue
+        C = td * f / (1 - f)
+        direction = ("hero_to_boss" if e.get("t_typeid") == CB_BOSS_TYPE_ID
+                     else "boss_to_hero")
+        p_elem = e.get("p_elem", -1)
+        buckets[(direction, p_elem)].append(C)
+
+    out: dict = {"by_bucket": {}, "summary": {}}
+    for key, values in buckets.items():
+        if len(values) < 5:
+            continue
+        out["by_bucket"][f"{key[0]}/p_elem={key[1]}"] = {
+            "n": len(values),
+            "C_median": round(median(values)),
+            "C_mean":   round(mean(values)),
+            "C_stdev":  round(stdev(values)) if len(values) > 1 else 0,
+        }
+    h2b = [c for k, vs in buckets.items() if k[0] == "hero_to_boss" for c in vs]
+    b2h = [c for k, vs in buckets.items() if k[0] == "boss_to_hero" for c in vs]
+    if h2b:
+        out["summary"]["C_HERO_TO_BOSS"] = {
+            "n": len(h2b), "median": round(median(h2b)),
+        }
+    if b2h:
+        out["summary"]["C_BOSS_TO_HERO"] = {
+            "n": len(b2h), "median": round(median(b2h)),
+        }
+        force_only = [c for k, vs in buckets.items()
+                      if k[0] == "boss_to_hero" and k[1] == 2 for c in vs]
+        if force_only:
+            out["summary"]["C_BOSS_TO_HERO_FORCE"] = {
+                "n": len(force_only), "median": round(median(force_only)),
+            }
+    return out
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("tick_log", help="Path to tick_log_cb_*.json")
+    ap.add_argument("--write-json", metavar="PATH",
+                    help="Also write derived C coefficients to this path "
+                         "(default: data/derived/damage_formula.json)")
     args = ap.parse_args()
     path = Path(args.tick_log)
     if not path.exists():
@@ -159,6 +221,31 @@ def main() -> int:
     analyze_def_mitigation(events)
     print()
     analyze_hit_type_factors(events)
+    print()
+
+    derived = derive_def_coefficients(events)
+    print("=== Per-direction DEF C (from kind_id=6000 events) ===")
+    for k, info in sorted(derived["by_bucket"].items()):
+        print(f"  {k:<35} n={info['n']:>4} "
+              f"C_med={info['C_median']:>6} mean={info['C_mean']:>6} "
+              f"sigma={info['C_stdev']:>5}")
+    if derived.get("summary"):
+        print("\n  Suggested cb_constants medians:")
+        for k, info in derived["summary"].items():
+            print(f"    {k}: {info['median']} (n={info['n']})")
+
+    out_path = args.write_json or str(
+        Path(__file__).resolve().parent.parent
+        / "data" / "derived" / "damage_formula.json")
+    out_p = Path(out_path)
+    out_p.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "source_tick_log": path.name,
+        "event_count": len(events),
+        **derived,
+    }
+    out_p.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    print(f"\nwrote {out_p}")
     return 0
 
 
