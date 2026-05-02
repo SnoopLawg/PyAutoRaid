@@ -907,18 +907,33 @@ class CBSimulator:
                     pass  # stun is blocked!
                 else:
                     target.is_stunned = True
-                # Stun deals damage too. Real formula per game data (skill
-                # 222601 Crushing Force): attack.formula = 0.2*TRG_B_HP — that
-                # is 20% of TARGET'S MAX HP, not ATK-based. DEF does NOT
-                # reduce this (it's a %HP nuke). Gathering Fury DOES apply
-                # (multiplicative on the 20% HP base, by game's DMG_MUL math).
-                if self.model_survival and not target.has_buff("unkillable") and not target.has_buff("block_damage"):
+                # Stun deals damage too. Game-spec verified 2026-05-01:
+                # skill 222601 effect MultiplierFormula = `0.2*TRG_B_HP`.
+                # TRG_B_HP is the target's BASE HP (level-60 ungeared,
+                # ~19,650 for Cardiel), NOT current max HP (~45,379 with
+                # gear). Sim was using max — over-predicted stun damage
+                # by ~2.3×.
+                #
+                # DEF does NOT mitigate this (it's a %HP nuke). Gathering
+                # Fury DOES apply (multiplicative on the 20% HP base, by
+                # game's DMG_MUL formula).
+                #
+                # BlockDamage fully blocks the hit. UK takes the damage
+                # but HP clamps to 1 (Phase B fix — UK is not a full skip).
+                if self.model_survival and not target.has_buff("block_damage"):
                     fury_mult = 1.0
                     if self.cb_turn >= GATHERING_FURY_START_TURN:
                         fury_mult = 1.0 + GATHERING_FURY_RATE_PER_TURN * (self.cb_turn - GATHERING_FURY_START_TURN + 1)
-                    target_max_hp = target.stats.get(HP, target.hp_max if hasattr(target, 'hp_max') else 40000)
-                    stun_dmg = CB_STUN_HP_FRACTION * target_max_hp * fury_mult
+                    # base_HP comes from cb_optimizer.calc_stats — it's the
+                    # game's GetBaseStats output (pre-gear, level-scaled).
+                    # Fall back to current max HP if unavailable.
+                    target_base_hp = target.stats.get("base_HP") or target.stats.get(HP, target.max_hp if target.max_hp else 40000)
+                    stun_dmg = CB_STUN_HP_FRACTION * target_base_hp * fury_mult
                     target.current_hp -= stun_dmg
+                    # UK clamp-to-1 (per Phase B): hero takes the damage,
+                    # but HP can't drop below 1 while UK is up.
+                    if target.has_buff("unkillable") and target.current_hp < 1:
+                        target.current_hp = 1
                     if target.current_hp <= 0:
                         target.is_dead = True
                         target.death_turn = self.cb_turn

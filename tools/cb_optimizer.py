@@ -222,6 +222,12 @@ def calc_stats(hero, artifacts, account):
             CD: bc.get("CD", 0) * 100 if bc.get("CD", 0) < 1 else bc.get("CD", 0),
             RES: bc.get("RES", 0),
             ACC: bc.get("ACC", 0),
+            # Phase E 2026-05-01: pre-gear base HP, captured for the
+            # CB stun-damage formula. Skill 222601 multiplier is
+            # `0.2*TRG_B_HP` — TRG_B_HP = ungeared base HP, NOT max HP.
+            # Without this, sim was using gear-included HP (~2× higher),
+            # over-predicting stun damage by ~2×.
+            "base_HP": bc.get("HP", 0),
         }
         # Add blessing bonus (from game's CalcBlessingBonus)
         for stat in (HP, ATK, DEF):
