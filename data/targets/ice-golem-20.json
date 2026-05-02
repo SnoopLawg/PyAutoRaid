@@ -1,0 +1,30 @@
+{
+  "slug": "ice-golem-20",
+  "label": "Ice Golem Stage 20 (Resist set farm)",
+  "role_targets": {
+    "tank": {
+      "stat_floors": {
+        "RES": 100,
+        "DEF_pct_of_base": 2.0,
+        "HP_pct_of_base": 1.6,
+        "SPD": 150
+      },
+      "preferred_sets": ["Resist", "Stoneskin", "Defense"],
+      "primary_by_slot": {
+        "weapon": "ATK",
+        "helmet": "HP",
+        "chest": "DEF",
+        "gauntlets": "DEF",
+        "boots": "SPD",
+        "ring": "DEF",
+        "amulet": "HP",
+        "banner": "RES"
+      },
+      "substats_priority": ["DEF", "HP", "RES", "SPD"],
+      "notes": "Ice Golem's debuffs need high RES; Resist/Stoneskin sets farm here."
+    }
+  },
+  "global": {
+    "min_artifact_rank": 5
+  }
+}

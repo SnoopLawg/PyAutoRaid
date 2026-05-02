@@ -1,0 +1,50 @@
+{
+  "slug": "dragon-25",
+  "label": "Dragon Stage 25 (CR/CD nuker team)",
+  "role_targets": {
+    "nuker": {
+      "stat_floors": {
+        "CR": 80,
+        "CD": 150,
+        "ATK_pct_of_base": 2.5,
+        "SPD": 180
+      },
+      "preferred_sets": ["Lethal", "Cruel", "Savage", "Offense"],
+      "primary_by_slot": {
+        "weapon": "ATK",
+        "helmet": "HP",
+        "chest": "ATK",
+        "gauntlets": "CR",
+        "boots": "SPD",
+        "ring": "ATK",
+        "amulet": "CD",
+        "banner": "ATK"
+      },
+      "substats_priority": ["CR", "CD", "ATK", "SPD"],
+      "notes": "Dragon 25 wants high CR/CD nukers; 80% CR + 150% CD gives reliable crit damage. ATK% over flat for scaling with sets."
+    },
+    "support": {
+      "stat_floors": {
+        "ACC": 150,
+        "SPD": 200,
+        "HP_pct_of_base": 1.6
+      },
+      "preferred_sets": ["Speed", "Perception", "Accuracy"],
+      "primary_by_slot": {
+        "weapon": "ATK",
+        "helmet": "HP",
+        "chest": "HP",
+        "gauntlets": "HP",
+        "boots": "SPD",
+        "ring": "DEF",
+        "amulet": "HP",
+        "banner": "ACC"
+      },
+      "substats_priority": ["SPD", "HP", "ACC", "RES"],
+      "notes": "Support enables nukers — high SPD opener + ACC for debuffs."
+    }
+  },
+  "global": {
+    "min_artifact_rank": 5
+  }
+}

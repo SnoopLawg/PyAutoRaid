@@ -1,0 +1,73 @@
+{
+  "slug": "cb-unm",
+  "label": "Clan Boss UNM (Budget UK / Myth Eater)",
+  "role_targets": {
+    "debuffer": {
+      "stat_floors": {
+        "ACC": 230,
+        "SPD": 170,
+        "HP_pct_of_base": 1.5
+      },
+      "preferred_sets": ["Lifesteal", "Accuracy", "Toxic", "Stun"],
+      "primary_by_slot": {
+        "weapon": "ATK",
+        "helmet": "HP",
+        "chest": "HP",
+        "gauntlets": "HP",
+        "boots": "SPD",
+        "ring": "ATK",
+        "amulet": "ACC",
+        "banner": "ACC"
+      },
+      "substats_priority": ["ACC", "SPD", "HP", "RES"],
+      "notes": "ACC>=230 covers UNM RES=250 minus base/skill ACC bonus. SPD band 170-189 fits Budget UK rotations."
+    },
+    "stunner": {
+      "stat_floors": {
+        "ACC": 200,
+        "SPD": 100,
+        "HP_pct_of_base": 1.6
+      },
+      "stat_caps": {
+        "SPD": 118
+      },
+      "preferred_sets": ["Stun", "Lifesteal", "Accuracy"],
+      "primary_by_slot": {
+        "weapon": "ATK",
+        "helmet": "HP",
+        "chest": "HP",
+        "gauntlets": "HP",
+        "boots": "SPD",
+        "ring": "ATK",
+        "amulet": "HP",
+        "banner": "ACC"
+      },
+      "substats_priority": ["HP", "ACC", "DEF", "SPD"],
+      "notes": "Stun target sits at the back of UK rotation: SPD must be capped (~118) so stun lands on the right boss turn."
+    },
+    "unkillable": {
+      "stat_floors": {
+        "SPD": 215,
+        "HP_pct_of_base": 1.7,
+        "DEF_pct_of_base": 1.4
+      },
+      "preferred_sets": ["Immunity", "Lifesteal", "Stoneskin"],
+      "primary_by_slot": {
+        "weapon": "ATK",
+        "helmet": "HP",
+        "chest": "DEF",
+        "gauntlets": "HP",
+        "boots": "SPD",
+        "ring": "DEF",
+        "amulet": "HP",
+        "banner": "RES"
+      },
+      "substats_priority": ["SPD", "HP", "DEF", "RES"],
+      "notes": "Maneater/Demytha SPD bands: ~228 (1st ME) and ~215 (2nd ME / Demytha) for Budget UK / Myth Eater rotations."
+    }
+  },
+  "global": {
+    "min_artifact_rank": 5,
+    "set_bonus_value_per_pct": 100
+  }
+}

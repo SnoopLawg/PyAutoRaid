@@ -315,30 +315,68 @@ the survival model has compensating wrongs that mask each other —
 instead of a "paused at 94%" black box. User runs the suite, picks
 the next chunk to tackle, regression-checks each step.
 
-### Phase 6 — Optimizer per location
+### Phase 6 — Optimizer per location ✅ (target schema + evaluator shipped; full SA solver remains CB-specific)
 
 **Goal**: artifact optimizer takes a location target and produces a
 swap-list.
 
-- [ ] Per-location stat target presets (`data/targets/cb_unm.json`,
-      `data/targets/dragon_20.json`, etc.)
-- [ ] Generalize `tools/global_gear_solver.py` to read these
-- [ ] Diff output: which artifact swaps actually move stats; produce
-      one-click "apply this loadout" via the existing equip endpoints
+- [x] Per-location stat target presets in `data/targets/`:
+      `cb-unm.json` (3 roles: debuffer / stunner / unkillable),
+      `dragon-25.json` (nuker / support), `fire-knight-25.json`
+      (shield_piercer), `ice-golem-20.json` (tank). Schema has
+      stat_floors / stat_caps / preferred_sets / primary_by_slot /
+      substats_priority / notes — documented in `tools/gear_targets.py`.
+- [x] `tools/gear_targets.py` — load_target / list_targets / get_role /
+      evaluate_gear. Synthetic `<STAT>_pct_of_base` floors evaluate
+      against per-hero base stats from the mod's hero-computed-stats.
+- [x] CLI: `python3 tools/gear_solve.py --hero <name> --location <slug>
+      --role <role>`. Reports PASS / FAIL with deltas; for missed
+      stats, scans the user's vault for unequipped artifacts that roll
+      the needed substat (top 5 candidates per gap).
+- [ ] Wire target preset's preferred_sets into `tools/global_gear_solver.py`
+      so the SA optimizer can target any location, not just CB UK.
+      Today the SA solver hardcodes Myth Eater speed bands; reading
+      from a target preset would generalize it. (Real refactor; not
+      blocking.)
+- [ ] One-click "apply this loadout" via the existing equip endpoints —
+      `gear_solve.py` only suggests swaps today. Application would
+      thread through `/equip` + `/swap`. (Real refactor; not blocking.)
 
-**Deliverable**: user picks a hero + location, gets the swap plan.
+**Deliverable**: ✅ user picks a hero + location, gets the floor /
+violation report + vault candidates per missed stat. Full SA-driven
+swap optimizer for non-CB locations is a logged follow-up.
 
-### Phase 7 — Smart farm recommender
+### Phase 7 — Smart farm recommender ✅ (set-coverage allocator shipped; per-substat odds remain rough)
 
 **Goal**: given stat goals (CB ACC for Hero X, Dragon CD for Y), tell
 the user which dungeons to farm and how many runs.
 
-- [ ] Drop-rate model from `data/static/drops.json` × per-stage rolls
-- [ ] Greedy / linear-prog allocator: minimize energy spent to hit all
-      goals
-- [ ] CLI: `python3 tools/farm_plan.py --goals goals.json --max-energy 5000`
+- [x] Set-coverage greedy allocator: `tools/farm_plan.py`. Reads
+      `data/static/drops.json` (46 regions × difficulties × set IDs),
+      cross-references with the target preset's `preferred_sets`,
+      ranks dungeons by sets-covered / energy-cost (efficiency), and
+      produces a greedy coverage plan.
+- [x] Friendly-name aliasing — UI names ("Lifesteal") map to internal
+      codenames ("LifeDrain") so target presets can use whichever.
+- [x] CLI: `python3 tools/farm_plan.py --target cb-unm` (uses target's
+      preferred_sets) or `--sets "Lifesteal,Speed,Accuracy"` for
+      ad-hoc queries. `--list-sources` enumerates every (region, diff,
+      set) row.
+- [ ] Per-substat odds — drops.json exposes which sets *can* drop
+      (set_drops.max_prob), not the per-roll probability of getting
+      a specific substat (e.g. "ACC roll on a Lifesteal Banner").
+      Substat odds are uniform within an artifact's primary set, so
+      the recommender's rough "10 runs per dungeon" budget is the
+      right granularity until per-stage rolls are exposed.
+- [ ] Goal file: today the recommender takes `--target <slug>` or
+      `--sets <list>`. A `goals.json` shape (per-hero per-stat needs
+      with weights) would let multiple heroes' demands aggregate. Add
+      when a caller needs the multi-goal LP.
 
-**Deliverable**: farming becomes a measured process, not vibes.
+**Deliverable**: ✅ farming becomes measured. `python3 tools/farm_plan.py
+--target cb-unm` says "farm DragonsLair Normal for Accuracy + LifeDrain
++ DotRate (3-of-4 needed sets at 0.50 efficiency); FireGolemCave Normal
+for StunChance" — concrete instead of vibes.
 
 ## External Data Sources — How We Use Them
 

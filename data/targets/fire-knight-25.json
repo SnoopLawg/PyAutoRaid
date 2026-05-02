@@ -1,0 +1,29 @@
+{
+  "slug": "fire-knight-25",
+  "label": "Fire Knight Stage 25 (shield-piercer team)",
+  "role_targets": {
+    "shield_piercer": {
+      "stat_floors": {
+        "ACC": 150,
+        "SPD": 180,
+        "ATK_pct_of_base": 2.4
+      },
+      "preferred_sets": ["Lethal", "Offense", "Cursed"],
+      "primary_by_slot": {
+        "weapon": "ATK",
+        "helmet": "HP",
+        "chest": "ATK",
+        "gauntlets": "CR",
+        "boots": "SPD",
+        "ring": "ATK",
+        "amulet": "CD",
+        "banner": "ACC"
+      },
+      "substats_priority": ["CR", "ATK", "ACC", "SPD"],
+      "notes": "Fire Knight has a shield that requires multi-hit attackers; ACC for shield-strip-debuff lands."
+    }
+  },
+  "global": {
+    "min_artifact_rank": 5
+  }
+}
