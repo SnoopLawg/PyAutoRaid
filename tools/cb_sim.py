@@ -1126,19 +1126,28 @@ class CBSimulator:
         })
 
         # Apply team buffs. Shield is special — Demytha A1 places it on
-        # the LOWEST-HP ally only (excluding caster), with absorption
-        # equal to 10% caster MAX_HP × hit_count. Other team buffs go to
-        # the whole team uniformly.
+        # the LOWEST-HP ally (excluding caster), with absorption equal
+        # to 10% caster MAX_HP. Game mechanic: same-type buffs REFRESH,
+        # not stack — so multi-hit casts (Demytha A1 has 2 hits) place
+        # ONE shield refreshed to the latest amount, NOT n × amount.
+        # Each hit MAY target a different lowest-HP ally though.
         for buff_name, duration in chosen.team_buffs:
             if buff_name == "shield":
-                shield_amount = champ.max_hp * 0.10 * max(1, chosen.hit_count)
-                allies = [c for c in self.champions
-                          if c is not champ and not c.is_dead]
-                if allies:
-                    target = min(allies, key=lambda c: c.current_hp / max(1, c.max_hp))
+                allies_alive = [c for c in self.champions
+                                if c is not champ and not c.is_dead]
+                if not allies_alive:
+                    continue
+                shield_amount = champ.max_hp * 0.10
+                hits = max(1, chosen.hit_count)
+                for _ in range(hits):
+                    # Re-pick lowest-HP target each hit (may differ as
+                    # earlier hits raise their absorbed HP via shield).
+                    target = min(allies_alive,
+                                 key=lambda c: c.current_hp / max(1, c.max_hp))
                     target.add_buff("shield", duration)
-                    target.shield_hp = min(target.max_hp,
-                                           target.shield_hp + shield_amount)
+                    # Refresh (not stack) to the cast amount on this target.
+                    target.shield_hp = max(target.shield_hp,
+                                           min(target.max_hp, shield_amount))
                 continue
             for c in self.champions:
                 c.add_buff(buff_name, duration)
