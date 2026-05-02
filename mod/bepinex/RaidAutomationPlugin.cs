@@ -2019,20 +2019,24 @@ namespace RaidAutomation
                 long inputRaw  = -1;
                 long targetDef = -1;
                 long resultRaw = -1;
-                int targetId = 0;
-                int producerId = 0;
-                // arg[0] = EffectContext (has Producer/Target)
-                // arg[1] = BattleHero (the target whose DEF is used)
-                // arg[2] = Fixed (input value)
+                long pAtk = -1, pDef = -1;
+                int pLevel = -1, tLevel = -1;
+                int pTypeId = -1, tTypeId = -1;
+                int targetId = 0, producerId = 0;
+                string pBuffs = null, tDebuffs = null;
+
                 try
                 {
+                    // arg[0] = EffectContext, arg[1] = BattleHero (target),
+                    // arg[2] = Fixed input damage value.
                     var ctx = __args[0];
+                    object prodHero = null, tgtHero = null;
                     if (ctx != null)
                     {
-                        try { var p = Prop(ctx, "Producer"); if (p != null) producerId = IntProp(p, "Id"); } catch { }
-                        try { var t = Prop(ctx, "Target");   if (t != null) targetId   = IntProp(t, "Id"); } catch { }
+                        try { prodHero = Prop(ctx, "Producer"); if (prodHero != null) producerId = IntProp(prodHero, "Id"); } catch { }
+                        try { tgtHero  = Prop(ctx, "Target");   if (tgtHero  != null) targetId   = IntProp(tgtHero,  "Id"); } catch { }
                     }
-                    var battleHero = __args[1];
+                    var battleHero = __args[1] ?? tgtHero;
                     if (battleHero != null)
                     {
                         try
@@ -2040,6 +2044,24 @@ namespace RaidAutomation
                             var stats = Prop(battleHero, "Stats");
                             if (stats != null) targetDef = ReadFixedRaw(stats, "Defence");
                         } catch { }
+                        try { tLevel  = IntProp(battleHero, "Level"); } catch { }
+                        try { tTypeId = IntProp(battleHero, "TypeId"); } catch { }
+                        try { tDebuffs = SerializeActiveEffectIds(battleHero); } catch { }
+                    }
+                    if (prodHero != null)
+                    {
+                        try
+                        {
+                            var pStats = Prop(prodHero, "Stats");
+                            if (pStats != null)
+                            {
+                                pAtk = ReadFixedRaw(pStats, "Attack");
+                                pDef = ReadFixedRaw(pStats, "Defence");
+                            }
+                        } catch { }
+                        try { pLevel  = IntProp(prodHero, "Level"); } catch { }
+                        try { pTypeId = IntProp(prodHero, "TypeId"); } catch { }
+                        try { pBuffs  = SerializeActiveEffectIds(prodHero); } catch { }
                     }
                     var fixedIn = __args[2];
                     if (fixedIn != null)
@@ -2053,19 +2075,68 @@ namespace RaidAutomation
                 }
                 catch { }
 
-                // Append a single tick-log entry. Fixed values are 32.32 —
-                // consumer scales by (>> 32) to get integer game value.
+                // One tick-log entry per call. Fixed values are 32.32 —
+                // consumer scales by (>> 32) to get the integer game value.
                 var sb = new StringBuilder();
                 sb.Append("{\"kind\":\"def_reduction\",\"tick\":").Append(_battleCommandCount);
                 sb.Append(",\"producer_id\":").Append(producerId);
                 sb.Append(",\"target_id\":").Append(targetId);
-                if (inputRaw  >= 0) sb.Append(",\"in_raw\":").Append(inputRaw);
-                if (targetDef >= 0) sb.Append(",\"t_def\":").Append(targetDef);
-                if (resultRaw >= 0) sb.Append(",\"out_raw\":").Append(resultRaw);
+                if (pTypeId  >= 0) sb.Append(",\"p_typeid\":").Append(pTypeId);
+                if (tTypeId  >= 0) sb.Append(",\"t_typeid\":").Append(tTypeId);
+                if (pLevel   >= 0) sb.Append(",\"p_lvl\":").Append(pLevel);
+                if (tLevel   >= 0) sb.Append(",\"t_lvl\":").Append(tLevel);
+                if (pAtk     >= 0) sb.Append(",\"p_atk\":").Append(pAtk);
+                if (pDef     >= 0) sb.Append(",\"p_def\":").Append(pDef);
+                if (inputRaw >= 0) sb.Append(",\"in_raw\":").Append(inputRaw);
+                if (targetDef>= 0) sb.Append(",\"t_def\":").Append(targetDef);
+                if (resultRaw>= 0) sb.Append(",\"out_raw\":").Append(resultRaw);
+                if (!string.IsNullOrEmpty(pBuffs))   sb.Append(",\"p_buffs\":").Append(pBuffs);
+                if (!string.IsNullOrEmpty(tDebuffs)) sb.Append(",\"t_debuffs\":").Append(tDebuffs);
                 sb.Append("}");
                 lock (_tickLog) { _tickLog.Add(sb.ToString()); }
             }
             catch { }
+        }
+
+        // Pull the AppliedEffects list off a BattleHero and emit a
+        // JSON array of effect type IDs. Lets the consumer correlate
+        // active buff/debuff state with the captured DEF mitigation
+        // factor — answering "does the factor change with Weaken /
+        // DEF Down / Inc DEF / etc.?"
+        private static string SerializeActiveEffectIds(object hero)
+        {
+            try
+            {
+                var aes = Prop(hero, "AppliedEffects");
+                if (aes == null) return null;
+                // AppliedEffects is typically Il2CppSystem.Collections.Generic.List<AppliedEffect>.
+                var sb = new StringBuilder("[");
+                bool first = true;
+                var t = aes.GetType();
+                var countP = t.GetProperty("Count");
+                int n = countP != null ? Convert.ToInt32(countP.GetValue(aes)) : 0;
+                var itemP = t.GetProperty("Item") ?? t.GetMethod("get_Item")?.DeclaringType?.GetProperty("Item");
+                for (int i = 0; i < n && i < 32; i++)
+                {
+                    object ae = null;
+                    try { ae = itemP?.GetValue(aes, new object[] { i }); }
+                    catch { continue; }
+                    if (ae == null) continue;
+                    int tid = 0;
+                    try { tid = IntProp(ae, "TypeId"); } catch { }
+                    if (tid == 0)
+                    {
+                        try { var et = Prop(ae, "EffectType"); if (et != null) tid = IntProp(et, "Id"); } catch { }
+                    }
+                    if (tid == 0) continue;
+                    if (!first) sb.Append(",");
+                    first = false;
+                    sb.Append(tid);
+                }
+                sb.Append("]");
+                return sb.ToString();
+            }
+            catch { return null; }
         }
 
         public static void BattleHook_DamageChange(object __instance, object[] __args)
