@@ -357,6 +357,72 @@ def newbie_defence_damage_factor(level: int = 60) -> float:
 
 
 # ============================================================================
+# Status-effect multipliers — STATIC (data/static/effects.json)
+# ============================================================================
+# Every status effect with a HasMultiplier=True entry carries its literal
+# multiplier in `MultiplierFormula`. Examples (read live from static):
+#   Id 350 IncreaseDamageTaken25 (Weaken) -> 1.25
+#   Id 351 IncreaseDamageTaken15          -> 1.15
+#   Id 430 Minotaur IDT                   -> 3
+#   Id 431 HydraNeck IDT                  -> 3
+# Sim's hand-coded `wk = 1.25 if has_weaken` is game-truth, but reading
+# from static keeps it traceable AND auto-updates when Plarium tunes the
+# value in a patch.
+
+_STATIC_EFFECT_MULTIPLIERS_CACHE: dict[int, float] | None = None
+
+
+def _load_status_effect_multipliers() -> dict[int, float]:
+    """Lazy-load {effect_id -> MultiplierFormula} from effects.json.
+    Skips effects whose formula isn't a plain number (some are computed
+    expressions like '0.2*TRG_B_HP'). Caller can fall back to a hand-
+    coded constant when an effect's formula is a string expression.
+    """
+    global _STATIC_EFFECT_MULTIPLIERS_CACHE
+    if _STATIC_EFFECT_MULTIPLIERS_CACHE is not None:
+        return _STATIC_EFFECT_MULTIPLIERS_CACHE
+    import json as _json
+    from pathlib import Path as _Path
+    p = _Path(__file__).resolve().parent.parent / "data" / "static" / "effects.json"
+    out: dict[int, float] = {}
+    if p.exists():
+        try:
+            data = _json.loads(p.read_text(encoding="utf-8")).get("data", [])
+            for e in data:
+                eid = e.get("Id")
+                mf = e.get("MultiplierFormula")
+                if eid is None or mf is None:
+                    continue
+                try:
+                    out[eid] = float(mf)
+                except (TypeError, ValueError):
+                    pass  # formula is an expression like "0.2*TRG_B_HP"
+        except Exception:
+            pass
+    _STATIC_EFFECT_MULTIPLIERS_CACHE = out
+    return out
+
+
+def status_effect_multiplier(effect_id: int, default: float = 1.0) -> float:
+    """Game-truth multiplier for any status effect by Id.
+
+    Examples:
+        status_effect_multiplier(350)  # 1.25 (Weaken)
+        status_effect_multiplier(351)  # 1.15 (small Weaken variant)
+        status_effect_multiplier(430)  # 3.0  (Minotaur IDT)
+    Returns `default` when the effect isn't in static, or has a
+    formula expression (not a plain number).
+    """
+    return _load_status_effect_multipliers().get(effect_id, default)
+
+
+# Convenience aliases for common effects sim references (so callers
+# can write `WEAKEN_MULT` instead of remembering effect 350).
+WEAKEN_MULT: float          = status_effect_multiplier(350, 1.25)  # IncreaseDamageTaken25
+WEAKEN_15_MULT: float       = status_effect_multiplier(351, 1.15)  # IncreaseDamageTaken15
+
+
+# ============================================================================
 # DEF mitigation formula — GAME-TRUTH (extracted from GameAssembly.dll)
 # ============================================================================
 # Reverse-engineered 2026-05-02 by disassembling

@@ -51,7 +51,7 @@ from cb_constants import (
     FA_CAP_BIG, FA_CAP_MEDIUM, FA_CAP_SMALL, FA_CAP_DOT,
     GATHERING_FURY_START_TURN, GATHERING_FURY_RATE_PER_TURN,
     GATHERING_FURY_CLIFF_TURN, ENRAGE_TURN,
-    def_mitigation_factor, HERO_BASE_ARMOR_PIERCE,
+    def_mitigation_factor, HERO_BASE_ARMOR_PIERCE, WEAKEN_MULT,
 )
 
 TM_THRESHOLD = 1000
@@ -1435,7 +1435,10 @@ class CBSimulator:
         def_mult = max(0.05, def_mitigation_factor(
             effective_def, defence_modifier=HERO_BASE_ARMOR_PIERCE))
 
-        wk = 1.25 if self.debuff_bar.has("weaken") else 1.0
+        # Weaken multiplier from data/static/effects.json Id 350
+        # (IncreaseDamageTaken25): MultiplierFormula = 1.25. Applied
+        # via ChangeCalculatedDamageProcessor when the boss is Weakened.
+        wk = WEAKEN_MULT if self.debuff_bar.has("weaken") else 1.0
         str_mult = 1.25 if champ.has_buff("strengthen") else 1.0
         bid = 1.06 if champ.has_bring_it_down else 1.0
 
