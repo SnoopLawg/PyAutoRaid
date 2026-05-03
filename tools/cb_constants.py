@@ -271,6 +271,92 @@ LEECH_HEAL_RATE: float = 0.10
 
 
 # ============================================================================
+# Hit-type bonus formula — GAME-TRUTH (extracted 2026-05-02)
+# ============================================================================
+# DamageCalculator.HitTypeBonus(BattleHero dealer, HitType hitType) at VA
+# 0x182CE7880. Branches by hitType (enum: Normal=0 Crushing=1 Critical=2
+# Glancing=3) and returns a Fixed bonus that the caller adds to 1.0 to
+# scale base damage:
+#
+#   Normal   -> Fixed.Zero (0)                    => damage × 1.00
+#   Crushing -> GameplayData.CrushingHitCoef      => damage × (1 + 0.30)
+#   Critical -> dealer.Stats.CriticalDamage       => damage × (1 + CD)
+#   Glancing -> GameplayData.GlancingHitCoef      => damage × (1 + -0.30)
+#
+# CrushingHitCoef and GlancingHitCoef are the same values exposed via
+# `data/static/gameplay.json` (matching CrushingHitCoef=0.3,
+# GlancingHitCoef=-0.3 above). Critical is per-hero — the game reads
+# the dealer's CD stat from BattleStats[+0x48] directly.
+
+# Game-truth values from data/static/gameplay.json (= CRUSHING_HIT_COEF
+# / GLANCING_HIT_COEF that gameplay-data refresh produces, kept named
+# explicitly here to mirror the Plarium field names).
+CRUSHING_HIT_COEF: float = 0.3
+GLANCING_HIT_COEF: float = -0.3
+
+
+def hit_type_bonus(hit_type: str, dealer_cd_pct: float = 0.0) -> float:
+    """Returns the +bonus the game adds to a hit's base damage multiplier.
+
+    `hit_type` ∈ {"normal", "crushing", "critical", "glancing"}.
+    `dealer_cd_pct` is the dealer's Critical Damage stat as a percent
+    (e.g. 150 for 150% CD). Multiplier the caller applies:
+        final = base × (1 + hit_type_bonus(...))
+    """
+    if hit_type == "crushing": return CRUSHING_HIT_COEF
+    if hit_type == "glancing": return GLANCING_HIT_COEF
+    if hit_type == "critical": return dealer_cd_pct / 100.0
+    return 0.0  # Normal hit, or unknown
+
+
+# ============================================================================
+# StoneSkin / Petrification / NewbieDefence factors — GAME-SPEC
+# ============================================================================
+# DamageCalculator.StoneSkinDamageFactor(BattleHero, EffectKindId) at VA
+# 0x182CE8520, PetrificationDamageFactor at 0x182CE8200, and
+# NewbieDefenceDamageFactor at 0x182CE80C0. All three follow the same
+# pattern:
+#   1. Look up the effect descriptor on the target's BattleHero.
+#   2. If no qualifying effect active, fall through to "no reduction".
+#   3. Compare the incoming EffectKindId against 0xbc1 (= 3009 =
+#      ContinuousDamage / Poison) — poisons bypass StoneSkin/Petrification.
+#   4. Read the effect's Amount from the descriptor (offset +0x1a8 →
+#      +0x18 for StoneSkin, +0x1b0 → +0x18 for Petrification).
+#
+# In CB, none of these three are active on the player team or boss in
+# observed events:
+#   - StoneSkin: hero buff, not present on CB targets
+#   - Petrification: dungeon mechanic, never on CB
+#   - NewbieDefence: low-level account protection, well past us
+# Sim treats them as factor = 1.0 (no reduction). When the captures
+# surface a non-trivial value, replace these with the actual function.
+
+def stone_skin_damage_factor(*, has_stone_skin: bool = False,
+                              effect_kind_id: int = 0,
+                              stone_skin_amount: float = 0.0) -> float:
+    if not has_stone_skin:
+        return 1.0
+    if effect_kind_id == 3009:  # poison bypasses StoneSkin
+        return 1.0
+    return 1.0 - stone_skin_amount  # e.g. 0.6 amount → 0.4 factor
+
+
+def petrification_damage_factor(*, has_petrification: bool = False,
+                                 effect_kind_id: int = 0,
+                                 petrification_amount: float = 0.0) -> float:
+    if not has_petrification:
+        return 1.0
+    if effect_kind_id == 3009:  # poison bypasses
+        return 1.0
+    return 1.0 - petrification_amount
+
+
+def newbie_defence_damage_factor(level: int = 60) -> float:
+    """Game's low-level damage reduction. Above level ~10 returns 1.0."""
+    return 1.0  # We're always past it. Stub for future captures.
+
+
+# ============================================================================
 # DEF mitigation formula — GAME-TRUTH (extracted from GameAssembly.dll)
 # ============================================================================
 # Reverse-engineered 2026-05-02 by disassembling

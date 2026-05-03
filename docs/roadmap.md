@@ -52,6 +52,18 @@ candidate for the same extraction process used on `DamageReductionByDefence`.
   - Formula: `factor = 1 − 0.85 × (1 − exp((Defence − acc_mod) × (1 + defence_modifier) × (−1/1500)))`
   - Verified against 247 captured `(t_def, factor)` tuples — <0.01% error
   - Mod hook chain: `BattleHook_DefReduction_Prefix` + `BattleHook_FixedSubtraction` + `BattleHook_DefReduction` postfix
+- **HitTypeBonus function** (`tools/cb_constants.py::hit_type_bonus`)
+  - Source: `DamageCalculator.HitTypeBonus(BattleHero, HitType)` at VA 0x182CE7880
+  - Branches by hitType: Normal=0, Crushing=`GameplayData.CrushingHitCoef` (=+0.30), Critical=`dealer.Stats.CriticalDamage`, Glancing=`GameplayData.GlancingHitCoef` (=-0.30)
+  - Constants confirmed game-truth (already matched values in `gameplay.json`)
+- **DamageReductionByStatusEffects scope** (`tools/cb_constants.py::stone_skin_damage_factor` and friends)
+  - Source: `DamageCalculator.DamageReductionByStatusEffects` at VA 0x182CE6E50
+  - The function processes ONLY: Invisible (480/481), StoneSkin (620/621), Petrification (630), NewbieDefence (670). None of these are active in CB scenarios.
+  - Loaded literals 0.25, 0.075, 0.15 are reduction amounts for those specific buffs.
+  - **Implication for CB sim**: Weaken/Strengthen/Decrease ATK are NOT in this function; they're applied by other code paths (`CalculateDamage` itself or via boss skill multipliers). Sim's hand-coded `wk = 1.25 if has_weaken` is correct.
+- **StoneSkin / Petrification / NewbieDefence factor functions** (stubs returning 1.0)
+  - Source: `StoneSkinDamageFactor` (0x182CE8520), `PetrificationDamageFactor` (0x182CE8200), `NewbieDefenceDamageFactor` (0x182CE80C0)
+  - All three return 1.0 (no reduction) for any CB-realistic state. Functions added to `cb_constants.py` for future use; CB sim doesn't call them.
 
 ### ✅ Game-truth values from static export (no decompile needed)
 
@@ -63,13 +75,6 @@ candidate for the same extraction process used on `DamageReductionByDefence`.
 - **Gathering Fury formula** (T10–T19: `0.75 × (turn − 9)`; T20+: cliff; T50: enrage) — extracted from `data/static/skills_all.json` skill 222904
 
 ### 🟡 Hand-coded / empirical — candidates for the same extraction treatment
-
-| Mechanic | Where it lives now | Extraction target |
-|---|---|---|
-| **Hit-type damage factors** (Normal/Crushing/Critical/Glancing damage modifiers) | `cb_constants.py` constants + `cb_sim.py::_calc_skill_damage` crit_mult logic | `DamageCalculator.HitTypeBonus(BattleHero, HitType)` and `DamageCalculator.CalculateHitType` — same dump+disassemble pipeline |
-| **DamageReductionByStatusEffects** (Weaken / Strengthen / Inc Damage Taken) | Hand-coded multipliers (`wk = 1.25 if has_weaken`) | `DamageCalculator.DamageReductionByStatusEffects` — already located in dump.cs |
-| **Stoneskin / Petrification damage factors** | Geomancer Stoneguard hand-coded; petrification not modeled | `StoneSkinDamageFactor`, `PetrificationDamageFactor` — visible in dump.cs |
-| **Newbie defence damage factor** (low-level account protection) | Not modeled (we're past it) | `NewbieDefenceDamageFactor` — likely returns 1.0 for level-60+ |
 | **DoT cap formula** (75K HP Burn, 50K Poison) | Hardcoded constants in `cb_constants.py::FA_CAP_*` | Find the cap-applying function (likely `ApplyDamageCap` or in `EffectKindGroup` rules) |
 | **Hero per-skill `IgnoreDefence`** values | Inferred from skill descriptions (Ninja A3 = 50%, OB A2 = 30%, etc.) | Captured live as additional `defence_modifier` variants (–0.32, –0.52, –1.0 observed); resolve which skill produces which value |
 | **Damage cap chain** (Force-Affinity caps, infinite-HP-mode caps) | Empirical observation, FA_CAP_BIG/MEDIUM/SMALL | Find the runtime cap-resolver — likely in `CalculateDamage` or `DamageContext` post-processing |
@@ -86,11 +91,13 @@ candidate for the same extraction process used on `DamageReductionByDefence`.
 
 ### Next-up extraction targets in priority order
 
-1. **`HitTypeBonus(BattleHero, HitType)`** — biggest open variance source. Determines per-hit damage when sim rolls a hit type. Same pipeline as DEF formula.
-2. **`DamageReductionByStatusEffects`** — Weaken / Strengthen / dec_atk should land in here. Will let us drop the hand-coded `wk = 1.25` and friends.
-3. **DoT cap formula** — resolves `FA_CAP_*` constants which are currently empirical.
-4. **`StoneSkinDamageFactor` / `PetrificationDamageFactor`** — replaces Geomancer Stoneguard's hand-rolled implementation.
-5. **Per-hero passive scheduler** — possibly a single hook on the passive-process site captures all of them generically.
+(Items 1–4 from previous priority queue extracted 2026-05-02; see ✅ above.)
+
+1. **`CalculateDamage(EffectContext, Fixed)` body** — top-level orchestrator. Where Weaken/Strengthen/dec_atk multipliers live (since they're NOT in `DamageReductionByStatusEffects`). Find their literal source here.
+2. **DoT per-tick cap (75K Burn / 50K Poison)** — `data/static/effects.json` Id 470 (HP_Burn) and 80 (Poison) have `StatusParams` blocks. Likely `MaxDamage` field on the StatusParams or via skill effect's MultiplierFormula. Probe via `tools/static_data` reader.
+3. **Per-hero passive scheduler** — Sicia burn-density, Ninja Escalation, Geomancer reflect, Cardiel detonate. Each currently hand-coded in `cb_sim.py`. Hook the passive-process call site to capture their per-event contribution generically.
+4. **Boss skill cycle priority** — sim cycles aoe1/aoe2/stun by turn-mod; live game uses an AI / skill-priority list. Investigate `BattleAI` or `BossSkillPriority` types in dump.cs.
+5. **CB damage caps in infinite-HP mode** — `FA_CAP_BIG/MEDIUM/SMALL` constants are currently empirical. Find the cap-applying function (likely a postprocess on `DamageContext`).
 
 Each one removes one more "hand-coded multiplier" line from `cb_sim.py` and replaces it with a call into a `cb_constants.py` function backed by the actual game arithmetic.
 
