@@ -313,6 +313,13 @@ class SimChampion:
     burn_stat_pct: float = 0.0             # Sicia: +3% ATK per HP Burn on field
     burn_dmg_reduction: float = 0.0        # Sicia: 3% dmg reduction per HP Burn
 
+    # Per-turn passive debuff placement — list of {debuff, duration} dicts
+    # parsed from the hero's passive skill effects (kind=5000 effects on
+    # Group=Passive skills). Sourced from load_game_profiles passive_data.
+    # Example: Occult Brawler passive places poison_2_5pct + poison_5pct
+    # every turn for 4 turns each.
+    passive_debuffs: list = field(default_factory=list)
+
     # Used by --bug-fix-buff-tick: the last CB turn this champion ticked
     # buffs in. When the flag is on, tick_buffs becomes a no-op if called
     # twice within the same CB turn (a fast hero who double-turns no
@@ -897,21 +904,32 @@ class CBSimulator:
                 if has_uk and c.current_hp < 1:
                     c.current_hp = 1
 
-                # Cardiel passive: Block Damage when about to die (4T CD per ally)
+                # Cardiel + UDK death-prevention passives. Approximated
+                # here as 4-turn CDs because the literal static-skill
+                # logic involves complex conditions we don't fully model:
+                #   Cardiel skill 57604 passive: ChangeDamageMultiplier
+                #     -0.2*DMG_MUL gated by faction (UndeadHordes/Knight
+                #     Revenant only) + `canUniqueApplyForTurn` rate-limit.
+                #     The save-ally is `ActivateSkill` triggered on a
+                #     dying ally — requires faction conditions and
+                #     uniqueApply tracking we approximate as 4T CD.
+                #   UDK skill 70904 passive: ChangeEffectTarget redirects
+                #     non-AoE non-boss damage from allies to UDK; plus
+                #     `Heal 0.2*CurrentHealMultiplier` on the saved ally.
+                #     Sim approximates with 1-HP-clamp + 1T Unkillable.
+                # See data/static/skills_all.json skills 57604 / 70904.
                 if c.current_hp <= 0:
                     saved = False
-                    # Check for Cardiel passive
                     cardiel_cd_key = f"_cardiel_cd_{c.position}"
                     cardiel = next((x for x in self.champions
                                    if x.name == "Cardiel" and not x.is_dead), None)
                     if cardiel and not hasattr(cardiel, cardiel_cd_key):
                         setattr(cardiel, cardiel_cd_key, 0)
                     if cardiel and getattr(cardiel, cardiel_cd_key, 0) <= 0:
-                        c.current_hp = 1  # saved by Cardiel
+                        c.current_hp = 1
                         setattr(cardiel, cardiel_cd_key, 4)
                         saved = True
 
-                    # UDK passive: Unkillable at 1HP (4T CD)
                     if not saved and c.name == "Ultimate Deathknight":
                         udk_cd_key = "_udk_passive_cd"
                         if not hasattr(c, udk_cd_key):
@@ -1285,9 +1303,16 @@ class CBSimulator:
         # Apply skill effects
         self._apply_effects(champ, chosen)
 
-        # OB passive: place extra poison per turn
-        if champ.name == "Occult Brawler":
-            self._try_place_debuff(champ, "poison_5pct", 2, 1.0)
+        # Per-turn passive debuff placement. Any hero whose passive
+        # skill carries a kind=5000 effect (e.g. Occult Brawler:
+        # passive places poison_2_5pct + poison_5pct, both 4 turns)
+        # gets each placement triggered once per turn here. List
+        # populated by load_game_profiles from the static skill data.
+        for db_def in champ.passive_debuffs:
+            db_type = db_def.get("debuff")
+            db_dur  = int(db_def.get("duration", 2))
+            if db_type:
+                self._try_place_debuff(champ, db_type, db_dur, 1.0)
 
         # Put skill on CD
         if chosen.base_cd > 0:
@@ -1920,6 +1945,7 @@ def build_sim_champion(name: str, stats: dict, position: int,
     combo_cd_pct = pd.get('combo_cd_pct', 0.0)
     burn_stat_pct = pd.get('burn_stat_pct', 0.0)
     burn_dmg_red = pd.get('burn_dmg_reduction', 0.0)
+    passive_debuffs_data = pd.get('passive_debuffs', []) or []
 
     # Base speed from hero data (before gear), for speed buff/debuff calculations
     raw_base_speed = stats.get("base_speed", 0)
@@ -1966,6 +1992,7 @@ def build_sim_champion(name: str, stats: dict, position: int,
         combo_cd_pct=combo_cd_pct,
         burn_stat_pct=burn_stat_pct,
         burn_dmg_reduction=burn_dmg_red,
+        passive_debuffs=list(passive_debuffs_data),
     )
 
     # Auto-assign WM/GS if no T6 offense mastery
