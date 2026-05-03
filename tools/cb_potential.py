@@ -84,9 +84,16 @@ ASCENSION_BONUSES_PER_STAR = {
 }
 
 
-def build_potential_hero(name: str) -> dict:
+def build_potential_hero(name: str, preserve_gear: bool = False) -> dict:
     """Create a synthetic 6★ fully built hero entry.
-    Adds estimated ascension stat bonuses for heroes below 6★."""
+    Adds estimated ascension stat bonuses for heroes below 6★.
+
+    Args:
+        preserve_gear: when True, keep the hero's CURRENTLY equipped
+            artifacts on the returned record (instead of clearing for
+            re-optimization). Used by simulate_team(use_current_gear=
+            True) so sim damage matches the calibrated real-game value.
+    """
     # Find best version in roster
     best = None
     for h in heroes_all["heroes"]:
@@ -127,7 +134,12 @@ def build_potential_hero(name: str) -> dict:
             MASTERY_IDS["bring_it_down"],
             MASTERY_IDS["keen_strike"],
         ]
-    hero["artifacts"] = []  # will be assigned by optimizer
+    if preserve_gear:
+        # Use of currently-equipped artifacts. The base record from
+        # heroes_all already has them.
+        hero["artifacts"] = list(best.get("artifacts", []) or [])
+    else:
+        hero["artifacts"] = []  # will be assigned by optimizer
     return hero
 
 
@@ -179,7 +191,9 @@ def stun_priority(p):
 # =============================================================================
 def simulate_team(team_names: list, verbose: bool = False,
                   cb_element: int = 4, cb_difficulty: str | None = None,
-                  cb_speed: float | None = None) -> dict:
+                  cb_speed: float | None = None,
+                  use_current_gear: bool = False,
+                  explore_speed: bool = False) -> dict:
     """Simulate a team with full potential (6★, booked, mastered, optimal gear).
 
     Args:
@@ -190,6 +204,15 @@ def simulate_team(team_names: list, verbose: bool = False,
             Sets boss HP and SPD via cb_constants.
         cb_speed: explicit boss SPD override (rarely needed; prefer
             cb_difficulty so HP gets set correctly too).
+        use_current_gear: skip the artifact optimizer and use each
+            hero's CURRENT equipped artifacts (matches calibrated
+            damage at the cost of locking gear to your active loadout).
+            Useful when the explorer is comparing teams against your
+            real CB output.
+        explore_speed: drop the UK_ME_SPD_RANGE cap on UK heroes when
+            optimizing gear. The optimizer is then free to find
+            non-traditional speed tunes (e.g., a Maneater at SPD 250+
+            paired with a non-Demytha second UK provider).
 
     Defaults preserve the historical UNM Void behaviour so existing
     callers don't shift numbers.
@@ -205,7 +228,7 @@ def simulate_team(team_names: list, verbose: bool = False,
             me_count += 1
 
         if tname not in hero_cache:
-            h = build_potential_hero(tname)
+            h = build_potential_hero(tname, preserve_gear=use_current_gear)
             if h is None:
                 return {"error": f"Hero not found: {tname}", "total": 0}
             hero_cache[tname] = h
@@ -232,20 +255,32 @@ def simulate_team(team_names: list, verbose: bool = False,
 
     used = set()
     assigned = [[] for _ in range(5)]
-    priority = sorted(range(5), key=lambda i: (
-        0 if team_p[i].unkillable else
-        (3 if i == stun_idx else (1 if team_p[i].needs_acc else 2))
-    ))
-    for pi in priority:
-        avail = [a for a in all_arts if a.get("id") not in used and a.get("rank", 0) >= 5]
-        spd_max = UK_ME_SPD_RANGE[1] if (has_uk and team_p[pi].unkillable) else None
-        is_stun = has_uk and pi == stun_idx
-        arts, _ = optimal_artifacts_for_hero(
-            team_h[pi], team_p[pi], avail, account,
-            spd_max=spd_max, is_stun_target=is_stun)
-        assigned[pi] = arts
-        for a in arts:
-            used.add(a.get("id"))
+    if use_current_gear:
+        # Skip the optimizer entirely — pull each hero's currently-
+        # equipped artifacts straight from the live roster. This makes
+        # damage match the real-game calibrated sim instead of a
+        # hypothetical optimum.
+        for pi in range(5):
+            assigned[pi] = team_h[pi].get("artifacts", []) or []
+    else:
+        priority = sorted(range(5), key=lambda i: (
+            0 if team_p[i].unkillable else
+            (3 if i == stun_idx else (1 if team_p[i].needs_acc else 2))
+        ))
+        for pi in priority:
+            avail = [a for a in all_arts if a.get("id") not in used and a.get("rank", 0) >= 5]
+            # spd_max caps UK heroes at the traditional Maneater SPD
+            # ceiling; explore_speed drops the cap so the optimizer
+            # can surface non-standard speed tunes.
+            spd_max = (None if explore_speed else
+                       (UK_ME_SPD_RANGE[1] if (has_uk and team_p[pi].unkillable) else None))
+            is_stun = has_uk and pi == stun_idx
+            arts, _ = optimal_artifacts_for_hero(
+                team_h[pi], team_p[pi], avail, account,
+                spd_max=spd_max, is_stun_target=is_stun)
+            assigned[pi] = arts
+            for a in arts:
+                used.add(a.get("id"))
 
     # Build SimChampions with speed overrides
     sim_champs = []

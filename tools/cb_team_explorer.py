@@ -400,6 +400,16 @@ def main() -> int:
                     help="Mark a team `novel` only when its damage "
                          "exceeds the closest matching DWJ tune by at "
                          "least this fraction (default 0.10 = 10%)")
+    ap.add_argument("--use-current-gear", action="store_true",
+                    help="Skip the artifact optimizer; sim with each "
+                         "hero's CURRENTLY equipped artifacts. "
+                         "Damage values then match your calibrated "
+                         "sim (~36M for the active CB team) instead "
+                         "of the potential-projection baseline.")
+    ap.add_argument("--explore-speed", action="store_true",
+                    help="Drop the UK_ME_SPD_RANGE cap on UK heroes "
+                         "during gear optimization so the optimizer "
+                         "can find non-standard speed tunes.")
     ap.add_argument("--seed", type=int, default=42)
     args = ap.parse_args()
     import random
@@ -526,7 +536,9 @@ def main() -> int:
         if i % 50 == 0 and i:
             print(f"  ... {i}/{len(sim_pool)}", file=sys.stderr)
         try:
-            res = simulate_team(team, verbose=False, cb_element=elem_id)
+            res = simulate_team(team, verbose=False, cb_element=elem_id,
+                                use_current_gear=args.use_current_gear,
+                                explore_speed=args.explore_speed)
             total = float(res.get("total", 0)) if "error" not in res else 0.0
         except Exception:
             total = 0.0
