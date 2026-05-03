@@ -27,6 +27,11 @@ The non-negotiables:
   and skill-effect descriptions are the ground truth).
 - Sim numbers must match observed battle logs within calibrated bounds.
 
+> **Roadmap & status by area** — `docs/roadmap.md` tracks completion per
+> location/system, what's still hand-coded vs game-truth-extracted, and the
+> priority queue of next mechanics to extract. Update it whenever a feature
+> moves from 🟡/🔴 to ✅ or when a new gap is identified.
+
 ### Battle Locations (the universe of activity)
 
 Every location below uses the same **Battle Setup** screen (5+ slot grid +
@@ -279,7 +284,7 @@ read the same data.
 
 ## CB Sim Accuracy
 
-Calibrated to **-7%** vs real battle data (46.15M actual, 38M sim, Void affinity).
+Calibrated to **+0.61%** vs real battle data on Magic UNM (36.36M sim avg / 36.14M real, σ=0.88M, 10 runs). The DEF mitigation formula is now extracted *literally* from `GameAssembly.dll` (see Reverse-Engineering section below).
 
 Key mechanics:
 - All fights uncapped (no FA damage caps)
@@ -292,6 +297,67 @@ Key mechanics:
 - Ninja Escalation: capped at +100% ATK (5 stacks), increments per full A1+A2+A3 cycle
 - Turn 50 enrage: no hero actions after final CB turn
 - Geomancer passive: deflect scales with Gathering Fury + HP Burn presence
+- HP Burn `StackCount: 1` (game-truth from `data/static/effects.json` Id 470) — singular, not stacking
+- Sim covers 1120/1121 heroes for skills (full game roster)
+- Unowned heroes: synthetic record from `hero_types.json` + best-vault-gear from optimizer
+
+## Reverse-Engineering Methodology — game is ground truth
+
+When sim output diverges from observed game data, the rule is:
+
+> **Back-solving / fitting is a SIGNAL to find the literal formula in the game, not a license to embed a constant.**
+
+### When to extract a formula
+
+Trigger conditions:
+1. Empirical fit produces a constant that "looks meaningful" (e.g., implied C drifts with input — not a true single-C formula).
+2. Sim residual exceeds the calibration target (±7%) on a specific event class.
+3. A new game mechanic (set, hero passive, boss skill) produces unexplained variance.
+
+### Extraction pipeline (CB DEF formula, 2026-05-02 — gold-standard reference)
+
+| Step | Tool | Output |
+|---|---|---|
+| 1. Static dump | `tools/il2cpp_dumper/Il2CppDumper.exe GameAssembly.dll global-metadata.dat dump_output/` | `dump.cs` (signatures + RVAs), `script.json` (~178MB symbol table), `il2cpp.h` (struct layouts), `DummyDll/` |
+| 2. Locate method | `grep "DamageReductionByDefence" dump.cs` | RVA + file offset of the IL2CPP-compiled method |
+| 3. Disassemble | Python `capstone` (`pip install capstone pefile`) | x86_64 instructions for the method body |
+| 4. Resolve calls | Cross-reference `[rip + N]` targets against `dump.cs` VA listings | Helper-function names (`Fixed.op_Multiply`, `Fixed.Exp`, `EnumerateAppliedEffects`) |
+| 5. Read .rdata literals | `pefile` to map RVA → file offset, `struct.unpack('<d', ...)` | Embedded double constants (e.g. `0.85`) |
+| 6. Resolve struct fields | `il2cpp.h` for field offsets (e.g. `BattleHero._Stats @ 0x98`, `BattleStats.Defence @ 0x20`) | What's being read at each `[reg + N]` access |
+| 7. Mod-side live capture | `mod/bepinex/RaidAutomationPlugin.cs` Harmony postfix (and prefix-postfix chains for intermediate values) | Per-call (input, output) tuples → `tick_log_*.json` |
+| 8. Verify in Python | `tools/extract_def_factor.py`, `tools/derive_damage_formula.py` | Formula matches captured outputs to <0.01% |
+| 9. Wire into sim | `tools/cb_constants.py` exposes `def_mitigation_factor(...)`; `cb_sim.py` imports it | Sim uses the literal function, not a back-fit |
+
+### Scalability across game updates
+
+| Concern | Survives game update? |
+|---|---|
+| **Method names** (e.g. `DamageReductionByDefence`) | ✓ Yes — Harmony patches lookup by FQN. Re-attach automatically. |
+| **Method RVAs / file offsets** (e.g. `0x2CE5350`) | ✗ Will move. Re-run Il2CppDumper to get new offsets. |
+| **`.rdata` literal positions** (e.g. `0x3EB9B68`) | ✗ Will move. Re-read from new dump. |
+| **Static-field offsets in `Fixed`/`BattleStats`/etc.** | ✓ Stable across patches (new fields appended). |
+| **Game-internal constants the formula uses** (e.g. `0.85`, `1500`) | Likely stable; if Plarium tunes them, our captures auto-detect drift |
+| **Mod hook tick logs** (`def_reduction` events) | ✓ Continue to work; if a value changes, the next capture shows it |
+| **Sim's hardcoded constants in `cb_constants.py`** | ⚠️ Need re-confirmation after each major patch — but the procedure is "run a battle, run `extract_def_factor.py`, compare" |
+
+### Refresh procedure for a new game version
+
+```bash
+# 1. Re-dump
+tools/il2cpp_dumper/Il2CppDumper.exe \
+  "$LOCALAPPDATA/PlariumPlay/StandAloneApps/raid/build/GameAssembly.dll" \
+  "$LOCALAPPDATA/PlariumPlay/StandAloneApps/raid/build/Raid_Data/il2cpp_data/Metadata/global-metadata.dat" \
+  tools/il2cpp_dumper/dump_output
+
+# 2. Run a battle to capture fresh tick log (mod auto-reattaches)
+python3 tools/cb_run.py --calibrate
+
+# 3. Extract & compare against current cb_constants.py
+python3 tools/extract_def_factor.py tick_log_cb_<latest>.json
+python3 tools/derive_damage_formula.py tick_log_cb_<latest>.json
+
+# 4. If values drift, update tools/cb_constants.py + commit
+```
 
 ### Skill Effect Mapping (kind → sim)
 
