@@ -298,27 +298,79 @@ namespace RaidAutomation
                     if (presetList == null) presetList = Prop(heroes, "HeroesAiPresets");
                     if (presetList != null)
                     {
-                        object bestSameCount = null;
-                        object bestSameType = null;
-                        object firstAny = null;
+                        // Source-picker tiers (lower = more preferred):
+                        //   0: same type, same heroes set, has starters
+                        //   1: same type, same heroes set
+                        //   2: same type, same hero count, has starters
+                        //   3: same type, same hero count
+                        //   4: same type
+                        //   5: anything
+                        // "has starters" = at least one Sequence has a non-empty
+                        //   StarterSkillIds list. This matters because the
+                        //   validator's first check on each setup is an Any()
+                        //   over starters; cloning a source with that flag
+                        //   already set means we don't trigger the empty-
+                        //   starters fallback path that throws 80003.
+                        var heroIdSet = new HashSet<int>(heroIds);
+                        object[] tier = new object[6];
                         foreach (var p in ListItems(presetList))
                         {
-                            if (firstAny == null) firstAny = p;
                             int pType = 0;
                             try { pType = Convert.ToInt32(Prop(p, "Type")); } catch { }
                             var sps = Prop(p, "SkillPrioritiesSetups");
                             int spsCount = 0;
+                            var spsHeroes = new HashSet<int>();
+                            bool hasStarters = false;
                             if (sps != null)
                             {
                                 var cntP = sps.GetType().GetProperty("Count");
+                                var itemP = sps.GetType().GetProperty("Item");
                                 if (cntP != null) spsCount = Convert.ToInt32(cntP.GetValue(sps));
+                                if (itemP != null)
+                                {
+                                    for (int i = 0; i < spsCount; i++)
+                                    {
+                                        var setup = itemP.GetValue(sps, new object[] { i });
+                                        spsHeroes.Add(IntProp(setup, "HeroId"));
+                                        if (!hasStarters)
+                                        {
+                                            var seqs = Prop(setup, "Sequences");
+                                            if (seqs != null)
+                                            {
+                                                var sCntP = seqs.GetType().GetProperty("Count");
+                                                var sItemP = seqs.GetType().GetProperty("Item");
+                                                int sCnt = sCntP != null ? Convert.ToInt32(sCntP.GetValue(seqs)) : 0;
+                                                for (int j = 0; j < sCnt && !hasStarters; j++)
+                                                {
+                                                    var seq = sItemP.GetValue(seqs, new object[] { j });
+                                                    if (seq == null) continue;
+                                                    var ss = Prop(seq, "StarterSkillIds");
+                                                    if (ss != null)
+                                                    {
+                                                        var sLen = ss.GetType().GetProperty("Count");
+                                                        if (sLen != null && Convert.ToInt32(sLen.GetValue(ss)) > 0)
+                                                            hasStarters = true;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
                             }
-                            if (pType == presetType && spsCount == heroIds.Count && bestSameCount == null)
-                                bestSameCount = p;
-                            if (pType == presetType && bestSameType == null)
-                                bestSameType = p;
+                            bool sameType = pType == presetType;
+                            bool sameHeroes = sameType && spsHeroes.SetEquals(heroIdSet);
+                            bool sameCount = sameType && spsCount == heroIds.Count;
+                            int t = sameHeroes && hasStarters ? 0
+                                  : sameHeroes ? 1
+                                  : sameCount && hasStarters ? 2
+                                  : sameCount ? 3
+                                  : sameType ? 4 : 5;
+                            if (tier[t] == null) tier[t] = p;
                         }
-                        existingPreset = bestSameCount ?? bestSameType ?? firstAny;
+                        for (int t = 0; t < 6; t++)
+                        {
+                            if (tier[t] != null) { existingPreset = tier[t]; break; }
+                        }
                     }
                 }
                 catch { }
@@ -360,42 +412,77 @@ namespace RaidAutomation
                 // through THAT path. Callers' `type` param flows in via
                 // `presetTypeEnumVal` used in the ctor invocation.
 
-                // Force Id to 0 — try multiple approaches since IL2CPP cloned
-                // objects may have the original Id baked into native memory.
-                bool idSet = false;
-                // Approach 1: property setter
-                try {
-                    var setId = presetT.GetMethod("set_Id");
-                    if (setId != null) { setId.Invoke(preset, new object[] { 0 }); idSet = true; }
-                } catch {}
-                // Approach 2: field
-                if (!idSet) {
+                // CRITICAL: Pick an unused Id in the range 1-100 so the
+                // game's HeroesAiPreset.get_Type() returns 1 (GeneralPvE).
+                //
+                // Earlier attempts forced Id to 0 thinking that meant
+                // "new preset for server to assign". WRONG — game's
+                // IsArenaDefencePreset(0) returns true, which makes
+                // get_Type() return 2 (Pvp). The local Validate then
+                // runs `AssertIsValidPrioritiesSetup(setup, Pvp, hero)`
+                // and rejects because our setup structure is the
+                // GeneralPvE shape (3 sequences), not Pvp-shape.
+                //
+                // Id range -> Type mapping (from get_Type disassembly):
+                //    Id == 0, 301, 601-603 -> 2 (ArenaDefence/Pvp)
+                //    Id < 100              -> 1 (GeneralPvE)
+                //    100 <= Id < 200       -> 2 (Pvp)
+                //    200 <= Id < 400       -> 4 (Fractions)
+                //    400 <= Id < 700       -> 5 (DoomTower)
+                //    700 <= Id < 800       -> 3 (Hydra)
+                //    800 <= Id < 900       -> {6,7}
+                //    Id >= 900             -> 7 (CooperationEventWorldBoss)
+                //
+                // For now we only support type=1 (GeneralPvE) reliably,
+                // so pick any unused 1-100 Id. The server reassigns its
+                // own Id on save anyway.
+                int targetIdForType = 0;
+                if (presetType == 1) // GeneralPvE
+                {
+                    var usedIds = new HashSet<int>();
                     try {
-                        var idField = presetT.GetField("Id", BindingFlags.Public | BindingFlags.Instance);
-                        if (idField != null) { idField.SetValue(preset, 0); idSet = true; }
-                    } catch {}
-                }
-                // Approach 3: IL2CPP raw write via Pointer offset
-                if (!idSet) {
-                    try {
-                        var ptrProp = presetT.GetProperty("Pointer");
-                        if (ptrProp != null) {
-                            IntPtr ptr = (IntPtr)ptrProp.GetValue(preset);
-                            if (ptr != IntPtr.Zero) {
-                                // Id is typically the first int field after the IL2CPP header
-                                // Write 0 at common offsets
-                                foreach (var off in new[] { 0x10, 0x18, 0x20 }) {
-                                    int cur = Marshal.ReadInt32(ptr + off);
-                                    if (cur == 1) { // Found the cloned Id=1
-                                        Marshal.WriteInt32(ptr + off, 0);
-                                        idSet = true;
-                                        break;
-                                    }
-                                }
-                            }
+                        var heroes2 = Prop(uw, "Heroes");
+                        var hd2 = Prop(heroes2, "HeroData");
+                        object pl2 = Prop(hd2, "HeroesAiPresets") ?? Prop(heroes2, "HeroesAiPresets");
+                        if (pl2 != null) {
+                            foreach (var pp in ListItems(pl2))
+                                usedIds.Add(IntProp(pp, "Id"));
                         }
                     } catch {}
+                    for (int candidate = 1; candidate < 100; candidate++) {
+                        if (!usedIds.Contains(candidate)) { targetIdForType = candidate; break; }
+                    }
                 }
+                bool idSet = false;
+                if (targetIdForType > 0) {
+                    try {
+                        var setId = presetT.GetMethod("set_Id");
+                        if (setId != null) {
+                            setId.Invoke(preset, new object[] { targetIdForType });
+                            idSet = true;
+                        }
+                    } catch {}
+                    if (!idSet) {
+                        try {
+                            var idField = presetT.GetField("Id", BindingFlags.Public | BindingFlags.Instance);
+                            if (idField != null) { idField.SetValue(preset, targetIdForType); idSet = true; }
+                        } catch {}
+                    }
+                    if (!idSet) {
+                        // IL2CPP raw write
+                        try {
+                            var ptrProp = presetT.GetProperty("Pointer");
+                            if (ptrProp != null) {
+                                IntPtr ptr = (IntPtr)ptrProp.GetValue(preset);
+                                if (ptr != IntPtr.Zero) {
+                                    Marshal.WriteInt32(ptr + 0x10, targetIdForType);
+                                    idSet = true;
+                                }
+                            }
+                        } catch {}
+                    }
+                }
+                sb.Append(",\"targetId\":").Append(targetIdForType);
                 sb.Append(",\"idSet\":" + (idSet ? "true" : "false"));
 
                 // Build the SkillPrioritiesSetups list using the game's own constructors.
@@ -474,6 +561,32 @@ namespace RaidAutomation
                     existingCount--;
                 }
 
+                // Detect if the cloned source already has the EXACT
+                // heroes we want — in that order. When true, skip the
+                // per-setup remap entirely (zero-touch clone). The
+                // source's skill_ids may even be STALE for the current
+                // game version, but the validator was happy with them
+                // when the user originally saved the preset, so leaving
+                // them alone is safer than retranslating.
+                bool sourceMatchesExactly = true;
+                if (existingCount == heroIds.Count)
+                {
+                    for (int idx = 0; idx < heroIds.Count; idx++)
+                    {
+                        var sup = listItem.GetValue(setupList, new object[] { idx });
+                        if (sup == null || IntProp(sup, "HeroId") != heroIds[idx])
+                        {
+                            sourceMatchesExactly = false;
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                    sourceMatchesExactly = false;
+                }
+                sb.Append(",\"sourceMatchesExactly\":" + (sourceMatchesExactly ? "true" : "false"));
+
                 sb.Append("},\"heroes\":[");
                 bool first = true;
 
@@ -483,7 +596,7 @@ namespace RaidAutomation
                     object setup = listItem.GetValue(setupList, new object[] { idx });
                     if (setup == null) continue;
 
-                    // Get hero's skills
+                    // Get hero's skills (only for the response payload)
                     object hero = null;
                     try {
                         var ck = heroDict.GetType().GetMethod("ContainsKey");
@@ -514,10 +627,14 @@ namespace RaidAutomation
                         } catch {}
                     }
 
-                    // Mutate the cloned setup: set HeroId, translate every
-                    // dict's skill IDs to match the new hero's skills.
-                    SetFieldOrProp(setupT, setup, "HeroId", heroId);
-                    RemapSetupSkillIds(setup, sptEnum, dictT, dictAdd, newSkillIds);
+                    if (!sourceMatchesExactly)
+                    {
+                        // Mutate the cloned setup: set HeroId, translate every
+                        // dict's skill IDs to match the new hero's skills.
+                        SetFieldOrProp(setupT, setup, "HeroId", heroId);
+                        RemapSetupSkillIds(setup, sptEnum, dictT, dictAdd, newSkillIds);
+                    }
+                    // else: leave the cloned setup completely untouched
 
                     if (!first) sb.Append(",");
                     first = false;
@@ -722,6 +839,25 @@ namespace RaidAutomation
                     }
                 }
             }
+            // Pick a "Default" value from an existing entry to reuse
+            // when we need to add a NEW key beyond what oldKeys had.
+            // Reusing an existing IL2Cpp-boxed enum value avoids the
+            // managed-vs-Il2Cpp type mismatch that managed Enum.ToObject
+            // produces (the validator's check on enum values seems to
+            // require values that came from Il2Cpp's own boxing).
+            object reusableDefault = null;
+            foreach (var ov in oldValues.Values)
+            {
+                if (ov != null && Convert.ToInt32(ov) == 0) { reusableDefault = ov; break; }
+            }
+            if (reusableDefault == null)
+            {
+                // No 0-valued entry to reuse — fall back to managed
+                // Enum.ToObject. Caller may still see InvalidPrioritiesTypes
+                // if validator rejects this boxing.
+                reusableDefault = Enum.ToObject(sptEnum, 0);
+            }
+
             // Clear and re-populate with new keys, value index-aligned
             var clearM = dict.GetType().GetMethod("Clear");
             if (clearM != null) clearM.Invoke(dict, null);
@@ -732,7 +868,7 @@ namespace RaidAutomation
                 if (i < oldKeys.Count && oldValues.TryGetValue(oldKeys[i], out var ov))
                     val = ov;
                 else
-                    val = Enum.ToObject(sptEnum, 0);  // Default
+                    val = reusableDefault;
                 try { dictAdd.Invoke(dict, new object[] { newKey, val }); } catch { }
             }
         }
