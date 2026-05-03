@@ -51,7 +51,7 @@ from cb_constants import (
     FA_CAP_BIG, FA_CAP_MEDIUM, FA_CAP_SMALL, FA_CAP_DOT,
     GATHERING_FURY_START_TURN, GATHERING_FURY_RATE_PER_TURN,
     GATHERING_FURY_CLIFF_TURN, ENRAGE_TURN,
-    C_HERO_TO_BOSS, C_BOSS_TO_HERO, C_BOSS_TO_HERO_FORCE, FORCE_ELEM,
+    def_mitigation_factor,
 )
 
 TM_THRESHOLD = 1000
@@ -779,13 +779,14 @@ class CBSimulator:
                     c.death_turn = self.cb_turn
                     continue
 
-                # Boss → hero damage: damage = raw × C / (C + DEF).
-                # C constants live in cb_constants.py with provenance.
+                # Boss → hero damage uses the game-truth DEF mitigation
+                # function from cb_constants (extracted from
+                # DamageCalculator.DamageReductionByDefence in
+                # GameAssembly.dll, 2026-05-02).
                 target_def = c.stats.get(DEF, 1000)
                 if c.has_buff("inc_def"):
                     target_def *= 1.6  # DEF Up = +60%
-                C_DEF = C_BOSS_TO_HERO_FORCE if c.element == FORCE_ELEM else C_BOSS_TO_HERO
-                def_reduction = C_DEF / (C_DEF + target_def)
+                def_reduction = def_mitigation_factor(target_def)
 
                 # Incoming affinity: when boss has affinity advantage
                 # against this hero, more attacks LAND (+15% crit chance,
@@ -1426,7 +1427,10 @@ class CBSimulator:
         if champ.has_helmsmasher:
             effective_def *= 0.875
 
-        def_mult = max(0.05, 1 - effective_def / (effective_def + C_HERO_TO_BOSS))
+        # Hero -> boss DEF mitigation: same game-truth function.
+        # Per-skill ignore_def already applied above by reducing
+        # effective_def — pass it as the bare DEF here.
+        def_mult = max(0.05, def_mitigation_factor(effective_def))
 
         wk = 1.25 if self.debuff_bar.has("weaken") else 1.0
         str_mult = 1.25 if champ.has_buff("strengthen") else 1.0

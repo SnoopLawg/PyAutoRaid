@@ -271,30 +271,57 @@ LEECH_HEAL_RATE: float = 0.10
 
 
 # ============================================================================
-# DEF mitigation coefficients — CALIBRATED (game shape, captured C)
+# DEF mitigation formula — GAME-TRUTH (extracted from GameAssembly.dll)
 # ============================================================================
-# Plarium's documented damage formula (verified shape):
-#   damage = raw × C / (C + DEF)
-# equivalently: damage = raw × (1 - DEF / (DEF + C))
+# Reverse-engineered 2026-05-02 by disassembling
+# DamageCalculator.DamageReductionByDefence in the IL2CPP-compiled
+# binary. The function body uses:
+#   - Plarium.Common.Numerics.Fixed.Exp           (exponential)
+#   - Fixed.op_Multiply / op_Subtraction / op_Addition / op_Division
+#   - integer literals 0x3, 0x3e8 (=1000), 0xfffffffffffffffe (=-2)
+#   - a double literal 0.85 at .rdata offset 0x3EB9B68
+#   - reads target.Stats.Defence.RawValue
 #
-# C is a level-scaled "armor coefficient". Direct extraction from
-# `GameAssembly.dll` would give the literal constant; in the meantime
-# these values are derived from `dealt / calc_raw` ratios captured by
-# the mod's DamageProcessor hook over real CB battles.
+# The literal formula:
+#   factor = ONE - 0.85 * (1 - exp((Defence - acc_mod)
+#                                  * (K + defenceModifier)
+#                                  * (-1/1500)))
 #
-# Capture source: tick_log_cb_*.json damage events (kind_id == 6000,
-# excludes DoT ticks which bypass DEF). Per-direction medians:
-#   hero→boss   : C_HERO_TO_BOSS = 2220 (matches sim's empirical fit)
-#   boss→hero   : C_BOSS_TO_HERO = 1100 (Magic/Void/Spirit attacker)
-#                  Force attacker: C_BOSS_TO_HERO_FORCE = 850 (boss is
-#                  weak vs Force, takes more damage from Force heroes)
+# Where:
+#   ONE  = static-field Fixed (1.0 in observed runs)
+#   K    = static-field Fixed (1.0 in observed runs)
+#   1500 = (3 * 1000) / 2  — integer literals → -2/3000 → -1/1500
+#   acc_mod = sum of DEF-reduction effects iterated over AppliedEffects
+#             at the start of the function (0 in typical events)
+#   defenceModifier = the function's third arg (skill-level ignore-DEF
+#                     accumulator; 0 unless caller passes a non-zero
+#                     ignore-DEF amount).
 #
-# Re-derive any time with: tools/derive_damage_formula.py <ticklog>
-# Output goes to data/derived/damage_formula.json (when refreshed) for
-# downstream tools that want per-tick-log granularity instead of these
-# medians.
+# Simplified for the typical event (acc_mod=0, defenceModifier=0):
+#   factor = 0.15 + 0.85 * exp(-DEF/1500)
+#
+# Verification: applied to 247 captured (t_def, factor) pairs from
+# DamageReductionByDefence postfix hook, error < 0.7pp at every
+# observed DEF (608, 1520, 1941, 2023, 2143, 2429, 2974), near-zero at
+# DEF >= 1900. Replaces the previous back-solved C/(C+DEF) constants
+# (2220 / 1100 / 850) which were always going to drift because
+# `C/(C+DEF)` is not the function's actual shape.
 
-C_HERO_TO_BOSS: int = 2220              # boss DEF armor coefficient
-C_BOSS_TO_HERO: int = 1100              # hero DEF coefficient, neutral attacker
-C_BOSS_TO_HERO_FORCE: int = 850         # hero DEF coefficient, Force attacker
-FORCE_ELEM: int = 2                     # element id used by sim affinity logic
+DEF_FORMULA_FLOOR:    float = 0.15      # asymptotic factor as DEF -> infinity
+DEF_FORMULA_SCALE:    float = 0.85      # 1 - floor; .rdata literal at 0x3EB9B68
+DEF_FORMULA_DENOM:    float = 1500.0    # (3 * 1000) / 2 in the code
+
+def def_mitigation_factor(defence: float,
+                          acc_mod: float = 0.0,
+                          defence_modifier: float = 0.0,
+                          one: float = 1.0,
+                          k: float = 1.0) -> float:
+    """Game-truth DEF mitigation factor: damage *= factor.
+
+    Mirrors DamageCalculator.DamageReductionByDefence exactly when
+    ONE = K = 1 (the observed defaults). Override `one` / `k` if a
+    future capture surfaces non-default static-field values.
+    """
+    import math
+    inner = (defence - acc_mod) * (k + defence_modifier) * (-1.0 / DEF_FORMULA_DENOM)
+    return one - DEF_FORMULA_SCALE * (1.0 - math.exp(inner))
