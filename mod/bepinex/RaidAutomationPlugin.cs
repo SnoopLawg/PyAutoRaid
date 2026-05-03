@@ -2046,7 +2046,7 @@ namespace RaidAutomation
                         } catch { }
                         try { tLevel  = IntProp(battleHero, "Level"); } catch { }
                         try { tTypeId = IntProp(battleHero, "TypeId"); } catch { }
-                        try { tDebuffs = SerializeActiveEffectIds(battleHero); } catch { }
+                        try { tDebuffs = ReadActiveEffects(battleHero); } catch { }
                     }
                     if (prodHero != null)
                     {
@@ -2061,7 +2061,7 @@ namespace RaidAutomation
                         } catch { }
                         try { pLevel  = IntProp(prodHero, "Level"); } catch { }
                         try { pTypeId = IntProp(prodHero, "TypeId"); } catch { }
-                        try { pBuffs  = SerializeActiveEffectIds(prodHero); } catch { }
+                        try { pBuffs  = ReadActiveEffects(prodHero); } catch { }
                     }
                     var fixedIn = __args[2];
                     if (fixedIn != null)
@@ -2090,54 +2090,14 @@ namespace RaidAutomation
                 if (inputRaw >= 0) sb.Append(",\"in_raw\":").Append(inputRaw);
                 if (targetDef>= 0) sb.Append(",\"t_def\":").Append(targetDef);
                 if (resultRaw>= 0) sb.Append(",\"out_raw\":").Append(resultRaw);
-                if (!string.IsNullOrEmpty(pBuffs))   sb.Append(",\"p_buffs\":").Append(pBuffs);
-                if (!string.IsNullOrEmpty(tDebuffs)) sb.Append(",\"t_debuffs\":").Append(tDebuffs);
+                if (!string.IsNullOrEmpty(pBuffs)   && pBuffs   != "[]") sb.Append(",\"p_buffs\":").Append(pBuffs);
+                if (!string.IsNullOrEmpty(tDebuffs) && tDebuffs != "[]") sb.Append(",\"t_debuffs\":").Append(tDebuffs);
                 sb.Append("}");
                 lock (_tickLog) { _tickLog.Add(sb.ToString()); }
             }
             catch { }
         }
 
-        // Pull the AppliedEffects list off a BattleHero and emit a
-        // JSON array of effect type IDs. Lets the consumer correlate
-        // active buff/debuff state with the captured DEF mitigation
-        // factor — answering "does the factor change with Weaken /
-        // DEF Down / Inc DEF / etc.?"
-        private static string SerializeActiveEffectIds(object hero)
-        {
-            try
-            {
-                var aes = Prop(hero, "AppliedEffects");
-                if (aes == null) return null;
-                // AppliedEffects is typically Il2CppSystem.Collections.Generic.List<AppliedEffect>.
-                var sb = new StringBuilder("[");
-                bool first = true;
-                var t = aes.GetType();
-                var countP = t.GetProperty("Count");
-                int n = countP != null ? Convert.ToInt32(countP.GetValue(aes)) : 0;
-                var itemP = t.GetProperty("Item") ?? t.GetMethod("get_Item")?.DeclaringType?.GetProperty("Item");
-                for (int i = 0; i < n && i < 32; i++)
-                {
-                    object ae = null;
-                    try { ae = itemP?.GetValue(aes, new object[] { i }); }
-                    catch { continue; }
-                    if (ae == null) continue;
-                    int tid = 0;
-                    try { tid = IntProp(ae, "TypeId"); } catch { }
-                    if (tid == 0)
-                    {
-                        try { var et = Prop(ae, "EffectType"); if (et != null) tid = IntProp(et, "Id"); } catch { }
-                    }
-                    if (tid == 0) continue;
-                    if (!first) sb.Append(",");
-                    first = false;
-                    sb.Append(tid);
-                }
-                sb.Append("]");
-                return sb.ToString();
-            }
-            catch { return null; }
-        }
 
         public static void BattleHook_DamageChange(object __instance, object[] __args)
         {
