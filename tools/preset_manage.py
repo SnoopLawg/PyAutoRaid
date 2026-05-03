@@ -126,6 +126,33 @@ def cmd_list(args) -> int:
 
 
 def cmd_create(args) -> int:
+    # DISABLED 2026-05-03: server rejects our SaveAiPresetCmd with
+    # `ClientLogicException HeroesAiPreset_InvalidPrioritiesTypes 'F' False`.
+    # The server validates priorities against the preset's expected
+    # type/sequence-count and our clone-then-mutate path produces an
+    # invalid combination. Triggering this shows an in-game ERROR
+    # popup that requires the user to dismiss it.
+    #
+    # Until we understand the server-side validation rules (likely:
+    # all skills present, no priority collisions across First/Second/
+    # Third, sequence-count matching presetType, etc.), this command
+    # short-circuits with an explanation rather than triggering more
+    # error popups.
+    if not args.allow_unsafe:
+        print(
+            "ERROR: 'create' is currently disabled.\n"
+            "  The server rejects our SaveAiPresetCmd with\n"
+            "  HeroesAiPreset_InvalidPrioritiesTypes — we don't yet\n"
+            "  match the server's validation rules. Triggering this\n"
+            "  shows an in-game ERROR popup.\n\n"
+            "  Workaround for now: create the preset SHELL in-game (Battle\n"
+            "  Setup -> save a placeholder team into the slot you want),\n"
+            "  then use `update` to set priorities/starters via this CLI.\n\n"
+            "  If you really need to call /save-preset for testing,\n"
+            "  re-run with --allow-unsafe (will trigger the ERROR popup).",
+            file=sys.stderr,
+        )
+        return 2
     if args.hero_ids:
         try:
             hero_ids = [int(x.strip()) for x in args.hero_ids.split(",") if x.strip()]
@@ -241,6 +268,11 @@ def main() -> int:
                                  "(0=Default 1=First 2=Second 3=Third 4=NotUsed)")
     sp_create.add_argument("--starters", default=None,
                             help="Forced openers: heroId:sid,sid;heroId:sid;...")
+    sp_create.add_argument("--allow-unsafe", action="store_true",
+                            help="Bypass the safety check and call "
+                                 "/save-preset anyway. Will trigger an "
+                                 "in-game ERROR popup until the server "
+                                 "validation logic is understood.")
 
     sp_remove = sub.add_parser("remove", help="Remove a preset by id")
     sp_remove.add_argument("--id", type=int, required=True)
