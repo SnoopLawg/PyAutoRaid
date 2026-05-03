@@ -529,16 +529,29 @@ def main() -> int:
 
     # Sim each
     print(f"Simulating ({len(sim_pool)} teams)...", file=sys.stderr)
-    from cb_potential import simulate_team
     elem_id = {"magic": 1, "force": 2, "spirit": 3, "void": 4}[args.cb_element]
+    if args.use_current_gear:
+        # Calibrated path: real gear + Maneater A3-opener (cb_sim main
+        # convention). Closer to in-game damage but still ~50% below
+        # calibrated sim until /presets are applied per hero.
+        from cb_sim import evaluate_team_calibrated as _sim_fn
+        def _run(team):
+            return _sim_fn(team, cb_element=elem_id,
+                            use_current_gear=True,
+                            force_affinity=True)
+    else:
+        # Default: potential gear via cb_potential.simulate_team.
+        from cb_potential import simulate_team as _sim_fn
+        def _run(team):
+            return _sim_fn(team, cb_element=elem_id,
+                            explore_speed=args.explore_speed)
+
     results: list[tuple[list[str], float, dict]] = []
     for i, team in enumerate(sim_pool):
         if i % 50 == 0 and i:
             print(f"  ... {i}/{len(sim_pool)}", file=sys.stderr)
         try:
-            res = simulate_team(team, verbose=False, cb_element=elem_id,
-                                use_current_gear=args.use_current_gear,
-                                explore_speed=args.explore_speed)
+            res = _run(team)
             total = float(res.get("total", 0)) if "error" not in res else 0.0
         except Exception:
             total = 0.0

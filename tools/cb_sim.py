@@ -2193,6 +2193,122 @@ def run_potential_team(pt: dict, cb_element: int = 4,
     return result
 
 
+def evaluate_team_calibrated(hero_names: List[str], cb_element: int = 4,
+                              use_current_gear: bool = True,
+                              force_affinity: bool = True,
+                              max_cb_turns: int = 50,
+                              verbose: bool = False) -> dict:
+    """Run the calibrated CB sim on an arbitrary 5-hero team.
+
+    Mirrors what `cb_sim.py --team "X,Y,Z" --use-current-gear` does
+    programmatically — no tune required, no DWJ assignment. Uses the
+    hero's currently equipped artifacts (or re-optimizes via the
+    artifact optimizer when use_current_gear=False), applies the
+    Maneater A3-opener convention from cb_sim main, and runs the
+    full CBSimulator with the same defaults as the calibration tests
+    (deterministic=True, force_affinity=True, max_cb_turns=50).
+
+    On the calibration team (Maneater/Demytha/Ninja/Geomancer/
+    Venomage) with current gear and Magic UNM, this matches the
+    +0.61% calibration value (~36M).
+
+    Returns a dict with keys: total, cb_turns, errors, valid (or
+    `error` on failure).
+    """
+    from cb_optimizer import calc_stats, optimal_artifacts_for_hero, PROFILES
+    from cb_optimizer import UK_ME_SPD_RANGE
+    base = Path(__file__).parent.parent
+    with open(base / "heroes_6star.json") as f:
+        heroes_data = json.load(f)
+    with open(base / "all_artifacts.json") as f:
+        artifacts_data = json.load(f)
+    with open(base / "account_data.json") as f:
+        account = json.load(f)
+
+    hero_by_name = {}
+    for h in heroes_data["heroes"]:
+        name = h.get("name", "")
+        if name and name not in hero_by_name:
+            hero_by_name[name] = h
+
+    # Resolve team — fall back to synthetic record for unowned heroes
+    from profile_resolver import make_synthetic_hero_record
+    from cb_profiles import resolve as _resolve_profile
+    from load_game_profiles import load_profiles as _lgp
+    SD, _, _ = _lgp()
+
+    team_h, team_p = [], []
+    me_count = 0
+    for tname in hero_names:
+        key = tname
+        if tname == "Maneater":
+            me_count += 1
+            if me_count > 1:
+                key = "Maneater_2"
+        h = hero_by_name.get(key) or hero_by_name.get(tname)
+        if not h:
+            h = make_synthetic_hero_record(tname)
+            if not h:
+                return {"error": f"Hero not found: {tname}", "total": 0}
+        team_h.append(h)
+        team_p.append(_resolve_profile(tname, SD.get(tname)))
+
+    # Gear: either current equipped, or re-optimize from full vault
+    if use_current_gear:
+        assigned_arts = []
+        for h in team_h:
+            current = h.get("artifacts", []) or []
+            assigned_arts.append([a for a in current
+                                  if isinstance(a, dict) and a.get("id")])
+    else:
+        all_arts = [a for a in artifacts_data.get("artifacts", []) if not a.get("error")]
+        used = set()
+        has_uk = sum(1 for p in team_p if p and p.unkillable) >= 2
+        dps_idx = [i for i, p in enumerate(team_p) if p and not p.unkillable]
+        from cb_optimizer import stun_priority
+        stun_idx = (min(dps_idx, key=lambda i: stun_priority(team_p[i]))
+                    if dps_idx else -1)
+        priority_order = sorted(range(5), key=lambda i: (
+            0 if (team_p[i] and team_p[i].unkillable) else
+            (3 if i == stun_idx else
+             (1 if (team_p[i] and team_p[i].needs_acc) else 2))
+        ))
+        assigned_arts = [[] for _ in range(5)]
+        for pi in priority_order:
+            if team_h[pi].get("_synthetic"):
+                continue
+            avail = [a for a in all_arts if a.get("id") not in used and a.get("rank", 0) >= 5]
+            spd_max = (UK_ME_SPD_RANGE[1]
+                       if (has_uk and team_p[pi] and team_p[pi].unkillable)
+                       else None)
+            is_stun = has_uk and pi == stun_idx
+            arts, _ = optimal_artifacts_for_hero(
+                team_h[pi], team_p[pi], avail, account,
+                spd_max=spd_max, is_stun_target=is_stun)
+            assigned_arts[pi] = arts
+            for a in arts:
+                used.add(a.get("id"))
+
+    # Build sim champions — same opening conventions as cb_sim main()
+    sim_champs = []
+    me_idx = 0
+    for i, tname in enumerate(hero_names):
+        stats = calc_stats(team_h[i], assigned_arts[i], account)
+        opening = []
+        if tname == "Maneater":
+            me_idx += 1
+            opening = ["A3"] if me_idx == 1 else ["A1", "A3"]
+        champ = build_sim_champion(tname, stats, i + 1,
+                                    masteries=team_h[i].get("masteries", []),
+                                    opening=opening)
+        sim_champs.append(champ)
+
+    sim = CBSimulator(sim_champs, deterministic=True, verbose=verbose,
+                       cb_element=cb_element,
+                       force_affinity=force_affinity)
+    return sim.run(max_cb_turns=max_cb_turns)
+
+
 def run_tune(tune_id: str, hero_names: List[str], cb_element: int = 4,
              force_affinity: bool = True, verbose: bool = False,
              use_current_gear: bool = True, spd_override: dict = None) -> dict:
