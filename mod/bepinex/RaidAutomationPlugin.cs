@@ -267,7 +267,29 @@ namespace RaidAutomation
                 }
                 catch (Exception ex) { lock (_hookPatchLog) { _hookPatchLog.Add("TurnLeftSet:err:" + ex.Message); } }
 
-                // Re-process the processor list
+                // CRASH ISOLATION (2026-05-03): Raid.exe is crashing
+                // mid-battle (~boss turn 27-28) with APPCRASH in
+                // coreclr.dll at offset 0x1d1fdd, exception 0xC0000005.
+                // Pre-existing pattern in WER ReportArchive going back
+                // to 4/25 — same bucket ID 220d01ff7dc7a28946e7dc0f36236cd7.
+                //
+                // Suspect: our battle-event Harmony postfixes do raw
+                // Marshal.ReadIntPtr walks (BattleHook_DamageChange has
+                // multi-level pointer derefs at 2255-2291; ReadActiveEffects
+                // walks HeroState memory). When a pointer is freed mid-
+                // battle, the read triggers an SEH access violation.
+                // Modern .NET 6 corrupted-state exceptions bypass our
+                // try/catch — runtime crashes.
+                //
+                // DISABLED until the unsafe walks are wrapped in
+                // SafeHandle-style validation OR replaced with
+                // Il2CppInterop typed accessors. Mod still works for
+                // its primary HTTP API surface (navigation, context-call,
+                // resources, view-contexts, etc.) — only loses per-
+                // damage-event hooks during battle.
+                bool _ENABLE_BATTLE_PROCESSOR_HOOKS = false;
+                if (_ENABLE_BATTLE_PROCESSOR_HOOKS)
+                {
                 foreach (var (typeName, hookSuffix) in new[] {
                     ("SharedModel.Battle.Core.Skill.EffectProcessing.Processors.DamageProcessor", "DamageChange"),
                     ("SharedModel.Battle.Core.Skill.EffectProcessing.Processors.ApplyStatusEffectProcessor", "ApplyStatus"),
@@ -291,59 +313,29 @@ namespace RaidAutomation
                     }
                     catch (Exception ex) { lock (_hookPatchLog) { _hookPatchLog.Add(hookSuffix + ":err:" + ex.Message); } }
                 }
-
-                // Hook DamageCalculator.DamageReductionByDefence and
-                // Fixed.op_Subtraction to capture the formula's literal
-                // operands. The first op_Subtraction call inside
-                // DamageReductionByDefence is `Stats.Defence - acc_mod`
-                // — its inputs reveal acc_mod (the buff-loop accumulator)
-                // which a postfix on the function alone can't see.
-                try
-                {
-                    var dcType = FindTypeStatic("SharedModel.Battle.Core.DamageCalculator");
-                    if (dcType != null)
-                    {
-                        var redM = dcType.GetMethod("DamageReductionByDefence",
-                            BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
-                        if (redM != null)
-                        {
-                            var prefix  = new HarmonyMethod(typeof(RaidAutomationPlugin)
-                                .GetMethod("BattleHook_DefReduction_Prefix", BindingFlags.Static | BindingFlags.Public));
-                            var postfix = new HarmonyMethod(typeof(RaidAutomationPlugin)
-                                .GetMethod("BattleHook_DefReduction", BindingFlags.Static | BindingFlags.Public));
-                            if (prefix.method != null && postfix.method != null)
-                            {
-                                harmony.Patch(redM, prefix: prefix, postfix: postfix);
-                                lock (_hookPatchLog) { _hookPatchLog.Add("DefReduction:patched"); }
-                                Logger.LogInfo("Harmony: patched DefReduction (prefix+postfix)");
-                            }
-                        }
-                        else { lock (_hookPatchLog) { _hookPatchLog.Add("DefReduction:no_method"); } }
-                    }
-                    else { lock (_hookPatchLog) { _hookPatchLog.Add("DefReduction:no_DamageCalculator_type"); } }
-
-                    // Hook Fixed.op_Subtraction. The first call inside
-                    // DamageReductionByDefence is the one we want — its
-                    // second arg is acc_mod. Filtered via _inDefReduction
-                    // flag set by the prefix above.
-                    var fixedType = FindTypeStatic("Plarium.Common.Numerics.Fixed");
-                    if (fixedType != null)
-                    {
-                        var subM = fixedType.GetMethod("op_Subtraction",
-                            BindingFlags.Public | BindingFlags.Static);
-                        if (subM != null)
-                        {
-                            var subPostfix = new HarmonyMethod(typeof(RaidAutomationPlugin)
-                                .GetMethod("BattleHook_FixedSubtraction", BindingFlags.Static | BindingFlags.Public));
-                            if (subPostfix.method != null)
-                            {
-                                harmony.Patch(subM, postfix: subPostfix);
-                                lock (_hookPatchLog) { _hookPatchLog.Add("FixedSub:patched"); }
-                            }
-                        }
-                    }
                 }
-                catch (Exception ex) { lock (_hookPatchLog) { _hookPatchLog.Add("DefReduction:err:" + ex.Message); } }
+                else
+                {
+                    lock (_hookPatchLog) { _hookPatchLog.Add("battle_processor_hooks:DISABLED_for_crash_isolation"); }
+                    Logger.LogInfo("Harmony: battle processor hooks DISABLED for crash isolation");
+                }
+
+                // DamageReductionByDefence + Fixed.op_Subtraction hooks
+                // were used to extract the literal DEF mitigation formula
+                // (factor = 1 - 0.85 * (1 - exp((Defence - acc_mod) *
+                //  (1 + defence_modifier) * (-1/1500)))) and the -0.02
+                // base armor pierce. See `cb_constants.def_mitigation_factor`
+                // and commit 8501dc7. The hooks are now DISABLED because
+                // they triggered a coreclr.dll APPCRASH (c0000005 access
+                // violation) at battle teardown — the BattleHero pointers
+                // we read via Marshal.ReadIntPtr are freed before the
+                // final DamageReductionByDefence call completes.
+                //
+                // Re-enable only when:
+                //   (a) acc_mod or defence_modifier needs re-derivation
+                //       after a game patch, AND
+                //   (b) the Marshal.ReadIntPtr walks have been wrapped in
+                //       try/catch with pointer-validity checks.
 
                 Logger.LogInfo("Harmony initialized");
             }

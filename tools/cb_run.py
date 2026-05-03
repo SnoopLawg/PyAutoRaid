@@ -142,7 +142,30 @@ def start_battle():
     return False
 
 
-def poll_battle():
+def _snapshot_battle_log(snapshot_path):
+    """Best-effort fetch of /battle-log + /tick-log to disk. Used by
+    poll_battle for crash-resilient incremental snapshots.
+    Game crashes on scene transitions (Raid.exe APPCRASH in coreclr.dll
+    has been a recurring pattern; see WER ReportArchive). Saving the
+    log incrementally during polling means we always have data within
+    one snapshot interval of the crash.
+    """
+    try:
+        r = mod_get("/battle-log", timeout=10)
+        if "error" not in r and r.get("log"):
+            with open(snapshot_path, "w") as f:
+                json.dump(r, f)
+        # Also tick log if available
+        tl = mod_get("/tick-log", timeout=10)
+        if "error" not in tl and tl.get("ticks"):
+            tick_path = str(snapshot_path).replace("battle_logs_cb_", "tick_log_cb_")
+            with open(tick_path, "w") as f:
+                json.dump(tl, f)
+    except Exception:
+        pass  # Crash-resilience: snapshot failure shouldn't break polling
+
+
+def poll_battle(snapshot_path=None, snapshot_every_polls=20):
     """Poll until the battle is truly over.
 
     Previous version bailed as soon as /battle-state returned an error, which
@@ -153,6 +176,13 @@ def poll_battle():
       - `/battle-state` returns active=False AND heroes list is empty
 
     Transient `/battle-state` errors are tolerated (logged, not fatal).
+
+    `snapshot_path`: when provided, /battle-log + /tick-log are saved
+    to disk every `snapshot_every_polls` polls (default 20 = ~60s). This
+    is crash-resilience: Raid.exe periodically crashes on scene
+    transitions (APPCRASH in coreclr.dll) and the post-battle
+    /battle-log fetch can return ConnectionRefused. Incremental
+    snapshots ensure we have data within ~60s of the crash.
     """
     print("\nPolling battle progress...")
     prev_turn = 0
@@ -163,15 +193,26 @@ def poll_battle():
     MAX_TRANSIENT = 10
 
     for i in range(MAX_POLLS):
+        # Crash-resilience snapshot. Fire on every Nth poll AND once
+        # immediately when we first see transient errors (early hint
+        # of scene transition, before the crash window).
+        if snapshot_path and (i > 0 and i % snapshot_every_polls == 0):
+            _snapshot_battle_log(snapshot_path)
         bs = mod_get("/battle-state")
         if "error" in bs:
             transient_err_streak += 1
+            # FIRST transient error often precedes a scene-transition crash:
+            # snapshot now while the mod is still up.
+            if transient_err_streak == 1 and snapshot_path:
+                _snapshot_battle_log(snapshot_path)
             if transient_err_streak >= MAX_TRANSIENT:
                 # Likely real end — confirm by checking scene
                 st = mod_get("/status")
                 scene = (st or {}).get("scene", "")
                 if scene != "Dungeon_Clan":
                     print(f"  Scene changed to {scene!r} — battle ended at poll {i}")
+                    # One more snapshot before exiting (in case mod is still up)
+                    if snapshot_path: _snapshot_battle_log(snapshot_path)
                     break
                 # Scene still CB: just a glitch, keep polling
                 transient_err_streak = 0
@@ -277,9 +318,23 @@ def save_battle_log(filename=None):
         filename = f"battle_logs_cb_{ts}.json"
 
     filepath = PROJECT_ROOT / filename
-    with open(filepath, "w") as f:
-        json.dump(r, f)
-    print(f"  Saved: {filepath.name}")
+    # Don't clobber a poll_battle crash-resilience snapshot with an
+    # empty post-crash fetch. If the file already exists with more
+    # entries than we just fetched, keep the existing one.
+    existing_entries = 0
+    if filepath.exists():
+        try:
+            with open(filepath) as f:
+                existing_entries = len(json.load(f).get("log", []) or [])
+        except Exception:
+            pass
+    new_entries = len(entries)
+    if new_entries >= existing_entries:
+        with open(filepath, "w") as f:
+            json.dump(r, f)
+        print(f"  Saved: {filepath.name}")
+    else:
+        print(f"  Keeping prior snapshot ({existing_entries} entries) — final fetch returned only {new_entries}")
 
     # Phase 5 (mechanics research) — also save the per-event tick log.
     # The mod's BattleHook_DamageChange path captures attacker ATK / target
@@ -452,12 +507,22 @@ def main():
     if not start_battle():
         return 1
 
-    # Poll until complete
-    final_dmg, final_turn = poll_battle()
+    # Pre-allocate the snapshot filename so poll_battle can write
+    # incremental crash-resilient snapshots to it. Same name used by
+    # save_battle_log at the end (overwrites with the final fetch).
+    snapshot_filename = (args.log_name
+                          if args.log_name
+                          else f"battle_logs_cb_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
+    snapshot_path = PROJECT_ROOT / snapshot_filename
+
+    # Poll until complete (with periodic battle-log snapshots)
+    final_dmg, final_turn = poll_battle(snapshot_path=snapshot_path)
     print(f"\nBattle complete: {final_dmg:,} damage over {final_turn} boss turns")
 
-    # Save log
-    log_info = save_battle_log(args.log_name)
+    # Save log — final attempt; if mod is reachable this overwrites
+    # the snapshot with the complete log. If Raid has crashed, we
+    # fall back to whatever the last snapshot captured.
+    log_info = save_battle_log(snapshot_filename)
     if not log_info:
         return 1
 
