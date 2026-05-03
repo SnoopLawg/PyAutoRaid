@@ -69,9 +69,17 @@ except Exception:
 import json as _json
 from pathlib import Path as _Path
 def _load_observed_dot_caps():
-    """Load observed per-tick DoT caps from disk; falls back to manual values
-    if no calibration file exists yet."""
-    caps_path = _Path(__file__).parent.parent / "data" / "observed_dot_caps.json"
+    """Source of truth for per-tick DoT caps:
+
+    1. Game static data (`tools.cb_constants.cb_dot_cap`) — extracted
+       from boss skills 200007 / 200008 in `data/static/skills_all.json`,
+       which contain the literal `MultiplierFormula` for each cap. This
+       is the authoritative source: the boss carries these caps in its
+       passive skills.
+    2. `data/observed_dot_caps.json` — optional override from real
+       battle log calibration; rarely needed since static is exact.
+    3. Hand-coded fallback — only used when both above are unreachable.
+    """
     fallback = {
         "poison_5pct": 50_000,
         "poison_2_5pct": 25_000,
@@ -79,12 +87,26 @@ def _load_observed_dot_caps():
         "warmaster": 75_000,
         "giant_slayer": 75_000,
     }
+    out = dict(fallback)
+    try:
+        from cb_constants import cb_dot_cap as _cap
+        out["hp_burn"]      = _cap("hp_burn",      out["hp_burn"])
+        out["poison_5pct"]  = _cap("poison_5pct",  out["poison_5pct"])
+        out["poison_2_5pct"]= _cap("poison_2_5pct",out["poison_2_5pct"])
+        # WM/GS aren't in the boss passives — they're mastery procs.
+        # The 75K cap matches HP burn cap (same ApplyDamageCap flow).
+        out["warmaster"]    = out["hp_burn"]
+        out["giant_slayer"] = out["hp_burn"]
+    except Exception:
+        pass
+    # Optional override file
+    caps_path = _Path(__file__).parent.parent / "data" / "observed_dot_caps.json"
     try:
         observed = _json.loads(caps_path.read_text())
-        # Merge — keep fallback for any missing keys
-        return {**fallback, **observed}
+        out.update(observed)
     except (FileNotFoundError, ValueError):
-        return fallback
+        pass
+    return out
 _DOT_CAPS = _load_observed_dot_caps()
 POISON_5PCT_DMG  = _DOT_CAPS["poison_5pct"]
 POISON_25PCT_DMG = _DOT_CAPS["poison_2_5pct"]

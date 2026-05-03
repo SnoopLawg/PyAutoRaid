@@ -263,6 +263,102 @@ FA_CAP_DOT:    int =  75_000   # per-tick DoT cap (HP Burn / Poison tick)
 
 
 # ============================================================================
+# CB DoT-cap constants — STATIC (from boss passive skill bodies)
+# ============================================================================
+# Boss skill 200008 ("Clan Boss TRG_HP resistance") clamps incoming
+# AoEContinuousDamage (HP Burn) ticks. Boss skill 200007 ("Clan Boss
+# Cont damage resistance IV") clamps ContinuousDamage (Poison) ticks.
+# Each skill's MultiplierFormula spells out the cap explicitly:
+#
+#   200008 -> -(DMG_MUL - (!detonated*75000 + detonated*75000*turns_left))
+#             ...for HP Burn 5% (the standard CB UNM HP Burn cap = 75000)
+#             plus 15000 and 50000 caps on lower-tier variants
+#             plus a 250000 cap (big-AoE)
+#   200007 -> -(DMG_MUL - (!detonated*25000 + ...))   [poison_2_5pct]
+#             -(DMG_MUL - (!detonated*50000 + ...))   [poison_5pct]
+#
+# Reading this from static keeps the caps traceable. They were
+# previously CALIBRATED constants in this file — now sourced from the
+# skill data the boss itself carries.
+
+_CB_DOT_CAPS_CACHE: dict[str, int] | None = None
+
+
+def _load_cb_dot_caps() -> dict[str, int]:
+    """Parse `data/static/skills_all.json` for skills 200008 and 200007
+    and extract the integer cap values from their ChangeDamageMultiplier
+    formulas.
+
+    Formula shape: `-(DMG_MUL-(!relatedEffectWasDetonated*X+relatedEffectWasDetonated*X*...))`
+    Extract X from `!relatedEffectWasDetonated*X+`.
+    """
+    global _CB_DOT_CAPS_CACHE
+    if _CB_DOT_CAPS_CACHE is not None:
+        return _CB_DOT_CAPS_CACHE
+    import json as _json, re as _re
+    from pathlib import Path as _Path
+    p = _Path(__file__).resolve().parent.parent / "data" / "static" / "skills_all.json"
+    out: dict[str, int] = {}
+    if not p.exists():
+        _CB_DOT_CAPS_CACHE = out
+        return out
+    try:
+        sa = _json.loads(p.read_text(encoding="utf-8"))["data"]
+    except Exception:
+        _CB_DOT_CAPS_CACHE = out
+        return out
+    sk_idx = {s["Id"]: s for s in sa if isinstance(s, dict) and "Id" in s}
+
+    def extract_caps(skill_id: int) -> list[int]:
+        s = sk_idx.get(skill_id)
+        if not s:
+            return []
+        caps = []
+        for e in s.get("Effects", []) or []:
+            if not isinstance(e, dict):
+                continue
+            mf = e.get("MultiplierFormula") or ""
+            m = _re.search(r"!relatedEffectWasDetonated\*(\d+)", mf)
+            if m:
+                caps.append(int(m.group(1)))
+            else:
+                # fallback for the simple 250000 case "-(DMG_MUL-250000)"
+                m2 = _re.search(r"-\(DMG_MUL-(\d+)\)", mf)
+                if m2:
+                    caps.append(int(m2.group(1)))
+        return caps
+
+    # Skill 200008: HP Burn cap (sorted; UNM = the largest at 75000)
+    burn_caps = sorted(extract_caps(200008))
+    if burn_caps:
+        # 250000 is the big-AoE cap (last); the other three are
+        # difficulty-tiered HP-Burn caps. UNM is the maximum non-AoE.
+        burn_excl_aoe = [c for c in burn_caps if c <= 100_000]
+        if burn_excl_aoe:
+            out["hp_burn"] = max(burn_excl_aoe)
+        out["big_aoe_cap"] = max(burn_caps)
+    # Skill 200007: Poison caps
+    poison_caps = sorted(extract_caps(200007))
+    if poison_caps:
+        out["poison_2_5pct"] = poison_caps[0] if len(poison_caps) >= 1 else 25_000
+        out["poison_5pct"]   = poison_caps[-1]
+    _CB_DOT_CAPS_CACHE = out
+    return out
+
+
+def cb_dot_cap(effect: str, default: int = 75_000) -> int:
+    """Per-tick DoT cap for the named effect on UNM CB.
+
+    Effect keys:
+        "hp_burn"        -> 75000 (skill 200008)
+        "poison_5pct"    -> 50000 (skill 200007)
+        "poison_2_5pct"  -> 25000 (skill 200007)
+        "big_aoe_cap"    -> 250000 (skill 200008 last effect)
+    """
+    return _load_cb_dot_caps().get(effect, default)
+
+
+# ============================================================================
 # Lifesteal / Leech debuff — GAME-SPEC
 # ============================================================================
 # Leech debuff: attackers heal 10% of damage dealt. Skill-induced (Sicia,
