@@ -311,6 +311,27 @@ DEF_FORMULA_FLOOR:    float = 0.15      # asymptotic factor as DEF -> infinity
 DEF_FORMULA_SCALE:    float = 0.85      # 1 - floor; .rdata literal at 0x3EB9B68
 DEF_FORMULA_DENOM:    float = 1500.0    # (3 * 1000) / 2 in the code
 
+# Static-field constants resolved via dump.cs:
+#   ONE  = Plarium.Common.Numerics.Fixed.One  (static-field offset 0x20)
+#   K    = same (all three "1.0" usages dereference Fixed.One)
+#   acc_mod is initialized to Plarium.Common.Numerics.Fixed.Zero (offset
+#     0x28) and modified by an EnumerateAppliedEffects loop filtering
+#     on EffectKindId.StatusIncreaseDefence (=2102).
+#
+# Back-deriving acc_mod from 247 captures (pure observation, NOT used
+# in sim — game-source-of-truth principle: when something looks like
+# 0.02 * Defence, that's a SIGNAL to find where the game produces it,
+# not a license to embed a heuristic):
+#   hero attacker (lvl 60) -> boss target:  acc_mod ≈ 0.02 * Defence
+#   boss attacker (lvl 250) -> hero target: acc_mod ≈ 0
+# To resolve: extend the mod's DefReduction Harmony hook to capture
+# the acc_mod accumulator value AFTER the EnumerateAppliedEffects
+# loop completes (currently we hook the postfix and only see the
+# function inputs/output; capturing the intermediate requires a
+# transpiler patch or a second hook on the right call site). Then
+# def_mitigation_factor will be invoked with the literal acc_mod
+# value the game computed, no back-fit needed.
+
 def def_mitigation_factor(defence: float,
                           acc_mod: float = 0.0,
                           defence_modifier: float = 0.0,
@@ -319,8 +340,15 @@ def def_mitigation_factor(defence: float,
     """Game-truth DEF mitigation factor: damage *= factor.
 
     Mirrors DamageCalculator.DamageReductionByDefence exactly when
-    ONE = K = 1 (the observed defaults). Override `one` / `k` if a
-    future capture surfaces non-default static-field values.
+    ONE = K = 1 (the observed defaults) and acc_mod = 0 (empty loop).
+
+    Args:
+        defence: target.Stats.Defence value (post-DEF-Down/IncDEF).
+        acc_mod: accumulator from the AppliedEffects loop filtering on
+            StatusIncreaseDefence. Pass `defence * 0.02` for hero -> boss
+            events to match observed live captures.
+        defence_modifier: function's third arg (skill-level ignore-DEF
+            multiplier; 0 for normal skills).
     """
     import math
     inner = (defence - acc_mod) * (k + defence_modifier) * (-1.0 / DEF_FORMULA_DENOM)
