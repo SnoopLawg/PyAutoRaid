@@ -217,9 +217,12 @@ def simulate_team(team_names: list, verbose: bool = False,
             h["id"] = h["id"] + 100000  # unique ID for 2nd ME
         team_h.append(h)
 
-        p = PROFILES.get(tname)
-        if not p:
-            return {"error": f"No profile for: {tname}", "total": 0}
+        # Hand-curated PROFILES win when present (51 heroes); otherwise
+        # derive a generic profile from the hero's skill data so any of
+        # the 1000+ heroes can flow through. cb_profiles.resolve()
+        # always returns a usable HeroProfile.
+        from cb_profiles import resolve as _resolve_profile
+        p = _resolve_profile(tname, SKILL_DATA.get(tname))
         team_p.append(p)
 
     # Assign optimal gear
