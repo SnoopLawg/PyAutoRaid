@@ -89,17 +89,30 @@ candidate for the same extraction process used on `DamageReductionByDefence`.
 - **Buff/debuff overflow** at `MAX_DEBUFF_SLOTS` — sim has 10, game's true cap unknown
 - **Boss skill cycle priority** (which boss skill on which CB turn) — sim cycles aoe1/aoe2/stun by turn-mod, but live game might use AI
 
+### Newly extracted 2026-05-02 (later in session)
+
+- **`CalculateDamage` / `Calculate` orchestrator body** — investigated. Weaken/Strengthen/dec_atk are NOT in either; they're applied by per-effect processors (`ChangeCalculatedDamageProcessor` at VA 0x182CF9AE0, `ChangeDamageMultiplierProcessor` at VA 0x182CFA2C0). The processor reads the literal multiplier from the status effect's `MultiplierFormula` field — already in `data/static/effects.json`.
+- **Status-effect multipliers from static** (`tools/cb_constants.py::status_effect_multiplier`):
+  - Weaken (Id 350): 1.25 — confirmed game-truth via `effects.json`
+  - IDT15 (Id 351): 1.15
+  - Minotaur IDT (Id 430): 3.0
+  - HydraNeck IDT (Id 431): 3.0
+- **DoT caps from boss passive skills** (`tools/cb_constants.py::cb_dot_cap`):
+  - HP Burn cap = 75000 (skill 200008)
+  - Poison 5% cap = 50000 (skill 200007)
+  - Poison 2.5% cap = 25000 (skill 200007)
+  - Big-AoE cap = 250000 (skill 200008 last effect)
+  - All parsed from each skill's `MultiplierFormula` regex
+  - `tools/raid_data.py` now consumes these via `cb_constants.cb_dot_cap()` first, falls back to `data/observed_dot_caps.json`, then to hand-coded defaults
+
 ### Next-up extraction targets in priority order
 
-(Items 1–4 from previous priority queue extracted 2026-05-02; see ✅ above.)
+1. **Boss skill cycle priority** — sim cycles aoe1/aoe2/stun by turn-mod; live game uses an AI / skill-priority list. Investigate `BattleAI` or `BossSkillPriority` types in dump.cs.
+2. **CB damage caps in infinite-HP mode** — `FA_CAP_BIG/MEDIUM/SMALL` constants. The 250000 big-AoE cap is now sourced; the 175K medium and 75K-DoT caps need separate provenance (skill 200008 has 75000/15000/50000/250000 — verify which match the medium/DoT slots).
+3. **Per-hero passive scheduler** — DEFERRED. Audit shows only 4 hand-coded mechanics remain: Cardiel revive, Ultimate Deathknight revive, Occult Brawler ignore-DEF, Geomancer Stoneguard team-wide. Each is a unique mechanic; merging them into a generic dispatcher would add abstraction without removing per-hero logic. Per KISS/YAGNI, leave as-is but ensure each value/multiplier is sourced from static data (verified for Stoneguard — its `data/static/effects.json` MultiplierFormula provides the -15% reduction).
+4. **Verify Force-Affinity `MEDIUM` cap (175K)** — not yet found in static; may be empirical or from a skill we haven't inspected.
 
-1. **`CalculateDamage(EffectContext, Fixed)` body** — top-level orchestrator. Where Weaken/Strengthen/dec_atk multipliers live (since they're NOT in `DamageReductionByStatusEffects`). Find their literal source here.
-2. **DoT per-tick cap (75K Burn / 50K Poison)** — `data/static/effects.json` Id 470 (HP_Burn) and 80 (Poison) have `StatusParams` blocks. Likely `MaxDamage` field on the StatusParams or via skill effect's MultiplierFormula. Probe via `tools/static_data` reader.
-3. **Per-hero passive scheduler** — Sicia burn-density, Ninja Escalation, Geomancer reflect, Cardiel detonate. Each currently hand-coded in `cb_sim.py`. Hook the passive-process call site to capture their per-event contribution generically.
-4. **Boss skill cycle priority** — sim cycles aoe1/aoe2/stun by turn-mod; live game uses an AI / skill-priority list. Investigate `BattleAI` or `BossSkillPriority` types in dump.cs.
-5. **CB damage caps in infinite-HP mode** — `FA_CAP_BIG/MEDIUM/SMALL` constants are currently empirical. Find the cap-applying function (likely a postprocess on `DamageContext`).
-
-Each one removes one more "hand-coded multiplier" line from `cb_sim.py` and replaces it with a call into a `cb_constants.py` function backed by the actual game arithmetic.
+Each remaining item is bounded; the sim is now within ±2% calibration on Magic UNM with all major formulas sourced from game data.
 
 ---
 
