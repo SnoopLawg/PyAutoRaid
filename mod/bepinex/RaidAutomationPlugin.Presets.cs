@@ -245,8 +245,20 @@ namespace RaidAutomation
             }
         }
 
-        // save-preset: Clone existing preset, replace heroes, set priorities.
-        // params: name, heroes (comma-sep instance IDs), type (1=PvE)
+        // save-preset: Build a new HeroesAiPreset using the game's
+        // own factories (BattlePresetsOverlayContext.CreateNewPreset
+        // for the empty shell, HeroesAiPresetExtensions.
+        // DefaultSkillPriorities for each hero's priority dict, then
+        // the 3-arg SkillPrioritiesSetup ctor). Send via SaveAiPresetCmd.
+        //
+        // Earlier strategies (clone-then-mutate) failed local PreEdit
+        // validation with HeroesAiPreset_InvalidPrioritiesTypes because
+        // our manually-built priority dicts didn't have the proper
+        // IL2Cpp-side enum value boxing the validator checks for. The
+        // game's factory `DefaultSkillPriorities(HeroType)` produces
+        // dicts the validator accepts.
+        //
+        // Params: name, heroes (comma-sep instance IDs), type (1=PvE)
         //   priorities: heroId:skillId=pri,skillId=pri;heroId:... (optional)
         //   pri: 0=Default, 1=First, 2=Second, 3=Third, 4=NotUsed
         private string SavePreset(string nameStr, string heroIdsStr, string typeStr)
@@ -276,6 +288,174 @@ namespace RaidAutomation
             if (setupT == null) return "{\"error\":\"SkillPrioritiesSetup type not found\"}";
             if (sptEnum == null) return "{\"error\":\"SkillPriorityType enum not found\"}";
 
+            try
+            {
+                var uw = GetUserWrapper();
+                var heroDict = Prop(Prop(Prop(uw, "Heroes"), "HeroData"), "HeroById");
+
+                var sb = new StringBuilder();
+                sb.Append("{\"ok\":true,\"debug\":{");
+
+                // === Factory-based strategy (using game's own helpers) ===
+                // 1. Find unused Id in 1-99 range so get_Type returns 1 (GeneralPvE)
+                var usedIds = new HashSet<int>();
+                try {
+                    var heroes2 = Prop(uw, "Heroes");
+                    var hd2 = Prop(heroes2, "HeroData");
+                    object pl2 = Prop(hd2, "HeroesAiPresets") ?? Prop(heroes2, "HeroesAiPresets");
+                    if (pl2 != null) {
+                        foreach (var pp in ListItems(pl2))
+                            usedIds.Add(IntProp(pp, "Id"));
+                    }
+                } catch {}
+                int newId = 0;
+                for (int candidate = 1; candidate < 100; candidate++) {
+                    if (!usedIds.Contains(candidate)) { newId = candidate; break; }
+                }
+                if (newId == 0) return "{\"error\":\"no free preset Id in 1-99 range\"}";
+                sb.Append("\"newId\":").Append(newId);
+
+                // 2. Use BattlePresetsOverlayContext.CreateNewPreset(int id)
+                //    to build the empty preset shell (proper IL2Cpp identity).
+                var bpoT = FindType("Client.ViewModel.Contextes.BattlePresets.BattlePresetsOverlayContext");
+                if (bpoT == null) return "{\"error\":\"BattlePresetsOverlayContext type not found\"}";
+                var createM = bpoT.GetMethod("CreateNewPreset",
+                    BindingFlags.NonPublic | BindingFlags.Static);
+                if (createM == null)
+                    createM = bpoT.GetMethod("CreateNewPreset",
+                        BindingFlags.Public | BindingFlags.Static);
+                if (createM == null) return "{\"error\":\"CreateNewPreset method not found\"}";
+                object preset;
+                try { preset = createM.Invoke(null, new object[] { newId }); }
+                catch (TargetInvocationException tex) {
+                    return "{\"error\":\"CreateNewPreset failed: " + Esc((tex.InnerException ?? tex).Message) + "\"}";
+                }
+                if (preset == null) return "{\"error\":\"CreateNewPreset returned null\"}";
+                sb.Append(",\"strategy\":\"factory\"");
+
+                // 3. Override Name (CreateNewPreset gave it "New Team N").
+                SetFieldOrProp(presetT, preset, "Name", presetName);
+                SetFieldOrProp(presetT, preset, "NameIsNotDefault", true);
+
+                // 4. Build setups via game factories: for each hero,
+                //    call DefaultSkillPriorities(hero.Type) to make the
+                //    priority dict, then SkillPrioritiesSetup(heroId,
+                //    dict, presetType) to build the setup with proper
+                //    sequences. Add to preset.SkillPrioritiesSetups.
+                var presetTypeEnumVal = presetTypeEnum != null
+                    ? Enum.ToObject(presetTypeEnum, presetType)
+                    : null;
+                var hpExtT = FindType("SharedModel.Meta.Heroes.HeroesAiPresetExtensions");
+                if (hpExtT == null) return "{\"error\":\"HeroesAiPresetExtensions not found\"}";
+                var heroTypeT = FindType("SharedModel.Meta.Heroes.HeroType");
+                if (heroTypeT == null) return "{\"error\":\"HeroType not found\"}";
+                var defaultPrioritiesM = hpExtT.GetMethod("DefaultSkillPriorities",
+                    BindingFlags.Public | BindingFlags.Static, null, new[] { heroTypeT }, null);
+                if (defaultPrioritiesM == null)
+                    return "{\"error\":\"DefaultSkillPriorities not found\"}";
+
+                var setupCtor3 = setupT.GetConstructor(new[] { typeof(int), defaultPrioritiesM.ReturnType, presetTypeEnum });
+                if (setupCtor3 == null)
+                    return "{\"error\":\"3-arg SkillPrioritiesSetup ctor not found\"}";
+
+                // Get the preset's setup list to add into
+                var spsField = presetT.GetField("SkillPrioritiesSetups",
+                    BindingFlags.Public | BindingFlags.Instance);
+                object setupList = spsField != null ? spsField.GetValue(preset) : null;
+                if (setupList == null) {
+                    var getSetups = presetT.GetMethod("get_SkillPrioritiesSetups");
+                    if (getSetups != null) setupList = getSetups.Invoke(preset, null);
+                }
+                if (setupList == null) return "{\"error\":\"preset.SkillPrioritiesSetups null\"}";
+                var addSetupM = setupList.GetType().GetMethod("Add");
+                if (addSetupM == null) return "{\"error\":\"setupList.Add not found\"}";
+
+                sb.Append("},\"heroes\":[");
+                bool first = true;
+                foreach (int heroId in heroIds)
+                {
+                    object hero = null;
+                    try {
+                        var ck = heroDict.GetType().GetMethod("ContainsKey");
+                        if (ck != null && (bool)ck.Invoke(heroDict, new object[] { heroId }))
+                            hero = heroDict.GetType().GetProperty("Item")?.GetValue(heroDict, new object[] { heroId });
+                    } catch {}
+                    if (hero == null) {
+                        sb.Append(first ? "" : ",");
+                        first = false;
+                        sb.Append("{\"id\":").Append(heroId).Append(",\"err\":\"hero not found\"}");
+                        continue;
+                    }
+                    object hType = Prop(hero, "Type");
+                    if (hType == null) {
+                        sb.Append(first ? "" : ",");
+                        first = false;
+                        sb.Append("{\"id\":").Append(heroId).Append(",\"err\":\"hero.Type null\"}");
+                        continue;
+                    }
+                    // Build dict via game factory
+                    object priDict;
+                    try { priDict = defaultPrioritiesM.Invoke(null, new object[] { hType }); }
+                    catch (TargetInvocationException tex) {
+                        sb.Append(first ? "" : ",");
+                        first = false;
+                        sb.Append("{\"id\":").Append(heroId)
+                          .Append(",\"err\":\"DefaultSkillPriorities: ")
+                          .Append(Esc((tex.InnerException ?? tex).Message))
+                          .Append("\"}");
+                        continue;
+                    }
+                    // Build setup via 3-arg ctor
+                    object setup;
+                    try { setup = setupCtor3.Invoke(new object[] { heroId, priDict, presetTypeEnumVal }); }
+                    catch (TargetInvocationException tex) {
+                        sb.Append(first ? "" : ",");
+                        first = false;
+                        sb.Append("{\"id\":").Append(heroId)
+                          .Append(",\"err\":\"setup ctor: ")
+                          .Append(Esc((tex.InnerException ?? tex).Message))
+                          .Append("\"}");
+                        continue;
+                    }
+                    addSetupM.Invoke(setupList, new object[] { setup });
+                    sb.Append(first ? "" : ",");
+                    first = false;
+                    sb.Append("{\"id\":").Append(heroId).Append(",\"ok\":true}");
+                }
+                sb.Append("]");
+
+                // 5. Save via SaveAiPresetCmd (same path as
+                //    BattlePresetsOverlayContext.SavePreset uses).
+                var cmdT = FindType("Client.Model.Gameplay.Heroes.Commands.SaveAiPresetCmd");
+                if (cmdT == null) return "{\"error\":\"SaveAiPresetCmd not found\"}";
+                var cmdCtor = cmdT.GetConstructor(new[] { presetT });
+                if (cmdCtor == null) return "{\"error\":\"SaveAiPresetCmd ctor not found\"}";
+                var cmd = cmdCtor.Invoke(new object[] { preset });
+                try { InvokeExecute(cmd); }
+                catch (TargetInvocationException tex) {
+                    return sb.ToString() + ",\"saveError\":\""
+                         + Esc((tex.InnerException ?? tex).Message) + "\"}";
+                }
+                sb.Append(",\"name\":\"").Append(Esc(presetName)).Append("\"}");
+                return sb.ToString();
+            }
+            catch (TargetInvocationException tex)
+            {
+                return "{\"error\":\"" + Esc((tex.InnerException ?? tex).Message) + "\"}";
+            }
+            catch (Exception ex)
+            {
+                return "{\"error\":\"" + Esc(ex.Message) + "\"}";
+            }
+        }
+
+        // The clone-and-mutate strategy is REMOVED. See git history
+        // commit c450ef0 for the prior implementation. The factory
+        // strategy above (CreateNewPreset + DefaultSkillPriorities +
+        // 3-arg SkillPrioritiesSetup ctor) is the correct path.
+#if false
+        private string SavePreset_LegacyCloneStrategy(string nameStr, string heroIdsStr, string typeStr)
+        {
             try
             {
                 var uw = GetUserWrapper();
@@ -689,6 +869,7 @@ namespace RaidAutomation
                 return "{\"error\":\"" + Esc(ex.Message) + "\",\"stack\":\"" + Esc(ex.StackTrace) + "\"}";
             }
         }
+#endif
 
         /// <summary>
         /// Mutate a SkillPrioritiesSetup in place so its skill-id keys
