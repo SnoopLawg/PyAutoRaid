@@ -159,7 +159,20 @@ def generate_candidate_teams(eligible_heroes: list[str],
             pair_combos.append((surv, sust,
                 list(combinations(free, need))))
 
-    # Round-robin: yield first combo from each pair, then second, etc.
+    # Stratified random sampling: shuffle each pair's combo list and
+    # round-robin one team at a time, so the candidate pool gets even
+    # representation across all (survivor, sustainer) anchor pairs.
+    # Without this, alphabetically-first DPS heroes dominate the
+    # output because itertools.combinations yields them first.
+    import random as _rand
+    for i, (surv, sust, combos) in enumerate(pair_combos):
+        # Stable shuffle: each pair gets a deterministic but distinct
+        # shuffle order based on its index, so re-runs are reproducible.
+        rng = _rand.Random(0x5eed ^ hash((surv, sust)))
+        shuffled = list(combos)
+        rng.shuffle(shuffled)
+        pair_combos[i] = (surv, sust, shuffled)
+
     max_iters = max(len(c[2]) for c in pair_combos) if pair_combos else 0
     for i in range(max_iters):
         for surv, sust, combos in pair_combos:
@@ -167,7 +180,6 @@ def generate_candidate_teams(eligible_heroes: list[str],
                 continue
             team = sorted({surv, sust, *combos[i]})
             if len(team) < 5:
-                # surv == sust collapsed; pull one extra DPS
                 continue
             key = frozenset(team)
             if key in seen:
@@ -192,29 +204,171 @@ def generate_candidate_teams(eligible_heroes: list[str],
     return teams
 
 
-def load_dwj_tune_signatures() -> set[frozenset]:
-    """Return {frozenset(team)} for every DWJ tune so we can flag teams
-    that are NOT already a known recipe (= "novel" candidates)."""
-    sigs: set[frozenset] = set()
+def load_dwj_tunes() -> list[dict]:
+    """Return every DWJ tune as `{name, slug, slots: [hero_names]}`.
+    DWJ slots are dicts with a `hero` field (not `name`).
+    """
     p = PROJECT_ROOT / "data" / "dwj" / "parsed" / "tunes.json"
     if not p.exists():
-        return sigs
+        return []
     try:
         data = json.loads(p.read_text(encoding="utf-8"))
     except Exception:
-        return sigs
-    tunes = data.get("tunes") if isinstance(data, dict) else data
-    if not isinstance(tunes, list):
-        return sigs
+        return []
+    tunes = data if isinstance(data, list) else (data.get("tunes") or [])
+    out: list[dict] = []
     for tune in tunes:
         if not isinstance(tune, dict):
             continue
-        slots = tune.get("slots") or tune.get("hero_names") or []
-        names = [s.get("name") if isinstance(s, dict) else s for s in slots]
-        names = [n for n in names if isinstance(n, str)]
+        slots = tune.get("slots") or []
+        names = []
+        for s in slots:
+            if isinstance(s, dict):
+                n = s.get("hero") or s.get("name")
+                if isinstance(n, str): names.append(n)
+            elif isinstance(s, str):
+                names.append(s)
         if 4 <= len(names) <= 6:
-            sigs.add(frozenset(names))
-    return sigs
+            out.append({
+                "name":  tune.get("name") or tune.get("slug") or "?",
+                "slug":  tune.get("slug") or "",
+                "slots": names[:5],
+            })
+    return out
+
+
+def load_hh_ratings() -> dict[str, float]:
+    """Return {hero_name -> CB rating 0..10} from HellHades tier list."""
+    p = PROJECT_ROOT / "data" / "hh" / "parsed" / "tierlist.json"
+    if not p.exists():
+        return {}
+    try:
+        data = json.loads(p.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    rows = data if isinstance(data, list) else (data.get("ratings") or data)
+    out: dict[str, float] = {}
+    if isinstance(rows, list):
+        for r in rows:
+            if not isinstance(r, dict): continue
+            n = r.get("name")
+            cb = r.get("clan_boss") or r.get("cb") or r.get("CB")
+            if n and cb is not None:
+                try: out[n] = float(cb)
+                except (TypeError, ValueError): pass
+    return out
+
+
+def predict_score(team: list[str],
+                  roles_by_hero: dict[str, set[str]],
+                  hh_ratings: dict[str, float]) -> float:
+    """Cheap heuristic for team strength — used to prune candidates
+    before paying the full sim cost.
+
+    Adds:
+      - role-coverage points (UK/BD/heal/def_down/weaken/poisoner/burner)
+      - per-hero HH CB rating (when available)
+      - synergy bonuses (poisoner + poison_sens, etc.)
+    """
+    team_roles: list[set[str]] = [roles_by_hero.get(h, set()) for h in team]
+    flat: set[str] = set().union(*team_roles)
+    score = 0.0
+    # Role coverage
+    if "uk" in flat:        score += 5
+    if "bd" in flat:        score += 4
+    if "heal" in flat or "shield" in flat or "heal_active" in flat: score += 3
+    if "def_down" in flat:  score += 4
+    if "weaken" in flat:    score += 3
+    if "poisoner" in flat:  score += 2
+    if "burner" in flat:    score += 2
+    if "ally_protect" in flat: score += 1
+    # DPS counts: more DPS = more output potential
+    score += sum(1 for r in team_roles if "dps" in r) * 0.5
+    # Per-hero CB rating (HH tier list 0..10)
+    score += sum(hh_ratings.get(h, 0.0) for h in team) * 0.3
+    # Synergy: poison + poison_sens
+    if "poisoner" in flat and any("poison_sens" in r for r in team_roles):
+        score += 2
+    return score
+
+
+# DWJ slot strings can be EITHER a literal hero name OR a role
+# placeholder. Map common placeholders to the role tag set the
+# explorer's role classifier produces.
+DWJ_PLACEHOLDER_ROLES = {
+    "DPS":                    {"dps"},
+    "DPS/Cleanser":           {"dps", "heal_active"},
+    "DPS (Extra Turn)":       {"dps", "extra_turn"},
+    "Cleanser":               {"heal_active"},
+    "Pain Keeper":            {"cd_reset"},
+    "Painkeeper":             {"cd_reset"},
+    "Slowboi":                {"dps"},   # low-SPD DPS — sub with any DPS
+    "Stun Target":            {"dps"},
+    "Stun Target - Any DPS":  {"dps"},
+    "Stun Target (DPS)":      {"dps"},
+    "Unkillable Champion (4 turn CD)": {"uk"},
+    "Tower/Santa":            {"uk"},   # both are UK providers
+    "Fast Maneater":          {"uk"},   # specific Maneater config
+    "Slow Maneater":          {"uk"},
+}
+
+# Some DWJ slot strings are literal hero names with typos / extra
+# whitespace. Map them to the canonical name.
+DWJ_NAME_FIXUPS = {
+    "Deacon ":           "Deacon Armstrong",
+    "Deacon Armstron":   "Deacon Armstrong",
+    "Maneater_2":        "Maneater",  # Budget UK uses two
+}
+
+
+def fill_dwj_tune_with_owned(slots: list[str], owned: set[str],
+                              roles_by_hero: dict[str, set[str]]) -> list[str] | None:
+    """Resolve a DWJ tune's slot list to a concrete owned-hero team.
+
+    Each slot is either:
+      - A literal hero name (resolve directly).
+      - A name with typo/whitespace (canonicalize via DWJ_NAME_FIXUPS).
+      - A role placeholder (find the highest-rated owned hero with
+        the placeholder's role tags).
+
+    Returns None when any slot can't be filled OR the resulting team
+    has fewer than 5 distinct members.
+    """
+    team: list[str] = []
+    used: set[str] = set()
+    for raw_slot in slots:
+        # Normalize: strip whitespace, apply name fixups
+        slot = DWJ_NAME_FIXUPS.get(raw_slot, raw_slot.strip())
+        # Direct hero match
+        if slot in owned and slot not in used:
+            team.append(slot)
+            used.add(slot)
+            continue
+        # Same hero allowed twice (2x Maneater pattern) — Budget-UK
+        if slot in owned:
+            # Already used, but DWJ tune lists it again
+            team.append(slot)
+            continue
+        # Role placeholder
+        target_roles = DWJ_PLACEHOLDER_ROLES.get(slot)
+        if target_roles is None:
+            target_roles = roles_by_hero.get(slot, set())
+        if not target_roles:
+            return None
+        # Find best owned hero for this role
+        candidates = [h for h in owned
+                      if (target_roles & roles_by_hero.get(h, set()))
+                      and h not in used]
+        if not candidates:
+            return None
+        # Pick the hero with the most-overlapping role set
+        candidates.sort(key=lambda h: -len(target_roles & roles_by_hero.get(h, set())))
+        chosen = candidates[0]
+        team.append(chosen)
+        used.add(chosen)
+    if len(set(team)) < 4:  # CB tunes can have a 2x-Maneater duplicate
+        return None
+    return team[:5]
 
 
 def main() -> int:
@@ -224,14 +378,32 @@ def main() -> int:
                     help="Show top N teams by sim damage (default 30)")
     ap.add_argument("--cb-element", default="magic",
                     choices=("magic", "force", "spirit", "void"))
-    ap.add_argument("--max-combos", type=int, default=2000,
-                    help="Cap candidate teams enumerated (default 2000)")
+    ap.add_argument("--candidate-pool", type=int, default=5000,
+                    help="Total feasible teams to enumerate (default 5000)")
+    ap.add_argument("--sample", type=int, default=2000,
+                    help="Randomly sample this many from the candidate "
+                         "pool to prune-score (default 2000)")
+    ap.add_argument("--sim-top", type=int, default=200,
+                    help="Number of pre-scored teams to actually sim "
+                         "(default 200). Score-based prune to keep "
+                         "runtime tractable.")
     ap.add_argument("--include-unowned", action="store_true",
                     help="Include potential (unowned) heroes — uses "
                          "ungeared baseline / vault-best gear")
-    ap.add_argument("--min-roles", default="uk,sustain,3dps",
-                    help="Comma-separated feasibility rules (default uk,sustain,3dps)")
+    ap.add_argument("--include-dwj", action="store_true", default=True,
+                    help="Also sim every DWJ tune populated with the "
+                         "user's roster (substitute missing slots with "
+                         "same-role owned heroes). Default on.")
+    ap.add_argument("--no-dwj", action="store_false", dest="include_dwj",
+                    help="Skip the DWJ-tune coverage")
+    ap.add_argument("--novel-margin", type=float, default=0.10,
+                    help="Mark a team `novel` only when its damage "
+                         "exceeds the closest matching DWJ tune by at "
+                         "least this fraction (default 0.10 = 10%)")
+    ap.add_argument("--seed", type=int, default=42)
     args = ap.parse_args()
+    import random
+    random.seed(args.seed)
 
     print("Loading data...", file=sys.stderr)
     # Owned roster — restrict to 6-star (which is what `simulate_team`
@@ -267,13 +439,13 @@ def main() -> int:
     eligible = sorted(owned if not args.include_unowned else set(ht_by_name.keys()))
     print(f"  eligible heroes: {len(eligible)}", file=sys.stderr)
 
-    # Discover roles
+    # Discover roles for EVERY hero in the static catalog (not just
+    # eligible) — we need unowned-hero role data so DWJ-tune fill can
+    # find substitutes for slots the user doesn't own.
     print("Classifying heroes by role...", file=sys.stderr)
     roles_by_hero: dict[str, set[str]] = {}
-    for name in eligible:
-        ht_entry = ht_by_name.get(name)
-        if ht_entry:
-            roles_by_hero[name] = discover_roles(name, ht_entry, sk_idx, sd_all_text)
+    for name, ht_entry in ht_by_name.items():
+        roles_by_hero[name] = discover_roles(name, ht_entry, sk_idx, sd_all_text)
     role_counts = defaultdict(int)
     for r in roles_by_hero.values():
         for role in r:
@@ -291,45 +463,123 @@ def main() -> int:
     has_2me = len([h for h in ah["heroes"] if h.get("name") == "Maneater"]) >= 2
     candidates = generate_candidate_teams(
         eligible, roles_by_hero,
-        max_combos=args.max_combos,
+        max_combos=args.candidate_pool,
         has_double_maneater=has_2me,
     )
-    print(f"  {len(candidates)} feasible team combos", file=sys.stderr)
+    # Random sample to break alphabetical bias from the round-robin
+    if len(candidates) > args.sample:
+        candidates = random.sample(candidates, args.sample)
+    print(f"  {len(candidates)} candidate team combos (after sampling)",
+          file=sys.stderr)
+
+    # Source DWJ tunes — populate with user's roster where slots are
+    # role placeholders. dwj_sigs holds the FILLED team frozensets so
+    # the novelty check below can look them up by hero name.
+    dwj_tunes = load_dwj_tunes()
+    dwj_sigs: set[frozenset] = set()
+    dwj_tune_teams: list[tuple[list[str], dict]] = []  # (team, tune_meta)
+    for tune in dwj_tunes:
+        if args.include_dwj:
+            filled = fill_dwj_tune_with_owned(tune["slots"],
+                                                set(eligible),
+                                                roles_by_hero)
+            if filled:
+                team_sorted = sorted(filled)
+                dwj_tune_teams.append((team_sorted, tune))
+                dwj_sigs.add(frozenset(team_sorted))
+    print(f"  DWJ tunes: {len(dwj_tunes)} known, "
+          f"{len(dwj_tune_teams)} fillable from owned roster",
+          file=sys.stderr)
+
+    # Score-based prune: rank candidates by predict_score, keep top
+    # `sim-top` for full sim. DWJ-tune teams always get simmed (they're
+    # the baseline we compare novel candidates against).
+    print("Pre-scoring candidates...", file=sys.stderr)
+    hh_ratings = load_hh_ratings()
+    scored: list[tuple[float, list[str]]] = []
+    for team in candidates:
+        s = predict_score(team, roles_by_hero, hh_ratings)
+        scored.append((s, team))
+    scored.sort(key=lambda x: -x[0])
+    sim_pool = [t for _, t in scored[:args.sim_top]]
+    # Add DWJ teams (de-dup against pool)
+    sim_keys = {frozenset(t) for t in sim_pool}
+    for team, _ in dwj_tune_teams:
+        if frozenset(team) not in sim_keys:
+            sim_pool.append(team)
+            sim_keys.add(frozenset(team))
+    print(f"  pruned to {len(sim_pool)} teams "
+          f"({len(scored[:args.sim_top])} top-scored + "
+          f"{len(sim_pool) - len(scored[:args.sim_top])} DWJ)",
+          file=sys.stderr)
 
     if not candidates:
         print("No feasible teams found. Try --include-unowned or relax --min-roles.")
         return 1
 
     # Sim each
-    print(f"Simulating ({len(candidates)} teams)...", file=sys.stderr)
+    print(f"Simulating ({len(sim_pool)} teams)...", file=sys.stderr)
     from cb_potential import simulate_team
     elem_id = {"magic": 1, "force": 2, "spirit": 3, "void": 4}[args.cb_element]
     results: list[tuple[list[str], float, dict]] = []
-    for i, team in enumerate(candidates):
+    for i, team in enumerate(sim_pool):
         if i % 50 == 0 and i:
-            print(f"  ... {i}/{len(candidates)}", file=sys.stderr)
+            print(f"  ... {i}/{len(sim_pool)}", file=sys.stderr)
         try:
             res = simulate_team(team, verbose=False, cb_element=elem_id)
             total = float(res.get("total", 0)) if "error" not in res else 0.0
-        except Exception as e:
+        except Exception:
             total = 0.0
-            res = {"error": str(e)}
+            res = {"error": "sim failed"}
         results.append((team, total, res))
 
     results.sort(key=lambda r: -r[1])
 
-    # Flag novel comps (not in DWJ tune library)
-    dwj_sigs = load_dwj_tune_signatures()
+    # Build "closest DWJ damage" lookup so we can flag novel teams
+    # (those that BEAT their closest DWJ tune by --novel-margin).
+    # Closest DWJ for a team = the DWJ tune with the most overlapping
+    # heroes. If no overlap, novel margin is meaningless → mark "yes".
+    dwj_team_dmgs: dict[frozenset, float] = {}
+    for team, dmg, _ in results:
+        if frozenset(team) in dwj_sigs:
+            dwj_team_dmgs[frozenset(team)] = dmg
+
+    def closest_dwj_damage(team: list[str]) -> float:
+        team_set = frozenset(team)
+        best_overlap = 0
+        best_dmg = 0.0
+        for dwj_sig, dwj_dmg in dwj_team_dmgs.items():
+            overlap = len(team_set & dwj_sig)
+            if overlap > best_overlap:
+                best_overlap = overlap
+                best_dmg = dwj_dmg
+        return best_dmg
 
     # Output
     top = results[: args.top]
     print(f"\n=== Top {len(top)} CB teams (cb_element={args.cb_element}) ===\n")
-    print(f"{'#':>3} {'damage':>10} {'novel?':>6} team")
-    print("-" * 80)
+    print(f"{'#':>3} {'damage':>10} {'novel':>7} {'vs_dwj':>10}  team")
+    print("-" * 110)
     for i, (team, total, res) in enumerate(top, 1):
-        novel = "yes" if frozenset(team) not in dwj_sigs else "no"
+        sig = frozenset(team)
+        is_dwj_match = sig in dwj_sigs
+        if is_dwj_match:
+            novel_flag = "DWJ"
+            vs = "—"
+        else:
+            ref = closest_dwj_damage(team)
+            if ref > 0:
+                margin = (total - ref) / ref
+                if margin >= args.novel_margin:
+                    novel_flag = f"+{margin*100:.0f}%"
+                else:
+                    novel_flag = "no"
+                vs = f"{ref/1_000_000:.1f}M"
+            else:
+                novel_flag = "yes"
+                vs = "n/a"
         team_str = ", ".join(team)
-        print(f"{i:>3} {total/1_000_000:>8.1f}M {novel:>6} {team_str}")
+        print(f"{i:>3} {total/1_000_000:>8.1f}M {novel_flag:>7} {vs:>10}  {team_str}")
     return 0
 
 
