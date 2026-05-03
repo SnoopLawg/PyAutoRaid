@@ -115,6 +115,51 @@ Each remaining item is bounded; the sim is now within ±2% calibration on Magic 
 
 ---
 
+## Team explorer (`tools/cb_team_explorer.py`)
+
+State at end of 2026-05-02: explorer is functional and surfacing
+genuinely novel team comps from the user's owned roster.
+
+### What works
+
+- **Dynamic role discovery** from `data/static/skill_descriptions_all.json` — keyword matching for UK/BD/heal/shield/def_down/weaken/poisoner/burner/inc_atk/inc_def/inc_spd/inc_cr/inc_cd/cd_reset/extra_turn/revive/etc. Across all 1121 hero names.
+- **Stratified random sampling** from feasible team enumeration (eliminates alphabetical bias).
+- **Score-based prune** via `predict_score()` (role coverage + HellHades CB ratings) before paying full sim cost.
+- **DWJ tune fill** — populates each DWJ tune's slot list with owned heroes, substituting role placeholders (`"DPS"`, `"Cleanser"`, `"Pain Keeper"`, `"Tower/Santa"`) with same-role owned heroes. 35/103 DWJ tunes fillable from a typical 6-star roster.
+- **Tighter `novel?` flag** — distinguishes `DWJ` (exact tune match), `+N%` (beats closest DWJ by N%), `no` (worse than closest DWJ), with `--novel-margin` threshold (default 10%).
+- **Two sim paths**:
+  - Default `simulate_team` — potential gear, ~12M scale
+  - `--use-current-gear` → `evaluate_team_calibrated` — real gear + Maneater A3-opener convention, ~16M scale
+  - `--explore-speed` — drops UK SPD cap during gear opt (often produces lower damage but useful for genuine new-tune exploration when paired with cross-hero SPD coordination)
+
+### Known gaps (not blocking — flagged for future)
+
+1. **Preset-driven skill priorities** — the 16M-vs-36M gap. Calibrated sim hits ~36M because it applies the user's saved presets (Demytha A2 priority, Ninja delay-2 A3, etc.). `evaluate_team_calibrated` doesn't yet read `/presets`. Closing this gap requires loading the user's saved presets and applying matching ones to test teams during sim. User flagged as "preset handling isn't ready yet".
+2. **`--explore-speed` is naive** — just drops the SPD cap; doesn't coordinate cross-hero ratios. Real new-tune discovery needs an SPD-search algorithm that finds hero-speed combinations where the UK chain holds at non-traditional values.
+3. **`vs_dwj` baseline** uses the closest DWJ tune by hero overlap — fine for swap-style novel comps but uninformative for fully-novel comps with no DWJ overlap (shows `n/a`).
+
+### Current strong novel candidates (run on owned 6-star roster, Magic UNM, --use-current-gear)
+
+| Damage | vs DWJ | Team |
+|---|---|---|
+| 65.5M | +87% | Geomancer, Maneater, Seeker, Teodor the Savant, Uugo |
+| 44.7M | +27% | Demytha, Maneater, Razelvarg, Seeker, Teodor the Savant |
+| 29.1M | +149% | Alsgor, Maneater, Ninja, Teodor the Savant, Urogrim |
+| 28.9M | +65% | Demytha, Fayne, Geomancer, Maneater, Uugo |
+| 22.1M | +59% | Demytha, Maneater, Miscreated Monster, Sicia, Teodor |
+
+Pattern observation: `Teodor the Savant` (DoT-extender) and `Seeker` (multi-debuff) appear in 4 of top 5; `Uugo` (def_down + cleanse) is the standout sustain+debuff hybrid. Worth in-game testing.
+
+### When picking back up
+
+1. **Validate top picks in-game**: spend a CB key on `Geomancer + Maneater + Seeker + Teodor + Uugo` and compare to ~36M baseline.
+2. **Wire `/presets` reading** when ready: read user's saved presets at sim time, apply matching priorities to each test team. Closes the 16M→36M gap.
+3. **Per-hero damage breakdown in explorer output** — show DoT vs direct vs WM/GS contribution for each top team so the user sees WHERE the damage is coming from.
+4. **Cross-hero SPD coordinator** for real `--explore-speed` discovery.
+5. **Use the team explorer to validate new heroes** before deciding to ascend / book / gear them.
+
+---
+
 ## Beyond CB — the larger goals from CLAUDE.md
 
 ### Battle Locations universe
