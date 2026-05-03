@@ -333,6 +333,15 @@ namespace RaidAutomation
                 SetFieldOrProp(presetT, preset, "Name", presetName);
                 SetFieldOrProp(presetT, preset, "NameIsNotDefault", true);
 
+                // Note: HeroesAiPreset.Type is a READ-ONLY computed
+                // property (no setter, no backing field). It's derived
+                // from the preset's SkillPrioritiesSetups — specifically
+                // the number of Sequences each setup carries. The 3-arg
+                // SkillPrioritiesSetup ctor below takes presetType and
+                // builds Sequences accordingly, so we drive the type
+                // through THAT path. Callers' `type` param flows in via
+                // `presetTypeEnumVal` used in the ctor invocation.
+
                 // Force Id to 0 — try multiple approaches since IL2CPP cloned
                 // objects may have the original Id baked into native memory.
                 bool idSet = false;
