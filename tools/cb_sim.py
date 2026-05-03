@@ -51,7 +51,7 @@ from cb_constants import (
     FA_CAP_BIG, FA_CAP_MEDIUM, FA_CAP_SMALL, FA_CAP_DOT,
     GATHERING_FURY_START_TURN, GATHERING_FURY_RATE_PER_TURN,
     GATHERING_FURY_CLIFF_TURN, ENRAGE_TURN,
-    def_mitigation_factor,
+    def_mitigation_factor, HERO_BASE_ARMOR_PIERCE,
 )
 
 TM_THRESHOLD = 1000
@@ -1428,12 +1428,12 @@ class CBSimulator:
             effective_def *= 0.875
 
         # Hero -> boss DEF mitigation: same game-truth function.
-        # Per-skill ignore_def already applied above by reducing
-        # effective_def — pass it as the bare DEF here.
-        # acc_mod (the AppliedEffects-loop accumulator) is left at 0
-        # until the mod's DefReduction hook captures its value inline;
-        # observed residual is ~0.5pp at low DEF.
-        def_mult = max(0.05, def_mitigation_factor(effective_def))
+        # The caller (CalculateDamage) passes a base defence_modifier of
+        # -0.02 for hero attackers (HERO_BASE_ARMOR_PIERCE, captured
+        # 2026-05-02). Skill-level ignore_def is already applied above
+        # by reducing effective_def, so we pass the base only here.
+        def_mult = max(0.05, def_mitigation_factor(
+            effective_def, defence_modifier=HERO_BASE_ARMOR_PIERCE))
 
         wk = 1.25 if self.debuff_bar.has("weaken") else 1.0
         str_mult = 1.25 if champ.has_buff("strengthen") else 1.0

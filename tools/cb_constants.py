@@ -318,19 +318,19 @@ DEF_FORMULA_DENOM:    float = 1500.0    # (3 * 1000) / 2 in the code
 #     0x28) and modified by an EnumerateAppliedEffects loop filtering
 #     on EffectKindId.StatusIncreaseDefence (=2102).
 #
-# Back-deriving acc_mod from 247 captures (pure observation, NOT used
-# in sim — game-source-of-truth principle: when something looks like
-# 0.02 * Defence, that's a SIGNAL to find where the game produces it,
-# not a license to embed a heuristic):
-#   hero attacker (lvl 60) -> boss target:  acc_mod ≈ 0.02 * Defence
-#   boss attacker (lvl 250) -> hero target: acc_mod ≈ 0
-# To resolve: extend the mod's DefReduction Harmony hook to capture
-# the acc_mod accumulator value AFTER the EnumerateAppliedEffects
-# loop completes (currently we hook the postfix and only see the
-# function inputs/output; capturing the intermediate requires a
-# transpiler patch or a second hook on the right call site). Then
-# def_mitigation_factor will be invoked with the literal acc_mod
-# value the game computed, no back-fit needed.
+# Captured live (mod hook on Fixed.op_Subtraction, 2026-05-02):
+#   acc_mod is always 0 in observed events — the EnumerateAppliedEffects
+#   loop runs but produces no contribution under normal play. The
+#   "0.02 * Defence" pattern initially attributed to acc_mod actually
+#   came from defenceModifier (the function's third arg) being -0.02
+#   for hero attackers — a 2% base armor pierce applied by the caller
+#   (CalculateDamage). Boss attackers pass 0. Skill-level ignore-DEF
+#   modifiers push the value more negative (Ninja A3 = -1.0 full ignore).
+#
+# Sim-side defaults:
+#   hero -> boss attacks: defence_modifier = HERO_BASE_ARMOR_PIERCE
+#   boss -> hero attacks: defence_modifier = 0
+HERO_BASE_ARMOR_PIERCE: float = -0.02   # GAME-TRUTH (captured Fixed=-0.02)
 
 def def_mitigation_factor(defence: float,
                           acc_mod: float = 0.0,

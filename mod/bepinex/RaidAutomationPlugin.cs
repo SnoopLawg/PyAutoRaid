@@ -292,10 +292,12 @@ namespace RaidAutomation
                     catch (Exception ex) { lock (_hookPatchLog) { _hookPatchLog.Add(hookSuffix + ":err:" + ex.Message); } }
                 }
 
-                // Hook DamageCalculator.DamageReductionByDefence to capture
-                // (input, target_def, returned_factor) tuples per call. With
-                // many samples we can fit the literal C in damage = raw × C/(C+DEF)
-                // straight from game execution — no decompiler needed.
+                // Hook DamageCalculator.DamageReductionByDefence and
+                // Fixed.op_Subtraction to capture the formula's literal
+                // operands. The first op_Subtraction call inside
+                // DamageReductionByDefence is `Stats.Defence - acc_mod`
+                // — its inputs reveal acc_mod (the buff-loop accumulator)
+                // which a postfix on the function alone can't see.
                 try
                 {
                     var dcType = FindTypeStatic("SharedModel.Battle.Core.DamageCalculator");
@@ -305,18 +307,41 @@ namespace RaidAutomation
                             BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
                         if (redM != null)
                         {
+                            var prefix  = new HarmonyMethod(typeof(RaidAutomationPlugin)
+                                .GetMethod("BattleHook_DefReduction_Prefix", BindingFlags.Static | BindingFlags.Public));
                             var postfix = new HarmonyMethod(typeof(RaidAutomationPlugin)
                                 .GetMethod("BattleHook_DefReduction", BindingFlags.Static | BindingFlags.Public));
-                            if (postfix.method != null)
+                            if (prefix.method != null && postfix.method != null)
                             {
-                                harmony.Patch(redM, postfix: postfix);
+                                harmony.Patch(redM, prefix: prefix, postfix: postfix);
                                 lock (_hookPatchLog) { _hookPatchLog.Add("DefReduction:patched"); }
-                                Logger.LogInfo("Harmony: patched DefReduction");
+                                Logger.LogInfo("Harmony: patched DefReduction (prefix+postfix)");
                             }
                         }
                         else { lock (_hookPatchLog) { _hookPatchLog.Add("DefReduction:no_method"); } }
                     }
                     else { lock (_hookPatchLog) { _hookPatchLog.Add("DefReduction:no_DamageCalculator_type"); } }
+
+                    // Hook Fixed.op_Subtraction. The first call inside
+                    // DamageReductionByDefence is the one we want — its
+                    // second arg is acc_mod. Filtered via _inDefReduction
+                    // flag set by the prefix above.
+                    var fixedType = FindTypeStatic("Plarium.Common.Numerics.Fixed");
+                    if (fixedType != null)
+                    {
+                        var subM = fixedType.GetMethod("op_Subtraction",
+                            BindingFlags.Public | BindingFlags.Static);
+                        if (subM != null)
+                        {
+                            var subPostfix = new HarmonyMethod(typeof(RaidAutomationPlugin)
+                                .GetMethod("BattleHook_FixedSubtraction", BindingFlags.Static | BindingFlags.Public));
+                            if (subPostfix.method != null)
+                            {
+                                harmony.Patch(subM, postfix: subPostfix);
+                                lock (_hookPatchLog) { _hookPatchLog.Add("FixedSub:patched"); }
+                            }
+                        }
+                    }
                 }
                 catch (Exception ex) { lock (_hookPatchLog) { _hookPatchLog.Add("DefReduction:err:" + ex.Message); } }
 
@@ -2005,6 +2030,40 @@ namespace RaidAutomation
         // Counter for diagnostic visibility in /battle-state output.
         private static int _hookDiag_DefReduction = 0;
 
+        // Coordination state for the dual DefReduction + op_Subtraction
+        // hook chain. Plarium's battle code runs on Unity's main thread,
+        // so a static flag suffices (no thread-locals needed). Reset by
+        // the DefReduction prefix and consumed by the postfix.
+        [ThreadStatic] private static bool _inDefReduction;
+        [ThreadStatic] private static int  _defReductionSubCount;
+        [ThreadStatic] private static long _defReductionAccModRaw;
+
+        public static void BattleHook_DefReduction_Prefix()
+        {
+            _inDefReduction = true;
+            _defReductionSubCount = 0;
+            _defReductionAccModRaw = 0;
+        }
+
+        // Postfix on Fixed.op_Subtraction. Called for EVERY subtraction
+        // game-wide; we early-out unless the DefReduction prefix has
+        // armed us. The first sub call inside DamageReductionByDefence
+        // is `Stats.Defence - acc_mod` — capture its second arg.
+        public static void BattleHook_FixedSubtraction(object[] __args)
+        {
+            if (!_inDefReduction) return;
+            _defReductionSubCount++;
+            if (_defReductionSubCount != 1) return;
+            // Args: [0] = Fixed x (Stats.Defence), [1] = Fixed y (acc_mod)
+            try
+            {
+                if (__args == null || __args.Length < 2 || __args[1] == null) return;
+                var rv = Prop(__args[1], "RawValue");
+                if (rv != null) _defReductionAccModRaw = Convert.ToInt64(rv);
+            }
+            catch { }
+        }
+
         // Postfix for DamageCalculator.DamageReductionByDefence
         // (EffectContext, BattleHero, Fixed) -> Fixed.
         // Captures (input_value_raw, target_def_raw, returned_factor_raw)
@@ -2016,7 +2075,8 @@ namespace RaidAutomation
             try
             {
                 if (__args == null || __args.Length < 3) return;
-                long inputRaw  = -1;
+                long inputRaw  = 0;
+                bool inputCaptured = false;
                 long targetDef = -1;
                 long resultRaw = -1;
                 long pAtk = -1, pDef = -1;
@@ -2066,7 +2126,11 @@ namespace RaidAutomation
                     var fixedIn = __args[2];
                     if (fixedIn != null)
                     {
-                        try { var rv = Prop(fixedIn, "RawValue"); if (rv != null) inputRaw = Convert.ToInt64(rv); } catch { }
+                        try
+                        {
+                            var rv = Prop(fixedIn, "RawValue");
+                            if (rv != null) { inputRaw = Convert.ToInt64(rv); inputCaptured = true; }
+                        } catch { }
                     }
                     if (__result != null)
                     {
@@ -2087,13 +2151,23 @@ namespace RaidAutomation
                 if (tLevel   >= 0) sb.Append(",\"t_lvl\":").Append(tLevel);
                 if (pAtk     >= 0) sb.Append(",\"p_atk\":").Append(pAtk);
                 if (pDef     >= 0) sb.Append(",\"p_def\":").Append(pDef);
-                if (inputRaw >= 0) sb.Append(",\"in_raw\":").Append(inputRaw);
+                if (inputCaptured) sb.Append(",\"in_raw\":").Append(inputRaw);
                 if (targetDef>= 0) sb.Append(",\"t_def\":").Append(targetDef);
                 if (resultRaw>= 0) sb.Append(",\"out_raw\":").Append(resultRaw);
+                // acc_mod captured by the FixedSubtraction sub-hook.
+                // Game-truth value of the AppliedEffects-loop accumulator
+                // — closes the residual that empirical fitting otherwise
+                // had to back-derive.
+                sb.Append(",\"acc_mod_raw\":").Append(_defReductionAccModRaw);
+                sb.Append(",\"sub_calls\":").Append(_defReductionSubCount);
                 if (!string.IsNullOrEmpty(pBuffs)   && pBuffs   != "[]") sb.Append(",\"p_buffs\":").Append(pBuffs);
                 if (!string.IsNullOrEmpty(tDebuffs) && tDebuffs != "[]") sb.Append(",\"t_debuffs\":").Append(tDebuffs);
                 sb.Append("}");
                 lock (_tickLog) { _tickLog.Add(sb.ToString()); }
+                // Clear the dual-hook coordination state so the next
+                // call starts fresh (the [ThreadStatic] fields persist
+                // until reset).
+                _inDefReduction = false;
             }
             catch { }
         }
