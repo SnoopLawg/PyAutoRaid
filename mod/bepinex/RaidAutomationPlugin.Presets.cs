@@ -285,8 +285,10 @@ namespace RaidAutomation
                 sb.Append("{\"ok\":true,\"debug\":{");
 
                 // === Strategy A: Clone an existing preset and modify it ===
-                // This is the most reliable approach — Clone() produces a proper IL2CPP object
-                // with all native memory correctly allocated.
+                // Pick the source preset deterministically: prefer one with the
+                // SAME hero count we're creating (so the cloned setup list is
+                // already the right size for in-place mutation) and matching
+                // type. Fall back to "first preset" only when nothing better.
                 object existingPreset = null;
                 try
                 {
@@ -296,11 +298,27 @@ namespace RaidAutomation
                     if (presetList == null) presetList = Prop(heroes, "HeroesAiPresets");
                     if (presetList != null)
                     {
+                        object bestSameCount = null;
+                        object bestSameType = null;
+                        object firstAny = null;
                         foreach (var p in ListItems(presetList))
                         {
-                            existingPreset = p;
-                            break; // Take the first one
+                            if (firstAny == null) firstAny = p;
+                            int pType = 0;
+                            try { pType = Convert.ToInt32(Prop(p, "Type")); } catch { }
+                            var sps = Prop(p, "SkillPrioritiesSetups");
+                            int spsCount = 0;
+                            if (sps != null)
+                            {
+                                var cntP = sps.GetType().GetProperty("Count");
+                                if (cntP != null) spsCount = Convert.ToInt32(cntP.GetValue(sps));
+                            }
+                            if (pType == presetType && spsCount == heroIds.Count && bestSameCount == null)
+                                bestSameCount = p;
+                            if (pType == presetType && bestSameType == null)
+                                bestSameType = p;
                         }
+                        existingPreset = bestSameCount ?? bestSameType ?? firstAny;
                     }
                 }
                 catch { }
@@ -406,27 +424,65 @@ namespace RaidAutomation
                 Type setupListT = setupList.GetType();
                 sb.Append(",\"listType\":\"" + setupListT.FullName + "\"");
 
-                // Clear the cloned list and add fresh entries
-                var clearList = setupListT.GetMethod("Clear");
-                if (clearList != null) clearList.Invoke(setupList, null);
-                var addSetup = setupListT.GetMethod("Add");
+                // === Mutate-in-place strategy ===
+                // Earlier strategy was clear-list + rebuild via the 3-arg
+                // SkillPrioritiesSetup ctor. That triggered server-side
+                // HeroesAiPreset_InvalidPrioritiesTypes (80003) — likely
+                // because the dict we built in managed code didn't marshal
+                // through SaveAiPresetCmd's serializer the way the validator
+                // expects (Il2Cpp's enum value boxing, etc.).
+                //
+                // The clone source's setups are ALREADY validator-acceptable
+                // by definition (the user saved them in-game). We mutate
+                // those setups in place: keep the existing dict objects
+                // and Sequences, just rewrite HeroId and translate skill
+                // IDs to match the new hero. Everything else (priority
+                // VALUES, Sequences count, type tags) stays untouched.
+                var listCount = setupListT.GetProperty("Count");
+                var listItem  = setupListT.GetProperty("Item");
+                int existingCount = listCount != null ? Convert.ToInt32(listCount.GetValue(setupList)) : 0;
+                sb.Append(",\"existingSetups\":" + existingCount);
 
-                // Get the SkillPrioritiesSetup(heroId, dict, presetType) constructor
-                var setupCtor3 = presetTypeEnum != null
-                    ? setupT.GetConstructor(new[] { typeof(int), dictT, presetTypeEnum })
-                    : null;
-                sb.Append(",\"setupCtor3\":" + (setupCtor3 != null ? "true" : "false"));
+                // Get/Add helpers; we may need to grow or shrink the list
+                var addSetupM = setupListT.GetMethod("Add");
+                var removeAtM = setupListT.GetMethod("RemoveAt", new[] { typeof(int) });
+                var dictAdd = dictT.GetMethod("Add");
+                if (dictAdd == null) dictAdd = dictT.GetMethod("Add", new[] { typeof(int), sptEnum });
 
-                // Prepare presetType enum value
-                object presetTypeEnumVal = presetTypeEnum != null
-                    ? Enum.ToObject(presetTypeEnum, presetType)
-                    : null;
+                // If the cloned list has FEWER setups than we need, clone
+                // the last one to fill. If MORE, drop extras from the end.
+                while (existingCount < heroIds.Count)
+                {
+                    if (existingCount == 0)
+                    {
+                        sb.Append(",\"err\":\"clone source has 0 setups, cannot grow\"");
+                        return sb.ToString() + "}";
+                    }
+                    object srcSetup = listItem.GetValue(setupList, new object[] { existingCount - 1 });
+                    var setupCloneM = setupT.GetMethod("Clone", BindingFlags.Public | BindingFlags.Instance);
+                    object newSetup = setupCloneM != null
+                        ? setupCloneM.Invoke(srcSetup, null)
+                        : null;
+                    if (newSetup == null) { sb.Append(",\"err\":\"setup Clone failed\""); break; }
+                    addSetupM.Invoke(setupList, new object[] { newSetup });
+                    existingCount++;
+                }
+                while (existingCount > heroIds.Count)
+                {
+                    if (removeAtM == null) break;
+                    removeAtM.Invoke(setupList, new object[] { existingCount - 1 });
+                    existingCount--;
+                }
 
                 sb.Append("},\"heroes\":[");
                 bool first = true;
 
-                foreach (int heroId in heroIds)
+                for (int idx = 0; idx < heroIds.Count; idx++)
                 {
+                    int heroId = heroIds[idx];
+                    object setup = listItem.GetValue(setupList, new object[] { idx });
+                    if (setup == null) continue;
+
                     // Get hero's skills
                     object hero = null;
                     try {
@@ -435,7 +491,7 @@ namespace RaidAutomation
                             hero = heroDict.GetType().GetProperty("Item")?.GetValue(heroDict, new object[] { heroId });
                     } catch {}
 
-                    var skillIds = new List<int>();
+                    var newSkillIds = new List<int>();
                     if (hero != null)
                     {
                         try {
@@ -443,7 +499,7 @@ namespace RaidAutomation
                             if (skills != null)
                             {
                                 var getCount = skills.GetType().GetProperty("Count");
-                                int cnt = getCount != null ? (int)getCount.GetValue(skills) : 0;
+                                int cnt = getCount != null ? Convert.ToInt32(getCount.GetValue(skills)) : 0;
                                 var getItem = skills.GetType().GetProperty("Item");
                                 for (int si = 0; si < cnt; si++)
                                 {
@@ -451,100 +507,22 @@ namespace RaidAutomation
                                     if (skill != null)
                                     {
                                         var typeId = Prop(skill, "TypeId");
-                                        if (typeId != null) skillIds.Add((int)typeId);
+                                        if (typeId != null) newSkillIds.Add(Convert.ToInt32(typeId));
                                     }
                                 }
                             }
                         } catch {}
                     }
 
-                    // Create skill priority dict: all skills = Default (0)
-                    var priDict = Activator.CreateInstance(dictT);
-                    var dictAdd = dictT.GetMethod("Add");
-                    // Try specific overload first, then fall back to generic Add
-                    if (dictAdd == null)
-                        dictAdd = dictT.GetMethod("Add", new[] { typeof(int), sptEnum });
-
-                    foreach (int sid in skillIds)
-                    {
-                        try { dictAdd.Invoke(priDict, new object[] { sid, Enum.ToObject(sptEnum, 0) }); } catch {}
-                    }
-
-                    object setup = null;
-
-                    // Strategy 1: Use the 3-arg constructor which creates sequences properly
-                    if (setupCtor3 != null)
-                    {
-                        try
-                        {
-                            setup = setupCtor3.Invoke(new object[] { heroId, priDict, presetTypeEnumVal });
-                        }
-                        catch (Exception ctorEx)
-                        {
-                            Logger.LogWarning("PRESET: 3-arg ctor failed for hero " + heroId + ": " + ctorEx.Message);
-                        }
-                    }
-
-                    // Strategy 2: Default ctor + set fields directly
-                    if (setup == null)
-                    {
-                        setup = Activator.CreateInstance(setupT);
-                        SetFieldOrProp(setupT, setup, "HeroId", heroId);
-                        SetFieldOrProp(setupT, setup, "PriorityBySkillId", priDict);
-
-                        // Create sequences manually using HeroAiPresetSequence(dict) ctor
-                        var seqT = FindType("SharedModel.Meta.Heroes.HeroAiPresetSequence");
-                        if (seqT != null)
-                        {
-                            var seqField = setupT.GetField("Sequences",
-                                BindingFlags.Public | BindingFlags.Instance);
-                            Type seqListT = seqField != null ? seqField.FieldType
-                                : (FindType("System.Collections.Generic.List`1") ?? typeof(List<>)).MakeGenericType(seqT);
-                            var seqList = Activator.CreateInstance(seqListT);
-                            var addSeq = seqListT.GetMethod("Add");
-
-                            // HeroAiPresetSequence has a ctor(Dictionary<int,SPT>)
-                            var seqCtor = seqT.GetConstructor(new[] { dictT });
-                            int numSeqs = 3; // Default for GeneralPve
-
-                            for (int r = 0; r < numSeqs; r++)
-                            {
-                                object seq = null;
-                                if (seqCtor != null)
-                                {
-                                    // Clone the dict for each sequence
-                                    var seqDict = Activator.CreateInstance(dictT);
-                                    foreach (int sid in skillIds)
-                                    {
-                                        try { dictAdd.Invoke(seqDict, new object[] { sid, Enum.ToObject(sptEnum, 0) }); } catch {}
-                                    }
-                                    try { seq = seqCtor.Invoke(new object[] { seqDict }); } catch {}
-                                }
-                                if (seq == null)
-                                {
-                                    seq = Activator.CreateInstance(seqT);
-                                    var seqDict = Activator.CreateInstance(dictT);
-                                    foreach (int sid in skillIds)
-                                    {
-                                        try { dictAdd.Invoke(seqDict, new object[] { sid, Enum.ToObject(sptEnum, 0) }); } catch {}
-                                    }
-                                    SetFieldOrProp(seqT, seq, "PriorityBySkillId", seqDict);
-                                }
-                                addSeq.Invoke(seqList, new object[] { seq });
-                            }
-                            SetFieldOrProp(setupT, setup, "Sequences", seqList);
-                        }
-                    }
-
-                    addSetup.Invoke(setupList, new object[] { setup });
+                    // Mutate the cloned setup: set HeroId, translate every
+                    // dict's skill IDs to match the new hero's skills.
+                    SetFieldOrProp(setupT, setup, "HeroId", heroId);
+                    RemapSetupSkillIds(setup, sptEnum, dictT, dictAdd, newSkillIds);
 
                     if (!first) sb.Append(",");
                     first = false;
-                    sb.Append("{\"id\":" + heroId + ",\"skills\":[" + string.Join(",", skillIds) + "]}");
+                    sb.Append("{\"id\":" + heroId + ",\"skills\":[" + string.Join(",", newSkillIds) + "]}");
                 }
-
-                // Set the SkillPrioritiesSetups field on the preset
-                SetFieldOrProp(presetT, preset, "SkillPrioritiesSetups", setupList);
 
                 sb.Append("]");
 
@@ -592,6 +570,328 @@ namespace RaidAutomation
             catch (Exception ex)
             {
                 return "{\"error\":\"" + Esc(ex.Message) + "\",\"stack\":\"" + Esc(ex.StackTrace) + "\"}";
+            }
+        }
+
+        /// <summary>
+        /// Mutate a SkillPrioritiesSetup in place so its skill-id keys
+        /// match the new hero's skill list. Preserves the priority
+        /// VALUES (Default/First/Second/Third) by index — i.e., the
+        /// first skill in the new hero's kit gets whatever priority the
+        /// first skill in the old hero's kit had, etc. This keeps the
+        /// validator-acceptable structure of the source preset while
+        /// retargeting the heroes.
+        /// </summary>
+        private static void RemapSetupSkillIds(object setup, Type sptEnum, Type dictT, MethodInfo dictAdd, List<int> newSkillIds)
+        {
+            // Collect the OLD ordered skill ids from the setup-level
+            // PriorityBySkillId dict (or the first sequence's dict, since
+            // the setup-level dict is empty in valid presets).
+            List<int> oldSkillIds = new List<int>();
+            object templateDict = Prop(setup, "PriorityBySkillId");
+            if (templateDict == null || GetDictCount(templateDict) == 0)
+            {
+                // Fall back to first sequence's dict for ordering
+                var seqs = Prop(setup, "Sequences");
+                if (seqs != null)
+                {
+                    var sCntP = seqs.GetType().GetProperty("Count");
+                    var sItemP = seqs.GetType().GetProperty("Item");
+                    int sCnt = sCntP != null ? Convert.ToInt32(sCntP.GetValue(seqs)) : 0;
+                    if (sCnt > 0 && sItemP != null)
+                    {
+                        var firstSeq = sItemP.GetValue(seqs, new object[] { 0 });
+                        if (firstSeq != null) templateDict = Prop(firstSeq, "PriorityBySkillId");
+                    }
+                }
+            }
+            if (templateDict != null)
+            {
+                CollectIl2CppDictKeys(templateDict, oldSkillIds);
+            }
+
+            // Translate the setup-level dict (usually empty, but mutate
+            // in place anyway in case the source preset stamped values).
+            object setupDict = Prop(setup, "PriorityBySkillId");
+            if (setupDict != null)
+            {
+                RemapDictKeysPreservingValues(setupDict, oldSkillIds, newSkillIds, sptEnum, dictT, dictAdd);
+            }
+
+            // Translate each Sequence's PriorityBySkillId AND StarterSkillIds.
+            var sequences = Prop(setup, "Sequences");
+            if (sequences != null)
+            {
+                var cntP = sequences.GetType().GetProperty("Count");
+                var itemP = sequences.GetType().GetProperty("Item");
+                int cnt = cntP != null ? Convert.ToInt32(cntP.GetValue(sequences)) : 0;
+                for (int i = 0; i < cnt; i++)
+                {
+                    object seq = itemP.GetValue(sequences, new object[] { i });
+                    if (seq == null) continue;
+                    var seqDict = Prop(seq, "PriorityBySkillId");
+                    if (seqDict != null)
+                        RemapDictKeysPreservingValues(seqDict, oldSkillIds, newSkillIds, sptEnum, dictT, dictAdd);
+
+                    // Translate StarterSkillIds list (List<int>).
+                    var starterList = Prop(seq, "StarterSkillIds");
+                    if (starterList != null)
+                    {
+                        var sCntP = starterList.GetType().GetProperty("Count");
+                        var sItemP = starterList.GetType().GetProperty("Item");
+                        int sCnt = sCntP != null ? Convert.ToInt32(sCntP.GetValue(starterList)) : 0;
+                        // Capture old starters → translate to new
+                        var newStarters = new List<int>();
+                        for (int s = 0; s < sCnt; s++)
+                        {
+                            int oldSid = Convert.ToInt32(sItemP.GetValue(starterList, new object[] { s }));
+                            int idx = oldSkillIds.IndexOf(oldSid);
+                            if (idx >= 0 && idx < newSkillIds.Count)
+                                newStarters.Add(newSkillIds[idx]);
+                        }
+                        var clearM = starterList.GetType().GetMethod("Clear");
+                        var addM   = starterList.GetType().GetMethod("Add");
+                        if (clearM != null) clearM.Invoke(starterList, null);
+                        if (addM != null)
+                            foreach (int sid in newStarters)
+                                addM.Invoke(starterList, new object[] { sid });
+                    }
+                }
+            }
+        }
+
+        private static int GetDictCount(object dict)
+        {
+            try
+            {
+                var p = dict.GetType().GetProperty("Count");
+                if (p != null) return Convert.ToInt32(p.GetValue(dict));
+            }
+            catch { }
+            return 0;
+        }
+
+        private static void CollectIl2CppDictKeys(object dict, List<int> outKeys)
+        {
+            var t = dict.GetType();
+            var getEnum = t.GetMethod("GetEnumerator");
+            if (getEnum == null) return;
+            var enumerator = getEnum.Invoke(dict, null);
+            if (enumerator == null) return;
+            var et = enumerator.GetType();
+            var moveNext = et.GetMethod("MoveNext");
+            var current = et.GetProperty("Current");
+            if (moveNext == null || current == null) return;
+            while ((bool)moveNext.Invoke(enumerator, null))
+            {
+                var pair = current.GetValue(enumerator);
+                if (pair == null) continue;
+                var keyP = pair.GetType().GetProperty("Key");
+                if (keyP == null) continue;
+                outKeys.Add(Convert.ToInt32(keyP.GetValue(pair)));
+            }
+        }
+
+        private static void RemapDictKeysPreservingValues(object dict, List<int> oldKeys, List<int> newKeys, Type sptEnum, Type dictT, MethodInfo dictAdd)
+        {
+            // Capture (oldKey, value) pairs ordered by oldKeys so we can
+            // map index-aligned to newKeys.
+            var oldValues = new Dictionary<int, object>();
+            var t = dict.GetType();
+            var getEnum = t.GetMethod("GetEnumerator");
+            if (getEnum != null)
+            {
+                var enumerator = getEnum.Invoke(dict, null);
+                if (enumerator != null)
+                {
+                    var et = enumerator.GetType();
+                    var moveNext = et.GetMethod("MoveNext");
+                    var current = et.GetProperty("Current");
+                    if (moveNext != null && current != null)
+                    {
+                        while ((bool)moveNext.Invoke(enumerator, null))
+                        {
+                            var pair = current.GetValue(enumerator);
+                            if (pair == null) continue;
+                            var keyP = pair.GetType().GetProperty("Key");
+                            var valP = pair.GetType().GetProperty("Value");
+                            if (keyP == null || valP == null) continue;
+                            int k = Convert.ToInt32(keyP.GetValue(pair));
+                            oldValues[k] = valP.GetValue(pair);
+                        }
+                    }
+                }
+            }
+            // Clear and re-populate with new keys, value index-aligned
+            var clearM = dict.GetType().GetMethod("Clear");
+            if (clearM != null) clearM.Invoke(dict, null);
+            for (int i = 0; i < newKeys.Count; i++)
+            {
+                int newKey = newKeys[i];
+                object val = null;
+                if (i < oldKeys.Count && oldValues.TryGetValue(oldKeys[i], out var ov))
+                    val = ov;
+                else
+                    val = Enum.ToObject(sptEnum, 0);  // Default
+                try { dictAdd.Invoke(dict, new object[] { newKey, val }); } catch { }
+            }
+        }
+
+        /// <summary>
+        /// Walk an IL2CPP Dictionary<int, T> via GetEnumerator/MoveNext
+        /// and emit `"key":int_value,...` JSON pairs. Il2Cpp's
+        /// KeyCollection / ValueCollection don't implement managed
+        /// System.Collections.IEnumerable, so the standard `foreach`
+        /// throws an InvalidCastException.
+        /// </summary>
+        private static void DumpIl2CppIntDict(StringBuilder sb, object dict)
+        {
+            var t = dict.GetType();
+            var getEnum = t.GetMethod("GetEnumerator");
+            if (getEnum == null) return;
+            var enumerator = getEnum.Invoke(dict, null);
+            if (enumerator == null) return;
+            var et = enumerator.GetType();
+            var moveNext = et.GetMethod("MoveNext");
+            var current = et.GetProperty("Current");
+            if (moveNext == null || current == null) return;
+            bool first = true;
+            while ((bool)moveNext.Invoke(enumerator, null))
+            {
+                var pair = current.GetValue(enumerator);
+                if (pair == null) continue;
+                var pt = pair.GetType();
+                var keyP = pt.GetProperty("Key");
+                var valP = pt.GetProperty("Value");
+                if (keyP == null || valP == null) continue;
+                int kv = Convert.ToInt32(keyP.GetValue(pair));
+                int vv = Convert.ToInt32(valP.GetValue(pair));
+                if (!first) sb.Append(","); first = false;
+                sb.Append("\"").Append(kv).Append("\":").Append(vv);
+            }
+        }
+
+        /// <summary>
+        /// Deep dump of a preset's priorities — for every setup, every
+        /// sequence, every (skill_id, priority_type) pair. Used to
+        /// discover what the server's SaveAiPresetCmd validator
+        /// accepts. Mirroring this structure in /save-preset prevents
+        /// the HeroesAiPreset_InvalidPrioritiesTypes rejection.
+        /// </summary>
+        private string PresetDeepDump(string idStr)
+        {
+            if (!int.TryParse(idStr ?? "", out int targetId))
+                return "{\"error\":\"bad id\"}";
+            try
+            {
+                var uw = GetUserWrapper();
+                var heroes = Prop(uw, "Heroes");
+                var heroData = Prop(heroes, "HeroData");
+                object presetList = Prop(heroData, "HeroesAiPresets") ?? Prop(heroes, "HeroesAiPresets");
+                if (presetList == null) return "{\"error\":\"no presets\"}";
+                object target = null;
+                foreach (var p in ListItems(presetList))
+                    if (IntProp(p, "Id") == targetId) { target = p; break; }
+                if (target == null) return "{\"error\":\"preset not found\"}";
+
+                var sb = new StringBuilder();
+                sb.Append("{\"id\":").Append(targetId);
+                sb.Append(",\"name\":\"").Append(Esc(StrProp(target, "Name") ?? "")).Append("\"");
+                int typeIv = 0;
+                try { typeIv = Convert.ToInt32(Prop(target, "Type")); } catch { }
+                sb.Append(",\"type\":").Append(typeIv);
+                sb.Append(",\"setups\":[");
+                bool firstSetup = true;
+                var setups = Prop(target, "SkillPrioritiesSetups");
+                if (setups != null)
+                {
+                    foreach (var setup in ListItems(setups))
+                    {
+                        if (!firstSetup) sb.Append(","); firstSetup = false;
+                        int heroId = IntProp(setup, "HeroId");
+                        sb.Append("{\"hero_id\":").Append(heroId);
+                        // StarterSkillId (Nullable<int>)
+                        try
+                        {
+                            var ss = Prop(setup, "StarterSkillId");
+                            if (ss != null)
+                            {
+                                bool hv = false; int v = 0;
+                                try { hv = (bool)ss.GetType().GetProperty("HasValue").GetValue(ss); } catch { }
+                                if (hv)
+                                {
+                                    try { v = (int)ss.GetType().GetProperty("Value").GetValue(ss); } catch { }
+                                    sb.Append(",\"starter\":").Append(v);
+                                }
+                                else { sb.Append(",\"starter\":null"); }
+                            }
+                        }
+                        catch { }
+                        // PriorityBySkillId (IL2CPP Dictionary<int, SkillPriorityType>).
+                        // Il2Cpp KeyCollection doesn't implement managed
+                        // IEnumerable — use the GetEnumerator() / MoveNext pair.
+                        sb.Append(",\"pri\":{");
+                        try
+                        {
+                            var dict = Prop(setup, "PriorityBySkillId");
+                            if (dict != null)
+                            {
+                                DumpIl2CppIntDict(sb, dict);
+                            }
+                        }
+                        catch (Exception ex) { sb.Append("\"_err\":\"").Append(Esc(ex.Message)).Append("\""); }
+                        sb.Append("}");
+                        // Sequences (each round's priorities)
+                        sb.Append(",\"seqs\":[");
+                        try
+                        {
+                            var seqs = Prop(setup, "Sequences");
+                            if (seqs != null)
+                            {
+                                bool firstSeq = true;
+                                foreach (var seq in ListItems(seqs))
+                                {
+                                    if (!firstSeq) sb.Append(","); firstSeq = false;
+                                    sb.Append("{\"starters\":[");
+                                    try
+                                    {
+                                        var ss = Prop(seq, "StarterSkillIds");
+                                        if (ss != null)
+                                        {
+                                            // Iterate via Count + Item[index]
+                                            var cntP = ss.GetType().GetProperty("Count");
+                                            var itemP = ss.GetType().GetProperty("Item");
+                                            int cnt = cntP != null ? Convert.ToInt32(cntP.GetValue(ss)) : 0;
+                                            for (int i = 0; i < cnt; i++)
+                                            {
+                                                if (i > 0) sb.Append(",");
+                                                var sv = itemP.GetValue(ss, new object[] { i });
+                                                sb.Append(Convert.ToInt32(sv));
+                                            }
+                                        }
+                                    }
+                                    catch { }
+                                    sb.Append("],\"pri\":{");
+                                    try
+                                    {
+                                        var sd = Prop(seq, "PriorityBySkillId");
+                                        if (sd != null) DumpIl2CppIntDict(sb, sd);
+                                    }
+                                    catch (Exception ex) { sb.Append("\"_err\":\"").Append(Esc(ex.Message)).Append("\""); }
+                                    sb.Append("}}");
+                                }
+                            }
+                        }
+                        catch (Exception ex) { sb.Append("{\"_err\":\"").Append(Esc(ex.Message)).Append("\"}"); }
+                        sb.Append("]}");
+                    }
+                }
+                sb.Append("]}");
+                return sb.ToString();
+            }
+            catch (Exception ex)
+            {
+                return "{\"error\":\"" + Esc(ex.Message) + "\"}";
             }
         }
 

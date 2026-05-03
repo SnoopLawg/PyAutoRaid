@@ -535,6 +535,7 @@ namespace RaidAutomation
                     "/save-preset" => RunOnMainThread(() => SavePreset(QP(query, "name"), QP(query, "heroes"), QP(query, "type")), 30000),
                     "/update-preset" => RunOnMainThread(() => UpdatePreset(QP(query, "id"), QP(query, "priorities"), QP(query, "starters")), 30000),
                     "/preset-schema" => RunOnMainThread(() => PresetSchema(QP(query, "id")), 15000),
+                    "/preset-deep" => RunOnMainThread(() => PresetDeepDump(QP(query, "id")), 15000),
                     "/set-preset-team" => RunOnMainThread(() => SetPresetTeam(QP(query, "id"), QP(query, "heroes")), 30000),
                     "/skill-texts" => RunOnMainThread(() => GetSkillTexts(QP(query, "hero_id"), QP(query, "min_grade")), 60000),
                     "/mastery-data" => RunOnMainThread(() => GetMasteryData(QP(query, "hero_id"))),
