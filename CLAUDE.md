@@ -340,6 +340,35 @@ Trigger conditions:
 | **Mod hook tick logs** (`def_reduction` events) | ✓ Continue to work; if a value changes, the next capture shows it |
 | **Sim's hardcoded constants in `cb_constants.py`** | ⚠️ Need re-confirmation after each major patch — but the procedure is "run a battle, run `extract_def_factor.py`, compare" |
 
+### Methodology rule of thumb — static first, decompile second
+
+When chasing a "what's the literal value of X" question, the order is:
+
+1. **Check `data/static/effects.json`** for any `MultiplierFormula` /
+   `Amount` / `StackCount` field on the effect ID. Many "magic numbers"
+   that look like they need decompile actually live in plain text:
+   - Weaken = 1.25 (Id 350 `MultiplierFormula`)
+   - HP Burn DoT = 0.03 × TRG_HP (Id 470)
+   - Damage Reduction 15 = 0.85 (Id 510)
+2. **Check `data/static/skills_all.json`** for the relevant skill's
+   Effects[] block. Per-skill behavior (Geomancer Stoneguard's -15%
+   team / -30% self, CB boss's DoT caps in skill 200008/200007,
+   Gathering Fury formula in skill 222904) is spelled out as
+   `MultiplierFormula` strings.
+3. **Check `data/static/gameplay.json`** for global tuning constants
+   (CrushingHitCoef, GlancingHitCoef, ElementDisadvantageCoef, etc.).
+4. **Only after all three** — disassemble. Decompile is for the
+   pure-arithmetic *functions* (DEF mitigation formula, hit-type
+   selector); `static` is the source for *parameters*.
+
+The IL2CPP processors (`ChangeCalculatedDamageProcessor`,
+`ChangeDamageMultiplierProcessor`, `ChangeDefenceModifierProcessor`)
+contain NO hardcoded multipliers — they read each value from the
+status effect's `MultiplierFormula` field at runtime. So whenever
+you see a hand-coded "1.25" / "75000" / "0.30" in `cb_sim.py` or
+`raid_data.py`, the first move is `grep MultiplierFormula
+data/static/skills_all.json` for it.
+
 ### Refresh procedure for a new game version
 
 ```bash

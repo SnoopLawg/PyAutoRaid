@@ -107,10 +107,9 @@ candidate for the same extraction process used on `DamageReductionByDefence`.
 
 ### Next-up extraction targets in priority order
 
-1. **Boss skill cycle priority** — sim cycles aoe1/aoe2/stun by turn-mod; live game uses an AI / skill-priority list. Investigate `BattleAI` or `BossSkillPriority` types in dump.cs.
-2. **CB damage caps in infinite-HP mode** — `FA_CAP_BIG/MEDIUM/SMALL` constants. The 250000 big-AoE cap is now sourced; the 175K medium and 75K-DoT caps need separate provenance (skill 200008 has 75000/15000/50000/250000 — verify which match the medium/DoT slots).
+1. **Boss skill cycle priority** — INVESTIGATED 2026-05-02: real captured boss casts show exactly the same `aoe1 → aoe2 → stun` rotation sim already implements. The game doesn't use a complex utility-AI for CB; the cycle is determined by skill priority + cooldown rules (A3 cd=3, A2 cd=3, A1 cd=0). No extraction needed — sim's `CB_VOID_PATTERN` is game-truth. The full `UtilityAI` / `EnemyTurnActionGenerator.PickSkills` pipeline exists in dump.cs at VAs 0x182DC2820+ / 0x182DC58B0 and matters for non-CB battles (other dungeons / Hydra / DT bosses) where the boss's per-turn decision is non-trivial.
+2. **CB damage caps in infinite-HP mode** — `FA_CAP_*` constants. From skill 200008's MultiplierFormula effects we now have all four cap values: 15000 / 50000 / 75000 / 250000. Sim uses 75000 for SMALL/DoT and 250000 for BIG; the 175K MEDIUM cap doesn't exist in skill 200008 — it might be a different skill or an empirical observation that's actually one of the other values. Re-derive sim's MEDIUM usage from real captured Force-Affinity battles when one's available.
 3. **Per-hero passive scheduler** — DEFERRED. Audit shows only 4 hand-coded mechanics remain: Cardiel revive, Ultimate Deathknight revive, Occult Brawler ignore-DEF, Geomancer Stoneguard team-wide. Each is a unique mechanic; merging them into a generic dispatcher would add abstraction without removing per-hero logic. Per KISS/YAGNI, leave as-is but ensure each value/multiplier is sourced from static data (verified for Stoneguard — its `data/static/effects.json` MultiplierFormula provides the -15% reduction).
-4. **Verify Force-Affinity `MEDIUM` cap (175K)** — not yet found in static; may be empirical or from a skill we haven't inspected.
 
 Each remaining item is bounded; the sim is now within ±2% calibration on Magic UNM with all major formulas sourced from game data.
 
