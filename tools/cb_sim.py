@@ -53,11 +53,13 @@ from cb_constants import (
     GATHERING_FURY_CLIFF_TURN, ENRAGE_TURN,
     def_mitigation_factor, HERO_BASE_ARMOR_PIERCE, WEAKEN_MULT,
     buff_mult,
+    MAX_APPLIED_DEBUFF_EFFECTS,
 )
 
 TM_THRESHOLD = 1000
 MAX_CB_TURNS = 50
-MAX_DEBUFF_SLOTS = 10
+# Game-truth from data/static/gameplay.json (`MaxAppliedDebuffEffects`).
+MAX_DEBUFF_SLOTS = MAX_APPLIED_DEBUFF_EFFECTS
 
 # FA_CAP_*, LEECH_HEAL_RATE — see cb_constants.
 

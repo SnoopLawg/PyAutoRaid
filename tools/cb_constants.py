@@ -581,6 +581,25 @@ BUFF_REGISTRY: dict[str, int] = {
     "strengthen_15":510, "strengthen_25":511,
     # PoisonSensitivity (CALCULATED_DMG * X — trailing factor)
     "poison_sens":  500,
+
+    # ----- DoT base rates (fraction of TRG_HP per tick) -----
+    # These are the PRE-CAP percentages the game applies. CB UNM caps
+    # them per cb_dot_cap() — but for non-CB content (dungeons, hydra),
+    # the percentage is the active formula.
+    "hp_burn":       470,     # 0.03 * TRG_HP
+    "poison_5pct":    80,     # 0.05 * TRG_HP
+    "poison_2_5pct":  81,     # 0.025 * TRG_HP
+
+    # ----- Survival mechanics -----
+    "revive_on_death": 300,   # 0.3 * TRG_HP (revives at 30% MAX HP)
+
+    # ----- Damage-absorb shields -----
+    "hit_counter_shield_80": 450,   # 0.8 * DEALT_DMG (Shemnath-style)
+    "bone_shield_20":        730,   # 0.2 * DEALT_DMG (BoneShield base)
+    "bone_shield_30":        731,   # 0.3 * DEALT_DMG (BoneShield bigger)
+
+    # ----- Detonate-on-end damage -----
+    "time_bomb":     330,     # 5 * ATK (Bomb deals 5x ATK on expire)
 }
 
 
@@ -646,6 +665,55 @@ def buff_mult(name: str, default: float = 0.0) -> float:
 def buff_effect_id(name: str) -> int | None:
     """The static effect Id behind a registry entry."""
     return BUFF_REGISTRY.get(name)
+
+
+# ============================================================================
+# Top-level gameplay tunables — STATIC (data/static/gameplay.json)
+# ============================================================================
+# These are global Plarium constants exposed via StaticGameplayData.
+# Loaded once on import; refresh by re-running tools/refresh_static_data.py.
+
+_GAMEPLAY_CACHE: dict | None = None
+
+
+def _load_gameplay() -> dict:
+    global _GAMEPLAY_CACHE
+    if _GAMEPLAY_CACHE is not None:
+        return _GAMEPLAY_CACHE
+    import json as _json
+    from pathlib import Path as _Path
+    p = _Path(__file__).resolve().parent.parent / "data" / "static" / "gameplay.json"
+    out: dict = {}
+    if p.exists():
+        try:
+            out = _json.loads(p.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+    _GAMEPLAY_CACHE = out
+    return out
+
+
+def gameplay_const(name: str, default: float = 0.0) -> float:
+    """Read a top-level constant from gameplay.json.
+
+    Examples:
+        gameplay_const("CounterattackModifier")    # -0.25
+        gameplay_const("ShieldCapValue")           # 1000000
+        gameplay_const("HpDestructionFromDamagePercent")  # 0.4
+        gameplay_const("CrushingHitCoef")          # 0.3 (also exposed as CRUSHING_HIT_COEF)
+    """
+    val = _load_gameplay().get(name, default)
+    if isinstance(val, (int, float, bool)):
+        return float(val)
+    return default
+
+
+# Common aliases sim references — sourced from gameplay.json.
+COUNTERATTACK_MODIFIER: float = gameplay_const("CounterattackModifier", -0.25)
+SHIELD_CAP_VALUE:       int   = int(gameplay_const("ShieldCapValue",   1_000_000))
+HP_DESTRUCTION_PCT:     float = gameplay_const("HpDestructionFromDamagePercent", 0.4)
+MAX_APPLIED_BUFF_EFFECTS:   int = int(gameplay_const("MaxAppliedBuffEffects",   10))
+MAX_APPLIED_DEBUFF_EFFECTS: int = int(gameplay_const("MaxAppliedDebuffEffects", 10))
 
 
 # ============================================================================
