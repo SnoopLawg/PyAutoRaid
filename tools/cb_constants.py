@@ -519,6 +519,136 @@ WEAKEN_15_MULT: float       = status_effect_multiplier(351, 1.15)  # IncreaseDam
 
 
 # ============================================================================
+# Comprehensive buff/debuff registry — STATIC (data/static/effects.json)
+# ============================================================================
+# Every common CB-relevant buff/debuff is defined here as
+# `name -> effect_id`. The literal multiplier ALWAYS comes from
+# `data/static/effects.json` at lookup time — we never store the
+# numeric value, only the effect Id. This means the registry can't
+# drift from game data: if Plarium retunes a value in a patch,
+# refreshing `effects.json` (run `tools/refresh_static_data.py`)
+# auto-updates every callsite.
+#
+# Naming convention: `<effect>_<percentage>` matches the in-game
+# tooltip number (e.g. `inc_spd_30` = "+30% Speed buff").
+# Pair IDs are sorted by ascending magnitude — _15 / _30 / _50.
+#
+# Important: each effect's MultiplierFormula encodes the value in its
+# own way, so callers must know what they're getting:
+#   - StatusIncreaseSpeed/Defence/etc. -> "0.3*TRG_B_SPD"  ->  0.3
+#     (the additive % of base stat — 0.3 means +30%)
+#   - IncreaseCriticalChance/Damage    -> "0.3"            ->  0.3
+#     (additive percentage points)
+#   - IncreaseDamageTaken (Weaken)     -> "1.25"           ->  1.25
+#     (final multiplier — caller does NOT add 1; multiplies directly)
+#   - ReduceDamageTaken (Strengthen)   -> "0.85"           ->  0.85
+#     (final factor — damage_taken *= 0.85 = -15%)
+#   - ContinuousHeal                   -> "0.075*TRG_HP"   ->  0.075
+#     (fraction of TRG_HP per tick)
+#   - ReflectDamage                    -> "0.15*DEALT_DMG" ->  0.15
+#     (fraction of damage reflected)
+#   - PoisonSensitivity                -> "CALCULATED_DMG*0.25" -> 0.25
+#     (we extract the trailing factor)
+
+# name -> static effect Id
+BUFF_REGISTRY: dict[str, int] = {
+    # Speed (TRG_B_SPD-relative additive)
+    "inc_spd_15":   160, "inc_spd_30":   161,
+    "dec_spd_15":   170, "dec_spd_30":   171,
+    # Attack
+    "inc_atk_25":   120, "inc_atk_50":   121,
+    "dec_atk_25":   130, "dec_atk_50":   131,
+    # Defence
+    "inc_def_30":   140, "inc_def_60":   141,
+    "dec_def_30":   150, "dec_def_60":   151,
+    # Crit Chance (additive percentage points)
+    "inc_cr_15":    240, "inc_cr_30":    241,
+    "dec_cr_15":    250, "dec_cr_30":    251,
+    # Crit Damage
+    "inc_cd_15":    260, "inc_cd_30":    261,
+    # Accuracy / Resistance
+    "inc_acc_25":   220, "inc_acc_50":   221,
+    "dec_acc_25":   230, "dec_acc_50":   231,
+    "inc_res_25":   710, "inc_res_50":   711,
+    "dec_res_25":   720, "dec_res_50":   721,
+    # IncreaseDamageTaken (Weaken family — final mult, e.g. 1.25)
+    "weaken_25":    350, "weaken_15":    351,
+    # ContinuousHeal (fraction of TRG_HP per tick)
+    "cont_heal_75":  90, "cont_heal_15":  91,
+    # ReflectDamage (fraction of DEALT_DMG)
+    "reflect_15":   410, "reflect_30":   411,
+    # ReduceDamageTaken (Strengthen — final factor, e.g. 0.85)
+    "strengthen_15":510, "strengthen_25":511,
+    # PoisonSensitivity (CALCULATED_DMG * X — trailing factor)
+    "poison_sens":  500,
+}
+
+
+def _parse_multiplier_formula(mf: str | None) -> float | None:
+    """Extract the numeric coefficient from a MultiplierFormula.
+    Handles "0.3*TRG_B_SPD" / "0.85" / "CALCULATED_DMG*0.25" /
+    "0.075*TRG_HP". Returns None when the formula is non-numeric.
+    """
+    if mf is None:
+        return None
+    import re
+    s = str(mf).strip()
+    # Leading numeric: "0.3", "0.3*X", "1.25"
+    m = re.match(r'^(-?[\d.]+)', s)
+    if m:
+        try: return float(m.group(1))
+        except ValueError: pass
+    # Trailing numeric: "X*0.25"
+    m = re.search(r'\*(-?[\d.]+)\s*$', s)
+    if m:
+        try: return float(m.group(1))
+        except ValueError: pass
+    return None
+
+
+def buff_mult(name: str, default: float = 0.0) -> float:
+    """Look up a buff/debuff's literal multiplier.
+
+    Reads from `data/static/effects.json` MultiplierFormula via the
+    BUFF_REGISTRY mapping. Returns the parsed numeric value of the
+    formula. Caller is responsible for knowing whether that value is
+    additive (+30% SPD = 0.30 added to base) or a final factor
+    (Weaken = 1.25 multiplied directly).
+
+    Examples:
+        buff_mult("inc_spd_30")    # 0.30  (additive on base SPD)
+        buff_mult("weaken_25")     # 1.25  (final mult on damage taken)
+        buff_mult("cont_heal_75")  # 0.075 (fraction of MAX_HP)
+        buff_mult("strengthen_15") # 0.85  (final factor: damage * 0.85)
+    """
+    eid = BUFF_REGISTRY.get(name)
+    if eid is None:
+        return default
+    val = status_effect_multiplier(eid, default=None)  # type: ignore[arg-type]
+    if val is None or val == 0.0:
+        # status_effect_multiplier may return 0.0 when formula didn't
+        # parse — try our richer parser.
+        import json as _json
+        from pathlib import Path as _Path
+        p = _Path(__file__).resolve().parent.parent / "data" / "static" / "effects.json"
+        if p.exists():
+            data = _json.loads(p.read_text(encoding="utf-8")).get("data", [])
+            for e in data:
+                if e.get("Id") == eid:
+                    parsed = _parse_multiplier_formula(e.get("MultiplierFormula"))
+                    if parsed is not None:
+                        return parsed
+                    break
+        return default
+    return val
+
+
+def buff_effect_id(name: str) -> int | None:
+    """The static effect Id behind a registry entry."""
+    return BUFF_REGISTRY.get(name)
+
+
+# ============================================================================
 # DEF mitigation formula — GAME-TRUTH (extracted from GameAssembly.dll)
 # ============================================================================
 # Reverse-engineered 2026-05-02 by disassembling

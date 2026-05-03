@@ -52,6 +52,7 @@ from cb_constants import (
     GATHERING_FURY_START_TURN, GATHERING_FURY_RATE_PER_TURN,
     GATHERING_FURY_CLIFF_TURN, ENRAGE_TURN,
     def_mitigation_factor, HERO_BASE_ARMOR_PIERCE, WEAKEN_MULT,
+    buff_mult,
 )
 
 TM_THRESHOLD = 1000
@@ -544,12 +545,15 @@ class CBSimulator:
 
         true_speed = total_speed; speed buff/debuff are multiplicative on
         the total (matches cb_scheduler.effective_speed and the live calc).
+        Multipliers come from data/static/effects.json via cb_constants
+        BUFF_REGISTRY (Ids 161/171 = +30%/-30% Speed; Ids 160/170 are
+        the smaller +15%/-15% variants tracked separately if needed).
         """
         buff_mod = 0.0
         if c.has_buff("inc_spd"):
-            buff_mod += 0.30
+            buff_mod += buff_mult("inc_spd_30")
         if c.has_buff("dec_spd"):
-            buff_mod -= 0.30
+            buff_mod -= buff_mult("dec_spd_30")
         return c.speed * (1.0 + buff_mod)
 
     def run(self, max_cb_turns: int = MAX_CB_TURNS) -> dict:
@@ -785,7 +789,9 @@ class CBSimulator:
                 # GameAssembly.dll, 2026-05-02).
                 target_def = c.stats.get(DEF, 1000)
                 if c.has_buff("inc_def"):
-                    target_def *= 1.6  # DEF Up = +60%
+                    # Inc DEF buff: +60% relative to base DEF.
+                    # effects.json Id 141, MultiplierFormula = 0.6*TRG_B_DEF.
+                    target_def *= (1.0 + buff_mult("inc_def_60"))
                 def_reduction = def_mitigation_factor(target_def)
 
                 # Incoming affinity: when boss has affinity advantage
@@ -974,10 +980,15 @@ class CBSimulator:
                         living_allies = sum(1 for a in self.champions
                                             if not a.is_dead)
                         # Base deflect: 15% of per-ally damage, summed
-                        # across allies, × 1 (single boss target).
-                        base_deflect = per_ally_aoe * living_allies * 0.15
-                        # 30% chance bonus per deflect event (one event per
-                        # ally), 75K cap on boss MAX HP percentage.
+                        # across allies. Multiplier from Geomancer Passive
+                        # skill 48805's `-0.15*DMG_MUL` ChangeDamageMultiplier
+                        # effect — the same -15% team-wide reduction
+                        # also produces a reflect proportional to the
+                        # damage avoided.
+                        base_deflect = per_ally_aoe * living_allies * buff_mult("strengthen_15", 0.15)
+                        # Per-ally reflect bonus: skill 48805's
+                        # `'0.03*TRG_HP'` PassiveReflectDamage path,
+                        # capped at 75K (CB DoT cap from skill 200008).
                         bonus_per_event = 0.30 * 75_000
                         bonus_total = living_allies * bonus_per_event
                         c.damage.passive += base_deflect + bonus_total
@@ -1254,13 +1265,15 @@ class CBSimulator:
                         target.current_hp = min(target.max_hp,
                             target.current_hp + target.max_hp * champ.a1_target_heal_pct)
 
-        # Continuous Heal tick (7.5% or 15% variant)
+        # Continuous Heal tick — multipliers from data/static/effects.json:
+        #   Id 91 (ContinuousHeal15 family): 0.15*TRG_HP per tick
+        #   Id 90 (ContinuousHeal075p):      0.075*TRG_HP per tick
         if self.model_survival:
             if champ.has_buff("cont_heal_15"):
-                heal = champ.max_hp * 0.15
+                heal = champ.max_hp * buff_mult("cont_heal_15")
                 champ.current_hp = min(champ.max_hp, champ.current_hp + heal)
             elif champ.has_buff("cont_heal"):
-                heal = champ.max_hp * CONT_HEAL_RATE
+                heal = champ.max_hp * buff_mult("cont_heal_75")
                 champ.current_hp = min(champ.max_hp, champ.current_hp + heal)
 
         # Immortal set: 3% HP per turn
