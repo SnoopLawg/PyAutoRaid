@@ -3409,8 +3409,10 @@ namespace RaidAutomation
         }
 
         /// <summary>
-        /// Invoke a value-type-int method (one int parameter, void return) on
-        /// the IL2CPP context. Returns null on success, error string on failure.
+        /// Invoke a method with int and optional bool args. Uses unmanaged
+        /// HGlobal buffers (the working pattern from Battle.cs's getItem(int)
+        /// invocation) — pinned managed arrays don't survive correctly across
+        /// the IL2CPP runtime_invoke boundary on this binding.
         /// </summary>
         private string InvokeIntArgMethod(IntPtr ctxObj, IntPtr ctxClass,
                                           string methodName, int paramCount, int heroId,
@@ -3421,46 +3423,94 @@ namespace RaidAutomation
                 return "{\"error\":\"" + Esc(methodName) + "(" + paramCount
                     + " params) not found on squad context\"}";
 
-            // Pin args. Each arg = pointer to value buffer.
-            int[] iBuf = new int[] { heroId };
-            byte[] bBuf = new byte[] { (byte)(secondVal ? 1 : 0) };
-            var hI = System.Runtime.InteropServices.GCHandle.Alloc(iBuf,
-                System.Runtime.InteropServices.GCHandleType.Pinned);
-            var hB = secondBoolArg
-                ? System.Runtime.InteropServices.GCHandle.Alloc(bBuf,
-                    System.Runtime.InteropServices.GCHandleType.Pinned)
-                : default;
-            try
+            // Try TWO layouts in sequence:
+            //   POINTER LAYOUT:  argsArr[i] = pointer to value buffer
+            //                    (Battle.cs getItem(int) uses this)
+            //   INLINE LAYOUT:   argsArr[i] = the value, 8 bytes (zero/sign-extended)
+            // Both are documented for different IL2CPP wrappers; we try the
+            // first, and if it throws "no value (HeroType) for given key" with
+            // a likely-pointer key (huge negative or > 1M), fall back to inline.
+            string callOnceWithLayout(bool inlineLayout)
             {
-                IntPtr iAddr = System.Runtime.InteropServices.Marshal.UnsafeAddrOfPinnedArrayElement(iBuf, 0);
-                IntPtr[] argv;
-                if (secondBoolArg)
-                {
-                    IntPtr bAddr = System.Runtime.InteropServices.Marshal.UnsafeAddrOfPinnedArrayElement(bBuf, 0);
-                    argv = new IntPtr[] { iAddr, bAddr };
-                }
-                else
-                {
-                    argv = new IntPtr[] { iAddr };
-                }
-                var hArgs = System.Runtime.InteropServices.GCHandle.Alloc(argv,
-                    System.Runtime.InteropServices.GCHandleType.Pinned);
+                IntPtr intBuf = IntPtr.Zero, boolBuf = IntPtr.Zero, argsArr = IntPtr.Zero;
                 try
                 {
-                    IntPtr argsAddr = System.Runtime.InteropServices.Marshal.UnsafeAddrOfPinnedArrayElement(argv, 0);
+                    if (inlineLayout)
+                    {
+                        argsArr = System.Runtime.InteropServices.Marshal.AllocHGlobal(IntPtr.Size * paramCount);
+                        // Each slot is 8 bytes; write the int value into the
+                        // low 4 bytes (zero-extended), bool into next slot.
+                        System.Runtime.InteropServices.Marshal.WriteInt64(argsArr, (long)heroId);
+                        if (secondBoolArg)
+                            System.Runtime.InteropServices.Marshal.WriteInt64(argsArr, IntPtr.Size, secondVal ? 1L : 0L);
+                    }
+                    else
+                    {
+                        intBuf = System.Runtime.InteropServices.Marshal.AllocHGlobal(4);
+                        boolBuf = secondBoolArg
+                            ? System.Runtime.InteropServices.Marshal.AllocHGlobal(4) : IntPtr.Zero;
+                        argsArr = System.Runtime.InteropServices.Marshal.AllocHGlobal(IntPtr.Size * paramCount);
+                        System.Runtime.InteropServices.Marshal.WriteInt32(intBuf, heroId);
+                        if (secondBoolArg)
+                            System.Runtime.InteropServices.Marshal.WriteInt32(boolBuf, secondVal ? 1 : 0);
+                        System.Runtime.InteropServices.Marshal.WriteIntPtr(argsArr, intBuf);
+                        if (secondBoolArg)
+                            System.Runtime.InteropServices.Marshal.WriteIntPtr(argsArr, IntPtr.Size, boolBuf);
+                    }
+
                     IntPtr exc = IntPtr.Zero;
-                    il2cpp_runtime_invoke(method, ctxObj, argsAddr, ref exc);
+                    il2cpp_runtime_invoke(method, ctxObj, argsArr, ref exc);
                     if (exc != IntPtr.Zero)
-                        return "{\"error\":\"" + Esc(methodName) + " threw\"}";
+                    {
+                        string excMsg = "(no detail)";
+                        try
+                        {
+                            IntPtr excClass = il2cpp_object_get_class(exc);
+                            IntPtr getMsg = FindClassMethodByName(excClass, "get_Message", 0);
+                            if (getMsg != IntPtr.Zero)
+                            {
+                                IntPtr exc2 = IntPtr.Zero;
+                                IntPtr msgPtr = il2cpp_runtime_invoke(getMsg, exc, IntPtr.Zero, ref exc2);
+                                if (msgPtr != IntPtr.Zero)
+                                {
+                                    string mg = Il2CppInterop.Runtime.IL2CPP.Il2CppStringToManaged(msgPtr);
+                                    if (!string.IsNullOrEmpty(mg)) excMsg = mg;
+                                }
+                            }
+                        }
+                        catch { }
+                        return excMsg;
+                    }
+                    return null;
                 }
-                finally { hArgs.Free(); }
+                finally
+                {
+                    if (intBuf != IntPtr.Zero) System.Runtime.InteropServices.Marshal.FreeHGlobal(intBuf);
+                    if (boolBuf != IntPtr.Zero) System.Runtime.InteropServices.Marshal.FreeHGlobal(boolBuf);
+                    if (argsArr != IntPtr.Zero) System.Runtime.InteropServices.Marshal.FreeHGlobal(argsArr);
+                }
             }
-            finally
+
+            // Pointer layout first (matches Battle.cs).
+            string err = callOnceWithLayout(false);
+            if (err == null) return null;
+            // If the failure mentions the magic "no value (HeroType) for given
+            // key" pattern with a value that's clearly a heap pointer (millions
+            // or negative), retry with inline.
+            bool looksLikePointerLeak = err.Contains("no value")
+                && err.Contains("for given key");
+            if (!looksLikePointerLeak)
             {
-                if (hI.IsAllocated) hI.Free();
-                if (secondBoolArg && hB.IsAllocated) hB.Free();
+                Logger.LogWarning("[Squad] " + methodName + " threw: " + err);
+                return "{\"error\":\"" + Esc(methodName) + " threw: " + Esc(err) + "\"}";
             }
-            return null;
+            Logger.LogInfo("[Squad] " + methodName + " pointer-layout failed (" + err
+                + "); retrying inline layout");
+            string err2 = callOnceWithLayout(true);
+            if (err2 == null) return null;
+            Logger.LogWarning("[Squad] " + methodName + " inline layout also failed: " + err2);
+            return "{\"error\":\"" + Esc(methodName) + " threw (both layouts): "
+                + Esc(err) + " | " + Esc(err2) + "\"}";
         }
 
         // =====================================================
@@ -3575,6 +3625,121 @@ namespace RaidAutomation
             }
         }
 
+        /// <summary>
+        /// Find a Hero IL2CPP object by hero instance id, by walking the
+        /// user's Heroes.HeroData.HeroById dictionary. Returns IntPtr.Zero
+        /// if not found. We use raw IL2CPP because managed reflection
+        /// fights us on IL2Cpp generic Dictionary.
+        /// </summary>
+        private IntPtr FindHeroObjectById(int heroId)
+        {
+            try
+            {
+                var uw = GetUserWrapper();
+                if (uw == null) return IntPtr.Zero;
+                var heroes = Prop(uw, "Heroes");
+                var heroData = Prop(heroes, "HeroData");
+                var heroDict = Prop(heroData, "HeroById");
+                if (heroDict == null) return IntPtr.Zero;
+                foreach (var h in DictValues(heroDict))
+                {
+                    if (h == null) continue;
+                    if (IntProp(h, "Id") == heroId)
+                    {
+                        if (h is Il2CppSystem.Object il2obj) return il2obj.Pointer;
+                        return IntPtr.Zero;
+                    }
+                }
+            }
+            catch { }
+            return IntPtr.Zero;
+        }
+
+        /// <summary>
+        /// Invoke AddHero(Hero hero, bool showHeroFuse) on the squad context.
+        /// HeroesSquadContext`1.AddHero(int,bool) does NOT exist — that
+        /// overload is on IterativeHeroSquadContext, a totally different class.
+        /// HeroesSquadContext only has AddHero(Hero,bool) and AddHero(HeroType).
+        /// </summary>
+        private string SquadInvokeAddHero(IntPtr ctxObj, IntPtr ctxClass, int heroId)
+        {
+            IntPtr heroObj = FindHeroObjectById(heroId);
+            if (heroObj == IntPtr.Zero)
+                return "{\"error\":\"hero id " + heroId + " not in user roster\"}";
+
+            // Find AddHero(Hero, bool) — 2 params, first param is reference
+            // type (Hero). We look it up by name + count + parameter-type-name
+            // matching for safety.
+            IntPtr method = IntPtr.Zero;
+            IntPtr scan = ctxClass;
+            while (scan != IntPtr.Zero && method == IntPtr.Zero)
+            {
+                IntPtr mIter = IntPtr.Zero;
+                IntPtr m;
+                while ((m = il2cpp_class_get_methods(scan, ref mIter)) != IntPtr.Zero)
+                {
+                    string mn = Marshal.PtrToStringAnsi(il2cpp_method_get_name(m));
+                    if (mn != "AddHero" || il2cpp_method_get_param_count(m) != 2)
+                        continue;
+                    // First param should be Hero (reference type). Without a
+                    // direct il2cpp_method_get_param_type C# wrapper, we trust
+                    // the count + class lookup since HeroesSquadContext only
+                    // has one 2-param AddHero.
+                    method = m;
+                    break;
+                }
+                scan = il2cpp_class_get_parent(scan);
+            }
+            if (method == IntPtr.Zero)
+                return "{\"error\":\"AddHero(Hero,bool) not found on squad class\"}";
+
+            // Args: [pointer-to-Hero-pointer, pointer-to-bool-buffer]. Reference
+            // type args are POINTERS TO POINTERS in the IL2CPP runtime_invoke
+            // convention; value type args are pointers to value buffers.
+            IntPtr heroPtrSlot = System.Runtime.InteropServices.Marshal.AllocHGlobal(IntPtr.Size);
+            IntPtr boolBuf = System.Runtime.InteropServices.Marshal.AllocHGlobal(4);
+            IntPtr argsArr = System.Runtime.InteropServices.Marshal.AllocHGlobal(IntPtr.Size * 2);
+            try
+            {
+                System.Runtime.InteropServices.Marshal.WriteIntPtr(heroPtrSlot, heroObj);
+                System.Runtime.InteropServices.Marshal.WriteInt32(boolBuf, 0);
+                System.Runtime.InteropServices.Marshal.WriteIntPtr(argsArr, heroObj);  // direct hero pointer
+                System.Runtime.InteropServices.Marshal.WriteIntPtr(argsArr, IntPtr.Size, boolBuf);
+
+                IntPtr exc = IntPtr.Zero;
+                il2cpp_runtime_invoke(method, ctxObj, argsArr, ref exc);
+                if (exc != IntPtr.Zero)
+                {
+                    string excMsg = "(no detail)";
+                    try
+                    {
+                        IntPtr excClass = il2cpp_object_get_class(exc);
+                        IntPtr getMsg = FindClassMethodByName(excClass, "get_Message", 0);
+                        if (getMsg != IntPtr.Zero)
+                        {
+                            IntPtr exc2 = IntPtr.Zero;
+                            IntPtr msgPtr = il2cpp_runtime_invoke(getMsg, exc, IntPtr.Zero, ref exc2);
+                            if (msgPtr != IntPtr.Zero)
+                            {
+                                string mg = Il2CppInterop.Runtime.IL2CPP.Il2CppStringToManaged(msgPtr);
+                                if (!string.IsNullOrEmpty(mg)) excMsg = mg;
+                            }
+                        }
+                    }
+                    catch { }
+                    Logger.LogWarning("[Squad] AddHero(Hero,bool) threw: " + excMsg);
+                    return "{\"error\":\"AddHero threw: " + Esc(excMsg) + "\"}";
+                }
+                return null;
+            }
+            finally
+            {
+                System.Runtime.InteropServices.Marshal.FreeHGlobal(heroPtrSlot);
+                System.Runtime.InteropServices.Marshal.FreeHGlobal(boolBuf);
+                System.Runtime.InteropServices.Marshal.FreeHGlobal(argsArr);
+            }
+        }
+
         private string SquadAdd(string heroIdStr)
         {
             if (!int.TryParse(heroIdStr, out int heroId))
@@ -3582,9 +3747,7 @@ namespace RaidAutomation
             var (ctxObj, ctxClass) = FindActiveSquadContext();
             if (ctxObj == IntPtr.Zero)
                 return "{\"error\":\"no active battle-setup squad\"}";
-            // AddHero(int heroId, bool showHeroFuse=false) — 2 params.
-            var err = InvokeIntArgMethod(ctxObj, ctxClass, "AddHero", 2, heroId,
-                                          secondBoolArg: true, secondVal: false);
+            var err = SquadInvokeAddHero(ctxObj, ctxClass, heroId);
             if (err != null) return err;
             return "{\"ok\":true,\"added\":" + heroId + "}";
         }
@@ -3596,7 +3759,8 @@ namespace RaidAutomation
             var (ctxObj, ctxClass) = FindActiveSquadContext();
             if (ctxObj == IntPtr.Zero)
                 return "{\"error\":\"no active battle-setup squad\"}";
-            // RemoveHero(int heroId) — 1 param.
+            // RemoveHero(int) IS on the generic HeroesSquadContext as a 1-arg
+            // method. Different from AddHero — both squads have RemoveHero(int).
             var err = InvokeIntArgMethod(ctxObj, ctxClass, "RemoveHero", 1, heroId);
             if (err != null) return err;
             return "{\"ok\":true,\"removed\":" + heroId + "}";
@@ -3667,8 +3831,7 @@ namespace RaidAutomation
                 {
                     if (!seen.Add(hid)) continue;
                     if (currentSet.Contains(hid)) continue;
-                    var err = InvokeIntArgMethod(ctxObj, ctxClass, "AddHero", 2, hid,
-                                                  secondBoolArg: true, secondVal: false);
+                    var err = SquadInvokeAddHero(ctxObj, ctxClass, hid);
                     if (err == null) added.Add(hid);
                 }
                 return "{\"ok\":true,\"removed\":" + removed
