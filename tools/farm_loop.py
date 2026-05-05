@@ -181,13 +181,20 @@ def quick_restart() -> dict:
 
 
 def close_finish_dialog() -> dict:
-    """Continue/close the BattleFinish dialog → returns to battle setup."""
+    """Close the BattleFinish dialog → returns to battle setup. Different
+    BattleFinish variants expose different close-methods; try in order."""
     dlgs = list_active_dialogs()
     finish_dialog = next((d for d in dlgs if "BattleFinish" in d), None)
     if not finish_dialog:
         return {"error": "no battle-finish dialog active"}
     path = f"UIManager/Canvas (Ui Root)/Dialogs/{finish_dialog}"
-    return _get(f"/context-call?path={urllib.parse.quote(path)}&method=OnContinue")
+    last = None
+    # Close = generic; OnLobbyPressed for Story; OnContinue for Campaign.
+    for method in ("Close", "OnLobbyPressed", "OnContinue"):
+        last = _get(f"/context-call?path={urllib.parse.quote(path)}&method={method}")
+        if last and not last.get("error"):
+            return last
+    return last or {"error": "no close method matched"}
 
 
 def wait_for_finish(timeout_s: int = 300) -> str:
