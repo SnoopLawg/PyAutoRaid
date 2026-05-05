@@ -45,6 +45,41 @@ namespace RaidAutomation
             var heroes = Prop(uw, "Heroes");
             var equipment = Prop(uw, "Artifacts");
 
+            // Resolve the AcademyGuardiansWrapper.Has(Hero) check once so
+            // each AppendHero call can decide per-hero whether the champ is
+            // currently assigned to a Faction Guardian slot. Heroes assigned
+            // as guardians can NEVER be sacrificed/ranked-up — the cmd will
+            // fail server-side with AcademyGuardians_HeroAlreadyInSlot.
+            object guardiansWrap = null;
+            MethodInfo guardiansHasM = null;
+            try
+            {
+                var academy = Prop(uw, "Academy");
+                if (academy != null)
+                {
+                    guardiansWrap = Prop(academy, "Guardians");
+                    if (guardiansWrap != null)
+                    {
+                        var heroT = FindType("SharedModel.Meta.Heroes.Hero");
+                        if (heroT != null)
+                        {
+                            guardiansHasM = guardiansWrap.GetType().GetMethod("Has",
+                                BindingFlags.Public | BindingFlags.Instance,
+                                null, new[] { heroT }, null);
+                        }
+                    }
+                }
+            }
+            catch { /* leave guardians* null; per-hero check returns false */ }
+
+            // Pre-compute set of hero TypeIds that are ingredients in any
+            // fusion recipe AVAILABLE TO THIS USER (per UserHeroData
+            // FuseInfosByOutputHeroId). Walks SharedModelManager.GameParameters
+            // .FuseSettings.FuseHeroRecipesSettings, filters to recipes whose
+            // OutputHeroId appears in the user's FuseInfosByOutputHeroId map,
+            // then collects each recipe's HeroMaterials[].HeroTypeId.
+            var fusionIngredientTypeIds = TryReadFusionIngredientTypeIds(uw);
+
             var heroData = Prop(heroes, "HeroData");
             var heroDict = Prop(heroData, "HeroById");
 
@@ -68,7 +103,24 @@ namespace RaidAutomation
                 if (written >= limit) break;
                 if (written > 0) sb.Append(",");
                 int mark = sb.Length;
-                try { AppendHero(sb, hero, equipment); }
+                bool isGuardian = false;
+                try
+                {
+                    if (guardiansHasM != null)
+                        isGuardian = (bool)guardiansHasM.Invoke(guardiansWrap, new object[] { hero });
+                }
+                catch { }
+                bool isFusionIngredient = false;
+                try
+                {
+                    if (fusionIngredientTypeIds != null && fusionIngredientTypeIds.Count > 0)
+                    {
+                        int tid = IntProp(hero, "TypeId");
+                        isFusionIngredient = fusionIngredientTypeIds.Contains(tid);
+                    }
+                }
+                catch { }
+                try { AppendHero(sb, hero, equipment, isGuardian, isFusionIngredient); }
                 catch (Exception ex)
                 {
                     sb.Length = mark; // Revert partial output
@@ -81,7 +133,252 @@ namespace RaidAutomation
             return sb.ToString();
         }
 
-        private void AppendHero(StringBuilder sb, object hero, object equipment)
+        /// <summary>
+        /// Walk SharedModelManager.GameParameters.FuseSettings.FuseHeroRecipesSettings,
+        /// filter recipes whose OutputHeroId appears in the user's
+        /// FuseInfosByOutputHeroId (i.e. fusions currently AVAILABLE to this user),
+        /// and return the set of HeroTypeIds that appear as ingredients in those
+        /// recipes. Heroes with these TypeIds should NEVER be sacrificed.
+        /// Empty set on any reflection failure.
+        /// </summary>
+        private HashSet<int> TryReadFusionIngredientTypeIds(object uw)
+        {
+            var typeIds = new HashSet<int>();
+            try
+            {
+                // The game pre-computes a HashSet<int> of fusion-material hero
+                // TypeIds inside HeroFuseWrapper._fuseMaterialHeroes. We just
+                // mirror it. This already filters by availability windows AND
+                // by which fusions the user has access to.
+                var heroes = Prop(uw, "Heroes");
+                var fuseWrap = Prop(heroes, "Fuse");
+                if (fuseWrap == null) { Logger.LogWarning("[Fusion] Heroes.Fuse null"); return typeIds; }
+
+                // Il2CppInterop exposes private IL2CPP fields as properties on
+                // the C# side (same gotcha as the rank-up DTO). Use GetProperty.
+                var matProp = fuseWrap.GetType().GetProperty("_fuseMaterialHeroes",
+                    BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                int matCountObserved = 0;
+                if (matProp != null)
+                {
+                    var matSet = matProp.GetValue(fuseWrap);
+                    if (matSet is IEnumerable matEnum)
+                    {
+                        foreach (var v in matEnum)
+                        {
+                            if (v is int vi) { typeIds.Add(vi); matCountObserved++; }
+                            else if (int.TryParse(v?.ToString() ?? "", out int vp)) { typeIds.Add(vp); matCountObserved++; }
+                        }
+                    }
+                }
+                Logger.LogInfo("[Fusion] _fuseMaterialHeroes count=" + matCountObserved);
+
+                // Walk _availableRecipes — if matCountObserved was 0, this also
+                // gives us materials directly from each recipe's HeroMaterials.
+                var availProp = fuseWrap.GetType().GetProperty("_availableRecipes",
+                    BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                int recipeCount = 0;
+                if (availProp != null)
+                {
+                    var availList = availProp.GetValue(fuseWrap);
+                    if (availList != null)
+                    {
+                        foreach (var recipe in ListItems(availList))
+                        {
+                            if (recipe == null) continue;
+                            recipeCount++;
+                            int outputId = IntProp(recipe, "OutputHeroId");
+                            if (outputId == 0) outputId = IntProp(recipe, "InitialOutputHeroId");
+                            if (outputId > 0) typeIds.Add(outputId);
+                            // Walk this recipe's materials too as a fallback.
+                            var materials = Prop(recipe, "HeroMaterials");
+                            if (materials != null)
+                            {
+                                foreach (var mat in ListItems(materials))
+                                {
+                                    if (mat == null) continue;
+                                    int matTypeId = IntProp(mat, "HeroTypeId");
+                                    if (matTypeId > 0) typeIds.Add(matTypeId);
+                                }
+                            }
+                        }
+                    }
+                }
+                Logger.LogInfo("[Fusion] _availableRecipes count=" + recipeCount);
+
+                // Static fallback: walk every recipe in
+                // SharedModelManager.GameParameters.FuseSettings.FuseHeroRecipesSettings
+                // and add every hero TypeId that's used (active or historical).
+                // The "permissive" approach matches the user's mental model:
+                // "Diabolist is a fusion hero" — Plarium reuses common heroes
+                // across many time-limited fusion events, so even if today's
+                // recipes don't include Diabolist, the next event might.
+                int activeHits = 0, historicalHits = 0;
+                try
+                {
+                    var smm = FindType("SharedModel.SharedModelManager") ?? FindType("SharedModelManager");
+                    var gpAcc = smm?.GetProperty("GameParameters",
+                        BindingFlags.Public | BindingFlags.Static | BindingFlags.NonPublic);
+                    var gp = gpAcc?.GetValue(null);
+                    var fuseSettings = gp != null ? Prop(gp, "FuseSettings") : null;
+                    var settingsList = fuseSettings != null ? Prop(fuseSettings, "FuseHeroRecipesSettings") : null;
+                    if (settingsList != null)
+                    {
+                        var nowUtc = DateTime.UtcNow;
+                        foreach (var rec in ListItems(settingsList))
+                        {
+                            if (rec == null) continue;
+                            historicalHits++;
+                            var fromCdt = Prop(rec, "AvailableFrom");
+                            var toCdt = Prop(rec, "AvailableTo");
+                            if (IsConfigDateInRange(fromCdt, toCdt, nowUtc)) activeHits++;
+                            int outputId = IntProp(rec, "OutputHeroId");
+                            if (outputId > 0) typeIds.Add(outputId);
+                            var materials = Prop(rec, "HeroMaterials");
+                            if (materials == null) continue;
+                            foreach (var mat in ListItems(materials))
+                            {
+                                if (mat == null) continue;
+                                int matTypeId = IntProp(mat, "HeroTypeId");
+                                if (matTypeId > 0) typeIds.Add(matTypeId);
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex2)
+                {
+                    Logger.LogWarning("[Fusion] static walk failed: " + ex2.Message);
+                }
+                Logger.LogInfo("[Fusion] static recipes: " + activeHits + " active / "
+                    + historicalHits + " total, " + typeIds.Count + " unique TypeIds protected");
+                Logger.LogInfo("[Fusion] ingredient TypeIds=" + typeIds.Count);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning("[Fusion] read failed: " + ex.Message);
+            }
+            return typeIds;
+        }
+
+        /// <summary>
+        /// ConfigDateTime range check. Returns true if `now` is within
+        /// [from, to]. Either bound may be null (treat as open-ended).
+        /// </summary>
+        private bool IsConfigDateInRange(object fromCdt, object toCdt, DateTime now)
+        {
+            try
+            {
+                DateTime? from = ConfigDateToDateTime(fromCdt);
+                DateTime? to = ConfigDateToDateTime(toCdt);
+                if (from.HasValue && now < from.Value) return false;
+                if (to.HasValue && now > to.Value) return false;
+                return true;
+            }
+            catch { return false; }
+        }
+
+        private DateTime? ConfigDateToDateTime(object cdt)
+        {
+            if (cdt == null) return null;
+            try
+            {
+                int y = IntProp(cdt, "Year"), mo = IntProp(cdt, "Month"), d = IntProp(cdt, "Day");
+                int h = IntProp(cdt, "Hour"), mi = IntProp(cdt, "Minute"), s = IntProp(cdt, "Second");
+                if (y == 0) return null;
+                return new DateTime(y, mo == 0 ? 1 : mo, d == 0 ? 1 : d,
+                                    h, mi, s, DateTimeKind.Utc);
+            }
+            catch { return null; }
+        }
+
+        /// <summary>
+        /// Walk userdata's Academy Guardians data structure and collect every hero ID
+        /// currently assigned to a guardian slot (across all factions and rarities).
+        /// Returns a HashSet of hero instance IDs. Empty on any failure.
+        /// (No longer wired into /all-heroes — superseded by Guardians.Has(Hero) per-hero.)
+        /// </summary>
+        private HashSet<int> TryReadAcademyGuardianHeroIds(object uw)
+        {
+            var ids = new HashSet<int>();
+            try
+            {
+                // Try several paths to find AcademyGuardians data on the user wrapper.
+                // The IL2Cpp class is UserAcademyGuardiansData with field SlotsByFraction.
+                object academy = null;
+                foreach (var name in new[] { "Academy", "AcademyData", "AcademyGuardians" })
+                {
+                    try { academy = Prop(uw, name); if (academy != null) break; } catch { }
+                }
+                if (academy == null) return ids;
+                // If we got "Academy" wrapper, drill into Guardians/AcademyGuardians.
+                object guardians = academy;
+                foreach (var name in new[] { "AcademyGuardians", "Guardians", "Data" })
+                {
+                    try
+                    {
+                        var sub = Prop(guardians, name);
+                        if (sub != null && sub.GetType().GetProperty("SlotsByFraction") != null)
+                        {
+                            guardians = sub;
+                            break;
+                        }
+                    }
+                    catch { }
+                }
+                var slotsByFraction = Prop(guardians, "SlotsByFraction");
+                if (slotsByFraction == null) return ids;
+
+                // SlotsByFraction is Dictionary<HeroFraction, AcademyGuardiansRaritySlots>.
+                // Iterate Values, then SlotsByRarity Values, then List<AcademyGuardiansSlot>.
+                foreach (var raritySlots in DictValues(slotsByFraction))
+                {
+                    if (raritySlots == null) continue;
+                    var slotsByRarity = Prop(raritySlots, "SlotsByRarity");
+                    if (slotsByRarity == null) continue;
+                    foreach (var slotList in DictValues(slotsByRarity))
+                    {
+                        if (slotList == null) continue;
+                        foreach (var slot in ListItems(slotList))
+                        {
+                            if (slot == null) continue;
+                            // FirstHero / SecondHero are Nullable<int>.
+                            foreach (var name in new[] { "FirstHero", "SecondHero" })
+                            {
+                                try
+                                {
+                                    var v = slot.GetType().GetProperty(name)?.GetValue(slot);
+                                    if (v == null) continue;
+                                    // Nullable wrapper — try Value/HasValue, fallback to direct cast.
+                                    var hasValueProp = v.GetType().GetProperty("HasValue");
+                                    var valueProp = v.GetType().GetProperty("Value");
+                                    if (hasValueProp != null && valueProp != null)
+                                    {
+                                        bool has = (bool)hasValueProp.GetValue(v);
+                                        if (has)
+                                        {
+                                            int hid = (int)valueProp.GetValue(v);
+                                            if (hid > 0) ids.Add(hid);
+                                        }
+                                    }
+                                    else if (v is int i)
+                                    {
+                                        if (i > 0) ids.Add(i);
+                                    }
+                                }
+                                catch { }
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning("[Guardians] read failed: " + ex.Message);
+            }
+            return ids;
+        }
+
+        private void AppendHero(StringBuilder sb, object hero, object equipment, bool isGuardian = false, bool isFusionIngredient = false)
         {
             int id = IntProp(hero, "Id");
             int typeId = IntProp(hero, "TypeId");
@@ -89,15 +386,19 @@ namespace RaidAutomation
             int level = IntProp(hero, "Level");
             int empower = IntProp(hero, "EmpowerLevel");
 
-            bool locked = false, inStorage = false;
+            bool locked = false, inStorage = false, inBathhouse = false;
             try { var p = hero.GetType().GetProperty("Locked"); if (p != null) locked = (bool)p.GetValue(hero); } catch { }
             try { var p = hero.GetType().GetProperty("InStorage"); if (p != null) inStorage = (bool)p.GetValue(hero); } catch { }
+            try { var p = hero.GetType().GetProperty("InBathhouse"); if (p != null) inBathhouse = (bool)p.GetValue(hero); } catch { }
 
             sb.Append("{\"id\":" + id + ",\"type_id\":" + typeId +
                       ",\"grade\":" + grade + ",\"level\":" + level +
                       ",\"empower\":" + empower +
                       ",\"locked\":" + (locked ? "true" : "false") +
-                      ",\"in_storage\":" + (inStorage ? "true" : "false"));
+                      ",\"in_storage\":" + (inStorage ? "true" : "false") +
+                      ",\"in_bathhouse\":" + (inBathhouse ? "true" : "false") +
+                      ",\"is_faction_guardian\":" + (isGuardian ? "true" : "false") +
+                      ",\"is_fusion_ingredient\":" + (isFusionIngredient ? "true" : "false"));
 
             // HeroType — name, fraction, rarity, element, role
             object heroType = null;
@@ -2040,7 +2341,12 @@ namespace RaidAutomation
             var uw = GetUserWrapper();
             if (uw == null) return "{\"error\":\"Not logged in\"}";
 
-            int offset = 0, limit = 200;
+            // Default limit raised from 200 to 50000 so a single call returns the
+            // whole vault. 200 hid 90%+ of the artifacts on real accounts (verified
+            // 2026-05-04: account had 2692 artifacts; default returned only 200,
+            // making top SPD substats look capped at +18 when real max was +24).
+            // Pagination still available via explicit ?offset=N&limit=M.
+            int offset = 0, limit = 50000;
             int.TryParse(offsetStr, out offset);
             if (int.TryParse(limitStr, out int pl) && pl > 0) limit = pl;
 

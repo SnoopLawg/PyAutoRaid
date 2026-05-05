@@ -1,0 +1,17 @@
+{
+  "_notes": [
+    "Heroes that should NEVER be sacrificed as food/skill-up fodder.",
+    "Edit this file to add fusion targets or specific epics to protect.",
+    "exclude_all_legendaries: true means R5 heroes are never food (default).",
+    "exclude_all_epics: false means R4 heroes ARE food unless listed in protected_names.",
+    "protected_names: case-sensitive hero names to always protect.",
+    "fusion_targets: heroes being collected for upcoming fusions.",
+    "exclude_reserve_vault: true means heroes with in_bathhouse=true (game's 'Reserve Vault') are NOT eligible food. Plarium's IL2CPP field is named 'InBathhouse' but the game UI shows it as 'Reserve Vault'."
+  ],
+  "exclude_all_legendaries": true,
+  "exclude_all_epics": true,
+  "exclude_empowered": true,
+  "exclude_reserve_vault": false,
+  "protected_names": ["Coldheart", "Heiress", "Diabolist"],
+  "fusion_targets": ["Lady Mikage"]
+}

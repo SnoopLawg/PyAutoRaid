@@ -3219,7 +3219,428 @@ function CBSpeedSweep() {
 }
 
 
+/* ===================== Champ manager (skill-up + rank-up planner) ===================== */
+
+function PageChampManager() {
+  const [data, setData] = React.useState(null);
+  const [err, setErr] = React.useState(null);
+  const [loading, setLoading] = React.useState(false);
+  const [executing, setExecuting] = React.useState(false);
+  const [maxSkill, setMaxSkill] = React.useState(0);
+  const [maxRank, setMaxRank] = React.useState(0);
+  const [lastResult, setLastResult] = React.useState(null);
+
+  const refresh = React.useCallback(async () => {
+    setLoading(true); setErr(null);
+    try {
+      const r = await fetch('/api/champ-manager');
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      setData(await r.json());
+    } catch (e) {
+      setErr(String(e));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  React.useEffect(() => { refresh(); }, [refresh]);
+
+  const execute = async (phase) => {
+    const verb = phase === 'skill' ? 'skill-ups'
+               : phase === 'rank'  ? 'rank-ups'
+               : 'skill-ups + rank-ups';
+    const cap = phase === 'skill' ? maxSkill
+              : phase === 'rank'  ? maxRank
+              : `${maxSkill || 'all'} + ${maxRank || 'all'}`;
+    if (!window.confirm(`Execute ${verb}? (cap: ${cap}) — DESTRUCTIVE`)) return;
+    setExecuting(true); setErr(null); setLastResult(null);
+    try {
+      const r = await fetch('/api/champ-manager/execute', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          phase,
+          max_skill_ups: maxSkill || 0,
+          max_rank_ups: maxRank || 0,
+        }),
+      });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
+      setLastResult(j);
+      await refresh();
+    } catch (e) {
+      setErr(String(e));
+    } finally {
+      setExecuting(false);
+    }
+  };
+
+  return (
+    <div style={{display:'grid', gridTemplateColumns: '1fr 360px', gap: 10, minHeight: '100%'}}>
+      {/* Left: plans */}
+      <div className="card scroll" style={{padding: 16, overflow:'auto', minHeight: 0}}>
+        <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom: 12}}>
+          <div className="card-title">Champion manager · skill-up + rank-up</div>
+          <button className="btn" onClick={refresh} disabled={loading}>
+            {loading ? 'Loading…' : 'Refresh'}
+          </button>
+        </div>
+        {err && <div style={{color:'var(--red)', fontSize: 12, marginBottom: 10}}>{err}</div>}
+        {!data && !err && <div style={{color:'var(--text-dim)', fontSize: 12}}>Loading…</div>}
+        {data && (
+          <>
+            <div className="mono" style={{fontSize: 11, color:'var(--text-dim)', marginBottom: 14}}>
+              Roster: {data.roster_total} · Reserved: {data.reserved_count} ·
+              Skill plans: {data.skill_plans.length} ({data.skill_consumed_count} dups) ·
+              Rank plans: {data.rank_plans.length} ({data.rank_consumed_count} fodder) ·
+              Bottlenecked: {data.bottlenecked.length}
+            </div>
+
+            <ChampManagerSection title="Skill-up plans" emptyText="No skill-up plans (all skills maxed or no dups).">
+              {data.skill_plans.map((p, i) => (
+                <div key={p.primary.id} style={{padding:'8px 0', borderBottom:'1px solid var(--border)', fontSize: 12}}>
+                  <div style={{display:'flex', justifyContent:'space-between'}}>
+                    <span><strong>[{i+1}]</strong> {p.primary.name} <span className="mono" style={{color:'var(--text-dim)'}}>R{p.primary.rarity}/G{p.primary.grade}/L{p.primary.level} (id {p.primary.id})</span></span>
+                    <span className="mono" style={{color:'var(--accent)'}}>+{p.total_remaining} levels · {p.feeds.length} feed(s)</span>
+                  </div>
+                  <div style={{paddingLeft: 16, marginTop: 4, color:'var(--text-sub)', fontSize: 11}}>
+                    {p.skill_levels.filter(s=>s.remaining > 0).map(s => (
+                      <span key={s.name} className="mono" style={{marginRight: 12}}>{s.name} {s.current}/{s.max}</span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </ChampManagerSection>
+
+            <ChampManagerSection title="Rank-up plans" emptyText="No rank-up plans.">
+              {data.rank_plans.map((p, i) => (
+                <div key={p.target.id} style={{padding:'8px 0', borderBottom:'1px solid var(--border)', fontSize: 12}}>
+                  <div style={{display:'flex', justifyContent:'space-between'}}>
+                    <span><strong>[{i+1}]</strong> {p.target.name} <span className="mono" style={{color:'var(--text-dim)'}}>R{p.target.rarity}/G{p.target.grade}/L{p.target.level} (id {p.target.id})</span></span>
+                    <span className="mono" style={{color:'var(--text-dim)'}}>{p.food.length} food</span>
+                  </div>
+                  <div style={{paddingLeft: 16, marginTop: 4, fontSize: 11, color:'var(--text-sub)'}} className="mono">
+                    {p.food.map(f => `${f.name}(R${f.rarity}/G${f.grade}/L${f.level})`).join(' · ')}
+                  </div>
+                </div>
+              ))}
+            </ChampManagerSection>
+
+            <ChampManagerSection title="Bottlenecked" emptyText="No bottlenecks.">
+              {data.bottlenecked.map(b => (
+                <div key={b.target.id} style={{padding:'6px 0', fontSize: 12}}>
+                  <span>{b.target.name} </span>
+                  <span className="mono" style={{color:'var(--text-dim)'}}>(G{b.target.grade}): need {b.needed}, have {b.available} (short {b.missing})</span>
+                </div>
+              ))}
+            </ChampManagerSection>
+
+            {data.multi_pass && (
+              <ChampManagerSection title={`Multi-pass simulation (${data.multi_pass.passes.length} passes)`}
+                                    emptyText="No iterative plan.">
+                <div style={{fontSize: 11, color:'var(--text-dim)', marginBottom: 6}}>
+                  Iteratively applies rank-ups so newly-promoted heroes can feed bigger targets next pass.
+                </div>
+                {data.multi_pass.passes.map(p => (
+                  <div key={p.pass} style={{padding:'4px 0', fontSize: 11.5}} className="mono">
+                    <span style={{color:'var(--accent)'}}>Pass {p.pass}:</span>
+                    <span style={{marginLeft: 8}}>{p.rank_plans} rank-ups</span>
+                    <span style={{marginLeft: 12, color:'var(--text-sub)'}}>{p.rank_targets.slice(0,5).join(', ')}{p.rank_targets.length > 5 ? `, +${p.rank_targets.length-5}` : ''}</span>
+                  </div>
+                ))}
+                <div style={{marginTop: 6, fontSize: 11, color:'var(--text-sub)'}}>
+                  Cumulative: <span className="mono">{data.multi_pass.total_rank_plans}</span> rank-ups achievable across {data.multi_pass.passes.length} passes.
+                </div>
+                {data.multi_pass.final_bottlenecked.length > 0 && (
+                  <div style={{marginTop: 6, fontSize: 11, color:'var(--text-dim)'}}>
+                    Still bottlenecked after all passes:&nbsp;
+                    <span className="mono">{data.multi_pass.final_bottlenecked.map(b => `${b.name} G${b.grade} (need ${b.needed}, have ${b.available})`).join(' · ')}</span>
+                  </div>
+                )}
+              </ChampManagerSection>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* Right: protected + execute + ascension picker */}
+      <div style={{display:'grid', gridTemplateRows:'auto auto auto auto auto', gap: 10, minHeight: 0}}>
+        <div className="card" style={{padding: 14}}>
+          <div className="card-title" style={{marginBottom: 8}}>Protection rules</div>
+          {data && (
+            <div style={{fontSize: 11.5, color:'var(--text-sub)', lineHeight: 1.7}}>
+              <div>Legendaries: <span className="mono">{data.protected.exclude_all_legendaries ? 'excluded' : 'allowed'}</span></div>
+              <div>Epics: <span className="mono">{data.protected.exclude_all_epics ? 'excluded' : 'allowed'}</span></div>
+              <div>Fusions: <span className="mono">{(data.protected.fusion_targets||[]).join(', ') || '(none)'}</span></div>
+              <div>Named: <span className="mono">{(data.protected.protected_names||[]).join(', ') || '(none)'}</span></div>
+              <div style={{marginTop: 8, fontSize: 10.5, color:'var(--text-dim)'}}>
+                Edit <span className="mono">data/protected_heroes.json</span> to add specific names.
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="card" style={{padding: 14}}>
+          <div className="card-title" style={{marginBottom: 10}}>Caps (0 = no limit)</div>
+          <div style={{display:'flex', gap: 10, fontSize: 11}}>
+            <label style={{flex: 1}}>
+              <div style={{color:'var(--text-dim)', marginBottom: 4}}>Max skill-ups</div>
+              <input type="number" min="0" value={maxSkill}
+                     onChange={e=>setMaxSkill(Math.max(0, parseInt(e.target.value)||0))}
+                     style={{width:'100%', padding: 6, background:'var(--bg-subtle)',
+                             border:'1px solid var(--border)', color:'var(--text)',
+                             fontFamily:'JetBrains Mono, monospace'}}/>
+            </label>
+            <label style={{flex: 1}}>
+              <div style={{color:'var(--text-dim)', marginBottom: 4}}>Max rank-ups</div>
+              <input type="number" min="0" value={maxRank}
+                     onChange={e=>setMaxRank(Math.max(0, parseInt(e.target.value)||0))}
+                     style={{width:'100%', padding: 6, background:'var(--bg-subtle)',
+                             border:'1px solid var(--border)', color:'var(--text)',
+                             fontFamily:'JetBrains Mono, monospace'}}/>
+            </label>
+          </div>
+        </div>
+
+        <div className="card" style={{padding: 14}}>
+          <div className="card-title" style={{marginBottom: 10}}>Execute (DESTRUCTIVE)</div>
+          <div style={{display:'flex', flexDirection:'column', gap: 6}}>
+            <button className="btn" disabled={executing || !data || data.skill_plans.length===0}
+                    onClick={()=>execute('skill')}>
+              {executing ? '…' : 'Run skill-ups only'}
+            </button>
+            <button className="btn" disabled={executing || !data || data.rank_plans.length===0}
+                    onClick={()=>execute('rank')}>
+              {executing ? '…' : 'Run rank-ups only'}
+            </button>
+            <button className="btn primary" disabled={executing || !data ||
+                    (data.skill_plans.length===0 && data.rank_plans.length===0)}
+                    onClick={()=>execute('both')}>
+              {executing ? '…' : 'Run both phases'}
+            </button>
+          </div>
+          <div style={{marginTop: 8, fontSize: 10.5, color:'var(--text-dim)'}}>
+            Calls <span className="mono">/skill-up</span> + <span className="mono">/rank-up</span> on the live mod.
+          </div>
+        </div>
+
+        <div className="card scroll" style={{padding: 14, overflow:'auto', minHeight: 0}}>
+          <div className="card-title" style={{marginBottom: 8}}>Last execution</div>
+          {!lastResult && <div style={{fontSize: 11, color:'var(--text-dim)'}}>(none yet)</div>}
+          {lastResult && (
+            <div style={{fontSize: 11.5}}>
+              <div className="mono" style={{color:'var(--accent)', marginBottom: 6}}>
+                Phase: {lastResult.phase} · skill {lastResult.skill_succeeded}/{lastResult.skill_results.length} · rank {lastResult.rank_succeeded}/{lastResult.rank_results.length}
+              </div>
+              {lastResult.skill_results.map((r, i) => (
+                <div key={'s'+i} style={{color: r.ok ? 'var(--text-sub)' : 'var(--red)'}}>
+                  {r.ok ? '+' : '!'} skill {r.primary.name}{r.error ? ' — ' + r.error : ''}
+                </div>
+              ))}
+              {lastResult.rank_results.map((r, i) => (
+                <div key={'r'+i} style={{color: r.ok ? 'var(--text-sub)' : 'var(--red)'}}>
+                  {r.ok ? '+' : '!'} rank {r.target.name}{r.error ? ' — ' + r.error : ''}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <RankUpChainPlanner/>
+      </div>
+    </div>
+  );
+}
+
+/* ===================== Rank-up chain planner ===================== */
+/* Picks targets, computes recursive rank-up cost (1*->6* via same-grade fodder).
+   NOT 'Ascension' — that's Sacred Ascend, post-6*, separate Raid mechanic. */
+
+function RankUpChainPlanner() {
+  const [heroes, setHeroes] = React.useState([]);
+  const [picked, setPicked] = React.useState([]);    // array of hero ids
+  const [toGrade, setToGrade] = React.useState(6);
+  const [filter, setFilter] = React.useState('');
+  const [plan, setPlan] = React.useState(null);
+  const [planning, setPlanning] = React.useState(false);
+  const [err, setErr] = React.useState(null);
+
+  React.useEffect(() => {
+    fetch('/api/rank-up-targets')
+      .then(r => r.json())
+      .then(j => setHeroes(j.heroes || []))
+      .catch(e => setErr('load: ' + e));
+  }, []);
+
+  const filtered = React.useMemo(() => {
+    const f = filter.trim().toLowerCase();
+    let xs = heroes;
+    if (f) xs = xs.filter(h => (h.name || '').toLowerCase().includes(f));
+    return xs.slice(0, 200);
+  }, [heroes, filter]);
+
+  const togglePick = (id) => {
+    setPicked(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]);
+  };
+
+  const runPlan = async () => {
+    if (picked.length === 0) return;
+    setPlanning(true); setErr(null); setPlan(null);
+    try {
+      const r = await fetch('/api/rank-up-chain', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ target_ids: picked, to_grade: toGrade }),
+      });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error || 'HTTP ' + r.status);
+      setPlan(j);
+    } catch (e) {
+      setErr(String(e));
+    } finally {
+      setPlanning(false);
+    }
+  };
+
+  return (
+    <div className="card" style={{padding: 14, display:'flex', flexDirection:'column', minHeight: 0}}>
+      <div className="card-title" style={{marginBottom: 10}}>Rank-up chain planner</div>
+      <div style={{fontSize: 11, color:'var(--text-dim)', marginBottom: 8}}>
+        Pick heroes to rank-up (1★→6★). Tool computes recursive fodder cost: short G5 → promote from G4 → from G3 → etc.
+      </div>
+
+      <div style={{display:'flex', gap: 8, marginBottom: 8, alignItems:'center'}}>
+        <input placeholder="Filter by name…" value={filter}
+               onChange={e=>setFilter(e.target.value)}
+               style={{flex: 1, padding: 6, background:'var(--bg-subtle)',
+                       border:'1px solid var(--border)', color:'var(--text)',
+                       fontSize: 11, fontFamily:'JetBrains Mono, monospace'}}/>
+        <select value={toGrade} onChange={e=>setToGrade(parseInt(e.target.value))}
+                style={{padding: 6, background:'var(--bg-subtle)',
+                        border:'1px solid var(--border)', color:'var(--text)', fontSize: 11}}>
+          {[2,3,4,5,6].map(g => <option key={g} value={g}>To G{g}</option>)}
+        </select>
+      </div>
+
+      <div className="scroll" style={{flex: 1, minHeight: 100, maxHeight: 220, overflowY: 'auto',
+                                       background:'var(--bg-subtle)', border:'1px solid var(--border)',
+                                       padding: 4, marginBottom: 8}}>
+        {filtered.map(h => {
+          const sel = picked.includes(h.id);
+          return (
+            <div key={h.id} onClick={()=>togglePick(h.id)} style={{
+              padding:'4px 8px', cursor:'pointer', fontSize: 11.5,
+              background: sel ? 'var(--accent-soft)' : 'transparent',
+              color: sel ? 'var(--accent)' : 'var(--text)',
+              display:'flex', justifyContent:'space-between',
+            }}>
+              <span>{sel ? '✓ ' : '  '}{h.name}</span>
+              <span className="mono" style={{color:'var(--text-dim)'}}>
+                R{h.rarity}/G{h.grade}/L{h.level}{h.level_ready ? '' : ' ⚠'}
+              </span>
+            </div>
+          );
+        })}
+        {filtered.length === 0 && <div style={{padding: 8, color:'var(--text-dim)', fontSize: 11}}>No heroes match.</div>}
+      </div>
+
+      <div style={{display:'flex', gap: 6, alignItems:'center', marginBottom: 8}}>
+        <span className="mono" style={{fontSize: 10.5, color:'var(--text-dim)'}}>{picked.length} picked</span>
+        <span style={{flex: 1}}/>
+        <button className="btn" onClick={()=>setPicked([])} disabled={picked.length === 0}>
+          Clear
+        </button>
+        <button className="btn primary" onClick={runPlan}
+                disabled={planning || picked.length === 0}>
+          {planning ? 'Planning…' : 'Compute plan'}
+        </button>
+      </div>
+
+      {err && <div style={{color:'var(--red)', fontSize: 11.5}}>{err}</div>}
+
+      {plan && (
+        <div className="scroll" style={{maxHeight: 320, overflowY: 'auto',
+                                         borderTop:'1px solid var(--border)', paddingTop: 8}}>
+          <div className="mono" style={{fontSize: 11, color:'var(--text-dim)', marginBottom: 8}}>
+            Targets: {plan.plans.length} · Feasible: {plan.feasible_count}/{plan.plans.length} ·
+            Heroes consumed: {plan.total_consumed} · /rank-up calls: {plan.total_calls || 0}
+          </div>
+          {plan.plans.map((p, i) => <RankUpPlanRow key={i} p={p}/>)}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+function RankUpPlanRow({p}) {
+  const [showCalls, setShowCalls] = React.useState(false);
+  const t = p.target;
+  const seq = p.call_sequence || [];
+  return (
+    <div style={{padding:'6px 0', borderBottom:'1px solid var(--border)', fontSize: 11.5}}>
+      <div style={{display:'flex', justifyContent:'space-between'}}>
+        <span><strong>{t.name}</strong> <span className="mono" style={{color:'var(--text-dim)'}}>G{t.grade}/L{t.level} → G{t.to_grade}</span></span>
+        <span className="mono" style={{
+          color: p.feasible ? 'var(--accent)' : 'var(--red)', fontSize: 10.5,
+        }}>
+          {p.already_at_grade ? 'already at grade' :
+           p.feasible ? `OK (${seq.length} calls)` : 'INFEASIBLE'}
+        </span>
+      </div>
+      {p.level_ready === false && (
+        <div style={{paddingLeft: 10, color:'var(--yellow, #cc9933)', fontSize: 10.5}}>
+          ⚠ at L{t.level}; level to L{t.grade*10} before rank-up
+        </div>
+      )}
+      {(p.chain || []).map((c, j) => (
+        <div key={j} className="mono" style={{paddingLeft: 12, fontSize: 10.5,
+                                               color: c.short > 0 ? 'var(--text)' : 'var(--text-sub)'}}>
+          G{c.grade}: need {c.demand}, have {c.available}
+          {c.short > 0 && <span> · short {c.short} → promote {c.short} from G{c.grade-1} ({c.short * c.grade} G{c.grade-1} heroes)</span>}
+        </div>
+      ))}
+      {seq.length > 0 && (
+        <div style={{paddingLeft: 12, marginTop: 4}}>
+          <a href="#" onClick={e => { e.preventDefault(); setShowCalls(!showCalls); }}
+             style={{fontSize: 10.5, color:'var(--accent)', textDecoration:'none'}}>
+            {showCalls ? '▼ hide' : '▶ show'} ordered /rank-up calls ({seq.length})
+          </a>
+          {showCalls && (
+            <div style={{marginTop: 4, fontSize: 10.5}}>
+              {seq.map((c, k) => (
+                <div key={k} className="mono" style={{padding:'2px 0', color:'var(--text-sub)'}}>
+                  <span style={{color:'var(--text-dim)'}}>{(k+1).toString().padStart(2)}.</span>{' '}
+                  <span style={{color: c.hero_id === t.id ? 'var(--accent)' : 'var(--text)'}}>
+                    {c.hero_name}
+                  </span>
+                  <span style={{color:'var(--text-dim)'}}> G{c.from_grade}→G{c.to_grade}</span>
+                  <span style={{color:'var(--text-dim)'}}> ← [{c.food_names.join(', ')}]</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+function ChampManagerSection({title, children, emptyText}) {
+  const empty = !React.Children.count(children);
+  return (
+    <div style={{marginBottom: 16}}>
+      <div style={{fontSize: 10.5, color:'var(--text-sub)', textTransform:'uppercase',
+                   letterSpacing:'0.08em', fontWeight: 600, marginBottom: 6}}>{title}</div>
+      {empty
+        ? <div style={{fontSize: 11.5, color:'var(--text-dim)'}}>{emptyText}</div>
+        : children}
+    </div>
+  );
+}
+
+
 Object.assign(window, {
   PageOverview, PageLive, PageTasks, PageResources, PageCB, PageHeroes, PageEvents, PageHistory, PageMod,
+  PageChampManager, RankUpChainPlanner, RankUpPlanRow,
   ScheduleCard,
 });

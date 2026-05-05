@@ -39,6 +39,15 @@ from tools.sell_rules import (  # noqa: E402
     load_rules as _load_sell,
     save_rules as _save_sell,
 )
+from tools.champ_manager import (  # noqa: E402
+    plan_skill_ups as _cm_plan_skill_ups,
+    plan_rank_ups as _cm_plan_rank_ups,
+    plan_multi_pass as _cm_plan_multi_pass,
+    load_reserved as _cm_load_reserved,
+    load_protected as _cm_load_protected,
+    load_skills_db as _cm_load_skills_db,
+)
+from tools.rank_up_chain import plan_session as _ruc_plan_session  # noqa: E402
 
 # Override to point proxy at a remote mod (e.g. PYAUTORAID_MOD_URL=http://mothership2:6790)
 MOD_URL = os.environ.get("PYAUTORAID_MOD_URL", "http://localhost:6790")
@@ -1897,6 +1906,200 @@ def build_history(cb_damage):
     return entries[-14:]
 
 
+def _hero_summary(h):
+    """Compact dict for dashboard transport — strips fields the UI doesn't need."""
+    return {
+        "id": h.get("id"),
+        "name": h.get("name"),
+        "rarity": h.get("rarity"),
+        "grade": h.get("grade"),
+        "level": h.get("level"),
+    }
+
+
+def build_champ_manager():
+    """Skill-up + rank-up plan, computed from /all-heroes + reserved + protected.
+    Single source of truth: tools/champ_manager.py."""
+    heroes = _fetch_all_heroes() or []
+    reserved = _cm_load_reserved()
+    protected = _cm_load_protected()
+    skills_db = _cm_load_skills_db()
+
+    skill_plans, skill_consumed = _cm_plan_skill_ups(
+        heroes, reserved, protected, skills_db)
+    rank_plans, bottlenecked = _cm_plan_rank_ups(
+        heroes, reserved, protected, pre_consumed=skill_consumed)
+    multi = _cm_plan_multi_pass(heroes, reserved, protected, skills_db)
+
+    return {
+        "roster_total": len(heroes),
+        "reserved_count": len(reserved),
+        "multi_pass": multi,
+        "protected": {
+            "exclude_all_legendaries": protected.get("exclude_all_legendaries", True),
+            "exclude_all_epics": protected.get("exclude_all_epics", False),
+            "fusion_targets": protected.get("fusion_targets", []),
+            "protected_names": protected.get("protected_names", []),
+        },
+        "skill_plans": [
+            {
+                "primary": _hero_summary(p["primary"]),
+                "feeds": [_hero_summary(f) for f in p["feeds"]],
+                "skill_levels": p["skill_levels"],
+                "total_remaining": p["total_remaining"],
+            }
+            for p in skill_plans
+        ],
+        "rank_plans": [
+            {
+                "target": _hero_summary(p["target"]),
+                "food": [_hero_summary(f) for f in p["food"]],
+            }
+            for p in rank_plans
+        ],
+        "bottlenecked": [
+            {
+                "target": _hero_summary(b["target"]),
+                "needed": b["needed"], "available": b["available"],
+                "missing": b["missing"],
+            }
+            for b in bottlenecked
+        ],
+        "skill_consumed_count": len(skill_consumed),
+        "rank_consumed_count": sum(len(p["food"]) for p in rank_plans),
+    }
+
+
+def build_rank_up_chain(body: dict):
+    """Recursive rank-up chain plan for a session of selected target heroes.
+    Body: {"target_ids": [int], "to_grade": int}.
+    Returns the same shape as rank_up_chain.plan_session.
+
+    NOTE: 'rank-up' is the 1*->6* progression. NOT to be confused with
+    'Ascension' (Sacred Ascend) which is a separate post-6* mechanic."""
+    target_ids = body.get("target_ids") or []
+    to_grade = int(body.get("to_grade") or 6)
+    if not isinstance(target_ids, list) or not target_ids:
+        return ({"error": "target_ids: non-empty list required"}, 400)
+    try:
+        target_ids = [int(x) for x in target_ids]
+    except Exception:
+        return ({"error": "target_ids must be integers"}, 400)
+
+    heroes = _fetch_all_heroes() or []
+    by_id = {h.get("id"): h for h in heroes}
+    targets = [by_id[i] for i in target_ids if i in by_id]
+    if not targets:
+        return ({"error": "no matching heroes in roster"}, 400)
+    reserved = _cm_load_reserved()
+    protected = _cm_load_protected()
+
+    result = _ruc_plan_session(heroes, targets, to_grade, reserved, protected)
+    # consumed_ids is a set — convert for JSON.
+    for p in result["plans"]:
+        if isinstance(p.get("consumed_ids"), set):
+            p["consumed_ids"] = sorted(p["consumed_ids"])
+    return result
+
+
+def list_rank_up_targets():
+    """Return heroes that could be rank-up targets (grade < 6, not reserved/locked).
+    Used by the dashboard's target picker."""
+    heroes = _fetch_all_heroes() or []
+    reserved = _cm_load_reserved()
+    out = []
+    for h in heroes:
+        if h.get("locked") or h.get("in_storage"):
+            continue
+        if h.get("id") in reserved:
+            continue
+        if (h.get("grade") or 0) >= 6:
+            continue
+        out.append({
+            "id": h.get("id"), "name": h.get("name"),
+            "rarity": h.get("rarity"), "grade": h.get("grade"),
+            "level": h.get("level"),
+            "level_ready": (h.get("level") or 0) >= (h.get("grade") or 0) * 10,
+        })
+    out.sort(key=lambda h: (-(h.get("rarity") or 0),
+                             -(h.get("grade") or 0),
+                             -(h.get("level") or 0),
+                             h.get("name") or ""))
+    return {"heroes": out}
+
+
+def execute_champ_manager(body: dict):
+    """Run the planned skill-ups + rank-ups against the live mod.
+    Body: {"phase": "skill"|"rank"|"both", "max_skill_ups": N, "max_rank_ups": N}.
+    Returns per-call results so the UI can show what succeeded/failed."""
+    phase = (body or {}).get("phase", "both")
+    if phase not in ("skill", "rank", "both"):
+        return ({"error": "phase must be skill | rank | both"}, 400)
+    max_skill = int((body or {}).get("max_skill_ups") or 0)
+    max_rank = int((body or {}).get("max_rank_ups") or 0)
+
+    heroes = _fetch_all_heroes() or []
+    reserved = _cm_load_reserved()
+    protected = _cm_load_protected()
+    skills_db = _cm_load_skills_db()
+
+    client = mod_client()
+    if not client.available:
+        return ({"error": "mod offline"}, 503)
+
+    skill_plans, skill_consumed = _cm_plan_skill_ups(
+        heroes, reserved, protected, skills_db)
+    rank_plans, _bot = _cm_plan_rank_ups(
+        heroes, reserved, protected, pre_consumed=skill_consumed)
+
+    skill_results = []
+    if phase in ("skill", "both"):
+        n_to_run = max_skill if max_skill > 0 else len(skill_plans)
+        for p in skill_plans[:n_to_run]:
+            pri = p["primary"]
+            food_csv = ",".join(str(f["id"]) for f in p["feeds"])
+            try:
+                r = client._get(f"/skill-up?hero_id={pri['id']}&food={food_csv}") or {}
+            except Exception as ex:
+                skill_results.append({"primary": _hero_summary(pri), "ok": False,
+                                      "error": str(ex)})
+                continue
+            skill_results.append({"primary": _hero_summary(pri),
+                                  "ok": bool(r.get("ok")),
+                                  "error": r.get("error"),
+                                  "fed": len(p["feeds"])})
+
+    rank_results = []
+    if phase in ("rank", "both"):
+        n_to_run = max_rank if max_rank > 0 else len(rank_plans)
+        for p in rank_plans[:n_to_run]:
+            t = p["target"]
+            food_csv = ",".join(str(f["id"]) for f in p["food"])
+            try:
+                r = client._get(f"/rank-up?hero_id={t['id']}&food={food_csv}") or {}
+            except Exception as ex:
+                rank_results.append({"target": _hero_summary(t), "ok": False,
+                                     "error": str(ex)})
+                continue
+            rank_results.append({"target": _hero_summary(t),
+                                 "ok": bool(r.get("ok")),
+                                 "error": r.get("error"),
+                                 "consumed": len(p["food"])})
+
+    # Bust the all-heroes cache so the next /api/champ-manager hit reflects
+    # the post-execution state.
+    _all_heroes_cache["data"] = None
+    _all_heroes_cache["ts"] = 0
+
+    return {
+        "phase": phase,
+        "skill_results": skill_results,
+        "rank_results": rank_results,
+        "skill_succeeded": sum(1 for x in skill_results if x.get("ok")),
+        "rank_succeeded": sum(1 for x in rank_results if x.get("ok")),
+    }
+
+
 def build_state():
     cb = build_cb_last_run()
     cb_damage = ((cb or {}).get("last_run") or {}).get("damage", 0)
@@ -2132,6 +2335,8 @@ GET_ROUTES = {
     "/api/sim-sweep":              _sim_sweep,
     "/api/sell-rules":             lambda q: _sell_rules_summary(q),
     "/api/sell-rules/preview":     lambda q: _eval_sell(_all_artifacts_for_rules(), _load_sell()),
+    "/api/champ-manager":          lambda q: build_champ_manager(),
+    "/api/rank-up-targets":        lambda q: list_rank_up_targets(),
 }
 
 # A couple GET handlers want the raw `parsed.query` string instead of the
@@ -2219,6 +2424,8 @@ POST_ROUTES = {
     "/api/sell-rules":            _post_sell_rules,
     "/api/sell-rules/bulk-sell":  _post_bulk_sell,
     "/api/preset/edit":           _post_preset_edit,
+    "/api/champ-manager/execute": execute_champ_manager,
+    "/api/rank-up-chain":         build_rank_up_chain,
 }
 
 # POST handlers matched by regex — the captured group is appended to the body args.

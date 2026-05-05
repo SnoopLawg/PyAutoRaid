@@ -261,10 +261,11 @@ namespace RaidAutomation
         // Params: name, heroes (comma-sep instance IDs), type (1=PvE)
         //   priorities: heroId:skillId=pri,skillId=pri;heroId:... (optional)
         //   pri: 0=Default, 1=First, 2=Second, 3=Third, 4=NotUsed
-        private string SavePreset(string nameStr, string heroIdsStr, string typeStr)
+        private string SavePreset(string nameStr, string heroIdsStr, string typeStr, string emptyStr = null)
         {
-            if (string.IsNullOrEmpty(heroIdsStr))
-                return "{\"error\":\"heroes required (comma-separated hero IDs)\"}";
+            bool emptyOnly = (emptyStr == "1" || emptyStr == "true");
+            if (!emptyOnly && string.IsNullOrEmpty(heroIdsStr))
+                return "{\"error\":\"heroes required (comma-separated hero IDs), or pass empty=1 for an empty shell\"}";
 
             string presetName = string.IsNullOrEmpty(nameStr) ? "New Team" : nameStr;
             int presetType = 1; // GeneralPve
@@ -272,12 +273,16 @@ namespace RaidAutomation
                 int.TryParse(typeStr, out presetType);
 
             var heroIds = new List<int>();
-            foreach (var s in heroIdsStr.Split(','))
+            if (!string.IsNullOrEmpty(heroIdsStr))
             {
-                if (int.TryParse(s.Trim(), out int hid) && hid > 0)
-                    heroIds.Add(hid);
+                foreach (var s in heroIdsStr.Split(','))
+                {
+                    if (int.TryParse(s.Trim(), out int hid) && hid > 0)
+                        heroIds.Add(hid);
+                }
             }
-            if (heroIds.Count == 0) return "{\"error\":\"no valid hero IDs\"}";
+            if (!emptyOnly && heroIds.Count == 0)
+                return "{\"error\":\"no valid hero IDs\"}";
 
             var presetT = FindType("SharedModel.Meta.Heroes.HeroesAiPreset");
             var setupT = FindType("SharedModel.Meta.Heroes.SkillPrioritiesSetup");
@@ -372,7 +377,11 @@ namespace RaidAutomation
 
                 sb.Append("},\"heroes\":[");
                 bool first = true;
-                foreach (int heroId in heroIds)
+                // When emptyOnly=true, skip adding setups so the saved
+                // preset has SkillPrioritiesSetups=[]. The validator's
+                // per-setup loop is then a no-op.
+                IEnumerable<int> setupHeroes = emptyOnly ? new int[0] : (IEnumerable<int>)heroIds;
+                foreach (int heroId in setupHeroes)
                 {
                     object hero = null;
                     try {
@@ -1311,13 +1320,34 @@ namespace RaidAutomation
         /// pri: 0=Default, 1=First, 2=Second, 3=Third, 4=NotUsed
         /// Example: /update-preset?id=1&priorities=15120:10703=3;18607:65102=2,65103=3;2643:62003=3
         /// </summary>
-        private string UpdatePreset(string idStr, string prioritiesStr, string startersStr = null)
+        private string UpdatePreset(string idStr, string prioritiesStr, string startersStr = null, string nameStr = null)
         {
             if (string.IsNullOrEmpty(idStr))
                 return "{\"error\":\"id required\"}";
             int targetId;
             if (!int.TryParse(idStr, out targetId))
                 return "{\"error\":\"invalid id\"}";
+
+            // Reject names with characters the game's AssertIsValidName rejects.
+            // (Same set client-side validates in tools/preset_manage.py.)
+            if (!string.IsNullOrEmpty(nameStr) &&
+                (nameStr.IndexOf('+') >= 0 || nameStr.IndexOf('&') >= 0 ||
+                 nameStr.IndexOf('<') >= 0 || nameStr.IndexOf('>') >= 0))
+                return "{\"error\":\"name contains rejected characters (+, &, <, >)\"}";
+
+            // Sync length pre-check against live HeroSettings — avoids queueing
+            // a SaveAiPresetCmd that fails AssertIsValidName async (which produces
+            // an in-game popup we can't intercept).
+            if (!string.IsNullOrEmpty(nameStr))
+            {
+                int minV, maxV;
+                if (TryReadPresetNameLimits(out minV, out maxV) &&
+                    (nameStr.Length < minV || nameStr.Length > maxV))
+                {
+                    return "{\"error\":\"name length " + nameStr.Length +
+                           " outside [" + minV + "," + maxV + "]\"}";
+                }
+            }
 
             // starters format: heroId:skillId,skillId,skillId;heroId:skillId;...
             // Each hero's list becomes Sequence[0].StarterSkillIds (Round 1).
@@ -1602,6 +1632,15 @@ namespace RaidAutomation
                 }
 
                 dbg.Append("]");
+
+                // Optional rename: set Name on the original preset before saving.
+                bool nameApplied = false;
+                if (!string.IsNullOrEmpty(nameStr))
+                {
+                    try { SetFieldOrProp(presetT, targetPreset, "Name", nameStr); nameApplied = true; }
+                    catch (Exception ex) { Logger.LogWarning("PRESET set name: " + ex.Message); }
+                }
+
                 // Now save the ORIGINAL (modified) preset via SaveAiPresetCmd
                 var cmdType = FindType("Client.Model.Gameplay.Heroes.Commands.SaveAiPresetCmd");
                 if (cmdType == null) return "{\"error\":\"SaveAiPresetCmd not found\"}";
@@ -1614,6 +1653,7 @@ namespace RaidAutomation
                 sb.Append("]");
                 sb.Append(",\"applied\":" + applied);
                 sb.Append(",\"starters_applied\":" + startersApplied);
+                sb.Append(",\"name_applied\":" + (nameApplied ? "true" : "false"));
                 sb.Append(dbg.ToString());
                 sb.Append("}");
                 return sb.ToString();
@@ -1658,6 +1698,155 @@ namespace RaidAutomation
         }
 
         /// <summary>
+        /// Resolve HeroSettings.HeroesAiPresetNameMin/MaxCharsCount via the same
+        /// reflection chain GetPresetNameLimits() uses (field → property → getter).
+        /// Returns true on success.
+        /// </summary>
+        private bool TryReadPresetNameLimits(out int minV, out int maxV)
+        {
+            minV = -1; maxV = -1;
+            try
+            {
+                var smT = FindType("SharedModel.SharedModelManager");
+                if (smT == null) return false;
+                var allFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static;
+                object gp = null;
+                var gpField = smT.GetField("GameParameters", allFlags);
+                if (gpField != null) gp = gpField.GetValue(null);
+                if (gp == null) { var p = smT.GetProperty("GameParameters", allFlags); if (p != null) gp = p.GetValue(null); }
+                if (gp == null) { var m = smT.GetMethod("get_GameParameters", allFlags); if (m != null) gp = m.Invoke(null, null); }
+                if (gp == null) return false;
+
+                object hs = null;
+                var hsF = gp.GetType().GetField("HeroSettings", BindingFlags.Public | BindingFlags.Instance);
+                if (hsF != null) hs = hsF.GetValue(gp);
+                if (hs == null) { var p = gp.GetType().GetProperty("HeroSettings", BindingFlags.Public | BindingFlags.Instance); if (p != null) hs = p.GetValue(gp); }
+                if (hs == null) return false;
+
+                int Read(string n)
+                {
+                    var f = hs.GetType().GetField(n, BindingFlags.Public | BindingFlags.Instance);
+                    if (f != null) return (int)f.GetValue(hs);
+                    var p = hs.GetType().GetProperty(n, BindingFlags.Public | BindingFlags.Instance);
+                    if (p != null) return (int)p.GetValue(hs);
+                    return -1;
+                }
+                minV = Read("HeroesAiPresetNameMinCharsCount");
+                maxV = Read("HeroesAiPresetNameMaxCharsCount");
+                return minV >= 0 && maxV >= 0;
+            }
+            catch { return false; }
+        }
+
+        /// <summary>
+        /// Read SharedModelManager.GameParameters.HeroSettings.HeroesAiPresetNameMin/MaxCharsCount.
+        /// Surfaces the actual length bounds the game's AssertIsValidName checks against,
+        /// so we can pre-validate before queueing a SaveAiPresetCmd that would popup-error.
+        /// </summary>
+        private string GetPresetNameLimits()
+        {
+            try
+            {
+                var smT = FindType("SharedModel.SharedModelManager");
+                if (smT == null) return "{\"error\":\"SharedModelManager type not found\"}";
+
+                // IL2CPP often wraps static fields as property getters. Try field, then property.
+                object gp = null;
+                var allFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static;
+                var gpField = smT.GetField("GameParameters", allFlags);
+                if (gpField != null) gp = gpField.GetValue(null);
+                if (gp == null)
+                {
+                    var gpProp = smT.GetProperty("GameParameters", allFlags);
+                    if (gpProp != null) gp = gpProp.GetValue(null);
+                }
+                if (gp == null)
+                {
+                    var gpGet = smT.GetMethod("get_GameParameters", allFlags);
+                    if (gpGet != null) gp = gpGet.Invoke(null, null);
+                }
+                if (gp == null)
+                {
+                    // Diagnostic dump of available members so we can see the actual API shape.
+                    var diag = new StringBuilder();
+                    diag.Append("{\"error\":\"GameParameters not accessible\",\"members\":[");
+                    bool first = true;
+                    foreach (var f in smT.GetFields(allFlags))
+                    {
+                        if (!first) diag.Append(",");
+                        first = false;
+                        diag.Append("\"f:" + f.Name + "\"");
+                    }
+                    foreach (var p in smT.GetProperties(allFlags))
+                    {
+                        if (!first) diag.Append(",");
+                        first = false;
+                        diag.Append("\"p:" + p.Name + "\"");
+                    }
+                    foreach (var m in smT.GetMethods(allFlags))
+                    {
+                        if (m.Name.StartsWith("get_"))
+                        {
+                            if (!first) diag.Append(",");
+                            first = false;
+                            diag.Append("\"m:" + m.Name + "\"");
+                        }
+                    }
+                    diag.Append("]}");
+                    return diag.ToString();
+                }
+
+                var hsField = gp.GetType().GetField("HeroSettings", BindingFlags.Public | BindingFlags.Instance);
+                var hs = hsField != null ? hsField.GetValue(gp) : null;
+                if (hs == null)
+                {
+                    var hsProp = gp.GetType().GetProperty("HeroSettings", BindingFlags.Public | BindingFlags.Instance);
+                    if (hsProp != null) hs = hsProp.GetValue(gp);
+                }
+                if (hs == null) return "{\"error\":\"HeroSettings not found on GameParameters\"}";
+                var hsT = hs.GetType();
+                int minV = -1, maxV = -1;
+                var minF = hsT.GetField("HeroesAiPresetNameMinCharsCount", BindingFlags.Public | BindingFlags.Instance);
+                if (minF != null) minV = (int)minF.GetValue(hs);
+                else
+                {
+                    var p = hsT.GetProperty("HeroesAiPresetNameMinCharsCount", BindingFlags.Public | BindingFlags.Instance);
+                    if (p != null) minV = (int)p.GetValue(hs);
+                }
+                var maxF = hsT.GetField("HeroesAiPresetNameMaxCharsCount", BindingFlags.Public | BindingFlags.Instance);
+                if (maxF != null) maxV = (int)maxF.GetValue(hs);
+                else
+                {
+                    var p = hsT.GetProperty("HeroesAiPresetNameMaxCharsCount", BindingFlags.Public | BindingFlags.Instance);
+                    if (p != null) maxV = (int)p.GetValue(hs);
+                }
+                if (minV >= 0 && maxV >= 0)
+                    return "{\"min\":" + minV + ",\"max\":" + maxV + "}";
+
+                // Diagnostic: enumerate HeroSettings members so we can see real API shape.
+                var diag2 = new StringBuilder();
+                diag2.Append("{\"min\":" + minV + ",\"max\":" + maxV + ",\"hs_type\":\"" + Esc(hsT.FullName) + "\",\"members\":[");
+                bool df = true;
+                foreach (var f in hsT.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
+                {
+                    if (!df) diag2.Append(","); df = false;
+                    diag2.Append("\"f:" + f.Name + ":" + f.FieldType.Name + "\"");
+                }
+                foreach (var p in hsT.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
+                {
+                    if (!df) diag2.Append(","); df = false;
+                    diag2.Append("\"p:" + p.Name + ":" + p.PropertyType.Name + "\"");
+                }
+                diag2.Append("]}");
+                return diag2.ToString();
+            }
+            catch (Exception ex)
+            {
+                return "{\"error\":\"" + Esc(ex.Message) + "\"}";
+            }
+        }
+
+        /// <summary>
         /// Get the IL2CPP Dictionary type for the given key/value types.
         /// Tries Il2CppSystem first (proper IL2CPP collections), falls back to System.
         /// </summary>
@@ -1672,6 +1861,1282 @@ namespace RaidAutomation
             // Try System.Collections.Generic.Dictionary`2 (in IL2CPP interop, these may be remapped)
             try { return typeof(Dictionary<,>).MakeGenericType(keyT, valT); } catch {}
             return null;
+        }
+
+        // =====================================================
+        // API: /apply-preset?id=N — activate preset N on the current
+        // hero-selection dialog.
+        //
+        // Replicates the in-game checkbox-click flow: the overlay's
+        // checkbox handler (BattlePresetItemContext.ChangePresetActivity)
+        // ultimately calls back into the parent dialog via
+        // HeroesSelectionDialogContext.SelectPresetsForBattle(int[]),
+        // which writes SelectedPresets[] and calls the dialog's
+        // (overridden) UpdateAiPreset() + UpdateSlots() to auto-populate
+        // the squad. Hitting SelectPresetsForBattle directly skips the
+        // overlay UI but uses the same downstream preset machinery —
+        // so the squad fill goes through the game's preset path, not
+        // a direct HeroesSquadContext.AddHero / SetHero.
+        //
+        // Implementation note: standard managed reflection cannot see
+        // IL2CPP-defined Context properties / methods on proxy types, so
+        // we use raw il2cpp_* APIs (same pattern as SearchContextAndInvoke
+        // in RaidAutomationPlugin.Navigate.cs).
+        // =====================================================
+        private string ApplyPreset(string idStr)
+        {
+            if (string.IsNullOrEmpty(idStr) || !int.TryParse(idStr, out int presetId))
+                return "{\"error\":\"id (int) required\"}";
+
+            try
+            {
+                // 1. Verify the preset id exists & isn't empty (early bail).
+                var uw = GetUserWrapper();
+                if (uw == null) return "{\"error\":\"Not logged in\"}";
+                object presetList = Prop(Prop(Prop(uw, "Heroes"), "HeroData"), "HeroesAiPresets")
+                                    ?? Prop(Prop(uw, "Heroes"), "HeroesAiPresets");
+                bool found = false; bool isEmpty = true; string presetName = "";
+                if (presetList != null)
+                {
+                    foreach (var p in ListItems(presetList))
+                    {
+                        if (IntProp(p, "Id") != presetId) continue;
+                        found = true;
+                        presetName = StrProp(p, "Name");
+                        try { isEmpty = (bool)Prop(p, "IsEmpty"); } catch { }
+                        break;
+                    }
+                }
+                if (!found) return "{\"error\":\"preset id " + presetId + " not found\"}";
+                if (isEmpty) return "{\"error\":\"preset id " + presetId + " is empty (no heroes)\"}";
+
+                // 2. Find the active hero-selection dialog by walking the dialog
+                //    GameObject tree via raw IL2Cpp pointers. We're looking for a
+                //    MonoBehaviour whose get_Context() returns an instance whose
+                //    type-hierarchy includes "HeroesSelectionDialogContext`1".
+                var dialogsRoot = GameObject.Find("UIManager/Canvas (Ui Root)/Dialogs");
+                if (dialogsRoot == null) return "{\"error\":\"no Dialogs root in scene\"}";
+
+                IntPtr ctxObj = IntPtr.Zero;
+                IntPtr ctxClass = IntPtr.Zero;
+                string dialogName = null;
+                string ctxClassName = null;
+                string ctxNs = null;
+
+                for (int di = 0; di < dialogsRoot.transform.childCount && ctxObj == IntPtr.Zero; di++)
+                {
+                    var dialog = dialogsRoot.transform.GetChild(di);
+                    if (!dialog.gameObject.activeSelf) continue;
+                    if (TryFindHeroesSelectionContext(dialog, out ctxObj, out ctxClass, out ctxClassName, out ctxNs))
+                        dialogName = dialog.gameObject.name;
+                }
+
+                if (ctxObj == IntPtr.Zero)
+                    return "{\"error\":\"no active HeroesSelectionDialog (open Battle Setup first)\"}";
+
+                // 3. Locate SelectPresetsForBattle(int[]) on the context class
+                //    (walk the IL2Cpp parent chain — defined on generic base).
+                IntPtr spfbMethod = IntPtr.Zero;
+                IntPtr ck = ctxClass;
+                while (ck != IntPtr.Zero && spfbMethod == IntPtr.Zero)
+                {
+                    IntPtr mIter = IntPtr.Zero;
+                    IntPtr m;
+                    while ((m = il2cpp_class_get_methods(ck, ref mIter)) != IntPtr.Zero)
+                    {
+                        string mn = Marshal.PtrToStringAnsi(il2cpp_method_get_name(m));
+                        if (mn == "SelectPresetsForBattle" && il2cpp_method_get_param_count(m) == 1)
+                        {
+                            spfbMethod = m;
+                            break;
+                        }
+                    }
+                    ck = il2cpp_class_get_parent(ck);
+                    string pn = ck != IntPtr.Zero ? Marshal.PtrToStringAnsi(il2cpp_class_get_name(ck)) : "";
+                    if (pn == "Object" || pn == "Il2CppObjectBase") break;
+                }
+                if (spfbMethod == IntPtr.Zero)
+                    return "{\"error\":\"SelectPresetsForBattle not found on " + Esc(ctxClassName) + "\"}";
+
+                // 4. Allocate Il2Cpp int[1] = { presetId } and invoke.
+                //    Il2CppInterop's Il2CppStructArray<int>(int[]) builds a
+                //    GC-rooted IL2CPP array from a managed source.
+                var presetIdArr = new Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppStructArray<int>(
+                    new int[] { presetId });
+                IntPtr arrPtr = presetIdArr.Pointer;
+
+                // Reference-type arg: il2cpp_runtime_invoke wants params to be
+                // an array of pointers; for object args, each element holds the
+                // object pointer directly.
+                IntPtr[] argv = new IntPtr[] { arrPtr };
+                System.Runtime.InteropServices.GCHandle h =
+                    System.Runtime.InteropServices.GCHandle.Alloc(argv,
+                        System.Runtime.InteropServices.GCHandleType.Pinned);
+                IntPtr exc = IntPtr.Zero;
+                try
+                {
+                    IntPtr argsAddr = System.Runtime.InteropServices.Marshal.UnsafeAddrOfPinnedArrayElement(argv, 0);
+                    il2cpp_runtime_invoke(spfbMethod, ctxObj, argsAddr, ref exc);
+                }
+                finally { h.Free(); }
+
+                if (exc != IntPtr.Zero)
+                    return "{\"error\":\"SelectPresetsForBattle threw\",\"context\":\"" + Esc(ctxClassName) + "\"}";
+
+                return "{\"ok\":true,\"preset_id\":" + presetId +
+                       ",\"preset_name\":\"" + Esc(presetName) + "\"" +
+                       ",\"dialog\":\"" + Esc(dialogName) + "\"" +
+                       ",\"context\":\"" + Esc((ctxNs ?? "") + "." + (ctxClassName ?? "")) + "\"}";
+            }
+            catch (Exception ex)
+            {
+                return "{\"error\":\"" + Esc(ex.Message) + "\"}";
+            }
+        }
+
+        // =====================================================
+        // API: /set-dungeon-difficulty?hard=N — switch the open
+        // DungeonsDialog between Normal (0) and Hard (1).
+        //
+        // Mechanism: locate the difficulty Dropdown UI component
+        // (UnityEngine.UI.Dropdown subclass), call set_value(N) via
+        // raw IL2Cpp. Unity fires onValueChanged, which the dialog's
+        // viewmodel binding routes into OnDifficultyChanged() — same
+        // path as a UI dropdown click.
+        // =====================================================
+        private string SetDungeonDifficulty(string hardStr)
+        {
+            int hard = (hardStr == "1" || hardStr.ToLowerInvariant() == "true") ? 1 : 0;
+            string dropPath = "UIManager/Canvas (Ui Root)/Dialogs/[DV] DungeonsDialog/Workspace/Content/RegionInfoView/DropdownPlace_h/Dropdown";
+            try
+            {
+                var go = GameObject.Find(dropPath);
+                if (go == null) return "{\"error\":\"DungeonsDialog dropdown not found (open Dragon/Spider/etc dungeon first)\"}";
+
+                // Find the UnityEngine.UI.Dropdown component. Il2CppInterop's
+                // managed wrapper Type names don't always carry the IL2Cpp
+                // class name, so match via raw IL2Cpp class name instead.
+                IntPtr dropPtr = IntPtr.Zero;
+                IntPtr dropClass = IntPtr.Zero;
+                foreach (var comp in go.GetComponents<MonoBehaviour>())
+                {
+                    if (comp == null) continue;
+                    IntPtr ptr = comp.Pointer;
+                    if (ptr == IntPtr.Zero) continue;
+                    IntPtr cls = il2cpp_object_get_class(ptr);
+                    // Walk the class chain and check each ancestor for "Dropdown"
+                    IntPtr scan = cls;
+                    bool isDropdown = false;
+                    while (scan != IntPtr.Zero)
+                    {
+                        string sn = Marshal.PtrToStringAnsi(il2cpp_class_get_name(scan));
+                        if (sn != null && sn.Contains("Dropdown")) { isDropdown = true; break; }
+                        if (sn == "Object" || sn == "MonoBehaviour" || sn == "Behaviour") break;
+                        scan = il2cpp_class_get_parent(scan);
+                    }
+                    if (isDropdown)
+                    {
+                        dropPtr = ptr;
+                        dropClass = cls;
+                        break;
+                    }
+                }
+                if (dropPtr == IntPtr.Zero) return "{\"error\":\"no Dropdown component on " + Esc(dropPath) + "\"}";
+
+                // Walk the class chain looking for set_value(int).
+                IntPtr setValueMethod = IntPtr.Zero;
+                IntPtr klass = dropClass;
+                while (klass != IntPtr.Zero && setValueMethod == IntPtr.Zero)
+                {
+                    IntPtr mIter = IntPtr.Zero;
+                    IntPtr m;
+                    while ((m = il2cpp_class_get_methods(klass, ref mIter)) != IntPtr.Zero)
+                    {
+                        string mn = Marshal.PtrToStringAnsi(il2cpp_method_get_name(m));
+                        if (mn == "set_value" && il2cpp_method_get_param_count(m) == 1)
+                        {
+                            setValueMethod = m;
+                            break;
+                        }
+                    }
+                    klass = il2cpp_class_get_parent(klass);
+                }
+                if (setValueMethod == IntPtr.Zero) return "{\"error\":\"set_value not found on Dropdown class chain\"}";
+
+                // Value-type arg: each argv element points to the value buffer.
+                int v = hard;
+                System.Runtime.InteropServices.GCHandle h =
+                    System.Runtime.InteropServices.GCHandle.Alloc(new int[] { v },
+                        System.Runtime.InteropServices.GCHandleType.Pinned);
+                IntPtr exc = IntPtr.Zero;
+                try
+                {
+                    IntPtr valAddr = System.Runtime.InteropServices.Marshal.UnsafeAddrOfPinnedArrayElement((int[])h.Target, 0);
+                    IntPtr[] argv = new IntPtr[] { valAddr };
+                    System.Runtime.InteropServices.GCHandle h2 =
+                        System.Runtime.InteropServices.GCHandle.Alloc(argv,
+                            System.Runtime.InteropServices.GCHandleType.Pinned);
+                    try
+                    {
+                        IntPtr argsAddr = System.Runtime.InteropServices.Marshal.UnsafeAddrOfPinnedArrayElement(argv, 0);
+                        il2cpp_runtime_invoke(setValueMethod, dropPtr, argsAddr, ref exc);
+                    }
+                    finally { h2.Free(); }
+                }
+                finally { h.Free(); }
+
+                if (exc != IntPtr.Zero)
+                    return "{\"error\":\"set_value threw\"}";
+
+                return "{\"ok\":true,\"hard\":" + (hard == 1 ? "true" : "false") + "}";
+            }
+            catch (Exception ex)
+            {
+                return "{\"error\":\"" + Esc(ex.Message) + "\"}";
+            }
+        }
+
+        // =====================================================
+        // API: /rank-up?hero_id=X&food=A,B,C[,...] — rank up a champion
+        // by sacrificing food champions.
+        //
+        // Mechanic: MultiRankUpHeroesCmd (NOT the single RankUpHeroCmd —
+        // that one is a UserPreEditCmdNoOut, a deprecated client-side
+        // pre-edit validator that returns ok but never reaches the
+        // server. Same pattern as SellArtifactsCmd vs
+        // SellArtifactsWithEquippedCmd — see memory).
+        //
+        // MultiRankUpHeroesCmd : UserPostEditCmdNoOut<MultiRankUpHeroRequestDto>
+        //   RankUpItems: List<RankUpHeroRequestDto> (at least 1 item)
+        //   DeactivateMaterialsHeroArtifacts: bool (strip gear off fodder)
+        //   VaultFilterUsed: Nullable<bool>
+        // RankUpHeroRequestDto:
+        //   HeroId             target
+        //   MaterialHeroIds[]  food hero instance ids
+        //   BmiTypeIds[]       black-market substitutes (chickens etc.)
+        // =====================================================
+        private string RankUpHero(string heroIdStr, string foodCsv)
+        {
+            if (string.IsNullOrEmpty(heroIdStr) || !int.TryParse(heroIdStr, out int heroId))
+                return "{\"error\":\"hero_id (int) required\"}";
+            if (string.IsNullOrEmpty(foodCsv))
+                return "{\"error\":\"food (comma-separated hero ids) required\"}";
+
+            var foodIds = new List<int>();
+            foreach (var part in foodCsv.Split(','))
+            {
+                var p = part.Trim();
+                if (string.IsNullOrEmpty(p)) continue;
+                if (!int.TryParse(p, out int fid))
+                    return "{\"error\":\"food list must be int csv, got: " + Esc(p) + "\"}";
+                foodIds.Add(fid);
+            }
+            if (foodIds.Count == 0)
+                return "{\"error\":\"at least 1 food hero required\"}";
+
+            var itemDtoType = FindType("SharedModel.Meta.Heroes.Dtos.RankUpHeroRequestDto");
+            var multiDtoType = FindType("SharedModel.Meta.Heroes.Dtos.MultiRankUpHeroRequestDto");
+            var cmdType = FindType("Client.Model.Gameplay.Heroes.Commands.MultiRankUpHeroesCmd");
+            if (itemDtoType == null) return "{\"error\":\"RankUpHeroRequestDto type not found\"}";
+            if (multiDtoType == null) return "{\"error\":\"MultiRankUpHeroRequestDto type not found\"}";
+            if (cmdType == null) return "{\"error\":\"MultiRankUpHeroesCmd type not found\"}";
+
+            try
+            {
+                // NOTE: IL2Cpp interop exposes public fields as PROPERTIES on the
+                // C# side (the interop layer wraps them so memory access goes
+                // through the proper IL2Cpp marshaller). GetField() succeeds via
+                // reflection but SetValue silently no-ops on IL2Cpp objects —
+                // verified empirically (multiDto.RankUpItems stayed NULL after
+                // SetValue). Use GetProperty + SetValue instead, same pattern as
+                // SellArtifactsWithEquippedCmd in Mutations.cs.
+
+                // 1) Build the per-item RankUpHeroRequestDto
+                var itemDto = Activator.CreateInstance(itemDtoType);
+                var heroIdP = itemDtoType.GetProperty("HeroId");
+                if (heroIdP != null) heroIdP.SetValue(itemDto, heroId);
+
+                var matP = itemDtoType.GetProperty("MaterialHeroIds");
+                if (matP != null)
+                {
+                    var arr = new Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppStructArray<int>(foodIds.ToArray());
+                    matP.SetValue(itemDto, arr);
+                }
+
+                var bmiP = itemDtoType.GetProperty("BmiTypeIds");
+                if (bmiP != null)
+                {
+                    var arrType = bmiP.PropertyType;
+                    var emptyArr = Activator.CreateInstance(arrType, new object[] { 0 });
+                    bmiP.SetValue(itemDto, emptyArr);
+                }
+
+                // 2) Build the MultiRankUpHeroRequestDto wrapping a List of one
+                var multiDto = Activator.CreateInstance(multiDtoType);
+                var itemsP = multiDtoType.GetProperty("RankUpItems");
+                if (itemsP == null)
+                    return "{\"error\":\"RankUpItems property not found on MultiRankUpHeroRequestDto\"}";
+                {
+                    var listType = itemsP.PropertyType;
+                    var list = Activator.CreateInstance(listType);
+                    MethodInfo addM = null;
+                    foreach (var m in listType.GetMethods(BindingFlags.Public | BindingFlags.Instance))
+                    {
+                        if (m.Name == "Add" && m.GetParameters().Length == 1) { addM = m; break; }
+                    }
+                    if (addM == null) return "{\"error\":\"List.Add not found on RankUpItems type\"}";
+                    addM.Invoke(list, new object[] { itemDto });
+                    itemsP.SetValue(multiDto, list);
+                }
+                var deactP = multiDtoType.GetProperty("DeactivateMaterialsHeroArtifacts");
+                if (deactP != null) deactP.SetValue(multiDto, true);  // strip gear off fodder before sacrifice
+
+                // VaultFilterUsed is Nullable<bool>; leaving null is fine
+
+                // 3) Construct + execute MultiRankUpHeroesCmd
+                var ctor = cmdType.GetConstructor(new[] { multiDtoType });
+                if (ctor == null) return "{\"error\":\"MultiRankUpHeroesCmd(MultiRankUpHeroRequestDto) ctor not found\"}";
+                var cmd = ctor.Invoke(new object[] { multiDto });
+
+                // Hook IfError(Action) — fires if server rejects the cmd post-queue.
+                // Uses Action overload (slot 9 on INotifyingCmd interface).
+                try
+                {
+                    var ifErrorM = cmd.GetType().GetMethod("IfError",
+                        BindingFlags.Instance | BindingFlags.Public | BindingFlags.FlattenHierarchy,
+                        null, new[] { typeof(Action) }, null);
+                    if (ifErrorM != null)
+                    {
+                        Action errCb = () => Logger.LogWarning(
+                            "[RankUp] SERVER REJECTED hero=" + heroId
+                            + " food=[" + string.Join(",", foodIds) + "]");
+                        ifErrorM.Invoke(cmd, new object[] { errCb });
+                    }
+                }
+                catch { /* non-fatal; cmd still executes */ }
+
+                Logger.LogInfo("[RankUp] enqueue hero=" + heroId
+                    + " food=[" + string.Join(",", foodIds) + "]");
+                try
+                {
+                    InvokeExecute(cmd);
+                }
+                catch (Exception eExec)
+                {
+                    Logger.LogError("[RankUp] InvokeExecute threw: "
+                        + eExec.GetType().Name + ": " + eExec.Message);
+                    return "{\"error\":\"InvokeExecute: " + Esc(eExec.Message) + "\"}";
+                }
+
+                return "{\"ok\":true,\"hero_id\":" + heroId + ",\"food_count\":" + foodIds.Count + "}";
+            }
+            catch (TargetInvocationException tex)
+            {
+                return "{\"error\":\"" + Esc((tex.InnerException ?? tex).Message) + "\"}";
+            }
+            catch (Exception ex)
+            {
+                return "{\"error\":\"" + Esc(ex.Message) + "\"}";
+            }
+        }
+
+        // =====================================================
+        // API: /move-heroes?dest=X&ids=A,B,C — relocate champions
+        // between Champion list / Master Vault / Reserve Vault.
+        //   dest=inventory  -> Champion list (MoveHeroesToInventoryCmd)
+        //   dest=storage    -> Master Vault (AddHeroesToStorageCmd)
+        //   dest=bathhouse  -> Reserve Vault (AddHeroesToBathhouseCmd)
+        //
+        // Note: "Bathhouse" is Plarium's IL2CPP field name — the in-game
+        // UI calls this location "Reserve Vault". Same thing.
+        //
+        // All three cmds take a List<int> of hero instance IDs;
+        // Bathhouse also takes `needDeactivateArtifacts` (true = strip gear).
+        // Storage and Inventory don't strip gear.
+        // =====================================================
+        private string MoveHeroes(string dest, string idsCsv)
+        {
+            if (string.IsNullOrEmpty(dest))
+                return "{\"error\":\"dest required: inventory|storage|bathhouse\"}";
+            dest = dest.ToLowerInvariant().Trim();
+            if (dest != "inventory" && dest != "storage" && dest != "bathhouse")
+                return "{\"error\":\"dest must be inventory|storage|bathhouse, got: " + Esc(dest) + "\"}";
+            if (string.IsNullOrEmpty(idsCsv))
+                return "{\"error\":\"ids (comma-separated hero ids) required\"}";
+
+            var heroIds = new List<int>();
+            foreach (var part in idsCsv.Split(','))
+            {
+                var p = part.Trim();
+                if (string.IsNullOrEmpty(p)) continue;
+                if (!int.TryParse(p, out int hid))
+                    return "{\"error\":\"ids must be int csv, got: " + Esc(p) + "\"}";
+                heroIds.Add(hid);
+            }
+            if (heroIds.Count == 0)
+                return "{\"error\":\"at least 1 id required\"}";
+
+            string cmdTypeName;
+            if (dest == "inventory")
+                cmdTypeName = "Client.Model.Gameplay.Heroes.Commands.MoveHeroesToInventoryCmd";
+            else if (dest == "storage")
+                cmdTypeName = "Client.Model.Gameplay.Heroes.Commands.AddHeroesToStorageCmd";
+            else // bathhouse
+                cmdTypeName = "Client.Model.Gameplay.Heroes.Commands.AddHeroesToBathhouseCmd";
+
+            var cmdType = FindType(cmdTypeName);
+            if (cmdType == null) return "{\"error\":\"" + cmdTypeName + " not found\"}";
+
+            try
+            {
+                // Build Il2Cpp List<int> of hero ids. The cmds expect
+                // SharedModel.* generic List<int>; using Il2CppSystem.Collections
+                // .Generic.List<int> is the IL2CPP marshalled form.
+                var listType = typeof(Il2CppSystem.Collections.Generic.List<int>);
+                var list = Activator.CreateInstance(listType);
+                MethodInfo addM = null;
+                foreach (var m in listType.GetMethods(BindingFlags.Public | BindingFlags.Instance))
+                {
+                    if (m.Name == "Add" && m.GetParameters().Length == 1) { addM = m; break; }
+                }
+                if (addM == null) return "{\"error\":\"List<int>.Add not found\"}";
+                foreach (int hid in heroIds) addM.Invoke(list, new object[] { hid });
+
+                object cmd;
+                if (dest == "bathhouse")
+                {
+                    // AddHeroesToBathhouseCmd(List<int> heroIds, bool needDeactivateArtifacts)
+                    var ctor = cmdType.GetConstructor(new[] { listType, typeof(bool) });
+                    if (ctor == null) return "{\"error\":\"AddHeroesToBathhouseCmd(List<int>,bool) ctor not found\"}";
+                    cmd = ctor.Invoke(new object[] { list, true });  // strip gear by default
+                }
+                else
+                {
+                    // MoveHeroesToInventoryCmd(List<int>) and AddHeroesToStorageCmd(List<int>)
+                    var ctor = cmdType.GetConstructor(new[] { listType });
+                    if (ctor == null) return "{\"error\":\"" + cmdType.Name + "(List<int>) ctor not found\"}";
+                    cmd = ctor.Invoke(new object[] { list });
+                }
+
+                Logger.LogInfo("[Move] " + cmdType.Name + " ids=[" + string.Join(",", heroIds) + "] -> " + dest);
+                try
+                {
+                    InvokeExecute(cmd);
+                }
+                catch (Exception eExec)
+                {
+                    Logger.LogError("[Move] InvokeExecute threw: " + eExec.GetType().Name + ": " + eExec.Message);
+                    return "{\"error\":\"InvokeExecute: " + Esc(eExec.Message) + "\"}";
+                }
+
+                return "{\"ok\":true,\"dest\":\"" + dest + "\",\"count\":" + heroIds.Count + "}";
+            }
+            catch (TargetInvocationException tex)
+            {
+                return "{\"error\":\"" + Esc((tex.InnerException ?? tex).Message) + "\"}";
+            }
+            catch (Exception ex)
+            {
+                return "{\"error\":\"" + Esc(ex.Message) + "\"}";
+            }
+        }
+
+        // =====================================================
+        // API: /skill-up?hero_id=X&food=A,B[,...] — feed duplicate
+        // copies of the hero (heroInventoryIds) to upgrade their skills.
+        // For tome-based skill-up, additionally pass &books=tier:count
+        // (e.g., books=4:5 means 5x Legendary tomes; tier maps to
+        // BlackMarketItemId).
+        //
+        // Mechanic: LevelUpSkillCmd takes a LevelUpSkillRequestDto with:
+        //   HeroId           target hero
+        //   HeroFormId       form id (0 for default)
+        //   HeroInventoryIds duplicates of same hero used as fodder
+        //   BmiCountByTypeIds  Dictionary<BlackMarketItemId, int> of tomes
+        //
+        // Server validates the food champs are duplicates of the target
+        // (same baseTypeId) and that you have the tome counts claimed.
+        // =====================================================
+        private string SkillUpHero(string heroIdStr, string foodCsv, string booksCsv)
+        {
+            if (string.IsNullOrEmpty(heroIdStr) || !int.TryParse(heroIdStr, out int heroId))
+                return "{\"error\":\"hero_id (int) required\"}";
+
+            var foodIds = new List<int>();
+            if (!string.IsNullOrEmpty(foodCsv))
+            {
+                foreach (var part in foodCsv.Split(','))
+                {
+                    var p = part.Trim();
+                    if (string.IsNullOrEmpty(p)) continue;
+                    if (!int.TryParse(p, out int fid))
+                        return "{\"error\":\"food list must be int csv\"}";
+                    foodIds.Add(fid);
+                }
+            }
+
+            // Parse books: "tier:count,tier:count" — each pair becomes
+            // a BmiCountByTypeIds entry. Tier ids correspond to skill
+            // tome BMIs (Mystery=1, Rare=2, Epic=3, Legendary=4 — verify
+            // against actual BlackMarketItemId enum values when in use).
+            var bookPairs = new List<(int tier, int count)>();
+            if (!string.IsNullOrEmpty(booksCsv))
+            {
+                foreach (var part in booksCsv.Split(','))
+                {
+                    var p = part.Trim();
+                    if (string.IsNullOrEmpty(p)) continue;
+                    var kv = p.Split(':');
+                    if (kv.Length != 2)
+                        return "{\"error\":\"books must be tier:count pairs\"}";
+                    if (!int.TryParse(kv[0], out int t) || !int.TryParse(kv[1], out int c))
+                        return "{\"error\":\"books pair must be int:int\"}";
+                    bookPairs.Add((t, c));
+                }
+            }
+
+            if (foodIds.Count == 0 && bookPairs.Count == 0)
+                return "{\"error\":\"need either food (duplicate hero ids) or books (tier:count pairs)\"}";
+
+            var dtoType = FindType("SharedModel.Meta.Heroes.Dtos.LevelUpSkillRequestDto");
+            var cmdType = FindType("Client.Model.Gameplay.Heroes.Commands.LevelUpSkillCmd");
+            if (dtoType == null) return "{\"error\":\"LevelUpSkillRequestDto type not found\"}";
+            if (cmdType == null) return "{\"error\":\"LevelUpSkillCmd type not found\"}";
+
+            try
+            {
+                // Resolve heroFormId from /all-heroes (default to 0)
+                int heroFormId = 0;
+                try
+                {
+                    var uw = GetUserWrapper();
+                    var heroes = Prop(Prop(uw, "Heroes"), "HeroData");
+                    var heroList = Prop(heroes, "Heroes");
+                    if (heroList != null)
+                    {
+                        foreach (var h in ListItems(heroList))
+                        {
+                            if (IntProp(h, "Id") == heroId)
+                            {
+                                heroFormId = IntProp(h, "FormId");
+                                if (heroFormId == 0)
+                                    heroFormId = IntProp(h, "HeroFormId");
+                                break;
+                            }
+                        }
+                    }
+                }
+                catch { /* form 0 is the typical default */ }
+
+                // IL2Cpp DTO fields must be accessed via PROPERTY reflection
+                // (interop layer wraps them) — see RankUp comment above.
+                var dto = Activator.CreateInstance(dtoType);
+                dtoType.GetProperty("HeroId")?.SetValue(dto, heroId);
+                dtoType.GetProperty("HeroFormId")?.SetValue(dto, heroFormId);
+
+                if (foodIds.Count > 0)
+                {
+                    var arr = new Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppStructArray<int>(
+                        foodIds.ToArray());
+                    dtoType.GetProperty("HeroInventoryIds")?.SetValue(dto, arr);
+                }
+
+                // BmiCountByTypeIds is Dictionary<BlackMarketItemId, int>.
+                // For now we only set it if books were provided AND we can
+                // resolve the BlackMarketItemId enum type. Skipping if not
+                // resolvable (food-only skill-up still works).
+                if (bookPairs.Count > 0)
+                {
+                    var bmiEnum = FindType("SharedModel.Meta.BlackMarket.BlackMarketItemId");
+                    if (bmiEnum != null)
+                    {
+                        var dictType = typeof(Il2CppSystem.Collections.Generic.Dictionary<,>)
+                            .MakeGenericType(bmiEnum, typeof(int));
+                        var dict = Activator.CreateInstance(dictType);
+                        var addM = dictType.GetMethod("Add");
+                        foreach (var (tier, count) in bookPairs)
+                        {
+                            var enumVal = Enum.ToObject(bmiEnum, tier);
+                            addM.Invoke(dict, new object[] { enumVal, count });
+                        }
+                        dtoType.GetProperty("BmiCountByTypeIds")?.SetValue(dto, dict);
+                    }
+                }
+
+                var ctor = cmdType.GetConstructor(new[] { dtoType });
+                if (ctor == null) return "{\"error\":\"LevelUpSkillCmd(dto) ctor not found\"}";
+                var cmd = ctor.Invoke(new object[] { dto });
+                InvokeExecute(cmd);
+
+                return "{\"ok\":true,\"hero_id\":" + heroId +
+                       ",\"food_count\":" + foodIds.Count +
+                       ",\"book_pairs\":" + bookPairs.Count + "}";
+            }
+            catch (TargetInvocationException tex)
+            {
+                return "{\"error\":\"" + Esc((tex.InnerException ?? tex).Message) + "\"}";
+            }
+            catch (Exception ex)
+            {
+                return "{\"error\":\"" + Esc(ex.Message) + "\"}";
+            }
+        }
+
+        // =====================================================
+        // API: /apply-blessing?hero_id=X&blessing_id=Y -- assign a
+        // Blessing to a hero. Mirrors the in-game blessing-picker UI.
+        //
+        // Mechanic: SetBlessingCmd(int heroId, BlessingTypeId typeId)
+        // is a UserPostEditCmdNoOut. Server validates the hero owns
+        // the right Blessing tier (Mythical / Divine / Sacred / etc.)
+        // and that the player has the resource cost (Mythical/Divine
+        // Mystery dust depending on tier). On success the assignment
+        // is permanent until /remove-blessing is called.
+        //
+        // BlessingTypeId is an int enum — pass the raw id from
+        // HH details JSON (`blessingId` field).
+        // =====================================================
+        private string ApplyBlessing(string heroIdStr, string blessingIdStr)
+        {
+            if (string.IsNullOrEmpty(heroIdStr) || !int.TryParse(heroIdStr, out int heroId))
+                return "{\"error\":\"hero_id (int) required\"}";
+            if (string.IsNullOrEmpty(blessingIdStr) || !int.TryParse(blessingIdStr, out int blessingId))
+                return "{\"error\":\"blessing_id (int) required\"}";
+
+            var cmdType = FindType("Client.Model.Gameplay.DoubleAscend.Commands.SetBlessingCmd");
+            if (cmdType == null) return "{\"error\":\"SetBlessingCmd type not found\"}";
+
+            var blessingEnum = FindType("SharedModel.Meta.DoubleAscend.BlessingTypeId");
+            if (blessingEnum == null)
+            {
+                // Try alternate namespace paths
+                foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
+                {
+                    try
+                    {
+                        foreach (var t in asm.GetTypes())
+                        {
+                            if (t.Name == "BlessingTypeId" && t.IsEnum) { blessingEnum = t; break; }
+                        }
+                    } catch { }
+                    if (blessingEnum != null) break;
+                }
+            }
+            if (blessingEnum == null) return "{\"error\":\"BlessingTypeId enum not found\"}";
+
+            try
+            {
+                // Find the (int, BlessingTypeId) constructor
+                var ctor = cmdType.GetConstructor(new[] { typeof(int), blessingEnum });
+                if (ctor == null)
+                {
+                    // Try with a base int type for the enum (Il2Cpp interop sometimes
+                    // surfaces enums as int parameters directly).
+                    ctor = cmdType.GetConstructor(new[] { typeof(int), typeof(int) });
+                }
+                if (ctor == null) return "{\"error\":\"SetBlessingCmd ctor (int, BlessingTypeId) not found\"}";
+
+                // Build the enum value from raw int
+                object enumVal;
+                try { enumVal = Enum.ToObject(blessingEnum, blessingId); }
+                catch { enumVal = blessingId; }
+
+                var cmd = ctor.Invoke(new object[] { heroId, enumVal });
+                InvokeExecute(cmd);
+
+                return "{\"ok\":true,\"hero_id\":" + heroId + ",\"blessing_id\":" + blessingId + "}";
+            }
+            catch (TargetInvocationException tex)
+            {
+                return "{\"error\":\"" + Esc((tex.InnerException ?? tex).Message) + "\"}";
+            }
+            catch (Exception ex)
+            {
+                return "{\"error\":\"" + Esc(ex.Message) + "\"}";
+            }
+        }
+
+        // =====================================================
+        // API: /event-progress — live per-event score + placement.
+        //
+        // The game splits event data:
+        //   - DataJson (served by /events) holds the static catalog:
+        //     prototype ids, mission rules, tier reward tables, dates.
+        //     This is sent down once per refresh and rarely re-syncs.
+        //   - TournamentPointsByStateId, SoloEventPointsByStateId,
+        //     PositionByStateId hold the LIVE state — your earned
+        //     points and current leaderboard position. These are
+        //     [JsonSkip]/[IgnoreMember] in the DTO so they never
+        //     appear in DataJson; only direct memory access works.
+        //
+        // Cross-reference with /events output via the shared stateId.
+        // =====================================================
+        private string GetEventProgress()
+        {
+            try
+            {
+                var uw = GetUserWrapper();
+                if (uw == null) return "{\"error\":\"Not logged in\"}";
+                var tournaments = Prop(uw, "Tournaments");
+                if (tournaments == null) return "{\"error\":\"Tournaments wrapper not found\"}";
+
+                var sb = new StringBuilder(2048);
+                sb.Append("{");
+
+                // PositionByStateId: int -> int (stateId -> rank).
+                var positions = Prop(tournaments, "PositionByStateId");
+                sb.Append("\"positions\":");
+                AppendIntDict(sb, positions);
+
+                // Per-quest score lives in QuestState.TotalPoints (a
+                // Nullable<int> at offset 0xF4 on each QuestState row of
+                // QuestData.OpenedStates). Walk the list, emit
+                // {prototype_id, quest_id, points} rows. Consumers
+                // aggregate by prototype_id (= GlobalEvent's stateId
+                // domain) to get per-event totals.
+                var qd = Prop(tournaments, "QuestData");
+                var openedStates = Prop(qd, "OpenedStates");
+                sb.Append(",\"quest_points\":");
+                AppendQuestStatePoints(sb, openedStates);
+
+                sb.Append("}");
+                return sb.ToString();
+            }
+            catch (Exception ex)
+            {
+                return "{\"error\":\"" + Esc(ex.Message) + "\"}";
+            }
+        }
+
+        /// <summary>
+        /// Walk a List&lt;QuestState&gt; and emit per-quest score rows.
+        /// Each QuestState may track score in two places:
+        ///   - TotalPoints (Nullable&lt;int&gt; @0xF4): aggregated total,
+        ///     populated for some quest types (notably Solo events
+        ///     after their final tally — not always live during play).
+        ///   - Completions[i].ByTournament.ByPoints.CountCollected:
+        ///     live per-quest tournament score that updates as you
+        ///     play. For TA Dragon this is the field that mirrors
+        ///     the in-game tournament UI's "your points" number.
+        ///   - Completions[i].BySoloEvent.ByPoints.ByPoints.CountCollected:
+        ///     same idea for solo events.
+        ///
+        /// Field offsets (all from the IL2CPP dump):
+        ///   QuestState.QuestId      @0x10 (int)
+        ///   QuestState.PrototypeId  @0x14 (int)
+        ///   QuestState.Completions  @0x88 (List&lt;QuestCompletion&gt;)
+        ///   QuestState.TotalPoints  @0xF4 (Nullable&lt;int&gt;)
+        ///   QuestCompletion.BySoloEvent  @0x88 (QuestCompletionBySoloEvent)
+        ///   QuestCompletion.ByTournament @0x90 (QuestCompletionByTournament)
+        ///   QuestCompletionBySoloEvent.ByPoints   @0x20 (QuestCompletionByEventPoints)
+        ///   QuestCompletionByTournament.ByPoints  @0x20 (QuestCompletionByTournamentPoints)
+        ///   QuestCompletionBy*Points.CountCollected @0x14 (int)
+        /// </summary>
+        private void AppendQuestStatePoints(StringBuilder sb, object listObj)
+        {
+            sb.Append("[");
+            if (listObj == null) { sb.Append("]"); return; }
+            try
+            {
+                IntPtr listPtr = GetIl2CppPointer(listObj);
+                if (listPtr == IntPtr.Zero) { sb.Append("]"); return; }
+                IntPtr listCls = il2cpp_object_get_class(listPtr);
+                IntPtr itemsField = IntPtr.Zero, sizeField = IntPtr.Zero;
+                IntPtr fi = IntPtr.Zero;
+                IntPtr f;
+                while ((f = il2cpp_class_get_fields(listCls, ref fi)) != IntPtr.Zero)
+                {
+                    string fn = Marshal.PtrToStringAnsi(il2cpp_field_get_name(f));
+                    if (fn == "_items") itemsField = f;
+                    else if (fn == "_size") sizeField = f;
+                }
+                if (itemsField == IntPtr.Zero || sizeField == IntPtr.Zero) { sb.Append("]"); return; }
+                int size = Marshal.ReadInt32(listPtr, (int)il2cpp_field_get_offset(sizeField));
+                IntPtr itemsArrPtr = Marshal.ReadIntPtr(listPtr, (int)il2cpp_field_get_offset(itemsField));
+                if (itemsArrPtr == IntPtr.Zero || size == 0) { sb.Append("]"); return; }
+
+                IntPtr itemsBase = IntPtr.Add(itemsArrPtr, 0x20);
+                bool first = true;
+                int kept = 0;
+                for (int i = 0; i < size && kept < 800; i++)
+                {
+                    IntPtr qsPtr = Marshal.ReadIntPtr(itemsBase, i * 8);
+                    if (qsPtr == IntPtr.Zero) continue;
+                    int questId = Marshal.ReadInt32(qsPtr, 0x10);
+                    int protoId = Marshal.ReadInt32(qsPtr, 0x14);
+
+                    // 1) TotalPoints (Nullable<int>) at 0xF4. Layout
+                    // varies — read both halves and keep the non-zero.
+                    int totalPts = Marshal.ReadInt32(qsPtr, 0xF4);
+
+                    // 2) Walk Completions and pull tournament/solo CountCollected
+                    int tournamentCol = 0;
+                    int soloCol = 0;
+                    IntPtr completionsList = Marshal.ReadIntPtr(qsPtr, 0x88);
+                    if (completionsList != IntPtr.Zero)
+                    {
+                        // Repeat the List walker on completionsList
+                        IntPtr cCls = il2cpp_object_get_class(completionsList);
+                        IntPtr cItemsF = IntPtr.Zero, cSizeF = IntPtr.Zero;
+                        IntPtr cFi = IntPtr.Zero;
+                        IntPtr cF;
+                        while ((cF = il2cpp_class_get_fields(cCls, ref cFi)) != IntPtr.Zero)
+                        {
+                            string cn = Marshal.PtrToStringAnsi(il2cpp_field_get_name(cF));
+                            if (cn == "_items") cItemsF = cF;
+                            else if (cn == "_size") cSizeF = cF;
+                        }
+                        if (cItemsF != IntPtr.Zero && cSizeF != IntPtr.Zero)
+                        {
+                            int cSize = Marshal.ReadInt32(completionsList, (int)il2cpp_field_get_offset(cSizeF));
+                            IntPtr cArr = Marshal.ReadIntPtr(completionsList, (int)il2cpp_field_get_offset(cItemsF));
+                            if (cArr != IntPtr.Zero)
+                            {
+                                IntPtr cBase = IntPtr.Add(cArr, 0x20);
+                                for (int ci = 0; ci < cSize; ci++)
+                                {
+                                    IntPtr qcPtr = Marshal.ReadIntPtr(cBase, ci * 8);
+                                    if (qcPtr == IntPtr.Zero) continue;
+
+                                    // ByTournament @ 0x90 -> ByPoints @ 0x20 -> CountCollected @ 0x14
+                                    IntPtr byTour = Marshal.ReadIntPtr(qcPtr, 0x90);
+                                    if (byTour != IntPtr.Zero)
+                                    {
+                                        IntPtr byPts = Marshal.ReadIntPtr(byTour, 0x20);
+                                        if (byPts != IntPtr.Zero)
+                                            tournamentCol += Marshal.ReadInt32(byPts, 0x14);
+                                    }
+                                    // BySoloEvent @ 0x88 -> ByPoints @ 0x20 ->
+                                    //   QuestCompletionByEventPoints.ByPoints (nested) -> CountCollected
+                                    IntPtr bySolo = Marshal.ReadIntPtr(qcPtr, 0x88);
+                                    if (bySolo != IntPtr.Zero)
+                                    {
+                                        IntPtr eventByPts = Marshal.ReadIntPtr(bySolo, 0x20);
+                                        if (eventByPts != IntPtr.Zero)
+                                            soloCol += Marshal.ReadInt32(eventByPts, 0x14);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if (totalPts == 0 && tournamentCol == 0 && soloCol == 0) continue;
+                    if (!first) sb.Append(",");
+                    first = false;
+                    sb.Append("{\"q\":").Append(questId)
+                      .Append(",\"p\":").Append(protoId)
+                      .Append(",\"tp\":").Append(totalPts)
+                      .Append(",\"tour\":").Append(tournamentCol)
+                      .Append(",\"solo\":").Append(soloCol)
+                      .Append("}");
+                    kept++;
+                }
+            }
+            catch (Exception ex) { sb.Append("\"_err\":\"").Append(Esc(ex.Message)).Append("\""); }
+            sb.Append("]");
+        }
+
+        /// <summary>
+        /// Get the raw IL2Cpp pointer of a wrapping CLR object. Walks the
+        /// type chain looking for a Pointer property/field — Il2CppInterop
+        /// places it on Il2CppObjectBase but type wrappers obscure it.
+        /// </summary>
+        private static IntPtr GetIl2CppPointer(object obj)
+        {
+            if (obj == null) return IntPtr.Zero;
+            var t = obj.GetType();
+            while (t != null && t != typeof(object))
+            {
+                var p = t.GetProperty("Pointer",
+                    BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+                if (p != null)
+                {
+                    try { return (IntPtr)p.GetValue(obj); } catch { }
+                }
+                var f = t.GetField("Pointer",
+                    BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+                if (f != null)
+                {
+                    try { return (IntPtr)f.GetValue(obj); } catch { }
+                }
+                t = t.BaseType;
+            }
+            return IntPtr.Zero;
+        }
+
+        /// <summary>
+        /// Walk an IL2Cpp object's class fields by name; return the
+        /// pointer stored at the matching field's offset. Used for fields
+        /// the managed reflection can't see (e.g. [IgnoreMember] dicts of
+        /// unresolved generic types).
+        /// </summary>
+        private IntPtr ResolveDictByFieldName(object holder, string fieldName)
+        {
+            if (holder == null) return IntPtr.Zero;
+            IntPtr holderPtr = GetIl2CppPointer(holder);
+            if (holderPtr == IntPtr.Zero) return IntPtr.Zero;
+            IntPtr klass = il2cpp_object_get_class(holderPtr);
+            if (klass == IntPtr.Zero) return IntPtr.Zero;
+            IntPtr fIter = IntPtr.Zero;
+            IntPtr fld;
+            while ((fld = il2cpp_class_get_fields(klass, ref fIter)) != IntPtr.Zero)
+            {
+                string fn = Marshal.PtrToStringAnsi(il2cpp_field_get_name(fld));
+                if (fn == fieldName)
+                {
+                    uint off = il2cpp_field_get_offset(fld);
+                    return Marshal.ReadIntPtr(holderPtr, (int)off);
+                }
+            }
+            return IntPtr.Zero;
+        }
+
+        /// <summary>
+        /// Walk a Dictionary&lt;int,int&gt; by raw _entries[] memory layout and
+        /// emit it as JSON. Same entry layout as the wrapper-aware path
+        /// in AppendIntDict but starting from a raw IntPtr.
+        /// </summary>
+        private void AppendIntDictRaw(StringBuilder sb, IntPtr dictPtr)
+        {
+            if (dictPtr == IntPtr.Zero) { sb.Append("{}"); return; }
+            sb.Append("{");
+            try
+            {
+                IntPtr klass = il2cpp_object_get_class(dictPtr);
+                IntPtr entriesField = IntPtr.Zero;
+                IntPtr countField = IntPtr.Zero;
+                IntPtr fIter = IntPtr.Zero;
+                IntPtr f;
+                while ((f = il2cpp_class_get_fields(klass, ref fIter)) != IntPtr.Zero)
+                {
+                    string fn = Marshal.PtrToStringAnsi(il2cpp_field_get_name(f));
+                    if (fn == "_entries") entriesField = f;
+                    else if (fn == "_count") countField = f;
+                }
+                if (entriesField == IntPtr.Zero || countField == IntPtr.Zero) { sb.Append("}"); return; }
+                uint entriesOff = il2cpp_field_get_offset(entriesField);
+                uint countOff = il2cpp_field_get_offset(countField);
+                int count = Marshal.ReadInt32(dictPtr, (int)countOff);
+                IntPtr entriesPtr = Marshal.ReadIntPtr(dictPtr, (int)entriesOff);
+                if (entriesPtr == IntPtr.Zero || count == 0) { sb.Append("}"); return; }
+                bool first = true;
+                int entrySize = 16;  // hashCode(4) + next(4) + key(4) + value(4)
+                IntPtr dataBase = IntPtr.Add(entriesPtr, 0x20);
+                for (int i = 0; i < count; i++)
+                {
+                    int hashCode = Marshal.ReadInt32(dataBase, i * entrySize);
+                    if (hashCode < 0) continue;
+                    int key = Marshal.ReadInt32(dataBase, i * entrySize + 8);
+                    int val = Marshal.ReadInt32(dataBase, i * entrySize + 12);
+                    if (!first) sb.Append(",");
+                    first = false;
+                    sb.Append("\"").Append(key).Append("\":").Append(val);
+                }
+            }
+            catch (Exception ex) { sb.Append("\"_err\":\"").Append(Esc(ex.Message)).Append("\""); }
+            sb.Append("}");
+        }
+
+        /// <summary>
+        /// Serialize an Il2Cpp Dictionary&lt;int,int&gt; as JSON {"k":v,...}.
+        /// Uses raw IL2Cpp via il2cpp_runtime_invoke on get_Keys / get_Item:
+        /// managed reflection on Il2CppInterop dict wrappers tends to
+        /// return "?"-typed enumerators that can't be walked.
+        /// </summary>
+        private void AppendIntDict(StringBuilder sb, object dict)
+        {
+            if (dict == null) { sb.Append("{}"); return; }
+            sb.Append("{");
+            try
+            {
+                // Need an Il2CppObjectBase (or anything exposing .Pointer).
+                // The dict object may be wrapped — cast to Il2CppSystem.Object
+                // first if its declared type doesn't expose Pointer directly.
+                IntPtr dictPtr = IntPtr.Zero;
+                var ptrProp = dict.GetType().GetProperty("Pointer",
+                    BindingFlags.Public | BindingFlags.Instance);
+                if (ptrProp != null)
+                {
+                    try { dictPtr = (IntPtr)ptrProp.GetValue(dict); } catch { }
+                }
+                if (dictPtr == IntPtr.Zero)
+                {
+                    // Walk type chain — some wrapped types expose Pointer
+                    // only on a base class.
+                    var bt = dict.GetType().BaseType;
+                    while (bt != null && dictPtr == IntPtr.Zero && bt != typeof(object))
+                    {
+                        var bp = bt.GetProperty("Pointer",
+                            BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+                        if (bp != null)
+                        {
+                            try { dictPtr = (IntPtr)bp.GetValue(dict); } catch { }
+                        }
+                        bt = bt.BaseType;
+                    }
+                }
+                if (dictPtr == IntPtr.Zero)
+                {
+                    // Last resort — Il2CppObjectBase exposes a `Pointer` field too.
+                    var pointerField = dict.GetType().GetField("Pointer",
+                        BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic);
+                    if (pointerField != null)
+                    {
+                        try { dictPtr = (IntPtr)pointerField.GetValue(dict); } catch { }
+                    }
+                }
+                if (dictPtr == IntPtr.Zero)
+                {
+                    sb.Append("\"_err\":\"no Pointer on ").Append(Esc(dict.GetType().FullName ?? "?")).Append("\"}");
+                    return;
+                }
+
+                IntPtr klass = il2cpp_object_get_class(dictPtr);
+                // Find get_Keys + get_Count + indexer (get_Item) on the
+                // Dictionary class. Walk the parent chain in case the
+                // method is inherited.
+                IntPtr getKeys = IntPtr.Zero, getCount = IntPtr.Zero, getItem = IntPtr.Zero;
+                IntPtr scan = klass;
+                while (scan != IntPtr.Zero && (getKeys == IntPtr.Zero || getCount == IntPtr.Zero || getItem == IntPtr.Zero))
+                {
+                    IntPtr mIter = IntPtr.Zero;
+                    IntPtr m;
+                    while ((m = il2cpp_class_get_methods(scan, ref mIter)) != IntPtr.Zero)
+                    {
+                        string mn = Marshal.PtrToStringAnsi(il2cpp_method_get_name(m));
+                        uint pc = il2cpp_method_get_param_count(m);
+                        if (mn == "get_Keys" && pc == 0 && getKeys == IntPtr.Zero) getKeys = m;
+                        else if (mn == "get_Count" && pc == 0 && getCount == IntPtr.Zero) getCount = m;
+                        else if (mn == "get_Item" && pc == 1 && getItem == IntPtr.Zero) getItem = m;
+                    }
+                    scan = il2cpp_class_get_parent(scan);
+                }
+                if (getKeys == IntPtr.Zero || getItem == IntPtr.Zero) { sb.Append("}"); return; }
+
+                IntPtr exc = IntPtr.Zero;
+                IntPtr keysObj = il2cpp_runtime_invoke(getKeys, dictPtr, IntPtr.Zero, ref exc);
+                if (exc != IntPtr.Zero || keysObj == IntPtr.Zero) { sb.Append("}"); return; }
+
+                // Keys is a KeyCollection — use its Count + index-based iteration
+                // via its own enumerator. Easier: use System.Linq via reflection
+                // OR just fall back to walking _entries directly.
+                // Cleanest: walk _entries[] directly. The dict layout in the
+                // System.Collections.Generic.Dictionary IL2Cpp port has:
+                //   _entries (ref-array of Entry structs) somewhere at offset.
+                // Find via field iteration + name match.
+                IntPtr fIter = IntPtr.Zero;
+                IntPtr fld;
+                IntPtr entriesField = IntPtr.Zero;
+                IntPtr countField = IntPtr.Zero;
+                while ((fld = il2cpp_class_get_fields(klass, ref fIter)) != IntPtr.Zero)
+                {
+                    string fn = Marshal.PtrToStringAnsi(il2cpp_field_get_name(fld));
+                    if (fn == "_entries") entriesField = fld;
+                    else if (fn == "_count") countField = fld;
+                }
+                if (entriesField == IntPtr.Zero || countField == IntPtr.Zero) { sb.Append("}"); return; }
+
+                uint entriesOff = il2cpp_field_get_offset(entriesField);
+                uint countOff = il2cpp_field_get_offset(countField);
+                int count = Marshal.ReadInt32(dictPtr, (int)countOff);
+                IntPtr entriesPtr = Marshal.ReadIntPtr(dictPtr, (int)entriesOff);
+                if (entriesPtr == IntPtr.Zero || count == 0) { sb.Append("}"); return; }
+
+                // Il2Cpp arrays: header is 0x20 bytes, then Length at 0x18,
+                // then data at 0x20. Each Entry<int,int> in IL2Cpp layout is
+                // 16 bytes: { int hashCode, int next, int key, int value }.
+                // Walk count entries, skipping deleted (hashCode < 0).
+                bool first = true;
+                int entrySize = 16;
+                IntPtr dataBase = IntPtr.Add(entriesPtr, 0x20);
+                for (int i = 0; i < count; i++)
+                {
+                    int hashCode = Marshal.ReadInt32(dataBase, i * entrySize);
+                    if (hashCode < 0) continue; // deleted slot
+                    int key = Marshal.ReadInt32(dataBase, i * entrySize + 8);
+                    int val = Marshal.ReadInt32(dataBase, i * entrySize + 12);
+                    if (!first) sb.Append(",");
+                    first = false;
+                    sb.Append("\"").Append(key).Append("\":").Append(val);
+                }
+            }
+            catch (Exception ex)
+            {
+                sb.Append("\"_err\":\"").Append(Esc(ex.Message)).Append("\"");
+            }
+            sb.Append("}");
+        }
+
+        // =====================================================
+        // API: /events — dump active GlobalEvents (tournaments,
+        // solo events, cvc, etc.) as the game's own JSON.
+        //
+        // Source: UserWrapper.Tournaments._globalEvents.DataJson —
+        // a 200KB+ string the server sends down with the full event
+        // catalog: prototype ids, titles, mission types, score tables,
+        // reward tiers, start/end timestamps. Surfacing it raw lets
+        // tooling decide which events are worth farming.
+        // =====================================================
+        private string GetEvents()
+        {
+            try
+            {
+                var uw = GetUserWrapper();
+                if (uw == null) return "{\"error\":\"Not logged in\"}";
+                var tournaments = Prop(uw, "Tournaments");
+                if (tournaments == null) return "{\"error\":\"Tournaments wrapper not found\"}";
+                var globalEvents = Prop(tournaments, "_globalEvents");
+                if (globalEvents == null) return "{\"error\":\"_globalEvents not found on TournamentsWrapper\"}";
+
+                // The DataJson public property and its backing field both work.
+                // Read the property first; fall back to the backing field if
+                // the property accessor is missing (Il2CppInterop sometimes
+                // wraps these inconsistently).
+                string json = null;
+                try
+                {
+                    var v = Prop(globalEvents, "DataJson");
+                    if (v != null) json = v.ToString();
+                }
+                catch { }
+                if (string.IsNullOrEmpty(json))
+                {
+                    try
+                    {
+                        var v = Prop(globalEvents, "_DataJson_k__BackingField");
+                        if (v != null) json = v.ToString();
+                    }
+                    catch { }
+                }
+                if (string.IsNullOrEmpty(json))
+                    return "{\"error\":\"DataJson empty (no events down from server yet?)\"}";
+
+                // The DataJson is already valid JSON — wrap it so consumers
+                // can also see the byte size + when it was last refreshed.
+                long updatedTicks = 0;
+                try
+                {
+                    var ut = Prop(globalEvents, "_knownUpdateTime");
+                    if (ut != null)
+                    {
+                        var ticksProp = ut.GetType().GetProperty("Ticks",
+                            BindingFlags.Public | BindingFlags.Instance);
+                        if (ticksProp != null)
+                            updatedTicks = (long)ticksProp.GetValue(ut);
+                    }
+                }
+                catch { }
+
+                var sb = new StringBuilder(json.Length + 256);
+                sb.Append("{\"size\":").Append(json.Length);
+                sb.Append(",\"updated_ticks\":").Append(updatedTicks);
+                sb.Append(",\"data\":").Append(json);
+                sb.Append("}");
+                return sb.ToString();
+            }
+            catch (Exception ex)
+            {
+                return "{\"error\":\"" + Esc(ex.Message) + "\"}";
+            }
+        }
+
+        /// <summary>
+        /// BFS through a dialog's transform hierarchy looking for a MonoBehaviour
+        /// whose get_Context() returns a HeroesSelectionDialogContext subclass.
+        /// Uses raw IL2Cpp APIs (managed reflection misses IL2Cpp-defined props).
+        /// </summary>
+        private bool TryFindHeroesSelectionContext(Transform root,
+                                                   out IntPtr ctxObj,
+                                                   out IntPtr ctxClass,
+                                                   out string ctxClassName,
+                                                   out string ctxNs)
+        {
+            ctxObj = IntPtr.Zero;
+            ctxClass = IntPtr.Zero;
+            ctxClassName = null;
+            ctxNs = null;
+
+            var queue = new Queue<KeyValuePair<Transform, int>>();
+            queue.Enqueue(new KeyValuePair<Transform, int>(root, 0));
+            int searched = 0;
+            while (queue.Count > 0 && searched < 400)
+            {
+                var pair = queue.Dequeue();
+                var t = pair.Key;
+                int depth = pair.Value;
+                searched++;
+
+                foreach (var mono in t.gameObject.GetComponents<MonoBehaviour>())
+                {
+                    if (mono == null) continue;
+                    try
+                    {
+                        IntPtr monoPtr = mono.Pointer;
+                        if (monoPtr == IntPtr.Zero) continue;
+                        IntPtr monoClass = il2cpp_object_get_class(monoPtr);
+                        if (monoClass == IntPtr.Zero) continue;
+
+                        // Walk the class hierarchy looking for get_Context.
+                        IntPtr klass = monoClass;
+                        IntPtr getCtx = IntPtr.Zero;
+                        while (klass != IntPtr.Zero && getCtx == IntPtr.Zero)
+                        {
+                            IntPtr mIter = IntPtr.Zero;
+                            IntPtr mm;
+                            while ((mm = il2cpp_class_get_methods(klass, ref mIter)) != IntPtr.Zero)
+                            {
+                                string mn = Marshal.PtrToStringAnsi(il2cpp_method_get_name(mm));
+                                if (mn == "get_Context" && il2cpp_method_get_param_count(mm) == 0)
+                                {
+                                    getCtx = mm;
+                                    break;
+                                }
+                            }
+                            if (getCtx == IntPtr.Zero)
+                                klass = il2cpp_class_get_parent(klass);
+                        }
+                        if (getCtx == IntPtr.Zero) continue;
+
+                        IntPtr exc = IntPtr.Zero;
+                        IntPtr cobj = il2cpp_runtime_invoke(getCtx, monoPtr, IntPtr.Zero, ref exc);
+                        if (exc != IntPtr.Zero || cobj == IntPtr.Zero) continue;
+
+                        IntPtr cclass = il2cpp_object_get_class(cobj);
+                        if (cclass == IntPtr.Zero) continue;
+
+                        // Walk parent chain to see if any ancestor is the
+                        // HeroesSelectionDialogContext`1 generic base.
+                        IntPtr scan = cclass;
+                        bool isMatch = false;
+                        while (scan != IntPtr.Zero)
+                        {
+                            string sn = Marshal.PtrToStringAnsi(il2cpp_class_get_name(scan));
+                            if (sn == "HeroesSelectionDialogContext`1")
+                            {
+                                isMatch = true;
+                                break;
+                            }
+                            if (sn == "Object" || sn == "Il2CppObjectBase") break;
+                            scan = il2cpp_class_get_parent(scan);
+                        }
+                        if (!isMatch) continue;
+
+                        ctxObj = cobj;
+                        ctxClass = cclass;
+                        ctxClassName = Marshal.PtrToStringAnsi(il2cpp_class_get_name(cclass));
+                        ctxNs = Marshal.PtrToStringAnsi(il2cpp_class_get_namespace(cclass));
+                        return true;
+                    }
+                    catch { }
+                }
+
+                if (depth < 10)
+                {
+                    for (int ci = 0; ci < t.childCount && ci < 30; ci++)
+                        queue.Enqueue(new KeyValuePair<Transform, int>(t.GetChild(ci), depth + 1));
+                }
+            }
+            return false;
         }
     }
 }
