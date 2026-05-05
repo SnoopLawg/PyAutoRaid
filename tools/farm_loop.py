@@ -348,7 +348,31 @@ def main() -> int:
         return 1
 
     initial_team = [carry["id"]] + [f["id"] for f in food]
-    print(f"\n--- iter 0: setting squad {initial_team} ---")
+    print(f"\n--- iter 0: prepping squad {initial_team} ---")
+
+    # Pre-step: move any team member from Reserve Vault / Master Vault to
+    # Champion list. The server rejects CreateBattle if the squad has any
+    # non-Inventory hero (game throws AcademyGuardians_HeroAlreadyInSlot
+    # for guardians or generic 500 for Reserve Vault picks). Plus, AddHero
+    # silently no-ops on Reserve Vault heroes — they need to be in
+    # Inventory before we put them in the squad.
+    by_id = {h["id"]: h for h in heroes}
+    move_ids = []
+    for hid in initial_team:
+        h = by_id.get(hid, {})
+        if h.get("in_storage") or h.get("in_bathhouse"):
+            move_ids.append(hid)
+    if move_ids:
+        ids_csv = ",".join(str(i) for i in move_ids)
+        print(f"  moving {len(move_ids)} squad members to Champion list...")
+        try:
+            r = _get(f"/move-heroes?dest=inventory&ids={ids_csv}")
+            print(f"  move: {r}")
+        except Exception as ex:
+            print(f"  ERR move: {ex}")
+        time.sleep(2)  # let server commit
+
+    print(f"  setting squad {initial_team}")
     r = squad_set(initial_team)
     print(f"  squad-set: {r}")
     if not r.get("ok"):
@@ -437,6 +461,19 @@ def main() -> int:
 
         target_team = [carry["id"]] + new_food
         if target_team != [carry["id"]] + cur_squad[1:] if cur_squad else True:
+            # Pre-move any Reserve Vault / Master Vault picks to Inventory.
+            by_id_now = {h["id"]: h for h in heroes}
+            move_ids2 = []
+            for hid in target_team:
+                h = by_id_now.get(hid, {})
+                if h.get("in_storage") or h.get("in_bathhouse"):
+                    move_ids2.append(hid)
+            if move_ids2:
+                try:
+                    _get(f"/move-heroes?dest=inventory&ids={','.join(str(i) for i in move_ids2)}")
+                    time.sleep(1)
+                except Exception:
+                    pass
             print(f"  squad change → {target_team}")
             squad_set(target_team)
 

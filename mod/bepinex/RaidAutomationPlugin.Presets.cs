@@ -3245,22 +3245,91 @@ namespace RaidAutomation
         }
 
         /// <summary>
-        /// Resolve the active HeroesSquadContext by walking the scene's
-        /// Dialogs root. Returns (IntPtr.Zero, IntPtr.Zero) if no battle-setup
-        /// dialog with a squad is currently visible.
+        /// Resolve the active HeroesSquadContext. The squad is NOT a separate
+        /// MonoBehaviour-context — it's a protected field `MySquad` on the
+        /// dialog's HeroesSquadSelectionDialogContext. Walks the active
+        /// dialogs root, finds the dialog context, then reads the MySquad
+        /// field from its IL2Cpp class hierarchy.
+        /// Returns (IntPtr.Zero, IntPtr.Zero) if no battle-setup dialog with a
+        /// squad is currently visible.
         /// </summary>
         private (IntPtr ctxObj, IntPtr ctxClass) FindActiveSquadContext()
         {
             var dialogsRoot = GameObject.Find("UIManager/Canvas (Ui Root)/Dialogs");
             if (dialogsRoot == null) return (IntPtr.Zero, IntPtr.Zero);
+
+            // Step 1: find the active HeroesSelectionDialogContext via the
+            // existing BFS finder.
+            IntPtr dlgCtx = IntPtr.Zero;
+            IntPtr dlgClass = IntPtr.Zero;
+            string ignoreClassName = null, ignoreNs = null;
             for (int di = 0; di < dialogsRoot.transform.childCount; di++)
             {
                 var dialog = dialogsRoot.transform.GetChild(di);
                 if (!dialog.gameObject.activeSelf) continue;
-                if (TryFindHeroesSquadContext(dialog, out var ctxObj, out var ctxClass))
-                    return (ctxObj, ctxClass);
+                if (TryFindHeroesSelectionContext(dialog, out dlgCtx, out dlgClass,
+                                                   out ignoreClassName, out ignoreNs))
+                    break;
             }
-            return (IntPtr.Zero, IntPtr.Zero);
+            if (dlgCtx == IntPtr.Zero) return (IntPtr.Zero, IntPtr.Zero);
+
+            // Step 2: locate the `MySquad` instance field on the class
+            // hierarchy. The field is declared `protected readonly
+            // HeroesSquadContext<HeroSlotContext>` on
+            // HeroesSquadSelectionDialogContext (the parent of every
+            // story/dungeon/arena dialog context). Walk up the chain.
+            IntPtr fieldPtr = IntPtr.Zero;
+            uint fieldOffset = 0;
+            bool foundField = false;
+            IntPtr scan = dlgClass;
+            while (scan != IntPtr.Zero)
+            {
+                IntPtr fIter = IntPtr.Zero;
+                IntPtr ff;
+                while ((ff = il2cpp_class_get_fields(scan, ref fIter)) != IntPtr.Zero)
+                {
+                    string fn = Marshal.PtrToStringAnsi(il2cpp_field_get_name(ff));
+                    if (fn == "MySquad")
+                    {
+                        fieldPtr = ff;
+                        fieldOffset = il2cpp_field_get_offset(ff);
+                        foundField = true;
+                        break;
+                    }
+                }
+                if (foundField) break;
+                scan = il2cpp_class_get_parent(scan);
+            }
+            if (!foundField)
+            {
+                Logger.LogWarning("[Squad] MySquad field not found on dialog class chain");
+                return (IntPtr.Zero, IntPtr.Zero);
+            }
+
+            // Step 3: read the field from the dialog context object. IL2Cpp
+            // stores reference fields as IntPtr at the field's offset within
+            // the object's instance data. Object header = 16 bytes (klass +
+            // monitor) on 64-bit; field offsets are relative to start of
+            // object including header.
+            IntPtr squadPtr;
+            try
+            {
+                squadPtr = Marshal.ReadIntPtr(dlgCtx, (int)fieldOffset);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning("[Squad] read MySquad field failed: " + ex.Message);
+                return (IntPtr.Zero, IntPtr.Zero);
+            }
+            if (squadPtr == IntPtr.Zero)
+            {
+                Logger.LogWarning("[Squad] MySquad field is null at offset " + fieldOffset);
+                return (IntPtr.Zero, IntPtr.Zero);
+            }
+            IntPtr squadClass = il2cpp_object_get_class(squadPtr);
+            Logger.LogInfo("[Squad] resolved MySquad ptr=0x" + squadPtr.ToString("X")
+                + " offset=" + fieldOffset);
+            return (squadPtr, squadClass);
         }
 
         /// <summary>
@@ -3319,13 +3388,20 @@ namespace RaidAutomation
                     IntPtr e3 = IntPtr.Zero;
                     IntPtr okPtr = il2cpp_runtime_invoke(moveNext, it, IntPtr.Zero, ref e3);
                     if (e3 != IntPtr.Zero || okPtr == IntPtr.Zero) break;
-                    bool ok = Marshal.ReadByte(okPtr, 16) != 0;  // boxed bool
+                    // il2cpp_object_unbox returns pointer to the value buffer
+                    // (skips the IL2Cpp object header) — works for any value type.
+                    IntPtr okVal = il2cpp_object_unbox(okPtr);
+                    bool ok = okVal != IntPtr.Zero && Marshal.ReadByte(okVal) != 0;
                     if (!ok) break;
                     IntPtr e4 = IntPtr.Zero;
                     IntPtr curPtr = il2cpp_runtime_invoke(getCur, it, IntPtr.Zero, ref e4);
                     if (e4 != IntPtr.Zero || curPtr == IntPtr.Zero) continue;
-                    int v = Marshal.ReadInt32(curPtr, 16);  // boxed int
+                    IntPtr curVal = il2cpp_object_unbox(curPtr);
+                    if (curVal == IntPtr.Zero) continue;
+                    int v = Marshal.ReadInt32(curVal);
                     result.Add(v);
+                    // Safety: bound the loop in case something pathological happens.
+                    if (result.Count > 50) break;
                 }
             }
             catch { }
@@ -3567,27 +3643,38 @@ namespace RaidAutomation
                 if (ctxObj == IntPtr.Zero)
                     return "{\"error\":\"no active battle-setup squad\"}";
 
-                // Step 1: clear current squad (remove every existing hero).
+                // Diff-based set: remove only heroes that aren't in the
+                // target list, add only target heroes that aren't already
+                // in the squad. This avoids unnecessary churn AND avoids
+                // re-adding heroes whose AddHero is rejected by game logic
+                // (e.g. Faction Guardians) — if a guardian is already in
+                // the squad as the carry, she stays untouched.
                 var current = ReadCurrentSquadHeroIds(ctxObj, ctxClass);
+                var targetSet = new HashSet<int>(heroIds);
+                var currentSet = new HashSet<int>(current);
+
                 int removed = 0;
                 foreach (int hid in current)
                 {
+                    if (targetSet.Contains(hid)) continue;
                     var err = InvokeIntArgMethod(ctxObj, ctxClass, "RemoveHero", 1, hid);
                     if (err == null) removed++;
                 }
 
-                // Step 2: add the requested heroes in order. Skip duplicates.
                 var added = new List<int>();
                 var seen = new HashSet<int>();
                 foreach (int hid in heroIds)
                 {
                     if (!seen.Add(hid)) continue;
+                    if (currentSet.Contains(hid)) continue;
                     var err = InvokeIntArgMethod(ctxObj, ctxClass, "AddHero", 2, hid,
                                                   secondBoolArg: true, secondVal: false);
                     if (err == null) added.Add(hid);
                 }
                 return "{\"ok\":true,\"removed\":" + removed
-                       + ",\"added\":[" + string.Join(",", added) + "]}";
+                       + ",\"added\":[" + string.Join(",", added)
+                       + "],\"already_present\":[" + string.Join(",",
+                            current.FindAll(h => targetSet.Contains(h))) + "]}";
             }
             catch (Exception ex)
             {
