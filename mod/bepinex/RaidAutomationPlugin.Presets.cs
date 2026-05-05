@@ -3138,5 +3138,365 @@ namespace RaidAutomation
             }
             return false;
         }
+
+        // =====================================================
+        // SQUAD MANIPULATION (no presets)
+        //
+        // The user-facing battle setup screen (StoryHeroesSelectionDialog,
+        // and the dungeon equivalents) embeds a HeroesSquadContext<T> that
+        // exposes AddHero / RemoveHero / Reset on the active squad. These
+        // endpoints let us drive the slots directly — no preset save needed,
+        // suitable for tight rotation loops where the team changes every
+        // few battles.
+        //
+        // Endpoints:
+        //   /squad-set?ids=A,B,C,D,E — replace the whole squad
+        //   /squad-add?hero_id=X     — add one hero to the next free slot
+        //   /squad-remove?hero_id=X  — remove a specific hero
+        //   /squad-clear             — empty all slots
+        //   /squad-current           — read current HeroIds (diagnostic)
+        // =====================================================
+
+        /// <summary>
+        /// BFS the active dialog tree looking for a MonoBehaviour whose
+        /// get_Context() returns an instance whose class hierarchy contains
+        /// HeroesSquadContext`1. Mirrors TryFindHeroesSelectionContext but
+        /// matches the squad context instead of the dialog context.
+        /// </summary>
+        private bool TryFindHeroesSquadContext(Transform root,
+                                               out IntPtr ctxObj,
+                                               out IntPtr ctxClass)
+        {
+            ctxObj = IntPtr.Zero;
+            ctxClass = IntPtr.Zero;
+
+            var queue = new Queue<KeyValuePair<Transform, int>>();
+            queue.Enqueue(new KeyValuePair<Transform, int>(root, 0));
+            int searched = 0;
+            while (queue.Count > 0 && searched < 600)
+            {
+                var pair = queue.Dequeue();
+                var t = pair.Key;
+                int depth = pair.Value;
+                searched++;
+
+                foreach (var mono in t.gameObject.GetComponents<MonoBehaviour>())
+                {
+                    if (mono == null) continue;
+                    try
+                    {
+                        IntPtr monoPtr = mono.Pointer;
+                        if (monoPtr == IntPtr.Zero) continue;
+                        IntPtr monoClass = il2cpp_object_get_class(monoPtr);
+                        if (monoClass == IntPtr.Zero) continue;
+
+                        IntPtr klass = monoClass;
+                        IntPtr getCtx = IntPtr.Zero;
+                        while (klass != IntPtr.Zero && getCtx == IntPtr.Zero)
+                        {
+                            IntPtr mIter = IntPtr.Zero;
+                            IntPtr mm;
+                            while ((mm = il2cpp_class_get_methods(klass, ref mIter)) != IntPtr.Zero)
+                            {
+                                string mn = Marshal.PtrToStringAnsi(il2cpp_method_get_name(mm));
+                                if (mn == "get_Context" && il2cpp_method_get_param_count(mm) == 0)
+                                {
+                                    getCtx = mm;
+                                    break;
+                                }
+                            }
+                            if (getCtx == IntPtr.Zero)
+                                klass = il2cpp_class_get_parent(klass);
+                        }
+                        if (getCtx == IntPtr.Zero) continue;
+
+                        IntPtr exc = IntPtr.Zero;
+                        IntPtr cobj = il2cpp_runtime_invoke(getCtx, monoPtr, IntPtr.Zero, ref exc);
+                        if (exc != IntPtr.Zero || cobj == IntPtr.Zero) continue;
+
+                        IntPtr cclass = il2cpp_object_get_class(cobj);
+                        if (cclass == IntPtr.Zero) continue;
+
+                        IntPtr scan = cclass;
+                        bool isMatch = false;
+                        while (scan != IntPtr.Zero)
+                        {
+                            string sn = Marshal.PtrToStringAnsi(il2cpp_class_get_name(scan));
+                            if (sn == "HeroesSquadContext`1") { isMatch = true; break; }
+                            if (sn == "Object" || sn == "Il2CppObjectBase") break;
+                            scan = il2cpp_class_get_parent(scan);
+                        }
+                        if (!isMatch) continue;
+
+                        ctxObj = cobj;
+                        ctxClass = cclass;
+                        return true;
+                    }
+                    catch { }
+                }
+
+                if (depth < 12)
+                {
+                    for (int ci = 0; ci < t.childCount && ci < 40; ci++)
+                        queue.Enqueue(new KeyValuePair<Transform, int>(t.GetChild(ci), depth + 1));
+                }
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Resolve the active HeroesSquadContext by walking the scene's
+        /// Dialogs root. Returns (IntPtr.Zero, IntPtr.Zero) if no battle-setup
+        /// dialog with a squad is currently visible.
+        /// </summary>
+        private (IntPtr ctxObj, IntPtr ctxClass) FindActiveSquadContext()
+        {
+            var dialogsRoot = GameObject.Find("UIManager/Canvas (Ui Root)/Dialogs");
+            if (dialogsRoot == null) return (IntPtr.Zero, IntPtr.Zero);
+            for (int di = 0; di < dialogsRoot.transform.childCount; di++)
+            {
+                var dialog = dialogsRoot.transform.GetChild(di);
+                if (!dialog.gameObject.activeSelf) continue;
+                if (TryFindHeroesSquadContext(dialog, out var ctxObj, out var ctxClass))
+                    return (ctxObj, ctxClass);
+            }
+            return (IntPtr.Zero, IntPtr.Zero);
+        }
+
+        /// <summary>
+        /// Find a method by name + parameter count on the IL2CPP class
+        /// hierarchy, walking parents until found or exhausted.
+        /// </summary>
+        private IntPtr FindClassMethodByName(IntPtr cclass, string name, int paramCount)
+        {
+            IntPtr scan = cclass;
+            while (scan != IntPtr.Zero)
+            {
+                IntPtr mIter = IntPtr.Zero;
+                IntPtr m;
+                while ((m = il2cpp_class_get_methods(scan, ref mIter)) != IntPtr.Zero)
+                {
+                    string mn = Marshal.PtrToStringAnsi(il2cpp_method_get_name(m));
+                    if (mn == name && il2cpp_method_get_param_count(m) == paramCount)
+                        return m;
+                }
+                scan = il2cpp_class_get_parent(scan);
+            }
+            return IntPtr.Zero;
+        }
+
+        /// <summary>
+        /// Read current squad hero IDs by invoking get_HeroIds() on the squad
+        /// context. Returns IEnumerable<int> as a managed list (best-effort).
+        /// </summary>
+        private List<int> ReadCurrentSquadHeroIds(IntPtr ctxObj, IntPtr ctxClass)
+        {
+            var result = new List<int>();
+            try
+            {
+                IntPtr getMethod = FindClassMethodByName(ctxClass, "get_HeroIds", 0);
+                if (getMethod == IntPtr.Zero) return result;
+                IntPtr exc = IntPtr.Zero;
+                IntPtr enumObj = il2cpp_runtime_invoke(getMethod, ctxObj, IntPtr.Zero, ref exc);
+                if (exc != IntPtr.Zero || enumObj == IntPtr.Zero) return result;
+
+                // Wrap as Il2CppSystem object and iterate.
+                var enumerable = new Il2CppSystem.Object(enumObj);
+                // Try cast to IEnumerable<int> via Il2CppSystem.Collections.IEnumerable.
+                // Easiest path: GetEnumerator() + MoveNext + Current using reflection.
+                IntPtr enumClass = il2cpp_object_get_class(enumObj);
+                IntPtr getEnum = FindClassMethodByName(enumClass, "GetEnumerator", 0);
+                if (getEnum == IntPtr.Zero) return result;
+                IntPtr exc2 = IntPtr.Zero;
+                IntPtr it = il2cpp_runtime_invoke(getEnum, enumObj, IntPtr.Zero, ref exc2);
+                if (exc2 != IntPtr.Zero || it == IntPtr.Zero) return result;
+                IntPtr itClass = il2cpp_object_get_class(it);
+                IntPtr moveNext = FindClassMethodByName(itClass, "MoveNext", 0);
+                IntPtr getCur = FindClassMethodByName(itClass, "get_Current", 0);
+                if (moveNext == IntPtr.Zero || getCur == IntPtr.Zero) return result;
+                while (true)
+                {
+                    IntPtr e3 = IntPtr.Zero;
+                    IntPtr okPtr = il2cpp_runtime_invoke(moveNext, it, IntPtr.Zero, ref e3);
+                    if (e3 != IntPtr.Zero || okPtr == IntPtr.Zero) break;
+                    bool ok = Marshal.ReadByte(okPtr, 16) != 0;  // boxed bool
+                    if (!ok) break;
+                    IntPtr e4 = IntPtr.Zero;
+                    IntPtr curPtr = il2cpp_runtime_invoke(getCur, it, IntPtr.Zero, ref e4);
+                    if (e4 != IntPtr.Zero || curPtr == IntPtr.Zero) continue;
+                    int v = Marshal.ReadInt32(curPtr, 16);  // boxed int
+                    result.Add(v);
+                }
+            }
+            catch { }
+            return result;
+        }
+
+        /// <summary>
+        /// Invoke a value-type-int method (one int parameter, void return) on
+        /// the IL2CPP context. Returns null on success, error string on failure.
+        /// </summary>
+        private string InvokeIntArgMethod(IntPtr ctxObj, IntPtr ctxClass,
+                                          string methodName, int paramCount, int heroId,
+                                          bool secondBoolArg = false, bool secondVal = false)
+        {
+            IntPtr method = FindClassMethodByName(ctxClass, methodName, paramCount);
+            if (method == IntPtr.Zero)
+                return "{\"error\":\"" + Esc(methodName) + "(" + paramCount
+                    + " params) not found on squad context\"}";
+
+            // Pin args. Each arg = pointer to value buffer.
+            int[] iBuf = new int[] { heroId };
+            byte[] bBuf = new byte[] { (byte)(secondVal ? 1 : 0) };
+            var hI = System.Runtime.InteropServices.GCHandle.Alloc(iBuf,
+                System.Runtime.InteropServices.GCHandleType.Pinned);
+            var hB = secondBoolArg
+                ? System.Runtime.InteropServices.GCHandle.Alloc(bBuf,
+                    System.Runtime.InteropServices.GCHandleType.Pinned)
+                : default;
+            try
+            {
+                IntPtr iAddr = System.Runtime.InteropServices.Marshal.UnsafeAddrOfPinnedArrayElement(iBuf, 0);
+                IntPtr[] argv;
+                if (secondBoolArg)
+                {
+                    IntPtr bAddr = System.Runtime.InteropServices.Marshal.UnsafeAddrOfPinnedArrayElement(bBuf, 0);
+                    argv = new IntPtr[] { iAddr, bAddr };
+                }
+                else
+                {
+                    argv = new IntPtr[] { iAddr };
+                }
+                var hArgs = System.Runtime.InteropServices.GCHandle.Alloc(argv,
+                    System.Runtime.InteropServices.GCHandleType.Pinned);
+                try
+                {
+                    IntPtr argsAddr = System.Runtime.InteropServices.Marshal.UnsafeAddrOfPinnedArrayElement(argv, 0);
+                    IntPtr exc = IntPtr.Zero;
+                    il2cpp_runtime_invoke(method, ctxObj, argsAddr, ref exc);
+                    if (exc != IntPtr.Zero)
+                        return "{\"error\":\"" + Esc(methodName) + " threw\"}";
+                }
+                finally { hArgs.Free(); }
+            }
+            finally
+            {
+                if (hI.IsAllocated) hI.Free();
+                if (secondBoolArg && hB.IsAllocated) hB.Free();
+            }
+            return null;
+        }
+
+        private string SquadCurrent()
+        {
+            try
+            {
+                var (ctxObj, ctxClass) = FindActiveSquadContext();
+                if (ctxObj == IntPtr.Zero)
+                    return "{\"error\":\"no active battle-setup squad\"}";
+                var ids = ReadCurrentSquadHeroIds(ctxObj, ctxClass);
+                return "{\"ok\":true,\"hero_ids\":[" + string.Join(",", ids) + "]}";
+            }
+            catch (Exception ex)
+            {
+                return "{\"error\":\"" + Esc(ex.Message) + "\"}";
+            }
+        }
+
+        private string SquadAdd(string heroIdStr)
+        {
+            if (!int.TryParse(heroIdStr, out int heroId))
+                return "{\"error\":\"hero_id (int) required\"}";
+            var (ctxObj, ctxClass) = FindActiveSquadContext();
+            if (ctxObj == IntPtr.Zero)
+                return "{\"error\":\"no active battle-setup squad\"}";
+            // AddHero(int heroId, bool showHeroFuse=false) — 2 params.
+            var err = InvokeIntArgMethod(ctxObj, ctxClass, "AddHero", 2, heroId,
+                                          secondBoolArg: true, secondVal: false);
+            if (err != null) return err;
+            return "{\"ok\":true,\"added\":" + heroId + "}";
+        }
+
+        private string SquadRemove(string heroIdStr)
+        {
+            if (!int.TryParse(heroIdStr, out int heroId))
+                return "{\"error\":\"hero_id (int) required\"}";
+            var (ctxObj, ctxClass) = FindActiveSquadContext();
+            if (ctxObj == IntPtr.Zero)
+                return "{\"error\":\"no active battle-setup squad\"}";
+            // RemoveHero(int heroId) — 1 param.
+            var err = InvokeIntArgMethod(ctxObj, ctxClass, "RemoveHero", 1, heroId);
+            if (err != null) return err;
+            return "{\"ok\":true,\"removed\":" + heroId + "}";
+        }
+
+        private string SquadClear()
+        {
+            try
+            {
+                var (ctxObj, ctxClass) = FindActiveSquadContext();
+                if (ctxObj == IntPtr.Zero)
+                    return "{\"error\":\"no active battle-setup squad\"}";
+                var current = ReadCurrentSquadHeroIds(ctxObj, ctxClass);
+                int removed = 0;
+                foreach (int hid in current)
+                {
+                    var err = InvokeIntArgMethod(ctxObj, ctxClass, "RemoveHero", 1, hid);
+                    if (err == null) removed++;
+                }
+                return "{\"ok\":true,\"removed\":" + removed + "}";
+            }
+            catch (Exception ex)
+            {
+                return "{\"error\":\"" + Esc(ex.Message) + "\"}";
+            }
+        }
+
+        private string SquadSet(string idsCsv)
+        {
+            if (string.IsNullOrEmpty(idsCsv))
+                return "{\"error\":\"ids (csv of hero ids) required\"}";
+            var heroIds = new List<int>();
+            foreach (var p in idsCsv.Split(','))
+            {
+                var s = p.Trim();
+                if (string.IsNullOrEmpty(s)) continue;
+                if (!int.TryParse(s, out int id))
+                    return "{\"error\":\"ids must be int csv: " + Esc(s) + "\"}";
+                heroIds.Add(id);
+            }
+            try
+            {
+                var (ctxObj, ctxClass) = FindActiveSquadContext();
+                if (ctxObj == IntPtr.Zero)
+                    return "{\"error\":\"no active battle-setup squad\"}";
+
+                // Step 1: clear current squad (remove every existing hero).
+                var current = ReadCurrentSquadHeroIds(ctxObj, ctxClass);
+                int removed = 0;
+                foreach (int hid in current)
+                {
+                    var err = InvokeIntArgMethod(ctxObj, ctxClass, "RemoveHero", 1, hid);
+                    if (err == null) removed++;
+                }
+
+                // Step 2: add the requested heroes in order. Skip duplicates.
+                var added = new List<int>();
+                var seen = new HashSet<int>();
+                foreach (int hid in heroIds)
+                {
+                    if (!seen.Add(hid)) continue;
+                    var err = InvokeIntArgMethod(ctxObj, ctxClass, "AddHero", 2, hid,
+                                                  secondBoolArg: true, secondVal: false);
+                    if (err == null) added.Add(hid);
+                }
+                return "{\"ok\":true,\"removed\":" + removed
+                       + ",\"added\":[" + string.Join(",", added) + "]}";
+            }
+            catch (Exception ex)
+            {
+                return "{\"error\":\"" + Esc(ex.Message) + "\"}";
+            }
+        }
     }
 }
