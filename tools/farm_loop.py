@@ -171,13 +171,35 @@ def start_battle() -> dict:
 
 
 def quick_restart() -> dict:
-    """Hit Replay on the BattleFinish dialog to start the same fight again."""
+    """Hit Replay on the BattleFinish dialog. Newer dialogs (Story) use
+    OnQuickRestartPressed; older (Campaign) might use the same. Skips going
+    back to battle-setup, replays the same battle directly."""
     dlgs = list_active_dialogs()
     finish_dialog = next((d for d in dlgs if "BattleFinish" in d), None)
     if not finish_dialog:
         return {"error": "no battle-finish dialog active"}
     path = f"UIManager/Canvas (Ui Root)/Dialogs/{finish_dialog}"
     return _get(f"/context-call?path={urllib.parse.quote(path)}&method=OnQuickRestartPressed")
+
+
+def is_on_finish() -> bool:
+    return any("BattleFinish" in d for d in list_active_dialogs())
+
+
+def is_on_loading() -> bool:
+    return any("BattleLoading" in d for d in list_active_dialogs())
+
+
+def wait_for_battle_active(timeout_s: int = 120) -> str:
+    """After a quick-restart we expect Loading → BattleHUD. Returns the
+    state we landed on."""
+    deadline = time.time() + timeout_s
+    while time.time() < deadline:
+        dlgs = list_active_dialogs()
+        if any("BattleHUD" in d for d in dlgs): return "battle"
+        if any("MessageBox" in d for d in dlgs): return "block"
+        time.sleep(2)
+    return "timeout"
 
 
 def close_finish_dialog() -> dict:
@@ -406,9 +428,15 @@ def main() -> int:
             except Exception:
                 pass
 
-        # Start battle.
-        print(f"\n--- iter {completed+1}: starting battle ---")
-        r = start_battle()
+        # Decide how to start this iteration:
+        # - iter 1 OR after a Close (we're on battle setup): use StartBattle
+        # - subsequent iters with finish dialog still open: use OnQuickRestartPressed
+        if is_on_finish():
+            print(f"\n--- iter {completed+1}: quick-restart from finish dialog ---")
+            r = quick_restart()
+        else:
+            print(f"\n--- iter {completed+1}: starting battle ---")
+            r = start_battle()
         if r.get("error"):
             print(f"  start-battle err: {r}")
             failures += 1
@@ -416,6 +444,8 @@ def main() -> int:
                 print(f"  3 consecutive start failures; aborting.")
                 break
             continue
+        # After QuickRestart, we expect to leave the finish dialog and enter
+        # BattleLoading → BattleHUD. After StartBattle, same path.
         outcome = wait_for_finish(timeout_s=300)
         if outcome != "finish":
             print(f"  battle wait: {outcome}")
@@ -423,14 +453,9 @@ def main() -> int:
             if failures >= 3: break
             continue
         completed += 1
-        # Close finish dialog → back to battle setup.
-        close_finish_dialog()
-        time.sleep(2)
-        if not is_on_battle_setup():
-            # Wait a bit longer for setup to re-appear.
-            wait_for_setup(timeout_s=30)
 
-        # Re-read state & rank-up any maxed food.
+        # Re-read state & rank-up any maxed food. (Squad context is still
+        # accessible while finish dialog is open — the dialog underneath stays.)
         if args.auto_rank_up:
             heroes = fetch_heroes()
             results = auto_rank_up_maxed(heroes, reserved, protected, args.max_rarity)
@@ -442,6 +467,8 @@ def main() -> int:
                     consumed_food.update(r["consumed"])
 
         # Refresh squad: replace consumed/maxed food with fresh picks.
+        # /squad-set works even with the finish dialog covering the
+        # battle-setup dialog underneath (MySquad still resolves).
         heroes = fetch_heroes()
         cur_squad = squad_current()
         new_food: list[int] = []
