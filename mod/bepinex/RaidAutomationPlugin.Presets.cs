@@ -3387,6 +3387,102 @@ namespace RaidAutomation
             return null;
         }
 
+        // =====================================================
+        // DIAGNOSTICS: stage history
+        //
+        // Returns the user's BattleResultsByStageId map (stageId -> hit count).
+        // Lets us reverse-engineer the StageId encoding for a chapter+stage+
+        // difficulty triple by inspecting which IDs the user has battled.
+        // Use case: identify the StageId for "Campaign 12-3 Nightmare" so we
+        // can call OpenStageCmd(stageId) and skip the manual click-thru.
+        // =====================================================
+        private string StageHistory()
+        {
+            try
+            {
+                var uw = GetUserWrapper();
+                if (uw == null) return "{\"error\":\"Not logged in\"}";
+                // user.Stages.StageData (UpdatableUserStageData) wraps UserStageData.
+                var stages = Prop(uw, "Stages");
+                if (stages == null) return "{\"error\":\"Stages wrapper null\"}";
+                // Walk the parent for StageData (protected field on StageWrapperReadOnly).
+                object stageData = null;
+                try { stageData = Prop(stages, "StageData"); } catch { }
+                if (stageData == null)
+                {
+                    // The protected field needs reflection on the type hierarchy.
+                    var t = stages.GetType();
+                    while (t != null)
+                    {
+                        var f = t.GetField("StageData", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+                        if (f != null) { stageData = f.GetValue(stages); break; }
+                        var p = t.GetProperty("StageData", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+                        if (p != null) { stageData = p.GetValue(stages); break; }
+                        t = t.BaseType;
+                    }
+                }
+                if (stageData == null) return "{\"error\":\"StageData not accessible\"}";
+                // BattleResultsByStageId is also exposed as a property on the readonly wrapper.
+                object battleResults = null;
+                try { battleResults = Prop(stages, "BattleResultsByStageId"); } catch { }
+                if (battleResults == null)
+                {
+                    try { battleResults = Prop(stageData, "BattleResultsByStageId"); } catch { }
+                }
+                if (battleResults == null) return "{\"error\":\"BattleResultsByStageId not accessible\"}";
+
+                var sb = new StringBuilder("{\"ok\":true,\"results\":[");
+                bool first = true;
+                int count = 0;
+                // IL2Cpp dicts don't expose a managed-reflection-friendly
+                // GetEnumerator over KeyValuePair. Zip Keys + Values instead.
+                var keysProp = battleResults.GetType().GetProperty("Keys");
+                var valsProp = battleResults.GetType().GetProperty("Values");
+                if (keysProp == null || valsProp == null)
+                    return "{\"error\":\"Keys/Values not on results dict\"}";
+                var keysObj = keysProp.GetValue(battleResults);
+                var valsObj = valsProp.GetValue(battleResults);
+                var kIter = keysObj?.GetType().GetMethod("GetEnumerator");
+                var vIter = valsObj?.GetType().GetMethod("GetEnumerator");
+                if (kIter == null || vIter == null)
+                    return "{\"error\":\"key/value enumerators not available\"}";
+                var kEn = kIter.Invoke(keysObj, null);
+                var vEn = vIter.Invoke(valsObj, null);
+                var kMove = kEn.GetType().GetMethod("MoveNext");
+                var vMove = vEn.GetType().GetMethod("MoveNext");
+                var kCur = kEn.GetType().GetProperty("Current");
+                var vCur = vEn.GetType().GetProperty("Current");
+                while (kMove != null && vMove != null
+                       && (bool)kMove.Invoke(kEn, null)
+                       && (bool)vMove.Invoke(vEn, null))
+                {
+                    int stageId = 0;
+                    int passes = 0;
+                    try { stageId = (int)kCur.GetValue(kEn); } catch { }
+                    var stats = vCur.GetValue(vEn);
+                    if (stats != null)
+                    {
+                        try { passes = IntProp(stats, "PassedCount"); } catch { }
+                        if (passes == 0)
+                        {
+                            try { var p = (bool)stats.GetType().GetProperty("Passed").GetValue(stats); passes = p ? 1 : 0; } catch { }
+                        }
+                    }
+                    if (!first) sb.Append(",");
+                    sb.Append("{\"id\":" + stageId + ",\"passed\":" + passes + "}");
+                    first = false;
+                    count++;
+                    if (count >= 5000) break;
+                }
+                sb.Append("],\"count\":" + count + "}");
+                return sb.ToString();
+            }
+            catch (Exception ex)
+            {
+                return "{\"error\":\"" + Esc(ex.Message) + "\"}";
+            }
+        }
+
         private string SquadCurrent()
         {
             try
