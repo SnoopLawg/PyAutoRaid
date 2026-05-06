@@ -3782,6 +3782,35 @@ namespace RaidAutomation
             }
         }
 
+        // =====================================================
+        // /open-stage?id=N — invokes OpenStageCmd(stageId).
+        // For campaign Nightmare 12-3 try 12034 (chapter*1000 + stage*10 + diff)
+        // =====================================================
+        private string OpenStage(string idStr)
+        {
+            if (string.IsNullOrEmpty(idStr) || !int.TryParse(idStr, out int stageId))
+                return "{\"error\":\"id (int) required\"}";
+            var cmdType = FindType("Client.Model.Gameplay.Stages.Commands.OpenStageCmd");
+            if (cmdType == null) return "{\"error\":\"OpenStageCmd not found\"}";
+            try
+            {
+                var ctor = cmdType.GetConstructor(new[] { typeof(int) });
+                if (ctor == null) return "{\"error\":\"OpenStageCmd(int) ctor not found\"}";
+                var cmd = ctor.Invoke(new object[] { stageId });
+                Logger.LogInfo("[OpenStage] enqueue stageId=" + stageId);
+                InvokeExecute(cmd);
+                return "{\"ok\":true,\"stage_id\":" + stageId + "}";
+            }
+            catch (TargetInvocationException tex)
+            {
+                return "{\"error\":\"" + Esc((tex.InnerException ?? tex).Message) + "\"}";
+            }
+            catch (Exception ex)
+            {
+                return "{\"error\":\"" + Esc(ex.Message) + "\"}";
+            }
+        }
+
         private string SquadCurrent()
         {
             try

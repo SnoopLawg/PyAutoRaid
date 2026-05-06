@@ -552,6 +552,7 @@ namespace RaidAutomation
                     "/squad-clear" => RunOnMainThread(() => SquadClear(), 30000),
                     "/stage-history" => RunOnMainThread(() => StageHistory(), 30000),
                     "/finish-edit-team" => RunOnMainThread(() => FinishEditTeam(), 15000),
+                    "/open-stage" => RunOnMainThread(() => OpenStage(QP(query, "id")), 15000),
                     "/set-preset-team" => RunOnMainThread(() => SetPresetTeam(QP(query, "id"), QP(query, "heroes")), 30000),
                     "/skill-texts" => RunOnMainThread(() => GetSkillTexts(QP(query, "hero_id"), QP(query, "min_grade")), 60000),
                     "/mastery-data" => RunOnMainThread(() => GetMasteryData(QP(query, "hero_id"))),
