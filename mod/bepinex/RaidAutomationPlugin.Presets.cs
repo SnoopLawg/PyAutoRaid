@@ -3258,18 +3258,33 @@ namespace RaidAutomation
             var dialogsRoot = GameObject.Find("UIManager/Canvas (Ui Root)/Dialogs");
             if (dialogsRoot == null) return (IntPtr.Zero, IntPtr.Zero);
 
-            // Step 1: find the active HeroesSelectionDialogContext via the
-            // existing BFS finder.
+            // Step 1: find the HeroesSelectionDialogContext via BFS. Don't
+            // skip activeSelf=false because the underlying battle-setup dialog
+            // gets deactivated when a finish dialog overlays it. The squad
+            // context still lives on the inactive dialog and we can still
+            // call AddHero/RemoveHero on it (verified live).
             IntPtr dlgCtx = IntPtr.Zero;
             IntPtr dlgClass = IntPtr.Zero;
             string ignoreClassName = null, ignoreNs = null;
             for (int di = 0; di < dialogsRoot.transform.childCount; di++)
             {
                 var dialog = dialogsRoot.transform.GetChild(di);
+                // Try ACTIVE first (preferred), fall back to inactive after.
                 if (!dialog.gameObject.activeSelf) continue;
                 if (TryFindHeroesSelectionContext(dialog, out dlgCtx, out dlgClass,
                                                    out ignoreClassName, out ignoreNs))
                     break;
+            }
+            if (dlgCtx == IntPtr.Zero)
+            {
+                for (int di = 0; di < dialogsRoot.transform.childCount; di++)
+                {
+                    var dialog = dialogsRoot.transform.GetChild(di);
+                    if (dialog.gameObject.activeSelf) continue;
+                    if (TryFindHeroesSelectionContext(dialog, out dlgCtx, out dlgClass,
+                                                       out ignoreClassName, out ignoreNs))
+                        break;
+                }
             }
             if (dlgCtx == IntPtr.Zero) return (IntPtr.Zero, IntPtr.Zero);
 

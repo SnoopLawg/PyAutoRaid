@@ -3,7 +3,7 @@
 
 Pre-conditions:
   - Game is on a campaign battle-setup dialog (StoryHeroesSelectionDialog).
-    For now you navigate there manually (Campaign → chapter → stage tile).
+    For now you navigate there manually (Campaign -> chapter -> stage tile).
     Auto-open is a follow-up — needs StageId discovery.
 
 Workflow each iteration:
@@ -13,7 +13,7 @@ Workflow each iteration:
      slots 2-5 via /squad-set.
   3. Start battle (StartBattle on the active dialog context).
   4. Poll until finish dialog appears, read win/loss.
-  5. After battle: re-fetch /all-heroes; for any food now at cap →
+  5. After battle: re-fetch /all-heroes; for any food now at cap ->
      rank up using same-grade fodder; replace promoted hero in the
      squad with a fresh low-level food on the next iteration.
   6. Close finish dialog (continues back to battle setup).
@@ -191,7 +191,7 @@ def is_on_loading() -> bool:
 
 
 def wait_for_battle_active(timeout_s: int = 120) -> str:
-    """After a quick-restart we expect Loading → BattleHUD. Returns the
+    """After a quick-restart we expect Loading -> BattleHUD. Returns the
     state we landed on."""
     deadline = time.time() + timeout_s
     while time.time() < deadline:
@@ -203,7 +203,7 @@ def wait_for_battle_active(timeout_s: int = 120) -> str:
 
 
 def close_finish_dialog() -> dict:
-    """Close the BattleFinish dialog → returns to battle setup. Different
+    """Close the BattleFinish dialog -> returns to battle setup. Different
     BattleFinish variants expose different close-methods; try in order."""
     dlgs = list_active_dialogs()
     finish_dialog = next((d for d in dlgs if "BattleFinish" in d), None)
@@ -244,6 +244,23 @@ def wait_for_setup(timeout_s: int = 60) -> str:
 
 def fetch_heroes() -> list[dict]:
     return _get("/all-heroes?offset=0&limit=20000").get("heroes", [])
+
+
+def fetch_artifact_ids() -> set[int]:
+    """Snapshot of every artifact instance id the user owns. We diff this
+    snapshot before/after each battle to find newly-dropped artifacts."""
+    try:
+        r = _get("/all-artifacts?limit=20000", timeout=30)
+        return {a.get("id") for a in r.get("artifacts", []) if a.get("id")}
+    except Exception:
+        return set()
+
+
+def sell_artifacts(ids: list[int]) -> dict:
+    if not ids:
+        return {"ok": True, "sold": []}
+    csv = ",".join(str(i) for i in ids)
+    return _get(f"/sell-artifacts?ids={csv}", timeout=60)
 
 
 def auto_rank_up_maxed(heroes: list[dict], reserved: set[int],
@@ -308,6 +325,10 @@ def main() -> int:
     ap.add_argument("--auto-rank-up", action="store_true", default=True,
                     help="Auto-rank-up maxed food after each battle (default ON)")
     ap.add_argument("--no-auto-rank-up", dest="auto_rank_up", action="store_false")
+    ap.add_argument("--auto-sell-drops", action="store_true", default=True,
+                    help="Auto-sell artifacts dropped during the loop (default ON). "
+                         "Anything new since the loop started is treated as farm junk.")
+    ap.add_argument("--no-auto-sell-drops", dest="auto_sell_drops", action="store_false")
     ap.add_argument("--dry-run", action="store_true",
                     help="Plan + show team but don't fire battles")
     args = ap.parse_args()
@@ -335,12 +356,15 @@ def main() -> int:
     print(f"  carry: id={carry['id']} R{carry['rarity']}/G{carry['grade']}/L{carry['level']} {carry['name']}")
     print(f"  food slots: {args.food_slots} (max rarity: {args.max_rarity})")
 
-    # Sanity: are we on a battle setup screen?
+    # Sanity: we should be on either battle setup OR a finish dialog
+    # (resuming from a paused loop). If on finish, the main loop will detect
+    # it and use OnQuickRestartPressed for the first iteration.
     dlgs = list_active_dialogs()
     print(f"  active dialogs: {dlgs}")
-    if not is_on_battle_setup():
-        print("\nERROR: no battle-setup dialog open. Navigate to a campaign stage "
-              "battle setup screen in-game first (Campaign → chapter → stage tile).",
+    if not is_on_battle_setup() and not is_on_finish():
+        print("\nERROR: not on a campaign battle-setup OR battle-finish dialog. "
+              "Navigate to a campaign stage in-game first "
+              "(Campaign -> chapter -> stage tile).",
               file=sys.stderr)
         return 1
 
@@ -361,11 +385,27 @@ def main() -> int:
             print(f"    slot {i}: id={f['id']} R{f['rarity']}/G{f['grade']}/L{f['level']} {f['name']} (runway: {runway})")
         return 0
 
-    # Initial squad set.
+    # Initial squad set. Preserve any existing squad members that are still
+    # un-maxed eligible food — saves their accumulated XP from earlier
+    # battles. Only pick fresh food for empty slots.
     food_pool = [h for h in heroes if is_food_eligible(h, reserved, protected, args.max_rarity)]
+    cur_by_id_init = {h["id"]: h for h in heroes}
+    pre_squad = squad_current()
     excluded = {carry["id"]}
     food = []
-    for _ in range(args.food_slots):
+    # First pass: keep existing food that's still good.
+    for hid in pre_squad:
+        if hid == carry["id"]: continue
+        if hid in excluded: continue
+        h = cur_by_id_init.get(hid)
+        if not h: continue
+        if at_level_cap(h): continue  # maxed, will be ranked-up later
+        if not is_food_eligible(h, reserved, protected, args.max_rarity): continue
+        food.append(h)
+        excluded.add(hid)
+        if len(food) >= args.food_slots: break
+    # Second pass: fill remaining slots with fresh picks.
+    while len(food) < args.food_slots:
         f = pick_food_slot(food_pool, excluded, args.max_rarity)
         if f is None:
             print("WARN: ran out of food candidates before filling all slots")
@@ -412,6 +452,12 @@ def main() -> int:
     failures = 0
     rank_ups = 0
     consumed_food: set[int] = set()  # food sacrificed by rank-ups; need replacements
+    sold_total = 0
+
+    # Snapshot artifacts BEFORE the first battle so we can identify drops.
+    pre_artifacts = fetch_artifact_ids() if args.auto_sell_drops else set()
+    if args.auto_sell_drops:
+        print(f"  artifact baseline: {len(pre_artifacts)} owned")
 
     while True:
         # Stop conditions
@@ -445,7 +491,7 @@ def main() -> int:
                 break
             continue
         # After QuickRestart, we expect to leave the finish dialog and enter
-        # BattleLoading → BattleHUD. After StartBattle, same path.
+        # BattleLoading -> BattleHUD. After StartBattle, same path.
         outcome = wait_for_finish(timeout_s=300)
         if outcome != "finish":
             print(f"  battle wait: {outcome}")
@@ -454,6 +500,28 @@ def main() -> int:
             continue
         completed += 1
 
+        # Auto-sell any newly-dropped artifacts. The campaign farm stage
+        # gives low-rarity drops we don't want to keep — sell everything
+        # that's appeared since the loop started.
+        if args.auto_sell_drops:
+            cur_artifacts = fetch_artifact_ids()
+            new_drops = list(cur_artifacts - pre_artifacts)
+            if new_drops:
+                print(f"  selling {len(new_drops)} new artifact drop(s)")
+                try:
+                    sr = sell_artifacts(new_drops)
+                    n_sold = len(sr.get("sold", []))
+                    sold_total += n_sold
+                    if n_sold > 0:
+                        print(f"  + sold {n_sold}")
+                    skipped = sr.get("skipped") or []
+                    if skipped:
+                        print(f"  - skipped {len(skipped)}: {skipped[:3]}")
+                except Exception as ex:
+                    print(f"  ERR sell: {ex}")
+                # Update baseline to current to avoid re-trying skipped drops.
+                pre_artifacts = cur_artifacts - set(sr.get("sold", []))
+
         # Re-read state & rank-up any maxed food. (Squad context is still
         # accessible while finish dialog is open — the dialog underneath stays.)
         if args.auto_rank_up:
@@ -461,7 +529,7 @@ def main() -> int:
             results = auto_rank_up_maxed(heroes, reserved, protected, args.max_rarity)
             for r in results:
                 if r.get("from_grade"):
-                    print(f"  + ranked up {r['target']} G{r['from_grade']}→G{r['to_grade']} "
+                    print(f"  + ranked up {r['target']} G{r['from_grade']}->G{r['to_grade']} "
                           f"(consumed {len(r['consumed'])})")
                     rank_ups += 1
                     consumed_food.update(r["consumed"])
@@ -508,7 +576,7 @@ def main() -> int:
                     time.sleep(1)
                 except Exception:
                     pass
-            print(f"  squad change → {target_team}")
+            print(f"  squad change -> {target_team}")
             squad_set(target_team)
 
         if not new_food:
@@ -518,6 +586,7 @@ def main() -> int:
     print(f"\n=== Summary ===")
     print(f"  battles: {completed}")
     print(f"  rank-ups: {rank_ups}")
+    print(f"  artifacts sold: {sold_total}")
     print(f"  failures: {failures}")
     return 0
 
