@@ -417,36 +417,44 @@ def main() -> int:
         return 1
 
     initial_team = [carry["id"]] + [f["id"] for f in food]
-    print(f"\n--- iter 0: prepping squad {initial_team} ---")
 
-    # Pre-step: move any team member from Reserve Vault / Master Vault to
-    # Champion list. The server rejects CreateBattle if the squad has any
-    # non-Inventory hero (game throws AcademyGuardians_HeroAlreadyInSlot
-    # for guardians or generic 500 for Reserve Vault picks). Plus, AddHero
-    # silently no-ops on Reserve Vault heroes — they need to be in
-    # Inventory before we put them in the squad.
-    by_id = {h["id"]: h for h in heroes}
-    move_ids = []
-    for hid in initial_team:
-        h = by_id.get(hid, {})
-        if h.get("in_storage") or h.get("in_bathhouse"):
-            move_ids.append(hid)
-    if move_ids:
-        ids_csv = ",".join(str(i) for i in move_ids)
-        print(f"  moving {len(move_ids)} squad members to Champion list...")
-        try:
-            r = _get(f"/move-heroes?dest=inventory&ids={ids_csv}")
-            print(f"  move: {r}")
-        except Exception as ex:
-            print(f"  ERR move: {ex}")
-        time.sleep(2)  # let server commit
+    # If we're starting on a finish dialog (resumed mid-session), the
+    # underlying battle-setup dialog has been removed and we cannot
+    # /squad-set. Trust whatever is in the squad and just skip squad-set
+    # — OnQuickRestartPressed will replay with the existing setup.
+    skip_initial_squad_set = is_on_finish() and not is_on_battle_setup()
+    if skip_initial_squad_set:
+        print(f"\n--- iter 0: starting on finish dialog, skipping initial squad-set ---")
+        print(f"  (loop will replay with whatever squad was last set)")
+    else:
+        print(f"\n--- iter 0: prepping squad {initial_team} ---")
 
-    print(f"  setting squad {initial_team}")
-    r = squad_set(initial_team)
-    print(f"  squad-set: {r}")
-    if not r.get("ok"):
-        print(f"ERROR: failed to set initial squad", file=sys.stderr)
-        return 1
+        # Pre-step: move any team member from Reserve Vault / Master Vault to
+        # Champion list. The server rejects CreateBattle if the squad has any
+        # non-Inventory hero. Plus, AddHero silently no-ops on Reserve Vault
+        # heroes — they need to be in Inventory first.
+        by_id = {h["id"]: h for h in heroes}
+        move_ids = []
+        for hid in initial_team:
+            h = by_id.get(hid, {})
+            if h.get("in_storage") or h.get("in_bathhouse"):
+                move_ids.append(hid)
+        if move_ids:
+            ids_csv = ",".join(str(i) for i in move_ids)
+            print(f"  moving {len(move_ids)} squad members to Champion list...")
+            try:
+                r = _get(f"/move-heroes?dest=inventory&ids={ids_csv}")
+                print(f"  move: {r}")
+            except Exception as ex:
+                print(f"  ERR move: {ex}")
+            time.sleep(2)  # let server commit
+
+        print(f"  setting squad {initial_team}")
+        r = squad_set(initial_team)
+        print(f"  squad-set: {r}")
+        if not r.get("ok"):
+            print(f"ERROR: failed to set initial squad", file=sys.stderr)
+            return 1
 
     completed = 0
     failures = 0
@@ -474,15 +482,29 @@ def main() -> int:
             except Exception:
                 pass
 
-        # Decide how to start this iteration:
-        # - iter 1 OR after a Close (we're on battle setup): use StartBattle
-        # - subsequent iters with finish dialog still open: use OnQuickRestartPressed
+        # Decide how to start this iteration based on current dialog state:
+        # - finish dialog up:        OnQuickRestartPressed (in-place replay)
+        # - battle setup up:         StartBattle
+        # - battle already running:  the auto-replay or game's auto-battle
+        #                            kicked in; just wait for it to finish
+        # - anything else:           one-shot retry, then bail
         if is_on_finish():
             print(f"\n--- iter {completed+1}: quick-restart from finish dialog ---")
             r = quick_restart()
-        else:
+        elif is_on_battle_setup():
             print(f"\n--- iter {completed+1}: starting battle ---")
             r = start_battle()
+        elif is_on_loading() or any("BattleHUD" in d for d in list_active_dialogs()):
+            print(f"\n--- iter {completed+1}: battle already running (auto-restart caught it) ---")
+            r = {"ok": True}  # nothing to do; just wait for finish
+        else:
+            print(f"\n--- iter {completed+1}: unexpected state {list_active_dialogs()}, aborting ---")
+            failures += 1
+            if failures >= 3:
+                print(f"  3 consecutive failures; aborting.")
+                break
+            time.sleep(3)
+            continue
         if r.get("error"):
             print(f"  start-battle err: {r}")
             failures += 1
@@ -534,54 +556,20 @@ def main() -> int:
                     rank_ups += 1
                     consumed_food.update(r["consumed"])
 
-        # Refresh squad: replace consumed/maxed food with fresh picks.
-        # /squad-set works even with the finish dialog covering the
-        # battle-setup dialog underneath (MySquad still resolves).
+        # NOTE: while finish dialog is up, the underlying battle-setup
+        # dialog is REMOVED from the scene tree (verified: only
+        # BattleFinishStoryDialog remains). So we cannot /squad-set
+        # mid-loop. If food has maxed out, exit and let the user reset
+        # by going back to battle setup manually.
         heroes = fetch_heroes()
-        cur_squad = squad_current()
-        new_food: list[int] = []
-        food_pool = [h for h in heroes if is_food_eligible(h, reserved, protected, args.max_rarity)]
-        excluded = {carry["id"]} | set(consumed_food)
-        # Keep food from current squad if still un-maxed and eligible.
-        cur_by_id = {h["id"]: h for h in heroes}
-        for hid in cur_squad:
-            if hid == carry["id"]: continue
-            h = cur_by_id.get(hid)
-            if not h: continue
-            if at_level_cap(h) or not is_food_eligible(h, reserved, protected, args.max_rarity):
-                continue  # skip this slot, will refill
-            new_food.append(hid)
-            excluded.add(hid)
-        # Fill remaining slots.
-        while len(new_food) < args.food_slots:
-            f = pick_food_slot(food_pool, excluded, args.max_rarity)
-            if f is None:
-                print(f"  no more food candidates; ending loop with {len(new_food)} food slots filled")
-                break
-            new_food.append(f["id"])
-            excluded.add(f["id"])
-
-        target_team = [carry["id"]] + new_food
-        if target_team != [carry["id"]] + cur_squad[1:] if cur_squad else True:
-            # Pre-move any Reserve Vault / Master Vault picks to Inventory.
-            by_id_now = {h["id"]: h for h in heroes}
-            move_ids2 = []
-            for hid in target_team:
-                h = by_id_now.get(hid, {})
-                if h.get("in_storage") or h.get("in_bathhouse"):
-                    move_ids2.append(hid)
-            if move_ids2:
-                try:
-                    _get(f"/move-heroes?dest=inventory&ids={','.join(str(i) for i in move_ids2)}")
-                    time.sleep(1)
-                except Exception:
-                    pass
-            print(f"  squad change -> {target_team}")
-            squad_set(target_team)
-
-        if not new_food:
-            print(f"  no food left — stopping")
+        squad_ids = {f["id"] for f in food}
+        squad_at_cap = [h for h in heroes if h.get("id") in squad_ids and at_level_cap(h)]
+        if squad_at_cap:
+            print(f"  food at level cap: {[h['name']+'/'+str(h['id']) for h in squad_at_cap]}")
+            print(f"  exiting loop so you can rank-up + reset squad")
             break
+        # End of iteration. Loop back to top — quick-restart from the
+        # finish dialog will fire next iter.
 
     print(f"\n=== Summary ===")
     print(f"  battles: {completed}")
