@@ -3624,6 +3624,161 @@ namespace RaidAutomation
             }
         }
 
+        // =====================================================
+        // /finish-edit-team — From the BattleFinishStoryDialog (or other
+        // finish-dialog variants), invokes OpenSelectionDialog which closes
+        // the finish dialog and re-opens StoryHeroesSelectionDialog with
+        // the same squad. Equivalent to clicking the in-game "Edit Team"
+        // button. After this lands, /squad-set works again because the
+        // battle-setup dialog is back in the scene tree.
+        // =====================================================
+        private string FinishEditTeam()
+        {
+            try
+            {
+                var dialogsRoot = GameObject.Find("UIManager/Canvas (Ui Root)/Dialogs");
+                if (dialogsRoot == null) return "{\"error\":\"no Dialogs root\"}";
+                // Find the active BattleFinish dialog (Story / Campaign / etc.).
+                Transform finishDlg = null;
+                for (int di = 0; di < dialogsRoot.transform.childCount; di++)
+                {
+                    var d = dialogsRoot.transform.GetChild(di);
+                    if (!d.gameObject.activeSelf) continue;
+                    if (d.gameObject.name.Contains("BattleFinish"))
+                    {
+                        finishDlg = d;
+                        break;
+                    }
+                }
+                if (finishDlg == null) return "{\"error\":\"no active BattleFinish dialog\"}";
+
+                // BFS the dialog tree for any MonoBehaviour whose Context is
+                // a BattleFinishStorylineDialogContext (or similar). Then
+                // call OpenSelectionDialog on it (any arity).
+                var queue = new Queue<Transform>();
+                queue.Enqueue(finishDlg);
+                int searched = 0;
+                while (queue.Count > 0 && searched < 600)
+                {
+                    var t = queue.Dequeue();
+                    searched++;
+                    foreach (var mono in t.gameObject.GetComponents<MonoBehaviour>())
+                    {
+                        if (mono == null) continue;
+                        try
+                        {
+                            IntPtr monoPtr = mono.Pointer;
+                            if (monoPtr == IntPtr.Zero) continue;
+                            IntPtr monoClass = il2cpp_object_get_class(monoPtr);
+                            // Find get_Context.
+                            IntPtr getCtx = IntPtr.Zero;
+                            IntPtr ck = monoClass;
+                            while (ck != IntPtr.Zero && getCtx == IntPtr.Zero)
+                            {
+                                IntPtr mIter = IntPtr.Zero;
+                                IntPtr m;
+                                while ((m = il2cpp_class_get_methods(ck, ref mIter)) != IntPtr.Zero)
+                                {
+                                    string mn = Marshal.PtrToStringAnsi(il2cpp_method_get_name(m));
+                                    if (mn == "get_Context" && il2cpp_method_get_param_count(m) == 0)
+                                    {
+                                        getCtx = m;
+                                        break;
+                                    }
+                                }
+                                if (getCtx == IntPtr.Zero) ck = il2cpp_class_get_parent(ck);
+                            }
+                            if (getCtx == IntPtr.Zero) continue;
+
+                            IntPtr exc = IntPtr.Zero;
+                            IntPtr ctxObj = il2cpp_runtime_invoke(getCtx, monoPtr, IntPtr.Zero, ref exc);
+                            if (exc != IntPtr.Zero || ctxObj == IntPtr.Zero) continue;
+                            IntPtr ctxClass = il2cpp_object_get_class(ctxObj);
+                            if (ctxClass == IntPtr.Zero) continue;
+
+                            // Filter to BattleFinish*DialogContext.
+                            string ctxName = Marshal.PtrToStringAnsi(il2cpp_class_get_name(ctxClass)) ?? "";
+                            if (!ctxName.Contains("BattleFinish")) continue;
+
+                            // Find OpenSelectionDialog (any arity, walk parents).
+                            IntPtr openMethod = IntPtr.Zero;
+                            int openArity = -1;
+                            IntPtr scan = ctxClass;
+                            while (scan != IntPtr.Zero && openMethod == IntPtr.Zero)
+                            {
+                                IntPtr mIter = IntPtr.Zero;
+                                IntPtr m;
+                                while ((m = il2cpp_class_get_methods(scan, ref mIter)) != IntPtr.Zero)
+                                {
+                                    string mn = Marshal.PtrToStringAnsi(il2cpp_method_get_name(m));
+                                    if (mn == "OpenSelectionDialog")
+                                    {
+                                        openMethod = m;
+                                        openArity = (int)il2cpp_method_get_param_count(m);
+                                        break;
+                                    }
+                                }
+                                if (openMethod == IntPtr.Zero) scan = il2cpp_class_get_parent(scan);
+                            }
+                            if (openMethod == IntPtr.Zero) continue;
+
+                            // Invoke. If 0-arg, no params. If 1-arg, pass null
+                            // (typical "open with default state" pattern).
+                            IntPtr argsArr = IntPtr.Zero;
+                            if (openArity > 0)
+                            {
+                                argsArr = Marshal.AllocHGlobal(IntPtr.Size * openArity);
+                                for (int i = 0; i < openArity; i++)
+                                    Marshal.WriteIntPtr(argsArr, i * IntPtr.Size, IntPtr.Zero);
+                            }
+                            IntPtr exc2 = IntPtr.Zero;
+                            try
+                            {
+                                il2cpp_runtime_invoke(openMethod, ctxObj, argsArr, ref exc2);
+                            }
+                            finally
+                            {
+                                if (argsArr != IntPtr.Zero) Marshal.FreeHGlobal(argsArr);
+                            }
+                            if (exc2 != IntPtr.Zero)
+                            {
+                                string excMsg = "(no detail)";
+                                try
+                                {
+                                    IntPtr excClass = il2cpp_object_get_class(exc2);
+                                    IntPtr getMsg = FindClassMethodByName(excClass, "get_Message", 0);
+                                    if (getMsg != IntPtr.Zero)
+                                    {
+                                        IntPtr exc3 = IntPtr.Zero;
+                                        IntPtr msgPtr = il2cpp_runtime_invoke(getMsg, exc2, IntPtr.Zero, ref exc3);
+                                        if (msgPtr != IntPtr.Zero)
+                                        {
+                                            string mg = Il2CppInterop.Runtime.IL2CPP.Il2CppStringToManaged(msgPtr);
+                                            if (!string.IsNullOrEmpty(mg)) excMsg = mg;
+                                        }
+                                    }
+                                }
+                                catch { }
+                                return "{\"error\":\"OpenSelectionDialog threw: " + Esc(excMsg) + "\"}";
+                            }
+                            Logger.LogInfo("[Finish] OpenSelectionDialog invoked on " + ctxName
+                                + " (arity " + openArity + ")");
+                            return "{\"ok\":true,\"context\":\"" + Esc(ctxName)
+                                + "\",\"arity\":" + openArity + "}";
+                        }
+                        catch { }
+                    }
+                    for (int ci = 0; ci < t.childCount && ci < 40; ci++)
+                        queue.Enqueue(t.GetChild(ci));
+                }
+                return "{\"error\":\"no BattleFinish*DialogContext.OpenSelectionDialog found\"}";
+            }
+            catch (Exception ex)
+            {
+                return "{\"error\":\"" + Esc(ex.Message) + "\"}";
+            }
+        }
+
         private string SquadCurrent()
         {
             try

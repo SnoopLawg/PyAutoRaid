@@ -170,6 +170,13 @@ def start_battle() -> dict:
     return _get(f"/context-call?path={urllib.parse.quote(path)}&method=StartBattle")
 
 
+def finish_edit_team() -> dict:
+    """From a BattleFinish dialog, invoke OpenSelectionDialog (Edit Team
+    button) which closes the finish dialog and re-opens battle setup
+    with the same squad — restoring the squad context for /squad-set."""
+    return _get("/finish-edit-team", timeout=15)
+
+
 def quick_restart() -> dict:
     """Hit Replay on the BattleFinish dialog. Newer dialogs (Story) use
     OnQuickRestartPressed; older (Campaign) might use the same. Skips going
@@ -558,20 +565,72 @@ def main() -> int:
                     rank_ups += 1
                     consumed_food.update(r["consumed"])
 
-        # NOTE: while finish dialog is up, the underlying battle-setup
-        # dialog is REMOVED from the scene tree (verified: only
-        # BattleFinishStoryDialog remains). So we cannot /squad-set
-        # mid-loop. If food has maxed out, exit and let the user reset
-        # by going back to battle setup manually.
+        # If any food in the squad has hit level cap, swap them out for
+        # fresh L1 fodder. The /finish-edit-team mod endpoint clicks the
+        # in-game "Edit Team" button (OpenSelectionDialog), which closes
+        # the finish dialog and re-opens battle setup with the current
+        # squad — squad-context becomes addressable again.
         heroes = fetch_heroes()
         squad_ids = {f["id"] for f in food}
-        squad_at_cap = [h for h in heroes if h.get("id") in squad_ids and at_level_cap(h)]
-        if squad_at_cap:
-            print(f"  food at level cap: {[h['name']+'/'+str(h['id']) for h in squad_at_cap]}")
-            print(f"  exiting loop so you can rank-up + reset squad")
-            break
-        # End of iteration. Loop back to top — quick-restart from the
-        # finish dialog will fire next iter.
+        cur_by_id = {h["id"]: h for h in heroes}
+        maxed = [cur_by_id[hid] for hid in squad_ids
+                 if hid in cur_by_id and at_level_cap(cur_by_id[hid])]
+        if maxed:
+            print(f"  food at level cap: {[h['name']+'/'+str(h['id']) for h in maxed]}")
+            # Pick replacements from the same eligible pool, excluding what's
+            # already in the squad (un-maxed) and any previously-consumed.
+            food_pool = [h for h in heroes if is_food_eligible(
+                            h, reserved, protected, args.max_rarity)]
+            keep = [hid for hid in squad_ids
+                    if hid in cur_by_id
+                    and not at_level_cap(cur_by_id[hid])
+                    and is_food_eligible(cur_by_id[hid], reserved, protected, args.max_rarity)]
+            excluded = {carry["id"]} | set(keep) | set(consumed_food) | squad_ids
+            new_picks = []
+            for _ in range(len(maxed)):
+                p = pick_food_slot(food_pool, excluded, args.max_rarity)
+                if p is None:
+                    print(f"  no more fresh food left; ending loop")
+                    break
+                new_picks.append(p)
+                excluded.add(p["id"])
+            if not new_picks:
+                break
+            target_team = [carry["id"]] + keep + [p["id"] for p in new_picks]
+            print(f"  swapping {len(maxed)} maxed for fresh: -> {target_team}")
+
+            # Pre-move any Reserve Vault picks to Inventory.
+            move_ids = [p["id"] for p in new_picks
+                        if p.get("in_storage") or p.get("in_bathhouse")]
+            if move_ids:
+                ids_csv = ",".join(str(i) for i in move_ids)
+                try:
+                    _get(f"/move-heroes?dest=inventory&ids={ids_csv}")
+                    time.sleep(1)
+                except Exception:
+                    pass
+
+            # Click "Edit Team" — re-opens battle setup.
+            r = finish_edit_team()
+            print(f"  edit-team: {r}")
+            if not r.get("ok"):
+                print(f"  exiting (couldn't re-open battle setup)")
+                break
+            time.sleep(2)  # let the dialog transition
+
+            # Now squad-set works. Push the new squad.
+            r = squad_set(target_team)
+            print(f"  squad-set: {r}")
+            if not r.get("ok"):
+                print(f"  exiting (squad-set failed: {r.get('error')})")
+                break
+
+            # Update local food tracking for the next iter check.
+            food = [cur_by_id[hid] for hid in keep if hid in cur_by_id] + new_picks
+            # Next iter: is_on_battle_setup() will be true, StartBattle path.
+        # End of iteration. Loop back to top — quick-restart fires when
+        # we're still on the finish dialog (no swap), or StartBattle when
+        # we just edited the team.
 
     print(f"\n=== Summary ===")
     print(f"  battles: {completed}")
