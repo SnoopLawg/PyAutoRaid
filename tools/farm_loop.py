@@ -322,8 +322,10 @@ def main() -> int:
                     help="Stop after N battles (0 = unlimited)")
     ap.add_argument("--until-energy", type=int, default=None,
                     help="Stop when /all-resources Energy <= N")
-    ap.add_argument("--auto-rank-up", action="store_true", default=True,
-                    help="Auto-rank-up maxed food after each battle (default ON)")
+    ap.add_argument("--auto-rank-up", action="store_true", default=False,
+                    help="Auto-rank-up maxed food after each battle (default OFF — "
+                         "preferred workflow: accumulate maxed food, batch rank-up "
+                         "via champ_manager.py).")
     ap.add_argument("--no-auto-rank-up", dest="auto_rank_up", action="store_false")
     ap.add_argument("--auto-sell-drops", action="store_true", default=True,
                     help="Auto-sell artifacts dropped during the loop (default ON). "
