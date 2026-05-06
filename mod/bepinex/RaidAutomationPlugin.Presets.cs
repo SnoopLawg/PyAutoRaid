@@ -3722,15 +3722,18 @@ namespace RaidAutomation
                             }
                             if (openMethod == IntPtr.Zero) continue;
 
-                            // Invoke. If 0-arg, no params. If 1-arg, pass null
-                            // (typical "open with default state" pattern).
-                            IntPtr argsArr = IntPtr.Zero;
-                            if (openArity > 0)
+                            // CRASH GUARD: only invoke 0-arg overloads. The 1-arg
+                            // OpenSelectionDialog needs a State object — passing null
+                            // crashes the game (verified). For the non-zero-arity
+                            // case we'd need a real state value.
+                            if (openArity != 0)
                             {
-                                argsArr = Marshal.AllocHGlobal(IntPtr.Size * openArity);
-                                for (int i = 0; i < openArity; i++)
-                                    Marshal.WriteIntPtr(argsArr, i * IntPtr.Size, IntPtr.Zero);
+                                Logger.LogWarning("[Finish] OpenSelectionDialog has "
+                                    + openArity + " args — skipping (need state object)");
+                                return "{\"error\":\"OpenSelectionDialog requires arity-"
+                                    + openArity + " args; only 0-arg supported\"}";
                             }
+                            IntPtr argsArr = IntPtr.Zero;
                             IntPtr exc2 = IntPtr.Zero;
                             try
                             {

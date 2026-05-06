@@ -370,9 +370,11 @@ def main() -> int:
     # it and use OnQuickRestartPressed for the first iteration.
     dlgs = list_active_dialogs()
     print(f"  active dialogs: {dlgs}")
-    if not is_on_battle_setup() and not is_on_finish():
-        print("\nERROR: not on a campaign battle-setup OR battle-finish dialog. "
-              "Navigate to a campaign stage in-game first "
+    on_battle_running = (any("BattleHUD" in d for d in dlgs)
+                         or any("BattleLoading" in d for d in dlgs))
+    if not is_on_battle_setup() and not is_on_finish() and not on_battle_running:
+        print("\nERROR: not on a campaign battle-setup OR battle-finish OR running "
+              "battle. Navigate to a campaign stage in-game first "
               "(Campaign -> chapter -> stage tile).",
               file=sys.stderr)
         return 1
@@ -431,10 +433,22 @@ def main() -> int:
     # underlying battle-setup dialog has been removed and we cannot
     # /squad-set. Trust whatever is in the squad and just skip squad-set
     # — OnQuickRestartPressed will replay with the existing setup.
-    skip_initial_squad_set = is_on_finish() and not is_on_battle_setup()
+    skip_initial_squad_set = (is_on_finish() or on_battle_running) and not is_on_battle_setup()
+    # If we're resuming from finish dialog, click "Edit Team" up-front so
+    # we land back on battle setup. squad_current can read the live squad
+    # there, which is the only way to drive the swap-on-cap logic later.
+    if is_on_finish():
+        print(f"\n--- iter 0: starting on finish dialog, clicking Edit Team ---")
+        r = finish_edit_team()
+        print(f"  edit-team: {r}")
+        if r.get("ok"):
+            time.sleep(2)
+            # Re-fetch dialog state — should now be on battle setup.
+            if is_on_battle_setup():
+                skip_initial_squad_set = False
     if skip_initial_squad_set:
-        print(f"\n--- iter 0: starting on finish dialog, skipping initial squad-set ---")
-        print(f"  (loop will replay with whatever squad was last set)")
+        print(f"\n--- iter 0: starting on running battle, skipping initial squad-set ---")
+        print(f"  (loop will continue with whatever squad was last set)")
     else:
         print(f"\n--- iter 0: prepping squad {initial_team} ---")
 
