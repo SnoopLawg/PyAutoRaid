@@ -2977,6 +2977,262 @@ namespace RaidAutomation
         // reward tiers, start/end timestamps. Surfacing it raw lets
         // tooling decide which events are worth farming.
         // =====================================================
+        // /cvc-multipliers — read the user's active Clan vs Clan tournament
+        // and extract per-activity-group multipliers so callers can answer
+        // "what locations have 2x CvC right now?". Returns:
+        //   {ok, active: bool, ends_at: ms, multipliers: [{group: "Dragon",
+        //    multiplier: 2.0, activity_ids: [...], group_id: 5}, ...]}
+        // If no CvC tournament is currently active, returns active=false and
+        // an empty multipliers list (no fields raised as errors).
+        // /super-raid?action=status|toggle|on|off
+        // Read or set the Super Raid (BattleMultiplier) toggle on the open
+        // Heroes*SelectionDialog. Super Raid doubles per-run rewards AND
+        // energy/key cost (or triples at x3). Game model:
+        //   MultiRunContext._active     (bool) - currently on
+        //   MultiRunContext._enabled    (bool) - can be toggled
+        //   MultiRunContext._locked     (bool) - blocked (mid-multi-battle)
+        //   MultiRunContext._multiplier (int)  - 1/2/3 (none/double/triple)
+        //   MultiRunContext.OnToggle()         - cycles x1 -> x2 (-> x3 if avail)
+        // Stage rules:
+        //   * Available on: Campaign, Dungeons, Doom Tower, Faction Wars
+        //   * Not on: Hydra/CB/Chimera/Arena (multi-battle works differently)
+        //   * Stage must be passed at least once before toggle is enabled
+        private string SuperRaid(string action)
+        {
+            try
+            {
+                var dialogsRoot = GameObject.Find("UIManager/Canvas (Ui Root)/Dialogs");
+                if (dialogsRoot == null) return "{\"error\":\"no Dialogs root\"}";
+
+                IntPtr ctxObj = IntPtr.Zero, ctxClass = IntPtr.Zero;
+                string ctxName = null, ctxNs = null;
+                for (int di = 0; di < dialogsRoot.transform.childCount; di++)
+                {
+                    var dialog = dialogsRoot.transform.GetChild(di);
+                    if (!dialog.gameObject.activeSelf) continue;
+                    if (TryFindHeroesSelectionContext(dialog, out ctxObj, out ctxClass, out ctxName, out ctxNs))
+                        break;
+                }
+                if (ctxObj == IntPtr.Zero)
+                    return "{\"error\":\"no active heroes-selection dialog (Super Raid only togglable from battle setup)\"}";
+
+                // Walk class hierarchy to find MultiRun field on this context.
+                IntPtr mrField = IntPtr.Zero;
+                uint mrOff = 0;
+                IntPtr scan = ctxClass;
+                while (scan != IntPtr.Zero)
+                {
+                    IntPtr fIter = IntPtr.Zero;
+                    IntPtr ff;
+                    while ((ff = il2cpp_class_get_fields(scan, ref fIter)) != IntPtr.Zero)
+                    {
+                        string fn = Marshal.PtrToStringAnsi(il2cpp_field_get_name(ff));
+                        if (fn == "MultiRun")
+                        { mrField = ff; mrOff = il2cpp_field_get_offset(ff); break; }
+                    }
+                    if (mrField != IntPtr.Zero) break;
+                    scan = il2cpp_class_get_parent(scan);
+                }
+                if (mrField == IntPtr.Zero)
+                    return "{\"ok\":true,\"available\":false,\"note\":\"this stage type doesn't support Super Raid (e.g. CB/Hydra/Arena)\"}";
+
+                IntPtr mrCtx = Marshal.ReadIntPtr(ctxObj, (int)mrOff);
+                if (mrCtx == IntPtr.Zero)
+                    return "{\"ok\":true,\"available\":false,\"note\":\"MultiRunContext is null\"}";
+
+                // Wrap raw IL2CPP pointer back into a managed object via the
+                // standard Il2Cpp interop (TypeName)..ctor(IntPtr) pattern —
+                // same approach as RaidAutomationPlugin.Battle.cs line 304.
+                object mrManaged = null;
+                string wrapErr = null;
+                foreach (var typeName in new[] {
+                    "Client.ViewModel.Contextes.MultiRun.MultiRunContext",
+                    "Client.ViewModel.Contextes.MultiRunContext",
+                })
+                {
+                    var t = FindType(typeName);
+                    if (t == null) continue;
+                    try
+                    {
+                        mrManaged = Activator.CreateInstance(t, mrCtx);
+                        if (mrManaged != null) break;
+                    }
+                    catch (Exception ce) { wrapErr = $"{typeName}: {ce.Message}"; }
+                }
+                if (mrManaged == null)
+                    return "{\"error\":\"could not wrap MultiRunContext as managed object\",\"detail\":\"" + Esc(wrapErr ?? "type not found") + "\"}";
+
+                bool active = false, enabled = false, locked = false;
+                int multiplier = 1;
+                try { var p = Prop(mrManaged, "_active"); if (p != null) active = (bool)Prop(p, "Value"); } catch { }
+                try { var p = Prop(mrManaged, "_enabled"); if (p != null) enabled = (bool)Prop(p, "Value"); } catch { }
+                try { var p = Prop(mrManaged, "_locked"); if (p != null) locked = (bool)Prop(p, "Value"); } catch { }
+                try { var p = Prop(mrManaged, "_multiplier"); if (p != null) multiplier = Convert.ToInt32(Prop(p, "Value")); } catch { }
+
+                action = (action ?? "status").ToLower();
+                string actionResult = "noop";
+                if (action == "toggle" || (action == "on" && !active) || (action == "off" && active))
+                {
+                    if (locked || !enabled)
+                    {
+                        return "{\"ok\":true,\"active\":" + (active?"true":"false")
+                            + ",\"enabled\":" + (enabled?"true":"false")
+                            + ",\"locked\":" + (locked?"true":"false")
+                            + ",\"multiplier\":" + multiplier
+                            + ",\"action_skipped\":\"locked or not-enabled\"}";
+                    }
+                    var onToggle = mrManaged.GetType().GetMethod("OnToggle",
+                        BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                    if (onToggle == null)
+                        return "{\"error\":\"OnToggle method not found on MultiRunContext\"}";
+                    onToggle.Invoke(mrManaged, null);
+                    actionResult = "toggled";
+                    try { var p = Prop(mrManaged, "_active"); if (p != null) active = (bool)Prop(p, "Value"); } catch { }
+                    try { var p = Prop(mrManaged, "_multiplier"); if (p != null) multiplier = Convert.ToInt32(Prop(p, "Value")); } catch { }
+                }
+
+                return "{\"ok\":true,\"available\":true"
+                     + ",\"active\":" + (active?"true":"false")
+                     + ",\"enabled\":" + (enabled?"true":"false")
+                     + ",\"locked\":" + (locked?"true":"false")
+                     + ",\"multiplier\":" + multiplier
+                     + ",\"action\":\"" + Esc(action) + "\""
+                     + ",\"action_result\":\"" + Esc(actionResult) + "\"}";
+            }
+            catch (Exception ex)
+            {
+                return "{\"error\":\"" + Esc(ex.Message) + "\"}";
+            }
+        }
+
+        // /cvc-multipliers — read the user's active Clan vs Clan tournament
+        // and extract per-activity-group point multipliers so callers can
+        // answer "what locations have 2x CvC right now?". Reads
+        // Quest.CvcTournamentInfo.PointsMultipliers[] which is the source
+        // of truth used by the in-game multiplier badges.
+        private string GetCvcMultipliers()
+        {
+            try
+            {
+                var uw = GetUserWrapper();
+                if (uw == null) return "{\"error\":\"Not logged in\"}";
+                var cvc = Prop(uw, "CvcTournament");
+                if (cvc == null)
+                    return "{\"ok\":true,\"active\":false,\"multipliers\":[],\"note\":\"CvcTournament missing\"}";
+
+                bool hasActive = false, isParticipate = false, isEnabled = false;
+                long endsMs = 0;
+                try { hasActive = (bool)(Prop(cvc, "HasActive") ?? false); } catch { }
+                try { isParticipate = (bool)(Prop(cvc, "IsParticipate") ?? false); } catch { }
+                try { isEnabled = (bool)(Prop(cvc, "IsEnabled") ?? false); } catch { }
+                try
+                {
+                    var et = Prop(cvc, "EndTime");
+                    if (et != null)
+                    {
+                        var hv = et.GetType().GetProperty("HasValue");
+                        if (hv != null && (bool)hv.GetValue(et))
+                        {
+                            var v = et.GetType().GetProperty("Value").GetValue(et);
+                            var ticksProp = v.GetType().GetProperty("Ticks");
+                            if (ticksProp != null)
+                            {
+                                long ticks = (long)ticksProp.GetValue(v);
+                                endsMs = (ticks - 621_355_968_000_000_000L) / 10_000L;
+                            }
+                        }
+                    }
+                }
+                catch { }
+
+                // Pull per-activity-group multipliers from
+                // Quest.CvcTournamentInfo.PointsMultipliers[].
+                var mults = new System.Collections.Generic.List<string>();
+                string err = null;
+                string diag = "";
+                try
+                {
+                    var quest = Prop(cvc, "Quest");
+                    diag = "quest=" + (quest == null ? "null" : quest.GetType().Name);
+                    object info = null;
+                    if (quest != null)
+                    {
+                        info = Prop(quest, "CvcTournamentInfo");
+                        diag += "; info=" + (info == null ? "null" : info.GetType().Name);
+                    }
+                    object pms = null;
+                    if (info != null)
+                    {
+                        pms = Prop(info, "PointsMultipliers");
+                        diag += "; pms=" + (pms == null ? "null" : pms.GetType().Name);
+                    }
+                    if (pms != null)
+                    {
+                        // Use ListItems (count+indexer) — IL2CPP Lists don't
+                        // implement System.Collections.IEnumerable cleanly.
+                        int dbgCount = 0;
+                        foreach (var pm in ListItems(pms))
+                        {
+                            dbgCount++;
+                            if (pm == null) continue;
+                            int gid = 0;
+                            double mult = 0.0;
+                            int upper = 0;
+                            try { gid = Convert.ToInt32(Prop(pm, "ActivityGroup")); } catch { }
+                            try { mult = Convert.ToDouble(Prop(pm, "Multiplier")); } catch { }
+                            try { upper = Convert.ToInt32(Prop(pm, "UpperLimit")); } catch { }
+                            string lbl = gid switch
+                            {
+                                1 => "Hero", 2 => "Story (Campaign)",
+                                3 => "AllKeep", 4 => "Minotaur",
+                                5 => "Dragon", 6 => "IceGolem",
+                                7 => "FireKnight", 8 => "Spider",
+                                9 => "FactionWars", 10 => "Arena",
+                                11 => "AllianceBoss (CB/Demon Lord)",
+                                12 => "ArtifactAndJewelry (Gear)",
+                                13 => "Craft", 14 => "Other",
+                                15 => "ArtifactAscendDungeon",
+                                16 => "JewelryAscendDungeon",
+                                17 => "DoubleAscendDungeon",
+                                18 => "EventDungeon",
+                                _ => "Group" + gid,
+                            };
+                            mults.Add("{\"group_id\":" + gid
+                                + ",\"group\":\"" + Esc(lbl) + "\""
+                                + ",\"multiplier\":" + mult.ToString("F2")
+                                + ",\"upper_limit\":" + upper + "}");
+                        }
+                        diag += "; iter_count=" + dbgCount;
+                    }
+                }
+                catch (Exception qx) { err = qx.Message; }
+
+                var sb = new StringBuilder(2048);
+                sb.Append("{\"ok\":true");
+                sb.Append(",\"active\":").Append(hasActive ? "true" : "false");
+                sb.Append(",\"is_participate\":").Append(isParticipate ? "true" : "false");
+                sb.Append(",\"is_enabled\":").Append(isEnabled ? "true" : "false");
+                sb.Append(",\"ends_at\":").Append(endsMs);
+                sb.Append(",\"count\":").Append(mults.Count);
+                sb.Append(",\"multipliers\":[");
+                for (int i = 0; i < mults.Count; i++)
+                {
+                    if (i > 0) sb.Append(",");
+                    sb.Append(mults[i]);
+                }
+                sb.Append("]");
+                if (err != null)
+                    sb.Append(",\"error\":\"").Append(Esc(err)).Append("\"");
+                sb.Append(",\"diag\":\"").Append(Esc(diag)).Append("\"");
+                sb.Append("}");
+                return sb.ToString();
+            }
+            catch (Exception ex)
+            {
+                return "{\"error\":\"" + Esc(ex.Message) + "\"}";
+            }
+        }
+
         private string GetEvents()
         {
             try
@@ -3775,6 +4031,1016 @@ namespace RaidAutomation
                         queue.Enqueue(t.GetChild(ci));
                 }
                 return "{\"error\":\"no BattleFinish*DialogContext.OpenSelectionDialog found\"}";
+            }
+            catch (Exception ex)
+            {
+                return "{\"error\":\"" + Esc(ex.Message) + "\"}";
+            }
+        }
+
+        // =====================================================
+        // /open-chapter?n=N — from world map (MapHUD), open chapter N's
+        // region map. MapContext (not MapHUDContext — different type)
+        // owns _region1.._region12 fields, each a MapRegionItemContext
+        // with `_regionType : RegionTypeId`. We:
+        //   1. find MapContext in active dialogs
+        //   2. read `_regionN._regionType` (the int)
+        //   3. invoke MapContext.OnRegionClick(regionType)
+        // Same downstream path as a user tapping chapter N on the world
+        // map. Difficulty is whatever the dropdown is currently set to —
+        // separate /set-map-difficulty endpoint covers that case.
+        // =====================================================
+        private string OpenChapter(string nStr)
+        {
+            if (string.IsNullOrEmpty(nStr) || !int.TryParse(nStr, out int chapterN))
+                return "{\"error\":\"n (1..12) required\"}";
+            if (chapterN < 1 || chapterN > 12)
+                return "{\"error\":\"n must be 1..12\"}";
+            try
+            {
+                var allMBs = UnityEngine.Object.FindObjectsOfType<MonoBehaviour>();
+                IntPtr mapCtx = IntPtr.Zero, mapClass = IntPtr.Zero;
+                foreach (var mono in allMBs)
+                {
+                    if (mono == null) continue;
+                    try
+                    {
+                        IntPtr monoPtr = mono.Pointer;
+                        if (monoPtr == IntPtr.Zero) continue;
+                        IntPtr monoClass = il2cpp_object_get_class(monoPtr);
+                        if (monoClass == IntPtr.Zero) continue;
+                        IntPtr getCtx = IntPtr.Zero;
+                        IntPtr klass = monoClass;
+                        while (klass != IntPtr.Zero && getCtx == IntPtr.Zero)
+                        {
+                            IntPtr mIter = IntPtr.Zero;
+                            IntPtr m;
+                            while ((m = il2cpp_class_get_methods(klass, ref mIter)) != IntPtr.Zero)
+                            {
+                                string mn = Marshal.PtrToStringAnsi(il2cpp_method_get_name(m));
+                                if (mn == "get_Context" && il2cpp_method_get_param_count(m) == 0)
+                                { getCtx = m; break; }
+                            }
+                            if (getCtx == IntPtr.Zero) klass = il2cpp_class_get_parent(klass);
+                        }
+                        if (getCtx == IntPtr.Zero) continue;
+                        IntPtr exc = IntPtr.Zero;
+                        IntPtr cobj = il2cpp_runtime_invoke(getCtx, monoPtr, IntPtr.Zero, ref exc);
+                        if (exc != IntPtr.Zero || cobj == IntPtr.Zero) continue;
+                        IntPtr cclass = il2cpp_object_get_class(cobj);
+                        if (cclass == IntPtr.Zero) continue;
+                        string sn = Marshal.PtrToStringAnsi(il2cpp_class_get_name(cclass));
+                        if (sn != "MapContext") continue;
+                        mapCtx = cobj; mapClass = cclass;
+                        break;
+                    }
+                    catch { }
+                }
+                if (mapCtx == IntPtr.Zero)
+                    return "{\"error\":\"MapContext not found in scene\"}";
+
+                // Find _regionN field
+                string fname = "_region" + chapterN;
+                IntPtr fRegion = IntPtr.Zero;
+                uint regOff = 0;
+                IntPtr scan = mapClass;
+                while (scan != IntPtr.Zero)
+                {
+                    IntPtr fIter = IntPtr.Zero;
+                    IntPtr ff;
+                    while ((ff = il2cpp_class_get_fields(scan, ref fIter)) != IntPtr.Zero)
+                    {
+                        string fn = Marshal.PtrToStringAnsi(il2cpp_field_get_name(ff));
+                        if (fn == fname)
+                        { fRegion = ff; regOff = il2cpp_field_get_offset(ff); break; }
+                    }
+                    if (fRegion != IntPtr.Zero) break;
+                    scan = il2cpp_class_get_parent(scan);
+                }
+                if (fRegion == IntPtr.Zero)
+                    return "{\"error\":\"" + fname + " field not on MapContext\"}";
+                IntPtr regionItemPtr = Marshal.ReadIntPtr(mapCtx, (int)regOff);
+                if (regionItemPtr == IntPtr.Zero)
+                    return "{\"error\":\"" + fname + " is null (chapter likely not yet unlocked)\"}";
+
+                // Read _regionType from MapRegionItemContext
+                IntPtr riClass = il2cpp_object_get_class(regionItemPtr);
+                IntPtr fRegType = IntPtr.Zero;
+                uint rtOff = 0;
+                IntPtr riScan = riClass;
+                while (riScan != IntPtr.Zero)
+                {
+                    IntPtr fIter = IntPtr.Zero;
+                    IntPtr ff;
+                    while ((ff = il2cpp_class_get_fields(riScan, ref fIter)) != IntPtr.Zero)
+                    {
+                        string fn = Marshal.PtrToStringAnsi(il2cpp_field_get_name(ff));
+                        if (fn == "_regionType")
+                        { fRegType = ff; rtOff = il2cpp_field_get_offset(ff); break; }
+                    }
+                    if (fRegType != IntPtr.Zero) break;
+                    riScan = il2cpp_class_get_parent(riScan);
+                }
+                if (fRegType == IntPtr.Zero)
+                    return "{\"error\":\"_regionType not on MapRegionItemContext\"}";
+                int regionType = Marshal.ReadInt32(regionItemPtr, (int)rtOff);
+
+                // Find OnRegionClick(int) on MapContext
+                IntPtr method = IntPtr.Zero;
+                IntPtr mscan = mapClass;
+                while (mscan != IntPtr.Zero && method == IntPtr.Zero)
+                {
+                    IntPtr mIter = IntPtr.Zero;
+                    IntPtr m;
+                    while ((m = il2cpp_class_get_methods(mscan, ref mIter)) != IntPtr.Zero)
+                    {
+                        string mn = Marshal.PtrToStringAnsi(il2cpp_method_get_name(m));
+                        if (mn == "OnRegionClick" && il2cpp_method_get_param_count(m) == 1)
+                        { method = m; break; }
+                    }
+                    if (method == IntPtr.Zero) mscan = il2cpp_class_get_parent(mscan);
+                }
+                if (method == IntPtr.Zero)
+                    return "{\"error\":\"OnRegionClick(int) not on MapContext\"}";
+
+                // Invoke OnRegionClick(regionType)
+                IntPtr boxed = Marshal.AllocHGlobal(sizeof(int));
+                Marshal.WriteInt32(boxed, regionType);
+                IntPtr[] args = new IntPtr[] { boxed };
+                IntPtr argsHandle = Marshal.AllocHGlobal(IntPtr.Size);
+                Marshal.WriteIntPtr(argsHandle, boxed);
+                IntPtr exc2 = IntPtr.Zero;
+                try
+                {
+                    il2cpp_runtime_invoke(method, mapCtx, argsHandle, ref exc2);
+                }
+                finally
+                {
+                    Marshal.FreeHGlobal(boxed);
+                    Marshal.FreeHGlobal(argsHandle);
+                }
+                if (exc2 != IntPtr.Zero)
+                    return "{\"error\":\"OnRegionClick threw\",\"region_type\":" + regionType + "}";
+                return "{\"ok\":true,\"chapter\":" + chapterN + ",\"region_type\":" + regionType + "}";
+            }
+            catch (Exception ex)
+            {
+                return "{\"error\":\"" + Esc(ex.Message) + "\"}";
+            }
+        }
+
+        // =====================================================
+        // /open-campaign-map — chain Village -> BattleModeSelectionDialog
+        // -> AdventureModeContext.OpenMap() -> world map (MapHUD).
+        // Invokes the private OpenMap on the dialog's `_adventure` child
+        // context, replicating the user's tap on the Adventure mode button.
+        // =====================================================
+        private string OpenCampaignMap()
+        {
+            try
+            {
+                // Step 1: ensure BattleModeSelectionDialog is open. If not,
+                // call BattleMapButtonContext.OpenWorldMap to open it.
+                var dialogsRoot = GameObject.Find("UIManager/Canvas (Ui Root)/Dialogs");
+                if (dialogsRoot == null) return "{\"error\":\"no Dialogs root\"}";
+
+                Transform bmsdGO = null;
+                for (int i = 0; i < dialogsRoot.transform.childCount; i++)
+                {
+                    var c = dialogsRoot.transform.GetChild(i);
+                    if (c.name.Contains("BattleModeSelectionDialog"))
+                    { bmsdGO = c; break; }
+                }
+                if (bmsdGO == null || !bmsdGO.gameObject.activeSelf)
+                {
+                    // Fire OpenWorldMap and return — dialog opens async on
+                    // the cmd queue, and BLOCKING the main thread here
+                    // would prevent Unity from processing it. Caller polls
+                    // /view-contexts and re-invokes /open-campaign-map.
+                    Type bm = FindType("Client.ViewModel.Contextes.Village.HUD.BattleMapButtonContext");
+                    if (bm != null)
+                    {
+                        var owm = bm.GetMethod("OpenWorldMap",
+                            BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+                        if (owm != null) owm.Invoke(null, null);
+                    }
+                    return "{\"ok\":true,\"step\":1,\"queued\":\"OpenWorldMap\",\"next\":\"poll for [DV] BattleModeSelectionDialog then re-invoke /open-campaign-map\"}";
+                }
+
+                // Step 2: walk the dialog GO for its BaseView -> Context.
+                IntPtr dlgCtx = IntPtr.Zero, dlgClass = IntPtr.Zero;
+                var queue = new Queue<Transform>();
+                queue.Enqueue(bmsdGO);
+                int searched = 0;
+                while (queue.Count > 0 && searched < 200 && dlgCtx == IntPtr.Zero)
+                {
+                    var t = queue.Dequeue();
+                    searched++;
+                    foreach (var mono in t.gameObject.GetComponents<MonoBehaviour>())
+                    {
+                        if (mono == null) continue;
+                        try
+                        {
+                            IntPtr monoPtr = mono.Pointer;
+                            if (monoPtr == IntPtr.Zero) continue;
+                            IntPtr monoClass = il2cpp_object_get_class(monoPtr);
+                            if (monoClass == IntPtr.Zero) continue;
+                            IntPtr getCtx = IntPtr.Zero;
+                            IntPtr klass = monoClass;
+                            while (klass != IntPtr.Zero && getCtx == IntPtr.Zero)
+                            {
+                                IntPtr mIter = IntPtr.Zero;
+                                IntPtr m;
+                                while ((m = il2cpp_class_get_methods(klass, ref mIter)) != IntPtr.Zero)
+                                {
+                                    string mn = Marshal.PtrToStringAnsi(il2cpp_method_get_name(m));
+                                    if (mn == "get_Context" && il2cpp_method_get_param_count(m) == 0)
+                                    { getCtx = m; break; }
+                                }
+                                if (getCtx == IntPtr.Zero) klass = il2cpp_class_get_parent(klass);
+                            }
+                            if (getCtx == IntPtr.Zero) continue;
+                            IntPtr exc = IntPtr.Zero;
+                            IntPtr cobj = il2cpp_runtime_invoke(getCtx, monoPtr, IntPtr.Zero, ref exc);
+                            if (exc != IntPtr.Zero || cobj == IntPtr.Zero) continue;
+                            IntPtr cclass = il2cpp_object_get_class(cobj);
+                            if (cclass == IntPtr.Zero) continue;
+                            string cn = Marshal.PtrToStringAnsi(il2cpp_class_get_name(cclass));
+                            if (cn != null && cn.Contains("BattleModeSelectionDialogContext"))
+                            { dlgCtx = cobj; dlgClass = cclass; break; }
+                        }
+                        catch { }
+                    }
+                    if (dlgCtx != IntPtr.Zero) break;
+                    for (int ci = 0; ci < t.childCount && ci < 30; ci++)
+                        queue.Enqueue(t.GetChild(ci));
+                }
+                if (dlgCtx == IntPtr.Zero)
+                    return "{\"error\":\"BattleModeSelectionDialogContext not found in dialog tree\"}";
+
+                // Step 3: read _adventure field
+                IntPtr fAdv = IntPtr.Zero; uint advOff = 0;
+                IntPtr scan = dlgClass;
+                while (scan != IntPtr.Zero)
+                {
+                    IntPtr fIter = IntPtr.Zero;
+                    IntPtr ff;
+                    while ((ff = il2cpp_class_get_fields(scan, ref fIter)) != IntPtr.Zero)
+                    {
+                        string fn = Marshal.PtrToStringAnsi(il2cpp_field_get_name(ff));
+                        if (fn == "_adventure")
+                        { fAdv = ff; advOff = il2cpp_field_get_offset(ff); break; }
+                    }
+                    if (fAdv != IntPtr.Zero) break;
+                    scan = il2cpp_class_get_parent(scan);
+                }
+                if (fAdv == IntPtr.Zero) return "{\"error\":\"_adventure field not on BattleModeSelectionDialogContext\"}";
+                IntPtr advCtx = Marshal.ReadIntPtr(dlgCtx, (int)advOff);
+                if (advCtx == IntPtr.Zero) return "{\"error\":\"_adventure ctx is null\"}";
+                IntPtr advClass = il2cpp_object_get_class(advCtx);
+
+                // Step 4: invoke OpenMap (private instance method)
+                IntPtr openMap = IntPtr.Zero;
+                IntPtr ascan = advClass;
+                while (ascan != IntPtr.Zero && openMap == IntPtr.Zero)
+                {
+                    IntPtr mIter = IntPtr.Zero;
+                    IntPtr m;
+                    while ((m = il2cpp_class_get_methods(ascan, ref mIter)) != IntPtr.Zero)
+                    {
+                        string mn = Marshal.PtrToStringAnsi(il2cpp_method_get_name(m));
+                        if (mn == "OpenMap" && il2cpp_method_get_param_count(m) == 0)
+                        { openMap = m; break; }
+                    }
+                    if (openMap == IntPtr.Zero) ascan = il2cpp_class_get_parent(ascan);
+                }
+                if (openMap == IntPtr.Zero) return "{\"error\":\"OpenMap/0 not on AdventureModeContext\"}";
+
+                IntPtr exc2 = IntPtr.Zero;
+                il2cpp_runtime_invoke(openMap, advCtx, IntPtr.Zero, ref exc2);
+                if (exc2 != IntPtr.Zero) return "{\"error\":\"OpenMap threw\"}";
+                return "{\"ok\":true}";
+            }
+            catch (Exception ex)
+            {
+                return "{\"error\":\"" + Esc(ex.Message) + "\"}";
+            }
+        }
+
+        // =====================================================
+        // /open-region-tile?id=N — from MapHUD (world map) drill into
+        // a specific chapter region. Walks for MapRegionItemContext
+        // whose `_regionType : RegionTypeId == N` and invokes its
+        // OnClick() — replicating the user's tap on a chapter tile.
+        // Captures region ids by walking active MapHUD; pass the int
+        // RegionTypeId (no name registry yet — discover via inspection).
+        // =====================================================
+        private string OpenRegionTile(string idStr)
+        {
+            if (string.IsNullOrEmpty(idStr) || !int.TryParse(idStr, out int targetId))
+                return "{\"error\":\"id (int RegionTypeId) required\"}";
+            try
+            {
+                IntPtr hitObj = IntPtr.Zero, hitClass = IntPtr.Zero;
+                int candidates = 0;
+                string hitClassName = null;
+                // Region tiles render in 3D scene, not under /Dialogs.
+                var allMBs = UnityEngine.Object.FindObjectsOfType<MonoBehaviour>();
+                foreach (var mono in allMBs)
+                {
+                    if (mono == null) continue;
+                    try
+                    {
+                        IntPtr monoPtr = mono.Pointer;
+                        if (monoPtr == IntPtr.Zero) continue;
+                        IntPtr monoClass = il2cpp_object_get_class(monoPtr);
+                        if (monoClass == IntPtr.Zero) continue;
+                        IntPtr getCtx = IntPtr.Zero;
+                        IntPtr klass = monoClass;
+                        while (klass != IntPtr.Zero && getCtx == IntPtr.Zero)
+                        {
+                            IntPtr mIter = IntPtr.Zero;
+                            IntPtr m;
+                            while ((m = il2cpp_class_get_methods(klass, ref mIter)) != IntPtr.Zero)
+                            {
+                                string mn = Marshal.PtrToStringAnsi(il2cpp_method_get_name(m));
+                                if (mn == "get_Context" && il2cpp_method_get_param_count(m) == 0)
+                                { getCtx = m; break; }
+                            }
+                            if (getCtx == IntPtr.Zero) klass = il2cpp_class_get_parent(klass);
+                        }
+                        if (getCtx == IntPtr.Zero) continue;
+                        IntPtr exc = IntPtr.Zero;
+                        IntPtr cobj = il2cpp_runtime_invoke(getCtx, monoPtr, IntPtr.Zero, ref exc);
+                        if (exc != IntPtr.Zero || cobj == IntPtr.Zero) continue;
+                        IntPtr cclass = il2cpp_object_get_class(cobj);
+                        if (cclass == IntPtr.Zero) continue;
+                        string sn = Marshal.PtrToStringAnsi(il2cpp_class_get_name(cclass));
+                        if (sn != "MapRegionItemContext") continue;
+                        IntPtr fRegion = IntPtr.Zero;
+                        uint rOff = 0;
+                        IntPtr scan = cclass;
+                        while (scan != IntPtr.Zero)
+                        {
+                            IntPtr fIter = IntPtr.Zero;
+                            IntPtr ff;
+                            while ((ff = il2cpp_class_get_fields(scan, ref fIter)) != IntPtr.Zero)
+                            {
+                                string fn = Marshal.PtrToStringAnsi(il2cpp_field_get_name(ff));
+                                if (fn == "_regionType")
+                                { fRegion = ff; rOff = il2cpp_field_get_offset(ff); break; }
+                            }
+                            if (fRegion != IntPtr.Zero) break;
+                            scan = il2cpp_class_get_parent(scan);
+                        }
+                        if (fRegion == IntPtr.Zero) continue;
+                        candidates++;
+                        int rid = Marshal.ReadInt32(cobj, (int)rOff);
+                        if (rid != targetId) continue;
+                        hitObj = cobj;
+                        hitClass = cclass;
+                        hitClassName = sn;
+                        break;
+                    }
+                    catch { }
+                }
+                if (hitObj == IntPtr.Zero)
+                    return "{\"error\":\"no MapRegionItemContext with _regionType=" + targetId
+                           + "\",\"candidates_scanned\":" + candidates + "}";
+
+                IntPtr method = IntPtr.Zero;
+                IntPtr cscan = hitClass;
+                while (cscan != IntPtr.Zero && method == IntPtr.Zero)
+                {
+                    IntPtr mIter = IntPtr.Zero;
+                    IntPtr m;
+                    while ((m = il2cpp_class_get_methods(cscan, ref mIter)) != IntPtr.Zero)
+                    {
+                        string mn = Marshal.PtrToStringAnsi(il2cpp_method_get_name(m));
+                        if (mn == "OnClick" && il2cpp_method_get_param_count(m) == 0)
+                        { method = m; break; }
+                    }
+                    if (method == IntPtr.Zero) cscan = il2cpp_class_get_parent(cscan);
+                }
+                if (method == IntPtr.Zero)
+                    return "{\"error\":\"OnClick/0 not on " + Esc(hitClassName ?? "?") + "\"}";
+
+                IntPtr excClick = IntPtr.Zero;
+                il2cpp_runtime_invoke(method, hitObj, IntPtr.Zero, ref excClick);
+                if (excClick != IntPtr.Zero)
+                    return "{\"error\":\"OnClick threw\"}";
+                return "{\"ok\":true,\"region_type\":" + targetId + ",\"ctx\":\"" + Esc(hitClassName ?? "?") + "\"}";
+            }
+            catch (Exception ex)
+            {
+                return "{\"error\":\"" + Esc(ex.Message) + "\"}";
+            }
+        }
+
+        // =====================================================
+        // /list-region-tiles — diagnostic: dump all visible
+        // MapRegionItemContext + their _regionType values. Use this to
+        // discover the int for the chapter you want to open.
+        // =====================================================
+        private string ListRegionTiles()
+        {
+            try
+            {
+                // World-map region tiles render in the 3D scene, not under
+                // /Dialogs. Scan ALL MonoBehaviours in the scene for
+                // MapRegionItemContext.
+                var allMBs = UnityEngine.Object.FindObjectsOfType<MonoBehaviour>();
+                var sb = new StringBuilder();
+                sb.Append("{\"tiles\":[");
+                int n = 0;
+                foreach (var mono in allMBs)
+                {
+                    if (mono == null) continue;
+                    try
+                    {
+                        IntPtr monoPtr = mono.Pointer;
+                        if (monoPtr == IntPtr.Zero) continue;
+                        IntPtr monoClass = il2cpp_object_get_class(monoPtr);
+                        if (monoClass == IntPtr.Zero) continue;
+                        IntPtr getCtx = IntPtr.Zero;
+                        IntPtr klass = monoClass;
+                        while (klass != IntPtr.Zero && getCtx == IntPtr.Zero)
+                        {
+                            IntPtr mIter = IntPtr.Zero;
+                            IntPtr m;
+                            while ((m = il2cpp_class_get_methods(klass, ref mIter)) != IntPtr.Zero)
+                            {
+                                string mn = Marshal.PtrToStringAnsi(il2cpp_method_get_name(m));
+                                if (mn == "get_Context" && il2cpp_method_get_param_count(m) == 0)
+                                { getCtx = m; break; }
+                            }
+                            if (getCtx == IntPtr.Zero) klass = il2cpp_class_get_parent(klass);
+                        }
+                        if (getCtx == IntPtr.Zero) continue;
+                        IntPtr exc = IntPtr.Zero;
+                        IntPtr cobj = il2cpp_runtime_invoke(getCtx, monoPtr, IntPtr.Zero, ref exc);
+                        if (exc != IntPtr.Zero || cobj == IntPtr.Zero) continue;
+                        IntPtr cclass = il2cpp_object_get_class(cobj);
+                        if (cclass == IntPtr.Zero) continue;
+                        string ctxName = Marshal.PtrToStringAnsi(il2cpp_class_get_name(cclass));
+                        if (ctxName != "MapRegionItemContext") continue;
+                        IntPtr fRegion = IntPtr.Zero;
+                        uint rOff = 0;
+                        IntPtr scan = cclass;
+                        while (scan != IntPtr.Zero)
+                        {
+                            IntPtr fIter = IntPtr.Zero;
+                            IntPtr ff;
+                            while ((ff = il2cpp_class_get_fields(scan, ref fIter)) != IntPtr.Zero)
+                            {
+                                string fn = Marshal.PtrToStringAnsi(il2cpp_field_get_name(ff));
+                                if (fn == "_regionType")
+                                { fRegion = ff; rOff = il2cpp_field_get_offset(ff); break; }
+                            }
+                            if (fRegion != IntPtr.Zero) break;
+                            scan = il2cpp_class_get_parent(scan);
+                        }
+                        if (fRegion == IntPtr.Zero) continue;
+                        int rid = Marshal.ReadInt32(cobj, (int)rOff);
+                        if (n > 0) sb.Append(",");
+                        sb.Append(rid);
+                        n++;
+                    }
+                    catch { }
+                }
+                sb.Append("],\"count\":").Append(n).Append("}");
+                return sb.ToString();
+            }
+            catch (Exception ex)
+            {
+                return "{\"error\":\"" + Esc(ex.Message) + "\"}";
+            }
+        }
+
+        private string ListRegionTilesOLD()
+        {
+            try
+            {
+                var dialogsRoot = GameObject.Find("UIManager/Canvas (Ui Root)/Dialogs");
+                if (dialogsRoot == null) return "{\"error\":\"no Dialogs root\"}";
+                var sb = new StringBuilder();
+                sb.Append("{\"tiles\":[");
+                int n = 0;
+                for (int di = 0; di < dialogsRoot.transform.childCount; di++)
+                {
+                    var dialog = dialogsRoot.transform.GetChild(di);
+                    if (!dialog.gameObject.activeSelf) continue;
+                    var queue = new Queue<KeyValuePair<Transform, int>>();
+                    queue.Enqueue(new KeyValuePair<Transform, int>(dialog, 0));
+                    int searched = 0;
+                    while (queue.Count > 0 && searched < 800)
+                    {
+                        var pair = queue.Dequeue();
+                        var t = pair.Key;
+                        searched++;
+                        foreach (var mono in t.gameObject.GetComponents<MonoBehaviour>())
+                        {
+                            if (mono == null) continue;
+                            try
+                            {
+                                IntPtr monoPtr = mono.Pointer;
+                                if (monoPtr == IntPtr.Zero) continue;
+                                IntPtr monoClass = il2cpp_object_get_class(monoPtr);
+                                if (monoClass == IntPtr.Zero) continue;
+                                IntPtr getCtx = IntPtr.Zero;
+                                IntPtr klass = monoClass;
+                                while (klass != IntPtr.Zero && getCtx == IntPtr.Zero)
+                                {
+                                    IntPtr mIter = IntPtr.Zero;
+                                    IntPtr m;
+                                    while ((m = il2cpp_class_get_methods(klass, ref mIter)) != IntPtr.Zero)
+                                    {
+                                        string mn = Marshal.PtrToStringAnsi(il2cpp_method_get_name(m));
+                                        if (mn == "get_Context" && il2cpp_method_get_param_count(m) == 0)
+                                        { getCtx = m; break; }
+                                    }
+                                    if (getCtx == IntPtr.Zero) klass = il2cpp_class_get_parent(klass);
+                                }
+                                if (getCtx == IntPtr.Zero) continue;
+                                IntPtr exc = IntPtr.Zero;
+                                IntPtr cobj = il2cpp_runtime_invoke(getCtx, monoPtr, IntPtr.Zero, ref exc);
+                                if (exc != IntPtr.Zero || cobj == IntPtr.Zero) continue;
+                                IntPtr cclass = il2cpp_object_get_class(cobj);
+                                if (cclass == IntPtr.Zero) continue;
+                                string ctxName = Marshal.PtrToStringAnsi(il2cpp_class_get_name(cclass));
+                                if (ctxName != "MapRegionItemContext") continue;
+                                IntPtr fRegion = IntPtr.Zero;
+                                uint rOff = 0;
+                                IntPtr scan = cclass;
+                                while (scan != IntPtr.Zero)
+                                {
+                                    IntPtr fIter = IntPtr.Zero;
+                                    IntPtr ff;
+                                    while ((ff = il2cpp_class_get_fields(scan, ref fIter)) != IntPtr.Zero)
+                                    {
+                                        string fn = Marshal.PtrToStringAnsi(il2cpp_field_get_name(ff));
+                                        if (fn == "_regionType")
+                                        { fRegion = ff; rOff = il2cpp_field_get_offset(ff); break; }
+                                    }
+                                    if (fRegion != IntPtr.Zero) break;
+                                    scan = il2cpp_class_get_parent(scan);
+                                }
+                                if (fRegion == IntPtr.Zero) continue;
+                                int rid = Marshal.ReadInt32(cobj, (int)rOff);
+                                if (n > 0) sb.Append(",");
+                                sb.Append(rid);
+                                n++;
+                            }
+                            catch { }
+                        }
+                        if (pair.Value < 12)
+                        {
+                            for (int ci = 0; ci < t.childCount && ci < 60; ci++)
+                                queue.Enqueue(new KeyValuePair<Transform, int>(t.GetChild(ci), pair.Value + 1));
+                        }
+                    }
+                }
+                sb.Append("],\"count\":").Append(n).Append("}");
+                return sb.ToString();
+            }
+            catch (Exception ex)
+            {
+                return "{\"error\":\"" + Esc(ex.Message) + "\"}";
+            }
+        }
+
+        private bool FindRegionItemByRegionType(Transform root, int targetId,
+            out IntPtr ctxObj, out IntPtr ctxClass,
+            out string ctxClassName, ref int candidates)
+        {
+            ctxObj = IntPtr.Zero; ctxClass = IntPtr.Zero; ctxClassName = null;
+            var queue = new Queue<KeyValuePair<Transform, int>>();
+            queue.Enqueue(new KeyValuePair<Transform, int>(root, 0));
+            int searched = 0;
+            while (queue.Count > 0 && searched < 1500)
+            {
+                var pair = queue.Dequeue();
+                var t = pair.Key;
+                searched++;
+                foreach (var mono in t.gameObject.GetComponents<MonoBehaviour>())
+                {
+                    if (mono == null) continue;
+                    try
+                    {
+                        IntPtr monoPtr = mono.Pointer;
+                        if (monoPtr == IntPtr.Zero) continue;
+                        IntPtr monoClass = il2cpp_object_get_class(monoPtr);
+                        if (monoClass == IntPtr.Zero) continue;
+                        IntPtr getCtx = IntPtr.Zero;
+                        IntPtr klass = monoClass;
+                        while (klass != IntPtr.Zero && getCtx == IntPtr.Zero)
+                        {
+                            IntPtr mIter = IntPtr.Zero;
+                            IntPtr m;
+                            while ((m = il2cpp_class_get_methods(klass, ref mIter)) != IntPtr.Zero)
+                            {
+                                string mn = Marshal.PtrToStringAnsi(il2cpp_method_get_name(m));
+                                if (mn == "get_Context" && il2cpp_method_get_param_count(m) == 0)
+                                { getCtx = m; break; }
+                            }
+                            if (getCtx == IntPtr.Zero) klass = il2cpp_class_get_parent(klass);
+                        }
+                        if (getCtx == IntPtr.Zero) continue;
+                        IntPtr exc = IntPtr.Zero;
+                        IntPtr cobj = il2cpp_runtime_invoke(getCtx, monoPtr, IntPtr.Zero, ref exc);
+                        if (exc != IntPtr.Zero || cobj == IntPtr.Zero) continue;
+                        IntPtr cclass = il2cpp_object_get_class(cobj);
+                        if (cclass == IntPtr.Zero) continue;
+                        string sn = Marshal.PtrToStringAnsi(il2cpp_class_get_name(cclass));
+                        if (sn != "MapRegionItemContext") continue;
+                        IntPtr fRegion = IntPtr.Zero;
+                        uint rOff = 0;
+                        IntPtr scan = cclass;
+                        while (scan != IntPtr.Zero)
+                        {
+                            IntPtr fIter = IntPtr.Zero;
+                            IntPtr ff;
+                            while ((ff = il2cpp_class_get_fields(scan, ref fIter)) != IntPtr.Zero)
+                            {
+                                string fn = Marshal.PtrToStringAnsi(il2cpp_field_get_name(ff));
+                                if (fn == "_regionType")
+                                { fRegion = ff; rOff = il2cpp_field_get_offset(ff); break; }
+                            }
+                            if (fRegion != IntPtr.Zero) break;
+                            scan = il2cpp_class_get_parent(scan);
+                        }
+                        if (fRegion == IntPtr.Zero) continue;
+                        candidates++;
+                        int rid = Marshal.ReadInt32(cobj, (int)rOff);
+                        if (rid != targetId) continue;
+                        ctxObj = cobj;
+                        ctxClass = cclass;
+                        ctxClassName = sn;
+                        return true;
+                    }
+                    catch { }
+                }
+                if (pair.Value < 12)
+                {
+                    for (int ci = 0; ci < t.childCount && ci < 60; ci++)
+                        queue.Enqueue(new KeyValuePair<Transform, int>(t.GetChild(ci), pair.Value + 1));
+                }
+            }
+            return false;
+        }
+
+        // =====================================================
+        // /open-stage-tile?id=N — replicates "user taps stage tile in
+        // chapter map" by walking the active scene for any StageContext
+        // (StorylineStageContext / DungeonStageContext / etc.) whose
+        // `_stage.Id == N`, then invoking its `OpenSelectionDialog()`.
+        // Replaces the dead /open-stage cmd path (server returns 404 on
+        // OpenStageCmd — Plarium retired it).
+        // Requires the chapter map / region dialog to already be open
+        // (the StageContext only exists while the chapter is rendered).
+        // =====================================================
+        private string OpenStageTile(string idStr)
+        {
+            if (string.IsNullOrEmpty(idStr) || !int.TryParse(idStr, out int targetId))
+                return "{\"error\":\"id (int) required\"}";
+            try
+            {
+                var dialogsRoot = GameObject.Find("UIManager/Canvas (Ui Root)/Dialogs");
+                if (dialogsRoot == null)
+                    return "{\"error\":\"no Dialogs root\"}";
+
+                int candidates = 0;
+                IntPtr hitObj = IntPtr.Zero, hitClass = IntPtr.Zero;
+                IntPtr stageFieldPtr = IntPtr.Zero, idFieldPtr = IntPtr.Zero;
+                uint stageOff = 0, idOff = 0;
+                string hitClassName = null;
+
+                // Pass 1: active dialogs (chapter map likely renders an active
+                // RegionDialog with StageContext children)
+                for (int di = 0; di < dialogsRoot.transform.childCount; di++)
+                {
+                    var dialog = dialogsRoot.transform.GetChild(di);
+                    if (!dialog.gameObject.activeSelf) continue;
+                    if (FindStageContextByStageId(dialog, targetId,
+                            out hitObj, out hitClass, out stageOff, out idOff,
+                            out stageFieldPtr, out idFieldPtr, out hitClassName,
+                            ref candidates))
+                        break;
+                }
+                // Pass 2: inactive dialogs (chapter map gets deactivated when
+                // heroes-selection dialog overlays it; the StageContexts still
+                // live inside but the parent GO is activeSelf=false)
+                if (hitObj == IntPtr.Zero)
+                {
+                    for (int di = 0; di < dialogsRoot.transform.childCount; di++)
+                    {
+                        var dialog = dialogsRoot.transform.GetChild(di);
+                        if (dialog.gameObject.activeSelf) continue;
+                        if (FindStageContextByStageId(dialog, targetId,
+                                out hitObj, out hitClass, out stageOff, out idOff,
+                                out stageFieldPtr, out idFieldPtr, out hitClassName,
+                                ref candidates))
+                            break;
+                    }
+                }
+                if (hitObj == IntPtr.Zero)
+                    return "{\"error\":\"no StageContext with _stage.Id=" + targetId
+                           + " in active dialogs\",\"candidates_scanned\":" + candidates + "}";
+
+                // Walk class hierarchy to find OpenSelectionDialog method (0-arg)
+                IntPtr method = IntPtr.Zero;
+                IntPtr cscan = hitClass;
+                while (cscan != IntPtr.Zero && method == IntPtr.Zero)
+                {
+                    IntPtr mIter = IntPtr.Zero;
+                    IntPtr m;
+                    while ((m = il2cpp_class_get_methods(cscan, ref mIter)) != IntPtr.Zero)
+                    {
+                        string mn = Marshal.PtrToStringAnsi(il2cpp_method_get_name(m));
+                        if (mn == "OpenSelectionDialog" && il2cpp_method_get_param_count(m) == 0)
+                        {
+                            method = m;
+                            break;
+                        }
+                    }
+                    if (method == IntPtr.Zero)
+                        cscan = il2cpp_class_get_parent(cscan);
+                }
+                if (method == IntPtr.Zero)
+                    return "{\"error\":\"OpenSelectionDialog/0 not found on " + Esc(hitClassName ?? "?") + " hierarchy\"}";
+
+                IntPtr exc = IntPtr.Zero;
+                il2cpp_runtime_invoke(method, hitObj, IntPtr.Zero, ref exc);
+                if (exc != IntPtr.Zero)
+                    return "{\"error\":\"OpenSelectionDialog threw\",\"ctx\":\"" + Esc(hitClassName ?? "?") + "\"}";
+
+                return "{\"ok\":true,\"stage_id\":" + targetId + ",\"ctx\":\"" + Esc(hitClassName ?? "?") + "\"}";
+            }
+            catch (Exception ex)
+            {
+                return "{\"error\":\"" + Esc(ex.Message) + "\"}";
+            }
+        }
+
+        /// <summary>
+        /// BFS the scene tree under `root` for any MonoBehaviour whose
+        /// IL2CPP context has a `_stage` field of type Stage with `_stage.Id == targetId`.
+        /// Returns the matched object pointer + class.
+        /// </summary>
+        private bool FindStageContextByStageId(Transform root, int targetId,
+            out IntPtr ctxObj, out IntPtr ctxClass,
+            out uint stageOff, out uint idOff,
+            out IntPtr stageFieldPtr, out IntPtr idFieldPtr,
+            out string ctxClassName, ref int candidates)
+        {
+            ctxObj = IntPtr.Zero; ctxClass = IntPtr.Zero;
+            stageOff = 0; idOff = 0;
+            stageFieldPtr = IntPtr.Zero; idFieldPtr = IntPtr.Zero;
+            ctxClassName = null;
+
+            var queue = new Queue<KeyValuePair<Transform, int>>();
+            queue.Enqueue(new KeyValuePair<Transform, int>(root, 0));
+            int searched = 0;
+            while (queue.Count > 0 && searched < 1500)
+            {
+                var pair = queue.Dequeue();
+                var t = pair.Key;
+                int depth = pair.Value;
+                searched++;
+
+                foreach (var mono in t.gameObject.GetComponents<MonoBehaviour>())
+                {
+                    if (mono == null) continue;
+                    try
+                    {
+                        IntPtr monoPtr = mono.Pointer;
+                        if (monoPtr == IntPtr.Zero) continue;
+                        IntPtr monoClass = il2cpp_object_get_class(monoPtr);
+                        if (monoClass == IntPtr.Zero) continue;
+
+                        // Find get_Context on class hierarchy (UIElement <T>)
+                        IntPtr getCtx = IntPtr.Zero;
+                        IntPtr klass = monoClass;
+                        while (klass != IntPtr.Zero && getCtx == IntPtr.Zero)
+                        {
+                            IntPtr mIter = IntPtr.Zero;
+                            IntPtr mm;
+                            while ((mm = il2cpp_class_get_methods(klass, ref mIter)) != IntPtr.Zero)
+                            {
+                                string mn = Marshal.PtrToStringAnsi(il2cpp_method_get_name(mm));
+                                if (mn == "get_Context" && il2cpp_method_get_param_count(mm) == 0)
+                                { getCtx = mm; break; }
+                            }
+                            if (getCtx == IntPtr.Zero) klass = il2cpp_class_get_parent(klass);
+                        }
+                        if (getCtx == IntPtr.Zero) continue;
+
+                        IntPtr exc = IntPtr.Zero;
+                        IntPtr cobj = il2cpp_runtime_invoke(getCtx, monoPtr, IntPtr.Zero, ref exc);
+                        if (exc != IntPtr.Zero || cobj == IntPtr.Zero) continue;
+
+                        IntPtr cclass = il2cpp_object_get_class(cobj);
+                        if (cclass == IntPtr.Zero) continue;
+
+                        // Walk class hierarchy: must descend from StageContext
+                        // (i.e. a tile in a chapter map), NOT from a dialog
+                        // context. HeroesSelection*DialogContext also has _stage
+                        // but it doesn't have OpenSelectionDialog/0.
+                        IntPtr scanForBase = cclass;
+                        bool isStageCtxSubclass = false;
+                        while (scanForBase != IntPtr.Zero)
+                        {
+                            string sn = Marshal.PtrToStringAnsi(il2cpp_class_get_name(scanForBase));
+                            if (sn == "StageContext") { isStageCtxSubclass = true; break; }
+                            if (sn == "Object" || sn == "Il2CppObjectBase") break;
+                            scanForBase = il2cpp_class_get_parent(scanForBase);
+                        }
+                        if (!isStageCtxSubclass) continue;
+
+                        // Walk class hierarchy for _stage field
+                        IntPtr fStage = IntPtr.Zero;
+                        uint sOff = 0;
+                        IntPtr scan = cclass;
+                        while (scan != IntPtr.Zero)
+                        {
+                            IntPtr fIter = IntPtr.Zero;
+                            IntPtr ff;
+                            while ((ff = il2cpp_class_get_fields(scan, ref fIter)) != IntPtr.Zero)
+                            {
+                                string fn = Marshal.PtrToStringAnsi(il2cpp_field_get_name(ff));
+                                if (fn == "_stage")
+                                { fStage = ff; sOff = il2cpp_field_get_offset(ff); break; }
+                            }
+                            if (fStage != IntPtr.Zero) break;
+                            scan = il2cpp_class_get_parent(scan);
+                        }
+                        if (fStage == IntPtr.Zero) continue;
+                        candidates++;
+
+                        IntPtr stagePtr = Marshal.ReadIntPtr(cobj, (int)sOff);
+                        if (stagePtr == IntPtr.Zero) continue;
+                        IntPtr stageClass = il2cpp_object_get_class(stagePtr);
+
+                        IntPtr fId = IntPtr.Zero;
+                        uint iOff = 0;
+                        IntPtr ssc = stageClass;
+                        while (ssc != IntPtr.Zero)
+                        {
+                            IntPtr fIter = IntPtr.Zero;
+                            IntPtr ff;
+                            while ((ff = il2cpp_class_get_fields(ssc, ref fIter)) != IntPtr.Zero)
+                            {
+                                string fn = Marshal.PtrToStringAnsi(il2cpp_field_get_name(ff));
+                                if (fn == "Id")
+                                { fId = ff; iOff = il2cpp_field_get_offset(ff); break; }
+                            }
+                            if (fId != IntPtr.Zero) break;
+                            ssc = il2cpp_class_get_parent(ssc);
+                        }
+                        if (fId == IntPtr.Zero) continue;
+
+                        int sid = Marshal.ReadInt32(stagePtr, (int)iOff);
+                        if (sid != targetId) continue;
+
+                        ctxObj = cobj;
+                        ctxClass = cclass;
+                        stageOff = sOff;
+                        idOff = iOff;
+                        stageFieldPtr = fStage;
+                        idFieldPtr = fId;
+                        ctxClassName = Marshal.PtrToStringAnsi(il2cpp_class_get_name(cclass));
+                        return true;
+                    }
+                    catch { }
+                }
+                if (depth < 12)
+                {
+                    for (int ci = 0; ci < t.childCount && ci < 60; ci++)
+                        queue.Enqueue(new KeyValuePair<Transform, int>(t.GetChild(ci), depth + 1));
+                }
+            }
+            return false;
+        }
+
+        // =====================================================
+        // /current-stage — reads Stage.Id from the open Heroes*Selection
+        // dialog context (campaign Pve / dungeon / arena / etc.). The
+        // dialog has a `_stage : Stage` field on its dialog ctx; Stage.Id
+        // is the integer the game's CreatePveBattleCmd / OpenStageCmd
+        // would carry. Use this instead of the OpenStageCmd Harmony
+        // hook — taps don't always fire that cmd, but the dialog ALWAYS
+        // holds the stage ref while it's open.
+        // =====================================================
+        private string CurrentStage()
+        {
+            try
+            {
+                var dialogsRoot = GameObject.Find("UIManager/Canvas (Ui Root)/Dialogs");
+                if (dialogsRoot == null)
+                    return "{\"error\":\"no Dialogs root\"}";
+
+                IntPtr ctxObj = IntPtr.Zero, ctxClass = IntPtr.Zero;
+                string ctxName = null, ctxNs = null;
+                for (int di = 0; di < dialogsRoot.transform.childCount; di++)
+                {
+                    var dialog = dialogsRoot.transform.GetChild(di);
+                    if (!dialog.gameObject.activeSelf) continue;
+                    if (TryFindHeroesSelectionContext(dialog, out ctxObj, out ctxClass, out ctxName, out ctxNs))
+                        break;
+                }
+                if (ctxObj == IntPtr.Zero)
+                {
+                    for (int di = 0; di < dialogsRoot.transform.childCount; di++)
+                    {
+                        var dialog = dialogsRoot.transform.GetChild(di);
+                        if (dialog.gameObject.activeSelf) continue;
+                        if (TryFindHeroesSelectionContext(dialog, out ctxObj, out ctxClass, out ctxName, out ctxNs))
+                            break;
+                    }
+                }
+                if (ctxObj == IntPtr.Zero)
+                    return "{\"error\":\"no active heroes-selection dialog\"}";
+
+                // Walk class hierarchy looking for _stage field.
+                IntPtr stageFieldPtr = IntPtr.Zero;
+                uint stageOff = 0;
+                IntPtr scan = ctxClass;
+                while (scan != IntPtr.Zero)
+                {
+                    IntPtr fIter = IntPtr.Zero;
+                    IntPtr ff;
+                    while ((ff = il2cpp_class_get_fields(scan, ref fIter)) != IntPtr.Zero)
+                    {
+                        string fn = Marshal.PtrToStringAnsi(il2cpp_field_get_name(ff));
+                        if (fn == "_stage")
+                        {
+                            stageFieldPtr = ff;
+                            stageOff = il2cpp_field_get_offset(ff);
+                            break;
+                        }
+                    }
+                    if (stageFieldPtr != IntPtr.Zero) break;
+                    scan = il2cpp_class_get_parent(scan);
+                }
+                if (stageFieldPtr == IntPtr.Zero)
+                    return "{\"error\":\"_stage field not on dialog class chain\",\"ctx\":\"" + Esc(ctxName ?? "?") + "\"}";
+
+                IntPtr stagePtr = Marshal.ReadIntPtr(ctxObj, (int)stageOff);
+                if (stagePtr == IntPtr.Zero)
+                    return "{\"error\":\"_stage is null (dialog open but stage not bound yet)\"}";
+
+                IntPtr stageClass = il2cpp_object_get_class(stagePtr);
+                IntPtr idFieldPtr = IntPtr.Zero;
+                uint idOff = 0;
+                IntPtr ssc = stageClass;
+                while (ssc != IntPtr.Zero)
+                {
+                    IntPtr fIter = IntPtr.Zero;
+                    IntPtr ff;
+                    while ((ff = il2cpp_class_get_fields(ssc, ref fIter)) != IntPtr.Zero)
+                    {
+                        string fn = Marshal.PtrToStringAnsi(il2cpp_field_get_name(ff));
+                        if (fn == "Id")
+                        {
+                            idFieldPtr = ff;
+                            idOff = il2cpp_field_get_offset(ff);
+                            break;
+                        }
+                    }
+                    if (idFieldPtr != IntPtr.Zero) break;
+                    ssc = il2cpp_class_get_parent(ssc);
+                }
+                if (idFieldPtr == IntPtr.Zero)
+                    return "{\"error\":\"Stage.Id field not found\"}";
+
+                int stageId = Marshal.ReadInt32(stagePtr, (int)idOff);
+                return "{\"ok\":true,\"stage_id\":" + stageId
+                       + ",\"dialog_ctx\":\"" + Esc(ctxName ?? "?") + "\"}";
+            }
+            catch (Exception ex)
+            {
+                return "{\"error\":\"" + Esc(ex.Message) + "\"}";
+            }
+        }
+
+        // =====================================================
+        // /last-stage-id — returns the most recent stage id observed by
+        // the OpenStageCmd..ctor(int) Harmony hook, plus a short history.
+        // Workflow: user taps the desired stage tile in-game once -> we
+        // capture the real stageId -> farm_loop calls /open-stage?id=N
+        // forever after.
+        // =====================================================
+        private string LastStageId()
+        {
+            try
+            {
+                int last = _lastOpenedStageId;
+                string hist;
+                lock (_stageIdHistory)
+                {
+                    hist = string.Join(",", _stageIdHistory);
+                }
+                return "{\"ok\":true,\"last\":" + last + ",\"history\":[" + hist + "]}";
             }
             catch (Exception ex)
             {

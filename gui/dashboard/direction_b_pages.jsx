@@ -207,17 +207,18 @@ function PageResources({s}) {
         <div className="card-title" style={{marginBottom: 10}}>Keys & tokens</div>
         <div style={{display:'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 10}}>
           {[
-            ['Classic Arena',      'classic_arena_tokens', 'arena',     'oklch(0.72 0.18 180)'],
-            ['Tag Arena 3v3',      'tag_arena_tokens',     'arena',     'oklch(0.72 0.18 180)'],
-            ['Live Arena',         'live_arena_tokens',    'arena',     'oklch(0.68 0.18 250)'],
-            ['CB (Demon Lord)',    'demon_lord_keys',      'cb',        'oklch(0.70 0.20 25)'],
-            ['Hydra',              'hydra_keys',           'cb',        'oklch(0.72 0.17 145)'],
-            ['Chimera',            'chimera_keys',         'cb',        'oklch(0.68 0.22 315)'],
-            ['Fortress',           'fortress_keys',        'cb',        'oklch(0.78 0.17 85)'],
-            ['Cursed City',        'cursed_city_keys',     'cb',        'oklch(0.64 0.24 20)'],
-            ['Doom Tower (Gold)',  'doom_tower_gold_keys', 'cb',        'oklch(0.80 0.16 85)'],
-            ['Doom Tower (Silver)','doom_tower_silver_keys','cb',       'var(--text-sub)'],
-            ['Auto tickets',       'auto_tickets',         'arena',     'var(--text-sub)'],
+            ['Classic Arena',      'classic_arena_tokens', 'arena_token','oklch(0.72 0.18 180)'],
+            ['Tag Arena 3v3',      'tag_arena_tokens',     'arena_token','oklch(0.72 0.18 180)'],
+            ['Live Arena',         'live_arena_tokens',    'live_arena', 'oklch(0.68 0.18 250)'],
+            ['CB (Demon Lord)',    'demon_lord_keys',      'cb_key',     'oklch(0.70 0.20 25)'],
+            ['Hydra',              'hydra_keys',           'hydra',      'oklch(0.72 0.17 145)'],
+            ['Chimera',            'chimera_keys',         'chimera',    'oklch(0.68 0.22 315)'],
+            ['Fortress',           'fortress_keys',        'cb_key',     'oklch(0.78 0.17 85)'],
+            ['Cursed City',        'cursed_city_keys',     'cb_key',     'oklch(0.64 0.24 20)'],
+            ['Doom Tower (Gold)',  'doom_tower_gold_keys', 'doom_gold',  'oklch(0.80 0.16 85)'],
+            ['Doom Tower (Silver)','doom_tower_silver_keys','doom_silver','var(--text-sub)'],
+            ['Faction Wars',       'faction_keys',         'fw',         'oklch(0.66 0.18 30)'],
+            ['Auto tickets',       'auto_tickets',         'auto_ticket','var(--text-sub)'],
           ].map(([label, key, icon, col]) => {
             const v = (s.resources.keys || {})[key];
             return (
@@ -235,6 +236,88 @@ function PageResources({s}) {
         </div>
       </div>
       <ShardsInventory s={s}/>
+      <AllResourcesGrid s={s}/>
+    </div>
+  );
+}
+
+/* All-resources catalog. Pulls /api/state.resources.all_raw which is the
+ * raw mod /all-resources dump (90+ keys: crafting mats, soul coins, foggy
+ * forest tokens, etc). Renders every nonzero key with an icon + count.
+ * Icons missing from extraction render as an empty rarity-colored frame
+ * (per user req: no fallback hotlinks). */
+function AllResourcesGrid({s}) {
+  const raw = (s.resources || {}).all_raw || {};
+  const entries = Object.entries(raw)
+    .filter(([k, v]) => v > 0)
+    .sort((a, b) => RESOURCE_GROUP_ORDER(a[0]) - RESOURCE_GROUP_ORDER(b[0])
+                  || a[0].localeCompare(b[0]));
+  if (entries.length === 0) return null;
+  return (
+    <div className="card" style={{padding: 16, gridColumn: 'span 3'}}>
+      <div className="card-title" style={{marginBottom: 8}}>
+        All resources <span className="mono" style={{fontSize: 10.5, color:'var(--text-dim)', fontWeight: 400, marginLeft: 6}}>· {entries.length} types live</span>
+      </div>
+      <div style={{fontSize: 10.5, color:'var(--text-dim)', marginBottom: 10}}>
+        Crafting mats, dungeon-specific items, soul coins/essences. Live from mod's /all-resources.
+      </div>
+      <div style={{display:'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 8}}>
+        {entries.map(([k, v]) => (
+          <ResourceTile key={k} resourceKey={k} value={v}/>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Group ordering for sort: keys/energy first, then currencies, mats, etc.
+function RESOURCE_GROUP_ORDER(k) {
+  if (/^(Energy|Silver|Gems|Tokens|AutoBattleTickets|MythicalDust|PlariumPoints)$/.test(k)) return 0;
+  if (/Key/.test(k)) return 1;
+  if (/Token/.test(k)) return 2;
+  if (/Medal/.test(k)) return 3;
+  if (/Coin|Essence|Currency/.test(k)) return 4;
+  if (/Soulstone|Bloodstone/.test(k)) return 5;
+  if (/Magisteel|Corehammer|Meteors/.test(k)) return 6;
+  if (/(Spider|Dragon|Scarab|Magma|Frost|Griffin|Dreadhorn|Fae|Instinct|Nether)/.test(k)) return 7;  // dungeon mats
+  if (/FoggyForest/.test(k)) return 8;
+  if (/Siege/.test(k)) return 9;
+  if (/CursedCity/.test(k)) return 10;
+  return 99;
+}
+
+function ResourceTile({resourceKey, value}) {
+  // Try the extracted icon at assets/resources/<key>.png. If it 404s,
+  // <Icon> hides the img; the empty frame fills naturally.
+  const display = value >= 1e6 ? (value/1e6).toFixed(1) + 'M'
+                : value >= 1e3 ? (value/1e3).toFixed(1) + 'k'
+                : value % 1 ? value.toFixed(1) : value;
+  // Prettify: SoulstoneRare -> "Soulstone Rare"
+  const label = resourceKey.replace(/([A-Z])/g, ' $1').trim();
+  return (
+    <div style={{
+      display:'flex', alignItems:'center', gap: 8,
+      padding:'8px 10px', background:'var(--bg-subtle)',
+      border:'1px solid var(--border)', borderRadius: 5,
+    }} title={resourceKey}>
+      <div style={{
+        width: 32, height: 32, flexShrink: 0,
+        display:'flex', alignItems:'center', justifyContent:'center',
+        background:'#1a1d21', border:'1px solid var(--border)', borderRadius: 4,
+      }}>
+        <img src={`assets/resources/${resourceKey}.png`}
+             width={28} height={28}
+             style={{objectFit:'contain'}}
+             onError={e => { e.target.style.display = 'none'; }}/>
+      </div>
+      <div style={{minWidth: 0, flex: 1}}>
+        <div className="truncate" style={{fontSize: 10.5, color:'var(--text-dim)', textTransform:'uppercase', letterSpacing:'0.04em'}}>
+          {label}
+        </div>
+        <div className="num" style={{fontSize: 14, fontWeight: 600, color:'var(--text)'}}>
+          {display}
+        </div>
+      </div>
     </div>
   );
 }
@@ -401,7 +484,10 @@ function PageCB({s}) {
         <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom: 14}}>
           <div>
             <div style={{fontSize: 10.5, color:'var(--text-dim)', textTransform:'uppercase', letterSpacing:'0.06em'}}>Clan boss</div>
-            <div style={{fontSize: 22, fontWeight: 500, marginTop: 4}}>{s.cb.difficulty} · <span style={{color:'var(--text-sub)'}}>{s.cb.affinity} affinity</span></div>
+            <div style={{fontSize: 22, fontWeight: 500, marginTop: 4, display:'flex', alignItems:'center', gap: 8}}>
+              {s.cb.difficulty} · <AffinityIcon element={s.cb.affinity} size={20}/>
+              <span style={{color:'var(--text-sub)'}}>{s.cb.affinity} affinity</span>
+            </div>
             <div style={{fontSize: 11, color:'var(--text-dim)', marginTop: 4}} className="mono">{s.cb.clan} · boss HP {(s.cb.boss_hp/1e6).toFixed(0)}M</div>
           </div>
           <div style={{display:'grid', gridTemplateColumns: 'repeat(4, auto)', gap: 22, alignItems:'center'}}>
@@ -455,12 +541,20 @@ function PageCB({s}) {
                     <div key={h.name} style={{padding:'10px 16px', borderBottom:'1px solid var(--border)'}}>
                       <div style={{display:'grid', gridTemplateColumns: cols, alignItems:'center', fontSize: 12, columnGap: 10}}>
                         <span className="mono" style={{...numR, color:'var(--text-dim)', fontSize: 11}}>{slot}</span>
-                        <div style={{minWidth: 0}}>
-                          <div style={{fontWeight: 500, display:'flex', alignItems:'center', gap: 6}}>
-                            {i===0 && <span style={{fontSize: 9, color:'var(--accent)', border:'1px solid var(--accent)', padding:'1px 4px', borderRadius: 3}}>LEAD</span>}
-                            <span className="truncate">{h.name}</span>
+                        <div style={{minWidth: 0, display:'flex', alignItems:'center', gap: 8}}>
+                          <HeroPortrait typeId={h.type_id} size={32}
+                                        rarity={({Common:1,Uncommon:2,Rare:3,Epic:4,Legendary:5}[h.rarity])||0}
+                                        name={h.name}/>
+                          <div style={{minWidth: 0}}>
+                            <div style={{fontWeight: 500, display:'flex', alignItems:'center', gap: 6}}>
+                              {i===0 && <span style={{fontSize: 9, color:'var(--accent)', border:'1px solid var(--accent)', padding:'1px 4px', borderRadius: 3}}>LEAD</span>}
+                              <span className="truncate">{h.name}</span>
+                            </div>
+                            <div style={{fontSize: 10.5, color: rarityColor[h.rarity], marginTop: 2, display:'flex', alignItems:'center', gap: 4}}>
+                              <AffinityIcon element={h.element} size={11}/>
+                              <span>{h.rarity} · {h.faction}</span>
+                            </div>
                           </div>
-                          <div style={{fontSize: 10.5, color: rarityColor[h.rarity], marginTop: 2}}>{h.rarity} · {h.faction}</div>
                         </div>
                         <span style={{color:'var(--text-sub)', fontSize: 11.5}} className="truncate">{h.role}</span>
                         <span className="mono" style={{...numR, color:'var(--text-sub)'}}>{h.spd}</span>
@@ -948,16 +1042,22 @@ function DungeonTeamSlot({idx, hero, tid}) {
           {hero.rarity || ''}
         </span>
       </div>
-      <div style={{fontSize: 13, fontWeight: 600, lineHeight: 1.2,
-                   color:'var(--text)', minHeight: 32}}>
-        {hero.name}
-      </div>
-      <div className="mono" style={{fontSize: 10.5, color:'var(--text-sub)',
-                                    display:'flex', gap: 6, flexWrap:'wrap'}}>
-        <span>{'★'.repeat(Math.min(6, hero.stars || 0))}</span>
-        <span>L{hero.level || '?'}</span>
-        {hero.empower ? <span>+{hero.empower}</span> : null}
-        {hero.element ? <span style={{color:'var(--text-dim)'}}>{hero.element}</span> : null}
+      <div style={{display:'flex', alignItems:'center', gap: 8, minHeight: 48}}>
+        <HeroPortrait typeId={hero.type_id} size={42}
+                      rarity={({Common:1,Uncommon:2,Rare:3,Epic:4,Legendary:5}[hero.rarity])||0}
+                      name={hero.name}/>
+        <div style={{minWidth: 0, flex: 1}}>
+          <div style={{fontSize: 13, fontWeight: 600, lineHeight: 1.2, color:'var(--text)'}}>
+            {hero.name}
+          </div>
+          <div className="mono" style={{fontSize: 10.5, color:'var(--text-sub)',
+                                        display:'flex', alignItems:'center', gap: 5, flexWrap:'wrap', marginTop: 2}}>
+            <AffinityIcon element={hero.element} size={11}/>
+            <span>{'★'.repeat(Math.min(6, hero.stars || 0))}</span>
+            <span>L{hero.level || '?'}</span>
+            {hero.empower ? <span>+{hero.empower}</span> : null}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -1062,22 +1162,28 @@ function PageHeroes({s}) {
               ))}
             </div>
             <div className="scroll" style={{flex: 1, overflowY:'auto'}}>
-              <div style={{display:'grid', gridTemplateColumns: '1.4fr 100px 80px 70px 56px 80px 76px 56px 56px', gap: 6, padding:'8px 16px', fontSize: 10.5, color:'var(--text-dim)', textTransform:'uppercase', letterSpacing:'0.06em', borderBottom:'1px solid var(--border)', background:'var(--bg-subtle)'}}>
-                <span>Name</span><span>Faction</span><span>Rarity</span><span>Lv / ★</span><span>Emp</span><span>Skills</span><span>Masteries</span><span>Bless</span><span>Gear</span>
+              <div style={{display:'grid', gridTemplateColumns: '36px 1.4fr 100px 80px 70px 56px 80px 76px 56px 56px', gap: 6, padding:'8px 16px', fontSize: 10.5, color:'var(--text-dim)', textTransform:'uppercase', letterSpacing:'0.06em', borderBottom:'1px solid var(--border)', background:'var(--bg-subtle)'}}>
+                <span></span><span>Name</span><span>Faction</span><span>Rarity</span><span>Lv / ★</span><span>Emp</span><span>Skills</span><span>Masteries</span><span>Bless</span><span>Gear</span>
               </div>
               {heroes.map((h,i) => {
                 const mtrees = h.mastery_trees || [0,0,0];
                 const mtotal = h.mastery_count || mtrees.reduce((a,b)=>a+b,0);
                 const mComplete = mtotal >= 15;
                 return (
-                <div key={(h.id || h.name) + '-' + i} style={{display:'grid', gridTemplateColumns: '1.4fr 100px 80px 70px 56px 80px 76px 56px 56px', gap: 6, padding:'7px 16px', fontSize: 12, borderBottom:'1px solid var(--border)', alignItems:'center'}}>
+                <div key={(h.id || h.name) + '-' + i} style={{display:'grid', gridTemplateColumns: '36px 1.4fr 100px 80px 70px 56px 80px 76px 56px 56px', gap: 6, padding:'7px 16px', fontSize: 12, borderBottom:'1px solid var(--border)', alignItems:'center'}}>
+                  <HeroPortrait typeId={h.type_id} size={32}
+                                rarity={({Common:1,Uncommon:2,Rare:3,Epic:4,Legendary:5}[h.rarity])||0}
+                                name={h.name}/>
                   <div style={{minWidth: 0}}>
                     <div style={{fontWeight: 500, display:'flex', alignItems:'center', gap: 6}}>
                       {h.in_storage && <span title="Vaulted" style={{fontSize: 9, padding:'1px 5px', border:'1px solid var(--border-strong)', borderRadius: 3, color:'var(--text-dim)', letterSpacing:'0.04em'}}>VAULT</span>}
                       {h.locked && !h.in_storage && <span title="Locked" style={{fontSize: 10, color:'var(--text-dim)'}}>🔒</span>}
                       <span className="truncate">{h.name}</span>
                     </div>
-                    <div style={{fontSize: 10, color:'var(--text-dim)'}} className="mono">{h.role || ''}{h.element ? ' · ' + h.element : ''}</div>
+                    <div style={{fontSize: 10, color:'var(--text-dim)', display:'flex', alignItems:'center', gap: 4}} className="mono">
+                      <AffinityIcon element={h.element} size={11}/>
+                      <span>{h.role || ''}{h.element ? ' · ' + h.element : ''}</span>
+                    </div>
                   </div>
                   <span style={{color:'var(--text-sub)'}} className="truncate">{h.faction}</span>
                   <span style={{color: RARITY_COLORS[h.rarity]}}>{h.rarity}</span>
@@ -2038,12 +2144,20 @@ function CBRunDetailModal({s, lr, team, totalDealt, totalTaken, rarityColor, onC
               {team.map((h,i) => (
                 <div key={h.name} style={{padding:'10px 14px', borderBottom:'1px solid var(--border)'}}>
                   <div style={{display:'grid', gridTemplateColumns:'1.2fr 80px 80px 80px 80px 60px', gap: 8, alignItems:'center', fontSize: 12}}>
-                    <div style={{minWidth: 0}}>
-                      <div style={{fontWeight: 500, display:'flex', alignItems:'center', gap: 6}}>
-                        {i===0 && <span style={{fontSize: 9, color:'var(--accent)', border:'1px solid var(--accent)', padding:'1px 4px', borderRadius: 3}}>LEAD</span>}
-                        <span className="truncate">{h.name}</span>
+                    <div style={{minWidth: 0, display:'flex', alignItems:'center', gap: 8}}>
+                      <HeroPortrait typeId={h.type_id} size={32}
+                                    rarity={({Common:1,Uncommon:2,Rare:3,Epic:4,Legendary:5}[h.rarity])||0}
+                                    name={h.name}/>
+                      <div style={{minWidth: 0}}>
+                        <div style={{fontWeight: 500, display:'flex', alignItems:'center', gap: 6}}>
+                          {i===0 && <span style={{fontSize: 9, color:'var(--accent)', border:'1px solid var(--accent)', padding:'1px 4px', borderRadius: 3}}>LEAD</span>}
+                          <span className="truncate">{h.name}</span>
+                        </div>
+                        <div style={{fontSize: 10.5, color: rarityColor[h.rarity], marginTop: 2, display:'flex', alignItems:'center', gap: 4}}>
+                          <AffinityIcon element={h.element} size={11}/>
+                          <span>{h.rarity} · {h.faction} · {h.role}</span>
+                        </div>
                       </div>
-                      <div style={{fontSize: 10.5, color: rarityColor[h.rarity], marginTop: 2}}>{h.rarity} · {h.faction} · {h.role}</div>
                     </div>
                     <div style={{textAlign:'right'}}>
                       <div style={{fontSize: 10, color:'var(--text-dim)'}}>Dealt</div>
@@ -2464,14 +2578,37 @@ function TopAreas({areas}) {
 }
 
 function PageEvents({s}) {
+  const [liveEvents, setLiveEvents] = React.useState(null);
+  const [err, setErr] = React.useState(null);
+  React.useEffect(() => {
+    let alive = true;
+    const tick = async () => {
+      try {
+        const r = await fetch('/api/events', {cache:'no-store'});
+        if (!alive) return;
+        if (r.ok) {
+          const j = await r.json();
+          setLiveEvents(j.events || []);
+          if (j.error) setErr(j.error);
+        }
+      } catch(e) { setErr(String(e)); }
+    };
+    tick();
+    const id = setInterval(tick, 30000);  // events change slowly
+    return () => { alive = false; clearInterval(id); };
+  }, []);
+  const events = (liveEvents && liveEvents.length) ? liveEvents : s.events;
   return (
     <div style={{display:'grid', gridTemplateColumns: '1fr 320px', gap: 10, minHeight: '100%'}}>
-      <div className="card" style={{padding: 20, overflow:'auto'}} className="card scroll">
+      <div className="card scroll" style={{padding: 20, overflow:'auto'}}>
         <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom: 14}}>
           <div className="card-title">Active events · solo & tournaments</div>
-          <span className="chip" style={{background:'var(--accent-soft)', color:'var(--accent)', borderColor:'transparent'}}>Double-dip mode on</span>
+          <span className="chip" style={{background: liveEvents ? 'var(--accent-soft)' : 'var(--bg-subtle)', color: liveEvents ? 'var(--accent)' : 'var(--text-dim)', borderColor:'transparent'}}>
+            {liveEvents ? `${liveEvents.length} live` : 'sim'}
+          </span>
         </div>
-        {s.events.map(e => (
+        {err && <div style={{color:'var(--red)', fontSize: 11, marginBottom: 8}}>{err}</div>}
+        {events.map(e => (
           <div key={e.name} style={{padding:'14px 0', borderBottom:'1px solid var(--border)', opacity: e.upcoming ? 0.55 : 1}}>
             <div style={{display:'flex', justifyContent:'space-between', alignItems:'baseline', marginBottom: 6}}>
               <div style={{fontSize: 15, fontWeight: 500}}>{e.name}</div>
@@ -2546,31 +2683,70 @@ function PageHistory({s}) {
 }
 
 function PageMod({s}) {
+  const [info, setInfo] = React.useState(null);
+  const [err, setErr] = React.useState(null);
+  React.useEffect(() => {
+    let alive = true;
+    const tick = async () => {
+      try {
+        const r = await fetch('/api/mod-info', {cache:'no-store'});
+        if (!alive) return;
+        if (r.ok) setInfo(await r.json());
+      } catch(e) { setErr(String(e)); }
+    };
+    tick();
+    const id = setInterval(tick, 5000);
+    return () => { alive = false; clearInterval(id); };
+  }, []);
+  const status = info && info.status;
+  const dll = info && info.plugin_dll;
+  const hd = info && info.hook_diag;
+  const patches = (hd && hd.patches) || [];
+  const cmdClasses = (hd && hd.cmd_classes) || {};
+  const modAlive = !!status;
   return (
     <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap: 10, minHeight: '100%'}}>
       <div className="card" style={{padding: 18}}>
-        <div className="card-title" style={{marginBottom: 12}}>MelonLoader mod</div>
+        <div className="card-title" style={{marginBottom: 12}}>BepInEx plugin</div>
         <div className="mono" style={{fontSize: 12, lineHeight: 1.8, color:'var(--text-sub)'}}>
-          <div>RaidAutomationMod.dll · v1.4</div>
-          <div>HTTP · <span style={{color:'var(--accent)'}}>127.0.0.1:6790</span></div>
-          <div>Handlers · /status, /buttons, /click, /find, /scene</div>
-          <div>Queue · Unity main-thread</div>
-          <div style={{color:'var(--ok)', marginTop: 6}}>● 14 interactable buttons online</div>
+          <div>RaidAutomationPlugin.dll
+            {dll && <span style={{color:'var(--text-dim)'}}> · {dll.size.toLocaleString()} bytes</span>}
+          </div>
+          {dll && <div>SHA-256 · <span style={{color:'var(--accent)'}}>{dll.sha256_short}</span></div>}
+          {dll && <div>Modified · <span className="mono">{new Date(dll.modified*1000).toLocaleString()}</span></div>}
+          <div>HTTP · <span style={{color:'var(--accent)'}}>{(info && info.mod_url) || 'localhost:6790'}</span></div>
+          {status && <div>Scene · <span className="mono" style={{color:'var(--accent)'}}>{status.scene}</span></div>}
+          {status && <div>Logged-in · <span style={{color: status.logged_in ? 'var(--ok)' : 'var(--red)'}}>{String(status.logged_in)}</span></div>}
+          <div style={{color: modAlive ? 'var(--ok)' : 'var(--red)', marginTop: 6}}>
+            ● {modAlive ? 'mod online' : 'mod offline'}
+          </div>
+          {info && info.status_error && <div style={{color:'var(--red)', fontSize: 10.5}}>{info.status_error}</div>}
         </div>
       </div>
-      <div className="card" style={{padding: 18}}>
-        <div className="card-title" style={{marginBottom: 12}}>IL2CPP offsets</div>
-        <div className="mono" style={{fontSize: 11.5, lineHeight: 1.8, color:'var(--text-sub)'}}>
-          <div>AppModel · <span style={{color:'var(--accent)'}}>0x4DC1558</span></div>
-          <div>AppViewModel · <span style={{color:'var(--accent)'}}>0x4DC2A28</span></div>
-          <div>Unity · 6000.0.60</div>
-          <div>Metadata · v31</div>
-          <div>Game ver · 11.30.0</div>
-          <div style={{color:'var(--text-dim)', marginTop: 6}}>Source: Il2CppDumper v6.7.46</div>
+      <div className="card scroll" style={{padding: 18, maxHeight: 360, overflowY:'auto'}}>
+        <div className="card-title" style={{marginBottom: 12}}>Harmony patches ({patches.length})</div>
+        {patches.length === 0 && <div style={{fontSize: 11, color:'var(--text-dim)'}}>No patch data (mod may be offline)</div>}
+        <div className="mono" style={{fontSize: 10.5, lineHeight: 1.7, color:'var(--text-sub)'}}>
+          {patches.map((p, i) => (
+            <div key={i} style={{color: /err|fail/i.test(p) ? 'var(--red)' : 'var(--text-sub)'}}>{p}</div>
+          ))}
+        </div>
+      </div>
+      <div className="card scroll" style={{padding: 18, gridColumn:'span 2', maxHeight: 220, overflowY:'auto'}}>
+        <div className="card-title" style={{marginBottom: 12}}>
+          Cmd classes seen ({Object.keys(cmdClasses).length})
+        </div>
+        <div className="mono" style={{fontSize: 10.5, lineHeight: 1.7, color:'var(--text-sub)',
+                                       columnCount: 2, columnGap: 24}}>
+          {Object.entries(cmdClasses)
+            .sort((a,b) => b[1] - a[1])
+            .map(([n, c]) => (
+            <div key={n}>{n} <span style={{color:'var(--text-dim)'}}>· {c}</span></div>
+          ))}
         </div>
       </div>
       <div className="card" style={{padding: 18, gridColumn: 'span 2'}}>
-        <div className="card-title" style={{marginBottom: 12}}>VM · mothership2</div>
+        <div className="card-title" style={{marginBottom: 12}}>VM · {s.vm.host}</div>
         <div style={{display:'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16}}>
           <div><div style={{fontSize: 10.5, color:'var(--text-dim)', textTransform:'uppercase'}}>Host</div><div className="mono" style={{fontSize: 13, marginTop: 4}}>{s.vm.host}</div></div>
           <div><div style={{fontSize: 10.5, color:'var(--text-dim)', textTransform:'uppercase'}}>IP</div><div className="mono" style={{fontSize: 13, marginTop: 4}}>{s.vm.ip}</div></div>
@@ -3298,9 +3474,14 @@ function PageChampManager() {
             <ChampManagerSection title="Skill-up plans" emptyText="No skill-up plans (all skills maxed or no dups).">
               {data.skill_plans.map((p, i) => (
                 <div key={p.primary.id} style={{padding:'8px 0', borderBottom:'1px solid var(--border)', fontSize: 12}}>
-                  <div style={{display:'flex', justifyContent:'space-between'}}>
-                    <span><strong>[{i+1}]</strong> {p.primary.name} <span className="mono" style={{color:'var(--text-dim)'}}>R{p.primary.rarity}/G{p.primary.grade}/L{p.primary.level} (id {p.primary.id})</span></span>
-                    <span className="mono" style={{color:'var(--accent)'}}>+{p.total_remaining} levels · {p.feeds.length} feed(s)</span>
+                  <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', gap: 8}}>
+                    <div style={{display:'flex', alignItems:'center', gap: 8, minWidth: 0}}>
+                      <HeroPortrait typeId={p.primary.type_id} size={24} rarity={p.primary.rarity}/>
+                      <span style={{minWidth:0, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>
+                        <strong>[{i+1}]</strong> {p.primary.name} <span className="mono" style={{color:'var(--text-dim)'}}>R{p.primary.rarity}/G{p.primary.grade}/L{p.primary.level}</span>
+                      </span>
+                    </div>
+                    <span className="mono" style={{color:'var(--accent)', whiteSpace:'nowrap'}}>+{p.total_remaining} lv · {p.feeds.length} feed</span>
                   </div>
                   <div style={{paddingLeft: 16, marginTop: 4, color:'var(--text-sub)', fontSize: 11}}>
                     {p.skill_levels.filter(s=>s.remaining > 0).map(s => (
@@ -3314,9 +3495,14 @@ function PageChampManager() {
             <ChampManagerSection title="Rank-up plans" emptyText="No rank-up plans.">
               {data.rank_plans.map((p, i) => (
                 <div key={p.target.id} style={{padding:'8px 0', borderBottom:'1px solid var(--border)', fontSize: 12}}>
-                  <div style={{display:'flex', justifyContent:'space-between'}}>
-                    <span><strong>[{i+1}]</strong> {p.target.name} <span className="mono" style={{color:'var(--text-dim)'}}>R{p.target.rarity}/G{p.target.grade}/L{p.target.level} (id {p.target.id})</span></span>
-                    <span className="mono" style={{color:'var(--text-dim)'}}>{p.food.length} food</span>
+                  <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', gap: 8}}>
+                    <div style={{display:'flex', alignItems:'center', gap: 8, minWidth: 0}}>
+                      <HeroPortrait typeId={p.target.type_id} size={24} rarity={p.target.rarity}/>
+                      <span style={{minWidth:0, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>
+                        <strong>[{i+1}]</strong> {p.target.name} <span className="mono" style={{color:'var(--text-dim)'}}>R{p.target.rarity}/G{p.target.grade}/L{p.target.level}</span>
+                      </span>
+                    </div>
+                    <span className="mono" style={{color:'var(--text-dim)', whiteSpace:'nowrap'}}>{p.food.length} food</span>
                   </div>
                   <div style={{paddingLeft: 16, marginTop: 4, fontSize: 11, color:'var(--text-sub)'}} className="mono">
                     {p.food.map(f => `${f.name}(R${f.rarity}/G${f.grade}/L${f.level})`).join(' · ')}
@@ -3446,6 +3632,7 @@ function PageChampManager() {
         </div>
 
         <RankUpChainPlanner/>
+        <ChampionTrainingPanel/>
       </div>
     </div>
   );
@@ -3530,10 +3717,12 @@ function RankUpChainPlanner() {
               padding:'4px 8px', cursor:'pointer', fontSize: 11.5,
               background: sel ? 'var(--accent-soft)' : 'transparent',
               color: sel ? 'var(--accent)' : 'var(--text)',
-              display:'flex', justifyContent:'space-between',
+              display:'flex', alignItems:'center', gap: 6,
             }}>
-              <span>{sel ? '✓ ' : '  '}{h.name}</span>
-              <span className="mono" style={{color:'var(--text-dim)'}}>
+              <span style={{width: 12}}>{sel ? '✓' : ''}</span>
+              <HeroPortrait typeId={h.type_id} size={22} rarity={h.rarity}/>
+              <span style={{flex: 1, minWidth: 0, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{h.name}</span>
+              <span className="mono" style={{color:'var(--text-dim)', fontSize: 10.5}}>
                 R{h.rarity}/G{h.grade}/L{h.level}{h.level_ready ? '' : ' ⚠'}
               </span>
             </div>
@@ -3639,8 +3828,191 @@ function ChampManagerSection({title, children, emptyText}) {
 }
 
 
+/* ========================== ChampionTrainingPanel =========================
+ * Lives inside PageChampManager's right rail. Wraps tools/six_star.py:
+ * pick a target, see the cascade plan, kick off an autonomous farm-and-
+ * rank-up loop that survives Claude/dashboard exit. Polls
+ * /api/six-star/status for live progress.
+ */
+function ChampionTrainingPanel() {
+  const [heroes, setHeroes] = React.useState([]);
+  const [filter, setFilter] = React.useState('');
+  const [picked, setPicked] = React.useState(null);   // hero id
+  const [toGrade, setToGrade] = React.useState(6);
+  const [plan, setPlan] = React.useState(null);
+  const [planErr, setPlanErr] = React.useState(null);
+  const [status, setStatus] = React.useState(null);
+  const [busy, setBusy] = React.useState(false);
+
+  // Load rank-up targets once
+  React.useEffect(() => {
+    fetch('/api/rank-up-targets').then(r => r.json())
+      .then(j => setHeroes(j.heroes || []))
+      .catch(e => setPlanErr('targets: ' + e));
+  }, []);
+
+  // Poll training status every 4s
+  React.useEffect(() => {
+    let alive = true;
+    const tick = async () => {
+      try {
+        const r = await fetch('/api/six-star/status');
+        if (!alive) return;
+        if (r.ok) setStatus(await r.json());
+      } catch(e) {}
+    };
+    tick();
+    const id = setInterval(tick, 4000);
+    return () => { alive = false; clearInterval(id); };
+  }, []);
+
+  // Auto-load plan when target changes
+  React.useEffect(() => {
+    if (!picked) { setPlan(null); return; }
+    setPlanErr(null);
+    fetch(`/api/six-star/plan?target_id=${picked}&to_grade=${toGrade}`)
+      .then(r => r.json())
+      .then(j => { if (j.error) setPlanErr(j.error); else setPlan(j); })
+      .catch(e => setPlanErr(String(e)));
+  }, [picked, toGrade]);
+
+  const filtered = React.useMemo(() => {
+    const f = filter.trim().toLowerCase();
+    let xs = heroes;
+    if (f) xs = xs.filter(h => (h.name || '').toLowerCase().includes(f));
+    return xs.slice(0, 200);
+  }, [heroes, filter]);
+
+  const start = async () => {
+    if (!picked) return;
+    setBusy(true);
+    try {
+      const r = await fetch('/api/six-star/start', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ target_id: picked, to_grade: toGrade }),
+      });
+      const j = await r.json();
+      if (!r.ok) setPlanErr(j.error || ('HTTP ' + r.status));
+    } catch(e) { setPlanErr(String(e)); }
+    finally { setBusy(false); }
+  };
+
+  const stop = async () => {
+    setBusy(true);
+    try { await fetch('/api/six-star/stop', { method:'POST' }); }
+    catch(e) {}
+    finally { setBusy(false); }
+  };
+
+  const running = status && status.running;
+  const target = plan && plan.target;
+  const counts = plan && plan.pool_counts;
+  const protections = plan && plan.protections;
+
+  return (
+    <ChampManagerSection title="Champion training — 6★ autonomous">
+      <div style={{fontSize: 10.5, color:'var(--text-dim)', marginBottom: 6}}>
+        Picks target. Farms Campaign 12-3 NM unattended; cascades
+        G1→G2→…→G5; ranks up target when fodder hits threshold.
+      </div>
+
+      <div style={{display:'flex', gap: 6, marginBottom: 6, alignItems:'center'}}>
+        <input placeholder="Filter…" value={filter}
+               onChange={e=>setFilter(e.target.value)}
+               style={{flex:1, padding: 4, background:'var(--bg-subtle)',
+                       border:'1px solid var(--border)', color:'var(--text)',
+                       fontSize: 10.5, fontFamily:'JetBrains Mono, monospace'}}/>
+        <select value={toGrade} onChange={e=>setToGrade(parseInt(e.target.value))}
+                style={{padding: 4, background:'var(--bg-subtle)',
+                        border:'1px solid var(--border)', color:'var(--text)', fontSize: 10.5}}>
+          {[2,3,4,5,6].map(g => <option key={g} value={g}>G{g}</option>)}
+        </select>
+      </div>
+
+      <div className="scroll" style={{maxHeight: 110, overflowY: 'auto',
+                                       background:'var(--bg-subtle)', border:'1px solid var(--border)',
+                                       padding: 2, marginBottom: 6}}>
+        {filtered.slice(0, 80).map(h => {
+          const sel = picked === h.id;
+          return (
+            <div key={h.id} onClick={()=>setPicked(h.id)} style={{
+              padding:'2px 6px', cursor:'pointer', fontSize: 10.5,
+              background: sel ? 'var(--accent-soft)' : 'transparent',
+              color: sel ? 'var(--accent)' : 'var(--text)',
+              display:'flex', alignItems:'center', gap: 6,
+            }}>
+              <span style={{width: 14}}>{sel ? '●' : ''}</span>
+              <HeroPortrait typeId={h.type_id} size={20} rarity={h.rarity}/>
+              <span style={{flex:1, minWidth:0, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{h.name}</span>
+              <span className="mono" style={{color:'var(--text-dim)', fontSize: 10}}>
+                R{h.rarity}/G{h.grade}/L{h.level}{h.level_ready ? '' : '⚠'}
+              </span>
+            </div>
+          );
+        })}
+        {filtered.length === 0 && <div style={{padding: 4, color:'var(--text-dim)', fontSize: 10.5}}>No heroes match.</div>}
+      </div>
+
+      {planErr && <div style={{color:'var(--red)', fontSize: 10.5, marginBottom: 4}}>{planErr}</div>}
+
+      {plan && (
+        <div style={{borderTop:'1px solid var(--border)', paddingTop: 6, marginBottom: 6}}>
+          <div className="mono" style={{fontSize: 10, color:'var(--text-dim)', textTransform:'uppercase', letterSpacing:'0.06em', marginBottom: 4}}>cascade for {target.name} → G{toGrade}</div>
+          {(plan.chain || []).map((c, i) => (
+            <div key={i} className="mono" style={{fontSize: 10.5, color: c.short>0 ? 'var(--red)' : 'var(--accent)'}}>
+              G{c.grade}: need {c.demand}, have {c.available}{c.short > 0 && <span style={{color:'var(--text)'}}> · short {c.short}</span>}
+            </div>
+          ))}
+          <div className="mono" style={{fontSize: 10.5, marginTop: 4, color: plan.feasible ? 'var(--accent)' : 'var(--red)'}}>
+            {plan.feasible ? 'FEASIBLE' : `INFEASIBLE (short at G${plan.stuck_grade || 1})`}
+          </div>
+        </div>
+      )}
+
+      {counts && (
+        <div className="mono" style={{fontSize: 10.5, marginBottom: 6, color:'var(--text-sub)'}}>
+          pool: G1={counts[1]||0} G2={counts[2]||0} G3={counts[3]||0} G4={counts[4]||0} G5={counts[5]||0}
+        </div>
+      )}
+
+      <div style={{display:'flex', gap: 4, alignItems:'center', marginBottom: 4}}>
+        <span className="mono" style={{fontSize: 10, color: running ? 'var(--accent)' : 'var(--text-dim)'}}>
+          {running ? `running pid=${status.pid}` : 'idle'}
+        </span>
+        <span style={{flex:1}}/>
+        <SuperRaidWidget size="sm"/>
+        {!running ? (
+          <button className="btn primary" onClick={start} disabled={!picked || busy}>
+            {busy ? '…' : 'Start'}
+          </button>
+        ) : (
+          <button className="btn" onClick={stop} disabled={busy} style={{color:'var(--red)'}}>
+            {busy ? '…' : 'Stop'}
+          </button>
+        )}
+      </div>
+
+      {status && status.running && status.target_state && (
+        <div className="mono" style={{fontSize: 10.5, marginTop: 6, color:'var(--accent)'}}>
+          {status.target_name}: G{status.target_state.grade}/L{status.target_state.level}
+        </div>
+      )}
+
+      {status && status.running && status.log_tail && (
+        <pre className="scroll mono" style={{
+          maxHeight: 90, overflow:'auto', background:'#07090b',
+          border:'1px solid var(--border)', padding: 4, marginTop: 4,
+          fontSize: 9.5, color:'var(--text-sub)', margin: 0,
+          whiteSpace:'pre-wrap', wordBreak:'break-word',
+        }}>{status.log_tail}</pre>
+      )}
+    </ChampManagerSection>
+  );
+}
+
+
 Object.assign(window, {
   PageOverview, PageLive, PageTasks, PageResources, PageCB, PageHeroes, PageEvents, PageHistory, PageMod,
-  PageChampManager, RankUpChainPlanner, RankUpPlanRow,
+  PageChampManager, RankUpChainPlanner, RankUpPlanRow, ChampionTrainingPanel,
   ScheduleCard,
 });

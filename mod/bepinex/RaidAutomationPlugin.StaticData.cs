@@ -429,10 +429,53 @@ namespace RaidAutomation
                         string rankName = rankVar != null ? rankVar.ToString() : "?";
                         if (!first) sb.Append(",");
                         first = false;
+                        // Extract Resource cost (Resources.RawValues : Dict<ResourceTypeId, double>)
+                        var price = Prop(r, "Price");
+                        var rvBuilder = new StringBuilder();
+                        rvBuilder.Append("{");
+                        bool firstRv = true;
+                        if (price != null)
+                        {
+                            try
+                            {
+                                var rawDict = Prop(price, "RawValues");
+                                if (rawDict != null)
+                                {
+                                    var rvEntries = Prop(rawDict, "_entries");
+                                    int rvLen = rvEntries != null ? IntProp(rvEntries, "Length") : 0;
+                                    int rvCount = IntProp(rawDict, "Count");
+                                    var rvGet = rvEntries?.GetType().GetMethod("get_Item", new[] { typeof(int) })
+                                                ?? rvEntries?.GetType().GetProperty("Item")?.GetGetMethod();
+                                    int rvFound = 0;
+                                    for (int j = 0; j < rvLen && rvFound < rvCount; j++)
+                                    {
+                                        var rve = rvGet.Invoke(rvEntries, new object[] { j });
+                                        if (rve == null) continue;
+                                        var rk = Prop(rve, "key");
+                                        var rv = Prop(rve, "value");
+                                        if (rk == null || rv == null) continue;
+                                        rvFound++;
+                                        string keyName = rk.ToString();
+                                        double valNum = 0;
+                                        try { valNum = Convert.ToDouble(rv); } catch { }
+                                        if (!firstRv) rvBuilder.Append(",");
+                                        firstRv = false;
+                                        rvBuilder.Append("\"").Append(Esc(keyName)).Append("\":")
+                                                 .Append(valNum.ToString("0.####",
+                                                    System.Globalization.CultureInfo.InvariantCulture));
+                                    }
+                                }
+                            }
+                            catch { }
+                        }
+                        rvBuilder.Append("}");
+
                         sb.Append("{\"recipe_id\":").Append(recipeId)
                           .Append(",\"set_id\":").Append(setId)
                           .Append(",\"set_kind\":\"").Append(Esc(setName))
-                          .Append("\",\"rank_variation\":\"").Append(Esc(rankName)).Append("\"}");
+                          .Append("\",\"rank_variation\":\"").Append(Esc(rankName))
+                          .Append("\",\"price\":").Append(rvBuilder.ToString())
+                          .Append("}");
                         if (setId > 0) seenSets.Add(setId);
                     }
                     sb.Append("],\"unique_set_ids\":[");

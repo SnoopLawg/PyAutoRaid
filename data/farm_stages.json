@@ -1,0 +1,13 @@
+{
+  "_format": "captured via /current-stage from open HeroesSelectionPveDialogContext._stage.Id; chapter from MapContext._region<N>._regionType",
+  "stages": {
+    "campaign-12-3-nightmare": {
+      "stage_id": 1123003,
+      "chapter": 12,
+      "region_type": 112,
+      "label": "Campaign Brutal/NM 12-3 Nightmare",
+      "captured_at": "2026-05-05",
+      "dialog_ctx": "HeroesSelectionPveDialogContext"
+    }
+  }
+}

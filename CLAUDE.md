@@ -65,6 +65,12 @@ order editor (essential for CB delays, e.g. delay-2 A3).
 `/static-export` and `/alliance-bosses`/`/cb-bosses` (P1/P4 done; see
 `docs/static_data_roadmap.md`).
 
+> **Dungeon farming reference** — `docs/dungeon_farming.md` documents the
+> Normal/Hard stage layouts (Hard caps at 10, NOT 20), per-dungeon set
+> drops, Mythical-rarity rules (Hard-only), and farm-priority ordering.
+> Read this before recommending a "best stage to farm" — older Raid
+> guides reference "Hard 20" which doesn't exist and predate Hard mode.
+
 ### Battle Logger (the foundation)
 
 Every battle the user (or PyAutoRaid) runs MUST capture:

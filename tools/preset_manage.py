@@ -126,34 +126,19 @@ def cmd_list(args) -> int:
 
 
 def cmd_create(args) -> int:
-    # DISABLED 2026-05-03: server rejects our SaveAiPresetCmd with
-    # `ClientLogicException HeroesAiPreset_InvalidPrioritiesTypes 'F' False`.
-    # The server validates priorities against the preset's expected
-    # type/sequence-count and our clone-then-mutate path produces an
-    # invalid combination. Triggering this shows an in-game ERROR
-    # popup that requires the user to dismiss it.
-    #
-    # Until we understand the server-side validation rules (likely:
-    # all skills present, no priority collisions across First/Second/
-    # Third, sequence-count matching presetType, etc.), this command
-    # short-circuits with an explanation rather than triggering more
-    # error popups.
-    if not args.allow_unsafe:
-        print(
-            "ERROR: 'create' is currently disabled.\n"
-            "  The server rejects our SaveAiPresetCmd with\n"
-            "  HeroesAiPreset_InvalidPrioritiesTypes — we don't yet\n"
-            "  match the server's validation rules. Triggering this\n"
-            "  shows an in-game ERROR popup.\n\n"
-            "  Workaround for now: create the preset SHELL in-game (Battle\n"
-            "  Setup -> save a placeholder team into the slot you want),\n"
-            "  then use `update` to set priorities/starters via this CLI.\n\n"
-            "  If you really need to call /save-preset for testing,\n"
-            "  re-run with --allow-unsafe (will trigger the ERROR popup).",
-            file=sys.stderr,
-        )
+    # Validate name — game's AssertIsValidName rejects certain
+    # characters. Spaces and alphanumerics work; '+' and possibly
+    # other special chars trigger the ERROR popup. Restricting here
+    # so the user gets a clean error instead of an in-game popup.
+    if args.name and any(c in args.name for c in "+&<>"):
+        print(f"ERROR: name contains characters the game rejects ('+', '&', etc.). "
+              f"Use spaces and alphanumerics.", file=sys.stderr)
         return 2
-    if args.hero_ids:
+
+    hero_ids: list[int] = []
+    if args.empty:
+        pass  # no heroes needed
+    elif args.hero_ids:
         try:
             hero_ids = [int(x.strip()) for x in args.hero_ids.split(",") if x.strip()]
         except ValueError as e:
@@ -168,19 +153,23 @@ def cmd_create(args) -> int:
             return 2
         print(f"Resolved {names} -> {hero_ids}")
     else:
-        print("ERROR: provide --heroes or --hero-ids", file=sys.stderr)
+        print("ERROR: provide --heroes, --hero-ids, or --empty", file=sys.stderr)
         return 2
 
-    if len(hero_ids) < 1 or len(hero_ids) > 6:
+    if not args.empty and (len(hero_ids) < 1 or len(hero_ids) > 6):
         print(f"ERROR: need 1-6 heroes, got {len(hero_ids)}", file=sys.stderr)
         return 2
 
     params = {
         "name": args.name,
-        "heroes": ",".join(str(h) for h in hero_ids),
         "type": str(args.type),
     }
-    print(f"Creating preset: name={args.name!r}, type={args.type}, heroes={hero_ids}")
+    if args.empty:
+        params["empty"] = "1"
+    else:
+        params["heroes"] = ",".join(str(h) for h in hero_ids)
+    descr = "empty" if args.empty else f"heroes={hero_ids}"
+    print(f"Creating preset: name={args.name!r}, type={args.type}, {descr}")
     r = _mod_get("/save-preset", params)
     if "error" in r:
         print(f"ERROR: {r['error']}", file=sys.stderr)
@@ -237,11 +226,17 @@ def cmd_remove(args) -> int:
 
 
 def cmd_update(args) -> int:
+    if args.name and any(c in args.name for c in "+&<>"):
+        print(f"ERROR: name contains characters the game rejects ('+', '&', etc.). "
+              f"Use spaces and alphanumerics.", file=sys.stderr)
+        return 2
     params = {"id": str(args.id)}
     if args.priorities:
         params["priorities"] = args.priorities
     if args.starters:
         params["starters"] = args.starters
+    if args.name:
+        params["name"] = args.name
     r = _mod_get("/update-preset", params)
     if "error" in r:
         print(f"ERROR: {r['error']}", file=sys.stderr)
@@ -268,19 +263,21 @@ def main() -> int:
                                  "(0=Default 1=First 2=Second 3=Third 4=NotUsed)")
     sp_create.add_argument("--starters", default=None,
                             help="Forced openers: heroId:sid,sid;heroId:sid;...")
+    sp_create.add_argument("--empty", action="store_true",
+                            help="Create an empty preset (no hero setups). "
+                                 "Useful as a shell to populate via update.")
     sp_create.add_argument("--allow-unsafe", action="store_true",
-                            help="Bypass the safety check and call "
-                                 "/save-preset anyway. Will trigger an "
-                                 "in-game ERROR popup until the server "
-                                 "validation logic is understood.")
+                            help=argparse.SUPPRESS)  # legacy; kept for compat
 
     sp_remove = sub.add_parser("remove", help="Remove a preset by id")
     sp_remove.add_argument("--id", type=int, required=True)
 
-    sp_update = sub.add_parser("update", help="Update priorities/starters on existing")
+    sp_update = sub.add_parser("update", help="Update priorities/starters/name on existing")
     sp_update.add_argument("--id", type=int, required=True)
     sp_update.add_argument("--priorities", default=None)
     sp_update.add_argument("--starters", default=None)
+    sp_update.add_argument("--name", default=None,
+                            help="Rename the preset. Spaces + alphanumerics only.")
 
     args = p.parse_args()
     return {"list": cmd_list, "create": cmd_create,

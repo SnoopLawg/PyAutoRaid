@@ -47,7 +47,11 @@ from tools.champ_manager import (  # noqa: E402
     load_protected as _cm_load_protected,
     load_skills_db as _cm_load_skills_db,
 )
-from tools.rank_up_chain import plan_session as _ruc_plan_session  # noqa: E402
+from tools.rank_up_chain import (  # noqa: E402
+    plan_session as _ruc_plan_session,
+    plan_one_target as _ruc_plan_one_target,
+    is_food_eligible as _ruc_is_food_eligible,
+)
 
 # Override to point proxy at a remote mod (e.g. PYAUTORAID_MOD_URL=http://mothership2:6790)
 MOD_URL = os.environ.get("PYAUTORAID_MOD_URL", "http://localhost:6790")
@@ -282,6 +286,7 @@ def build_resources():
                     "doom_tower_gold_keys": "DoomTowerGoldKeys",
                     "doom_tower_silver_keys": "DoomTowerSilverKeys",
                     "auto_tickets":         "AutoBattleTickets",
+                    "faction_keys":         "FortressKeys",  # Faction Wars uses the same keys
                 }
                 import math
                 for out_k, src_k in keymap.items():
@@ -289,6 +294,11 @@ def build_resources():
                         # Floor fractional regenerating keys/tokens so the UI
                         # matches the in-game whole-key counter.
                         out["keys"][out_k] = int(math.floor(float(allres[src_k])))
+                # Include the full raw map so the dashboard can render every
+                # resource type the game exposes (crafting mats, soul coins,
+                # foggy forest tokens, etc.) — UI displays them as a flat
+                # grid with empty frame for icons we haven't extracted.
+                out["all_raw"] = {k: float(v) for k, v in allres.items()}
             except Exception as e:
                 logger.info("mod /all-resources failed: %s", e)
             # Shards come from a separate endpoint (/shards) since they live on
@@ -1910,10 +1920,13 @@ def _hero_summary(h):
     """Compact dict for dashboard transport — strips fields the UI doesn't need."""
     return {
         "id": h.get("id"),
+        "type_id": h.get("type_id"),
         "name": h.get("name"),
         "rarity": h.get("rarity"),
         "grade": h.get("grade"),
         "level": h.get("level"),
+        "element": h.get("element"),
+        "faction": h.get("faction"),
     }
 
 
@@ -2002,6 +2015,378 @@ def build_rank_up_chain(body: dict):
     return result
 
 
+# --- Champion training (long-running six_star.py) -------------------
+# Tracks one detached background subprocess. The dashboard exposes
+# start/status/stop for the user to drive the rank-up cascade loop
+# without keeping a Claude session open.
+_six_star_state = {
+    "pid": None,
+    "target_id": None,
+    "target_name": None,
+    "started_at": None,
+    "log_file": None,
+}
+
+
+def _six_star_log_path(target_name: str) -> Path:
+    return Path(__file__).resolve().parent.parent / f"farm_{target_name}.log"
+
+
+def _six_star_alive(pid: int) -> bool:
+    if not pid:
+        return False
+    try:
+        # Windows: tasklist /FI "PID eq N" returns the process line if alive
+        rc = subprocess.run(
+            ["tasklist", "/FI", f"PID eq {pid}", "/NH"],
+            capture_output=True, text=True, timeout=5,
+        )
+        return f" {pid} " in (rc.stdout or "") or f"\t{pid}\t" in (rc.stdout or "")
+    except Exception:
+        return False
+
+
+def _super_raid_proxy(action: str):
+    """Thin proxy to the mod's /super-raid endpoint. Lets the dashboard
+    UI read state and toggle without exposing :6790 to the browser."""
+    if action not in ("status", "toggle", "on", "off"):
+        return ({"error": "action must be status|toggle|on|off"}, 400)
+    try:
+        with urllib.request.urlopen(f"{MOD_URL}/super-raid?action={action}", timeout=10) as r:
+            return json.loads(r.read())
+    except Exception as e:
+        return ({"error": str(e)}, 502)
+
+
+def six_star_plan(query: dict):
+    """Return the cascade plan for a single target. Body/query: target_id=N&to_grade=6.
+    Re-uses rank_up_chain.plan_one_target — same output as the existing
+    /api/rank-up-chain endpoint but for one target with carry/stage hints."""
+    try:
+        tid = int(_q(query, "target_id") or 0)
+    except Exception:
+        return ({"error": "target_id (int) required"}, 400)
+    if not tid:
+        return ({"error": "target_id (int) required"}, 400)
+    to_grade = int(_q(query, "to_grade", 6) or 6)
+
+    heroes = _fetch_all_heroes() or []
+    target = next((h for h in heroes if h.get("id") == tid), None)
+    if not target:
+        return ({"error": f"hero id {tid} not in roster"}, 404)
+    reserved = _cm_load_reserved()
+    protected = _cm_load_protected()
+    plan = _ruc_plan_one_target(heroes, target, to_grade, reserved, protected)
+    if isinstance(plan.get("consumed_ids"), set):
+        plan["consumed_ids"] = sorted(plan["consumed_ids"])
+
+    # Augment with food-eligible counts per grade so UI can show "what
+    # commons/uncommons/rares we'll cascade through".
+    counts = {g: 0 for g in range(1, 7)}
+    eligible_samples_by_grade: dict[int, list] = {g: [] for g in range(1, 7)}
+    for h in heroes:
+        if not _ruc_is_food_eligible(h, reserved, protected):
+            continue
+        g = h.get("grade") or 0
+        if 1 <= g <= 6:
+            counts[g] = counts.get(g, 0) + 1
+            if len(eligible_samples_by_grade[g]) < 12:
+                eligible_samples_by_grade[g].append({
+                    "id": h.get("id"), "name": h.get("name"),
+                    "type_id": h.get("type_id"),
+                    "rarity": h.get("rarity"),
+                    "level": h.get("level"),
+                })
+    plan["pool_counts"] = counts
+    plan["pool_samples"] = eligible_samples_by_grade
+    plan["target"] = {
+        "id": target.get("id"), "name": target.get("name"),
+        "type_id": target.get("type_id"),
+        "rarity": target.get("rarity"), "grade": target.get("grade"),
+        "level": target.get("level"), "to_grade": to_grade,
+        "element": target.get("element"),
+    }
+    plan["protections"] = {
+        "exclude_legendaries": protected.get("exclude_all_legendaries", True),
+        "exclude_epics": protected.get("exclude_all_epics", False),
+        "protected_names": protected.get("protected_names", []),
+        "fusion_targets": protected.get("fusion_targets", []),
+    }
+    return plan
+
+
+def six_star_start(body: dict):
+    """Spawn six_star.py as a detached subprocess; track PID for status/stop.
+    Body: {target_id: N, target_name?: str, carry_id?: int, stage_name?: str}."""
+    if _six_star_state["pid"] and _six_star_alive(_six_star_state["pid"]):
+        return ({"error": "training already running",
+                 "pid": _six_star_state["pid"],
+                 "target": _six_star_state.get("target_name")}, 409)
+    body = body or {}
+    tid = int(body.get("target_id") or 0)
+    if not tid:
+        return ({"error": "target_id required"}, 400)
+    heroes = _fetch_all_heroes() or []
+    target = next((h for h in heroes if h.get("id") == tid), None)
+    if not target:
+        return ({"error": "target hero not in roster"}, 404)
+    name = target.get("name")
+
+    project_root = Path(__file__).resolve().parent.parent
+    log_path = _six_star_log_path(name)
+    # Open log file; subprocess inherits the FD so output streams live.
+    log_fd = open(log_path, "a", buffering=1, encoding="utf-8")
+    log_fd.write(f"\n\n=== six_star {name} started @ {datetime.datetime.utcnow().isoformat()}Z ===\n")
+    log_fd.flush()
+
+    args = [sys.executable, "-u", str(project_root / "tools" / "six_star.py"), name]
+    if body.get("carry_id"):
+        args += ["--carry", str(int(body["carry_id"]))]
+    if body.get("stage_name"):
+        args += ["--stage-name", str(body["stage_name"])]
+    if body.get("to_grade"):
+        args += ["--to-grade", str(int(body["to_grade"]))]
+
+    # Detach via CREATE_NEW_PROCESS_GROUP + CREATE_BREAKAWAY_FROM_JOB so the
+    # child survives this dashboard process exiting.
+    creationflags = 0
+    if sys.platform == "win32":
+        DETACHED_PROCESS = 0x00000008
+        CREATE_NEW_PROCESS_GROUP = 0x00000200
+        creationflags = DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP
+    proc = subprocess.Popen(
+        args, cwd=str(project_root),
+        stdout=log_fd, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
+        creationflags=creationflags,
+    )
+    _six_star_state.update({
+        "pid": proc.pid,
+        "target_id": tid,
+        "target_name": name,
+        "started_at": datetime.datetime.utcnow().isoformat() + "Z",
+        "log_file": str(log_path),
+    })
+    return {"ok": True, "pid": proc.pid, "target": name, "log": str(log_path)}
+
+
+def six_star_status():
+    """Live state of the running training task — pid + log tail + cascade snapshot."""
+    pid = _six_star_state.get("pid")
+    alive = bool(pid and _six_star_alive(pid))
+    out = {
+        "running": alive,
+        "pid": pid,
+        "target_id": _six_star_state.get("target_id"),
+        "target_name": _six_star_state.get("target_name"),
+        "started_at": _six_star_state.get("started_at"),
+        "log_file": _six_star_state.get("log_file"),
+    }
+    # Log tail (last 60 lines)
+    log_path = _six_star_state.get("log_file")
+    if log_path and Path(log_path).exists():
+        try:
+            with open(log_path, encoding="utf-8", errors="replace") as f:
+                lines = f.readlines()[-60:]
+            out["log_tail"] = "".join(lines)
+        except Exception:
+            out["log_tail"] = ""
+
+    # Live cascade snapshot
+    heroes = _fetch_all_heroes() or []
+    reserved = _cm_load_reserved()
+    protected = _cm_load_protected()
+    counts = {g: 0 for g in range(1, 7)}
+    for h in heroes:
+        if _ruc_is_food_eligible(h, reserved, protected):
+            g = h.get("grade") or 0
+            if 1 <= g <= 6:
+                counts[g] = counts.get(g, 0) + 1
+    out["fodder_counts"] = counts
+    if _six_star_state.get("target_id"):
+        cur = next((h for h in heroes if h.get("id") == _six_star_state["target_id"]), None)
+        if cur:
+            out["target_state"] = {
+                "grade": cur.get("grade"), "level": cur.get("level"),
+                "rarity": cur.get("rarity"),
+            }
+    return out
+
+
+def six_star_stop():
+    """Terminate the running training task, if any."""
+    pid = _six_star_state.get("pid")
+    if not pid:
+        return {"ok": True, "note": "nothing running"}
+    if not _six_star_alive(pid):
+        _six_star_state.update({"pid": None})
+        return {"ok": True, "note": "process already exited"}
+    try:
+        if sys.platform == "win32":
+            subprocess.run(["taskkill", "/F", "/T", "/PID", str(pid)],
+                           capture_output=True, timeout=10)
+        else:
+            os.kill(pid, 15)
+        _six_star_state.update({"pid": None})
+        return {"ok": True, "stopped_pid": pid}
+    except Exception as ex:
+        return ({"error": str(ex)}, 500)
+
+
+def build_mod_info():
+    """Aggregate live mod state for the Mod & offsets dashboard tab.
+    Pulls /status, /hook-diag, plugin DLL hash + game version."""
+    out: dict = {"mod_url": MOD_URL}
+    try:
+        with urllib.request.urlopen(f"{MOD_URL}/status", timeout=5) as r:
+            out["status"] = json.loads(r.read())
+    except Exception as e:
+        out["status_error"] = str(e)
+    try:
+        with urllib.request.urlopen(f"{MOD_URL}/hook-diag", timeout=5) as r:
+            out["hook_diag"] = json.loads(r.read())
+    except Exception as e:
+        out["hook_diag_error"] = str(e)
+    plugin = (Path(os.environ.get("LOCALAPPDATA", "")) / "PlariumPlay" / "StandAloneApps"
+              / "raid" / "build" / "BepInEx" / "plugins" / "RaidAutomationPlugin.dll")
+    if plugin.exists():
+        try:
+            stat = plugin.stat()
+            import hashlib
+            with open(plugin, "rb") as f:
+                h = hashlib.sha256(f.read()).hexdigest()[:16]
+            out["plugin_dll"] = {
+                "path": str(plugin),
+                "size": stat.st_size,
+                "modified": int(stat.st_mtime),
+                "sha256_short": h,
+            }
+        except Exception as e:
+            out["plugin_dll_error"] = str(e)
+    return out
+
+
+def build_events_from_mod():
+    """Pull live events from the mod's /events endpoint, extract the
+    minimal fields the dashboard's PageEvents needs (name, dates,
+    progress hint). Returns {events: [{...}, ...]}."""
+    try:
+        with urllib.request.urlopen(f"{MOD_URL}/events", timeout=10) as r:
+            raw = json.loads(r.read())
+    except Exception as e:
+        return {"events": [], "error": str(e)}
+    events = ((raw or {}).get("data") or {}).get("e") or []
+    now_ms = int(time.time() * 1000)
+    out = []
+    for ev in events:
+        d = ev.get("d") or {}
+        s = d.get("s")  # start ms
+        end = d.get("e")  # end ms
+        if not end:
+            continue
+        # Skip already-finished events older than 1d
+        if end < now_ms - 86_400_000:
+            continue
+        q = ((ev.get("q") or {}).get("q") or {})
+        n = (q.get("n") or {}).get("d") or f"Event #{ev.get('i','?')}"
+        ge = q.get("ge") or {}
+        goal = ge.get("g") or 0
+        # Format ends_in
+        diff_ms = end - now_ms
+        if diff_ms < 0:
+            ends_in = "ended"
+        else:
+            mins = diff_ms // 60000
+            if mins < 60:    ends_in = f"{mins}m"
+            elif mins < 1440: ends_in = f"{mins//60}h{(mins%60):02d}m"
+            else:           ends_in = f"{mins//1440}d{(mins%1440)//60}h"
+        upcoming = (s or 0) > now_ms
+        # Type heuristic
+        kind = "tournament" if "Tournament" in n else "event"
+        # progress: we don't have user-progress in this dump, default to 0
+        out.append({
+            "name": n[:80],
+            "type": kind,
+            "ends_in": ends_in,
+            "progress": 0.0,
+            "reward": f"goal {goal}" if goal else "—",
+            "upcoming": upcoming,
+            "starts_at": s,
+            "ends_at": end,
+        })
+    out.sort(key=lambda e: (e["upcoming"], e["ends_at"]))
+    return {"events": out}
+
+
+def build_mod_log(query: dict | None = None):
+    """Tail BepInEx LogOutput.log + recent activity into a unified
+    real-time feed. Returns {entries: [{t, level, tag, text}, ...]} where
+    `t` is unix-seconds and entries are newest-first.
+
+    Sources merged:
+      * BepInEx LogOutput.log (last N lines)
+      * /api/six-star/status log_tail (if running)
+    Truncates to `n` most-recent entries (default 60)."""
+    n = int(_q(query, "n", 60) or 60)
+    out = []
+    # 1) BepInEx mod log
+    bep = Path(os.environ.get("LOCALAPPDATA", "")) / "PlariumPlay" / "StandAloneApps" \
+          / "raid" / "build" / "BepInEx" / "LogOutput.log"
+    if bep.exists():
+        try:
+            with open(bep, "rb") as f:
+                f.seek(0, 2)
+                size = f.tell()
+                f.seek(max(0, size - 16384))
+                blob = f.read().decode("utf-8", errors="replace")
+            lines = blob.splitlines()[-n:]
+            mtime = bep.stat().st_mtime
+            for i, line in enumerate(lines):
+                if not line.strip():
+                    continue
+                # Format: [Info   :TagName] message body
+                level, tag, text = "info", "mod", line
+                if line.startswith("["):
+                    end = line.find("]")
+                    if end > 0:
+                        head = line[1:end]
+                        text = line[end+1:].strip()
+                        if ":" in head:
+                            lvl_part, tag_part = head.split(":", 1)
+                            level = lvl_part.strip().lower()
+                            tag = tag_part.strip()
+                # Synthesize timestamps spread over the recent past so the
+                # UI can sort them — file doesn't include per-line timestamps.
+                t = (mtime - (len(lines) - i - 1) * 1.0) * 1000  # ms
+                out.append({
+                    "t": int(t),
+                    "level": level if level in ("info","warn","warning","error","debug") else "info",
+                    "tag": tag.lower()[:12] if tag else "mod",
+                    "text": text[:400],
+                })
+        except Exception as e:
+            out.append({"t": int(time.time()*1000), "level":"warn", "tag":"sys",
+                       "text": f"mod-log read failed: {e}"})
+    # 2) Six-star training tail
+    sx_log = _six_star_state.get("log_file")
+    if sx_log and Path(sx_log).exists():
+        try:
+            with open(sx_log, encoding="utf-8", errors="replace") as f:
+                tail = f.readlines()[-20:]
+            mtime = Path(sx_log).stat().st_mtime
+            for i, line in enumerate(tail):
+                if not line.strip():
+                    continue
+                t = (mtime - (len(tail) - i - 1) * 0.5) * 1000
+                out.append({
+                    "t": int(t), "level":"info", "tag":"6star",
+                    "text": line.rstrip()[:400],
+                })
+        except Exception:
+            pass
+    out.sort(key=lambda e: -e["t"])
+    return {"entries": out[:n]}
+
+
 def list_rank_up_targets():
     """Return heroes that could be rank-up targets (grade < 6, not reserved/locked).
     Used by the dashboard's target picker."""
@@ -2017,6 +2402,7 @@ def list_rank_up_targets():
             continue
         out.append({
             "id": h.get("id"), "name": h.get("name"),
+            "type_id": h.get("type_id"),
             "rarity": h.get("rarity"), "grade": h.get("grade"),
             "level": h.get("level"),
             "level_ready": (h.get("level") or 0) >= (h.get("grade") or 0) * 10,
@@ -2337,6 +2723,12 @@ GET_ROUTES = {
     "/api/sell-rules/preview":     lambda q: _eval_sell(_all_artifacts_for_rules(), _load_sell()),
     "/api/champ-manager":          lambda q: build_champ_manager(),
     "/api/rank-up-targets":        lambda q: list_rank_up_targets(),
+    "/api/six-star/plan":          lambda q: six_star_plan(q),
+    "/api/six-star/status":        lambda q: six_star_status(),
+    "/api/super-raid":             lambda q: _super_raid_proxy(_q(q, "action", "status")),
+    "/api/mod-log":                lambda q: build_mod_log(q),
+    "/api/events":                 lambda q: build_events_from_mod(),
+    "/api/mod-info":               lambda q: build_mod_info(),
 }
 
 # A couple GET handlers want the raw `parsed.query` string instead of the
@@ -2426,6 +2818,8 @@ POST_ROUTES = {
     "/api/preset/edit":           _post_preset_edit,
     "/api/champ-manager/execute": execute_champ_manager,
     "/api/rank-up-chain":         build_rank_up_chain,
+    "/api/six-star/start":        six_star_start,
+    "/api/six-star/stop":         lambda body: six_star_stop(),
 }
 
 # POST handlers matched by regex — the captured group is appended to the body args.
@@ -2550,11 +2944,10 @@ def main():
     logger.info("Mod API target: %s", MOD_URL)
     logger.info("CB reset hour: %02d:00 UTC (PYAUTORAID_CB_RESET_UTC_HOUR to override)", CB_RESET_UTC_HOUR)
     logger.info("Dashboard: http://localhost:%d/PyAutoRaid%%20Dashboard.html", PORT)
-    # Start autorun worker (disabled by default; opt-in via /api/autorun/enable)
-    if not _autorun_state.get("thread_started"):
-        _autorun_state["thread_started"] = True
-        t = threading.Thread(target=_autorun_worker, daemon=True, name="cb-autorun")
-        t.start()
+    # Start autorun worker (disabled by default; opt-in via /api/autorun/enable).
+    # _autorun_state is a read-only proxy now; the worker module owns the
+    # 'thread_started' flag internally via ensure_thread().
+    _autorun_worker()
     # Pre-warm the SQLite-derived artifact cache so the first sell-rules
     # preview hit is instant. Done in a background thread so it doesn't
     # block the server from binding the port.

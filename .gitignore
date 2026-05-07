@@ -42,3 +42,103 @@ data/hh/raw/
 # The _meta.fetched_at field lets `--check` flag staleness.
 data/static/skills_all.json
 data/static/stages.json
+.hh_token
+
+# Mod build artifacts
+mod/bepinex/bin/
+mod/bepinex/obj/
+mod/bepinex/refs/
+
+# Extracted game assets (regen via tools/extract_game_assets.py — 299MB,
+# per-install, account-agnostic but too large for git)
+gui/dashboard/assets/_all/
+gui/dashboard/assets/heroes/
+gui/dashboard/assets/heroes_fuse/
+gui/dashboard/assets/hero_splash/
+gui/dashboard/assets/loaded_textures/
+gui/dashboard/assets/effects/
+gui/dashboard/assets/skills/
+gui/dashboard/assets/challenges/
+gui/dashboard/assets/artifact_sets/
+gui/dashboard/assets/artifacts/
+gui/dashboard/assets/artifact_vfx/
+gui/dashboard/assets/factions/
+gui/dashboard/assets/affinities/
+gui/dashboard/assets/leader_skills/
+gui/dashboard/assets/preset_icons/
+gui/dashboard/assets/blessings/
+gui/dashboard/assets/battle_ui/
+gui/dashboard/assets/ui/
+gui/dashboard/assets/resources/
+
+# HH crawl output (account-agnostic but multi-GB)
+data/hh/teams/
+
+# Scratch JSON dumps from interactive debugging
+ab.json
+bl.json
+bl.py
+boss_t.json
+bs_final.json
+cb_force*.json
+cb_live.json
+cb_magic*.json
+computed.json
+eprog.json
+events*.json
+forge_sets_new.json
+gnut_texts.json
+hero_stats_live.json
+latest_live.json
+maneater_t.json
+mast_dump.json
+ninja_*.json
+p_final.json
+p_now.json
+preset_dump.json
+presets_after.json
+resources.json
+skill_*.json
+stag.json
+t36002_d5.json
+tb.json
+tick_log_*.json
+tick_buffer_live.json
+all_artifacts_local.json
+all_champion_typeids.json
+all_heroes.json
+ticklog*.json
+
+# Claude session bookkeeping
+.claude/
+ERROR_FIXES_SUMMARY.md
+ERROR_HANDLING_IMPROVEMENTS.md
+
+# Throwaway test files
+test_error_handling.py
+test_improved_errors.py
+
+# Per-account / runtime
+pyautoraid.db
+data/dashboard_history.jsonl
+data/sell_history.jsonl
+data/gear_plans_cache.json
+farm_*.log
+
+# IDE / scratch
+Python/
+core/
+commands/
+forge_sets.json
+vc.json
+tools/il2cpp_dumper/dump_output/
+
+# Account-specific roster snapshots
+data/reserved_heroes.json
+data/hh/hero_pins.json
+data/hh/owned_counts.json
+data/hh/owned_typeids.json
+
+# Top-level scratch screenshots / scratch
+assets/battleIronTwins.png
+assets/factionWarsStart.png

@@ -88,6 +88,62 @@ def create_scheduled_task(name: str, time_hhmm: str, command: str) -> tuple[bool
     return False, (err or out or f"exit {rc}")[:300]
 
 
+def create_on_demand_task(name: str, command: str) -> tuple[bool, str]:
+    """Register an on-demand Task Scheduler entry — no automatic trigger.
+    Trigger via /Run or the Task Scheduler GUI. Detaches from any caller
+    (e.g. this Claude session), so the python process keeps running after
+    the spawning shell exits. Re-uses /Create with /SC ONCE in the past +
+    no actual trigger via PowerShell New-ScheduledTask.
+
+    Use this for long-running on-demand jobs like six_star.py — you
+    register once, then `schtasks /Run /TN \\PyAutoRaid\\<name>` whenever
+    you want to start it. It runs detached as the current user."""
+    if not TASK_NAME_RE.match(name or ""):
+        return False, "invalid name (A-Z, 0-9, underscore, dash only)"
+    if not command or not command.strip():
+        return False, "command required"
+    tn = f"{TASK_FOLDER}\\{name}"
+    # PowerShell New-ScheduledTask + Register-ScheduledTask without a
+    # trigger creates a task that is on-demand only.
+    cmd_escaped = command.replace("'", "''")
+    ps = f"""
+$action = New-ScheduledTaskAction -Execute 'cmd.exe' -Argument '/c {cmd_escaped}'
+$settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit (New-TimeSpan -Days 7) -MultipleInstances IgnoreNew
+$task = New-ScheduledTask -Action $action -Settings $settings
+Register-ScheduledTask -TaskName '{name}' -TaskPath '{TASK_FOLDER}\\' -InputObject $task -Force | Out-Null
+Write-Output 'created'
+""".strip()
+    rc, out, err = _run_cmd([
+        "powershell", "-NoProfile", "-NonInteractive", "-Command", ps
+    ], timeout=20)
+    if rc == 0:
+        return True, out.strip() or "created"
+    return False, (err or out or f"exit {rc}")[:400]
+
+
+def run_scheduled_task(name: str) -> tuple[bool, str]:
+    """Trigger a registered task. Returns immediately — the task runs
+    asynchronously, detached from this caller."""
+    if not TASK_NAME_RE.match(name or ""):
+        return False, "invalid name"
+    tn = f"{TASK_FOLDER}\\{name}"
+    rc, out, err = _run_cmd(["schtasks", "/Run", "/TN", tn])
+    if rc == 0:
+        return True, "running"
+    return False, (err or out or f"exit {rc}")[:300]
+
+
+def stop_scheduled_task(name: str) -> tuple[bool, str]:
+    """End a running task instance. Use to interrupt an on-demand job."""
+    if not TASK_NAME_RE.match(name or ""):
+        return False, "invalid name"
+    tn = f"{TASK_FOLDER}\\{name}"
+    rc, out, err = _run_cmd(["schtasks", "/End", "/TN", tn])
+    if rc == 0:
+        return True, "stopped"
+    return False, (err or out or f"exit {rc}")[:300]
+
+
 def delete_scheduled_task(name: str) -> tuple[bool, str]:
     if not TASK_NAME_RE.match(name or ""):
         return False, "invalid name"

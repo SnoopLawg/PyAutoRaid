@@ -19,11 +19,15 @@ Usage:
     python3 tools/dungeon_run.py --dungeon spider --stage 1 --no-start
     python3 tools/dungeon_run.py --stage 1                # already on stage list
 
+    # Hard mode + preset (verified Dragon Hard 3 with preset 4: 96-turn win)
+    python3 tools/dungeon_run.py --dungeon dragon --hard --stage 3 --preset 4 --wait
+
     # Loop until the Minotaur scroll-cap messagebox appears
     python3 tools/dungeon_run.py --dungeon minotaur --stage max --until-capped
 
     # Loop a fixed number of runs (any dungeon)
     python3 tools/dungeon_run.py --dungeon dragon --stage 20 --runs 10
+    python3 tools/dungeon_run.py --dungeon dragon --hard --stage 3 --preset 4 --runs 10
 
 Dungeon aliases match RegionTypeId (200s):
     dragon spider fire_knight ice_golem minotaur
@@ -268,6 +272,63 @@ def open_dungeon(dungeon: str) -> bool:
     return False
 
 
+def set_difficulty(hard: bool) -> bool:
+    """Flip the DungeonsDialog Normal/Hard dropdown. Mod endpoint sets
+    the Unity Dropdown's value, which fires the dialog's
+    OnDifficultyChanged listener (same path as a UI dropdown click)."""
+    if not _ensure_dungeons_dialog():
+        print("  ERR: DungeonsDialog not open — can't set difficulty",
+              file=sys.stderr)
+        return False
+    try:
+        r = _get(f"/set-dungeon-difficulty?hard={'1' if hard else '0'}")
+    except Exception as ex:
+        print(f"  ERR set_difficulty: {ex}", file=sys.stderr)
+        return False
+    if "error" in r:
+        print(f"  ERR set_difficulty: {r['error']}", file=sys.stderr)
+        return False
+    print(f"  difficulty set: {'Hard' if hard else 'Normal'}")
+    # Tile list re-virtualizes after a difficulty change; give the UI a
+    # moment to settle before any subsequent scroll/open-stage call.
+    time.sleep(1.0)
+    return True
+
+
+def set_super_raid(on: bool) -> dict:
+    """Toggle the Super Raid (x2 rewards & cost) checkbox on the open
+    hero-selection dialog. Pass True for on, False for off. Returns the
+    /super-raid response dict so caller can log if it was unavailable
+    (e.g. stage not yet passed) or locked. No-op on stages that don't
+    support Super Raid (CB / Hydra / Arena)."""
+    action = "on" if on else "off"
+    try:
+        r = _get(f"/super-raid?action={action}", timeout=10)
+    except Exception as ex:
+        return {"error": str(ex)}
+    return r or {}
+
+
+def apply_preset(preset_id: int) -> bool:
+    """Activate the saved preset on the open hero-selection dialog.
+    Same downstream path as the in-game checkbox click — sets
+    SelectedPresets[] on the dialog, which auto-populates the squad."""
+    if not _ensure_hero_selection():
+        print("  ERR: hero-selection dialog not open — can't apply preset",
+              file=sys.stderr)
+        return False
+    try:
+        r = _get(f"/apply-preset?id={preset_id}")
+    except Exception as ex:
+        print(f"  ERR apply_preset: {ex}", file=sys.stderr)
+        return False
+    if "error" in r:
+        print(f"  ERR apply_preset: {r['error']}", file=sys.stderr)
+        return False
+    print(f"  preset applied: id={preset_id} name={r.get('preset_name')!r}")
+    return True
+
+
 def _scroll_for_stage(stage: int) -> None:
     """The DungeonsDialog uses a virtualized scroll view that only
     renders ~15 tiles. Set the scroll position so the target stage's
@@ -333,6 +394,10 @@ def start_battle() -> bool:
 
 
 FINISH_DIALOG = "UIManager/Canvas (Ui Root)/Dialogs/[DV] BattleFinishDungeonDialog"
+# Iron Twins Fortress uses a different finish dialog (DoubleAscend variant)
+# because it has the dual-boss / multi-round battle flow. Same context-call
+# methods (Close, OnQuickRestartPressed) work on it.
+FINISH_DIALOG_ALT = "UIManager/Canvas (Ui Root)/Dialogs/[DV] BattleFinishDoubleAscendDungeonDialog"
 MESSAGE_BOXES = "UIManager/Canvas (Ui Root)/MessageBoxes"
 MESSAGE_BOX = "UIManager/Canvas (Ui Root)/MessageBoxes/MessageBox"
 
@@ -411,18 +476,25 @@ def _wait_for_finish_or_block(timeout_s: int = 600) -> str:
 
 
 def _read_verdict() -> tuple[str | None, str | None]:
-    """Returns (result, stage_name). Result is 'VICTORY'/'DEFEAT'/etc."""
-    try:
-        r = _get("/get-text?path=" + urllib.parse.quote(FINISH_DIALOG), timeout=8)
-    except Exception:
-        return None, None
-    result = stage = None
-    for t in r.get("texts", []):
-        if t.get("name") == "ResultLabel":
-            result = t.get("text")
-        elif t.get("name") == "Name":
-            stage = t.get("text")
-    return result, stage
+    """Returns (result, stage_name). Result is 'VICTORY'/'DEFEAT'/etc.
+    Tries the standard finish dialog first, then the Iron-Twins
+    DoubleAscend variant."""
+    for path in (FINISH_DIALOG, FINISH_DIALOG_ALT):
+        try:
+            r = _get("/get-text?path=" + urllib.parse.quote(path), timeout=8)
+        except Exception:
+            continue
+        if not r.get("texts"):
+            continue
+        result = stage = None
+        for t in r.get("texts", []):
+            if t.get("name") == "ResultLabel":
+                result = t.get("text")
+            elif t.get("name") == "Name":
+                stage = t.get("text")
+        if result or stage:
+            return result, stage
+    return None, None
 
 
 def wait_and_report() -> tuple[int, str]:
@@ -466,19 +538,20 @@ def wait_and_report() -> tuple[int, str]:
 
 
 def _close_finish_dialog() -> None:
-    """Dismiss BattleFinishDungeonDialog if open, returning to DungeonsDialog.
-    Polls until the dialog is actually gone (up to ~12s) to absorb the
-    Raid close animation."""
+    """Dismiss BattleFinish*Dialog if open, returning to DungeonsDialog.
+    Iron Twins Fortress uses BattleFinishDoubleAscendDungeonDialog instead
+    of the standard one; we try both paths."""
     deadline = time.time() + 12
     attempts = 0
     while time.time() < deadline:
         if not any("BattleFinish" in d for d in _dialogs()):
             return
         attempts += 1
-        try:
-            _context_call(FINISH_DIALOG, "Close")
-        except Exception:
-            pass
+        for path in (FINISH_DIALOG, FINISH_DIALOG_ALT):
+            try:
+                _context_call(path, "Close")
+            except Exception:
+                pass
         time.sleep(1.5)
     if attempts:
         print(f"  WARN: finish dialog still open after {attempts} close "
@@ -501,24 +574,47 @@ def _resolve_max_stage() -> int | None:
     return idxs[-1] + 1
 
 
-def _run_one(stage: int, dungeon: str | None = None) -> tuple[int, str]:
+def _run_one(stage: int, dungeon: str | None = None,
+             hard: bool = False,
+             preset_id: int | None = None,
+             super_raid: bool | None = None) -> tuple[int, str]:
     """Open the stage's hero selection and battle once. Returns (rc, status).
     If `dungeon` is provided, will re-navigate via /open-dungeon as a
     one-shot recovery if DungeonsDialog isn't currently up.
     Leaves the BattleFinishDungeonDialog open on success so the caller
     can chain via _replay_one()."""
+    re_navigated = False
     if not _ensure_dungeons_dialog() and dungeon:
         # We probably just exited a finish dialog; if scene drifted,
         # re-navigate so the next iteration starts cleanly.
         if not open_dungeon(dungeon):
             return 1, "open_failed"
+        re_navigated = True
+    # Hard mode flip is per-DungeonsDialog session — only re-flip on a
+    # fresh navigation. Once set, the dropdown state persists until we
+    # leave the dialog.
+    if hard and re_navigated:
+        if not set_difficulty(True):
+            return 1, "difficulty_failed"
     if not open_stage(stage):
         # One retry: re-navigate then try again.
-        if dungeon and open_dungeon(dungeon) and open_stage(stage):
-            pass
+        if dungeon and open_dungeon(dungeon):
+            if hard and not set_difficulty(True):
+                return 1, "difficulty_failed"
+            if not open_stage(stage):
+                return 1, "open_failed"
         else:
             return 1, "open_failed"
     time.sleep(1.0)
+    if preset_id is not None and not apply_preset(preset_id):
+        return 1, "preset_failed"
+    if super_raid is not None:
+        sr = set_super_raid(super_raid)
+        sr_state = ('on' if sr.get('active') else 'off') if sr.get('available', True) else 'unavailable'
+        if 'error' in sr:
+            print(f"  super-raid {('on' if super_raid else 'off')}: {sr['error']}", file=sys.stderr)
+        else:
+            print(f"  super-raid: {sr_state} (mult x{sr.get('multiplier','?')})")
     if not start_battle():
         return 1, "start_failed"
     return wait_and_report()
@@ -549,13 +645,19 @@ def _replay_one() -> tuple[int, str]:
     success."""
     if not any("BattleFinish" in d for d in _dialogs()):
         return 1, "replay_failed"
-    try:
-        r = _context_call(FINISH_DIALOG, "OnQuickRestartPressed")
-    except Exception as ex:
-        print(f"  ERR replay: {ex}", file=sys.stderr)
-        return 1, "replay_failed"
-    if "error" in r:
-        print(f"  ERR replay: {r['error']}", file=sys.stderr)
+    # Try both finish-dialog variants (regular and DoubleAscend / Iron Twins)
+    last_err = None
+    r = None
+    for path in (FINISH_DIALOG, FINISH_DIALOG_ALT):
+        try:
+            r = _context_call(path, "OnQuickRestartPressed")
+        except Exception as ex:
+            last_err = ex; continue
+        if "error" not in r:
+            break
+        last_err = r.get("error"); r = None
+    if r is None:
+        print(f"  ERR replay: {last_err}", file=sys.stderr)
         return 1, "replay_failed"
     print(f"  replay")
     # Wait for the *previous* finish dialog to close (replay animation).
@@ -574,7 +676,11 @@ def run_loop(dungeon: str | None,
              stop_condition: dict,
              on_progress=None,
              should_stop=None,
-             log_path: str = "data/runs/dungeon_runs.log") -> dict:
+             log_path: str = "data/runs/dungeon_runs.log",
+             hard: bool = False,
+             preset_id: int | None = None,
+             max_fails: int = 1,
+             super_raid: bool | None = None) -> dict:
     """Programmatic entry point for the dungeon-run loop. Used by both
     the CLI (main) and the dashboard server.
 
@@ -605,8 +711,14 @@ def run_loop(dungeon: str | None,
         if not open_dungeon(dungeon):
             return {"ok": False, "reason": "open_dungeon_failed",
                     "completed": 0, "failures": 0}
+    # Hard-mode flip happens once per loop after dungeon is open.
+    # Subsequent _run_one re-navigations will re-flip via re_navigated check.
+    if hard and _ensure_dungeons_dialog():
+        if not set_difficulty(True):
+            return {"ok": False, "reason": "set_difficulty_failed",
+                    "completed": 0, "failures": 0}
 
-    dungeon_label = (dungeon or "dungeon") + f"_{stage}"
+    dungeon_label = (dungeon or "dungeon") + ("_hard" if hard else "") + f"_{stage}"
     target_str = ("until capped" if stop_condition.get("type") == "capped"
                   else f"{stop_condition.get('n', 1)} run(s)")
     print(f"  loop start: {dungeon_label}, {target_str}")
@@ -648,9 +760,12 @@ def run_loop(dungeon: str | None,
             rc, status = _replay_one()
             if status == "replay_failed":
                 _close_finish_dialog()
-                rc, status = _run_one(stage, dungeon=dungeon)
+                rc, status = _run_one(stage, dungeon=dungeon,
+                                      hard=hard, preset_id=preset_id,
+                                      super_raid=super_raid)
         else:
-            rc, status = _run_one(stage, dungeon=dungeon)
+            rc, status = _run_one(stage, dungeon=dungeon,
+                                  hard=hard, preset_id=preset_id)
         elapsed = int(time.time() - t0)
         line = (f"{time.strftime('%Y-%m-%dT%H:%M:%S%z')} {dungeon_label} "
                 f"{status.upper()} {elapsed}s")
@@ -690,12 +805,25 @@ def run_loop(dungeon: str | None,
                     print(f"  auto-sell error: {ex}", file=sys.stderr)
             continue
         failures += 1
-        on_finish_dialog = False
-        print(f"  loop end: aborting after status={status} "
-              f"({completed} success, {failures} fail)", file=sys.stderr)
-        on_progress("end", reason=status, completed=completed)
-        return {"ok": False, "reason": status,
-                "completed": completed, "failures": failures}
+        # Defeats land on a BattleFinishDungeonDialog the same as victories,
+        # so the next iteration can chain via _replay_one (the "Try Again"
+        # button) — only true game-flow failures (open_failed, start_failed,
+        # preset_failed) drop us out of the dialog.
+        on_finish_dialog = (status == "defeat")
+        if failures >= max_fails:
+            print(f"  loop end: aborting after status={status} "
+                  f"({completed} success, {failures} fail, max_fails={max_fails})",
+                  file=sys.stderr)
+            on_progress("end", reason=status, completed=completed)
+            return {"ok": False, "reason": status,
+                    "completed": completed, "failures": failures}
+        # Tolerate this failure and keep going. For non-defeat statuses
+        # close the lingering finish dialog if any, so the next _run_one
+        # starts cleanly via /open-dungeon -> open_stage.
+        if not on_finish_dialog:
+            _close_finish_dialog()
+        print(f"  tolerating failure ({failures}/{max_fails}); continuing",
+              file=sys.stderr)
 
     if on_finish_dialog:
         _close_finish_dialog()
@@ -954,6 +1082,26 @@ def main():
                     help="Disable post-battle auto-sell of new drops "
                          "(otherwise drops are evaluated against "
                          "data/sell_rules.json and sold via /sell-artifacts).")
+    ap.add_argument("--hard", action="store_true",
+                    help="Run on Hard difficulty. Flips the DungeonsDialog "
+                         "Normal/Hard dropdown via /set-dungeon-difficulty "
+                         "(must be unlocked in-game).")
+    ap.add_argument("--super-raid", dest="super_raid", action="store_true",
+                    default=None,
+                    help="Enable Super Raid (x2 rewards & cost) before each "
+                         "battle. Stage must be passed once first; ignored if "
+                         "stage doesn't support it (Hydra/CB/Arena). Calls "
+                         "/super-raid?action=on on the open hero-selection.")
+    ap.add_argument("--no-super-raid", dest="super_raid", action="store_false",
+                    help="Force-disable Super Raid before each battle.")
+    ap.add_argument("--preset", type=int, default=None, metavar="ID",
+                    help="Apply saved preset ID on the hero-selection dialog "
+                         "before StartBattle. Same flow as the in-game preset "
+                         "checkbox click. List presets via /presets.")
+    ap.add_argument("--max-fails", type=int, default=1, metavar="N",
+                    help="Tolerate up to N defeats before aborting the loop. "
+                         "Default 1 (any defeat aborts). Useful for marginal "
+                         "Hard-mode comps where RNG defeats are expected.")
     args = ap.parse_args()
 
     if args.until_capped and args.dungeon and args.dungeon != "minotaur":
@@ -966,6 +1114,15 @@ def main():
 
     if args.dungeon and not open_dungeon(args.dungeon):
         return 1
+    if args.hard and not looping:
+        # Looping path flips Hard inside run_loop. For a single run we
+        # need to flip it here, after open_dungeon, before open_stage.
+        if not _ensure_dungeons_dialog():
+            print("  ERR: --hard requires DungeonsDialog open (pass --dungeon)",
+                  file=sys.stderr)
+            return 1
+        if not set_difficulty(True):
+            return 1
 
     if args.stage is None:
         ap.error("--stage required (1-25 or 'max')")
@@ -987,8 +1144,17 @@ def main():
     if not looping:
         if not open_stage(stage):
             return 1
+        if args.preset is not None:
+            time.sleep(0.5)
+            if not apply_preset(args.preset):
+                return 1
         if args.start:
             time.sleep(1.0)
+            if args.super_raid is not None:
+                sr = set_super_raid(args.super_raid)
+                if 'error' not in sr:
+                    print(f"  super-raid: {'on' if sr.get('active') else 'off'} "
+                          f"(mult x{sr.get('multiplier','?')})")
             if not start_battle():
                 return 1
             if args.wait:
@@ -1004,7 +1170,11 @@ def main():
     stop_condition["auto_sell"] = not args.no_auto_sell
     result = run_loop(dungeon=args.dungeon, stage=stage,
                       stop_condition=stop_condition,
-                      log_path=args.log or None)
+                      log_path=args.log or None,
+                      hard=args.hard,
+                      preset_id=args.preset,
+                      max_fails=args.max_fails,
+                      super_raid=args.super_raid)
     return 0 if result["ok"] else 1
 
 

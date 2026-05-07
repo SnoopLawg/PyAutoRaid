@@ -183,9 +183,13 @@ def plan_one_target(heroes: list[dict], target: dict, to_grade: int,
 
 def _summary(h: dict) -> dict:
     return {
-        "id": h.get("id"), "name": h.get("name"),
+        "id": h.get("id"),
+        "type_id": h.get("type_id"),
+        "name": h.get("name"),
         "rarity": h.get("rarity"), "grade": h.get("grade"),
         "level": h.get("level"),
+        "element": h.get("element"),
+        "faction": h.get("faction"),
     }
 
 

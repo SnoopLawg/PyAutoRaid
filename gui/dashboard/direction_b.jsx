@@ -104,6 +104,8 @@ function DirectionB() {
             <StripMetric icon="arena" val={s.resources.arena_tokens.toFixed(1)}/>
             <StripMetric icon="cb" val={`${s.resources.cb_keys}/2`}/>
             <Sep/>
+            <SuperRaidWidget size="sm"/>
+            <Sep/>
             <span className="mono" style={{color:'var(--text-dim)', fontSize: 10.5}}>{s.vm.host} · {Math.round(s.vm.cpu)}% · {s.vm.ram.toFixed(1)}G</span>
           </div>
         </header>

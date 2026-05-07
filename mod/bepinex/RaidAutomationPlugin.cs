@@ -97,6 +97,13 @@ namespace RaidAutomation
         internal static bool _buffApiDiagLogged;   // logs BattleHero buff/effect method scan once per battle
         internal static int _lastStatsLogTurn;      // last turn we emitted the context/hero snapshot
 
+        // Captured via Harmony postfix on OpenStageCmd..ctor(int).
+        // User taps a stage tile in-game once -> we have the real numeric
+        // stageId for /open-stage forever. Avoids guessing chapter*N + stage
+        // encodings (server rejects all attempts despite cmd ctor accepting them).
+        internal static int _lastOpenedStageId = 0;
+        internal static readonly System.Collections.Generic.List<int> _stageIdHistory = new();
+
         // Cached offsets for HeroState buff lists (discovered once via IL2CPP field scan)
         internal static int _hsAppliedBuffsOff = -1;   // HeroState.AppliedBuffs field offset
         internal static int _hsAppliedDebuffsOff = -1;  // HeroState.AppliedDebuffs field offset
@@ -337,6 +344,34 @@ namespace RaidAutomation
                 //   (b) the Marshal.ReadIntPtr walks have been wrapped in
                 //       try/catch with pointer-validity checks.
 
+                // OpenStageCmd..ctor(int) postfix — capture the real
+                // numeric stage id every time the user (or any code) opens
+                // a stage. Once captured, /last-stage-id exposes it so
+                // farm_loop can stop guessing chapter*N + stage encodings.
+                try
+                {
+                    var oscType = FindTypeStatic("Client.Model.Gameplay.Stages.Commands.OpenStageCmd");
+                    if (oscType != null)
+                    {
+                        var ctor = oscType.GetConstructor(new[] { typeof(int) });
+                        if (ctor != null)
+                        {
+                            var postfix = new HarmonyMethod(typeof(RaidAutomationPlugin)
+                                .GetMethod("Hook_OpenStageCmdCtor", BindingFlags.Static | BindingFlags.Public));
+                            if (postfix.method != null)
+                            {
+                                harmony.Patch(ctor, postfix: postfix);
+                                lock (_hookPatchLog) { _hookPatchLog.Add("OpenStageCmdCtor:patched"); }
+                                Logger.LogInfo("Harmony: patched OpenStageCmd..ctor(int)");
+                            }
+                            else { lock (_hookPatchLog) { _hookPatchLog.Add("OpenStageCmdCtor:no_postfix_method"); } }
+                        }
+                        else { lock (_hookPatchLog) { _hookPatchLog.Add("OpenStageCmdCtor:no_int_ctor"); } }
+                    }
+                    else { lock (_hookPatchLog) { _hookPatchLog.Add("OpenStageCmdCtor:type_not_found"); } }
+                }
+                catch (Exception ex) { lock (_hookPatchLog) { _hookPatchLog.Add("OpenStageCmdCtor:err:" + ex.Message); } }
+
                 Logger.LogInfo("Harmony initialized");
             }
             catch (Exception ex)
@@ -540,6 +575,8 @@ namespace RaidAutomation
                     "/apply-preset" => RunOnMainThread(() => ApplyPreset(QP(query, "id")), 15000),
                     "/set-dungeon-difficulty" => RunOnMainThread(() => SetDungeonDifficulty(QP(query, "hard")), 10000),
                     "/events" => RunOnMainThread(() => GetEvents(), 15000),
+                    "/cvc-multipliers" => RunOnMainThread(() => GetCvcMultipliers(), 15000),
+                    "/super-raid" => RunOnMainThread(() => SuperRaid(QP(query, "action")), 15000),
                     "/event-progress" => RunOnMainThread(() => GetEventProgress(), 10000),
                     "/apply-blessing" => RunOnMainThread(() => ApplyBlessing(QP(query, "hero_id"), QP(query, "blessing_id")), 15000),
                     "/rank-up" => RunOnMainThread(() => RankUpHero(QP(query, "hero_id"), QP(query, "food")), 30000),
@@ -553,6 +590,13 @@ namespace RaidAutomation
                     "/stage-history" => RunOnMainThread(() => StageHistory(), 30000),
                     "/finish-edit-team" => RunOnMainThread(() => FinishEditTeam(), 15000),
                     "/open-stage" => RunOnMainThread(() => OpenStage(QP(query, "id")), 15000),
+                    "/last-stage-id" => LastStageId(),
+                    "/current-stage" => RunOnMainThread(() => CurrentStage(), 15000),
+                    "/open-stage-tile" => RunOnMainThread(() => OpenStageTile(QP(query, "id")), 15000),
+                    "/open-region-tile" => RunOnMainThread(() => OpenRegionTile(QP(query, "id")), 15000),
+                    "/open-campaign-map" => RunOnMainThread(() => OpenCampaignMap(), 15000),
+                    "/open-chapter" => RunOnMainThread(() => OpenChapter(QP(query, "n")), 15000),
+                    "/list-region-tiles" => RunOnMainThread(() => ListRegionTiles(), 15000),
                     "/set-preset-team" => RunOnMainThread(() => SetPresetTeam(QP(query, "id"), QP(query, "heroes")), 30000),
                     "/skill-texts" => RunOnMainThread(() => GetSkillTexts(QP(query, "hero_id"), QP(query, "min_grade")), 60000),
                     "/mastery-data" => RunOnMainThread(() => GetMasteryData(QP(query, "hero_id"))),
@@ -584,6 +628,7 @@ namespace RaidAutomation
                     "/artifact-sets-truth" => RunOnMainThread(() => GetArtifactSetsTruth(), 30000),
                     "/view-contexts" => RunOnMainThread(() => GetViewContexts(QP(query, "path"))),
                     "/invoke-context" => RunOnMainThread(() => InvokeOnContext(QP(query, "type"), QP(query, "method"))),
+                    "/invoke-static" => RunOnMainThread(() => InvokeStaticMethod(QP(query, "type"), QP(query, "method"))),
                     "/list-static-methods" => ListStaticMethods(QP(query, "type"), QP(query, "filter")),
                     "/static-field" => RunOnMainThread(() => GetStaticField(QP(query, "type"), QP(query, "name"), QP(query, "depth")), 30000),
                     "/effect-kind-group" => RunOnMainThread(() => GetEffectKindGroup(QP(query, "group")), 30000),
@@ -2702,6 +2747,28 @@ namespace RaidAutomation
             catch { }
         }
         // __instance = the AppliedEffect being modified; __0 = the new TurnLeft value
+        // Harmony postfix on OpenStageCmd..ctor(int). Captures the stage id
+        // any time something opens a stage (user click in StagesDialog, code,
+        // doom-tower auto-advance, story replay). The most recent value is
+        // exposed via /last-stage-id; callers can pass it to /open-stage to
+        // re-open the same stage programmatically.
+        public static void Hook_OpenStageCmdCtor(int __0)
+        {
+            try
+            {
+                _lastOpenedStageId = __0;
+                lock (_stageIdHistory)
+                {
+                    if (_stageIdHistory.Count == 0 || _stageIdHistory[_stageIdHistory.Count - 1] != __0)
+                    {
+                        _stageIdHistory.Add(__0);
+                        if (_stageIdHistory.Count > 32) _stageIdHistory.RemoveAt(0);
+                    }
+                }
+            }
+            catch { }
+        }
+
         public static void BattleHook_TurnLeftSet(object __instance, int __0)
         {
             _hookDiag_TurnLeftSet++;
@@ -4349,6 +4416,51 @@ namespace RaidAutomation
         /// reading their Context property, and matching the context type name.
         /// Usage: /invoke-context?type=HeroesSelectionAllianceBoss&method=StartBattle
         /// </summary>
+        // /invoke-static?type=FQ.Type.Name&method=MethodName
+        // Invoke a parameter-less static method by type-name + method-name.
+        // Used for VillageHUD navigation: BattleMapButtonContext.OpenWorldMap()
+        // is static (no instance lives in the village scene tree, so
+        // /invoke-context can't find one).
+        private string InvokeStaticMethod(string typeName, string methodName)
+        {
+            if (string.IsNullOrEmpty(typeName) || string.IsNullOrEmpty(methodName))
+                return "{\"error\":\"type and method required\"}";
+            try
+            {
+                Type t = FindType(typeName);
+                if (t == null)
+                {
+                    // try short-name fallback
+                    foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
+                    {
+                        try
+                        {
+                            foreach (var tt in asm.GetTypes())
+                            {
+                                if (tt.Name == typeName || tt.FullName == typeName)
+                                { t = tt; break; }
+                            }
+                        }
+                        catch { }
+                        if (t != null) break;
+                    }
+                }
+                if (t == null) return "{\"error\":\"type not found: " + Esc(typeName) + "\"}";
+                var m = t.GetMethod(methodName,
+                    BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.FlattenHierarchy);
+                if (m == null) return "{\"error\":\"static method " + Esc(methodName) + " not found on " + Esc(t.FullName) + "\"}";
+                if (m.GetParameters().Length != 0)
+                    return "{\"error\":\"static method has " + m.GetParameters().Length + " params; only 0-arg supported\"}";
+                m.Invoke(null, null);
+                return "{\"ok\":true,\"type\":\"" + Esc(t.FullName) + "\",\"method\":\"" + Esc(methodName) + "\"}";
+            }
+            catch (Exception ex)
+            {
+                string msg = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+                return "{\"error\":\"" + Esc(msg) + "\"}";
+            }
+        }
+
         private string InvokeOnContext(string typeName, string methodName)
         {
             if (string.IsNullOrEmpty(typeName) || string.IsNullOrEmpty(methodName))
