@@ -1028,62 +1028,34 @@ class CBSimulator:
                 return True
         return False
 
-    def _apply_cycle_of_magic(self, caster: "SimChampion", hit_count: int) -> None:
-        """Cycle of Magic mastery (500344): 5% chance per hit against
-        bosses to reduce a random ally's active-skill cooldown by 1.
+    def _apply_cycle_of_magic(self, caster: "SimChampion",
+                                skill_had_cd: bool) -> None:
+        """Cycle of Magic mastery (500344): +5% TM to the caster every time
+        they use a skill that has a cooldown.
 
-        Deterministic mode uses a fractional accumulator that crosses 1.0
-        to apply a whole CD tick — converges to the expected value over
-        many turns without RNG noise. MC mode rolls per hit. Chance value
-        sourced from facade.mastery (500344) when available.
+        REWRITTEN 2026-06-19: was modeled as "5% chance per hit reduce
+        ally CD by 1". Real-game tick logs show CDs are NEVER reduced
+        (Mane A3 fires exactly every 5 her-turns matching booked CD).
+        Per HellHades' Raid Database, COM is actually a TM-gain mastery.
+        The previous CD-reduction model produced zero visible effect in
+        sim and missed the +18% TM boost real game shows on MEN heroes
+        (which has 3 COM holders × 2 CD skills per cycle).
         """
-        if hit_count <= 0:
+        if not skill_had_cd:
             return
-        # Look up chance from manifest (facade) — falls back to 0.05
+        # Look up chance from manifest (falls back to 5%).
         _f = _facade()
-        chance = 0.05
+        pct = 0.05
         if _f is not None:
             try:
                 proc = _f.mastery.get(500344) or {}
                 cp = proc.get("conditional_proc") or {}
                 if cp.get("chance") is not None:
-                    chance = float(cp["chance"])
+                    pct = float(cp["chance"])
             except Exception:
                 pass
-
-        # Determine how many proc events fire this skill use
-        if self.deterministic:
-            # Add expected value to accumulator; pop integer reductions.
-            caster._com_accum += chance * hit_count
-            procs = int(caster._com_accum)
-            caster._com_accum -= procs
-        else:
-            procs = 0
-            for _ in range(hit_count):
-                if self.rng.random() < chance:
-                    procs += 1
-        if procs <= 0:
-            return
-
-        # For each proc, pick a random ally and reduce their next-ready
-        # active skill's CD by 1. Deterministic mode round-robins through
-        # living allies; MC mode samples.
-        living_allies = [c for c in self.champions if not c.is_dead]
-        if not living_allies:
-            return
-        for i in range(procs):
-            if self.deterministic:
-                target = living_allies[i % len(living_allies)]
-            else:
-                target = self.rng.choice(living_allies)
-            # Find a skill currently on cooldown — prefer active skills
-            # with the highest current_cd (most ground to recover).
-            candidates = [s for s in target.skills
-                          if s.current_cd > 0 and s.base_cd > 0]
-            if not candidates:
-                continue
-            picked = max(candidates, key=lambda s: s.current_cd)
-            picked.current_cd = max(0, picked.current_cd - 1)
+        # Add the TM bonus to the caster
+        caster.tm += pct * TM_THRESHOLD
 
     def _apply_special_buff(self, caster: "SimChampion", chosen,
                               buff_name: str, duration: int) -> bool:
@@ -1815,11 +1787,14 @@ class CBSimulator:
             if champ.has_brimstone:
                 self._try_place_smite(champ, chosen.hit_count)
 
-            # Cycle of Magic (mastery 500344): 5% chance per hit to
-            # reduce a random ally's skill cooldown by 1. Critical for
-            # survival cycles like MEN's Maneater A3 → UK refresh.
+            # Cycle of Magic (mastery 500344): +5% TM per skill-with-CD
+            # use. CRITICAL for cycle alignment — real-game tick logs
+            # show MEN heroes cycle ~18% faster than sim's base math
+            # because COM-as-TM-boost compounds (3 COM holders × 2 CD
+            # skills per cycle = +30% TM bonuses per cycle).
             if champ.has_cycle_of_magic:
-                self._apply_cycle_of_magic(champ, chosen.hit_count)
+                skill_had_cd = (chosen.base_cd > 0)
+                self._apply_cycle_of_magic(champ, skill_had_cd)
 
             # Healing from damage dealt
             if self.model_survival:
