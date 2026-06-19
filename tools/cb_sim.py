@@ -842,6 +842,14 @@ class CBSimulator:
             _f.tm.tick_rate_for_threshold(TM_THRESHOLD)
             if _f is not None else 0.7
         )
+        # Empirical calibration 2026-06-19: tick_log analysis (boss 6.71
+        # game-ticks/turn vs gameplay 7.52, Mane 4.17 vs 4.96) shows
+        # CB has a +12% global TM bonus over gameplay.json's
+        # StaminaByTick=0.07. Source unidentified — could be CB area
+        # aura, runtime constant override, or framerate-based mismatch.
+        # Mane gets additional +6% from masteries (modeled as COM).
+        # Verified: boss cycle 22.5 → 20.1 (matches real 21 closely).
+        TICK_RATE *= 1.12
         while self.cb_turn < effective_max:
             if all(c.is_dead for c in self.champions) or enraged:
                 break
