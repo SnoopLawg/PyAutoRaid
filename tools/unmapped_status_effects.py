@@ -77,7 +77,10 @@ def main() -> int:
             ):
                 continue
             group = eff.get("Group", "")
-            for sei in (eff.get("StatusEffectInfos") or []):
+            # TypeIds live at ApplyStatusEffectParams.StatusEffectInfos (the
+            # bare StatusEffectInfos at effect-root is None at depth=8).
+            ase_params = eff.get("ApplyStatusEffectParams") or {}
+            for sei in (ase_params.get("StatusEffectInfos") or []):
                 tid = sei.get("TypeId")
                 if not isinstance(tid, int):
                     continue

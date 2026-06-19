@@ -60,22 +60,83 @@ SE_TO_SIM = {
     70: "heal_reduction",
     71: "heal_reduction_50",
     481: "perfect_veil",
+    # Added 2026-06-18 from universe-wide unmapped audit. The sim was
+    # silently dropping these very-common effects placed by hundreds of
+    # skills. Names match cb_constants.BUFF_REGISTRY / DEBUFF_REGISTRY
+    # conventions; if a slot is missing there, the effect is registered
+    # but does nothing until cb_sim adds runtime handling.
+    40:  "provoke",                 # CC: forces attacker to target placer
+    30:  "sleep",                   # CC: skip turn until hit
+    490: "fear",                    # CC: reduces turn meter on placement
+    491: "true_fear",               # CC variant
+    110: "block_buffs",             # debuff blocking new buffs
+    290: "block_active_skills",     # debuff blocking actives (Demytha A2 cleanses)
+    231: "dec_acc",                 # DEC ACC (Force boss aoe2)
+    221: "inc_acc",                 # INC ACC
+    130: "dec_atk_50",              # DEC ATK 50% (different from 131/132 variants)
+    150: "def_down_60",             # DEC DEF 60% (Ninja A1 family)
+    # Second batch 2026-06-18 — top universe-wide unmapped after first pass
+    120: "atk_up_50",                # INC ATK 50% (Spirithost Strengthen)
+    140: "inc_def_50",               # INC DEF 50% (Executioner Schiltron)
+    170: "dec_spd_30",               # DEC SPD 30% (common debuff variant)
+    411: "reflect_damage",           # Warden Wall of Thorns
+    410: "reflect_damage_15",
+    440: "mark",                     # Mark (Cleopterix, Mithrala)
+    441: "mark_50",
+    240: "inc_cr_15",                # INC C.RATE 15% (vs 241=30%)
+    260: "inc_cd_15",                # INC C.DMG 15% (vs 261=30%)
+    340: "weaken_25",                # Weaken 25% variant
+    430: "smite",                    # Brimstone smite mechanic
+    180: "shield_15pct",             # Shield variants
+    480: "stealth",                  # Stealth/Perfect Veil family
+    270: "inc_res",                  # INC RES
+    250: "dec_res",                  # DEC RES
+    191: "stun_resistance",          # Stun Resistance buff
+    370: "block_revive_2",           # Block Revive variant
+    # Third batch 2026-06-18
+    330: "time_bomb",                # TimeBomb (Souldrinker, Malbranche)
+    450: "hit_counter_shield",
+    230: "dec_acc_25",               # DEC ACC 25%
+    250: "dec_res_50",               # DEC RES 50%
+    251: "dec_cr_30",                # DEC CR 30%
+    271: "dec_cd_30",                # DEC CD 30%
+    711: "inc_res_50",               # INC RES 50%
+    721: "dec_res_25",               # DEC RES 25%
+    780: "taunt",
+    630: "petrification",
+    560: "block_passive_skills",
+    470: "hp_burn",                  # already mapped but alias confirmed
+    430: "smite",                    # already mapped
 }
 
 # Which SE types are team buffs (applied to allies) vs debuffs (applied to enemies)
 BUFF_SES = {
     "counterattack", "block_damage", "block_debuffs", "ally_protect",
-    "ally_protect_25", "unkillable", "atk_up", "atk_up_25", "inc_def",
-    "inc_def_30", "inc_spd", "inc_spd_15", "cont_heal_75", "cont_heal_15", "strengthen",
-    "strengthen_15", "inc_cr_30", "inc_cd_30", "shield", "revive_on_death",
+    "ally_protect_25", "unkillable", "atk_up", "atk_up_25", "atk_up_50",
+    "inc_def", "inc_def_30", "inc_def_50",
+    "inc_spd", "inc_spd_15", "inc_spd_30",
+    "cont_heal_75", "cont_heal_15", "strengthen",
+    "strengthen_15", "inc_cr_15", "inc_cr_30", "inc_cd_15", "inc_cd_30",
+    "inc_acc", "inc_res", "inc_res_50", "stun_resistance",
+    "shield", "shield_15pct", "revive_on_death", "perfect_veil",
+    "reflect_damage", "reflect_damage_15", "stealth",
+    "taunt", "hit_counter_shield",
 }
 
 # SE types that go on the CB debuff bar
 DEBUFF_SES = {
     "poison_5pct", "poison_2pct", "hp_burn", "def_down", "def_down_30",
-    "dec_atk", "dec_atk_25", "weaken", "weaken_15", "poison_sensitivity",
-    "poison_sensitivity_50", "leech", "dec_spd", "block_revive",
-    "stun", "freeze", "heal_reduction", "heal_reduction_50",
+    "def_down_60",
+    "dec_atk", "dec_atk_25", "dec_atk_50",
+    "weaken", "weaken_15", "weaken_25",
+    "poison_sensitivity", "poison_sensitivity_50",
+    "leech", "dec_spd", "dec_spd_30", "block_revive", "block_revive_2",
+    "stun", "freeze", "sleep", "provoke", "fear", "true_fear",
+    "block_buffs", "block_active_skills", "block_passive_skills",
+    "dec_acc", "dec_acc_25", "dec_res", "dec_res_25", "dec_res_50",
+    "dec_cr_30", "dec_cd_30",
+    "heal_reduction", "heal_reduction_50",
+    "mark", "mark_50", "smite", "time_bomb", "petrification",
 }
 
 
