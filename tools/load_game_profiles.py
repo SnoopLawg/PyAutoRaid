@@ -37,7 +37,12 @@ SE_TO_SIM = {
     122: "atk_up_25",
     141: "inc_def",
     142: "inc_def_30",
-    161: "inc_spd",
+    # Round 33 game-truth correction: effect 161 is +30% SPD per static
+    # (`0.3*TRG_B_SPD`, family IncreaseSpeed15 strength 2), not the
+    # generic +15% the previous "inc_spd" label suggested. Effect 160 is
+    # the +15% variant. cb_constants.BUFF_REGISTRY already maps these
+    # correctly (inc_spd_30 → 161); the loader now matches.
+    161: "inc_spd_30",
     171: "dec_spd",
     90: "cont_heal_75",
     91: "cont_heal_15",
@@ -354,6 +359,47 @@ def _supplement_skill_from_static(skill_id: int, label: str, hero_eff: dict,
         elif ge.kind_id == "Damage":
             if ge.damage_def_modifier < boss_def_modifier:
                 boss_def_modifier = ge.damage_def_modifier
+        elif ge.kind_id == "IncreaseStamina":
+            # TM-fill effects. MultiplierFormula examples:
+            #   "0.15*MAX_STAMINA" → 15% TM fill
+            #   "0.30*MAX_STAMINA" → 30% TM fill
+            # Target = RelationProducer → self_tm_fill (e.g. Ninja A1)
+            # Target = AllAllies → team_tm_fill (e.g. Cardiel A2)
+            # Target = Producer → self
+            mf = ge.multiplier_formula or ""
+            # Parse "X*MAX_STAMINA" patterns
+            import re as _re
+            m = _re.match(r'^\s*([\d.]+)\s*\*\s*MAX_STAMINA\s*$', mf)
+            if m:
+                pct = float(m.group(1))
+                tgt = ge.target_type or ""
+                is_self = tgt in ("Producer", "RelationProducer", "Owner")
+                is_team = tgt in ("AllAllies",)
+                if is_self and sd_entry.get("self_tm_fill", 0) == 0:
+                    sd_entry["self_tm_fill"] = pct
+                elif is_team and sd_entry.get("team_tm_fill", 0) == 0:
+                    sd_entry["team_tm_fill"] = pct
+        elif ge.kind_id == "Heal":
+            # Heal effects. Static MultiplierFormula examples:
+            #   "0.15*TRG_HP" → 15% MaxHP heal
+            #   "0.25*TRG_HP" → 25%
+            # Target = AllAllies → team heal; Producer = self heal.
+            # Compound Demytha-A2 heal uses different formula and is
+            # already handled by _detect_compound_extend_buff; skip here.
+            mf = ge.multiplier_formula or ""
+            if "totalIncreasedTurnsCount" in mf or "totalDecreasedTurnsCount" in mf:
+                continue  # compound heal — handled elsewhere
+            import re as _re
+            m = _re.match(r'^\s*([\d.]+)\s*\*\s*TRG_HP\s*$', mf)
+            if m:
+                pct = float(m.group(1))
+                tgt = ge.target_type or ""
+                if tgt == "AllAllies":
+                    if not any(e.get("effect_type") == "team_heal" for e in effs):
+                        effs.append(_eff("team_heal", heal_pct=pct))
+                elif tgt in ("Producer", "RelationProducer", "Owner"):
+                    if not any(e.get("effect_type") == "self_heal" for e in effs):
+                        effs.append(_eff("self_heal", heal_pct=pct))
     if boss_def_modifier < 0:
         # ignore_def is stored as positive fraction (0.5 = "ignore 50%")
         existing = sd_entry.get("ignore_def", 0.0)
@@ -428,6 +474,75 @@ def _get_book_cd_reductions(skills_db_path):
     return reductions
 
 
+def _get_book_shield_bonuses(skills_db_path):
+    """Get ShieldCreation bonus from skill books (level_bonuses type=4).
+
+    Per IL2Cpp enum SkillBonusType: 4 = ShieldCreation. Each book adds
+    the listed `value` percent to the shield amount the skill places.
+    Demytha A1 (Fires of Old) has 4× type=4 (5.0 each) = +20% shield.
+    Returns a dict {(hero_name, skill_type_id): fractional_bonus}.
+    """
+    return _sum_book_bonuses_by_type(skills_db_path, bonus_type=4)
+
+
+def _get_book_health_bonuses(skills_db_path):
+    """Get Health bonus from skill books (level_bonuses type=1).
+
+    Per IL2Cpp enum SkillBonusType: 1 = Health. Each book adds the
+    listed value percent to heal-based skill outputs. Demytha A2
+    (Light of the Deep) has 4× type=1 (5.0 each) = +20% heal amount.
+    Returns {(hero_name, skill_type_id): fractional_bonus}.
+    """
+    return _sum_book_bonuses_by_type(skills_db_path, bonus_type=1)
+
+
+def _get_book_attack_bonuses(skills_db_path):
+    """Get Attack bonus from skill books (level_bonuses type=0).
+
+    Per IL2Cpp enum SkillBonusType: 0 = Attack. Each book adds the
+    listed value percent to the skill's damage. Maneater A1 (Pummel)
+    has 4× type=0 (5.0 each) = +20% damage. Demytha A1 = +20%, etc.
+    Without this, sim under-models damage on heavily-booked skills.
+    """
+    return _sum_book_bonuses_by_type(skills_db_path, bonus_type=0)
+
+
+def _get_book_ignore_res_bonuses(skills_db_path):
+    """Get IgnoreResistance bonus from skill books (level_bonuses type=5).
+
+    Per IL2Cpp enum SkillBonusType: 5 = IgnoreResistance. Each book
+    adds % chance to ignore target RES on debuff land. No MEN hero
+    has any books of this type, but extraction is wired for future
+    teams.
+    """
+    return _sum_book_bonuses_by_type(skills_db_path, bonus_type=5)
+
+
+def _sum_book_bonuses_by_type(skills_db_path, bonus_type: int):
+    """Generic helper: sum level_bonuses[].value for matching type and
+    return as a {(hero, skill_id): fractional_bonus} dict.
+    """
+    out = {}
+    try:
+        with open(skills_db_path) as f:
+            db = json.load(f)
+        for hero_name, skills in db.items():
+            if not isinstance(skills, list):
+                continue
+            for sk in skills:
+                sid = sk.get('skill_type_id', 0)
+                total_pct = sum(
+                    float(b.get('value', 0) or 0)
+                    for b in sk.get('level_bonuses', [])
+                    if b.get('type') == bonus_type
+                )
+                if total_pct > 0:
+                    out[(hero_name, sid)] = total_pct / 100.0
+    except Exception:
+        pass
+    return out
+
+
 def load_profiles():
     """
     Load hero_profiles_game.json and produce SKILL_DATA, SKILL_EFFECTS, and
@@ -442,12 +557,23 @@ def load_profiles():
     with open(profiles_path) as f:
         profiles = json.load(f)
 
-    # Get book CD reductions
+    # Get book CD reductions (type=3) and ShieldCreation bonuses (type=4).
+    # ShieldCreation (verified via IL2Cpp dump.cs SkillBonusType enum,
+    # value 4) is what books like Demytha A1 Fires of Old grant — they
+    # boost the SHIELD AMOUNT not just chance/CD/damage. Without this
+    # bonus, sim under-shields by up to ~30% on shield-providers, hurting
+    # survival modeling on CB.
     cd_reductions = _get_book_cd_reductions(skills_db_path)
+    shield_bonuses = _get_book_shield_bonuses(skills_db_path)
+    health_bonuses = _get_book_health_bonuses(skills_db_path)
+    attack_bonuses = _get_book_attack_bonuses(skills_db_path)
+    ignore_res_bonuses = _get_book_ignore_res_bonuses(skills_db_path)
 
     skill_data = {}    # {hero_name: {"A1": {...}, "A2": {...}, "A3": {...}}}
     skill_effects = {} # {hero_name: {"A1": [...], "A2": [...], "A3": [...]}}
     passive_data = {}  # {hero_name: {flag: value, ...}}
+    skill_ids = {}     # {hero_name: {"A1": skill_id, "A2": skill_id, "A3": skill_id}}
+                       # Used by cb_sim to look up glance gates per skill
 
     for name, hero in profiles.items():
         skills = hero.get('skills', [])
@@ -750,6 +876,29 @@ def load_profiles():
                 sd_entry["ignore_def"] = ignore_def_pct
             if cb_tm_drain_pct > 0:
                 sd_entry["cb_tm_drain_pct"] = cb_tm_drain_pct
+            # Surface ShieldCreation book bonus (fraction, 0.0 if no books)
+            # so cb_sim can scale shield amounts accordingly. Demytha A1
+            # = 0.20 (4 books × 5%); without books = 0.0.
+            sc_bonus = shield_bonuses.get((name, sid), 0.0)
+            if sc_bonus > 0:
+                sd_entry["shield_creation_bonus"] = sc_bonus
+            # Surface Health book bonus — applied to heal_pct in
+            # extend_buffs effect and (future) other heal handlers.
+            # Demytha A2 = 0.20 (4 books × 5%).
+            h_bonus = health_bonuses.get((name, sid), 0.0)
+            if h_bonus > 0:
+                sd_entry["health_book_bonus"] = h_bonus
+            # Surface Attack book bonus — applied as multiplicative
+            # damage scaling. Maneater A1 fully booked = +20% damage.
+            atk_bonus = attack_bonuses.get((name, sid), 0.0)
+            if atk_bonus > 0:
+                sd_entry["attack_book_bonus"] = atk_bonus
+            # Surface IgnoreResistance book bonus — applied to debuff
+            # land chance vs target RES. No MEN hero has any, but the
+            # extraction is wired for future teams.
+            ir_bonus = ignore_res_bonuses.get((name, sid), 0.0)
+            if ir_bonus > 0:
+                sd_entry["ignore_res_book_bonus"] = ir_bonus
 
             hero_sd[label] = sd_entry
             hero_eff[label] = effects_list
@@ -770,6 +919,12 @@ def load_profiles():
             skill_data[name] = hero_sd
         if hero_eff:
             skill_effects[name] = hero_eff
+        # Track skill_id per labeled skill so the sim can do (hero,label)→id
+        # lookups for glance-gate dispatch and other static-data joins.
+        hero_skill_ids = {lbl: sk.get('id', 0) for lbl, sk in labeled.items()
+                          if sk.get('id', 0)}
+        if hero_skill_ids:
+            skill_ids[name] = hero_skill_ids
 
         # Process passives
         p_data = {}
@@ -799,7 +954,22 @@ def load_profiles():
                     if m:
                         val = float(m.group(1))
                         cond = (eff.get('condition') or '').lower()
-                        if 'relationtargetisally' in cond:
+                        # skills_db.json strips Condition for some passives
+                        # (e.g. Geomancer Stoneguard — static data has
+                        # `relationTargetIsAlly` but skills_db emits None).
+                        # Fall back to known-team-wide skill ids when cond
+                        # is missing. Verified against
+                        # data/static/skills_all.json effect[0] of Id 48805.
+                        KNOWN_TEAM_WIDE_REDUCTION_SKILLS = {
+                            48805: 0.15,  # Geomancer Stoneguard team -15%
+                        }
+                        sid = sk.get('skill_type_id', 0) or sk.get('id', 0)
+                        is_team_wide = (
+                            'relationtargetisally' in cond
+                            or (sid in KNOWN_TEAM_WIDE_REDUCTION_SKILLS
+                                and abs(val - KNOWN_TEAM_WIDE_REDUCTION_SKILLS[sid]) < 0.01)
+                        )
+                        if is_team_wide:
                             p_data['team_dmg_reduction'] = max(
                                 p_data.get('team_dmg_reduction', 0), val)
                             p_data['dmg_reduction'] = max(
@@ -1032,14 +1202,30 @@ def load_profiles():
     except Exception:
         pass
 
-    return skill_data, skill_effects, passive_data
+    # Phase 5 — hard-coded skill-specific effects that need explicit
+    # modeling outside the kind-routing pipeline. Each entry must cite
+    # the static formula it derives from.
+    #
+    # Maneater A3 (Ancient Blood, skill 10703): formula
+    #   `0.05 * HP * (5 - deadAlliesCount)` — caster takes damage equal
+    #   to 5% of HER MaxHP per alive ally. Static: skills_all.json effect
+    #   107033 KindId=Damage TargetType=Producer. Game-truth verified
+    #   via in-game screenshot 2026-06-15 (level 3/3 fully booked).
+    if "Maneater" in skill_effects:
+        a3_effs = skill_effects["Maneater"].setdefault("A3", [])
+        if not any(e.get("effect_type") == "self_damage_alive_allies" for e in a3_effs):
+            a3_effs.append(_eff("self_damage_alive_allies",
+                                 pct_max_hp_per_alive=0.05))
+
+    return skill_data, skill_effects, passive_data, skill_ids
 
 
 if __name__ == "__main__":
-    sd, se, pd = load_profiles()
+    sd, se, pd, sids = load_profiles()
     print(f"Loaded {len(sd)} heroes with skills")
     print(f"Loaded {len(se)} heroes with effects")
     print(f"Loaded {len(pd)} heroes with passives")
+    print(f"Loaded {len(sids)} heroes with skill-id maps")
 
     # Print a few examples
     for name in ["Sicia Flametongue", "Maneater", "Ninja", "Occult Brawler", "Skullcrusher"]:

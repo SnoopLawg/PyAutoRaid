@@ -1,0 +1,624 @@
+{
+  "_meta": {
+    "hero": "Reinbeast",
+    "skill_count": 3
+  },
+  "skills": {
+    "30101": {
+      "Id": 30101,
+      "Revision": 0,
+      "Name": {
+        "Key": "l10n:skill/name?id=30101#static",
+        "DefaultValue": "Skill 30101 name",
+        "HasBreakSymbol": false
+      },
+      "Description": {
+        "Key": "l10n:skill/description?id=30101#static",
+        "DefaultValue": "Attacks 1 enemy 1 time\nApplies Continuous heal II (15%) for 1 turn on the most injured ally",
+        "HasBreakSymbol": false
+      },
+      "Group": "Active",
+      "Targets": "Producer",
+      "Cooldown": 0,
+      "ReduceCooldownProhibited": false,
+      "IncreaseCooldownProhibited": false,
+      "CooldownIncludeProducer": false,
+      "IsSecret": false,
+      "ShowDamageScale": true,
+      "Visibility": "Visible",
+      "SkillLevelBonuses": [
+        {
+          "SkillBonusType": "Attack",
+          "Value": 0.05
+        },
+        {
+          "SkillBonusType": "Attack",
+          "Value": 0.05
+        },
+        {
+          "SkillBonusType": "Attack",
+          "Value": 0.05
+        }
+      ],
+      "Effects": [
+        {
+          "Count": 1,
+          "Id": 301011,
+          "KindId": "Damage",
+          "Group": "Active",
+          "TargetParams": {
+            "TargetType": "Target",
+            "Exclusive": false,
+            "FirstHitInSelected": false,
+            "TakeOneRandom": false,
+            "NotAoeDamage": false
+          },
+          "IsEffectDescription": false,
+          "ConsidersDead": false,
+          "LeaveThroughDeath": false,
+          "DoesntSetSkillOnCooldown": false,
+          "IgnoresCooldown": false,
+          "IsUnique": false,
+          "IterationChanceRolling": false,
+          "StackCount": 1,
+          "MultiplierFormula": "3.7*DEF",
+          "CalcMultiplier": {
+            "method_ptr": "<IntPtr>",
+            "invoke_impl": "<IntPtr>",
+            "m_target": {},
+            "method": "<IntPtr>",
+            "delegate_trampoline": "<IntPtr>",
+            "extra_arg": "<IntPtr>",
+            "method_code": "<IntPtr>",
+            "interp_method": "<IntPtr>",
+            "interp_invoke_impl": "<IntPtr>",
+            "method_info": "<MethodInfo>",
+            "method_is_virtual": false,
+            "Method": "<MethodInfo>",
+            "Target": {}
+          },
+          "PersistsThroughRounds": false,
+          "SnapshotRequired": false,
+          "MultiplierNotEvaluatedByAI": false,
+          "TargetType": "Target",
+          "StatusEffectFamily": "301010",
+          "Category": "Damage",
+          "IsContainer": false,
+          "IsGuaranteed": true,
+          "IsResistable": false,
+          "IsExtraTurnEffect": false,
+          "IsDamageModifiactionEffect": false,
+          "IsEvadeOrBlocker": false,
+          "IsActive": true,
+          "IsRelative": false,
+          "HasMultiplier": true,
+          "CanStack": false,
+          "IsPassiveBonus": false,
+          "CanApplyOnCorpse": false,
+          "ConsidersBanished": false,
+          "SharedModel.Battle.AI.IAiEffect.TypeId": 301011,
+          "SharedModel.Battle.AI.IAiEffect.KindId": "Damage",
+          "SharedModel.Battle.AI.IAiEffect.TargetType": "Target",
+          "SharedModel.Battle.AI.IAiEffect.MultiplierFormula": "3.7*DEF",
+          "SharedModel.Battle.AI.IAiEffect.IsRelative": false,
+          "SharedModel.Battle.AI.IAiEffect.MultiplierNotEvaluatedByAI": false,
+          "SharedModel.Battle.AI.IAiEffect.Count": 1,
+          "SharedModel.Battle.AI.IAiEffect.TargetParams": {
+            "TargetType": "Target",
+            "Exclusive": false,
+            "FirstHitInSelected": false,
+            "TakeOneRandom": false,
+            "NotAoeDamage": false
+          },
+          "RealEffect": "<EffectType>"
+        },
+        {
+          "Count": 1,
+          "Id": 301012,
+          "KindId": "ApplyBuff",
+          "Group": "Active",
+          "TargetParams": {
+            "TargetType": "MostInjuredAlly",
+            "Exclusive": false,
+            "FirstHitInSelected": false,
+            "TakeOneRandom": false,
+            "NotAoeDamage": false
+          },
+          "IsEffectDescription": false,
+          "ConsidersDead": false,
+          "LeaveThroughDeath": false,
+          "DoesntSetSkillOnCooldown": false,
+          "IgnoresCooldown": false,
+          "IsUnique": false,
+          "IterationChanceRolling": false,
+          "Relation": {
+            "EffectTypeId": 0,
+            "Phases": [
+              "AfterEffectProcessed"
+            ],
+            "ActivateOnGlancingHit": false
+          },
+          "StackCount": 1,
+          "PersistsThroughRounds": false,
+          "SnapshotRequired": false,
+          "ApplyStatusEffectParams": {
+            "StatusEffectInfos": [
+              {
+                "TypeId": 90,
+                "Duration": 1
+              }
+            ]
+          },
+          "MultiplierNotEvaluatedByAI": false,
+          "TargetType": "MostInjuredAlly",
+          "StatusEffectFamily": "301010",
+          "Category": "InstantBuff",
+          "IsContainer": false,
+          "IsGuaranteed": true,
+          "IsResistable": false,
+          "IsExtraTurnEffect": false,
+          "IsDamageModifiactionEffect": false,
+          "IsEvadeOrBlocker": false,
+          "IsActive": true,
+          "IsRelative": true,
+          "HasMultiplier": false,
+          "CanStack": false,
+          "IsPassiveBonus": false,
+          "CanApplyOnCorpse": false,
+          "ConsidersBanished": false,
+          "SharedModel.Battle.AI.IAiEffect.TypeId": 301012,
+          "SharedModel.Battle.AI.IAiEffect.KindId": "ApplyBuff",
+          "SharedModel.Battle.AI.IAiEffect.TargetType": "MostInjuredAlly",
+          "SharedModel.Battle.AI.IAiEffect.IsRelative": true,
+          "SharedModel.Battle.AI.IAiEffect.MultiplierNotEvaluatedByAI": false,
+          "SharedModel.Battle.AI.IAiEffect.Count": 1,
+          "SharedModel.Battle.AI.IAiEffect.TargetParams": {
+            "TargetType": "MostInjuredAlly",
+            "Exclusive": false,
+            "FirstHitInSelected": false,
+            "TakeOneRandom": false,
+            "NotAoeDamage": false
+          },
+          "RealEffect": "<EffectType>"
+        }
+      ],
+      "VisualSkillDuration": {
+        "HasValue": false,
+        "hasValue": false,
+        "value": 527.695
+      },
+      "MovementDuration": {
+        "HasValue": false,
+        "hasValue": false,
+        "value": 527.695
+      },
+      "IsHiddenOnHud": false,
+      "IsVisibleForAI": true,
+      "LevelBonuses": [
+        {
+          "SkillBonusType": "Attack",
+          "Value": 0.05
+        },
+        {
+          "SkillBonusType": "Attack",
+          "Value": 0.05
+        },
+        {
+          "SkillBonusType": "Attack",
+          "Value": 0.05
+        }
+      ],
+      "IsDefault": true,
+      "MaxLevel": 4,
+      "IsActive": true,
+      "IsWarlordSkill": false,
+      "IgnoresTaunt": false
+    },
+    "30102": {
+      "Id": 30102,
+      "Revision": 1,
+      "Name": {
+        "Key": "l10n:skill/name?id=30102#static",
+        "DefaultValue": "Skill 30102name",
+        "HasBreakSymbol": false
+      },
+      "Description": {
+        "Key": "l10n:skill/description?id=30102#static",
+        "DefaultValue": "Attacks 1 enemy 2 times\nIf enemy dies, random ally will be Revived with full HP.",
+        "HasBreakSymbol": false
+      },
+      "Group": "Active",
+      "Targets": "Producer",
+      "Cooldown": 5,
+      "ReduceCooldownProhibited": false,
+      "IncreaseCooldownProhibited": false,
+      "CooldownIncludeProducer": false,
+      "IsSecret": false,
+      "ShowDamageScale": true,
+      "Visibility": "Visible",
+      "SkillLevelBonuses": [
+        {
+          "SkillBonusType": "Attack",
+          "Value": 0.05
+        },
+        {
+          "SkillBonusType": "Attack",
+          "Value": 0.05
+        },
+        {
+          "SkillBonusType": "Attack",
+          "Value": 0.05
+        },
+        {
+          "SkillBonusType": "Attack",
+          "Value": 0.05
+        }
+      ],
+      "Effects": [
+        {
+          "Count": 2,
+          "Id": 301021,
+          "KindId": "Damage",
+          "Group": "Active",
+          "TargetParams": {
+            "TargetType": "Target",
+            "Exclusive": false,
+            "FirstHitInSelected": false,
+            "TakeOneRandom": false,
+            "NotAoeDamage": false
+          },
+          "IsEffectDescription": false,
+          "ConsidersDead": false,
+          "LeaveThroughDeath": false,
+          "DoesntSetSkillOnCooldown": false,
+          "IgnoresCooldown": false,
+          "IsUnique": false,
+          "IterationChanceRolling": false,
+          "StackCount": 1,
+          "MultiplierFormula": "3.1*DEF",
+          "CalcMultiplier": {
+            "method_ptr": "<IntPtr>",
+            "invoke_impl": "<IntPtr>",
+            "m_target": {},
+            "method": "<IntPtr>",
+            "delegate_trampoline": "<IntPtr>",
+            "extra_arg": "<IntPtr>",
+            "method_code": "<IntPtr>",
+            "interp_method": "<IntPtr>",
+            "interp_invoke_impl": "<IntPtr>",
+            "method_info": "<MethodInfo>",
+            "method_is_virtual": false,
+            "Method": "<MethodInfo>",
+            "Target": {}
+          },
+          "PersistsThroughRounds": false,
+          "SnapshotRequired": false,
+          "MultiplierNotEvaluatedByAI": false,
+          "TargetType": "Target",
+          "StatusEffectFamily": "301020",
+          "Category": "Damage",
+          "IsContainer": false,
+          "IsGuaranteed": true,
+          "IsResistable": false,
+          "IsExtraTurnEffect": false,
+          "IsDamageModifiactionEffect": false,
+          "IsEvadeOrBlocker": false,
+          "IsActive": true,
+          "IsRelative": false,
+          "HasMultiplier": true,
+          "CanStack": false,
+          "IsPassiveBonus": false,
+          "CanApplyOnCorpse": false,
+          "ConsidersBanished": false,
+          "SharedModel.Battle.AI.IAiEffect.TypeId": 301021,
+          "SharedModel.Battle.AI.IAiEffect.KindId": "Damage",
+          "SharedModel.Battle.AI.IAiEffect.TargetType": "Target",
+          "SharedModel.Battle.AI.IAiEffect.MultiplierFormula": "3.1*DEF",
+          "SharedModel.Battle.AI.IAiEffect.IsRelative": false,
+          "SharedModel.Battle.AI.IAiEffect.MultiplierNotEvaluatedByAI": false,
+          "SharedModel.Battle.AI.IAiEffect.Count": 2,
+          "SharedModel.Battle.AI.IAiEffect.TargetParams": {
+            "TargetType": "Target",
+            "Exclusive": false,
+            "FirstHitInSelected": false,
+            "TakeOneRandom": false,
+            "NotAoeDamage": false
+          },
+          "RealEffect": "<EffectType>"
+        },
+        {
+          "Count": 1,
+          "Id": 301022,
+          "KindId": "Revive",
+          "Group": "Active",
+          "TargetParams": {
+            "TargetType": "RandomDeadAlly",
+            "Exclusive": false,
+            "FirstHitInSelected": false,
+            "TakeOneRandom": false,
+            "NotAoeDamage": false
+          },
+          "IsEffectDescription": false,
+          "ConsidersDead": false,
+          "LeaveThroughDeath": false,
+          "DoesntSetSkillOnCooldown": false,
+          "IgnoresCooldown": false,
+          "IsUnique": false,
+          "IterationChanceRolling": false,
+          "Relation": {
+            "EffectTypeId": 0,
+            "Phases": [
+              "HeroDead"
+            ],
+            "ActivateOnGlancingHit": false
+          },
+          "Condition": "heroKilledByProducer",
+          "CalcCondition": {
+            "method_ptr": "<IntPtr>",
+            "invoke_impl": "<IntPtr>",
+            "m_target": {},
+            "method": "<IntPtr>",
+            "delegate_trampoline": "<IntPtr>",
+            "extra_arg": "<IntPtr>",
+            "method_code": "<IntPtr>",
+            "interp_method": "<IntPtr>",
+            "interp_invoke_impl": "<IntPtr>",
+            "method_info": "<MethodInfo>",
+            "method_is_virtual": false,
+            "Method": "<MethodInfo>",
+            "Target": {}
+          },
+          "StackCount": 1,
+          "MultiplierFormula": "1*TRG_HP",
+          "CalcMultiplier": {
+            "method_ptr": "<IntPtr>",
+            "invoke_impl": "<IntPtr>",
+            "m_target": {},
+            "method": "<IntPtr>",
+            "delegate_trampoline": "<IntPtr>",
+            "extra_arg": "<IntPtr>",
+            "method_code": "<IntPtr>",
+            "interp_method": "<IntPtr>",
+            "interp_invoke_impl": "<IntPtr>",
+            "method_info": "<MethodInfo>",
+            "method_is_virtual": false,
+            "Method": "<MethodInfo>",
+            "Target": {}
+          },
+          "PersistsThroughRounds": false,
+          "SnapshotRequired": false,
+          "ReviveParams": {
+            "HealPercent": 0,
+            "IgnoreBlockRevive": false
+          },
+          "MultiplierNotEvaluatedByAI": false,
+          "TargetType": "RandomDeadAlly",
+          "StatusEffectFamily": "301020",
+          "Category": "Revive",
+          "IsContainer": false,
+          "IsGuaranteed": false,
+          "IsResistable": false,
+          "IsExtraTurnEffect": false,
+          "IsDamageModifiactionEffect": false,
+          "IsEvadeOrBlocker": false,
+          "IsActive": true,
+          "IsRelative": true,
+          "HasMultiplier": true,
+          "CanStack": false,
+          "IsPassiveBonus": false,
+          "CanApplyOnCorpse": false,
+          "ConsidersBanished": false,
+          "SharedModel.Battle.AI.IAiEffect.TypeId": 301022,
+          "SharedModel.Battle.AI.IAiEffect.KindId": "Revive",
+          "SharedModel.Battle.AI.IAiEffect.TargetType": "RandomDeadAlly",
+          "SharedModel.Battle.AI.IAiEffect.MultiplierFormula": "1*TRG_HP",
+          "SharedModel.Battle.AI.IAiEffect.IsRelative": true,
+          "SharedModel.Battle.AI.IAiEffect.MultiplierNotEvaluatedByAI": false,
+          "SharedModel.Battle.AI.IAiEffect.Count": 1,
+          "SharedModel.Battle.AI.IAiEffect.TargetParams": {
+            "TargetType": "RandomDeadAlly",
+            "Exclusive": false,
+            "FirstHitInSelected": false,
+            "TakeOneRandom": false,
+            "NotAoeDamage": false
+          },
+          "RealEffect": "<EffectType>"
+        }
+      ],
+      "VisualSkillDuration": {
+        "HasValue": false,
+        "hasValue": false,
+        "value": 527.695
+      },
+      "IsHiddenOnHud": false,
+      "IsVisibleForAI": true,
+      "LevelBonuses": [
+        {
+          "SkillBonusType": "Attack",
+          "Value": 0.05
+        },
+        {
+          "SkillBonusType": "Attack",
+          "Value": 0.05
+        },
+        {
+          "SkillBonusType": "Attack",
+          "Value": 0.05
+        },
+        {
+          "SkillBonusType": "Attack",
+          "Value": 0.05
+        }
+      ],
+      "IsDefault": false,
+      "MaxLevel": 5,
+      "IsActive": true,
+      "IsWarlordSkill": false,
+      "IgnoresTaunt": false
+    },
+    "30103": {
+      "Id": 30103,
+      "Revision": 0,
+      "Name": {
+        "Key": "l10n:skill/name?id=30103#static",
+        "DefaultValue": "Skill 30103 name",
+        "HasBreakSymbol": false
+      },
+      "Description": {
+        "Key": "l10n:skill/description?id=30103#static",
+        "DefaultValue": "Once per 2 turns, when ally hero is attacked, applies Shield, equal to 35% of Max HP to this hero for 2 turns",
+        "HasBreakSymbol": false
+      },
+      "Group": "Passive",
+      "Cooldown": 2,
+      "ReduceCooldownProhibited": false,
+      "IncreaseCooldownProhibited": false,
+      "CooldownIncludeProducer": false,
+      "IsSecret": false,
+      "ShowDamageScale": false,
+      "Visibility": "Visible",
+      "SkillLevelBonuses": [
+        {
+          "SkillBonusType": "ShieldCreation",
+          "Value": 0.1
+        },
+        {
+          "SkillBonusType": "ShieldCreation",
+          "Value": 0.1
+        },
+        {
+          "SkillBonusType": "ShieldCreation",
+          "Value": 0.1
+        }
+      ],
+      "Effects": [
+        {
+          "Count": 1,
+          "Id": 301031,
+          "KindId": "ApplyBuff",
+          "Group": "Passive",
+          "TargetParams": {
+            "TargetType": "RelationTarget",
+            "Exclusive": false,
+            "FirstHitInSelected": false,
+            "TakeOneRandom": false,
+            "NotAoeDamage": false
+          },
+          "IsEffectDescription": false,
+          "ConsidersDead": false,
+          "LeaveThroughDeath": false,
+          "DoesntSetSkillOnCooldown": false,
+          "IgnoresCooldown": false,
+          "IsUnique": false,
+          "IterationChanceRolling": false,
+          "Relation": {
+            "EffectKindIds": [
+              "Damage"
+            ],
+            "Phases": [
+              "AfterEffectProcessedOnTarget"
+            ],
+            "ActivateOnGlancingHit": false
+          },
+          "Condition": "relationTargetIsAlly&&canUniqueApplyForBaseEffect&&!producerIsTarget",
+          "CalcCondition": {
+            "method_ptr": "<IntPtr>",
+            "invoke_impl": "<IntPtr>",
+            "m_target": {},
+            "method": "<IntPtr>",
+            "delegate_trampoline": "<IntPtr>",
+            "extra_arg": "<IntPtr>",
+            "method_code": "<IntPtr>",
+            "interp_method": "<IntPtr>",
+            "interp_invoke_impl": "<IntPtr>",
+            "method_info": "<MethodInfo>",
+            "method_is_virtual": false,
+            "Method": "<MethodInfo>",
+            "Target": {}
+          },
+          "StackCount": 1,
+          "MultiplierFormula": "0.35*HP",
+          "CalcMultiplier": {
+            "method_ptr": "<IntPtr>",
+            "invoke_impl": "<IntPtr>",
+            "m_target": {},
+            "method": "<IntPtr>",
+            "delegate_trampoline": "<IntPtr>",
+            "extra_arg": "<IntPtr>",
+            "method_code": "<IntPtr>",
+            "interp_method": "<IntPtr>",
+            "interp_invoke_impl": "<IntPtr>",
+            "method_info": "<MethodInfo>",
+            "method_is_virtual": false,
+            "Method": "<MethodInfo>",
+            "Target": {}
+          },
+          "PersistsThroughRounds": false,
+          "SnapshotRequired": false,
+          "ApplyStatusEffectParams": {
+            "StatusEffectInfos": [
+              {
+                "TypeId": 280,
+                "Duration": 2
+              }
+            ]
+          },
+          "VisualizationDuration": 0,
+          "MultiplierNotEvaluatedByAI": false,
+          "TargetType": "RelationTarget",
+          "StatusEffectFamily": "301030",
+          "Category": "InstantBuff",
+          "IsContainer": false,
+          "IsGuaranteed": true,
+          "IsResistable": false,
+          "IsExtraTurnEffect": false,
+          "IsDamageModifiactionEffect": false,
+          "IsEvadeOrBlocker": false,
+          "IsActive": false,
+          "IsRelative": true,
+          "HasMultiplier": true,
+          "CanStack": false,
+          "IsPassiveBonus": false,
+          "CanApplyOnCorpse": false,
+          "ConsidersBanished": false,
+          "SharedModel.Battle.AI.IAiEffect.TypeId": 301031,
+          "SharedModel.Battle.AI.IAiEffect.KindId": "ApplyBuff",
+          "SharedModel.Battle.AI.IAiEffect.TargetType": "RelationTarget",
+          "SharedModel.Battle.AI.IAiEffect.MultiplierFormula": "0.35*HP",
+          "SharedModel.Battle.AI.IAiEffect.IsRelative": true,
+          "SharedModel.Battle.AI.IAiEffect.MultiplierNotEvaluatedByAI": false,
+          "SharedModel.Battle.AI.IAiEffect.Count": 1,
+          "SharedModel.Battle.AI.IAiEffect.TargetParams": {
+            "TargetType": "RelationTarget",
+            "Exclusive": false,
+            "FirstHitInSelected": false,
+            "TakeOneRandom": false,
+            "NotAoeDamage": false
+          },
+          "RealEffect": "<EffectType>"
+        }
+      ],
+      "IsHiddenOnHud": false,
+      "IsVisibleForAI": true,
+      "LevelBonuses": [
+        {
+          "SkillBonusType": "ShieldCreation",
+          "Value": 0.1
+        },
+        {
+          "SkillBonusType": "ShieldCreation",
+          "Value": 0.1
+        },
+        {
+          "SkillBonusType": "ShieldCreation",
+          "Value": 0.1
+        }
+      ],
+      "IsDefault": false,
+      "MaxLevel": 4,
+      "IsActive": false,
+      "IsWarlordSkill": false,
+      "IgnoresTaunt": false
+    }
+  }
+}

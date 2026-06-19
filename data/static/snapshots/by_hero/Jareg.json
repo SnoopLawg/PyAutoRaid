@@ -1,0 +1,541 @@
+{
+  "_meta": {
+    "hero": "Jareg",
+    "skill_count": 3
+  },
+  "skills": {
+    "29901": {
+      "Id": 29901,
+      "Revision": 0,
+      "Name": {
+        "Key": "l10n:skill/name?id=29901#static",
+        "DefaultValue": "Skill 29901 name",
+        "HasBreakSymbol": false
+      },
+      "Description": {
+        "Key": "l10n:skill/description?id=29901#static",
+        "DefaultValue": "Attacks 1 enemy 1 time\nPlaces Reduce ATK II (50%) debuff on a target for 2 turns with 35% chance",
+        "HasBreakSymbol": false
+      },
+      "Group": "Active",
+      "Targets": "Producer",
+      "Cooldown": 0,
+      "ReduceCooldownProhibited": false,
+      "IncreaseCooldownProhibited": false,
+      "CooldownIncludeProducer": false,
+      "IsSecret": false,
+      "ShowDamageScale": true,
+      "Visibility": "Visible",
+      "SkillLevelBonuses": [
+        {
+          "SkillBonusType": "Attack",
+          "Value": 0.05
+        },
+        {
+          "SkillBonusType": "EffectChance",
+          "Value": 0.05
+        },
+        {
+          "SkillBonusType": "Attack",
+          "Value": 0.05
+        },
+        {
+          "SkillBonusType": "EffectChance",
+          "Value": 0.1
+        },
+        {
+          "SkillBonusType": "Attack",
+          "Value": 0.1
+        },
+        {
+          "SkillBonusType": "EffectChance",
+          "Value": 0.1
+        }
+      ],
+      "Effects": [
+        {
+          "Count": 1,
+          "Id": 299011,
+          "KindId": "Damage",
+          "Group": "Active",
+          "TargetParams": {
+            "TargetType": "Target",
+            "Exclusive": false,
+            "FirstHitInSelected": false,
+            "TakeOneRandom": false,
+            "NotAoeDamage": false
+          },
+          "IsEffectDescription": false,
+          "ConsidersDead": false,
+          "LeaveThroughDeath": false,
+          "DoesntSetSkillOnCooldown": false,
+          "IgnoresCooldown": false,
+          "IsUnique": false,
+          "IterationChanceRolling": false,
+          "StackCount": 1,
+          "MultiplierFormula": "6.7*ATK",
+          "CalcMultiplier": {
+            "method_ptr": "<IntPtr>",
+            "invoke_impl": "<IntPtr>",
+            "m_target": {},
+            "method": "<IntPtr>",
+            "delegate_trampoline": "<IntPtr>",
+            "extra_arg": "<IntPtr>",
+            "method_code": "<IntPtr>",
+            "interp_method": "<IntPtr>",
+            "interp_invoke_impl": "<IntPtr>",
+            "method_info": "<MethodInfo>",
+            "method_is_virtual": false,
+            "Method": "<MethodInfo>",
+            "Target": {}
+          },
+          "PersistsThroughRounds": false,
+          "SnapshotRequired": false,
+          "MultiplierNotEvaluatedByAI": false,
+          "TargetType": "Target",
+          "StatusEffectFamily": "299010",
+          "Category": "Damage",
+          "IsContainer": false,
+          "IsGuaranteed": true,
+          "IsResistable": false,
+          "IsExtraTurnEffect": false,
+          "IsDamageModifiactionEffect": false,
+          "IsEvadeOrBlocker": false,
+          "IsActive": true,
+          "IsRelative": false,
+          "HasMultiplier": true,
+          "CanStack": false,
+          "IsPassiveBonus": false,
+          "CanApplyOnCorpse": false,
+          "ConsidersBanished": false,
+          "SharedModel.Battle.AI.IAiEffect.TypeId": 299011,
+          "SharedModel.Battle.AI.IAiEffect.KindId": "Damage",
+          "SharedModel.Battle.AI.IAiEffect.TargetType": "Target",
+          "SharedModel.Battle.AI.IAiEffect.MultiplierFormula": "6.7*ATK",
+          "SharedModel.Battle.AI.IAiEffect.IsRelative": false,
+          "SharedModel.Battle.AI.IAiEffect.MultiplierNotEvaluatedByAI": false,
+          "SharedModel.Battle.AI.IAiEffect.Count": 1,
+          "SharedModel.Battle.AI.IAiEffect.TargetParams": {
+            "TargetType": "Target",
+            "Exclusive": false,
+            "FirstHitInSelected": false,
+            "TakeOneRandom": false,
+            "NotAoeDamage": false
+          },
+          "RealEffect": "<EffectType>"
+        },
+        {
+          "Count": 1,
+          "Id": 299012,
+          "KindId": "ApplyDebuff",
+          "Group": "Active",
+          "TargetParams": {
+            "TargetType": "RelationTarget",
+            "Exclusive": false,
+            "FirstHitInSelected": false,
+            "TakeOneRandom": false,
+            "NotAoeDamage": false
+          },
+          "IsEffectDescription": false,
+          "ConsidersDead": false,
+          "LeaveThroughDeath": false,
+          "DoesntSetSkillOnCooldown": false,
+          "IgnoresCooldown": false,
+          "IsUnique": false,
+          "IterationChanceRolling": false,
+          "Relation": {
+            "EffectTypeId": 0,
+            "Phases": [
+              "AfterDamageDealt"
+            ],
+            "ActivateOnGlancingHit": false
+          },
+          "Chance": 0,
+          "StackCount": 1,
+          "PersistsThroughRounds": false,
+          "SnapshotRequired": false,
+          "ApplyStatusEffectParams": {
+            "StatusEffectInfos": [
+              {
+                "TypeId": 131,
+                "Duration": 2
+              }
+            ]
+          },
+          "MultiplierNotEvaluatedByAI": false,
+          "TargetType": "RelationTarget",
+          "StatusEffectFamily": "299010",
+          "Category": "InstantDebuff",
+          "IsContainer": false,
+          "IsGuaranteed": true,
+          "IsResistable": true,
+          "IsExtraTurnEffect": false,
+          "IsDamageModifiactionEffect": false,
+          "IsEvadeOrBlocker": false,
+          "IsActive": true,
+          "IsRelative": true,
+          "HasMultiplier": false,
+          "CanStack": false,
+          "IsPassiveBonus": false,
+          "CanApplyOnCorpse": false,
+          "ConsidersBanished": false,
+          "SharedModel.Battle.AI.IAiEffect.TypeId": 299012,
+          "SharedModel.Battle.AI.IAiEffect.KindId": "ApplyDebuff",
+          "SharedModel.Battle.AI.IAiEffect.TargetType": "RelationTarget",
+          "SharedModel.Battle.AI.IAiEffect.IsRelative": true,
+          "SharedModel.Battle.AI.IAiEffect.MultiplierNotEvaluatedByAI": false,
+          "SharedModel.Battle.AI.IAiEffect.Count": 1,
+          "SharedModel.Battle.AI.IAiEffect.TargetParams": {
+            "TargetType": "RelationTarget",
+            "Exclusive": false,
+            "FirstHitInSelected": false,
+            "TakeOneRandom": false,
+            "NotAoeDamage": false
+          },
+          "RealEffect": "<EffectType>"
+        }
+      ],
+      "VisualSkillDuration": {
+        "HasValue": false,
+        "hasValue": false,
+        "value": 527.695
+      },
+      "MovementDuration": {
+        "HasValue": false,
+        "hasValue": false,
+        "value": 527.695
+      },
+      "IsHiddenOnHud": false,
+      "IsVisibleForAI": true,
+      "LevelBonuses": [
+        {
+          "SkillBonusType": "Attack",
+          "Value": 0.05
+        },
+        {
+          "SkillBonusType": "EffectChance",
+          "Value": 0.05
+        },
+        {
+          "SkillBonusType": "Attack",
+          "Value": 0.05
+        },
+        {
+          "SkillBonusType": "EffectChance",
+          "Value": 0.1
+        },
+        {
+          "SkillBonusType": "Attack",
+          "Value": 0.1
+        },
+        {
+          "SkillBonusType": "EffectChance",
+          "Value": 0.1
+        }
+      ],
+      "IsDefault": true,
+      "MaxLevel": 7,
+      "IsActive": true,
+      "IsWarlordSkill": false,
+      "IgnoresTaunt": false
+    },
+    "29902": {
+      "Id": 29902,
+      "Revision": 0,
+      "Name": {
+        "Key": "l10n:skill/name?id=29902#static",
+        "DefaultValue": "Skill 29902 name",
+        "HasBreakSymbol": false
+      },
+      "Description": {
+        "Key": "l10n:skill/description?id=29902#static",
+        "DefaultValue": "Places Share damage II (50%) on all allies for 2 turns\nPlaces Increase DEF II (60%) on all allies for 2 turns",
+        "HasBreakSymbol": false
+      },
+      "Group": "Active",
+      "Targets": "Producer",
+      "Cooldown": 5,
+      "ReduceCooldownProhibited": false,
+      "IncreaseCooldownProhibited": false,
+      "CooldownIncludeProducer": false,
+      "IsSecret": false,
+      "ShowDamageScale": false,
+      "Visibility": "Visible",
+      "SkillLevelBonuses": [
+        {
+          "SkillBonusType": "CooltimeTurn",
+          "Value": 1
+        }
+      ],
+      "Effects": [
+        {
+          "Count": 1,
+          "Id": 299021,
+          "KindId": "ApplyBuff",
+          "Group": "Active",
+          "TargetParams": {
+            "TargetType": "AllAllies",
+            "Exclusion": "Target",
+            "Exclusive": false,
+            "FirstHitInSelected": false,
+            "TakeOneRandom": false,
+            "NotAoeDamage": false
+          },
+          "IsEffectDescription": false,
+          "ConsidersDead": false,
+          "LeaveThroughDeath": false,
+          "DoesntSetSkillOnCooldown": false,
+          "IgnoresCooldown": false,
+          "IsUnique": false,
+          "IterationChanceRolling": false,
+          "StackCount": 1,
+          "PersistsThroughRounds": false,
+          "SnapshotRequired": false,
+          "ApplyStatusEffectParams": {
+            "StatusEffectInfos": [
+              {
+                "TypeId": 310,
+                "Duration": 2
+              }
+            ]
+          },
+          "MultiplierNotEvaluatedByAI": false,
+          "TargetType": "AllAllies",
+          "StatusEffectFamily": "299020",
+          "Category": "InstantBuff",
+          "IsContainer": false,
+          "IsGuaranteed": true,
+          "IsResistable": false,
+          "IsExtraTurnEffect": false,
+          "IsDamageModifiactionEffect": false,
+          "IsEvadeOrBlocker": false,
+          "IsActive": true,
+          "IsRelative": false,
+          "HasMultiplier": false,
+          "CanStack": false,
+          "IsPassiveBonus": false,
+          "CanApplyOnCorpse": false,
+          "ConsidersBanished": false,
+          "SharedModel.Battle.AI.IAiEffect.TypeId": 299021,
+          "SharedModel.Battle.AI.IAiEffect.KindId": "ApplyBuff",
+          "SharedModel.Battle.AI.IAiEffect.TargetType": "AllAllies",
+          "SharedModel.Battle.AI.IAiEffect.IsRelative": false,
+          "SharedModel.Battle.AI.IAiEffect.MultiplierNotEvaluatedByAI": false,
+          "SharedModel.Battle.AI.IAiEffect.Count": 1,
+          "SharedModel.Battle.AI.IAiEffect.TargetParams": {
+            "TargetType": "AllAllies",
+            "Exclusion": "Target",
+            "Exclusive": false,
+            "FirstHitInSelected": false,
+            "TakeOneRandom": false,
+            "NotAoeDamage": false
+          },
+          "RealEffect": "<EffectType>"
+        },
+        {
+          "Count": 1,
+          "Id": 299022,
+          "KindId": "ApplyBuff",
+          "Group": "Active",
+          "TargetParams": {
+            "TargetType": "AllAllies",
+            "Exclusive": false,
+            "FirstHitInSelected": false,
+            "TakeOneRandom": false,
+            "NotAoeDamage": false
+          },
+          "IsEffectDescription": false,
+          "ConsidersDead": false,
+          "LeaveThroughDeath": false,
+          "DoesntSetSkillOnCooldown": false,
+          "IgnoresCooldown": false,
+          "IsUnique": false,
+          "IterationChanceRolling": false,
+          "StackCount": 1,
+          "PersistsThroughRounds": false,
+          "SnapshotRequired": false,
+          "ApplyStatusEffectParams": {
+            "StatusEffectInfos": [
+              {
+                "TypeId": 141,
+                "Duration": 2
+              }
+            ]
+          },
+          "MultiplierNotEvaluatedByAI": false,
+          "TargetType": "AllAllies",
+          "StatusEffectFamily": "299020",
+          "Category": "InstantBuff",
+          "IsContainer": false,
+          "IsGuaranteed": true,
+          "IsResistable": false,
+          "IsExtraTurnEffect": false,
+          "IsDamageModifiactionEffect": false,
+          "IsEvadeOrBlocker": false,
+          "IsActive": true,
+          "IsRelative": false,
+          "HasMultiplier": false,
+          "CanStack": false,
+          "IsPassiveBonus": false,
+          "CanApplyOnCorpse": false,
+          "ConsidersBanished": false,
+          "SharedModel.Battle.AI.IAiEffect.TypeId": 299022,
+          "SharedModel.Battle.AI.IAiEffect.KindId": "ApplyBuff",
+          "SharedModel.Battle.AI.IAiEffect.TargetType": "AllAllies",
+          "SharedModel.Battle.AI.IAiEffect.IsRelative": false,
+          "SharedModel.Battle.AI.IAiEffect.MultiplierNotEvaluatedByAI": false,
+          "SharedModel.Battle.AI.IAiEffect.Count": 1,
+          "SharedModel.Battle.AI.IAiEffect.TargetParams": {
+            "TargetType": "AllAllies",
+            "Exclusive": false,
+            "FirstHitInSelected": false,
+            "TakeOneRandom": false,
+            "NotAoeDamage": false
+          },
+          "RealEffect": "<EffectType>"
+        }
+      ],
+      "VisualSkillDuration": {
+        "HasValue": false,
+        "hasValue": false,
+        "value": 527.695
+      },
+      "IsHiddenOnHud": false,
+      "IsVisibleForAI": true,
+      "LevelBonuses": [
+        {
+          "SkillBonusType": "CooltimeTurn",
+          "Value": 1
+        }
+      ],
+      "IsDefault": false,
+      "MaxLevel": 2,
+      "IsActive": true,
+      "IsWarlordSkill": false,
+      "IgnoresTaunt": false
+    },
+    "29903": {
+      "Id": 29903,
+      "Revision": 0,
+      "Name": {
+        "Key": "l10n:skill/name?id=29903#static",
+        "DefaultValue": "Skill 29903 name",
+        "HasBreakSymbol": false
+      },
+      "Description": {
+        "Key": "l10n:skill/description?id=29903#static",
+        "DefaultValue": "Each time an ally losses 20% of it's MAX HP places Continuous heal II (15%) on this ally for 1 turns",
+        "HasBreakSymbol": false
+      },
+      "Group": "Passive",
+      "Cooldown": 0,
+      "ReduceCooldownProhibited": false,
+      "IncreaseCooldownProhibited": false,
+      "CooldownIncludeProducer": false,
+      "IsSecret": false,
+      "ShowDamageScale": false,
+      "Visibility": "Visible",
+      "Effects": [
+        {
+          "Count": 1,
+          "Id": 299031,
+          "KindId": "ApplyBuff",
+          "Group": "Passive",
+          "TargetParams": {
+            "TargetType": "RelationTarget",
+            "Exclusive": false,
+            "FirstHitInSelected": false,
+            "TakeOneRandom": false,
+            "NotAoeDamage": false
+          },
+          "IsEffectDescription": false,
+          "ConsidersDead": false,
+          "LeaveThroughDeath": false,
+          "DoesntSetSkillOnCooldown": false,
+          "IgnoresCooldown": false,
+          "IsUnique": false,
+          "IterationChanceRolling": false,
+          "Relation": {
+            "EffectKindIds": [
+              "Damage"
+            ],
+            "Phases": [
+              "AfterEffectProcessedOnTarget"
+            ],
+            "ActivateOnGlancingHit": false
+          },
+          "Condition": "DEALT_DMG>=0.2*TRG_HP&&!isAllyTurn&&relationTargetIsAlly",
+          "CalcCondition": {
+            "method_ptr": "<IntPtr>",
+            "invoke_impl": "<IntPtr>",
+            "m_target": {},
+            "method": "<IntPtr>",
+            "delegate_trampoline": "<IntPtr>",
+            "extra_arg": "<IntPtr>",
+            "method_code": "<IntPtr>",
+            "interp_method": "<IntPtr>",
+            "interp_invoke_impl": "<IntPtr>",
+            "method_info": "<MethodInfo>",
+            "method_is_virtual": false,
+            "Method": "<MethodInfo>",
+            "Target": {}
+          },
+          "StackCount": 1,
+          "PersistsThroughRounds": false,
+          "SnapshotRequired": false,
+          "ApplyStatusEffectParams": {
+            "StatusEffectInfos": [
+              {
+                "TypeId": 91,
+                "Duration": 1
+              }
+            ]
+          },
+          "VisualizationDuration": {
+            "HasValue": false,
+            "hasValue": false,
+            "value": 527.695
+          },
+          "MultiplierNotEvaluatedByAI": false,
+          "TargetType": "RelationTarget",
+          "StatusEffectFamily": "299030",
+          "Category": "InstantBuff",
+          "IsContainer": false,
+          "IsGuaranteed": true,
+          "IsResistable": false,
+          "IsExtraTurnEffect": false,
+          "IsDamageModifiactionEffect": false,
+          "IsEvadeOrBlocker": false,
+          "IsActive": false,
+          "IsRelative": true,
+          "HasMultiplier": false,
+          "CanStack": false,
+          "IsPassiveBonus": false,
+          "CanApplyOnCorpse": false,
+          "ConsidersBanished": false,
+          "SharedModel.Battle.AI.IAiEffect.TypeId": 299031,
+          "SharedModel.Battle.AI.IAiEffect.KindId": "ApplyBuff",
+          "SharedModel.Battle.AI.IAiEffect.TargetType": "RelationTarget",
+          "SharedModel.Battle.AI.IAiEffect.IsRelative": true,
+          "SharedModel.Battle.AI.IAiEffect.MultiplierNotEvaluatedByAI": false,
+          "SharedModel.Battle.AI.IAiEffect.Count": 1,
+          "SharedModel.Battle.AI.IAiEffect.TargetParams": {
+            "TargetType": "RelationTarget",
+            "Exclusive": false,
+            "FirstHitInSelected": false,
+            "TakeOneRandom": false,
+            "NotAoeDamage": false
+          },
+          "RealEffect": "<EffectType>"
+        }
+      ],
+      "IsHiddenOnHud": false,
+      "IsVisibleForAI": true,
+      "IsDefault": false,
+      "MaxLevel": 1,
+      "IsActive": false,
+      "IsWarlordSkill": false,
+      "IgnoresTaunt": false
+    }
+  }
+}

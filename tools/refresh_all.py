@@ -54,7 +54,7 @@ def verify_profiles():
     print("STEP 3: Verify skill profiles")
     print("=" * 60)
     from load_game_profiles import load_profiles
-    sd, se, pd = load_profiles()
+    sd, se, pd, _ = load_profiles()
     print(f"  Skill data: {len(sd)} heroes")
     print(f"  Skill effects: {len(se)} heroes")
     print(f"  Passive data: {len(pd)} heroes")

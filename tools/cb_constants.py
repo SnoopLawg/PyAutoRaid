@@ -69,10 +69,21 @@ def _refresh_cb_attack_mult() -> None:
             continue
 
 
-# Hand-coded baseline (verified 2026-04-23 against live game). Refreshed in
-# place when the mod is reachable. AoE1 = 4 hits × 1*ATK = 4.0; AoE2 = 2+1.
-CB_ATTACK_MULT.update({"aoe1": 4.0, "aoe2": 3.0})
+# Hand-coded baseline.
+# AoE2 (skill 222802 etc): 2 separate effects (2*ATK + 1*ATK) both Count=1
+#   to AllEnemies = 3*ATK per hero. Verified vs real T17 damage (40.34K sim
+#   vs 42K real, within 4%).
+CB_ATTACK_MULT.update({"aoe1": 1.0, "aoe2": 3.0})
 _refresh_cb_attack_mult()
+# AoE1 (skill 222603): Count=4 with TargetType=AllEnemies. The naive parser
+# computes 1*ATK × Count=4 = 4×ATK per hero. WRONG. Real damage data
+# (battle_logs_cb_20260615_203854) shows per-hero damage at AOE1 turns is
+# ~1×ATK, not 4×ATK. The Count=4 likely means "4 hits distributed across
+# targets" — with 5 player heroes and 4 hits, each hero takes ~0.8 hits avg
+# = ~1×ATK. Override AFTER _refresh_cb_attack_mult so live-mod re-reads
+# don't restore the wrong 4.0 value. Fixing 2026-06-16 brought Spirit-day
+# MEN sim from +1.0% to +0.0% vs real T50/37.12M.
+CB_ATTACK_MULT["aoe1"] = 1.0
 
 # Stun damage is *NOT* in CB_ATTACK_MULT — the sim handles it as
 # 0.2 * TARGET_MAX_HP (HP-based, no ATK scaling). See cb_sim._cb_turn().
@@ -135,18 +146,23 @@ except Exception:
 
 
 # ============================================================================
-# CB boss base speed by difficulty — CALIBRATED
+# CB boss base speed by difficulty — community-canonical
 # ============================================================================
-# These are the in-battle effective speeds DWJ uses, NOT the
-# HeroType.DefaultBaseStats values from static (which are pre-modifier and
-# read 80/120/140/160/170/170 respectively). The 190 UNM speed has been
-# verified against in-game observations of CB boss turn meter rate.
-# Static-derived values would need per-stat verification before flipping.
+# Verified 2026-06-16 by user (community canon):
+#   UNM: 190 base, recommended champ SPD 191-209 (or 171-189 if behind)
+#   NM:  170 base, 171-189
+#   Brutal: 160 base, 161-169
+#   Hard:   140 base, 141-149
+#   Normal: 120 base, 121-129
+#   Easy:    90 base,  91-99
+# The static `data/static/alliance_bosses.json` UNM spd=170 value was
+# misread (it's likely a pre-modifier base; the in-battle effective SPD
+# is 190). Reverted 2026-06-16 from a brief cb_speed=170 experiment.
 
 CB_SPEED_BY_DIFFICULTY: dict[str, float] = {
-    "easy":             80,
-    "normal":           100,
-    "hard":             120,
+    "easy":             90,
+    "normal":           120,
+    "hard":             140,
     "brutal":           160,
     "nightmare":        170,
     "ultra-nightmare":  190,
@@ -154,6 +170,40 @@ CB_SPEED_BY_DIFFICULTY: dict[str, float] = {
     "unm":              190,
     "nm":               170,
 }
+
+
+# ============================================================================
+# CB boss crit chance / crit damage — STATIC (data/static/alliance_bosses.json)
+# ============================================================================
+# UNM Demon Lord base_stats: cr=15 (= 0.15), cd=50 (= 0.50 = +50% crit dmg).
+# These come from the live mod's StaticData export; if Plarium retunes the
+# boss CR/CD, refreshing alliance_bosses.json updates these automatically.
+CB_CR_BY_DIFFICULTY: dict[str, float] = {}
+CB_CD_BY_DIFFICULTY: dict[str, float] = {}
+try:
+    for _b in (_bosses.values() if "_bosses" in dir() else []):
+        _bs = getattr(_b, "base_stats", None) or {}
+        _diff = _b.difficulty.lower()
+        # Stat-index field encodes percentages as integers — 15 -> 0.15.
+        _cr_raw = _bs.get("cr") if isinstance(_bs, dict) else getattr(_bs, "cr", None)
+        _cd_raw = _bs.get("cd") if isinstance(_bs, dict) else getattr(_bs, "cd", None)
+        if _cr_raw is not None:
+            CB_CR_BY_DIFFICULTY[_diff] = float(_cr_raw) / 100.0
+        if _cd_raw is not None:
+            CB_CD_BY_DIFFICULTY[_diff] = float(_cd_raw) / 100.0
+    # Aliases
+    if "ultranightmare" in CB_CR_BY_DIFFICULTY:
+        CB_CR_BY_DIFFICULTY["unm"] = CB_CR_BY_DIFFICULTY["ultranightmare"]
+        CB_CD_BY_DIFFICULTY["unm"] = CB_CD_BY_DIFFICULTY["ultranightmare"]
+    if "nightmare" in CB_CR_BY_DIFFICULTY:
+        CB_CR_BY_DIFFICULTY["nm"] = CB_CR_BY_DIFFICULTY["nightmare"]
+        CB_CD_BY_DIFFICULTY["nm"] = CB_CD_BY_DIFFICULTY["nightmare"]
+except Exception:
+    pass
+
+# Fallback defaults if static load failed (UNM values verified 2026-06-15).
+CB_CR_DEFAULT: float = CB_CR_BY_DIFFICULTY.get("unm", 0.15)
+CB_CD_DEFAULT: float = CB_CD_BY_DIFFICULTY.get("unm", 0.50)
 
 
 # ============================================================================
@@ -221,6 +271,23 @@ GS_PROC_RATE: float = 0.30   # Giant Slayer: 30% per hit
 WEAK_HIT_DMG_MULT: float = 0.80               # GAME-SPEC (1.0 + ElementDisadvantageCoef -0.2)
 WEAK_HIT_DEBUFF_FAIL: float = 0.35            # GAME-SPEC (Plarium official "35% chance")
 STRONG_HIT_DMG_MULT: float = 1.0              # GAME-SPEC (advantage adds CRIT chance, not flat damage)
+
+# Glancing hit chance on weak-affinity hits.
+# Empirically derived 2026-06-18: Force-day captures (Magic Ninja vs Force boss
+# = weak hit) showed Ninja A1's IncreaseStamina effect (+15% TM, gated by
+# `Relation.ActivateOnGlancingHit: false`) fired only 73% of the time across
+# 23 captures (192/264 casts). So ~27% of weak hits glance.
+# Spirit (strong) and Magic (neutral, same-affinity) captures showed 98%+ and
+# 100% fire rates — neither can glance.
+# Used by `_apply_effects` in cb_sim.py to gate any effect whose static
+# `Relation.ActivateOnGlancingHit` field is false (currently just Ninja A1's
+# self_tm_fill, but extensible to any other AfterEffectProcessedOnTarget-keyed
+# effect whose hero is weak vs boss).
+WEAK_HIT_GLANCE_CHANCE: float = 0.35          # game-truth: gameplay.json GlancingHitChance=0.35
+# Earlier value of 0.27 was empirical (192/264 weak-hit observations
+# 2026-06-18). The static value is HIGHER. Difference likely came from
+# multi-hit attacks where at least one hit landed non-glance and the boost
+# applied once per cast. Default to the static truth.
 
 
 # ============================================================================
@@ -799,3 +866,111 @@ def def_mitigation_factor(defence: float,
     import math
     inner = (defence - acc_mod) * (k + defence_modifier) * (-1.0 / DEF_FORMULA_DENOM)
     return one - DEF_FORMULA_SCALE * (1.0 - math.exp(inner))
+
+
+# ============================================================================
+# Manifest cross-check — Workstream 1.E / 2 / 3 integration safety net
+# ============================================================================
+# At import time, optionally validate that this module's constants match
+# the manifest-backed values exposed by sim_data_facade. Any drift surfaces
+# immediately rather than silently after a future manifest refresh.
+#
+# Best-effort: if the facade can't load (manifests missing), this is a
+# no-op. Set CB_CONSTANTS_STRICT=1 in env to make drift a hard error.
+def _validate_against_manifest() -> None:
+    import os
+    strict = os.environ.get("CB_CONSTANTS_STRICT") == "1"
+    try:
+        # Late import to avoid circular issues
+        import sys
+        from pathlib import Path
+        tools_dir = Path(__file__).resolve().parent
+        if str(tools_dir) not in sys.path:
+            sys.path.insert(0, str(tools_dir))
+        from sim_data_facade import try_facade
+        f = try_facade()
+        if f is None:
+            return
+        drift = []
+        # Normal-hit base factor
+        try:
+            manifest_nhf = f.damage.normal_hit_base_factor
+            if abs(manifest_nhf - NORMAL_HIT_BASE_FACTOR) > 0.0001:
+                drift.append(
+                    f"NORMAL_HIT_BASE_FACTOR: constants={NORMAL_HIT_BASE_FACTOR} "
+                    f"manifest={manifest_nhf}"
+                )
+        except Exception:
+            pass
+        # Element disadvantage
+        try:
+            manifest_disadv = f.damage.element_multiplier("Disadvantage")
+            if abs(manifest_disadv - WEAK_HIT_DMG_MULT) > 0.0001:
+                drift.append(
+                    f"WEAK_HIT_DMG_MULT: constants={WEAK_HIT_DMG_MULT} "
+                    f"manifest_Disadvantage={manifest_disadv}"
+                )
+        except Exception:
+            pass
+        # Warmaster proc rate
+        try:
+            manifest_wm = f.mastery.warmaster_proc().get("chance")
+            if manifest_wm is not None and abs(manifest_wm - WM_PROC_RATE) > 0.0001:
+                drift.append(
+                    f"WM_PROC_RATE: constants={WM_PROC_RATE} "
+                    f"manifest={manifest_wm}"
+                )
+        except Exception:
+            pass
+        # Giant Slayer proc rate
+        try:
+            manifest_gs = f.mastery.giant_slayer_proc().get("chance")
+            if manifest_gs is not None and abs(manifest_gs - GS_PROC_RATE) > 0.0001:
+                drift.append(
+                    f"GS_PROC_RATE: constants={GS_PROC_RATE} "
+                    f"manifest={manifest_gs}"
+                )
+        except Exception:
+            pass
+        # Boss turn-50 enrage trigger
+        try:
+            manifest_enrage = f.boss.turn_50_trigger
+            if manifest_enrage and manifest_enrage != ENRAGE_TURN:
+                drift.append(
+                    f"ENRAGE_TURN: constants={ENRAGE_TURN} "
+                    f"manifest={manifest_enrage}"
+                )
+        except Exception:
+            pass
+        # UNM boss base crit chance / damage (from alliance_bosses.json)
+        # These don't have a manifest equivalent yet (facade.boss covers
+        # skills, not stats) but we self-validate the static load.
+        try:
+            if not (0.0 <= CB_CR_DEFAULT <= 1.0):
+                drift.append(
+                    f"CB_CR_DEFAULT out of [0,1]: {CB_CR_DEFAULT}"
+                )
+            if not (0.0 <= CB_CD_DEFAULT <= 5.0):
+                drift.append(
+                    f"CB_CD_DEFAULT out of expected range: {CB_CD_DEFAULT}"
+                )
+        except Exception:
+            pass
+        if drift and strict:
+            raise RuntimeError(
+                "cb_constants ↔ manifest drift detected:\n  "
+                + "\n  ".join(drift)
+            )
+        elif drift:
+            import warnings
+            warnings.warn(
+                "cb_constants ↔ manifest drift:\n  "
+                + "\n  ".join(drift)
+                + "\n  (set CB_CONSTANTS_STRICT=1 to fail-loud)"
+            )
+    except Exception:
+        # Non-fatal: facade missing or other issue
+        pass
+
+
+_validate_against_manifest()

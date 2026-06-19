@@ -145,7 +145,10 @@ MASTERY_IDS = {
     "master_hexer":      500354,  # 30% chance extend debuff by 1T when placing
     "lore_of_steel":     500343,  # +15% to basic set bonuses
     "eagle_eye":         500364,  # +50 ACC
-    "cycle_of_magic":    500342,  # 5% reduce random CD by 1
+    "cycle_of_magic":    500344,  # 5% reduce random CD by 1
+    # ^ Was 500342 (verified wrong 2026-06-18 — that's Evil Eye in
+    # Support T4 col 2). Cycle of Magic is Support T4 col 4 = 500344.
+    # Demytha has 500344 in her mastery list, confirmed from heroes_all.
     # Defense T5
     "retribution":       500253,  # 50% counterattack when losing 25%+ HP
     "deterrence":        500254,  # 20% counterattack on stun/freeze/fear on ally

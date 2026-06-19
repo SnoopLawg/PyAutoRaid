@@ -510,7 +510,7 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"ERR loading owned profiles: {e}", file=sys.stderr)
         sys.exit(1)
-    sd, se, pd = load_profiles()
+    sd, se, pd, _ = load_profiles()
     pre = len(sd)
     added, total = augment_with_unowned(sd, se, passive_data=pd)
     print(f"owned heroes: {pre}; +{added} desc-derived; total: {total}")

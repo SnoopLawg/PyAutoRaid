@@ -468,7 +468,7 @@ def main():
     if args.compare:
         sys.path.insert(0, str(PROJECT_ROOT / "tools"))
         from load_game_profiles import load_profiles
-        sd, se, pd = load_profiles()
+        sd, se, pd, _ = load_profiles()
 
         profiled = set(sd.keys())
         total_diffs = 0

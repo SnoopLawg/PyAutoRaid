@@ -28,6 +28,126 @@ import json
 import re
 import random
 from pathlib import Path
+
+# Workstream 1 Stage E — data-driven effect dispatcher. Replaces the
+# legacy `if buff_name == "shield"` style branches with manifest-keyed
+# decisions. See docs/cb_workstream_1_effect_manifest.md.
+# Optional import: if the manifest isn't built yet, legacy paths still work.
+try:
+    from effect_dispatcher import EffectDispatcher as _EffectDispatcher
+    _EFFECT_DISPATCHER: "_EffectDispatcher | None" = _EffectDispatcher()
+except Exception as _disp_err:  # noqa: BLE001
+    _EFFECT_DISPATCHER = None
+    print(f"# cb_sim: effect_dispatcher unavailable ({_disp_err}); "
+          f"falling back to legacy effect handling.")
+
+
+def _dispatcher() -> "_EffectDispatcher | None":
+    """Lazy accessor — keeps cb_sim importable even without the manifest."""
+    return _EFFECT_DISPATCHER
+
+
+# Workstream 1.E / 2 / 3 — single facade accessor for damage / mastery /
+# boss / blessing manifest reads. Cached at module load so hot-path code
+# doesn't pay per-call import cost. Survives missing manifests via None.
+try:
+    from sim_data_facade import try_facade as _try_facade
+    _SIM_FACADE = _try_facade()
+except Exception:
+    _SIM_FACADE = None
+
+
+def _facade():
+    """Cached facade accessor — returns None if manifests are missing."""
+    return _SIM_FACADE
+
+
+# Workstream 4 — lethal-save passive registry. Replaces the previous
+# per-name branches (Cardiel ally-save, UDK self-save) with a
+# data-driven dispatch. New heroes with revive-at-1-HP passives are
+# added here (data, not code).
+#
+# Schema:
+#   save_scope: "ally" — savior can revive any dying ally
+#                "self" — savior can only save themselves
+#   cooldown_turns: turns the passive is unavailable after use
+#   grant_uk_turns: if >0, the saved hero gets that many turns of
+#                    Unkillable (else just 1-HP clamp)
+#   skill_id: reference to static skill (for future literal extraction)
+LETHAL_SAVE_PASSIVES: dict[str, dict] = {
+    "Cardiel": {
+        "save_scope": "ally",
+        "cooldown_turns": 4,
+        "grant_uk_turns": 0,
+        "skill_id": 57604,
+    },
+    "Ultimate Deathknight": {
+        "save_scope": "self",
+        "cooldown_turns": 4,
+        "grant_uk_turns": 1,
+        "skill_id": 70904,
+    },
+}
+
+
+# Heroes the user owns more than one of (and therefore may field
+# both copies on the same team — e.g. dual-Maneater "RabBatEater" tunes).
+# The team builder uses these to stash the second copy under a synthetic
+# `<name>_2` key. Generalizing the pattern: when the user pulls dups of
+# any other hero they want on a CB team, add them here (data, not code).
+DUPLICATE_INSTANCE_HEROES: tuple[str, ...] = (
+    "Maneater",
+)
+
+# Per-occurrence opener convention for duplicate-eligible heroes. The
+# Nth entry (1-based) is the opening skill sequence for the Nth copy
+# of that hero on the team. For Maneater this matches the RabBatEater
+# tune: 1st Maneater opens A3 (anchor), 2nd opens A1+A3 (delayed).
+DUPLICATE_INSTANCE_OPENERS: dict[str, list[list[str]]] = {
+    "Maneater": [["A3"], ["A1", "A3"]],
+}
+
+
+# Self-buff placements that hero_profiles_game.json extraction misses.
+# Each entry is `{ hero_name: { skill_label: [(buff_name, duration), ...] } }`.
+# The data is verified against `data/static/skills_all.json` (skill Effects[]
+# with TargetType=Producer and KindId=ApplyBuff). When the upstream extractor
+# in tools/load_game_profiles.py gains TargetType awareness, entries here
+# should move to the data file and be removed from this registry.
+#
+# Each entry must include a comment with the static skill Id + effect
+# index that justifies it, so cross-checks against future game updates
+# are quick.
+KNOWN_SELF_BUFF_OVERRIDES: dict[str, dict[str, list]] = {
+    "Ninja": {
+        # Skill 62002 (A2 "Storm of Kicks") effect [9]: ApplyBuff
+        # target=Producer, status_effect type=481 (perfect_veil) dur=2.
+        # Static-verified 2026-06-15 — without this, sim's Ninja never
+        # has Veil and the diff against real CB battles flags it
+        # every turn 1.
+        "A2": [("veil", 2)],
+    },
+}
+
+
+def _dup_key_for(name: str, occurrence: int) -> str:
+    """Return the lookup key for the Nth occurrence of a duplicate hero
+    (1-based). First occurrence is the plain name; subsequent are
+    `name_2`, `name_3`, etc."""
+    if occurrence <= 1 or name not in DUPLICATE_INSTANCE_HEROES:
+        return name
+    return f"{name}_{occurrence}"
+
+
+def _dup_opener_for(name: str, occurrence: int) -> list[str]:
+    """Return the opener skill sequence for the Nth occurrence of a
+    duplicate-eligible hero. Falls back to [] (no opener override) if
+    not registered."""
+    seqs = DUPLICATE_INSTANCE_OPENERS.get(name, [])
+    idx = occurrence - 1
+    if 0 <= idx < len(seqs):
+        return list(seqs[idx])
+    return []
 from copy import deepcopy
 from dataclasses import dataclass, field
 from typing import List, Dict, Optional, Tuple
@@ -45,8 +165,10 @@ from cb_constants import (
     WM_PROC_RATE, GS_PROC_RATE, LIFESTEAL_RATE, CONT_HEAL_RATE,
     LEECH_HEAL_RATE,
     WEAK_HIT_DMG_MULT, WEAK_HIT_DEBUFF_FAIL, STRONG_HIT_DMG_MULT,
+    WEAK_HIT_GLANCE_CHANCE,
     CB_ATTACK_MULT, CB_STUN_HP_FRACTION, NORMAL_HIT_BASE_FACTOR,
     CB_HP_BY_DIFFICULTY, CB_SPEED_BY_DIFFICULTY,
+    CB_CR_DEFAULT, CB_CD_DEFAULT,
     CB_ATK,
     FA_CAP_BIG, FA_CAP_MEDIUM, FA_CAP_SMALL, FA_CAP_DOT,
     GATHERING_FURY_START_TURN, GATHERING_FURY_RATE_PER_TURN,
@@ -63,15 +185,33 @@ MAX_DEBUFF_SLOTS = MAX_APPLIED_DEBUFF_EFFECTS
 
 # FA_CAP_*, LEECH_HEAL_RATE — see cb_constants.
 
-# Affinity system: Magic=1, Force=2, Spirit=3, Void=4
-# Weak hit: 20-35% damage reduction AND 35% chance debuffs don't land
-# Strong hit: 20-30% damage increase
-WEAK_AFFINITY = {1: 2, 2: 3, 3: 1}  # Magic weak vs Force, Force weak vs Spirit, Spirit weak vs Magic
-STRONG_AFFINITY = {1: 3, 2: 1, 3: 2}  # Magic strong vs Spirit, etc.
+# Affinity system: Magic=1, Force=2, Spirit=3, Void=4 (IL2Cpp Element enum
+# from dump.cs line 311202). Raid trinity: Spirit > Force > Magic > Spirit
+# (each strong against next). Equivalent: Magic > Spirit, Force > Magic, Spirit > Force.
+# Weak hit (hero weak vs boss): -20% damage + 35% glance chance + -35% debuff land
+# Strong hit (hero strong vs boss): 0% damage but +15% crit + 50% crushing chance
+#
+# Verified 2026-06-16 (user correction): I briefly flipped these tables to
+# {1:2, 2:3, 3:1} thinking "Magic > Force" but real Raid is "Magic > Spirit".
+# REVERTED to the original tables, which are correct.
+WEAK_AFFINITY = {1: 2, 2: 3, 3: 1}    # Magic weak vs Force, Force weak vs Spirit, Spirit weak vs Magic
+STRONG_AFFINITY = {1: 3, 2: 1, 3: 2}  # Magic strong vs Spirit, Force strong vs Magic, Spirit strong vs Force
 # WEAK_HIT_DMG_MULT, WEAK_HIT_DEBUFF_FAIL, STRONG_HIT_DMG_MULT — see cb_constants.
 
 HP, ATK, DEF, SPD, RES, ACC, CR, CD = 1, 2, 3, 4, 5, 6, 7, 8
 
+# Boss skill rotation. Game-truth per tick log 2026-06-16:
+# T1=stun (222601), T2=aoe1 (222603 = 4×1*ATK), T3=aoe2 (222702/222802/222602/222902 = 3*ATK)
+# Pattern repeats every 3 boss turns. All element bosses use the same
+# pattern; only the aoe2 skill ID + applied debuff differs per element
+# (same total damage formula).
+#
+# Sim's pattern [aoe1, aoe2, stun] is OFFSET by 1 turn from game-truth.
+# Switching to game-truth [stun, aoe1, aoe2] HURTS Spirit-day prediction
+# (which currently matches +1%) without fully fixing Force-day (T42/30M
+# vs real T21/12.88M). The pattern offset is a documented compensating
+# wrong that aligns with some other unmodeled mechanic. Keep as-is until
+# the root cause of Force-day deaths is identified.
 CB_VOID_PATTERN = ["aoe1", "aoe2", "stun"]
 
 # CB_SPEED_BY_DIFFICULTY — see cb_constants (CALIBRATED, do not flip from
@@ -227,6 +367,23 @@ class SimSkill:
     self_tm_fill: float = 0.0  # fraction of TM bar to fill for self on use (e.g., Ninja A1: 0.15)
     grants_extra_turn: bool = False  # kind=4007: immediately get another turn after use
     ignore_def: float = 0.0   # fraction of DEF to ignore (Ninja A3: 0.5, OB A2: 0.3)
+    # ShieldCreation book bonus (SkillBonusType=4 from IL2Cpp enum).
+    # Sourced from skills_db.json level_bonuses where type=4. Applied
+    # multiplicatively to shield amounts placed by this skill. Demytha
+    # A1 fully booked = 0.20 (+20% shield). Without books = 0.0.
+    shield_creation_bonus: float = 0.0
+    # Health book bonus (SkillBonusType=1 from IL2Cpp enum). Applied
+    # multiplicatively to heal_pct on heal-effects (e.g. Demytha A2's
+    # `Heals 2.5% MAX_HP per buff change`). Demytha A2 fully booked = 0.20.
+    health_book_bonus: float = 0.0
+    # Attack book bonus (SkillBonusType=0). Applied multiplicatively to
+    # the skill's damage multiplier. Maneater A1 fully booked = 0.20
+    # (+20% damage). Was the largest unmodeled damage gap in MEN tune.
+    attack_book_bonus: float = 0.0
+    # IgnoreResistance book bonus (SkillBonusType=5). Applied to debuff
+    # land chance vs target RES. Sourced for future teams; no MEN hero
+    # has any.
+    ignore_res_book_bonus: float = 0.0
     # CB boss is immune to TM drain — drain skills (Maneater A2 Syphon,
     # Geomancer A3 Quicksand Grasp) are silent against the boss. Verified
     # 2026-04-29 against per-tick TM telemetry: Maneater's TM after his
@@ -256,6 +413,12 @@ class SimChampion:
     tm: float = 0.0
     buffs: Dict[str, int] = field(default_factory=dict)
     buffs_new: set = field(default_factory=set)  # DWJ isAddedThisTurn — skip first tick
+    # Tracks survival buffs that have already had their post-placement
+    # tick. Per real-game tick log: UK/BD decrement once after the
+    # placement turn's first owner-turn-end, then "stick" at the
+    # resulting value until consumed by the failsafe. Cleared when
+    # buff is re-applied (refresh resets the cycle).
+    buffs_ticked_once: set = field(default_factory=set)
     is_stunned: bool = False
     turns_taken: int = 0
     damage: DamageTracker = field(default_factory=DamageTracker)
@@ -271,6 +434,18 @@ class SimChampion:
     has_sniper: bool = False
     has_master_hexer: bool = False
     has_retribution: bool = False
+    # Lasting Gifts (mastery 500351): 30% chance at start of owner's turn
+    # to extend a random ally buff by 1 turn. NonIncreaseable buffs (UK,
+    # BD, ControlEffects, etc.) are EXCLUDED per game-truth IL2Cpp dump.
+    has_lasting_gifts: bool = False
+    # Cycle of Magic (mastery 500344): 5% chance per hit on team damage
+    # to reduce a random ally's skill cooldown by 1. Survival-critical
+    # for MEN tune (Maneater A3 → UK refresh cycle).
+    has_cycle_of_magic: bool = False
+    # Accumulator for deterministic Cycle of Magic procs (5% × hits ≈
+    # fractional CD reductions; whole-tick reductions apply when accum
+    # crosses 1.0). Reset on each new run.
+    _com_accum: float = 0.0
 
     # Special flags
     is_geomancer: bool = False
@@ -332,8 +507,26 @@ class SimChampion:
     def add_buff(self, name, duration):
         self.buffs[name] = max(self.buffs.get(name, 0), duration)
         self.buffs_new.add(name)  # mark as new — won't tick until next turn
+        # Refresh ALWAYS resets consume-on-use tick tracking. The new
+        # placement gets its own post-placement first-tick allowance,
+        # regardless of whether duration went up. Real-game refresh
+        # observation: each Maneater A3 re-placement starts a fresh
+        # cycle (tick log boss 'id' field changes per placement).
+        self.buffs_ticked_once.discard(name)
 
-    def tick_buffs(self, cb_turn: int = -1, once_per_cb_turn: bool = False):
+    def tick_buffs(self, cb_turn: int = -1, once_per_cb_turn: bool = False,
+                    phase: str = "end_owner_turn"):
+        """Tick all buffs on this champion.
+
+        Workstream 1 Stage E: routes through `EffectDispatcher` when
+        available, so each buff's lifetime decrement respects the
+        literal IL2Cpp `LifetimeUpdateType` (OnStartTurn / OnEndTurn /
+        Custom). When the manifest is unavailable, falls back to the
+        legacy "always decrement at end of owner turn" model.
+
+        `phase`: "start_owner_turn" or "end_owner_turn". Default is
+        end-of-turn since most legacy call sites assume that.
+        """
         # DWJ: isAddedThisTurn — buffs added since last tick don't decrement
         if once_per_cb_turn and cb_turn >= 0:
             if self.last_ticked_cb_turn == cb_turn:
@@ -341,18 +534,57 @@ class SimChampion:
                 # second hero turn shouldn't burn another point of duration
                 # off their own buffs. Real Raid behaves this way for
                 # boss-cycle buffs.
+                #
+                # KNOWN ISSUE (2026-06-16): buffs_new is NOT cleared here.
+                # Buffs placed AFTER our first tick this CB turn (e.g.,
+                # Demytha A3 placing BD on Maneater after Mane's first
+                # action) carry "new" mark into the NEXT cb_turn's tick,
+                # which skips again, extending BD lifetime by 1 cb_turn.
+                # Sim BD coverage on Maneater = 71% vs real ~31%.
+                # Clearing buffs_new here makes Spirit go from +1% to -9%
+                # (the BD over-coverage was a compensating wrong matching
+                # other untracked mechanics). Pair-fix required: clear
+                # buffs_new HERE + restore pattern offset to game-truth
+                # [stun, aoe1, aoe2] simultaneously. See task #11.
                 return
             self.last_ticked_cb_turn = cb_turn
+
+        disp = _dispatcher()
         expired = []
-        for b, d in self.buffs.items():
+        for b, d in list(self.buffs.items()):
             if b in self.buffs_new:
-                continue  # skip first tick (just applied)
-            if d <= 1:
+                # SkipProcessingWhenJustApplied — equivalent to the legacy
+                # "buffs_new" guard. Manifest captures this per-effect.
+                if disp and not disp.skip_on_apply_tick_by_name(b):
+                    # Effect doesn't have skip-on-apply set; allow tick
+                    pass
+                else:
+                    continue
+            if disp:
+                # Consume-on-use survival buffs (UK, BD) tick once after
+                # placement, then stick — see EffectDispatcher comments.
+                # already_ticked=True suppresses further decrement.
+                already = b in self.buffs_ticked_once
+                new_d = disp.decrement_on_turn_by_name(
+                    name=b, current_turn_left=d, phase=phase,
+                    already_ticked=already,
+                )
+                # If the buff actually decremented (vs being skipped),
+                # mark its first-tick-done for consume-on-use semantics.
+                if (new_d < d
+                        and phase == "end_owner_turn"
+                        and disp.is_consume_on_use_by_name(b)):
+                    self.buffs_ticked_once.add(b)
+            else:
+                # Legacy fallback: unconditional decrement
+                new_d = max(0, d - 1)
+            if new_d <= 0:
                 expired.append(b)
             else:
-                self.buffs[b] = d - 1
+                self.buffs[b] = new_d
         for b in expired:
             del self.buffs[b]
+            self.buffs_ticked_once.discard(b)
             if b == "shield":
                 self.shield_hp = 0.0  # absorption pool dies with the buff
         self.buffs_new.clear()  # next tick will decrement normally
@@ -371,14 +603,37 @@ def _eff(effect_type, **params):
 
 try:
     from load_game_profiles import load_profiles as _load_game_profiles
-    SKILL_DATA, SKILL_EFFECTS, PASSIVE_DATA = _load_game_profiles()
+    SKILL_DATA, SKILL_EFFECTS, PASSIVE_DATA, SKILL_IDS_BY_HERO = (
+        _load_game_profiles()
+    )
 except (ImportError, FileNotFoundError) as _e:
     # Fall back to empty dicts + defaults; cb_sim will then use
     # DEFAULT_SKILL_DATA (line ~297). Run `python tools/refresh_all.py` to
     # regenerate hero_profiles_game.json if you see this path taken.
-    SKILL_DATA, SKILL_EFFECTS, PASSIVE_DATA = {}, {}, {}
+    SKILL_DATA, SKILL_EFFECTS, PASSIVE_DATA, SKILL_IDS_BY_HERO = (
+        {}, {}, {}, {}
+    )
     import sys as _sys
     print(f"[cb_sim] Warning: {_e.__class__.__name__}: {_e} — running without game-extracted profiles", file=_sys.stderr)
+
+# Glance-gate lookup: skill_id (int) → set of effect indices with
+# Relation.ActivateOnGlancingHit=false. Built by tools/build_glance_gates.py
+# from live-mod /static-export at depth=8. We don't use the per-index info;
+# the model is "if the skill has ANY gated effect AND attacker is weak, roll
+# one glance per cast and skip the cast's secondary effects on a hit."
+# This matches game behavior (glance is a property of the attack roll).
+try:
+    import json as _json
+    from pathlib import Path as _Path
+    _gg_path = (_Path(__file__).resolve().parent.parent
+                / "data" / "static" / "glance_gates.json")
+    _gg_raw = _json.loads(_gg_path.read_text(encoding="utf-8"))
+    GLANCE_GATED_SKILL_IDS = {int(k) for k in (_gg_raw.get("gates") or {}).keys()}
+except Exception as _e:
+    GLANCE_GATED_SKILL_IDS = set()
+    import sys as _sys
+    print(f"[cb_sim] Warning: glance_gates.json load failed ({_e}); "
+          f"generic glance gating disabled", file=_sys.stderr)
 
 
 # Empirically-corrected buff durations. The game's published descriptions list
@@ -451,8 +706,8 @@ class CBSimulator:
         self.cb_speed = cb_speed
         # Boss CR/CD (verified game-spec UNM 2026-05-02: CR=0.15, CD=0.50).
         # Pulled from profile if supplied, else default to UNM values.
-        self.cb_cr = float(getattr(profile, "cr", 0.15) or 0.15)
-        self.cb_cd = float(getattr(profile, "cd", 0.50) or 0.50)
+        self.cb_cr = float(getattr(profile, "cr", CB_CR_DEFAULT) or CB_CR_DEFAULT)
+        self.cb_cd = float(getattr(profile, "cd", CB_CD_DEFAULT) or CB_CD_DEFAULT)
         self.profile = profile
         # Apply team-wide speed aura. leader_skills with stat=4 (SPD) give a
         # percentage boost to all hero base speeds. DWJ calc exposes this as
@@ -579,7 +834,14 @@ class CBSimulator:
         enraged = False
         # Parity tick scale: parity uses 7%/threshold-100; cb_sim uses
         # threshold-1000, so the equivalent rate is 70%/threshold-1000 = 0.7 * SPD.
-        TICK_RATE = 0.7
+        # Facade-backed: TICK_RATE = StaminaByTick × (TM_THRESHOLD / StaminaToTurn).
+        # gameplay.json defines StaminaByTick=0.07, StaminaToTurn=100; if either
+        # changes Plarium-side, re-running extract_tm_pipeline.py flows it in.
+        _f = _facade()
+        TICK_RATE = (
+            _f.tm.tick_rate_for_threshold(TM_THRESHOLD)
+            if _f is not None else 0.7
+        )
         while self.cb_turn < effective_max:
             if all(c.is_dead for c in self.champions) or enraged:
                 break
@@ -633,7 +895,14 @@ class CBSimulator:
 
             if actor_kind == "cb":
                 self._cb_turn(tick)
-                if self.cb_turn >= ENRAGE_TURN:
+                # Turn-50 enrage trigger: facade-backed for game-truth.
+                # Demon Lord skill 222904 fires at this turn; bypasses
+                # BlockDamage + Unkillable (see project_cb_boss_turn_50_bypass).
+                _f = _facade()
+                _enrage_turn = (
+                    _f.boss.turn_50_trigger if _f is not None else ENRAGE_TURN
+                )
+                if self.cb_turn >= _enrage_turn:
                     enraged = True
                     break
             else:
@@ -655,10 +924,23 @@ class CBSimulator:
         """
         if champ.element == 4 or self.cb_element == 4:
             return (1.0, 1.0)  # Void = always neutral
+        # Pull multipliers from the manifest facade when available so any
+        # future Plarium rebalance (gameplay.json ElementDisadvantageCoef)
+        # flows in without code edits. WEAK_HIT_DEBUFF_FAIL is sim-only
+        # (no manifest equivalent) — keep as constant.
+        _f = _facade()
+        weak_mult = (
+            _f.damage.element_multiplier("Disadvantage")
+            if _f is not None else WEAK_HIT_DMG_MULT
+        )
+        strong_mult = (
+            _f.damage.element_multiplier("Advantage")
+            if _f is not None else STRONG_HIT_DMG_MULT
+        )
         if WEAK_AFFINITY.get(champ.element) == self.cb_element:
-            return (WEAK_HIT_DMG_MULT, 1.0 - WEAK_HIT_DEBUFF_FAIL)  # 0.80, 0.65
+            return (weak_mult, 1.0 - WEAK_HIT_DEBUFF_FAIL)
         if STRONG_AFFINITY.get(champ.element) == self.cb_element:
-            return (STRONG_HIT_DMG_MULT, 1.0)  # 1.0, 1.0 — game-spec
+            return (strong_mult, 1.0)
         return (1.0, 1.0)
 
     def _try_place_smite(self, champ: SimChampion, hit_count: int) -> None:
@@ -676,9 +958,169 @@ class CBSimulator:
         # Probability at least one of `hit_count` rolls procs:
         # 1 - (1 - chance)^hit_count
         p_any = 1.0 - (1.0 - chance) ** max(1, hit_count)
+        # Deterministic mode uses per-champ fractional accumulator so
+        # score_team / cb_calibrate produce identical results across runs.
+        # Without this branch, each sim used self.rng (random.Random
+        # initialized with system time when rng_seed=None) which caused
+        # ~1.3M damage variance per run on the MEN team. Bug discovered
+        # round 25 via score_team determinism check.
+        if self.deterministic:
+            key = ("brimstone_smite", champ.name)
+            self._placement_debt[key] = self._placement_debt.get(key, 0.0) + p_any
+            if self._placement_debt[key] >= 1.0:
+                self._placement_debt[key] -= 1.0
+                self.smite_holder = champ.name
+                self.smite_turns_left = 2
+            return
         if self.rng.random() < p_any:
             self.smite_holder = champ.name
             self.smite_turns_left = 2
+
+    def _try_lethal_save(self, victim: "SimChampion") -> bool:
+        """Attempt to save a dying champion via any registered
+        lethal-save passive. Returns True if saved, False if death proceeds.
+
+        Resolution order:
+          1. Ally-scope passives — any living savior on the team whose
+             registry entry is `save_scope == "ally"` may revive the
+             victim if their CD attr is <= 0.
+          2. Self-scope passives — if the victim's own name maps to a
+             `save_scope == "self"` entry, they self-revive.
+
+        CD bookkeeping uses `_save_cd_<savior_name>_<victim_pos>` for
+        ally-scope (one CD per (savior, target) pair) and
+        `_save_cd_self_<name>` for self-scope.
+        """
+        # Ally-scope passives first
+        for savior_name, defn in LETHAL_SAVE_PASSIVES.items():
+            if defn.get("save_scope") != "ally":
+                continue
+            savior = next(
+                (x for x in self.champions
+                 if x.name == savior_name and not x.is_dead),
+                None,
+            )
+            if savior is None:
+                continue
+            cd_key = f"_save_cd_{savior_name}_{victim.position}"
+            if not hasattr(savior, cd_key):
+                setattr(savior, cd_key, 0)
+            if getattr(savior, cd_key, 0) <= 0:
+                victim.current_hp = 1
+                uk_turns = int(defn.get("grant_uk_turns", 0) or 0)
+                if uk_turns > 0:
+                    victim.add_buff("unkillable", uk_turns)
+                setattr(savior, cd_key, int(defn.get("cooldown_turns", 4)))
+                return True
+
+        # Self-scope passive
+        defn = LETHAL_SAVE_PASSIVES.get(victim.name)
+        if defn and defn.get("save_scope") == "self":
+            cd_key = f"_save_cd_self_{victim.name}"
+            if not hasattr(victim, cd_key):
+                setattr(victim, cd_key, 0)
+            if getattr(victim, cd_key, 0) <= 0:
+                victim.current_hp = 1
+                uk_turns = int(defn.get("grant_uk_turns", 0) or 0)
+                if uk_turns > 0:
+                    victim.add_buff("unkillable", uk_turns)
+                setattr(victim, cd_key, int(defn.get("cooldown_turns", 4)))
+                return True
+        return False
+
+    def _apply_cycle_of_magic(self, caster: "SimChampion", hit_count: int) -> None:
+        """Cycle of Magic mastery (500344): 5% chance per hit against
+        bosses to reduce a random ally's active-skill cooldown by 1.
+
+        Deterministic mode uses a fractional accumulator that crosses 1.0
+        to apply a whole CD tick — converges to the expected value over
+        many turns without RNG noise. MC mode rolls per hit. Chance value
+        sourced from facade.mastery (500344) when available.
+        """
+        if hit_count <= 0:
+            return
+        # Look up chance from manifest (facade) — falls back to 0.05
+        _f = _facade()
+        chance = 0.05
+        if _f is not None:
+            try:
+                proc = _f.mastery.get(500344) or {}
+                cp = proc.get("conditional_proc") or {}
+                if cp.get("chance") is not None:
+                    chance = float(cp["chance"])
+            except Exception:
+                pass
+
+        # Determine how many proc events fire this skill use
+        if self.deterministic:
+            # Add expected value to accumulator; pop integer reductions.
+            caster._com_accum += chance * hit_count
+            procs = int(caster._com_accum)
+            caster._com_accum -= procs
+        else:
+            procs = 0
+            for _ in range(hit_count):
+                if self.rng.random() < chance:
+                    procs += 1
+        if procs <= 0:
+            return
+
+        # For each proc, pick a random ally and reduce their next-ready
+        # active skill's CD by 1. Deterministic mode round-robins through
+        # living allies; MC mode samples.
+        living_allies = [c for c in self.champions if not c.is_dead]
+        if not living_allies:
+            return
+        for i in range(procs):
+            if self.deterministic:
+                target = living_allies[i % len(living_allies)]
+            else:
+                target = self.rng.choice(living_allies)
+            # Find a skill currently on cooldown — prefer active skills
+            # with the highest current_cd (most ground to recover).
+            candidates = [s for s in target.skills
+                          if s.current_cd > 0 and s.base_cd > 0]
+            if not candidates:
+                continue
+            picked = max(candidates, key=lambda s: s.current_cd)
+            picked.current_cd = max(0, picked.current_cd - 1)
+
+    def _apply_special_buff(self, caster: "SimChampion", chosen,
+                              buff_name: str, duration: int) -> bool:
+        """Handle buffs with non-team-wide placement / non-default amounts.
+        Returns True if handled here (caller skips the team-wide path),
+        False if the caller should apply normally to all allies.
+
+        Currently registered:
+          shield — lowest-HP ally (excl. caster), absorption = 10% caster
+                    max_hp, refresh (not stack), one shield per hit.
+        Future hero kits with bespoke placement (e.g. Aura Shield, Bromiel
+        ramping shield) plug in here as additional branches.
+        """
+        if buff_name == "shield":
+            allies_alive = [c for c in self.champions
+                            if c is not caster and not c.is_dead]
+            if not allies_alive:
+                return True
+            # Apply ShieldCreation book bonus (IL2Cpp SkillBonusType=4).
+            # Demytha A1 fully booked = +20% shield amount. Without books,
+            # `shield_creation_bonus` is 0.0 and the shield matches the
+            # raw 10% caster max_hp baseline.
+            sc_bonus = float(getattr(chosen, "shield_creation_bonus", 0.0))
+            shield_amount = caster.max_hp * 0.10 * (1.0 + sc_bonus)
+            hits = max(1, getattr(chosen, "hit_count", 1))
+            for _ in range(hits):
+                target = min(
+                    allies_alive,
+                    key=lambda c: c.current_hp / max(1, c.max_hp),
+                )
+                target.add_buff("shield", duration)
+                target.shield_hp = max(
+                    target.shield_hp,
+                    min(target.max_hp, shield_amount),
+                )
+            return True
+        return False
 
     def _cb_turn(self, tick: int):
         self.cb_tm -= TM_THRESHOLD
@@ -751,20 +1193,44 @@ class CBSimulator:
         if attack in ("aoe1", "aoe2"):
             # Gathering Fury: +2% ATK per ROUND (game: BattleStatsModifier, round-based)
             # 1 round = 3 CB turns. Round N starts at CB turn (N-1)*3+1
+            # Gathering Fury per static boss skill 222904 formulas:
+            #   Formula 1 (turn 10-19): DMG_MUL * 0.75 * (turn - 9) added
+            #   Formula 2 (turn 20+):   DMG_MUL * 7.5 + DMG_MUL * (turn - 19)
+            # Game-truth verified via data/static/boss_skill_manifest.json.
+            # At turn 19 both formulas give 7.5x added → 8.5x total.
+            # Pre-round 24, sim used formula 1 unbounded which over-predicted
+            # by ~9% at turn 20+ (sim 9.25x vs game-truth 8.5x).
             fury_mult = 1.0
-            if self.cb_turn >= GATHERING_FURY_START_TURN:
+            if self.cb_turn >= GATHERING_FURY_CLIFF_TURN:
+                # Formula 2: 7.5 + (turn - 19) added to base 1.0
+                fury_mult = 1.0 + 7.5 + (self.cb_turn - 19)
+            elif self.cb_turn >= GATHERING_FURY_START_TURN:
+                # Formula 1: 0.75 * (turn - 9) added to base 1.0
                 fury_mult = 1.0 + GATHERING_FURY_RATE_PER_TURN * (self.cb_turn - GATHERING_FURY_START_TURN + 1)
 
-            # Dec ATK on CB reduces damage by 50%
-            dec_atk_mult = 0.5 if self.debuff_bar.has("dec_atk") else 1.0
+            # Dec ATK on CB: effect Id 131 (StatusReduceAttack 50%) — formula
+            # `0.5*TRG_B_ATK`. Damage scales linearly with ATK, so the damage
+            # factor is `1.0 - 0.5 = 0.5`. Pulled from static via buff_mult().
+            dec_atk_mult = (
+                (1.0 - buff_mult("dec_atk_50", 0.5))
+                if self.debuff_bar.has("dec_atk") else 1.0
+            )
+
+            # T50 enrage bypass: boss skill 222904 effect [2] adds
+            # BlockDamage + Unkillable to IgnoredEffects at OWNERS_TURN>=50.
+            # Verified live via /static-export of skill 222904
+            # AddIgnoredEffectsParams.IgnoredEffects = ["BlockDamage", "Unkillable"].
+            # See project_cb_boss_turn_50_bypass.md.
+            _t50_bypass = self.cb_turn >= 50
 
             # Calculate and apply damage to each hero (no AP redirect — see below)
             for c in self.champions:
                 if c.is_dead:
                     continue
 
-                has_uk = c.has_buff("unkillable")
-                has_bd = c.has_buff("block_damage")
+                # At T50+, UK/BD are bypassed (ignored) per skill 222904 effect [2]
+                has_uk = c.has_buff("unkillable") and not _t50_bypass
+                has_bd = c.has_buff("block_damage") and not _t50_bypass
 
                 # Phase B 2026-05-01 — game-spec UK/BD behaviour:
                 #   BlockDamage: fully absorbs the hit (no HP lost) — verified
@@ -776,7 +1242,9 @@ class CBSimulator:
                 #     over-protected — wrong #2 in the compensating list.
                 #
                 # Order: BlockDamage applies FIRST (fully absorbs), then UK
-                # is a HP floor of 1.
+                # is a HP floor of 1. BD stays time-decay (with skip-on-apply
+                # override) — consume-on-use was tried in round 23 but BD's
+                # effective coverage drops sharply (dur=1 = 1 boss action).
                 if has_bd:
                     continue  # BlockDamage fully blocks the hit
                 # has_uk falls through to damage calc + clamp at end
@@ -818,9 +1286,15 @@ class CBSimulator:
                 incoming_mult = 1.0
                 if c.element and self.cb_element and c.element != 4 and self.cb_element != 4:
                     if STRONG_AFFINITY.get(c.element) == self.cb_element:
-                        # Hero is strong vs boss → boss is weak vs hero
-                        # → boss damage to hero is -20%
-                        incoming_mult = WEAK_HIT_DMG_MULT  # 0.80
+                        # Hero is strong vs boss → boss is weak vs hero.
+                        # Multiplier sourced from sim_data_facade
+                        # (gameplay.json ElementDisadvantageCoef = -0.2);
+                        # falls back to WEAK_HIT_DMG_MULT if facade missing.
+                        _f = _facade()
+                        incoming_mult = (
+                            _f.damage.element_multiplier("Disadvantage")
+                            if _f is not None else WEAK_HIT_DMG_MULT
+                        )
 
                 # Per-attack multi-hit multiplier from real game data (see CB_ATTACK_MULT)
                 attack_mult = CB_ATTACK_MULT.get(attack, CB_AOE_MULT)
@@ -830,16 +1304,50 @@ class CBSimulator:
                 # = 1.075). In Monte Carlo, the sim's RNG rolls per hit.
                 # Boss crit chance includes affinity bonus (+15% if boss
                 # is strong vs hero).
-                cb_cr = self.cb_cr if hasattr(self, "cb_cr") else 0.15
-                cb_cd_mult = self.cb_cd if hasattr(self, "cb_cd") else 0.50
-                # Affinity advantage gives boss +15% crit chance vs weak hero
+                cb_cr = self.cb_cr if hasattr(self, "cb_cr") else CB_CR_DEFAULT
+                cb_cd_mult = self.cb_cd if hasattr(self, "cb_cd") else CB_CD_DEFAULT
+                # Affinity advantage gives boss +X% crit chance vs weak hero.
+                # X = gameplay.json CriticalHitChanceAdvantage (0.15), now
+                # routed through sim_data_facade so any future Plarium
+                # rebalance flows from the manifest automatically.
+                _f = _facade()
+                _affinity_crit_bonus = (
+                    _f.damage.hit_type_chance("crit_adv")
+                    if _f is not None else 0.15
+                )
+                # Boss has element advantage over hero when STRONG_AFFINITY[cb_element]==hero.element
+                boss_has_advantage = False
                 if c.element and self.cb_element and c.element != 4 and self.cb_element != 4:
                     if STRONG_AFFINITY.get(self.cb_element) == c.element:
-                        cb_cr = min(1.0, cb_cr + 0.15)
+                        cb_cr = min(1.0, cb_cr + _affinity_crit_bonus)
+                        boss_has_advantage = True
+                # Compute crit/crush damage modifier.
+                # gameplay.json: CrushingHitChance=0.5, CrushingHitCoef=0.3 (= +30% damage)
+                # When boss has element advantage over target:
+                #   p_crit fires for full crit damage (1 + CD)
+                #   non-crit hits: 50% crush (×1.30), 50% normal (×1.0)
+                # Verified 2026-06-16 via real CB battle (capture 144150 T17):
+                # Ninja (Magic, weak vs Force) took 43.9K vs Demytha (Void, neutral)
+                # 33.2K = +32% — matches crushing-hit modeling. Sim previously
+                # missed this for boss-to-hero damage; only modeled crit-chance
+                # bonus, leaving heroes alive in sim that died in real on
+                # Force/Magic/Spirit days (depending on team affinity mix).
                 if self.deterministic:
-                    crit_factor = 1.0 + cb_cr * cb_cd_mult
+                    if boss_has_advantage:
+                        # Crit fires p_crit, then non-crit splits crush/normal
+                        crit_factor = (
+                            cb_cr * (1.0 + cb_cd_mult)
+                            + (1 - cb_cr) * (0.5 * 1.30 + 0.5 * 1.0)
+                        )
+                    else:
+                        crit_factor = 1.0 + cb_cr * cb_cd_mult
                 else:
-                    crit_factor = (1.0 + cb_cd_mult) if self.rng.random() < cb_cr else 1.0
+                    if self.rng.random() < cb_cr:
+                        crit_factor = 1.0 + cb_cd_mult
+                    elif boss_has_advantage and self.rng.random() < 0.5:
+                        crit_factor = 1.30  # crushing
+                    else:
+                        crit_factor = 1.0
                 # Apply Normal-hit base factor (0.85) — derived from
                 # captured calc_raw/p_atk = 0.85 across all boss events.
                 # Already includes any "scrub" factor the game applies
@@ -904,42 +1412,14 @@ class CBSimulator:
                 if has_uk and c.current_hp < 1:
                     c.current_hp = 1
 
-                # Cardiel + UDK death-prevention passives. Approximated
-                # here as 4-turn CDs because the literal static-skill
-                # logic involves complex conditions we don't fully model:
-                #   Cardiel skill 57604 passive: ChangeDamageMultiplier
-                #     -0.2*DMG_MUL gated by faction (UndeadHordes/Knight
-                #     Revenant only) + `canUniqueApplyForTurn` rate-limit.
-                #     The save-ally is `ActivateSkill` triggered on a
-                #     dying ally — requires faction conditions and
-                #     uniqueApply tracking we approximate as 4T CD.
-                #   UDK skill 70904 passive: ChangeEffectTarget redirects
-                #     non-AoE non-boss damage from allies to UDK; plus
-                #     `Heal 0.2*CurrentHealMultiplier` on the saved ally.
-                #     Sim approximates with 1-HP-clamp + 1T Unkillable.
-                # See data/static/skills_all.json skills 57604 / 70904.
+                # Lethal-save passives — data-driven dispatch via
+                # LETHAL_SAVE_PASSIVES registry. Approximated here as
+                # cooldown gates because the literal static-skill logic
+                # involves faction-gated triggers + canUniqueApplyForTurn
+                # rate-limits we don't fully model. See registry comments
+                # at top of file for the original skill IDs.
                 if c.current_hp <= 0:
-                    saved = False
-                    cardiel_cd_key = f"_cardiel_cd_{c.position}"
-                    cardiel = next((x for x in self.champions
-                                   if x.name == "Cardiel" and not x.is_dead), None)
-                    if cardiel and not hasattr(cardiel, cardiel_cd_key):
-                        setattr(cardiel, cardiel_cd_key, 0)
-                    if cardiel and getattr(cardiel, cardiel_cd_key, 0) <= 0:
-                        c.current_hp = 1
-                        setattr(cardiel, cardiel_cd_key, 4)
-                        saved = True
-
-                    if not saved and c.name == "Ultimate Deathknight":
-                        udk_cd_key = "_udk_passive_cd"
-                        if not hasattr(c, udk_cd_key):
-                            setattr(c, udk_cd_key, 0)
-                        if getattr(c, udk_cd_key, 0) <= 0:
-                            c.current_hp = 1
-                            c.add_buff("unkillable", 1)
-                            setattr(c, udk_cd_key, 4)
-                            saved = True
-
+                    saved = self._try_lethal_save(c)
                     if not saved:
                         c.is_dead = True
                         c.death_turn = self.cb_turn
@@ -949,11 +1429,13 @@ class CBSimulator:
             # (Ally Protect redirect removed per game mechanics clarification —
             # no damage transfers to a protector; see above.)
 
-            # Tick Cardiel/UDK passive cooldowns
+            # Tick lethal-save passive cooldowns (registry-driven).
+            # All save-passive CD attrs use the `_save_cd_` prefix per
+            # _try_lethal_save's bookkeeping convention.
             for c in self.champions:
                 if not c.is_dead:
                     for attr in dir(c):
-                        if attr.startswith("_cardiel_cd_") or attr == "_udk_passive_cd":
+                        if attr.startswith("_save_cd_"):
                             val = getattr(c, attr, 0)
                             if val > 0:
                                 setattr(c, attr, val - 1)
@@ -1104,9 +1586,80 @@ class CBSimulator:
                 f" Poi×{poi_count}={'✓' if poison_sens else ''}")
 
     # ----- Champion Turn -----
+    # Buffs that the game's NonIncreaseableEffects list excludes from
+    # Lasting Gifts / Demytha A2 extends / similar effects. Sourced
+    # from `data/static/non_increaseable_effects.json` (IL2Cpp dump).
+    # ControlEffects (the entire group) also excluded — encoded as a
+    # name set below since sim doesn't currently expose group membership
+    # at the buff_name level.
+    _NON_EXTENDABLE_BUFFS_FOR_MASTERY = frozenset({
+        "unkillable",       # UK clamp-to-1
+        "block_damage",     # BD absorbs 100%
+        "revive_on_death",  # one-shot revive
+        "stone_skin",
+        "taunt",
+        "poison_cloud",
+        "thunder",
+        "entangle",
+        "syphon",
+        "on_guard",
+    })
+
+    def _apply_lasting_gifts(self, champ: "SimChampion") -> None:
+        """Lasting Gifts mastery (500351): 30% chance at start of owner's
+        turn to extend a random ally buff by 1 turn. NonIncreaseable
+        buffs are excluded. Deterministic mode uses an accumulator.
+        Chance sourced from facade.mastery.
+        """
+        if not getattr(champ, "has_lasting_gifts", False):
+            return
+        _f = _facade()
+        chance = 0.30
+        if _f is not None:
+            try:
+                rec = _f.mastery.get(500351) or {}
+                cp = rec.get("conditional_proc") or {}
+                if cp.get("chance") is not None:
+                    chance = float(cp["chance"])
+            except Exception:
+                pass
+        if self.deterministic:
+            key = ("lasting_gifts", champ.name)
+            self._placement_debt[key] = self._placement_debt.get(key, 0.0) + chance
+            if self._placement_debt[key] < 1.0:
+                return
+            self._placement_debt[key] -= 1.0
+        else:
+            if self.rng.random() >= chance:
+                return
+
+        # Pick a random living ally and a random eligible buff.
+        living = [c for c in self.champions if not c.is_dead]
+        if not living:
+            return
+        target = (
+            living[champ.turns_taken % len(living)]
+            if self.deterministic else self.rng.choice(living)
+        )
+        eligible = [
+            b for b in target.buffs
+            if b not in self._NON_EXTENDABLE_BUFFS_FOR_MASTERY
+        ]
+        if not eligible:
+            return
+        pick = (
+            eligible[champ.turns_taken % len(eligible)]
+            if self.deterministic else self.rng.choice(eligible)
+        )
+        target.buffs[pick] += 1
+        target.buffs_new.add(pick)
+
     def _champion_turn(self, champ: SimChampion, tick: int):
         champ.tm -= TM_THRESHOLD
         champ.turns_taken += 1
+
+        # Lasting Gifts mastery proc at start of owner turn.
+        self._apply_lasting_gifts(champ)
 
         # Passive buff extension (Heiress): extend ALL ally buffs by 1T
         # In-game: extends OTHER allies' buffs (not self). The extension effectively
@@ -1186,29 +1739,11 @@ class CBSimulator:
             "position": champ.position,
         })
 
-        # Apply team buffs. Shield is special — Demytha A1 places it on
-        # the LOWEST-HP ally (excluding caster), with absorption equal
-        # to 10% caster MAX_HP. Game mechanic: same-type buffs REFRESH,
-        # not stack — so multi-hit casts (Demytha A1 has 2 hits) place
-        # ONE shield refreshed to the latest amount, NOT n × amount.
-        # Each hit MAY target a different lowest-HP ally though.
+        # Apply team buffs. Buffs with custom targeting / amount rules
+        # (e.g. shield with lowest-HP target + 10% caster max_hp) route
+        # through _apply_special_buff; the rest go team-wide.
         for buff_name, duration in chosen.team_buffs:
-            if buff_name == "shield":
-                allies_alive = [c for c in self.champions
-                                if c is not champ and not c.is_dead]
-                if not allies_alive:
-                    continue
-                shield_amount = champ.max_hp * 0.10
-                hits = max(1, chosen.hit_count)
-                for _ in range(hits):
-                    # Re-pick lowest-HP target each hit (may differ as
-                    # earlier hits raise their absorbed HP via shield).
-                    target = min(allies_alive,
-                                 key=lambda c: c.current_hp / max(1, c.max_hp))
-                    target.add_buff("shield", duration)
-                    # Refresh (not stack) to the cast amount on this target.
-                    target.shield_hp = max(target.shield_hp,
-                                           min(target.max_hp, shield_amount))
+            if self._apply_special_buff(champ, chosen, buff_name, duration):
                 continue
             for c in self.champions:
                 c.add_buff(buff_name, duration)
@@ -1220,9 +1755,28 @@ class CBSimulator:
                 if not c.is_dead and c is not champ:
                     c.tm += tm_amount
 
-        # Apply self TM fill (e.g., Ninja A1: +15% TM)
+        # Apply self TM fill (e.g., Ninja A1: +15% TM).
+        # GLANCE GATING (2026-06-18): static skill data sets
+        # Relation.ActivateOnGlancingHit=false on these effects, so weak-affinity
+        # hits skip the fill ~27% of the time (the glance rate).
+        #   - Monte Carlo / RNG mode: binary per-cast — full fill OR zero.
+        #     Captures the cascading cycle-desync effect that breaks MEN
+        #     on real Force days (glance streaks → Mane A3 / Demytha A2
+        #     cycle drifts → BD gap opens → die T20-24).
+        #   - Deterministic mode: scale by non-glance probability (averages
+        #     the effect, used for steady-state damage prediction).
+        # Strong/Neutral/Void hits never glance → full fill applies.
         if chosen.self_tm_fill > 0:
-            champ.tm += chosen.self_tm_fill * TM_THRESHOLD
+            fill = chosen.self_tm_fill
+            is_weak = (champ.element in (1, 2, 3) and self.cb_element in (1, 2, 3)
+                       and WEAK_AFFINITY.get(champ.element) == self.cb_element)
+            if is_weak:
+                if self.deterministic:
+                    fill *= (1.0 - WEAK_HIT_GLANCE_CHANCE)
+                else:
+                    if self.rng.random() < WEAK_HIT_GLANCE_CHANCE:
+                        fill = 0.0
+            champ.tm += fill * TM_THRESHOLD
 
         # CB boss is immune to TM manipulation — drain skills (Maneater A2
         # Syphon, Geomancer A3 Quicksand Grasp) are no-ops here. Verified
@@ -1260,6 +1814,12 @@ class CBSimulator:
             # blessing description.
             if champ.has_brimstone:
                 self._try_place_smite(champ, chosen.hit_count)
+
+            # Cycle of Magic (mastery 500344): 5% chance per hit to
+            # reduce a random ally's skill cooldown by 1. Critical for
+            # survival cycles like MEN's Maneater A3 → UK refresh.
+            if champ.has_cycle_of_magic:
+                self._apply_cycle_of_magic(champ, chosen.hit_count)
 
             # Healing from damage dealt
             if self.model_survival:
@@ -1382,7 +1942,11 @@ class CBSimulator:
             burn_count = sum(1 for s in self.debuff_bar.slots if s.debuff_type == "hp_burn")
             scaling *= (1.0 + champ.burn_stat_pct * burn_count)
 
-        raw = scaling * skill.multiplier
+        # Skill multiplier scaled by Attack book bonus (IL2Cpp
+        # SkillBonusType=0). Maneater A1 fully booked = +20% damage,
+        # Ninja A2 (5 books mix incl. type=0) = +15%. Default 0.0.
+        effective_mult = skill.multiplier * (1.0 + skill.attack_book_bonus)
+        raw = scaling * effective_mult
 
         # Crit
         effective_cd = champ.stats.get(CD, 50)
@@ -1462,10 +2026,21 @@ class CBSimulator:
         if skill.ignore_def > 0:
             effective_def *= (1.0 - skill.ignore_def)
 
-        # Helmsmasher: ignore additional DEF (50% chance × 50% ignore = avg 25% → ~12.5% avg)
-        # Simplified as average: ignore 12.5% of remaining DEF
+        # Helmsmasher (mastery 500162): 50% chance × ignore 25% DEF.
+        # Deterministic average is `1 - (chance × ignore) = 1 - 0.125 = 0.875`.
+        # Pulled from mastery_manifest.json so a future game patch (e.g.
+        # chance or ignore-fraction change) flows in via re-extract.
         if champ.has_helmsmasher:
-            effective_def *= 0.875
+            _f = _facade()
+            if _f is not None:
+                hm = _f.mastery.helmsmasher_proc() or {}
+                _avg_ignore = float(
+                    hm.get("average_def_ignore",
+                           (hm.get("chance", 0.5) * 0.25))
+                )
+            else:
+                _avg_ignore = 0.125
+            effective_def *= (1.0 - _avg_ignore)
 
         # Hero -> boss DEF mitigation: same game-truth function.
         # The caller (CalculateDamage) passes a base defence_modifier of
@@ -1479,7 +2054,12 @@ class CBSimulator:
         # (IncreaseDamageTaken25): MultiplierFormula = 1.25. Applied
         # via ChangeCalculatedDamageProcessor when the boss is Weakened.
         wk = WEAKEN_MULT if self.debuff_bar.has("weaken") else 1.0
-        str_mult = 1.25 if champ.has_buff("strengthen") else 1.0
+        # Strengthen (+25% ATK buff, effect Id 120, formula `0.25*TRG_B_ATK`)
+        # scales damage by 1 + 0.25 = 1.25. Pulled from static via buff_mult.
+        str_mult = (
+            (1.0 + buff_mult("inc_atk_25", 0.25))
+            if champ.has_buff("strengthen") else 1.0
+        )
         bid = 1.06 if champ.has_bring_it_down else 1.0
 
         # Affinity modifier
@@ -1493,29 +2073,93 @@ class CBSimulator:
         # They are NOT multiplied by DEF Down or Weaken — the cap is absolute.
         # Previous code incorrectly applied DEF Down + Weaken multipliers here,
         # causing ~2x overestimation of WM/GS damage.
+        #
+        # Proc rates + damage caps come from the mastery manifest (facade)
+        # so a future game patch flows in via re-running
+        # extract_mastery_manifest.py rather than editing constants.
+        _f = _facade()
+        if _f is not None:
+            wm_proc = _f.mastery.warmaster_proc() or {}
+            gs_proc = _f.mastery.giant_slayer_proc() or {}
+            gs_rate = gs_proc.get("chance", GS_PROC_RATE)
+            wm_rate = wm_proc.get("chance", WM_PROC_RATE)
+            gs_dmg = gs_proc.get("damage_cap", GS_DMG)
+            wm_dmg = wm_proc.get("damage_cap", WM_DMG)
+        else:
+            gs_rate, wm_rate, gs_dmg, wm_dmg = (
+                GS_PROC_RATE, WM_PROC_RATE, GS_DMG, WM_DMG)
+
         if self.deterministic:
             if champ.has_gs:
-                return hit_count * GS_PROC_RATE * GS_DMG
+                return hit_count * gs_rate * gs_dmg
             elif champ.has_wm:
-                return WM_PROC_RATE * WM_DMG
+                return wm_rate * wm_dmg
             return 0
         else:
             dmg = 0
             if champ.has_gs:
                 for _ in range(hit_count):
-                    if self.rng.random() < GS_PROC_RATE:
-                        dmg += GS_DMG
+                    if self.rng.random() < gs_rate:
+                        dmg += gs_dmg
             elif champ.has_wm:
-                if self.rng.random() < WM_PROC_RATE:
-                    dmg += WM_DMG
+                if self.rng.random() < wm_rate:
+                    dmg += wm_dmg
             return dmg
 
     # ----- Effect Application -----
     def _apply_effects(self, champ: SimChampion, skill: SimSkill):
         effects = SKILL_EFFECTS.get(champ.name, {}).get(skill.name, [])
         acc_rate = calc_acc_land_rate(champ.stats.get(ACC, 0))
+        # IgnoreResistance book bonus (IL2Cpp SkillBonusType=5) — boosts
+        # the caster's effective ACC vs target RES on this skill. Default 0.0.
+        if skill.ignore_res_book_bonus > 0:
+            acc_rate = min(1.0, acc_rate + skill.ignore_res_book_bonus)
         sniper_bonus = 0.05 if champ.has_sniper else 0
         _, aff_debuff_mult = self._get_affinity_mult(champ)  # weak hits reduce debuff landing
+
+        # Apply self-buff overrides for skills where the upstream
+        # extractor missed an ApplyBuff Producer-target effect.
+        # Registry-driven (KNOWN_SELF_BUFF_OVERRIDES at module top); data,
+        # not branching code. Self-buffs only land on the caster.
+        # (Self-buffs don't glance — no attack roll on the placement.)
+        for sb_name, sb_dur in (
+            KNOWN_SELF_BUFF_OVERRIDES.get(champ.name, {}).get(skill.name, [])
+        ):
+            champ.add_buff(sb_name, sb_dur)
+
+        # GLANCE GATING (generic, 2026-06-18): weak-affinity attacks have a
+        # ~35% chance to glance (gameplay.json GlancingHitChance). When they
+        # glance, every secondary effect with Relation.ActivateOnGlancingHit=
+        # false on the cast skill is SUPPRESSED. This is the missing piece
+        # that explains MEN's Force-UNM failure: Ninja+Venom (Magic) glance
+        # ~35% on Force boss, losing DEC DEF / poisons / TM boost / HP burns
+        # → boss tankier, team takes more damage, BD/UK cycle drifts.
+        # Damage rolls (the kind=6000 damage effect) still apply (at the
+        # GlancingHitCoef penalty modeled elsewhere); we only gate the
+        # secondaries lumped into SKILL_EFFECTS[].
+        is_weak = (
+            champ.element in (1, 2, 3) and self.cb_element in (1, 2, 3)
+            and WEAK_AFFINITY.get(champ.element) == self.cb_element
+        )
+        skill_id = SKILL_IDS_BY_HERO.get(champ.name, {}).get(skill.name, 0)
+        skill_has_gate = skill_id in GLANCE_GATED_SKILL_IDS
+        glance_blocks_secondaries = False
+        glance_avg_dampen = 1.0   # for deterministic mode
+        if is_weak and skill_has_gate:
+            if self.deterministic:
+                # In deterministic mode, scale debuff land + per-cast effect
+                # firing by (1 - glance_chance) — averages the binary roll.
+                glance_avg_dampen = 1.0 - WEAK_HIT_GLANCE_CHANCE
+            else:
+                # Monte Carlo: binary roll per cast. If it glances, gate
+                # blocks ALL of this cast's secondary effects.
+                if self.rng.random() < WEAK_HIT_GLANCE_CHANCE:
+                    glance_blocks_secondaries = True
+
+        if glance_blocks_secondaries:
+            # MC glance: skip the entire effects list. Damage already
+            # applied at the calc-damage call site.
+            return
 
         for eff_raw in effects:
             # Handle both SkillEffect objects and dicts (from auto_skills)
@@ -1537,7 +2181,8 @@ class CBSimulator:
                         self._try_place_debuff(
                             champ, eff.params["debuff"],
                             eff.params.get("duration", 2),
-                            base_chance * acc_rate * aff_debuff_mult)
+                            base_chance * acc_rate * aff_debuff_mult
+                            * glance_avg_dampen)
 
             elif eff.effect_type == "conditional_debuff":
                 if eff.params.get("requires") == "poison_sensitivity":
@@ -1550,7 +2195,7 @@ class CBSimulator:
                     self._try_place_debuff(
                         champ, eff.params["debuff"],
                         eff.params.get("duration", 2),
-                        base_chance * acc_rate)
+                        base_chance * acc_rate * glance_avg_dampen)
 
             elif eff.effect_type == "extend_debuffs":
                 turns = eff.params.get("turns", 1)
@@ -1583,7 +2228,14 @@ class CBSimulator:
                     "syphon",           # one-shot drain
                     "on_guard",         # crit prevention
                 })
-                per_ally_changes = {c.name: 0 for c in self.champions}
+                # Track GLOBAL change totals separately. Game-truth Demytha
+                # A2 heal formula (skill 65102 E[2], verified 2026-06-18):
+                # `(0.025*TRG_HP) + ((0.025*TRG_HP) *
+                #  (totalIncreasedTurnsCountBySkill +
+                #   totalDecreasedTurnsCountBySkill))`
+                # → both `total*` are global across the cast.
+                buff_extend_total = 0
+                debuff_shrink_total = 0
                 for c in self.champions:
                     if c.is_dead:
                         continue
@@ -1597,31 +2249,39 @@ class CBSimulator:
                         # touched (placed OR extended) this turn does not
                         # decrement at end of that turn.
                         c.buffs_new.add(b)
-                        per_ally_changes[c.name] += 1
-                # Demytha A2 also shrinks ally debuffs by N turns. Debuffs
-                # are on the boss (debuff_bar), not heroes, so shrinking
-                # one debuff counts as one team-wide change. Distribute
-                # across allies (1 change each per debuff shrunk).
+                        buff_extend_total += turns  # +1 turn per buff per cast
+                # Demytha A2 also shrinks debuffs on the boss by N turns.
                 debuff_shrink = eff.params.get("shrink_debuffs", 0)
                 if debuff_shrink:
                     survivors = []
-                    debuff_changes = 0
                     for slot in self.debuff_bar.slots:
                         slot.remaining -= debuff_shrink
-                        debuff_changes += 1
+                        debuff_shrink_total += debuff_shrink
                         if slot.remaining >= 0:
                             survivors.append(slot)
                     self.debuff_bar.slots = survivors
-                    for nm in per_ally_changes:
-                        per_ally_changes[nm] += debuff_changes
                 base_heal_pct = eff.params.get("heal_pct", 0.0)
                 per_change_pct = eff.params.get("heal_per_change_pct", 0.0)
+                # Apply Health book bonus (IL2Cpp SkillBonusType=1).
+                # Demytha A2 fully booked = +20% heal output.
+                hb = float(getattr(skill, "health_book_bonus", 0.0) or 0.0)
+                heal_scale = 1.0 + hb
+                # Pre-fix (2026-06-18): sim counted changes per-ally, so a
+                # hero with 1 extended buff and 5 shrunken boss debuffs got
+                # changes=6 -> heal = 0.025 + 0.15 = 17.5% MaxHP. Real:
+                # GLOBAL total = (1 buff × 5 heroes) + 5 debuffs = 10 ->
+                # heal = 0.025 + 0.25 = 27.5% MaxHP. Sim was undershooting
+                # heals by ~40-50%, which caused Mane to bleed out under
+                # her A3 self-damage on Spirit days. Verified per-skill via
+                # data/static/snapshots/men_skills_depth8.json.
+                total_changes = buff_extend_total + debuff_shrink_total
                 if (base_heal_pct or per_change_pct) and self.model_survival:
                     for c in self.champions:
                         if c.is_dead:
                             continue
-                        changes = per_ally_changes.get(c.name, 0)
-                        heal = c.max_hp * (base_heal_pct + per_change_pct * changes)
+                        heal = (c.max_hp
+                                * (base_heal_pct + per_change_pct * total_changes)
+                                * heal_scale)
                         c.current_hp = min(c.max_hp, c.current_hp + heal)
 
             elif eff.effect_type == "ally_attack":
@@ -1633,6 +2293,29 @@ class CBSimulator:
                     targets = self.rng.sample(candidates, min(count, len(candidates)))
                 for ally in targets:
                     self._execute_a1(ally, is_counter=False)
+
+            elif eff.effect_type == "team_heal":
+                # Generic ally-team heal from static `KindId=Heal,
+                # TargetType=AllAllies, MultiplierFormula=X*TRG_HP`.
+                # Translator in load_game_profiles.py reads X into heal_pct.
+                if self.model_survival:
+                    pct = float(eff.params.get("heal_pct", 0.0))
+                    hb = float(getattr(skill, "health_book_bonus", 0.0) or 0.0)
+                    heal_scale = 1.0 + hb
+                    for c in self.champions:
+                        if c.is_dead:
+                            continue
+                        heal = c.max_hp * pct * heal_scale
+                        c.current_hp = min(c.max_hp, c.current_hp + heal)
+
+            elif eff.effect_type == "self_heal":
+                # Generic self heal (Producer/Owner target). Same shape as
+                # team_heal but only the caster.
+                if self.model_survival:
+                    pct = float(eff.params.get("heal_pct", 0.0))
+                    hb = float(getattr(skill, "health_book_bonus", 0.0) or 0.0)
+                    heal = champ.max_hp * pct * (1.0 + hb)
+                    champ.current_hp = min(champ.max_hp, champ.current_hp + heal)
 
             elif eff.effect_type == "detonate_poisons":
                 # Kalvalax: instant damage from all active poisons, then remove them
@@ -1741,32 +2424,92 @@ class CBSimulator:
                         sk.current_cd = max(0, sk.current_cd - turns)
                         break
 
-        # Master Hexer: 30% chance to extend placed debuffs
-        if champ.has_master_hexer and not self.deterministic:
-            # In RNG mode, roll per debuff
-            pass  # TODO for Monte Carlo mode
+            elif eff.effect_type == "self_damage_alive_allies":
+                # Maneater A3 "Ancient Blood": damage received = 5% MaxHP
+                # for each ALIVE ally. Game-truth formula from skill 10703
+                # effect 107033: `0.05*HP*(5-deadAlliesCount)`. The Damage
+                # effect (KindId=Damage) has TargetType=Producer so the
+                # caster takes the damage themselves. Verified 2026-06-15
+                # from skill screenshots: "Damage received is equal to 5%
+                # MAX HP for each alive ally."
+                pct = float(eff.params.get("pct_max_hp_per_alive", 0.05))
+                alive = sum(1 for c in self.champions if not c.is_dead)
+                dmg = champ.max_hp * pct * alive
+                if dmg > 0 and self.model_survival:
+                    # Damage is absorbed by shield first, then HP.
+                    if champ.shield_hp > 0:
+                        absorbed = min(champ.shield_hp, dmg)
+                        champ.shield_hp -= absorbed
+                        dmg -= absorbed
+                    champ.current_hp = max(0, champ.current_hp - dmg)
+                    if champ.current_hp <= 0:
+                        champ.is_dead = True
+
+        # Master Hexer extension is now applied inline at the moment of
+        # placement in _try_place_debuff — see _master_hexer_extends().
+        # This block is intentionally left blank (was a TODO stub).
 
     def _try_place_debuff(self, champ: SimChampion, debuff_type: str,
                           duration: int, effective_chance: float) -> bool:
-        """Try to place a debuff on CB. Returns True if placed."""
+        """Try to place a debuff on CB. Returns True if placed.
+
+        Master Hexer mastery (500354): 30% chance to extend placed debuff
+        by 1 turn. Applied just before the bar receives the placement so
+        the slot starts with the extended duration. Deterministic mode
+        uses a per-(caster,debuff) fractional accumulator; MC mode rolls.
+        """
         if self.debuff_bar.is_full():
             return False
+        # Master Hexer extension — fires only when placement succeeds.
+        # Resolved up-front so the same `duration` value is passed to
+        # debuff_bar.add for both deterministic and MC branches.
+        mh_extend = self._master_hexer_extends(champ, debuff_type)
+        eff_duration = duration + mh_extend
         if self.deterministic:
-            # Fractional accumulator: track debt per (champion, debuff_type).
-            # >= 50% chance: place on first attempt (more likely than not).
-            # < 50% chance: accumulate until debt >= 1.0 (models weak-hit scenarios).
             if effective_chance >= 0.5:
-                return self.debuff_bar.add(debuff_type, duration, champ.name)
+                return self.debuff_bar.add(debuff_type, eff_duration, champ.name)
             key = (champ.name, debuff_type)
             self._placement_debt[key] = self._placement_debt.get(key, 0.0) + effective_chance
             if self._placement_debt[key] >= 1.0:
                 self._placement_debt[key] -= 1.0
-                return self.debuff_bar.add(debuff_type, duration, champ.name)
+                return self.debuff_bar.add(debuff_type, eff_duration, champ.name)
             return False
         else:
             if self.rng.random() < effective_chance:
-                return self.debuff_bar.add(debuff_type, duration, champ.name)
+                return self.debuff_bar.add(debuff_type, eff_duration, champ.name)
         return False
+
+    def _master_hexer_extends(self, champ: "SimChampion",
+                                 debuff_type: str) -> int:
+        """Returns 1 if Master Hexer extends this debuff placement, else 0.
+
+        Chance sourced from facade.mastery (mastery 500354). Deterministic
+        mode uses a fractional accumulator keyed by (champion, debuff_type)
+        so extensions converge to the expected value without RNG noise.
+        """
+        if not getattr(champ, "has_master_hexer", False):
+            return 0
+        # Pull chance from manifest — falls back to 0.30 if unavailable
+        _f = _facade()
+        chance = 0.30
+        if _f is not None:
+            try:
+                rec = _f.mastery.get(500354) or {}
+                cp = rec.get("conditional_proc") or {}
+                if cp.get("chance") is not None:
+                    chance = float(cp["chance"])
+            except Exception:
+                pass
+
+        if self.deterministic:
+            key = ("master_hexer", champ.name, debuff_type)
+            self._placement_debt[key] = self._placement_debt.get(key, 0.0) + chance
+            if self._placement_debt[key] >= 1.0:
+                self._placement_debt[key] -= 1.0
+                return 1
+            return 0
+        else:
+            return 1 if self.rng.random() < chance else 0
 
     # ----- Results -----
     def _compile_result(self) -> dict:
@@ -1855,8 +2598,9 @@ def _resolve_brimstone(stats: dict) -> tuple[bool, float]:
 
     `stats` is the per-hero dict produced by the data pipeline; if the
     `blessing` key is present (id + grade from the live mod read), the
-    Brimstone chance is derived from grade. Falls back to (False, 0.0)
-    when no Brimstone blessing is set on this hero.
+    Brimstone chance is derived from grade via the blessing manifest
+    facade. Falls back to local _BRIMSTONE_CHANCE_BY_GRADE if facade
+    is unavailable.
     """
     bl = stats.get("blessing")
     if not isinstance(bl, dict):
@@ -1867,7 +2611,29 @@ def _resolve_brimstone(stats: dict) -> tuple[bool, float]:
     if int(bl.get("id", 0)) != _BRIMSTONE_BLESSING_ID:
         return False, 0.0
     grade = int(bl.get("grade", 1))
+    # Prefer manifest-backed lookup — falls back to constant table if
+    # facade missing or grade not in manifest.
+    _f = _facade()
+    if _f is not None:
+        chance = _f.blessing.brimstone_chance_by_grade(grade)
+        if chance > 0:
+            return True, chance
     return True, _BRIMSTONE_CHANCE_BY_GRADE.get(grade, 0.15)
+
+
+# =============================================================================
+# Empirical CD overrides — per (hero, skill) calibration
+# =============================================================================
+# REVERTED 2026-06-15 (Round 23): User uploaded screenshots proving Maneater
+# A3 is fully booked at level 3/3 with both cd-reduction bonuses applied
+# (effective cd=5). The "cd=4" override was a hack masking a different gap.
+# The real missing mechanic lives elsewhere — TM cycle, buff modeling, or
+# an unmodeled passive. Investigation continues; don't re-add cd overrides
+# without ground-truth proof from the live skill data.
+#
+# Format: { hero_name: { skill_name: cd_override } } — kept as empty
+# scaffold for future use, NOT as a calibration backdoor.
+EMPIRICAL_CD_OVERRIDES: dict[str, dict[str, int]] = {}
 
 
 # =============================================================================
@@ -1903,16 +2669,15 @@ def build_sim_champion(name: str, stats: dict, position: int,
                 except Exception:
                     pass
 
+        # Empirical override applied AFTER base_cd computation. See
+        # EMPIRICAL_CD_OVERRIDES dict + project_cb_speed_compensating_wrong
+        # memory for the calibration rationale.
+        _emp_override = EMPIRICAL_CD_OVERRIDES.get(name, {}).get(sk_name)
+        _base_cd = _emp_override if _emp_override is not None else (sd["cd"] if sd["cd"] > 0 else 0)
+
         sim_sk = SimSkill(
             name=sk_name,
-            # Real game CDs verified against ground-truth tick log:
-            # Maneater A3 fires every exactly 5 of his actions (matching
-            # raid_data CD=5); Demytha A2 every 3, A3 every 3 (both CD=3
-            # in raid_data after books). The previous -1 hack was always
-            # wrong — it dropped Demytha to CD=2 alternating A2↔A3 and
-            # never letting A1 fire, when real game has her cycle
-            # A2,A1,A3,A1 (17 A1 casts in 49 actions, verified).
-            base_cd=sd["cd"] if sd["cd"] > 0 else 0,
+            base_cd=_base_cd,
             multiplier=sd["mult"],
             scaling_stat=sd["stat"],
             hit_count=sd["hits"],
@@ -1923,6 +2688,10 @@ def build_sim_champion(name: str, stats: dict, position: int,
             ignore_def=sd.get("ignore_def", 0.0),
             cb_tm_drain_pct=tm_drain,
             delay_turns=int(sd.get("delay_turns", 0) or 0),
+            shield_creation_bonus=float(sd.get("shield_creation_bonus", 0.0) or 0.0),
+            health_book_bonus=float(sd.get("health_book_bonus", 0.0) or 0.0),
+            attack_book_bonus=float(sd.get("attack_book_bonus", 0.0) or 0.0),
+            ignore_res_book_bonus=float(sd.get("ignore_res_book_bonus", 0.0) or 0.0),
         )
         skills.append(sim_sk)
 
@@ -1986,6 +2755,8 @@ def build_sim_champion(name: str, stats: dict, position: int,
         has_sniper=MASTERY_IDS["sniper"] in masteries,
         has_master_hexer=MASTERY_IDS["master_hexer"] in masteries,
         has_retribution=MASTERY_IDS["retribution"] in masteries,
+        has_cycle_of_magic=MASTERY_IDS.get("cycle_of_magic", 500344) in masteries,
+        has_lasting_gifts=MASTERY_IDS.get("lasting_gifts", 500351) in masteries,
         is_geomancer=(name == "Geomancer"),
         is_counterattack_provider=(name == "Skullcrusher"),
         combo_atk_pct=combo_atk_pct,
@@ -2088,15 +2859,23 @@ def run_potential_team(pt: dict, cb_element: int = 4,
     with open(base / "account_data.json") as f:
         account = json.load(f)
     # Match cb_calibrate's dict-build pattern: first occurrence of a name
-    # wins, and a second Maneater (the user has 2) gets stashed under
-    # "Maneater_2" so RabBatEater-style tunes can reach both.
+    # wins, and subsequent copies of a duplicate-eligible hero (per
+    # DUPLICATE_INSTANCE_HEROES) get stashed under `<name>_N` so multi-
+    # copy tunes (e.g. RabBatEater dual-Maneater) can reach both.
     hero_by_name = {}
+    _dup_seen: dict[str, int] = {}
     for h in heroes_data["heroes"]:
         name = h.get("name", "")
-        if name and name not in hero_by_name:
+        if not name:
+            continue
+        if name not in hero_by_name:
             hero_by_name[name] = h
-        elif name == "Maneater" and "Maneater_2" not in hero_by_name:
-            hero_by_name["Maneater_2"] = h
+            _dup_seen[name] = 1
+        elif name in DUPLICATE_INSTANCE_HEROES:
+            _dup_seen[name] = _dup_seen.get(name, 1) + 1
+            key = _dup_key_for(name, _dup_seen[name])
+            if key not in hero_by_name:
+                hero_by_name[key] = h
 
     # Resolve concrete team_names: substitute generic slots from fillers.
     team_names = []
@@ -2235,16 +3014,15 @@ def evaluate_team_calibrated(hero_names: List[str], cb_element: int = 4,
     from profile_resolver import make_synthetic_hero_record
     from cb_profiles import resolve as _resolve_profile
     from load_game_profiles import load_profiles as _lgp
-    SD, _, _ = _lgp()
+    SD, _, _, _ = _lgp()
 
     team_h, team_p = [], []
-    me_count = 0
+    _dup_count: dict[str, int] = {}
     for tname in hero_names:
         key = tname
-        if tname == "Maneater":
-            me_count += 1
-            if me_count > 1:
-                key = "Maneater_2"
+        if tname in DUPLICATE_INSTANCE_HEROES:
+            _dup_count[tname] = _dup_count.get(tname, 0) + 1
+            key = _dup_key_for(tname, _dup_count[tname])
         h = hero_by_name.get(key) or hero_by_name.get(tname)
         if not h:
             h = make_synthetic_hero_record(tname)
@@ -2291,13 +3069,13 @@ def evaluate_team_calibrated(hero_names: List[str], cb_element: int = 4,
 
     # Build sim champions — same opening conventions as cb_sim main()
     sim_champs = []
-    me_idx = 0
+    _opener_dup_count: dict[str, int] = {}
     for i, tname in enumerate(hero_names):
         stats = calc_stats(team_h[i], assigned_arts[i], account)
         opening = []
-        if tname == "Maneater":
-            me_idx += 1
-            opening = ["A3"] if me_idx == 1 else ["A1", "A3"]
+        if tname in DUPLICATE_INSTANCE_HEROES:
+            _opener_dup_count[tname] = _opener_dup_count.get(tname, 0) + 1
+            opening = _dup_opener_for(tname, _opener_dup_count[tname])
         champ = build_sim_champion(tname, stats, i + 1,
                                     masteries=team_h[i].get("masteries", []),
                                     opening=opening)
@@ -2717,14 +3495,22 @@ def main():
     print(f"Team: {', '.join(team_names)}")
     print(f"CB Element: {args.cb_element} (id={cb_element})")
 
-    # Resolve heroes
+    # Resolve heroes — duplicate-eligible names (DUPLICATE_INSTANCE_HEROES)
+    # get stashed under `<name>_N` for the Nth copy.
     hero_by_name = {}
+    _dup_seen: dict[str, int] = {}
     for h in heroes_data["heroes"]:
         name = h.get("name", "")
-        if name and name not in hero_by_name:
+        if not name:
+            continue
+        if name not in hero_by_name:
             hero_by_name[name] = h
-        elif name == "Maneater" and "Maneater_2" not in hero_by_name:
-            hero_by_name["Maneater_2"] = h
+            _dup_seen[name] = 1
+        elif name in DUPLICATE_INSTANCE_HEROES:
+            _dup_seen[name] = _dup_seen.get(name, 1) + 1
+            key = _dup_key_for(name, _dup_seen[name])
+            if key not in hero_by_name:
+                hero_by_name[key] = h
 
     # Resolve team heroes. Owned heroes win; unowned names fall back to
     # a synthetic record built from hero_types.json (max-ascended,
@@ -2735,14 +3521,14 @@ def main():
     from cb_profiles import resolve as _resolve_profile
     from profile_resolver import make_synthetic_hero_record
     from load_game_profiles import load_profiles as _lgp
-    _SKILL_DATA, _, _ = _lgp()
+    _SKILL_DATA, _, _, _ = _lgp()
     team_h, team_p = [], []
-    me_count = 0
+    _dup_count: dict[str, int] = {}
     synthetic_used = []
     for tname in team_names:
-        if tname == "Maneater":
-            me_count += 1
-            key = "Maneater" if me_count == 1 else "Maneater_2"
+        if tname in DUPLICATE_INSTANCE_HEROES:
+            _dup_count[tname] = _dup_count.get(tname, 0) + 1
+            key = _dup_key_for(tname, _dup_count[tname])
         else:
             key = tname
         h = hero_by_name.get(key)
@@ -2790,19 +3576,52 @@ def main():
         # Skip to build phase
         stun_idx = -1
         sim_champs = []
-        me_idx = 0
+        _opener_dup_count: dict[str, int] = {}
         for i, tname in enumerate(team_names):
             stats = calc_stats(team_h[i], assigned_arts[i], account)
             opening = []
-            if tname == "Maneater":
-                me_idx += 1
-                opening = ["A3"] if me_idx == 1 else ["A1", "A3"]
+            if tname in DUPLICATE_INSTANCE_HEROES:
+                _opener_dup_count[tname] = _opener_dup_count.get(tname, 0) + 1
+                opening = _dup_opener_for(tname, _opener_dup_count[tname])
+            # 2026-06-18 fix: pass element from hero record so affinity
+            # matchups apply (was defaulting to 4=Void → glance gating + damage
+            # modifiers never fired in the --use-current-gear path).
+            hero_elem = team_h[i].get("element", 4)
             champ = build_sim_champion(tname, stats, i + 1,
                                         masteries=team_h[i].get("masteries", []),
-                                        opening=opening)
+                                        opening=opening,
+                                        element=hero_elem)
             sim_champs.append(champ)
             print(f"  {tname:20s} SPD:{stats[SPD]:.0f} ACC:{stats[ACC]:.0f} "
                   f"ATK:{stats[ATK]:.0f} DEF:{stats[DEF]:.0f} HP:{stats[HP]:.0f}")
+
+        # 2026-06-18: apply user's saved in-game preset (starters + skill
+        # priorities) to make the sim match their actual flagship tune.
+        # Without this the sim runs Default-AI everywhere, which yields the
+        # known 16M-vs-36M gap on MEN. Mirrors cb_calibrate.py path.
+        try:
+            from preset_loader import load_preset_for_team
+            plan = load_preset_for_team(team_names)
+        except Exception as e:
+            plan = {}
+            print(f"  [preset] load failed: {e}")
+        if plan:
+            applied = []
+            for champ in sim_champs:
+                entry = plan.get(champ.name) or {}
+                p_open = entry.get("opening") or []
+                p_prio = entry.get("priority") or []
+                if p_open:
+                    champ.opening = list(p_open)
+                if p_prio:
+                    champ.skill_priority = list(p_prio)
+                if p_open or p_prio:
+                    applied.append(
+                        f"{champ.name}(open={p_open or '-'} prio={p_prio or '-'})")
+            if applied:
+                print(f"  [preset] applied: {', '.join(applied)}")
+        else:
+            print(f"  [preset] no matching preset for team — running Default AI")
 
         # Run simulation
         if args.monte_carlo > 0:
@@ -2811,6 +3630,7 @@ def main():
                 sim = CBSimulator(deepcopy(sim_champs), deterministic=False,
                                   rng_seed=seed, verbose=False,
                                   cb_element=cb_element,
+                                  bugfix_buff_tick=False,
                                   force_affinity=not args.no_force_affinity)
                 result = sim.run(max_cb_turns=args.max_cb_turns)
                 totals.append(result["total"])
@@ -2821,13 +3641,14 @@ def main():
         else:
             sim = CBSimulator(sim_champs, deterministic=True, verbose=args.verbose,
                               cb_element=cb_element,
+                              bugfix_buff_tick=False,
                               force_affinity=not args.no_force_affinity)
             result = sim.run(max_cb_turns=args.max_cb_turns)
 
             print(f"\n{'='*70}")
             print(f"TOTAL DAMAGE: {result['total']/1e6:.1f}M over {result['cb_turns']} CB turns")
             gaps = len(result["errors"])
-            tune_str = "VALID ✓" if result["valid"] else f"INVALID ✗ ({gaps} gaps)"
+            tune_str = "VALID" if result["valid"] else f"INVALID ({gaps} gaps)"
             print(f"Speed tune: {tune_str}")
             print(f"{'='*70}")
             for hd in result["heroes"]:
@@ -2841,7 +3662,7 @@ def main():
             if result["errors"]:
                 print(f"\nProtection gaps: {len(result['errors'])}")
                 for e in result["errors"][:5]:
-                    print(f"  ✗ {e}")
+                    print(f"  x {e}")
             if args.validate_against:
                 _validate_against_real(result, args.validate_against)
         return
@@ -2884,13 +3705,13 @@ def main():
     # (Previous Budget-UK overrides that forced Maneater=228/215 and DPS=171-189 removed
     # because they conflicted with Myth-Eater or any other tune.)
     sim_champs = []
-    me_idx = 0
+    _opener_dup_count: dict[str, int] = {}
     for i, tname in enumerate(team_names):
         stats = calc_stats(team_h[i], assigned_arts[i], account)
         opening = []
-        if tname == "Maneater":
-            me_idx += 1
-            opening = ["A3"] if me_idx == 1 else ["A1", "A3"]
+        if tname in DUPLICATE_INSTANCE_HEROES:
+            _opener_dup_count[tname] = _opener_dup_count.get(tname, 0) + 1
+            opening = _dup_opener_for(tname, _opener_dup_count[tname])
         champ = build_sim_champion(tname, stats, i + 1,
                                     masteries=team_h[i].get("masteries", []),
                                     opening=opening)
