@@ -31,6 +31,8 @@ PyAutoRaid started as a simple PyAutoGUI screen clicker and evolved into a full 
 
 Runs headless on a Windows 10 VM (QEMU/KVM), fully automated on a cron schedule.
 
+> See [`MISSION.md`](MISSION.md) for the project's purpose and non-negotiables, and [`docs/roadmap.md`](docs/roadmap.md) for the phased execution plan.
+
 ### Built With
 
 ![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)

@@ -1,14 +1,12 @@
 # PyAutoRaid Roadmap
 
-Single source of truth for what's done, what's in flight, and what's next.
-Sourced from the **Goals & Scope** section of `CLAUDE.md` (which lists every
-location, every system, every non-negotiable). This file tracks completion
-status and prioritizes the next work.
+Phased execution plan against `MISSION.md`. Single source of truth for
+what's done, in flight, and next. Updated as work moves between states.
 
-> **Rule of thumb**: a feature is "done" only when (a) the CLI works, (b) the
-> sim/optimizer matches game behavior to its calibration target, and (c) the
-> values are sourced from the game (live mod or static IL2CPP dump), not
-> back-solved.
+> **Definition of done**: (a) CLI works, (b) sim/optimizer matches game
+> behavior to its calibration target (±5% per-affinity-per-tune for any
+> location feeding a recommender), (c) values are sourced from the game
+> (live mod or static IL2CPP dump), not back-solved.
 
 ## Status legend
 
@@ -16,7 +14,115 @@ status and prioritizes the next work.
 - 🟡 **Partial** — works for the common case; edge cases or other content not yet covered
 - 🔴 **Open** — not started or stalled
 
-## Overall progress (2026-05-02)
+---
+
+## Milestones
+
+The plan is to nail **CB end-to-end** as the reference implementation,
+then port the same pattern (sim → log → recommend → run) to every other
+location. Milestones are sequential — Milestone N's pattern informs N+1.
+
+### M1: CB end-to-end (in flight)
+
+**Goal**: sim ±5% across all 4 affinities × all tunes the user runs;
+full per-tick + post-battle logging; prompt-on-destructive recommender
+that proposes team/gear swaps; daily runner that survives mod restarts
+and verifies leaderboard credit.
+
+| Sub-goal | Status | Notes |
+|---|---|---|
+| Sim — Force-day MEN tune | ✅ | +6.2% at BT21 (sim 11.4M vs real 10.73M); calibrated via generic glance gate + universe-wide skill modeling |
+| Sim — Spirit-day MEN tune | 🟡 | -55% under-prediction; sim dies T22-23 vs real T50. Suspected: UK refresh gap, COM proc rate, un-modeled survival mechanic |
+| Sim — Magic-day MEN tune | 🟡 | -55% under-prediction; Ninja A1 +15% TM fires 100% on Force/Spirit but only 73% on Magic (70-capture empirical) — root cause for Magic-only cycle desync |
+| Sim — Void-day MEN tune | 🔴 | No recent Void capture; baseline unknown post-element-fix |
+| Battle log — per-tick state | ✅ | Mod's `/tick-log` captures TM, HP, buffs, debuffs, damage events with intermediates |
+| Battle log — post-battle deltas | 🟡 | Damage attribution per-hero works; quest/leaderboard credit verification added to `cb_daily.py`; item drops not yet structured |
+| Death watcher (key conservation) | ✅ | `tools/cb_watcher.py` validated end-to-end 2026-06-21: detected 1/5 dead at boss turn 23, fired `taskkill`, relaunched Raid, key count unchanged (1→1). Trigger fires on `hp_cur<=0`; per-poll JSONL trace lands at `cb_watcher_<tag>_<ts>.poll.jsonl`. Skill: `.claude/skills/cb-key-conservation/` |
+| Fixture library + replay | ✅ | `tools/fixture_archive.py` catalogs all (tick + battle + poll) triples into `data/fixtures/manifest.json` (120 captures, 13 replayable). `tools/sim_replay.py` runs sim against one fixture. `tools/sim_regress.py` runs the full battery — current baseline: Force median -0.7% (n=7), Magic -64.9% (n=1). Zero keys per iteration. |
+| Recommender — team picks | 🟡 | `cb_team_explorer.py` surfaces novel comps; gated below recommendation bar until sim ±5% across all affinities |
+| Recommender — gear loadouts | ✅ | `global_gear_solver.py` + `cb_optimizer.py` solve per-team stat targets; per-hero stat targets via `hh_picker.py` (HH still in path — to deprecate) |
+| Daily runner | ✅ | `cb_daily.py` runs all keys, session warm-up, leaderboard verification, silent-fail detection |
+| Preset substrate integration | ✅ | `/save-preset`, `/update-preset`, `/apply-preset` all live; user's flagship preset is id=1 (signal-matched, not type-filtered) |
+
+**Blockers / next-action**: Magic-day cycle desync is the headline gap.
+Hypothesis chain: Ninja A1 misfire 27% on Magic → cycle desync → BD/UK
+refresh window misses → death T22. Next capture should hook
+`AfterEffectProcessedOnTarget` on Ninja A1 to confirm/refute the misfire
+mechanism. Death-watcher tool would let us get multiple Magic captures
+without burning the daily 2-key budget.
+
+### M2: Replicate pattern for Hydra / Chimera
+
+**Goal**: same bar as CB (±5% sim, full logging, recommender, runner)
+applied to weekly Hydra and weekly Chimera battles.
+
+| Sub-goal | Status |
+|---|---|
+| Static export — Hydra heads + skills | ✅ (`data/static/hydra.json`) |
+| Static export — Chimera | ✅ (`data/static/chimera.json`) |
+| Sim — Hydra heads (Head/Hand/Torso/Stomach) | 🔴 |
+| Sim — Chimera | 🔴 |
+| Battle log — Hydra-specific damage attribution | 🔴 |
+| Recommender — head-targeting logic | 🔴 |
+| Runner | 🔴 |
+
+Pre-req: M1's death-watcher + fixture library generalize directly.
+
+### M3: Daily/weekly/monthly/event orchestrator
+
+**Goal**: resource-aware runner that walks every quest tier, every
+tournament, every event progression task. Smart-skip when resources
+won't support attempts. Records every action and its effect.
+
+| Sub-goal | Status |
+|---|---|
+| Daily quests (`tools/daily_quests.py` + per-domain tools) | 🟡 — most quest types tick; some have known automation gotchas (see memory `project_daily_quest_protos.md`) |
+| Weekly quests | 🟡 |
+| Monthly quests | 🔴 |
+| Tournaments | 🔴 (event detection in `tools/events_status.py`; per-tournament point-source mapping TBD) |
+| Events (e.g. fusion ingredient progression) | 🟡 — `fusion_frag_tracker.py` handles fragment events |
+| Magic shop daily | ✅ |
+| Arena daily (`tools/daily_arena.py`) | 🟡 — opponent picker live; sim recommender absent |
+| Tag Team Arena | 🔴 |
+| Clan tournament | 🔴 |
+| Gem mine, inbox, timed quests | 🟡 |
+
+### M4: Arena (classic + Tag Team) full
+
+**Goal**: opponent sim, team picker, daily runner. Classic Arena should
+factor speed-rank into picks; TT should factor 3v3 round structure.
+
+| Sub-goal | Status |
+|---|---|
+| Opponent state + refresh (`/arena-opponents`, `/arena-refresh`) | ✅ |
+| Sim — arena 5v5 turn order | 🔴 |
+| Sim — TT 3v3 round structure | 🔴 |
+| Recommender — counter-pick | 🔴 |
+| Runner | 🟡 (defensive — picks lowest-power available) |
+
+### M5: Universal hero / gear / synergy engine
+
+**Goal**: the Understand-pillar foundation generalized across every
+location. Per-location stat targets, per-hero kit synergy graph, per-set
+contribution model. Drives the recommender for every other location
+(Dragon, Spider, FK, Ice Golem, Minotaur, 4 Keeps, Faction Wars, Doom
+Tower, Cursed City, Siege, Grim Forest).
+
+Pre-req: M1-M4 patterns proven. M5 is the unification step.
+
+| Sub-goal | Status |
+|---|---|
+| Hero kit model (1076 heroes) | ✅ — universe-wide skill modeling foundation shipped |
+| Mastery effect map (stat-bonus + conditional) | 🟡 — stat-bonus auto-loaded; conditional (WM/GS/Crushing Rend/etc.) hand-coded |
+| Blessing effect map | 🟡 — stat-bonus auto-loaded; conditional hand-coded |
+| Per-location stat targets (`data/targets/*.json`) | 🔴 |
+| Per-set bonus model | ✅ — `data/static/artifact_sets.json` |
+| Synergy graph (cross-hero kit interactions) | 🔴 |
+| Recommender per location | 🔴 — depends on per-location stat targets + synergy graph |
+
+---
+
+## Overall progress snapshot (last updated 2026-06-21)
 
 | Area | Status | Notes |
 |---|---|---|

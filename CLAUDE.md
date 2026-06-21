@@ -1,5 +1,9 @@
 # CLAUDE.md
 
+> **Mission**: see `MISSION.md` (the "why" — pillars, non-negotiables, anti-patterns).
+> **Roadmap**: see `docs/roadmap.md` (the "what's next" — phased milestones).
+> This file is the "how" — operational reference and tool catalog.
+
 ## Project Overview
 
 PyAutoRaid automates Raid: Shadow Legends via a BepInEx mod HTTP API (port 6790) running on the local Windows PC (no VM). Primary focus: CB optimization with a turn-by-turn damage simulator calibrated to -7% of real battle data.
@@ -455,6 +459,9 @@ curl /context-call?path=...AllianceBossHeroesSelectionDialog&method=StartBattle
 | `tools/scrape_dwj.py` / `scrape_dwj_calc.py` | DWJ WordPress + calculator scrapers |
 | `tools/scrape_hellhades.py` | HH WordPress scraper (champions + tierlist + posts) |
 | `tools/dashboard_server.py` | HTTP dashboard server (port 6791) |
+| `tools/loadouts.py` | SQLite-backed artifact loadout snapshot / apply / restore |
+| `tools/hh_picker.py` | HH-driven team picker + per-hero stat targets + greedy gear picker (emits farm_cycle plans) |
+| `tools/farm_cycle.py` | Orchestrator: plan/prepare (snapshot → equip → preset), restore, status, run |
 
 ## Data Files
 
