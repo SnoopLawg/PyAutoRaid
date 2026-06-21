@@ -29,7 +29,8 @@ from fixture_archive import load_manifest
 from sim_replay import replay_fixture, format_summary
 
 
-def run_regression(affinity_filter=None, max_cb_turns=50, min_real_bt=0):
+def run_regression(affinity_filter=None, max_cb_turns=50, min_real_bt=0,
+                   compare_at_bt=None):
     manifest = load_manifest()
     if not manifest:
         return None, "No manifest. Run `tools/fixture_archive.py rebuild` first."
@@ -46,7 +47,7 @@ def run_regression(affinity_filter=None, max_cb_turns=50, min_real_bt=0):
     results = []
     for f in fixtures:
         t0 = time.time()
-        r = replay_fixture(f, max_cb_turns=max_cb_turns)
+        r = replay_fixture(f, max_cb_turns=max_cb_turns, compare_at_bt=compare_at_bt)
         r["wall_seconds"] = round(time.time() - t0, 2)
         results.append(r)
     return results, None
@@ -101,16 +102,22 @@ def main():
     ap.add_argument("--max-cb-turns", type=int, default=50)
     ap.add_argument("--gate", type=float, default=5.0,
                     help="Pass threshold (abs delta percent). Default 5.0.")
-    ap.add_argument("--min-bt", type=int, default=15,
-                    help="Skip fixtures with real_boss_turns < this (filters partial "
-                         "captures that bias deltas). Default 15.")
+    ap.add_argument("--min-bt", type=int, default=5,
+                    help="Skip fixtures with real_boss_turns < this. Default 5 (now "
+                         "that --at-bt comparison handles partial captures, the "
+                         "filter is just to drop noise <5 turns).")
+    ap.add_argument("--at-bt", type=int, default=None,
+                    help="Compare every fixture at boss turn N. Default: each "
+                         "fixture compared at its own real_boss_turns "
+                         "(apples-to-apples for partial captures).")
     ap.add_argument("--json", metavar="PATH",
                     help="Write full results JSON to PATH.")
     ap.add_argument("--quiet", action="store_true",
                     help="Skip per-fixture detail; summary table only.")
     args = ap.parse_args()
 
-    results, err = run_regression(args.affinity, args.max_cb_turns, args.min_bt)
+    results, err = run_regression(args.affinity, args.max_cb_turns,
+                                   args.min_bt, args.at_bt)
     if err:
         print(err)
         return 1

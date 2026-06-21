@@ -30,10 +30,16 @@ def find_fixture(manifest, timestamp):
     return None
 
 
-def replay_fixture(fixture, max_cb_turns=50, verbose=False):
+def replay_fixture(fixture, max_cb_turns=50, verbose=False, compare_at_bt=None):
     """Run the calibrated sim against the fixture's team + affinity.
 
-    Returns dict: {fixture, real, sim, delta, delta_pct, error}."""
+    By default, compares sim's cumulative damage at the SAME boss turn
+    the fixture ended on (fixture.real_boss_turns) — apples-to-apples
+    even for partial captures from cb_harvest. Pass `compare_at_bt` to
+    override (e.g. compare at boss turn 21 across all fixtures).
+
+    Returns dict: {fixture, affinity, team, real_damage, sim_damage,
+    delta, delta_pct, compared_at_bt, error}."""
     out = {
         "fixture": fixture["timestamp"],
         "affinity": fixture.get("affinity"),
@@ -41,7 +47,9 @@ def replay_fixture(fixture, max_cb_turns=50, verbose=False):
         "real_damage": fixture.get("real_damage_peak"),
         "real_boss_turns": fixture.get("real_boss_turns"),
         "sim_damage": None,
+        "sim_total": None,         # sim final total (end of sim run)
         "sim_cb_turns": None,
+        "compared_at_bt": None,    # the boss turn used for comparison
         "delta": None,
         "delta_pct": None,
         "error": None,
@@ -76,12 +84,38 @@ def replay_fixture(fixture, max_cb_turns=50, verbose=False):
     sim_total = result.get("total")
     if sim_total is not None:
         sim_total = int(round(sim_total))
-    out["sim_damage"] = sim_total
+    out["sim_total"] = sim_total
     out["sim_cb_turns"] = result.get("cb_turns")
+
+    # Default comparison turn = real_boss_turns from the fixture so
+    # partial captures (e.g. cb_harvest --kill-at-turn 15) compare
+    # against sim at the same turn, not sim at end.
+    target_bt = compare_at_bt or out["real_boss_turns"]
+    sim_at_bt = _sim_damage_at_bt(result.get("turn_snapshots") or [], target_bt)
+    if sim_at_bt is not None:
+        sim_at_bt = int(round(sim_at_bt))
+    out["sim_damage"] = sim_at_bt
+    out["compared_at_bt"] = target_bt
+
     if out["real_damage"] and out["sim_damage"]:
         out["delta"] = out["sim_damage"] - out["real_damage"]
         out["delta_pct"] = (out["delta"] / out["real_damage"]) * 100.0
     return out
+
+
+def _sim_damage_at_bt(turn_snapshots, target_bt):
+    """Return sim cumulative_damage at the snapshot where cb_turn == target_bt.
+
+    Falls back to the snapshot just below target_bt if there's no exact
+    match (sim may have died earlier). Returns the LAST snapshot's
+    cumulative_damage if the sim never reached target_bt."""
+    if not turn_snapshots or target_bt is None:
+        return None
+    exact = next((s for s in turn_snapshots if s.get("cb_turn") == target_bt), None)
+    if exact:
+        return exact.get("cumulative_damage")
+    # Sim ended before target_bt — return the final cumulative damage
+    return turn_snapshots[-1].get("cumulative_damage") if turn_snapshots else None
 
 
 def format_summary(r):
@@ -91,9 +125,9 @@ def format_summary(r):
     sim = r["sim_damage"] or 0
     dp = r["delta_pct"]
     dp_s = f"{dp:+6.1f}%" if dp is not None else "   n/a "
+    bt = r.get("compared_at_bt") or r["real_boss_turns"]
     return (f"{r['fixture']}  {r['affinity']:<6}  "
-            f"real={real:>11,}  sim={sim:>11,}  delta={dp_s}  "
-            f"(real_bt={r['real_boss_turns']}, sim_bt={r['sim_cb_turns']})")
+            f"real={real:>11,}  sim={sim:>11,}  delta={dp_s}  @BT{bt}")
 
 
 def main():
@@ -102,6 +136,9 @@ def main():
     ap.add_argument("--json", action="store_true", help="JSON output.")
     ap.add_argument("--quiet", action="store_true", help="One-line summary only.")
     ap.add_argument("--max-cb-turns", type=int, default=50)
+    ap.add_argument("--at-bt", type=int, default=None,
+                    help="Compare sim damage at boss turn N (default: "
+                         "fixture's real_boss_turns).")
     ap.add_argument("--verbose", "-v", action="store_true")
     args = ap.parse_args()
 
@@ -124,7 +161,7 @@ def main():
         print("Running sim...")
 
     result = replay_fixture(fixture, max_cb_turns=args.max_cb_turns,
-                            verbose=args.verbose)
+                            verbose=args.verbose, compare_at_bt=args.at_bt)
 
     if args.json:
         print(json.dumps(result, indent=2))
