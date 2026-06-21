@@ -16,6 +16,7 @@ Usage:
 
 import argparse
 import json
+import os
 import re
 import sys
 from pathlib import Path
@@ -25,6 +26,9 @@ MANIFEST_PATH = PROJECT_ROOT / "data" / "fixtures" / "manifest.json"
 
 ELEMENT_NAMES = {1: "magic", 2: "force", 3: "spirit", 4: "void"}
 TS_RE = re.compile(r"_cb_(\d{8}_\d{6})\.json")
+# Watcher trace: cb_watcher_<tag>_<YYYYMMDD_HHMMSS>.poll.jsonl
+WATCHER_RE = re.compile(r"cb_watcher_(.+?)_(\d{8}_\d{6})\.poll\.jsonl")
+HARVEST_DIR = "data" + os.sep + "harvest"  # informational; we glob recursively
 
 
 def _name_lookup():
@@ -40,9 +44,16 @@ def _name_lookup():
 
 
 def _scan_logs():
-    """Find all (tick|battle|poll)_log_cb_*.json files in repo root
-    and group by timestamp."""
+    """Find all CB log files (canonical + watcher harvest) and group by
+    timestamp.
+
+    Canonical (from cb_run.py, repo root):
+      (tick|battle|poll)_log_cb_<ts>.json
+    Watcher harvest (from cb_watcher.py / cb_harvest.py, anywhere):
+      cb_watcher_<tag>_<ts>.poll.jsonl
+    """
     fixtures = {}
+    # Canonical, repo root only
     for prefix, key in [("tick_log_cb_", "tick_log"),
                         ("battle_logs_cb_", "battle_log"),
                         ("poll_log_cb_", "poll_log")]:
@@ -52,11 +63,25 @@ def _scan_logs():
                 continue
             ts = m.group(1)
             fixtures.setdefault(ts, {})[key] = str(p.relative_to(PROJECT_ROOT))
+    # Watcher harvest, recursive (data/harvest/, future dirs)
+    for p in PROJECT_ROOT.rglob("cb_watcher_*.poll.jsonl"):
+        m = WATCHER_RE.search(p.name)
+        if not m:
+            continue
+        ts = m.group(2)  # group(1) is tag, group(2) is timestamp
+        entry = fixtures.setdefault(ts, {})
+        # Watcher poll trace is a poll log; don't clobber a canonical one
+        entry.setdefault("poll_log", str(p.relative_to(PROJECT_ROOT)))
+        entry.setdefault("source", "watcher")
     return fixtures
 
 
 def _parse_poll_log(path):
     """Pull battle metadata from a poll log JSONL.
+
+    Handles two schemas:
+      - cb_run format: each line = {poll, ts, state: {active, heroes:[{side,...}]}}
+      - cb_watcher format: each line = {poll, ts, active, players:[...], boss:{...}}
 
     Returns dict with: boss_element, hero_team_type_ids, real_damage_peak,
     real_boss_turns, poll_count. Missing fields = None."""
@@ -75,26 +100,34 @@ def _parse_poll_log(path):
     out["poll_count"] = len(polls)
     seen_team = False
     for p in polls:
-        st = p.get("state", {})
-        if "error" in st:
-            continue
-        heroes = st.get("heroes") or []
-        if not seen_team:
-            tids = [h.get("type_id") for h in heroes
-                    if h.get("side") == "player" and h.get("type_id")]
+        # Resolve players + boss across both schemas
+        if "state" in p:  # cb_run
+            st = p.get("state", {})
+            if "error" in st:
+                continue
+            heroes = st.get("heroes") or []
+            players = [h for h in heroes if h.get("side") == "player"]
+            boss = next((h for h in heroes if h.get("side") == "enemy"), None)
+        else:  # cb_watcher
+            if "error" in p:
+                continue
+            players = p.get("players") or []
+            boss = p.get("boss")
+
+        if not seen_team and players:
+            tids = [h.get("type_id") for h in players if h.get("type_id")]
             if tids:
                 out["hero_team_type_ids"] = tids
                 seen_team = True
-        for h in heroes:
-            if h.get("side") == "enemy":
-                if out["boss_element"] is None:
-                    out["boss_element"] = h.get("element")
-                dmg = h.get("dmg_taken") or 0
-                turn = h.get("turn_n") or 0
-                if out["real_damage_peak"] is None or dmg > out["real_damage_peak"]:
-                    out["real_damage_peak"] = dmg
-                if out["real_boss_turns"] is None or turn > out["real_boss_turns"]:
-                    out["real_boss_turns"] = turn
+        if boss:
+            if out["boss_element"] is None and boss.get("element"):
+                out["boss_element"] = boss.get("element")
+            dmg = boss.get("dmg_taken") or 0
+            turn = boss.get("turn_n") or 0
+            if out["real_damage_peak"] is None or dmg > out["real_damage_peak"]:
+                out["real_damage_peak"] = dmg
+            if out["real_boss_turns"] is None or turn > out["real_boss_turns"]:
+                out["real_boss_turns"] = turn
     return out
 
 

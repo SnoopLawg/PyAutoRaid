@@ -127,10 +127,13 @@ def snapshot_battle_log(snapshot_dir, tag):
 def _hero_trace_row(h):
     """Compact per-hero state for the poll trace. Captures the fields
     that matter for death-sequence analysis (hp_cur, hp_pct, dmg_taken,
-    turn_n, can_atk) without dragging in mods/sk/eff."""
+    turn_n, can_atk) without dragging in mods/sk/eff. `element` is
+    included so fixture_archive can recover boss affinity from the
+    trace alone."""
     return {
         "id": h.get("id"),
         "type_id": h.get("type_id"),
+        "element": h.get("element"),
         "hp_cur": h.get("hp_cur"),
         "hp_pct": h.get("hp_pct"),
         "hp_max": h.get("hp_max"),
@@ -201,6 +204,10 @@ def main():
     ap.add_argument("--grace-turns", type=int, default=0,
                     help="Do not kill before boss turn N, even if deaths occur. "
                          "Useful for capturing early-game data when team is fragile.")
+    ap.add_argument("--kill-at-turn", type=int, default=None,
+                    help="Fire the kill as soon as boss reaches turn N, regardless "
+                         "of deaths. Use to harvest fixed-length partial captures "
+                         "back-to-back without spending keys (see tools/cb_harvest.py).")
     ap.add_argument("--dry-run", action="store_true",
                     help="Log the death + snapshot, but do NOT taskkill Raid.")
     ap.add_argument("--tag", default="",
@@ -313,15 +320,21 @@ def main():
             prev_dead = cur_dead
             prev_boss_turn = cur_turn
 
-        # Trigger condition
-        if cur_dead >= threshold:
+        # Trigger conditions: hit kill-at-turn floor, OR threshold dead
+        # (subject to grace-turns).
+        trigger_reason = None
+        if args.kill_at_turn is not None and cur_turn >= args.kill_at_turn:
+            trigger_reason = f"boss turn {cur_turn} >= kill-at-turn={args.kill_at_turn}"
+        elif cur_dead >= threshold:
             if cur_turn < args.grace_turns:
                 # Death below grace floor — log but keep polling
                 # (we'd rather burn the key than discard sub-grace data)
                 time.sleep(POLL_INTERVAL)
                 continue
+            trigger_reason = f"{cur_dead}/{player_total(bs)} dead"
 
-            print(f"\n*** TRIGGER: {cur_dead}/{player_total(bs)} dead at boss turn {cur_turn} ***")
+        if trigger_reason:
+            print(f"\n*** TRIGGER: {trigger_reason} at boss turn {cur_turn} ***")
             snap_path, snap_err = snapshot_battle_log(snapshot_dir, args.tag)
             if snap_path:
                 print(f"  snapshot: {snap_path}")
