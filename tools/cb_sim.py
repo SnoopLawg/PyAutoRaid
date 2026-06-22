@@ -1162,19 +1162,24 @@ class CBSimulator:
         # skipped despite being Group=Active.
         _attack_for_smite = self.cb_pattern[(self.cb_turn) % 3]
 
-        # Speed-Division dragging-effect: per Speedology 201, real game
-        # grants every live champion +1 hero turn per ~8 boss turns
-        # vs naive Speed-Division math. Modeled mechanistically as boss
-        # effective TM rate ~11% slower (loses enough tie-break events
-        # cumulatively to drag into a slower division). This is closer
-        # to true dragging than the prior "TM += threshold/8 per BT to
-        # all champs" approach — that bumped hero TM at boss-action
-        # timing which broke UK/BD refresh cadence. Slowing boss
-        # preserves the cycle phase relationships.
-        # Implementation: extra cb_tm subtraction = boss starts deeper
-        # in the hole next cycle, taking ~11% more ticks to reach
-        # threshold again.
-        self.cb_tm -= TM_THRESHOLD * 0.11
+        # Speed-Division dragging-effect: real game's PvE team-tie-break
+        # gives heroes a small advantage over naive Speed-Division math.
+        # Modeled as boss effective TM rate ~3% slower per cycle.
+        #
+        # Calibration history: Speedology 201's "+1 hero turn per 8 BT"
+        # claim (≈12.5%) led to 0.11 which over-predicted by +20pp on
+        # Force. Root cause was actually the SimChampion.element
+        # default-to-Void bug (project_sim_element_bug_fix) hiding the
+        # affinity-damage gate. With element fixed, the residual dragging
+        # effect is closer to 3% — verified 2026-06-22 by sweep across
+        # drag={0.03..0.09} on 70-fixture regression:
+        #   0.03: Force +1.6%, Magic +0.2%, 34/70 pass   <- optimum
+        #   0.05: Force +0.5%, Magic +5.0%, 30/70 pass
+        #   0.07: Force +4.3%, Magic +8.7%, 32/70 pass
+        #   0.09: Force +8.2%, Magic +12.9%, 21/70 pass
+        # The 12.5% claim is mod-community lore, not game-truth. Replace
+        # with a proper tie-break model when bandwidth permits.
+        self.cb_tm -= TM_THRESHOLD * 0.03
 
         self.cb_turn += 1
         attack = self.cb_pattern[(self.cb_turn - 1) % 3]
