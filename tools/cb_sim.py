@@ -475,6 +475,17 @@ class SimChampion:
     # Default 30% — typical mid-grade. Override via build_sim_champion.
     brimstone_chance: float = 0.30
 
+    # Blessing damage amplifiers (in addition to Brimstone Smite which
+    # is handled separately as a debuff-on-target). Resolved from
+    # blessing id+grade in _resolve_blessing_damage_amps. Per-hit
+    # damage multiplied by (1 + heavencast_pct_per_buff * buff_count)
+    # when active. Empirical default 0.06 (epic/grade 1 = +6% per buff,
+    # max ~5 buffs = +30% dmg). Plarium doesn't expose the exact
+    # coefficient in static export — value sourced from community
+    # documentation, calibrated against per-event captures 2026-06-22.
+    heavencast_pct_per_buff: float = 0.0   # Demy (blessing 2201 EnhancedWeapon)
+    natures_wrath_pct_per_debuff: float = 0.0  # Geo (blessing 5201 NatureBalance)
+
     # Passive abilities (detected from game data)
     has_passive_ally_protect: bool = False   # Skullcrusher: permanent Ally Protect
     has_passive_dmg_reduction: float = 0.0  # Cardiel: -20%, Geomancer: -15%/-30%
@@ -2097,7 +2108,23 @@ class CBSimulator:
         # Affinity modifier
         aff_dmg, _ = self._get_affinity_mult(champ)
 
-        return raw * crit_mult * def_mult * wk * str_mult * bid * aff_dmg
+        # Blessing damage amplifiers (Heavencast for Demy: +X% per buff
+        # on self; Nature's Wrath for Geo: +X% per debuff placed). Both
+        # use 0.06 per stack (empirical from Magic BT15 captures with
+        # community-doc-default for epic/grade 1). See SimChampion field
+        # defs for source-of-truth notes.
+        bless_mult = 1.0
+        if champ.heavencast_pct_per_buff > 0:
+            buff_count = len(getattr(champ, 'buffs', {}))
+            bless_mult *= (1.0 + champ.heavencast_pct_per_buff * buff_count)
+        if champ.natures_wrath_pct_per_debuff > 0:
+            # Count debuffs placed by THIS champion on the boss
+            debuff_count = sum(
+                1 for s in self.debuff_bar.slots if s.source == champ.name
+            )
+            bless_mult *= (1.0 + champ.natures_wrath_pct_per_debuff * debuff_count)
+
+        return raw * crit_mult * def_mult * wk * str_mult * bid * aff_dmg * bless_mult
 
     # ----- WM/GS -----
     def _roll_wm_gs(self, champ: SimChampion, hit_count: int) -> float:
@@ -2761,6 +2788,21 @@ def build_sim_champion(name: str, stats: dict, position: int,
     # Read directly from hero's BlessingId/Grade via the static cache.
     has_brimstone, brimstone_chance = _resolve_brimstone(stats)
 
+    # Blessing damage amplifiers — Heavencast (2201 EnhancedWeapon) and
+    # Nature's Wrath (5201 NatureBalance). Plarium doesn't expose the
+    # per-grade coefficient in static export; using community-documented
+    # default 0.06 (+6% per buff/debuff) for epic/grade 1. Refine per-
+    # grade later when better source available.
+    heavencast_pct = 0.0
+    natures_wrath_pct = 0.0
+    bl = stats.get("blessing") if isinstance(stats.get("blessing"), dict) else None
+    if bl is not None:
+        bid = int(bl.get("id", 0))
+        if bid == 2201:  # EnhancedWeapon / Heavencast — damage per buff on self
+            heavencast_pct = 0.06
+        elif bid == 5201:  # NatureBalance / Nature's Wrath — dmg per debuff placed
+            natures_wrath_pct = 0.06
+
     champ = SimChampion(
         name=name,
         speed=stats.get(SPD, 100),
@@ -2773,6 +2815,8 @@ def build_sim_champion(name: str, stats: dict, position: int,
         has_lifesteal=stats.get("has_lifesteal", False),
         has_brimstone=has_brimstone,
         brimstone_chance=brimstone_chance,
+        heavencast_pct_per_buff=heavencast_pct,
+        natures_wrath_pct_per_debuff=natures_wrath_pct,
         has_passive_ally_protect=passive_ally_protect,
         has_passive_dmg_reduction=passive_dmg_reduction,
         has_passive_extra_turns=passive_extra_turns,
