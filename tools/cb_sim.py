@@ -3095,7 +3095,9 @@ def evaluate_team_calibrated(hero_names: List[str], cb_element: int = 4,
                               use_current_gear: bool = True,
                               force_affinity: bool = True,
                               max_cb_turns: int = 50,
-                              verbose: bool = False) -> dict:
+                              verbose: bool = False,
+                              deterministic: bool = True,
+                              rng_seed: int = None) -> dict:
     """Run the calibrated CB sim on an arbitrary 5-hero team.
 
     Mirrors what `cb_sim.py --team "X,Y,Z" --use-current-gear` does
@@ -3105,6 +3107,13 @@ def evaluate_team_calibrated(hero_names: List[str], cb_element: int = 4,
     Maneater A3-opener convention from cb_sim main, and runs the
     full CBSimulator with the same defaults as the calibration tests
     (deterministic=True, force_affinity=True, max_cb_turns=50).
+
+    Args:
+      deterministic: True for expected-value calc (single number,
+        used in regression's point comparison). False for Monte
+        Carlo — actual RNG rolls per cast. Pair with `rng_seed`
+        when running multiple trials.
+      rng_seed: seed for the per-run RNG when deterministic=False.
 
     On the calibration team (Maneater/Demytha/Ninja/Geomancer/
     Venomage) with current gear and Magic UNM, this matches the
@@ -3219,10 +3228,76 @@ def evaluate_team_calibrated(hero_names: List[str], cb_element: int = 4,
             champ.skill_priority = list(priority)
         sim_champs.append(champ)
 
-    sim = CBSimulator(sim_champs, deterministic=True, verbose=verbose,
+    sim = CBSimulator(sim_champs, deterministic=deterministic,
+                       rng_seed=rng_seed,
+                       verbose=verbose,
                        cb_element=cb_element,
                        force_affinity=force_affinity)
     return sim.run(max_cb_turns=max_cb_turns)
+
+
+def evaluate_team_mc(hero_names: List[str], cb_element: int = 4,
+                      n_trials: int = 30,
+                      use_current_gear: bool = True,
+                      force_affinity: bool = True,
+                      max_cb_turns: int = 50,
+                      seed_base: int = 1000) -> dict:
+    """Monte Carlo wrapper around evaluate_team_calibrated.
+
+    Runs the sim `n_trials` times with deterministic=False and varying
+    rng_seeds, then returns the distribution. Use this for fixture
+    validation when real-game RNG variance is significant (e.g. Force
+    UNM fixtures where one bad glance can cascade into a team wipe).
+
+    Returns:
+      {trials, mean, median, stdev, min, max, p5, p25, p75, p95,
+       turn_distributions: {bt: [trial values]}, samples: [totals]}
+    """
+    import statistics as _stats
+
+    samples = []
+    per_bt = {}  # bt -> list of cumulative damages
+    for i in range(n_trials):
+        r = evaluate_team_calibrated(
+            hero_names=hero_names,
+            cb_element=cb_element,
+            use_current_gear=use_current_gear,
+            force_affinity=force_affinity,
+            max_cb_turns=max_cb_turns,
+            deterministic=False,
+            rng_seed=seed_base + i * 7919,
+        )
+        if "error" in r:
+            continue
+        samples.append(r.get("total", 0))
+        for snap in r.get("turn_snapshots") or []:
+            bt = snap.get("cb_turn")
+            if bt is None:
+                continue
+            per_bt.setdefault(bt, []).append(snap.get("cumulative_damage", 0))
+    if not samples:
+        return {"error": "all trials failed", "trials": 0}
+
+    sorted_s = sorted(samples)
+    n = len(sorted_s)
+    def _pct(p):
+        idx = max(0, min(n - 1, int(round(p / 100.0 * (n - 1)))))
+        return sorted_s[idx]
+
+    return {
+        "trials": n,
+        "mean": _stats.mean(sorted_s),
+        "median": _stats.median(sorted_s),
+        "stdev": _stats.stdev(sorted_s) if n > 1 else 0.0,
+        "min": sorted_s[0],
+        "max": sorted_s[-1],
+        "p5": _pct(5),
+        "p25": _pct(25),
+        "p75": _pct(75),
+        "p95": _pct(95),
+        "turn_distributions": per_bt,
+        "samples": samples,
+    }
 
 
 def run_tune(tune_id: str, hero_names: List[str], cb_element: int = 4,

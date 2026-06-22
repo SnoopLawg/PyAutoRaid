@@ -30,7 +30,8 @@ def find_fixture(manifest, timestamp):
     return None
 
 
-def replay_fixture(fixture, max_cb_turns=50, verbose=False, compare_at_bt=None):
+def replay_fixture(fixture, max_cb_turns=50, verbose=False, compare_at_bt=None,
+                   trials=0):
     """Run the calibrated sim against the fixture's team + affinity.
 
     By default, compares sim's cumulative damage at the SAME boss turn
@@ -38,8 +39,14 @@ def replay_fixture(fixture, max_cb_turns=50, verbose=False, compare_at_bt=None):
     even for partial captures from cb_harvest. Pass `compare_at_bt` to
     override (e.g. compare at boss turn 21 across all fixtures).
 
-    Returns dict: {fixture, affinity, team, real_damage, sim_damage,
-    delta, delta_pct, compared_at_bt, error}."""
+    Args:
+      trials: 0 = deterministic single-shot (default). >0 = Monte Carlo
+        with that many trials; populates `mc` block with distribution
+        stats and reports whether real_damage falls within the
+        5-95th percentile band.
+
+    Returns dict with point-comparison fields plus optional `mc` block
+    when trials > 0."""
     out = {
         "fixture": fixture["timestamp"],
         "affinity": fixture.get("affinity"),
@@ -52,6 +59,7 @@ def replay_fixture(fixture, max_cb_turns=50, verbose=False, compare_at_bt=None):
         "compared_at_bt": None,    # the boss turn used for comparison
         "delta": None,
         "delta_pct": None,
+        "mc": None,                # populated when trials > 0
         "error": None,
     }
     team = fixture.get("hero_team_names") or []
@@ -64,7 +72,7 @@ def replay_fixture(fixture, max_cb_turns=50, verbose=False, compare_at_bt=None):
         return out
 
     # Import lazily — cb_sim is heavy
-    from cb_sim import evaluate_team_calibrated
+    from cb_sim import evaluate_team_calibrated, evaluate_team_mc
     try:
         result = evaluate_team_calibrated(
             hero_names=team,
@@ -100,6 +108,57 @@ def replay_fixture(fixture, max_cb_turns=50, verbose=False, compare_at_bt=None):
     if out["real_damage"] and out["sim_damage"]:
         out["delta"] = out["sim_damage"] - out["real_damage"]
         out["delta_pct"] = (out["delta"] / out["real_damage"]) * 100.0
+
+    # Monte Carlo block — distribution at the same comparison BT.
+    if trials > 0:
+        try:
+            mc = evaluate_team_mc(
+                hero_names=team,
+                cb_element=boss_element,
+                n_trials=trials,
+                use_current_gear=True,
+                max_cb_turns=max_cb_turns,
+            )
+        except Exception as ex:
+            out["mc"] = {"error": f"mc crashed: {ex}"}
+            return out
+        if "error" in mc:
+            out["mc"] = mc
+            return out
+
+        # Per-BT distribution at the target BT
+        per_bt = (mc.get("turn_distributions") or {}).get(target_bt) or []
+        if not per_bt:
+            # No exact snapshot at target_bt across trials — fall back
+            # to totals (rare; means sim died before target_bt every trial)
+            per_bt = mc.get("samples", [])
+        sorted_bt = sorted(per_bt)
+        n = len(sorted_bt)
+        def _pct(p):
+            if n == 0:
+                return None
+            idx = max(0, min(n - 1, int(round(p / 100.0 * (n - 1)))))
+            return sorted_bt[idx]
+        mc_at_bt = {
+            "trials": n,
+            "at_bt": target_bt,
+            "min": sorted_bt[0] if n else None,
+            "max": sorted_bt[-1] if n else None,
+            "median": sorted_bt[n // 2] if n else None,
+            "mean": (sum(sorted_bt) / n) if n else None,
+            "p5": _pct(5),
+            "p25": _pct(25),
+            "p75": _pct(75),
+            "p95": _pct(95),
+        }
+        real = out["real_damage"] or 0
+        if real and n:
+            mc_at_bt["real_in_p5_p95"] = mc_at_bt["p5"] <= real <= mc_at_bt["p95"]
+            mc_at_bt["real_vs_median_pct"] = (
+                (real - mc_at_bt["median"]) / mc_at_bt["median"] * 100.0
+                if mc_at_bt["median"] else None
+            )
+        out["mc"] = mc_at_bt
     return out
 
 
@@ -126,8 +185,20 @@ def format_summary(r):
     dp = r["delta_pct"]
     dp_s = f"{dp:+6.1f}%" if dp is not None else "   n/a "
     bt = r.get("compared_at_bt") or r["real_boss_turns"]
-    return (f"{r['fixture']}  {r['affinity']:<6}  "
+    base = (f"{r['fixture']}  {r['affinity']:<6}  "
             f"real={real:>11,}  sim={sim:>11,}  delta={dp_s}  @BT{bt}")
+    mc = r.get("mc") or {}
+    if mc and not mc.get("error"):
+        in_band = mc.get("real_in_p5_p95")
+        flag = "IN" if in_band else "OUT"
+        rv = mc.get("real_vs_median_pct")
+        rv_s = f"{rv:+6.1f}%" if rv is not None else "   n/a "
+        base += (f"  | MC[{mc.get('trials')}]"
+                 f" p5={int(round(mc.get('p5') or 0)):>11,}"
+                 f" med={int(round(mc.get('median') or 0)):>11,}"
+                 f" p95={int(round(mc.get('p95') or 0)):>11,}"
+                 f"  real{rv_s} vs med  ({flag})")
+    return base
 
 
 def main():
@@ -139,6 +210,11 @@ def main():
     ap.add_argument("--at-bt", type=int, default=None,
                     help="Compare sim damage at boss turn N (default: "
                          "fixture's real_boss_turns).")
+    ap.add_argument("--trials", type=int, default=0,
+                    help="Monte Carlo: run N stochastic trials and report "
+                         "distribution (p5/median/p95) + whether real "
+                         "damage falls in the 5-95 band. 0 = single "
+                         "deterministic run (default).")
     ap.add_argument("--verbose", "-v", action="store_true")
     args = ap.parse_args()
 
@@ -161,7 +237,8 @@ def main():
         print("Running sim...")
 
     result = replay_fixture(fixture, max_cb_turns=args.max_cb_turns,
-                            verbose=args.verbose, compare_at_bt=args.at_bt)
+                            verbose=args.verbose, compare_at_bt=args.at_bt,
+                            trials=args.trials)
 
     if args.json:
         print(json.dumps(result, indent=2))

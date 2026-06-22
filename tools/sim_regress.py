@@ -30,7 +30,7 @@ from sim_replay import replay_fixture, format_summary
 
 
 def run_regression(affinity_filter=None, max_cb_turns=50, min_real_bt=0,
-                   compare_at_bt=None):
+                   compare_at_bt=None, trials=0):
     manifest = load_manifest()
     if not manifest:
         return None, "No manifest. Run `tools/fixture_archive.py rebuild` first."
@@ -47,7 +47,8 @@ def run_regression(affinity_filter=None, max_cb_turns=50, min_real_bt=0,
     results = []
     for f in fixtures:
         t0 = time.time()
-        r = replay_fixture(f, max_cb_turns=max_cb_turns, compare_at_bt=compare_at_bt)
+        r = replay_fixture(f, max_cb_turns=max_cb_turns, compare_at_bt=compare_at_bt,
+                           trials=trials)
         r["wall_seconds"] = round(time.time() - t0, 2)
         results.append(r)
     return results, None
@@ -59,7 +60,7 @@ def print_per_fixture(results):
         print(f"  {format_summary(r)}  ({r.get('wall_seconds',0)}s)")
 
 
-def print_summary_table(results, gate_pct):
+def print_summary_table(results, gate_pct, mc_mode=False):
     by_aff = {}
     for r in results:
         if r.get("error"):
@@ -88,6 +89,27 @@ def print_summary_table(results, gate_pct):
         passing = sum(1 for d in deltas if abs(d) <= gate_pct)
         print(f"\nGate: +-{gate_pct}%  ->  {passing}/{len(deltas)} fixtures pass")
 
+    # MC-band stats: how many fixtures have real_damage within sim's
+    # 5-95th percentile MC distribution. This is the better metric when
+    # RNG variance dominates per-fixture delta (e.g. partial captures).
+    if mc_mode:
+        in_band_counts = {}
+        for aff in sorted(by_aff.keys()):
+            rs = by_aff[aff]
+            mc_rs = [r for r in rs if r.get("mc") and not (r.get("mc") or {}).get("error")]
+            in_band = sum(1 for r in mc_rs
+                          if (r.get("mc") or {}).get("real_in_p5_p95"))
+            if mc_rs:
+                in_band_counts[aff] = (in_band, len(mc_rs))
+        if in_band_counts:
+            print(f"\nMC band (real in 5-95th percentile):")
+            for aff, (inb, n) in sorted(in_band_counts.items()):
+                pct = (inb / n * 100.0) if n else 0
+                print(f"  {aff:<8} {inb}/{n} ({pct:.0f}%)")
+            tot_in = sum(v[0] for v in in_band_counts.values())
+            tot_n = sum(v[1] for v in in_band_counts.values())
+            print(f"  {'TOTAL':<8} {tot_in}/{tot_n} ({tot_in/tot_n*100:.0f}%)")
+
     errors = [r for r in results if r.get("error")]
     if errors:
         print(f"\n{len(errors)} fixture(s) errored:")
@@ -110,6 +132,11 @@ def main():
                     help="Compare every fixture at boss turn N. Default: each "
                          "fixture compared at its own real_boss_turns "
                          "(apples-to-apples for partial captures).")
+    ap.add_argument("--trials", type=int, default=0,
+                    help="Monte Carlo: run N stochastic trials per fixture. "
+                         "Adds MC distribution stats to per-fixture output "
+                         "and reports MC band coverage in summary. 0 = "
+                         "single deterministic run per fixture (default).")
     ap.add_argument("--json", metavar="PATH",
                     help="Write full results JSON to PATH.")
     ap.add_argument("--quiet", action="store_true",
@@ -117,7 +144,7 @@ def main():
     args = ap.parse_args()
 
     results, err = run_regression(args.affinity, args.max_cb_turns,
-                                   args.min_bt, args.at_bt)
+                                   args.min_bt, args.at_bt, trials=args.trials)
     if err:
         print(err)
         return 1
@@ -127,7 +154,7 @@ def main():
 
     if not args.quiet:
         print_per_fixture(results)
-    print_summary_table(results, args.gate)
+    print_summary_table(results, args.gate, mc_mode=(args.trials > 0))
 
     if args.json:
         Path(args.json).write_text(json.dumps(results, indent=2), encoding="utf-8")
