@@ -1515,15 +1515,22 @@ class CBSimulator:
                     if has_geo_burn:
                         atk_mult = CB_ATTACK_MULT.get(attack, CB_AOE_MULT)
                         per_ally_aoe = CB_ATK * atk_mult * dec_atk_mult
-                        living_allies = sum(1 for a in self.champions
-                                            if not a.is_dead)
+                        # Only count allies who actually TAKE the AOE damage
+                        # (BD absorbs 100% = no damage to deflect from). Per
+                        # game logic: "deflects damage" — if damage was
+                        # absorbed by BD, there's no damage to deflect.
+                        # Verified 2026-06-22: real Geo deflect ≈ 182K/cap,
+                        # sim was 619K/cap (3.4x over) because sim counted
+                        # all 5 living allies regardless of BD protection.
+                        # MEN team has BD coverage ~50%+ on Magic so this
+                        # halves real deflect.
+                        unprotected_allies = sum(
+                            1 for a in self.champions
+                            if not a.is_dead and not a.has_buff("block_damage")
+                        )
                         # Base deflect: 15% of per-ally damage, summed
-                        # across allies. Multiplier from Geomancer Passive
-                        # skill 48805's `-0.15*DMG_MUL` ChangeDamageMultiplier
-                        # effect — the same -15% team-wide reduction
-                        # also produces a reflect proportional to the
-                        # damage avoided.
-                        base_deflect = per_ally_aoe * living_allies * buff_mult("strengthen_15", 0.15)
+                        # across UNPROTECTED allies only.
+                        base_deflect = per_ally_aoe * unprotected_allies * buff_mult("strengthen_15", 0.15)
                         # Reflect bonus: skill 48805's `'0.03*TRG_HP'`
                         # PassiveReflectDamage path, capped at 75K (CB
                         # DoT cap from skill 200008). 2026-06-22:
