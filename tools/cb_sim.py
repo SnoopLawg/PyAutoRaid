@@ -1114,6 +1114,13 @@ class CBSimulator:
 
     def _cb_turn(self, tick: int):
         self.cb_tm -= TM_THRESHOLD
+        # Determine attack BEFORE Smite check below — Smite only fires
+        # on aoe1/aoe2 in real game, NOT stun. Verified 2026-06-22 via
+        # 5 Magic BT15 captures: Smite damages aligned with boss
+        # aoe1/aoe2 timing only; stun turns were skipped. Sim was
+        # firing on every boss action = ~50% over-attribution per
+        # placement (extra stun proc).
+        _attack_for_smite = self.cb_pattern[(self.cb_turn) % 3]
 
         # Speed-Division dragging-effect: per Speedology 201, real game
         # grants every live champion +1 hero turn per ~8 boss turns
@@ -1140,7 +1147,9 @@ class CBSimulator:
         # the cap so observed damage = 250K flat.
         if self.smite_turns_left > 0 and self.smite_holder:
             holder = next((c for c in self.champions if c.name == self.smite_holder), None)
-            if holder is not None and not holder.is_dead:
+            # Smite only fires on aoe1/aoe2 — NOT stun (empirical from
+            # Magic BT15 captures 2026-06-22).
+            if holder is not None and not holder.is_dead and _attack_for_smite != "stun":
                 holder.damage.passive += self.SMITE_CAP_DMG
             self.smite_turns_left -= 1
 
