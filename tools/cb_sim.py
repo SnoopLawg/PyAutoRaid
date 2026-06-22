@@ -1162,24 +1162,26 @@ class CBSimulator:
         # skipped despite being Group=Active.
         _attack_for_smite = self.cb_pattern[(self.cb_turn) % 3]
 
-        # Speed-Division dragging-effect: real game's PvE team-tie-break
-        # gives heroes a small advantage over naive Speed-Division math.
-        # Modeled as boss effective TM rate ~3% slower per cycle.
+        # No static dragging constant. The sim's actor-pick logic in the
+        # main schedule loop already implements the game-truth PvE
+        # tie-break ("team wins TM-tie vs boss" via the strict-greater
+        # `cb_tm > top_champ.tm` check). Any team-wide dragging effect
+        # should emerge naturally from that and per-hero TM mechanics
+        # (Cycle of Magic CD-reduce, A1 self-TM, set/mastery procs).
         #
-        # Calibration history: Speedology 201's "+1 hero turn per 8 BT"
-        # claim (≈12.5%) led to 0.11 which over-predicted by +20pp on
-        # Force. Root cause was actually the SimChampion.element
-        # default-to-Void bug (project_sim_element_bug_fix) hiding the
-        # affinity-damage gate. With element fixed, the residual dragging
-        # effect is closer to 3% — verified 2026-06-22 by sweep across
-        # drag={0.03..0.09} on 70-fixture regression:
-        #   0.03: Force +1.6%, Magic +0.2%, 34/70 pass   <- optimum
-        #   0.05: Force +0.5%, Magic +5.0%, 30/70 pass
-        #   0.07: Force +4.3%, Magic +8.7%, 32/70 pass
-        #   0.09: Force +8.2%, Magic +12.9%, 21/70 pass
-        # The 12.5% claim is mod-community lore, not game-truth. Replace
-        # with a proper tie-break model when bandwidth permits.
-        self.cb_tm -= TM_THRESHOLD * 0.03
+        # History: a `cb_tm -= TM_THRESHOLD * X` static drag was added
+        # 2026-06-22 at X=0.11 ("Speedology 201"), then re-tuned to 0.03
+        # after the SimChampion.element default-to-Void bug
+        # (project_sim_element_bug_fix) was fixed. Both are magic
+        # constants that mask team-specific TM mismodeling — they don't
+        # generalize to comps the team explorer surfaces.
+        #
+        # Removing the drag exposes ~3-5% Force AVG under-prediction
+        # rooted in a separately-tracked unmodeled mechanism: Mane
+        # shows +18% effective TM vs displayed SPD in real game (per
+        # project_real_game_21_tick_cycle). That's the real bug to
+        # solve — investigate the missing TM source rather than
+        # continuing to patch via boss slowdown.
 
         self.cb_turn += 1
         attack = self.cb_pattern[(self.cb_turn - 1) % 3]
