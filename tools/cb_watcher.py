@@ -127,10 +127,13 @@ def snapshot_battle_log(snapshot_dir, tag):
 def _hero_trace_row(h):
     """Compact per-hero state for the poll trace. Captures the fields
     that matter for death-sequence analysis (hp_cur, hp_pct, dmg_taken,
-    turn_n, can_atk) without dragging in mods/sk/eff. `element` is
-    included so fixture_archive can recover boss affinity from the
-    trace alone."""
-    return {
+    turn_n, can_atk) plus in-battle buffs/debuffs and CB-relevant
+    counters (uk_saved, ctr, abs) for cycle-timing analysis.
+
+    Schema of buffs/debuffs (per the mod): list of {t: type_id,
+    d: turns_remaining, src: source_hero_id}. Empty lists/null fields
+    are omitted to keep the trace small."""
+    row = {
         "id": h.get("id"),
         "type_id": h.get("type_id"),
         "element": h.get("element"),
@@ -142,6 +145,16 @@ def _hero_trace_row(h):
         "can_atk": h.get("can_atk"),
         "tm": h.get("tm"),
     }
+    # Only include buff/debuff/counter fields when non-empty
+    for key in ("buffs", "debuffs"):
+        val = h.get(key)
+        if val:
+            row[key] = val
+    for key in ("uk_saved", "ctr", "abs"):
+        val = h.get(key)
+        if val is not None:
+            row[key] = val
+    return row
 
 
 def append_poll_trace(trace_path, poll_n, ts, bs):
