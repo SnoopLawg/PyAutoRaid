@@ -1115,20 +1115,19 @@ class CBSimulator:
     def _cb_turn(self, tick: int):
         self.cb_tm -= TM_THRESHOLD
 
-        # Speed-Division dragging-effect bonus. Per RSL Speedology 201
-        # (MaxMeng77) and verified 2026-06-21 across 10 BT19 fixtures:
-        # real game grants every live champion +1 hero turn per ~8 boss
-        # turns vs naive Speed-Division math. The mechanism is the
-        # PvE team-tie-break: cumulatively across the team, boss loses
-        # enough tie-break events to be effectively ~11% slower than
-        # naive SD predicts. Equivalent implementation: grant each
-        # champion a small TM bonus per boss action = threshold/8.
-        # After 8 boss turns, each champ has accumulated +1 full turn
-        # worth of TM. See project_sim_sd_dragging_underprediction.
-        drag_bonus = TM_THRESHOLD / 8.0
-        for c in self.champions:
-            if not c.is_dead:
-                c.tm += drag_bonus
+        # Speed-Division dragging-effect: per Speedology 201, real game
+        # grants every live champion +1 hero turn per ~8 boss turns
+        # vs naive Speed-Division math. Modeled mechanistically as boss
+        # effective TM rate ~11% slower (loses enough tie-break events
+        # cumulatively to drag into a slower division). This is closer
+        # to true dragging than the prior "TM += threshold/8 per BT to
+        # all champs" approach — that bumped hero TM at boss-action
+        # timing which broke UK/BD refresh cadence. Slowing boss
+        # preserves the cycle phase relationships.
+        # Implementation: extra cb_tm subtraction = boss starts deeper
+        # in the hole next cycle, taking ~11% more ticks to reach
+        # threshold again.
+        self.cb_tm -= TM_THRESHOLD * 0.11
 
         self.cb_turn += 1
         attack = self.cb_pattern[(self.cb_turn - 1) % 3]
