@@ -2158,6 +2158,12 @@ class CBSimulator:
         # Proc rates + damage caps come from the mastery manifest (facade)
         # so a future game patch flows in via re-running
         # extract_mastery_manifest.py rather than editing constants.
+        #
+        # Glance gating (game-truth verified 2026-06-22 via static skill
+        # 500161): WM's Relation.ActivateOnGlancingHit=false, so weak-
+        # affinity casters' procs are gated by the 35% glance rate.
+        # Same condition on GS (500163). Heroes attacking neutral/strong/
+        # void targets glance 0% — full proc rate applies.
         _f = _facade()
         if _f is not None:
             wm_proc = _f.mastery.warmaster_proc() or {}
@@ -2170,19 +2176,27 @@ class CBSimulator:
             gs_rate, wm_rate, gs_dmg, wm_dmg = (
                 GS_PROC_RATE, WM_PROC_RATE, GS_DMG, WM_DMG)
 
+        is_weak = (champ.element in (1, 2, 3) and self.cb_element in (1, 2, 3)
+                   and WEAK_AFFINITY.get(champ.element) == self.cb_element)
+
         if self.deterministic:
+            glance_attenuation = (1.0 - WEAK_HIT_GLANCE_CHANCE) if is_weak else 1.0
             if champ.has_gs:
-                return hit_count * gs_rate * gs_dmg
+                return hit_count * gs_rate * gs_dmg * glance_attenuation
             elif champ.has_wm:
-                return wm_rate * wm_dmg
+                return wm_rate * wm_dmg * glance_attenuation
             return 0
         else:
             dmg = 0
             if champ.has_gs:
                 for _ in range(hit_count):
+                    if is_weak and self.rng.random() < WEAK_HIT_GLANCE_CHANCE:
+                        continue  # glance: no proc
                     if self.rng.random() < gs_rate:
                         dmg += gs_dmg
             elif champ.has_wm:
+                if is_weak and self.rng.random() < WEAK_HIT_GLANCE_CHANCE:
+                    return 0
                 if self.rng.random() < wm_rate:
                     dmg += wm_dmg
             return dmg
