@@ -3189,7 +3189,8 @@ def evaluate_team_calibrated(hero_names: List[str], cb_element: int = 4,
             opening = _dup_opener_for(tname, _opener_dup_count[tname])
         champ = build_sim_champion(tname, stats, i + 1,
                                     masteries=team_h[i].get("masteries", []),
-                                    opening=opening)
+                                    opening=opening,
+                                    element=int(team_h[i].get("element", 4) or 4))
         # Apply preset skill priority when the user has one set
         # (else SimChampion uses default-AI ordering A3>A2>A1).
         priority = plan.get("priority") or []
@@ -3830,7 +3831,8 @@ def main():
             opening = _dup_opener_for(tname, _opener_dup_count[tname])
         champ = build_sim_champion(tname, stats, i + 1,
                                     masteries=team_h[i].get("masteries", []),
-                                    opening=opening)
+                                    opening=opening,
+                                    element=int(team_h[i].get("element", 4) or 4))
         sim_champs.append(champ)
         print(f"  {tname:20s} SPD:{stats[SPD]:.0f} ACC:{stats[ACC]:.0f} ATK:{stats[ATK]:.0f} DEF:{stats[DEF]:.0f}")
 
