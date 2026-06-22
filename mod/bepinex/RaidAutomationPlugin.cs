@@ -294,38 +294,146 @@ namespace RaidAutomation
                 // its primary HTTP API surface (navigation, context-call,
                 // resources, view-contexts, etc.) — only loses per-
                 // damage-event hooks during battle.
-                bool _ENABLE_BATTLE_PROCESSOR_HOOKS = false;
-                if (_ENABLE_BATTLE_PROCESSOR_HOOKS)
-                {
-                foreach (var (typeName, hookSuffix) in new[] {
-                    ("SharedModel.Battle.Core.Skill.EffectProcessing.Processors.DamageProcessor", "DamageChange"),
-                    ("SharedModel.Battle.Core.Skill.EffectProcessing.Processors.ApplyStatusEffectProcessor", "ApplyStatus"),
-                    ("SharedModel.Battle.Core.Skill.EffectProcessing.Processors.RemoveStatusEffectsProcessor", "RemoveStatus"),
-                    ("SharedModel.Battle.Core.Skill.EffectProcessing.Processors.ChangeAppliedEffectDurationProcessor", "DurationChange"),
+                // Per-hook enable: DamageChange is heavy (Marshal pointer walks)
+                // and crashed at battle teardown 2026-05. Others are safe — they
+                // just dump basic args and don't follow pointers. Enabling
+                // ApplyStatus/RemoveStatus/DurationChange gives per-event
+                // visibility into buff/debuff resolution (blocked, resisted,
+                // applied) without the dangerous pointer walks.
+                // 2026-06-22: re-enabling for per-source damage attribution
+                // research. Will run watcher pattern so battle-teardown crash
+                // = Raid killed = CB key preserved. If stable, leaves it on.
+                bool _ENABLE_DAMAGE_HOOK = true;
+                bool _ENABLE_STATUS_HOOKS = true;
+                // ChangeStaminaProcessor.Process can't be patched via Harmony
+                // (Il2CppInterop class-pointer-store init throws). Leaving the
+                // Process-method entry disabled; instead the private static
+                // ChangeStamina(EffectContext, Fixed) helper is patched below
+                // via a separate code path.
+                bool _ENABLE_STAMINA_HOOK = false;
+                foreach (var (typeName, hookSuffix, enabled) in new[] {
+                    ("SharedModel.Battle.Core.Skill.EffectProcessing.Processors.DamageProcessor", "DamageChange", _ENABLE_DAMAGE_HOOK),
+                    ("SharedModel.Battle.Core.Skill.EffectProcessing.Processors.ApplyStatusEffectProcessor", "ApplyStatus", _ENABLE_STATUS_HOOKS),
+                    ("SharedModel.Battle.Core.Skill.EffectProcessing.Processors.RemoveStatusEffectsProcessor", "RemoveStatus", _ENABLE_STATUS_HOOKS),
+                    ("SharedModel.Battle.Core.Skill.EffectProcessing.Processors.ChangeAppliedEffectDurationProcessor", "DurationChange", _ENABLE_STATUS_HOOKS),
+                    // ChangeStaminaProcessor handles IncreaseStamina + ReduceStamina effects (Category:InstantBuff).
+                    // Ninja A1 effect[2] (+15% TM on hit boss) flows through here. The apply_status hook above
+                    // doesn't capture InstantBuff effects — this fills the gap.
+                    ("SharedModel.Battle.Core.Skill.EffectProcessing.Processors.ChangeStaminaProcessor", "ChangeStamina", _ENABLE_STAMINA_HOOK),
                 })
                 {
+                    if (!enabled) { lock (_hookPatchLog) { _hookPatchLog.Add(hookSuffix + ":disabled"); } continue; }
                     try
                     {
-                        var t = FindTypeStatic(typeName);
+                        // Try FindTypeStatic first. If that throws (some IL2CPP types
+                        // aren't registered in Il2CppInterop's ClassPointerStore — e.g.
+                        // ChangeStaminaProcessor), fall back to AppDomain assembly scan
+                        // by short name.
+                        Type t = null;
+                        try { t = FindTypeStatic(typeName); }
+                        catch
+                        {
+                            string shortName = typeName.Substring(typeName.LastIndexOf('.') + 1);
+                            foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
+                            {
+                                try
+                                {
+                                    foreach (var ty in asm.GetTypes())
+                                    {
+                                        if (ty.Name == shortName && ty.FullName == typeName)
+                                        {
+                                            t = ty; break;
+                                        }
+                                    }
+                                }
+                                catch { }
+                                if (t != null) break;
+                            }
+                        }
                         if (t == null) { lock (_hookPatchLog) { _hookPatchLog.Add(hookSuffix + ":type_not_found"); } continue; }
                         var procM = t.GetMethod("Process", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
                         if (procM == null) { lock (_hookPatchLog) { _hookPatchLog.Add(hookSuffix + ":no_Process"); } continue; }
                         var postfix = new HarmonyMethod(typeof(RaidAutomationPlugin)
                             .GetMethod("BattleHook_" + hookSuffix, BindingFlags.Static | BindingFlags.Public));
                         if (postfix.method == null) { lock (_hookPatchLog) { _hookPatchLog.Add(hookSuffix + ":no_postfix_method"); } continue; }
-                        harmony.Patch(procM, postfix: postfix);
-                        int argc = procM.GetParameters().Length;
-                        lock (_hookPatchLog) { _hookPatchLog.Add(hookSuffix + ":patched(argc=" + argc + ")"); }
-                        Logger.LogInfo("Harmony: patched " + hookSuffix);
+                        try
+                        {
+                            harmony.Patch(procM, postfix: postfix);
+                            int argc = procM.GetParameters().Length;
+                            lock (_hookPatchLog) { _hookPatchLog.Add(hookSuffix + ":patched(argc=" + argc + ")"); }
+                            Logger.LogInfo("Harmony: patched " + hookSuffix);
+                        }
+                        catch (Exception patchEx)
+                        {
+                            var pi = patchEx.InnerException != null ? patchEx.InnerException.Message : "";
+                            lock (_hookPatchLog) { _hookPatchLog.Add(hookSuffix + ":patch_err:" + patchEx.GetType().Name + ":" + patchEx.Message + (pi.Length > 0 ? "|inner:" + pi : "")); }
+                            // Continue to next hook attempt; this one couldn't be patched.
+                        }
                     }
-                    catch (Exception ex) { lock (_hookPatchLog) { _hookPatchLog.Add(hookSuffix + ":err:" + ex.Message); } }
+                    catch (Exception ex)
+                    {
+                        var inner = ex.InnerException != null ? ex.InnerException.Message : "";
+                        lock (_hookPatchLog) { _hookPatchLog.Add(hookSuffix + ":err:" + ex.GetType().Name + ":" + ex.Message + (inner.Length > 0 ? "|inner:" + inner : "")); }
+                    }
                 }
-                }
-                else
+
+                // DO NOT TRY TO HOOK ChangeStaminaProcessor — even FAILED patch
+                // attempts trigger the C# cctor which THROWS (no LogManager configured)
+                // and the failure gets CACHED. After that, when the game's
+                // BattleProcessor.ApplyCommand invokes EffectManager (which routes to
+                // ChangeStaminaProcessor), the cached cctor failure makes the entire
+                // command throw → battle aborts with an "ERROR" MessageBox →
+                // CB battles silently fail.
+                //
+                // Confirmed 2026-06-18: prior attempts to hook this class made CB
+                // battles unrunnable until Raid was relaunched. Even then the issue
+                // returned on subsequent attempts.
+                //
+                // To re-enable: need NativeDetour-style patching that bypasses the
+                // C# class system entirely.
+                lock (_hookPatchLog) { _hookPatchLog.Add("ChangeStaminaStatic:permanently_disabled_breaks_game"); }
+
+                // Sanity check: try patching ChangeStatForEffectProcessor — a sibling
+                // class with the same Process(EffectContext) signature, no static
+                // ISharedLog field. If THIS works, the ISharedLog field is the cause
+                // of ChangeStaminaProcessor's failure. If it ALSO fails, the issue is
+                // something deeper in Il2CppInterop.
+                try
                 {
-                    lock (_hookPatchLog) { _hookPatchLog.Add("battle_processor_hooks:DISABLED_for_crash_isolation"); }
-                    Logger.LogInfo("Harmony: battle processor hooks DISABLED for crash isolation");
+                    var t = FindTypeStatic("SharedModel.Battle.Core.Skill.EffectProcessing.Processors.ChangeStatForEffectProcessor");
+                    if (t != null)
+                    {
+                        var procM = t.GetMethod("Process", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                        if (procM != null)
+                        {
+                            var postfix = new HarmonyMethod(typeof(RaidAutomationPlugin)
+                                .GetMethod("BattleHook_ChangeStatForEffect", BindingFlags.Static | BindingFlags.Public));
+                            if (postfix.method != null)
+                            {
+                                try
+                                {
+                                    harmony.Patch(procM, postfix: postfix);
+                                    lock (_hookPatchLog) { _hookPatchLog.Add("ChangeStatForEffect:patched"); }
+                                }
+                                catch (Exception px)
+                                {
+                                    var pi = px.InnerException != null ? px.InnerException.Message : "";
+                                    lock (_hookPatchLog) { _hookPatchLog.Add("ChangeStatForEffect:patch_err:" + px.Message + (pi.Length > 0 ? "|inner:" + pi : "")); }
+                                }
+                            }
+                        }
+                    }
                 }
+                catch (Exception ex) { lock (_hookPatchLog) { _hookPatchLog.Add("ChangeStatForEffect:err:" + ex.Message); } }
+
+                // DO NOT TRY TO HOOK EffectManager — same cctor failure mode as
+                // ChangeStaminaProcessor. The cached failure breaks
+                // BattleProcessor.ApplyCommand → all battles abort. Confirmed
+                // 2026-06-18 via BepInEx log:
+                //   System.TypeInitializationException: ChangeStaminaProcessor
+                //   ---> LogManager of shared model should be configured
+                //   at DMD<BattleProcessor::ApplyCommand>
+                lock (_hookPatchLog) { _hookPatchLog.Add("EffectManagerProcess:permanently_disabled_breaks_game"); }
 
                 // DamageReductionByDefence + Fixed.op_Subtraction hooks
                 // were used to extract the literal DEF mitigation formula
@@ -371,6 +479,33 @@ namespace RaidAutomation
                     else { lock (_hookPatchLog) { _hookPatchLog.Add("OpenStageCmdCtor:type_not_found"); } }
                 }
                 catch (Exception ex) { lock (_hookPatchLog) { _hookPatchLog.Add("OpenStageCmdCtor:err:" + ex.Message); } }
+
+                // Diagnostic hook — log every cmd that goes through
+                // CmdQueue.Enqueue so we can see what the UI fires vs
+                // what our context-call dispatch fires. Goal: find the
+                // missing cmd that makes Arena/CB StartBattle work via
+                // UI but not via /context-call StartBattle.
+                try
+                {
+                    var cqType = FindTypeStatic("Client.Model.Network.GameServer.CmdQueueLogic.CmdQueue");
+                    if (cqType != null)
+                    {
+                        var enq = cqType.GetMethod("Enqueue", BindingFlags.Public | BindingFlags.Instance);
+                        if (enq != null)
+                        {
+                            var postfix = new HarmonyMethod(typeof(RaidAutomationPlugin)
+                                .GetMethod("CmdHook_Enqueue", BindingFlags.Static | BindingFlags.Public));
+                            if (postfix.method != null)
+                            {
+                                harmony.Patch(enq, postfix: postfix);
+                                Logger.LogInfo("Harmony: patched CmdQueue.Enqueue");
+                                lock (_hookPatchLog) { _hookPatchLog.Add("CmdQueue.Enqueue:patched"); }
+                            }
+                        }
+                    }
+                    else { lock (_hookPatchLog) { _hookPatchLog.Add("CmdQueue:type_not_found"); } }
+                }
+                catch (Exception ex) { lock (_hookPatchLog) { _hookPatchLog.Add("CmdQueue.Enqueue:err:" + ex.Message); } }
 
                 Logger.LogInfo("Harmony initialized");
             }
@@ -573,13 +708,73 @@ namespace RaidAutomation
                     "/preset-deep" => RunOnMainThread(() => PresetDeepDump(QP(query, "id")), 15000),
                     "/name-limits" => RunOnMainThread(() => GetPresetNameLimits(), 5000),
                     "/apply-preset" => RunOnMainThread(() => ApplyPreset(QP(query, "id")), 15000),
+                    "/cb-quick-battle" => RunOnMainThread(() => CbQuickBattle(QP(query, "value")), 10000),
+                    "/hero-fragments" => RunOnMainThread(() => GetHeroFragments(QP(query, "type")), 15000),
                     "/set-dungeon-difficulty" => RunOnMainThread(() => SetDungeonDifficulty(QP(query, "hard")), 10000),
                     "/events" => RunOnMainThread(() => GetEvents(), 15000),
                     "/cvc-multipliers" => RunOnMainThread(() => GetCvcMultipliers(), 15000),
                     "/super-raid" => RunOnMainThread(() => SuperRaid(QP(query, "action")), 15000),
-                    "/event-progress" => RunOnMainThread(() => GetEventProgress(), 10000),
+                    "/event-progress" => RunOnMainThread(() => GetEventProgress(), 15000),
+                    "/event-rewards" => RunOnMainThread(() => GetEventRewards(), 15000),
                     "/apply-blessing" => RunOnMainThread(() => ApplyBlessing(QP(query, "hero_id"), QP(query, "blessing_id")), 15000),
+                    "/user-relics" => RunOnMainThread(() => GetUserRelics(), 30000),
+                    "/hero-blessings" => RunOnMainThread(() => GetHeroBlessings(), 30000),
+                    "/relic-upgrade-prices" => RunOnMainThread(() => GetRelicUpgradePrices(), 30000),
+                    "/ascend-prices" => RunOnMainThread(() => GetAscendPrices(), 30000),
+                    "/daily-reset-times" => RunOnMainThread(() => GetDailyResetTimes(), 15000),
+                    "/clan-boss" => RunOnMainThread(() => GetClanBossLeaderboard(), 30000),
+                    "/cmd-history" => RunOnMainThread(() => GetCmdHistory(QP(query, "since"), QP(query, "clear")), 5000),
                     "/rank-up" => RunOnMainThread(() => RankUpHero(QP(query, "hero_id"), QP(query, "food")), 30000),
+                    "/claim-daily-collect" => RunOnMainThread(() => ClaimDailyCollect(), 60000),
+                    "/claim-clan-checkin" => RunOnMainThread(() => ClaimByZeroArgCmd("Client.Model.Gameplay.Alliance.Commands.AllianceCheckInCmd"), 15000),
+                    "/claim-gem-mine" => RunOnMainThread(() => ClaimByZeroArgCmd("Client.Model.Gameplay.Village.Commands.CollectGemsFromMineCmd"), 15000),
+                    "/claim-playtime-rewards" => RunOnMainThread(() => ClaimSessionChestRewards(false), 15000),
+                    "/claim-pp-rewards" => RunOnMainThread(() => ClaimSessionChestRewards(true), 15000),
+                    "/list-playtime-state" => RunOnMainThread(() => ListPlaytimeState(), 15000),
+                    "/claim-daily-program" => RunOnMainThread(() => Claim14DaysProgram(), 15000),
+                    "/list-static-offers" => RunOnMainThread(() => ListStaticOffers(), 15000),
+                    "/list-give-offers" => RunOnMainThread(() => ListGiveOffers(), 15000),
+                    "/list-open-offers" => RunOnMainThread(() => ListOpenOffers(), 15000),
+                    "/list-all-offer-collections" => RunOnMainThread(() => ListAllOfferCollections(), 15000),
+                    "/list-static-catalog" => RunOnMainThread(() => ListStaticCatalog(), 15000),
+                    "/claim-free-shop-offers" => RunOnMainThread(() => ClaimFreeShopOffers(), 30000),
+                    "/claim-free-give-offers" => RunOnMainThread(() => ClaimFreeGiveOffers(), 30000),
+                    "/claim-free-shop-by-onclick" => RunOnMainThread(() => ClaimFreeShopByOnClick(), 30000),
+                    "/list-inbox" => RunOnMainThread(() => ListInbox(), 15000),
+                    "/claim-inbox" => RunOnMainThread(() => ClaimInbox(), 30000),
+                    "/claim-inbox-onclick" => RunOnMainThread(() => ClaimInboxByOnClick(), 60000),
+                    "/diag-inbox-cmd" => RunOnMainThread(() => DiagInboxCmd(QP(query, "id")), 15000),
+                    "/claim-inbox-il2cpp" => RunOnMainThread(() => ClaimInboxIL2Cpp(QP(query, "id")), 30000),
+                    "/claim-cb-chests" => RunOnMainThread(() => ClaimCbChests(), 60000),
+                    "/summon-heroes" => RunOnMainThread(() => SummonHeroes(QP(query, "type"), QP(query, "count")), 60000),
+                    "/upgrade-junk-artifacts" => RunOnMainThread(() => UpgradeJunkArtifacts(QP(query, "count")), 60000),
+                    "/upgrade-artifact" => RunOnMainThread(() => UpgradeArtifactToLevel(QP(query, "id"), QP(query, "to_level")), 60000),
+                    "/buy-static-offer" => RunOnMainThread(() => BuyStaticOffer(QP(query, "id")), 15000),
+                    "/list-static-offer-catalog" => RunOnMainThread(() => ListStaticOfferCatalog(), 15000),
+                    "/collect-loyalty-day" => RunOnMainThread(() => CollectLoyaltyDay(), 15000),
+                    "/start-cb-battle" => RunOnMainThread(() => StartCbBattle(QP(query, "boss"), QP(query, "heroes"), QP(query, "preset")), 15000),
+                    "/magic-shop" => RunOnMainThread(() => ListMagicShop(), 15000),
+                    "/magic-shop-buy" => RunOnMainThread(() => BuyMagicShopItem(QP(query, "id"), false), 30000),
+                    "/magic-shop-buy-cheapest" => RunOnMainThread(() => BuyMagicShopItem("", true), 30000),
+                    "/magic-shop-buy-via-ui" => RunOnMainThread(() => BuyMagicShopViaUi(QP(query, "slot")), 30000),
+                    "/messagebox-click" => RunOnMainThread(() => MessageBoxClick(QP(query, "index")), 15000),
+                    "/arena-set-autobattle" => RunOnMainThread(() => ArenaSetAutoBattle(QP(query, "on")), 15000),
+                    "/arena-opponents" => RunOnMainThread(() => GetArenaOpponents(), 15000),
+                    "/arena-refresh" => RunOnMainThread(() => ArenaRefreshOpponents(), 15000),
+                    "/level-up-hero" => RunOnMainThread(() => LevelUpHero(QP(query, "target"), QP(query, "food")), 30000),
+                    "/tavern-state" => RunOnMainThread(() => TavernState(), 15000),
+                    "/tavern-fire-levelup" => RunOnMainThread(() => TavernFireLevelUp(), 15000),
+                    "/tavern-select-main" => RunOnMainThread(() => TavernSelectMain(QP(query, "hero_id")), 15000),
+                    "/tavern-select-food" => RunOnMainThread(() => TavernSelectFood(QP(query, "ids")), 15000),
+                    "/tavern-invoke-private" => RunOnMainThread(() => TavernInvokePrivate(QP(query, "method")), 15000),
+                    "/tavern-force-main-hero" => RunOnMainThread(() => TavernForceMainHero(QP(query, "hero_id")), 15000),
+                    "/tavern-execute-command" => RunOnMainThread(() => TavernExecuteCommand(QP(query, "food"), QP(query, "prev_level")), 30000),
+                    "/level-up-hero-managed" => RunOnMainThread(() => LevelUpHeroManaged(QP(query, "target"), QP(query, "food")), 30000),
+                    "/level-up-hero-brews" => RunOnMainThread(() => LevelUpHeroBrews(QP(query, "target"), QP(query, "brews")), 30000),
+                    "/brew-counts" => RunOnMainThread(() => BrewCounts(), 15000),
+                    "/list-quests" => RunOnMainThread(() => ListClaimableQuests(), 15000),
+                    "/quests" => RunOnMainThread(() => ListQuestsRich(QP(query, "category")), 30000),
+                    "/claim-quests" => RunOnMainThread(() => ClaimQuests(), 30000),
                     "/skill-up" => RunOnMainThread(() => SkillUpHero(QP(query, "hero_id"), QP(query, "food"), QP(query, "books")), 30000),
                     "/move-heroes" => RunOnMainThread(() => MoveHeroes(QP(query, "dest"), QP(query, "ids")), 30000),
                     "/squad-current" => RunOnMainThread(() => SquadCurrent(), 10000),
@@ -588,7 +783,9 @@ namespace RaidAutomation
                     "/squad-remove" => RunOnMainThread(() => SquadRemove(QP(query, "hero_id")), 15000),
                     "/squad-clear" => RunOnMainThread(() => SquadClear(), 30000),
                     "/stage-history" => RunOnMainThread(() => StageHistory(), 30000),
-                    "/finish-edit-team" => RunOnMainThread(() => FinishEditTeam(), 15000),
+                    "/finish-edit-team" => RunOnMainThread(() => FinishEditTeam(QP(query, "stage_id")), 15000),
+                    "/tournament-points" => RunOnMainThread(() => GetTournamentPointsByStateId(), 15000),
+                    "/pull-stats" => RunOnMainThread(() => GetShardPullStats(), 15000),
                     "/open-stage" => RunOnMainThread(() => OpenStage(QP(query, "id")), 15000),
                     "/last-stage-id" => LastStageId(),
                     "/current-stage" => RunOnMainThread(() => CurrentStage(), 15000),
@@ -600,6 +797,9 @@ namespace RaidAutomation
                     "/set-preset-team" => RunOnMainThread(() => SetPresetTeam(QP(query, "id"), QP(query, "heroes")), 30000),
                     "/skill-texts" => RunOnMainThread(() => GetSkillTexts(QP(query, "hero_id"), QP(query, "min_grade")), 60000),
                     "/mastery-data" => RunOnMainThread(() => GetMasteryData(QP(query, "hero_id"))),
+                    "/mastery-info" => RunOnMainThread(() => GetMasteryInfo(QP(query, "id"), QP(query, "all")), 60000),
+                    "/localizer-keys" => RunOnMainThread(() => DumpLocalizerKeys(QP(query, "substr")), 30000),
+                    "/localizer-test" => RunOnMainThread(() => { var v = LocalizerLookup(QP(query, "key")); return "{\"key\":\"" + Esc(QP(query, "key")) + "\",\"value\":\"" + Esc(v) + "\"}"; }, 15000),
                     "/open-mastery" => RunOnMainThread(() => OpenMastery(QP(query, "hero_id"), QP(query, "mastery_id")), 30000),
                     "/reset-masteries" => RunOnMainThread(() => ResetMasteries(QP(query, "hero_id")), 30000),
                     "/battle-state" => RunOnMainThread(() => GetBattleState(), 15000),
@@ -629,6 +829,8 @@ namespace RaidAutomation
                     "/view-contexts" => RunOnMainThread(() => GetViewContexts(QP(query, "path"))),
                     "/invoke-context" => RunOnMainThread(() => InvokeOnContext(QP(query, "type"), QP(query, "method"))),
                     "/invoke-static" => RunOnMainThread(() => InvokeStaticMethod(QP(query, "type"), QP(query, "method"))),
+                    "/overlay-state" => RunOnMainThread(() => GetOverlayState()),
+                    "/overlay-close-all" => RunOnMainThread(() => CloseAllOverlays()),
                     "/list-static-methods" => ListStaticMethods(QP(query, "type"), QP(query, "filter")),
                     "/static-field" => RunOnMainThread(() => GetStaticField(QP(query, "type"), QP(query, "name"), QP(query, "depth")), 30000),
                     "/effect-kind-group" => RunOnMainThread(() => GetEffectKindGroup(QP(query, "group")), 30000),
@@ -712,14 +914,45 @@ namespace RaidAutomation
             if (obj == null) return null;
             var t = obj.GetType();
             // Try property first (standard managed access).
-            var p = t.GetProperty(name);
+            PropertyInfo p = null;
+            try { p = t.GetProperty(name); }
+            catch (System.Reflection.AmbiguousMatchException) {
+                // Derived hides base via `new` — walk most-derived → base.
+                for (var cur = t; cur != null && p == null; cur = cur.BaseType) {
+                    try {
+                        p = cur.GetProperty(name,
+                            BindingFlags.Public | BindingFlags.NonPublic |
+                            BindingFlags.Instance | BindingFlags.DeclaredOnly);
+                    } catch { }
+                }
+            }
+            if (p == null) {
+                // Protected/internal property — walk hierarchy with NonPublic.
+                for (var cur = t; cur != null && p == null; cur = cur.BaseType) {
+                    try {
+                        p = cur.GetProperty(name,
+                            BindingFlags.Public | BindingFlags.NonPublic |
+                            BindingFlags.Instance | BindingFlags.DeclaredOnly);
+                    } catch { }
+                }
+            }
             if (p != null)
             {
                 try { return p.GetValue(obj); } catch { }
             }
             // Fallback to field — IL2CPP types like DamageResult expose Amount
             // as a public field, not a property, so GetProperty alone misses it.
-            var f = t.GetField(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+            FieldInfo f = null;
+            try { f = t.GetField(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance); }
+            catch (System.Reflection.AmbiguousMatchException) {
+                for (var cur = t; cur != null && f == null; cur = cur.BaseType) {
+                    try {
+                        f = cur.GetField(name,
+                            BindingFlags.Public | BindingFlags.NonPublic |
+                            BindingFlags.Instance | BindingFlags.DeclaredOnly);
+                    } catch { }
+                }
+            }
             if (f != null)
             {
                 try { return f.GetValue(obj); } catch { }
@@ -1785,10 +2018,34 @@ namespace RaidAutomation
                         "AbsorbedByBlockDamage", "DefenceModifier",
                         "CriticalHitChance", "GlancingHitChance", "CrushingHitChance",
                         "ElementRelation", "GlanceReason", "MultiplierValuePositive",
-                        "Accuracy", "Resistance", "BaseAccuracy", "ApplyResult",
+                        "Accuracy", "Resistance", "BaseAccuracy",
                         "ApplyFailReason", "IsGuaranteedBlocked",
                         "Amount",
                     });
+                    // ApplyResult: read directly from ApplyContext memory at +0x30
+                    // (Nullable<bool> inline: hasValue@+0x30, value@+0x31). The boxed
+                    // Nullable<bool> returned by .ApplyResult property accessor has
+                    // value byte always zeroed by IL2Cpp marshalling — empirical
+                    // diagnostic dump on 351 events showed 01-00-00-00-00-00-00-00.
+                    if (sub == "ApplyContext")
+                    {
+                        try
+                        {
+                            if (subCtx is Il2CppSystem.Object ctxObj)
+                            {
+                                var ctxPtr = ctxObj.Pointer;
+                                if (ctxPtr != IntPtr.Zero)
+                                {
+                                    byte hv = Marshal.ReadByte(ctxPtr, 0x30);
+                                    byte vv = Marshal.ReadByte(ctxPtr, 0x31);
+                                    string ar = (hv == 0) ? "null"
+                                                : (vv != 0 ? "true" : "false");
+                                    sb.Append(",\"ApplyResult\":").Append(ar);
+                                }
+                            }
+                        }
+                        catch { }
+                    }
                     // For ApplyContext: also pull the nested AppliedEffect details
                     // (EffectTypeId, TurnLeft, ProducerId, SkillTypeId, Lifetime)
                     if (sub == "ApplyContext")
@@ -1884,8 +2141,70 @@ namespace RaidAutomation
                         continue;
                     }
                     catch { }
-                    // String / enum
+                    // String / enum / IL2CPP Nullable<T>
                     var s = v.ToString();
+                    // IL2CPP Nullable<bool> / Nullable<int> appears as
+                    // "Il2CppSystem.Nullable`1[System.Boolean]" via ToString.
+                    // The standard .Value/.HasValue/GetValueOrDefault return 0
+                    // (verified in project_il2cpp_nullable_enum.md). Read the
+                    // raw memory at Pointer offset 16 to get the underlying
+                    // value, and check the byte at offset 8 for HasValue.
+                    if (s != null && s.Contains("Nullable"))
+                    {
+                        try
+                        {
+                            // Proven pattern (NullableEnumInt @ StaticData.cs):
+                            // HasValue reflection works correctly for the bool flag,
+                            // but Value getter returns 0 due to IL2Cpp marshaling.
+                            // Read the value directly from native memory at offset 16.
+                            var vt = v.GetType();
+                            var hvProp = vt.GetProperty("HasValue");
+                            bool hasVal = false;
+                            if (hvProp != null)
+                            {
+                                var hvv = hvProp.GetValue(v);
+                                hasVal = hvv is bool hb && hb;
+                            }
+                            if (!hasVal)
+                            {
+                                sb.Append(",\"" + fieldName + "\":null");
+                                continue;
+                            }
+                            var ptrProp = vt.GetProperty("Pointer");
+                            if (ptrProp != null && ptrProp.GetValue(v) is IntPtr ptr && ptr != IntPtr.Zero)
+                            {
+                                // Empirical: for Nullable<TEnum/int> the int VALUE
+                                // is at boxed offset 16 (verified BlessingTypeId
+                                // → 4101 in NullableEnumInt). For Nullable<bool>
+                                // the bool value is at +1 because the dump.cs
+                                // hasValue field occupies offset 16 (1 byte) and
+                                // the bool value is then at offset 17.
+                                if (s.Contains("Boolean"))
+                                {
+                                    // Boxed Nullable<bool> value byte is always 0
+                                    // due to IL2Cpp marshalling. Caller (e.g. the
+                                    // ApplyContext recurse path) reads the value
+                                    // directly from the parent object's memory.
+                                    // Here we emit null to signal "unread".
+                                    sb.Append(",\"" + fieldName + "\":null");
+                                    continue;
+                                }
+                                else if (s.Contains("Int32"))
+                                {
+                                    int val = Marshal.ReadInt32(ptr, 16);
+                                    sb.Append(",\"" + fieldName + "\":" + val);
+                                    continue;
+                                }
+                                else if (s.Contains("Fixed"))
+                                {
+                                    long rawL = Marshal.ReadInt64(ptr, 16);
+                                    sb.Append(",\"" + fieldName + "\":" + (rawL >> 32));
+                                    continue;
+                                }
+                            }
+                        }
+                        catch { }
+                    }
                     if (s != null && s.Length < 60) sb.Append(",\"" + fieldName + "\":\"" + Esc(s) + "\"");
                 }
                 catch { }
@@ -2611,6 +2930,121 @@ namespace RaidAutomation
             catch { }
         }
 
+        // Diagnostic counter for the new ChangeStamina hook.
+        private static int _hookDiag_ChangeStamina = 0;
+        private static int _hookDiag_ChangeStaminaStatic = 0;
+
+        // ChangeStaminaProcessor.Process(EffectContext cx) postfix.
+        // Captures IncreaseStamina + ReduceStamina effects (Category:InstantBuff).
+        // Specifically used to investigate why Ninja A1 effect[2] (+15% TM on hit
+        // boss) appears to fire inconsistently across affinities — see memory
+        // project_ninja_a1_tm_boost_affinity_diff.md.
+        //
+        // The hook is FIRED only if the Process method runs to completion. So
+        // a missing event = the effect was filtered out BEFORE processing.
+        // ApplyResult / ApplyFailReason on the context tells us whether the
+        // effect was actually applied (via ApplyContext at +0x30 / +0x31).
+        public static void BattleHook_ChangeStamina(object __instance, object[] __args)
+        {
+            _hookDiag_ChangeStamina++;
+            try
+            {
+                string ae = ExtractAppliedEffectFromCx(__args);
+                string entry = "{\"kind\":\"change_stamina\",\"tick\":" + _battleCommandCount + ae + ",\"args\":" + DumpEventArgs(__args ?? new object[0]) + "}";
+                lock (_tickLog) { if (_tickLog.Count < 20000) _tickLog.Add(entry); }
+            }
+            catch { }
+        }
+
+        // Sibling-class control hook: ChangeStatForEffectProcessor.Process. Same
+        // signature as ChangeStaminaProcessor but no static ISharedLog field. If
+        // this DOES patch and fire, the ISharedLog field is what blocks the
+        // ChangeStaminaProcessor patch.
+        private static int _hookDiag_ChangeStatForEffect = 0;
+        public static void BattleHook_ChangeStatForEffect(object __instance, object[] __args)
+        {
+            _hookDiag_ChangeStatForEffect++;
+            try
+            {
+                string ae = ExtractAppliedEffectFromCx(__args);
+                string entry = "{\"kind\":\"change_stat_for_effect\",\"tick\":" + _battleCommandCount + ae + "}";
+                lock (_tickLog) { if (_tickLog.Count < 20000) _tickLog.Add(entry); }
+            }
+            catch { }
+        }
+
+        // EffectManager.ProcessEffect postfix — central dispatch hook. Sees every
+        // effect application across every processor type. Dump producer/target and
+        // the effect description's KindId/TypeId to identify which effect fired.
+        private static int _hookDiag_EffectManagerProcess = 0;
+        public static void BattleHook_EffectManagerProcess(object[] __args)
+        {
+            _hookDiag_EffectManagerProcess++;
+            try
+            {
+                // __args: [BattleContext, SkillContext, EffectDescription, bool ignoreCondition]
+                // The EffectDescription has KindId / TypeId fields we want.
+                if (__args == null || __args.Length < 3) return;
+                int kindIdInt = -1;
+                int typeIdInt = -1;
+                try
+                {
+                    var desc = __args[2];
+                    if (desc != null)
+                    {
+                        var kid = Prop(desc, "KindId");
+                        if (kid != null) { try { kindIdInt = Convert.ToInt32(kid); } catch { } }
+                        var tid = Prop(desc, "TypeId");
+                        if (tid != null) { try { typeIdInt = Convert.ToInt32(tid); } catch { } }
+                    }
+                }
+                catch { }
+                string entry = "{\"kind\":\"effect_dispatch\",\"tick\":" + _battleCommandCount
+                             + ",\"effect_kind\":" + kindIdInt
+                             + ",\"effect_type\":" + typeIdInt
+                             + "}";
+                lock (_tickLog) { if (_tickLog.Count < 20000) _tickLog.Add(entry); }
+            }
+            catch { }
+        }
+
+        // ChangeStaminaProcessor.ChangeStamina(EffectContext cx, Fixed stamina) postfix.
+        // Private-static helper — invoked by Process() with the actual TM change amount.
+        // This fires once per ACTUAL stamina change with the exact value, bypassing the
+        // Il2CppInterop issue that prevented patching Process() directly.
+        public static void BattleHook_ChangeStaminaStatic(object[] __args)
+        {
+            _hookDiag_ChangeStaminaStatic++;
+            try
+            {
+                // __args[0] = EffectContext, __args[1] = Fixed stamina amount.
+                // Extract the producer/target/applied effect from the EffectContext
+                // (reuse the existing helper), and read the Fixed stamina raw value.
+                string ae = ExtractAppliedEffectFromCx(__args);
+                long stamRaw = 0;
+                long stamDisp = 0;
+                try
+                {
+                    if (__args != null && __args.Length >= 2 && __args[1] != null)
+                    {
+                        var raw = Prop(__args[1], "RawValue");
+                        if (raw != null)
+                        {
+                            stamRaw = Convert.ToInt64(raw);
+                            stamDisp = stamRaw >> 32;
+                        }
+                    }
+                }
+                catch { }
+                string entry = "{\"kind\":\"change_stamina_call\",\"tick\":" + _battleCommandCount
+                             + ",\"stam_amount\":" + stamDisp
+                             + ",\"stam_raw\":" + stamRaw
+                             + ae + "}";
+                lock (_tickLog) { if (_tickLog.Count < 20000) _tickLog.Add(entry); }
+            }
+            catch { }
+        }
+
         private static int _hookDiag_TurnLeftSet = 0;
         private static int _hookDiag_BeforeStartTurn = 0;
         private static int _hookDiag_UnapplyExecute = 0;
@@ -2746,6 +3180,89 @@ namespace RaidAutomation
             }
             catch { }
         }
+        // Serialize the cmd history. `?since=HH:MM:SS.fff` filters to entries
+        // after that timestamp. `?clear=1` empties the buffer after read.
+        private string GetCmdHistory(string since, string clear)
+        {
+            var sb = new StringBuilder();
+            sb.Append("{\"cmds\":[");
+            int n = 0;
+            lock (_cmdHistoryLock)
+            {
+                foreach (var entry in _cmdHistory)
+                {
+                    if (!string.IsNullOrEmpty(since))
+                    {
+                        // Entries are "HH:MM:SS.fff Class.Name" — compare prefix.
+                        if (string.CompareOrdinal(entry, 0, since, 0, since.Length) < 0) continue;
+                    }
+                    if (n > 0) sb.Append(",");
+                    sb.Append("\"").Append(Esc(entry)).Append("\"");
+                    n++;
+                }
+                if (clear == "1") _cmdHistory.Clear();
+            }
+            sb.Append("],\"count\":").Append(n).Append("}");
+            return sb.ToString();
+        }
+
+        // Ring buffer of every cmd type that goes through CmdQueue.Enqueue.
+        // Used to diagnose what the UI button fires vs what our context-call
+        // path fires. Exposed via /cmd-history endpoint.
+        internal static readonly System.Collections.Generic.List<string> _cmdHistory =
+            new System.Collections.Generic.List<string>();
+        internal static readonly object _cmdHistoryLock = new object();
+
+        // Harmony postfix on CmdQueue.Enqueue(UserEditGuard, ICmdQueueItem).
+        // Captures every cmd type so we can diff UI flow vs API flow.
+        // The Harmony parameter is typed as the interface (ICmdQueueItem)
+        // so __1.GetType() returns the interface name. We dig deeper:
+        //   - read the IL2CPP Pointer on the wrapper
+        //   - call il2cpp_object_get_class + il2cpp_class_get_name
+        // to get the CONCRETE cmd class name (e.g. SaveBattleResultCmd).
+        public static void CmdHook_Enqueue(object __0, object __1)
+        {
+            try
+            {
+                string name = "<null>";
+                if (__1 != null)
+                {
+                    // First try managed: in case Il2CppInterop returns concrete.
+                    var t = __1.GetType();
+                    name = t.FullName;
+                    // Now try to get concrete via IL2CPP class.
+                    try
+                    {
+                        var ptrProp = t.GetProperty("Pointer");
+                        if (ptrProp != null)
+                        {
+                            var ptrVal = ptrProp.GetValue(__1);
+                            if (ptrVal is IntPtr ptr && ptr != IntPtr.Zero)
+                            {
+                                IntPtr klass = il2cpp_object_get_class(ptr);
+                                if (klass != IntPtr.Zero)
+                                {
+                                    string nsName = Marshal.PtrToStringAnsi(il2cpp_class_get_namespace(klass)) ?? "";
+                                    string clsName = Marshal.PtrToStringAnsi(il2cpp_class_get_name(klass)) ?? "?";
+                                    name = string.IsNullOrEmpty(nsName) ? clsName : (nsName + "." + clsName);
+                                }
+                            }
+                        }
+                    }
+                    catch { }
+                }
+                string ts = DateTime.UtcNow.ToString("HH:mm:ss.fff");
+                lock (_cmdHistoryLock)
+                {
+                    _cmdHistory.Add(ts + " " + name);
+                    if (_cmdHistory.Count > 200) _cmdHistory.RemoveAt(0);
+                }
+                BepInEx.Logging.Logger.CreateLogSource("CmdQ").LogInfo(name);
+            }
+            catch { }
+        }
+
+
         // __instance = the AppliedEffect being modified; __0 = the new TurnLeft value
         // Harmony postfix on OpenStageCmd..ctor(int). Captures the stage id
         // any time something opens a stage (user click in StagesDialog, code,
@@ -3054,9 +3571,11 @@ namespace RaidAutomation
                                 long tmRaw = 0;
                                 IntPtr getId = FindIL2CPPMethodStatic(hc, "get_Id", 0);
                                 if (getId != IntPtr.Zero) { IntPtr e6 = IntPtr.Zero; IntPtr r = il2cpp_runtime_invoke(getId, heroObj, IntPtr.Zero, ref e6); if (r != IntPtr.Zero) id = Marshal.ReadInt32(r + 0x10); }
-                                // Stamina (TM) at offset 0x58+ via get_Stamina — returns Fixed (32.32)
-                                IntPtr getStam = FindIL2CPPMethodStatic(hc, "get_Stamina", 0);
-                                if (getStam != IntPtr.Zero) { IntPtr e7 = IntPtr.Zero; IntPtr r = il2cpp_runtime_invoke(getStam, heroObj, IntPtr.Zero, ref e7); if (r != IntPtr.Zero) tmRaw = Marshal.ReadInt64(r + 0x10); }
+                                // Stamina (TM): BattleHero.Stamina @ 0x80 (Fixed 32.32).
+                                // Direct memory read mirrors the HP/SPD path — getter-
+                                // invocation works for Stamina today but the offset path
+                                // is faster (no IL2CPP method dispatch per tick × 6 units).
+                                tmRaw = Marshal.ReadInt64(heroObj + 0x80);
                                 // TurnCount @ 0xE8
                                 turnN = Marshal.ReadInt32(heroObj + 0xE8);
                                 long tmDisplay = tmRaw >> 32;  // 32.32 fixed → display
@@ -3065,25 +3584,33 @@ namespace RaidAutomation
                                 // SPD that doesn't match real-game action ratios; the gap was
                                 // unmeasurable without this ground-truth value. BattleStats has
                                 // get_Speed returning Fixed (32.32). 0 if read fails.
+                                // BattleHero.Stats @ 0x98 → BattleStats pointer
+                                // BattleStats.Speed @ 0x28 (Fixed 32.32)
+                                // Offsets confirmed via dump.cs (TypeDefIndex 10447) and
+                                // battle_logs hero_fields. Earlier IL2CPP getter-invocation
+                                // path (get_Stats → get_Speed) silently failed and always
+                                // logged sSpd=0 — verified 2026-06-16 user-noticed bug.
                                 long sSpd = 0;
                                 try {
-                                    IntPtr getStats = FindIL2CPPMethodStatic(hc, "get_Stats", 0);
-                                    if (getStats != IntPtr.Zero) {
-                                        IntPtr eS1 = IntPtr.Zero;
-                                        IntPtr statsObj = il2cpp_runtime_invoke(getStats, heroObj, IntPtr.Zero, ref eS1);
-                                        if (statsObj != IntPtr.Zero) {
-                                            IntPtr statsClass = il2cpp_object_get_class(statsObj);
-                                            IntPtr getSpd = FindIL2CPPMethodStatic(statsClass, "get_Speed", 0);
-                                            if (getSpd != IntPtr.Zero) {
-                                                IntPtr eS2 = IntPtr.Zero;
-                                                IntPtr spdRes = il2cpp_runtime_invoke(getSpd, statsObj, IntPtr.Zero, ref eS2);
-                                                if (spdRes != IntPtr.Zero) sSpd = Marshal.ReadInt64(spdRes + 0x10) >> 32;
-                                            }
-                                        }
+                                    IntPtr statsPtr = Marshal.ReadIntPtr(heroObj + 0x98);
+                                    if ((long)statsPtr > 0x10000) {
+                                        sSpd = Marshal.ReadInt64(statsPtr + 0x28) >> 32;
+                                    }
+                                } catch { }
+                                // HP readings (Workstream 0 / cb_truth_diff):
+                                //   BattleHero.Health @ 0x58 — current HP (Fixed 32.32)
+                                //   BattleHero.BaseStats @ 0x90 → BattleStats.Health @ 0x10 — max HP
+                                long hpCur = 0, hpMax = 0;
+                                try {
+                                    hpCur = Marshal.ReadInt64(heroObj + 0x58) >> 32;
+                                    IntPtr baseStats = Marshal.ReadIntPtr(heroObj + 0x90);
+                                    if ((long)baseStats > 0x10000) {
+                                        hpMax = Marshal.ReadInt64(baseStats + 0x10) >> 32;
                                     }
                                 } catch { }
                                 if (uidx > 0) sbtl.Append(",");
-                                sbtl.Append("{\"s\":\"" + side + "\",\"id\":" + id + ",\"tm\":" + tmDisplay + ",\"tn\":" + turnN + ",\"s_spd\":" + sSpd);
+                                sbtl.Append("{\"s\":\"" + side + "\",\"id\":" + id + ",\"tm\":" + tmDisplay + ",\"tn\":" + turnN + ",\"s_spd\":" + sSpd
+                                    + ",\"hp\":" + hpCur + ",\"hp_max\":" + hpMax);
                                 // Read AppliedEffectsByHeroes dict pointer directly from field offset 0x108
                                 // (getter is inlined by IL2CPP AOT — field offset found via Il2CppDumper against GameAssembly.dll).
                                 // Dict is Dictionary<int, List<AppliedEffect>>; iterate via get_Values on raw pointer.
@@ -3786,6 +4313,228 @@ namespace RaidAutomation
             return sb.ToString();
         }
 
+        // Localize a key via ServiceLocator.Localizer (English). Returns
+        // the localized string or empty if not found. The Localizer's
+        // TryLocalize(key, out text, storage, needError) is the safe
+        // accessor. Storage=0 (Client) is sufficient for static data.
+        private static object _cachedLocalizer = null;
+        private object GetLocalizer()
+        {
+            if (_cachedLocalizer != null) return _cachedLocalizer;
+            try
+            {
+                var slType = FindType("Client.App.Services.ServiceLocator");
+                if (slType == null) return null;
+                var prop = slType.GetProperty("Localizer");
+                if (prop == null) return null;
+                _cachedLocalizer = prop.GetValue(null);
+            }
+            catch { }
+            return _cachedLocalizer;
+        }
+
+        private string LocalizerLookup(string key)
+        {
+            var loc = GetLocalizer();
+            if (loc == null) return "";
+            try
+            {
+                var methods = loc.GetType().GetMethods();
+                // Try BOTH Client (0) and Server (1) storages
+                for (int storage = 0; storage <= 1; storage++)
+                {
+                    foreach (var m in methods)
+                    {
+                        if (m.Name != "TryLocalize") continue;
+                        var ps = m.GetParameters();
+                        if (ps.Length < 2 || ps[1].ParameterType != typeof(string).MakeByRefType()) continue;
+                        object[] args = null;
+                        if (ps.Length == 4)
+                            args = new object[] { key, null, storage, false };
+                        else if (ps.Length == 5)
+                            args = new object[] { key, null, storage, false, null };
+                        else
+                            continue;
+                        try
+                        {
+                            var ok = (bool)m.Invoke(loc, args);
+                            if (ok && args[1] != null)
+                            {
+                                var v = args[1].ToString();
+                                if (!string.IsNullOrEmpty(v) && v != key) return v;
+                            }
+                        }
+                        catch { }
+                    }
+                }
+            }
+            catch { }
+            return "";
+        }
+
+        // Also expose direct dictionary lookup: dump all l10n keys matching
+        // a substring so we can discover the real key format.
+        private string DumpLocalizerKeys(string substr)
+        {
+            var loc = GetLocalizer();
+            if (loc == null) return "{\"error\":\"localizer not found\"}";
+            var sb = new StringBuilder("{\"loc_type\":\"" + Esc(loc.GetType().FullName) + "\",");
+            // Diagnostic: list all fields on the localizer instance
+            var allFields = loc.GetType().GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+            sb.Append("\"fields\":[");
+            int fi = 0;
+            foreach (var f in allFields)
+            {
+                object val = null;
+                try { val = f.GetValue(loc); } catch { }
+                string sz = "?";
+                if (val != null)
+                {
+                    try {
+                        var cnt = val.GetType().GetProperty("Count");
+                        if (cnt != null) sz = cnt.GetValue(val)?.ToString() ?? "?";
+                    } catch { }
+                }
+                if (fi > 0) sb.Append(",");
+                sb.Append("{\"name\":\"" + Esc(f.Name) + "\",\"type\":\"" + Esc(f.FieldType.Name) + "\",\"size\":\"" + sz + "\"}");
+                fi++;
+            }
+            sb.Append("],\"matches\":[");
+            int n = 0;
+            try
+            {
+                // Reflectively grab the three storage dicts on the Localizer instance
+                var locType = loc.GetType();
+                string[] fieldNames = new[] {
+                    "_internalClientLocalizationStorage",
+                    "_clientLocalizationStorage",
+                    "_serverLocalizationStorage",
+                };
+                foreach (var fn in fieldNames)
+                {
+                    var f = locType.GetField(fn, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+                    if (f == null) continue;
+                    var dict = f.GetValue(loc);
+                    if (dict == null) continue;
+                    // String-keyed dict: enumerate via reflection. DictEntries assumes int keys.
+                    var dictType = dict.GetType();
+                    var getEnumerator = dictType.GetMethod("GetEnumerator");
+                    if (getEnumerator == null) continue;
+                    var enumerator = getEnumerator.Invoke(dict, null);
+                    var enumType = enumerator.GetType();
+                    var moveNext = enumType.GetMethod("MoveNext");
+                    var current = enumType.GetProperty("Current");
+                    while ((bool)moveNext.Invoke(enumerator, null))
+                    {
+                        var entry = current.GetValue(enumerator);
+                        var entryType = entry.GetType();
+                        var key = entryType.GetProperty("Key").GetValue(entry);
+                        var val = entryType.GetProperty("Value").GetValue(entry);
+                        string ks = key?.ToString() ?? "";
+                        if (!string.IsNullOrEmpty(substr) && ks.IndexOf(substr, StringComparison.OrdinalIgnoreCase) < 0) continue;
+                        if (n >= 200) break;
+                        if (n > 0) sb.Append(",");
+                        sb.Append("{\"src\":\"" + fn.Replace("_", "").Replace("LocalizationStorage", "") + "\",");
+                        sb.Append("\"key\":\"" + Esc(ks) + "\",");
+                        sb.Append("\"value\":\"" + Esc(val?.ToString() ?? "") + "\"}");
+                        n++;
+                    }
+                    // Need to also dispose enumerator; let GC handle it
+                    if (n >= 200) break;
+                }
+            }
+            catch (Exception ex) { return "{\"error\":\"" + Esc(ex.Message) + "\"}"; }
+            sb.Append("],\"count\":" + n + "}");
+            return sb.ToString();
+        }
+
+        // GET /mastery-info?id=N  ->  {id, name, description, tree, row, col}
+        // GET /mastery-info?all=1 ->  {masteries: [ {id,name,description,tree,row,col}, ... ]}
+        private string GetMasteryInfo(string idStr, string allStr)
+        {
+            bool all = !string.IsNullOrEmpty(allStr) && allStr != "0" && allStr.ToLowerInvariant() != "false";
+            var appModel = GetAppModel();
+            if (appModel == null) return "{\"error\":\"appmodel not ready\"}";
+            var sd = Prop(appModel, "StaticData");
+            if (sd == null) return "{\"error\":\"static data unavailable\"}";
+            var masteryData = Prop(sd, "MasteryData");
+            if (masteryData == null) return "{\"error\":\"MasteryData not found\"}";
+            var byId = Prop(masteryData, "MasteryById");
+            if (byId == null) return "{\"error\":\"MasteryById null\"}";
+
+            // Build list of IDs to look up
+            var ids = new System.Collections.Generic.List<int>();
+            if (all)
+            {
+                foreach (var (k, _) in DictEntries(byId))
+                {
+                    try { ids.Add(Convert.ToInt32(k)); } catch { }
+                }
+                ids.Sort();
+            }
+            else
+            {
+                if (string.IsNullOrEmpty(idStr)) return "{\"error\":\"id or all=1 required\"}";
+                int mid;
+                if (!int.TryParse(idStr, out mid)) return "{\"error\":\"invalid id\"}";
+                ids.Add(mid);
+            }
+
+            var sb = new StringBuilder();
+            sb.Append(all ? "{\"masteries\":[" : "");
+            int n = 0;
+            foreach (var mid in ids)
+            {
+                // Resolve MasteryType for tree/row/col
+                object mtype = null;
+                try
+                {
+                    var item = byId.GetType().GetProperty("Item")?.GetValue(byId, new object[] { mid });
+                    mtype = item;
+                }
+                catch { }
+                string tree = "";
+                int row = 0, col = 0;
+                if (mtype != null)
+                {
+                    try { tree = Prop(mtype, "TreeId")?.ToString() ?? ""; } catch { }
+                    try { row = IntProp(mtype, "Row"); } catch { }
+                    try { col = IntProp(mtype, "Column"); } catch { }
+                }
+                // Resolve via Client.ViewModel.Contextes.Masteries.MasteryTypeExtensions
+                // GetName / GetDescription static extension methods — these are the
+                // exact lookup path the in-game UI uses (verified via il2cpp dump).
+                string name = "", desc = "";
+                if (mtype != null)
+                {
+                    try
+                    {
+                        var extType = FindType("Client.ViewModel.Contextes.Masteries.MasteryTypeExtensions");
+                        if (extType != null)
+                        {
+                            var getNameM = extType.GetMethod("GetName", BindingFlags.Public | BindingFlags.Static);
+                            var getDescM = extType.GetMethod("GetDescription", BindingFlags.Public | BindingFlags.Static);
+                            if (getNameM != null) try { name = getNameM.Invoke(null, new object[] { mtype }) as string ?? ""; } catch { }
+                            if (getDescM != null) try { desc = getDescM.Invoke(null, new object[] { mtype }) as string ?? ""; } catch { }
+                        }
+                    }
+                    catch { }
+                }
+
+                if (n > 0) sb.Append(",");
+                sb.Append("{\"id\":" + mid);
+                sb.Append(",\"name\":\"" + Esc(name) + "\"");
+                sb.Append(",\"description\":\"" + Esc(desc) + "\"");
+                sb.Append(",\"tree\":\"" + Esc(tree) + "\"");
+                sb.Append(",\"row\":" + row);
+                sb.Append(",\"col\":" + col);
+                sb.Append("}");
+                n++;
+            }
+            sb.Append(all ? ("],\"count\":" + n + "}") : "");
+            return sb.ToString();
+        }
+
         private string OpenMastery(string heroIdStr, string masteryIdStr)
         {
             if (string.IsNullOrEmpty(heroIdStr) || string.IsNullOrEmpty(masteryIdStr))
@@ -3880,8 +4629,29 @@ namespace RaidAutomation
 
         private void InvokeExecute(object gameCmd)
         {
-            // Try to enqueue through the game's CmdQueue first (proper server round-trip).
-            // Falls back to direct Execute() if queue not available.
+            // Some cmds (e.g. CollectRewardItemCmd) don't actually dispatch
+            // when enqueued via CmdQueue alone — they sit pending without
+            // ever firing IfStarting. The reliable path is direct Execute()
+            // which runs the cmd's full lifecycle (Validate → server →
+            // Edit → callbacks). Try direct Execute first; fall back to
+            // CmdQueue.Enqueue if no zero-arg Execute exists.
+            var t = gameCmd.GetType();
+            var walkT = t;
+            while (walkT != null)
+            {
+                foreach (var m in walkT.GetMethods(BindingFlags.Instance | BindingFlags.Public |
+                                                    BindingFlags.NonPublic | BindingFlags.DeclaredOnly))
+                {
+                    if (m.Name == "Execute" && m.GetParameters().Length == 0)
+                    {
+                        m.Invoke(gameCmd, null);
+                        return;
+                    }
+                }
+                walkT = walkT.BaseType;
+            }
+
+            // Fallback: enqueue through CmdQueue.
             try
             {
                 var appModelType = FindType("Client.Model.AppModel");
@@ -3909,21 +4679,6 @@ namespace RaidAutomation
             }
             catch { }
 
-            // Fallback: direct Execute()
-            var t = gameCmd.GetType();
-            while (t != null)
-            {
-                foreach (var m in t.GetMethods(BindingFlags.Instance | BindingFlags.Public |
-                                                BindingFlags.NonPublic | BindingFlags.DeclaredOnly))
-                {
-                    if (m.Name == "Execute" && m.GetParameters().Length == 0)
-                    {
-                        m.Invoke(gameCmd, null);
-                        return;
-                    }
-                }
-                t = t.BaseType;
-            }
             throw new Exception("Execute method not found on " + gameCmd.GetType().Name);
         }
 
@@ -4457,6 +5212,127 @@ namespace RaidAutomation
             catch (Exception ex)
             {
                 string msg = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+                return "{\"error\":\"" + Esc(msg) + "\"}";
+            }
+        }
+
+        // =====================================================
+        // /overlay-state — reads AppViewModel.Overlays.OpenedOverlaysCount
+        // dictionary to surface the currently-tracked open overlay keys.
+        // Used to diagnose the "All UI writes silently no-op" wedge that
+        // happens when the OverlayManager's view-count bookkeeping gets
+        // out of sync with Unity's scene graph (e.g. coroutine exception
+        // orphans a view's Closed callback).
+        // =====================================================
+        private object GetOverlayManagerInstance()
+        {
+            var avmT = FindType("Client.ViewModel.AppViewModel");
+            if (avmT == null) return null;
+            var overlaysProp = avmT.GetProperty("Overlays",
+                BindingFlags.Public | BindingFlags.Static);
+            if (overlaysProp == null) return null;
+            return overlaysProp.GetValue(null);
+        }
+
+        private string GetOverlayState()
+        {
+            try
+            {
+                var ovm = GetOverlayManagerInstance();
+                if (ovm == null)
+                    return "{\"error\":\"AppViewModel.Overlays not resolvable\"}";
+
+                var sb = new StringBuilder();
+                sb.Append("{\"manager_type\":\"").Append(Esc(ovm.GetType().FullName)).Append("\",\"opened\":[");
+
+                // OpenedOverlaysCount Dictionary<ViewKey,int> @ 0x30
+                var dictField = ovm.GetType().GetField("OpenedOverlaysCount",
+                    BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy);
+                if (dictField != null)
+                {
+                    var dict = dictField.GetValue(ovm);
+                    if (dict != null)
+                    {
+                        var enumerator = dict.GetType().GetMethod("GetEnumerator")?.Invoke(dict, null);
+                        if (enumerator != null)
+                        {
+                            var moveNext = enumerator.GetType().GetMethod("MoveNext");
+                            var current = enumerator.GetType().GetProperty("Current");
+                            int n = 0;
+                            while ((bool)moveNext.Invoke(enumerator, null))
+                            {
+                                var kv = current.GetValue(enumerator);
+                                var key = kv.GetType().GetProperty("Key").GetValue(kv);
+                                var val = kv.GetType().GetProperty("Value").GetValue(kv);
+                                if (n++ > 0) sb.Append(",");
+                                sb.Append("{\"key\":\"").Append(Esc(key?.ToString() ?? "null"))
+                                  .Append("\",\"count\":").Append(val ?? 0).Append("}");
+                            }
+                        }
+                    }
+                }
+                sb.Append("]");
+
+                // BlockUi state
+                try
+                {
+                    var blockUiProp = FindType("Client.ViewModel.AppViewModel")
+                        ?.GetProperty("BlockUi", BindingFlags.Public | BindingFlags.Static);
+                    if (blockUiProp != null)
+                    {
+                        var blockUi = blockUiProp.GetValue(null);
+                        if (blockUi != null)
+                        {
+                            var blockedProp = blockUi.GetType().GetProperty("IsBlocked")
+                                            ?? blockUi.GetType().GetProperty("Blocked");
+                            sb.Append(",\"block_ui_type\":\"").Append(Esc(blockUi.GetType().FullName)).Append("\"");
+                            if (blockedProp != null)
+                            {
+                                var blocked = blockedProp.GetValue(blockUi);
+                                sb.Append(",\"block_ui_state\":").Append(blocked?.ToString().ToLower() ?? "null");
+                            }
+                        }
+                    }
+                }
+                catch { }
+
+                sb.Append("}");
+                return sb.ToString();
+            }
+            catch (Exception ex)
+            {
+                return "{\"error\":\"" + Esc(ex.Message) + "\"}";
+            }
+        }
+
+        // =====================================================
+        // /overlay-close-all — calls OverlayManagerBase.CloseAll()
+        // on the singleton. Fixes the wedge where a coroutine exception
+        // orphans the OverlayManager's open-count bookkeeping and every
+        // subsequent UI write silently no-ops because the manager thinks
+        // an exclusive overlay is still showing.
+        // =====================================================
+        private string CloseAllOverlays()
+        {
+            try
+            {
+                var ovm = GetOverlayManagerInstance();
+                if (ovm == null)
+                    return "{\"error\":\"AppViewModel.Overlays not resolvable\"}";
+
+                var closeAll = ovm.GetType().GetMethod("CloseAll",
+                    BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy,
+                    null, Type.EmptyTypes, null);
+                if (closeAll == null)
+                    return "{\"error\":\"CloseAll method not found on " + Esc(ovm.GetType().FullName) + "\"}";
+
+                closeAll.Invoke(ovm, null);
+                Logger.LogInfo("[OverlayCloseAll] invoked");
+                return "{\"ok\":true,\"manager_type\":\"" + Esc(ovm.GetType().FullName) + "\"}";
+            }
+            catch (Exception ex)
+            {
+                var msg = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
                 return "{\"error\":\"" + Esc(msg) + "\"}";
             }
         }

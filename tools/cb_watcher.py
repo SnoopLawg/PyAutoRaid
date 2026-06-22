@@ -107,21 +107,33 @@ def boss_turn(bs):
 
 
 def snapshot_battle_log(snapshot_dir, tag):
-    """Append the current /battle-log payload to a JSON snapshot file.
+    """Append the current /battle-log AND /tick-log payloads to JSON
+    snapshot files. Keeps full-fidelity tick data even if Raid dies
+    mid-write.
 
-    Keeps full-fidelity tick data even if Raid dies mid-write."""
+    Two files written: `<tag>_<ts>.json` (battle log) and
+    `<tag>_<ts>.tick.json` (tick log with per-event damage records when
+    the mod's damage hook is enabled)."""
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    bl_path = snapshot_dir / (
+        f"cb_watcher_{tag}_{ts}.json" if tag else f"cb_watcher_{ts}.json"
+    )
+    tl_path = snapshot_dir / (
+        f"cb_watcher_{tag}_{ts}.tick.json" if tag else f"cb_watcher_{ts}.tick.json"
+    )
     try:
         log = requests.get(f"{MOD_BASE}/battle-log", timeout=15).json()
+        bl_path.write_text(json.dumps(log, indent=2), encoding="utf-8")
     except Exception as ex:
         return None, str(ex)
-    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-    name = f"cb_watcher_{tag}_{ts}.json" if tag else f"cb_watcher_{ts}.json"
-    path = snapshot_dir / name
+    # Tick log is separate endpoint and best-effort: damage events live
+    # here when DAMAGE_HOOK is enabled in the mod.
     try:
-        path.write_text(json.dumps(log, indent=2), encoding="utf-8")
-        return path, None
-    except Exception as ex:
-        return None, str(ex)
+        ticks = requests.get(f"{MOD_BASE}/tick-log", timeout=15).json()
+        tl_path.write_text(json.dumps(ticks, indent=2), encoding="utf-8")
+    except Exception:
+        pass
+    return bl_path, None
 
 
 def _hero_trace_row(h):
