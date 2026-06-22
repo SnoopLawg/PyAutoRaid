@@ -2265,15 +2265,23 @@ class CBSimulator:
             buff_count = len(getattr(champ, 'buffs', {}))
             bless_mult *= (1.0 + champ.heavencast_pct_per_buff * buff_count)
         if champ.natures_wrath_pct_per_debuff > 0:
+            # Counter cap is grade-tiered. Look up from blessing grade
+            # via the pct rate (0.02 = cap 3 or 4, 0.03 = cap 5, 0.05
+            # = cap 6). We don't track grade directly on champion, but
+            # the rate uniquely identifies tier-pair for default purposes.
             # Approximate the counter via "debuffs placed by this hero
-            # currently on boss" capped at 3 (game-truth ValueRange.Max).
-            # For most boss fights the counter saturates within 2-3
-            # debuff placements, so the cap dominates and exact count
-            # tracking would only matter for the first ~5-10 turns.
+            # currently on boss" — saturates fast in practice; exact
+            # placement count would only matter for first ~5-10 turns.
             debuff_count = sum(
                 1 for s in self.debuff_bar.slots if s.source == champ.name
             )
-            counter = min(3, debuff_count)
+            if champ.natures_wrath_pct_per_debuff >= 0.05:
+                cap = 6
+            elif champ.natures_wrath_pct_per_debuff >= 0.03:
+                cap = 5
+            else:
+                cap = 3  # grades 1-2 default; 4 for grades 3-4
+            counter = min(cap, debuff_count)
             bless_mult *= (1.0 + champ.natures_wrath_pct_per_debuff * counter)
 
         return raw * crit_mult * def_mult * wk * str_mult * bid * aff_dmg * bless_mult
@@ -2977,12 +2985,18 @@ def build_sim_champion(name: str, stats: dict, position: int,
             else:
                 heavencast_pct = 0.005
         elif bid == 5201:  # NatureBalance / Nature's Wrath (skill 600270)
-            # Grade 0-3: 0.02 per counter, grade 4-5: 0.03 per counter
-            # Counter capped at 3 (applied in _calc_skill_damage).
-            if grade >= 4:
-                natures_wrath_pct = 0.03
+            # Per-grade rate AND per-grade counter cap (game-truth verified
+            # 2026-06-22 via /static-export on Effects.Item[0/2/4/6]):
+            #   Grades 0-1 (UI 1-2): 0.02 mult, cap 3 → max +6% bonus
+            #   Grades 2-3 (UI 3-4): 0.02 mult, cap 4 → max +8% bonus
+            #   Grade 4 (UI 5):      0.03 mult, cap 5 → max +15% bonus
+            #   Grade 5 (UI 6):      0.05 mult, cap 6 → max +30% bonus
+            if grade >= 5:
+                natures_wrath_pct = 0.05  # cap 6 applied in _calc
+            elif grade >= 4:
+                natures_wrath_pct = 0.03  # cap 5
             else:
-                natures_wrath_pct = 0.02
+                natures_wrath_pct = 0.02  # cap 3-4
         elif bid == 1301:  # MagicOrb / Phantom Touch — 3.5*ATK bonus dmg per attack
             # Per static skill 600050 (verified 2026-06-22):
             #   Grades 0-1: Effect[0] gated by ownersDoubleAscendLevel==1||==2
