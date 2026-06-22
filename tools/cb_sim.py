@@ -3050,18 +3050,36 @@ def evaluate_team_calibrated(hero_names: List[str], cb_element: int = 4,
             for a in arts:
                 used.add(a.get("id"))
 
-    # Build sim champions — same opening conventions as cb_sim main()
+    # Build sim champions — preset-driven opener+priority when the
+    # user's flagship preset matches this team; falls back to
+    # DUPLICATE_INSTANCE_OPENERS for duplicate-eligible heroes
+    # otherwise. Without this, the sim hardcoded Maneater opener=A3
+    # while the user's preset id=1 actually opens with Mane A2
+    # (Syphon — fills ally TM); root-cause for the BT1-9 opening
+    # under-prediction documented 2026-06-21.
+    try:
+        from preset_loader import load_preset_for_team
+        preset_plan = load_preset_for_team(hero_names) or {}
+    except Exception:
+        preset_plan = {}
+
     sim_champs = []
     _opener_dup_count: dict[str, int] = {}
     for i, tname in enumerate(hero_names):
         stats = calc_stats(team_h[i], assigned_arts[i], account)
-        opening = []
-        if tname in DUPLICATE_INSTANCE_HEROES:
+        plan = preset_plan.get(tname) or {}
+        opening = plan.get("opening") or []
+        if not opening and tname in DUPLICATE_INSTANCE_HEROES:
             _opener_dup_count[tname] = _opener_dup_count.get(tname, 0) + 1
             opening = _dup_opener_for(tname, _opener_dup_count[tname])
         champ = build_sim_champion(tname, stats, i + 1,
                                     masteries=team_h[i].get("masteries", []),
                                     opening=opening)
+        # Apply preset skill priority when the user has one set
+        # (else SimChampion uses default-AI ordering A3>A2>A1).
+        priority = plan.get("priority") or []
+        if priority:
+            champ.skill_priority = list(priority)
         sim_champs.append(champ)
 
     sim = CBSimulator(sim_champs, deterministic=True, verbose=verbose,
