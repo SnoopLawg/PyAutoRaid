@@ -2182,21 +2182,44 @@ class CBSimulator:
         # Affinity modifier
         aff_dmg, _ = self._get_affinity_mult(champ)
 
-        # Blessing damage amplifiers (Heavencast for Demy: +X% per buff
-        # on self; Nature's Wrath for Geo: +X% per debuff placed). Both
-        # use 0.06 per stack (empirical from Magic BT15 captures with
-        # community-doc-default for epic/grade 1). See SimChampion field
-        # defs for source-of-truth notes.
+        # Blessing damage amplifiers — game-truth rates (verified 2026-06-22
+        # via /static-export on skills 600090 + 600270):
+        #
+        # Heavencast (600090, EnhancedWeapon blessing 2201):
+        #   - Grade 1-2: 0.005 per buff on self
+        #   - Grade 3-4: 0.01 per buff
+        #   - Grade 5-6: 0.015 per buff
+        #   Formula: bless_mult *= (1 + 0.005 * BUFF_COUNT)
+        #   Glance-gated (Relation.ActivateOnGlancingHit=false)
+        #
+        # Nature's Wrath (600270, NatureBalance blessing 5201):
+        #   - Counter NaturesBalance_Counter increments per debuff PLACED
+        #     by owner (Relation.EffectKindGroups: EffectThatApplyStatusDebuffs,
+        #     Phases: AfterEffectAppliedOnTarget). Cap = 3 (ValueRange.MaxFormula='3').
+        #   - Grade 1-2: 0.02 per counter stack
+        #   - Grade 3-4: 0.02 per stack
+        #   - Grade 5-6: 0.03 per stack
+        #   Max bonus = 0.02 * 3 = +6% (grade 1-2) or +9% (grade 5-6)
+        #   Glance-gated on damage application AND counter increment.
+        #
+        # Pre-fix (until 2026-06-22) the sim used 0.06 per stack uncapped for
+        # both, which over-stated Heavencast by ~12x and Nature's Wrath by
+        # ~5x (uncapped on a 5+ debuff boss).
         bless_mult = 1.0
         if champ.heavencast_pct_per_buff > 0:
             buff_count = len(getattr(champ, 'buffs', {}))
             bless_mult *= (1.0 + champ.heavencast_pct_per_buff * buff_count)
         if champ.natures_wrath_pct_per_debuff > 0:
-            # Count debuffs placed by THIS champion on the boss
+            # Approximate the counter via "debuffs placed by this hero
+            # currently on boss" capped at 3 (game-truth ValueRange.Max).
+            # For most boss fights the counter saturates within 2-3
+            # debuff placements, so the cap dominates and exact count
+            # tracking would only matter for the first ~5-10 turns.
             debuff_count = sum(
                 1 for s in self.debuff_bar.slots if s.source == champ.name
             )
-            bless_mult *= (1.0 + champ.natures_wrath_pct_per_debuff * debuff_count)
+            counter = min(3, debuff_count)
+            bless_mult *= (1.0 + champ.natures_wrath_pct_per_debuff * counter)
 
         return raw * crit_mult * def_mult * wk * str_mult * bid * aff_dmg * bless_mult
 
@@ -2889,10 +2912,22 @@ def build_sim_champion(name: str, stats: dict, position: int,
     if bl is not None:
         bid = int(bl.get("id", 0))
         grade = int(bl.get("grade", 0))
-        if bid == 2201:  # EnhancedWeapon / Heavencast — damage per buff on self
-            heavencast_pct = 0.06
-        elif bid == 5201:  # NatureBalance / Nature's Wrath — dmg per debuff placed
-            natures_wrath_pct = 0.06
+        if bid == 2201:  # EnhancedWeapon / Heavencast (skill 600090)
+            # Grade 0-1: 0.005, grade 2-3: 0.01, grade 4-5: 0.015 per buff
+            # (grade field is 0-indexed; UI grade 1 = data grade 0).
+            if grade >= 4:
+                heavencast_pct = 0.015
+            elif grade >= 2:
+                heavencast_pct = 0.01
+            else:
+                heavencast_pct = 0.005
+        elif bid == 5201:  # NatureBalance / Nature's Wrath (skill 600270)
+            # Grade 0-3: 0.02 per counter, grade 4-5: 0.03 per counter
+            # Counter capped at 3 (applied in _calc_skill_damage).
+            if grade >= 4:
+                natures_wrath_pct = 0.03
+            else:
+                natures_wrath_pct = 0.02
         elif bid == 1301:  # MagicOrb / Phantom Touch — 3.5*ATK bonus dmg per attack
             # Per static skill 600050 (verified 2026-06-22):
             #   Grades 0-1: Effect[0] gated by ownersDoubleAscendLevel==1||==2
