@@ -486,6 +486,19 @@ class SimChampion:
     # documentation, calibrated against per-event captures 2026-06-22.
     heavencast_pct_per_buff: float = 0.0   # Demy (blessing 2201 EnhancedWeapon)
     natures_wrath_pct_per_debuff: float = 0.0  # Geo (blessing 5201 NatureBalance)
+    # Phantom Touch (MagicOrb blessing 1301, internal skill 600050):
+    # AfterDamageDealt → bonus Damage = phantom_touch_mult × ATK to the
+    # same target. Game-truth verified 2026-06-22 via /static-export on
+    # SkillData.SkillTypeById.Item[600050]: KindId=Damage, Target=
+    # RelationTarget, MultiplierFormula=3.5*ATK, Relation.Phases=
+    # [AfterDamageDealt], ActivateOnGlancingHit=false. Grade-gated:
+    # grades 1-2 use Effect[0] (6000501), grades 3-4 use Effect[1]
+    # (6000502), grade 5 uses Effect[2] (6000503), grade 6 uses Effect[3]
+    # (6000504) + Effect[4] ChangeEffectRepeatCount. All grades share
+    # the 3.5*ATK multiplier in static; grade scaling is purely the
+    # repeat-count effect at grade 6 (modeled as +1 hit there).
+    phantom_touch_mult: float = 0.0          # 3.5 when blessed grade 1+, else 0
+    phantom_touch_repeat: int = 1            # +1 extra fire at grade 6
 
     # Passive abilities (detected from game data)
     has_passive_ally_protect: bool = False   # Skullcrusher: permanent Ally Protect
@@ -1887,6 +1900,38 @@ class CBSimulator:
             wm_gs = self._cap_fa(wm_gs, kind="wm_gs", hits=chosen.hit_count)
             champ.damage.wm_gs += wm_gs
 
+            # Phantom Touch (MagicOrb blessing): AfterDamageDealt fires
+            # an additional Damage hit at 3.5*ATK. Once per damage effect
+            # (so once per source hit; multi-hit skills proc it per hit).
+            # ActivateOnGlancingHit=false → weak-affinity casters skip on
+            # glance (35% rate, dampened by 0.65 in deterministic mode).
+            # Attributed to .passive for clarity in per-source breakdowns.
+            if champ.phantom_touch_mult > 0:
+                pt_skill = SimSkill(
+                    name=f"{chosen.name}_phantom",
+                    base_cd=0,
+                    multiplier=champ.phantom_touch_mult,
+                    scaling_stat="ATK",
+                    hit_count=1,  # PT fires per source-damage; loop external
+                )
+                pt_per_hit = self._calc_skill_damage(champ, pt_skill)
+                is_weak = (champ.element in (1, 2, 3) and self.cb_element in (1, 2, 3)
+                           and WEAK_AFFINITY.get(champ.element) == self.cb_element)
+                if is_weak:
+                    if self.deterministic:
+                        pt_per_hit *= (1.0 - WEAK_HIT_GLANCE_CHANCE)
+                    else:
+                        # Per-hit glance roll handled inside the loop below.
+                        pass
+                total_pt = 0.0
+                fires_per_skill_hit = champ.phantom_touch_repeat
+                for _ in range(chosen.hit_count * fires_per_skill_hit):
+                    if not self.deterministic and is_weak:
+                        if self.rng.random() < WEAK_HIT_GLANCE_CHANCE:
+                            continue  # glance: PT skips
+                    total_pt += pt_per_hit
+                champ.damage.passive += total_pt
+
             # Brimstone [Smite] placement — per hit, brimstone_chance
             # to refresh Smite on boss. Single-Smite-on-team rule per
             # blessing description.
@@ -2838,13 +2883,28 @@ def build_sim_champion(name: str, stats: dict, position: int,
     # grade later when better source available.
     heavencast_pct = 0.0
     natures_wrath_pct = 0.0
+    phantom_touch_mult = 0.0
+    phantom_touch_repeat = 1
     bl = stats.get("blessing") if isinstance(stats.get("blessing"), dict) else None
     if bl is not None:
         bid = int(bl.get("id", 0))
+        grade = int(bl.get("grade", 0))
         if bid == 2201:  # EnhancedWeapon / Heavencast — damage per buff on self
             heavencast_pct = 0.06
         elif bid == 5201:  # NatureBalance / Nature's Wrath — dmg per debuff placed
             natures_wrath_pct = 0.06
+        elif bid == 1301:  # MagicOrb / Phantom Touch — 3.5*ATK bonus dmg per attack
+            # Per static skill 600050 (verified 2026-06-22):
+            #   Grades 0-1: Effect[0] gated by ownersDoubleAscendLevel==1||==2
+            #   Grades 2-3: Effect[1] gated by ==3||==4
+            #   Grade 4:    Effect[2] gated by ==5
+            #   Grade 5:    Effect[3] gated by ==6 + Effect[4] ChangeEffectRepeatCount (+1 hit)
+            # `grade` in /all-heroes is 0-indexed (grade 1 in UI = 0 in field, etc.).
+            # All grades share MultiplierFormula=3.5*ATK.
+            phantom_touch_mult = 3.5
+            # Grade 5 (UI grade 6) gets +1 repeat per attack.
+            if grade >= 5:
+                phantom_touch_repeat = 2
 
     champ = SimChampion(
         name=name,
@@ -2860,6 +2920,8 @@ def build_sim_champion(name: str, stats: dict, position: int,
         brimstone_chance=brimstone_chance,
         heavencast_pct_per_buff=heavencast_pct,
         natures_wrath_pct_per_debuff=natures_wrath_pct,
+        phantom_touch_mult=phantom_touch_mult,
+        phantom_touch_repeat=phantom_touch_repeat,
         has_passive_ally_protect=passive_ally_protect,
         has_passive_dmg_reduction=passive_dmg_reduction,
         has_passive_extra_turns=passive_extra_turns,
