@@ -873,6 +873,10 @@ class CBSimulator:
                 # has TM >= threshold from a prior cast's overflow. Skipping this
                 # tick is what caused parity to fail at 9% match earlier — the
                 # excess TM accumulated across selections and flipped cast order.
+                # 2026-06-21: tested removing this to fix Geo/Venom same-SD bug
+                # (pure-SD gives them 8/7 turns, sim gives 7/6). Removing did
+                # NOT change calibration outputs — the bug is elsewhere. See
+                # project_sim_sd_dragging_underprediction memory.
                 safety = 0
                 while True:
                     for c in self.champions:
@@ -1110,6 +1114,22 @@ class CBSimulator:
 
     def _cb_turn(self, tick: int):
         self.cb_tm -= TM_THRESHOLD
+
+        # Speed-Division dragging-effect bonus. Per RSL Speedology 201
+        # (MaxMeng77) and verified 2026-06-21 across 10 BT19 fixtures:
+        # real game grants every live champion +1 hero turn per ~8 boss
+        # turns vs naive Speed-Division math. The mechanism is the
+        # PvE team-tie-break: cumulatively across the team, boss loses
+        # enough tie-break events to be effectively ~11% slower than
+        # naive SD predicts. Equivalent implementation: grant each
+        # champion a small TM bonus per boss action = threshold/8.
+        # After 8 boss turns, each champ has accumulated +1 full turn
+        # worth of TM. See project_sim_sd_dragging_underprediction.
+        drag_bonus = TM_THRESHOLD / 8.0
+        for c in self.champions:
+            if not c.is_dead:
+                c.tm += drag_bonus
+
         self.cb_turn += 1
         attack = self.cb_pattern[(self.cb_turn - 1) % 3]
 
