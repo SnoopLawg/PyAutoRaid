@@ -1900,59 +1900,63 @@ class CBSimulator:
             wm_gs = self._cap_fa(wm_gs, kind="wm_gs", hits=chosen.hit_count)
             champ.damage.wm_gs += wm_gs
 
-            # Phantom Touch (MagicOrb blessing): AfterDamageDealt fires
-            # an additional Damage hit at 3.5*ATK. Once per damage effect
-            # (so once per source hit; multi-hit skills proc it per hit).
-            # ActivateOnGlancingHit=false → weak-affinity casters skip on
-            # glance (35% rate, dampened by 0.65 in deterministic mode).
+            # Phantom Touch (MagicOrb blessing 1301, skill 600050).
+            # Game-truth (verified 2026-06-22 via /static-export + community
+            # cross-check on HellHades + Plarium forum):
+            #   - IsGuaranteed=True, Cooldown=1 turn → fires ONCE per turn
+            #     max (not per hit). Multi-hit skills (Venom A1 = 2 hits)
+            #     trigger PT only once per cast.
+            #   - DamageParams.IsFixed=True + no crit per community →
+            #     PT damage is FIXED, does NOT apply CR/CD crit multiplier.
+            #     Only DEF + affinity + glance gating modify it.
+            #   - DefenceModifier=-0.30 (ignores 30% target DEF).
+            #   - ActivateOnGlancingHit=false (weak attackers skip on glance).
             # Attributed to .passive for clarity in per-source breakdowns.
             if champ.phantom_touch_mult > 0:
-                pt_skill = SimSkill(
-                    name=f"{chosen.name}_phantom",
-                    base_cd=0,
-                    multiplier=champ.phantom_touch_mult,
-                    scaling_stat="ATK",
-                    hit_count=1,  # PT fires per source-damage; loop external
-                    # Game-truth: skill 600050 Effect[0].DamageParams.DefenceModifier
-                    # = -0.30 (ignores 30% of target DEF). Verified 2026-06-22 via
-                    # /static-export depth=6. Approximated here as ignore_def=0.30
-                    # (DEF *= 0.70 in calc) — gives 1.235x damage vs 1.222x exact;
-                    # ~1% noise vs full DefenceModifier impl. Matches HellHades
-                    # blessing tier list description "3.5*ATK ignoring 30% of DEF".
-                    ignore_def=0.30,
-                )
-                pt_per_hit = self._calc_skill_damage(champ, pt_skill)
+                # Compute PT damage WITHOUT crit roll. Reuse the
+                # def/affinity pipeline by computing raw and applying
+                # only the static modifiers (no crit_mult).
+                scaling = champ.stats.get(ATK, 0)
+                if champ.has_buff("atk_up"):
+                    scaling *= 1.5
+                raw_pt = scaling * champ.phantom_touch_mult
+                # DEF: PT ignores 30% of boss DEF (DefenceModifier=-0.30
+                # in static, approximated here as effective_def *= 0.70).
+                cb_def_pt = UNM_DEF
+                if self.debuff_bar.has("def_down"):
+                    cb_def_pt *= 0.4
+                cb_def_pt *= 0.70  # PT's 30% DEF ignore
+                pt_def_mult = max(0.05, def_mitigation_factor(
+                    cb_def_pt, defence_modifier=HERO_BASE_ARMOR_PIERCE))
+                # Affinity gate (PT is Damage KindId, normal affinity applies)
+                aff_pt, _ = self._get_affinity_mult(champ)
+                pt_per_proc = raw_pt * pt_def_mult * aff_pt
+
                 is_weak = (champ.element in (1, 2, 3) and self.cb_element in (1, 2, 3)
                            and WEAK_AFFINITY.get(champ.element) == self.cb_element)
-                if is_weak:
-                    if self.deterministic:
-                        pt_per_hit *= (1.0 - WEAK_HIT_GLANCE_CHANCE)
-                    else:
-                        # Per-hit glance roll handled inside the loop below.
-                        pass
+
+                # Fires once per skill cast (not per hit), gated by 1-turn CD
+                # which we approximate as 1 fire per skill use here (every
+                # hero turn). Grade 6 adds 35% chance for a second proc.
+                fires_per_cast = 1.0 + (
+                    (champ.phantom_touch_repeat - 1.0)
+                    if champ.phantom_touch_repeat > 1.0 else 0.0
+                )
+
                 total_pt = 0.0
-                # phantom_touch_repeat may be fractional (1.35 at grade 6).
-                # Deterministic: scale total by float repeat directly.
-                # MC: loop integer hits, treat fractional as Bernoulli on
-                # the last fire (e.g., 1.35 = 1 guaranteed + 35% second).
-                fires_float = champ.phantom_touch_repeat
-                int_fires = int(fires_float)
-                frac = fires_float - int_fires
-                for _ in range(chosen.hit_count * int_fires):
-                    if not self.deterministic and is_weak:
-                        if self.rng.random() < WEAK_HIT_GLANCE_CHANCE:
-                            continue  # glance: PT skips
-                    total_pt += pt_per_hit
-                # Fractional extra fire (grade-6 35%-second-PT case)
-                if frac > 0:
-                    if self.deterministic:
-                        total_pt += pt_per_hit * frac * chosen.hit_count
-                    else:
-                        for _ in range(chosen.hit_count):
-                            if self.rng.random() < frac:
-                                if is_weak and self.rng.random() < WEAK_HIT_GLANCE_CHANCE:
-                                    continue
-                                total_pt += pt_per_hit
+                if self.deterministic:
+                    glance_dampen = (1.0 - WEAK_HIT_GLANCE_CHANCE) if is_weak else 1.0
+                    total_pt = pt_per_proc * fires_per_cast * glance_dampen
+                else:
+                    int_fires = int(fires_per_cast)
+                    frac = fires_per_cast - int_fires
+                    for _ in range(int_fires):
+                        if is_weak and self.rng.random() < WEAK_HIT_GLANCE_CHANCE:
+                            continue
+                        total_pt += pt_per_proc
+                    if frac > 0 and self.rng.random() < frac:
+                        if not (is_weak and self.rng.random() < WEAK_HIT_GLANCE_CHANCE):
+                            total_pt += pt_per_proc
                 champ.damage.passive += total_pt
 
             # Brimstone [Smite] placement — per hit, brimstone_chance
