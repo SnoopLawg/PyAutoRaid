@@ -440,13 +440,14 @@ class SimChampion:
     # to extend a random ally buff by 1 turn. NonIncreaseable buffs (UK,
     # BD, ControlEffects, etc.) are EXCLUDED per game-truth IL2Cpp dump.
     has_lasting_gifts: bool = False
-    # Cycle of Magic (mastery 500344): 5% chance per hit on team damage
-    # to reduce a random ally's skill cooldown by 1. Survival-critical
-    # for MEN tune (Maneater A3 → UK refresh cycle).
+    # Cycle of Magic (mastery 500342): "At the start of hero turn 5% chance
+    # to reduce random skill cooldown for 1 turn" (per game-truth static
+    # skill 500342 + /mastery-info, verified 2026-06-22).
+    # KindId=ReduceCooldown, TargetType=Owner, Condition=isOwnersTurn.
+    # Fires on the mastery-holder's OWN skills (not random ally).
     has_cycle_of_magic: bool = False
-    # Accumulator for deterministic Cycle of Magic procs (5% × hits ≈
-    # fractional CD reductions; whole-tick reductions apply when accum
-    # crosses 1.0). Reset on each new run.
+    # Accumulator for deterministic COM procs: each own turn adds 0.05,
+    # whole-integer crossings reduce a random non-A1 skill's CD by 1.
     _com_accum: float = 0.0
 
     # Special flags
@@ -1057,34 +1058,51 @@ class CBSimulator:
                 return True
         return False
 
-    def _apply_cycle_of_magic(self, caster: "SimChampion",
-                                skill_had_cd: bool) -> None:
-        """Cycle of Magic mastery (500344): +5% TM to the caster every time
-        they use a skill that has a cooldown.
+    def _apply_cycle_of_magic(self, owner: "SimChampion") -> None:
+        """Cycle of Magic mastery (500342): at the start of the mastery
+        holder's own turn, 5% chance to reduce one of their own skill
+        cooldowns by 1 turn.
 
-        REWRITTEN 2026-06-19: was modeled as "5% chance per hit reduce
-        ally CD by 1". Real-game tick logs show CDs are NEVER reduced
-        (Mane A3 fires exactly every 5 her-turns matching booked CD).
-        Per HellHades' Raid Database, COM is actually a TM-gain mastery.
-        The previous CD-reduction model produced zero visible effect in
-        sim and missed the +18% TM boost real game shows on MEN heroes
-        (which has 3 COM holders × 2 CD skills per cycle).
+        Game-truth (verified 2026-06-22 via static skill 500342 +
+        /mastery-info):
+          - Description: "At the start of hero turn 5% chance to reduce
+            random skill cooldown for 1 turn"
+          - Effect: KindId=ReduceCooldown, TargetType=Owner,
+            Condition=isOwnersTurn, Chance=0.05
+          - Affects the mastery holder's own skills (Owner), not allies.
+
+        The prior implementations were both wrong:
+          - "5% per hit reduce ALLY CD" — wrong target (Owner not ally).
+          - "+5% TM per CD-skill use" — wrong trigger (start-of-turn not
+            after-cast) AND wrong effect (CD reduce, not TM gain).
         """
-        if not skill_had_cd:
-            return
-        # Look up chance from manifest (falls back to 5%).
         _f = _facade()
         pct = 0.05
         if _f is not None:
             try:
-                proc = _f.mastery.get(500344) or {}
+                proc = _f.mastery.get(500342) or {}
                 cp = proc.get("conditional_proc") or {}
                 if cp.get("chance") is not None:
                     pct = float(cp["chance"])
             except Exception:
                 pass
-        # Add the TM bonus to the caster
-        caster.tm += pct * TM_THRESHOLD
+        # Eligible CD skills: ones with base_cd > 0 currently on cooldown.
+        # A1 skills (base_cd==0) cannot be reduced — already always ready.
+        eligible = [sk for sk in owner.skills
+                    if sk.base_cd > 0 and sk.current_cd > 0]
+        if not eligible:
+            return
+        if self.deterministic:
+            owner._com_accum += pct
+            while owner._com_accum >= 1.0:
+                owner._com_accum -= 1.0
+                # Deterministic pick: rotate through eligible by turn count
+                idx = owner.turns_taken % len(eligible)
+                eligible[idx].current_cd = max(0, eligible[idx].current_cd - 1)
+        else:
+            if self.rng.random() < pct:
+                pick = self.rng.choice(eligible)
+                pick.current_cd = max(0, pick.current_cd - 1)
 
     def _apply_special_buff(self, caster: "SimChampion", chosen,
                               buff_name: str, duration: int) -> bool:
@@ -1708,6 +1726,12 @@ class CBSimulator:
         # Lasting Gifts mastery proc at start of owner turn.
         self._apply_lasting_gifts(champ)
 
+        # Cycle of Magic (mastery 500342): at the start of the owner's
+        # turn, 5% chance to reduce one of their own skill CDs by 1.
+        # Game-truth verified 2026-06-22.
+        if champ.has_cycle_of_magic:
+            self._apply_cycle_of_magic(champ)
+
         # Passive buff extension (Heiress): extend ALL ally buffs by 1T
         # In-game: extends OTHER allies' buffs (not self). The extension effectively
         # counters the tick, keeping buffs alive. For allies who already ticked this
@@ -1861,15 +1885,6 @@ class CBSimulator:
             # blessing description.
             if champ.has_brimstone:
                 self._try_place_smite(champ, chosen.hit_count)
-
-            # Cycle of Magic (mastery 500344): +5% TM per skill-with-CD
-            # use. CRITICAL for cycle alignment — real-game tick logs
-            # show MEN heroes cycle ~18% faster than sim's base math
-            # because COM-as-TM-boost compounds (3 COM holders × 2 CD
-            # skills per cycle = +30% TM bonuses per cycle).
-            if champ.has_cycle_of_magic:
-                skill_had_cd = (chosen.base_cd > 0)
-                self._apply_cycle_of_magic(champ, skill_had_cd)
 
             # Healing from damage dealt
             if self.model_survival:
@@ -2838,7 +2853,7 @@ def build_sim_champion(name: str, stats: dict, position: int,
         has_sniper=MASTERY_IDS["sniper"] in masteries,
         has_master_hexer=MASTERY_IDS["master_hexer"] in masteries,
         has_retribution=MASTERY_IDS["retribution"] in masteries,
-        has_cycle_of_magic=MASTERY_IDS.get("cycle_of_magic", 500344) in masteries,
+        has_cycle_of_magic=MASTERY_IDS.get("cycle_of_magic", 500342) in masteries,
         has_lasting_gifts=MASTERY_IDS.get("lasting_gifts", 500351) in masteries,
         is_geomancer=(name == "Geomancer"),
         is_counterattack_provider=(name == "Skullcrusher"),

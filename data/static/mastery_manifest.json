@@ -236,12 +236,12 @@
       "name": "Warmaster",
       "static_stat_bonus": null,
       "conditional_proc": {
-        "chance": 0.60,
+        "chance": 0.6,
         "trigger": "once_per_skill_use_against_boss",
-        "damage_basis": "0.10 \u00d7 target_max_hp (4% vs boss)",
+        "damage_basis": "0.10 × target_max_hp (4% vs boss)",
         "damage_cap": 67626,
         "stacks_with_def_down_weaken": false,
-        "notes": "60% rate VERIFIED 2026-06-22 from in-game mastery description via mod /mastery-info?id=500161: 'Has a 60% chance of inflicting bonus damage when attacking.' Previous empirical observation of 29% rate across 178 casts has unexplained discrepancy \u2014 possible causes: my cast count over-includes events (Syphon TM-drain counted as cast?), or hidden trigger conditions (requires specific hit types). DO NOT change this value again without primary-source justification."
+        "notes": "60% rate VERIFIED 2026-06-22 from in-game mastery description via mod /mastery-info?id=500161: 'Has a 60% chance of inflicting bonus damage when attacking.' Previous empirical observation of 29% rate across 178 casts has unexplained discrepancy — possible causes: my cast count over-includes events (Syphon TM-drain counted as cast?), or hidden trigger conditions (requires specific hit types). DO NOT change this value again without primary-source justification."
       },
       "is_simple_stat_bonus": false,
       "is_hand_coded": true
@@ -272,7 +272,7 @@
       "conditional_proc": {
         "chance": 0.3,
         "trigger": "per_hit_against_target_with_higher_hp",
-        "damage_basis": "0.075 \u00d7 target_max_hp (3% vs boss)",
+        "damage_basis": "0.075 × target_max_hp (3% vs boss)",
         "damage_cap": 67626,
         "stacks_with_def_down_weaken": false,
         "multi_hit": true
@@ -701,8 +701,10 @@
       "static_stat_bonus": null,
       "conditional_proc": {
         "chance": 0.05,
-        "trigger": "per_hit_when_team_takes_damage",
-        "effect": "reduce a random ally's skill cooldown by 1"
+        "trigger": "at_start_of_own_turn",
+        "effect": "reduce one of own random skill cooldowns by 1",
+        "target": "owner",
+        "source": "game-truth static skill 500342 (KindId=ReduceCooldown, TargetType=Owner, Condition=isOwnersTurn)"
       },
       "is_simple_stat_bonus": false,
       "is_hand_coded": true
@@ -720,7 +722,7 @@
       },
       "conditional_proc": {
         "effect": "+15% to basic set bonus stat values",
-        "source": "data/static/masteries.json \u2014 has stat_bonus formula"
+        "source": "data/static/masteries.json — has stat_bonus formula"
       },
       "is_simple_stat_bonus": false,
       "is_hand_coded": true
@@ -730,9 +732,15 @@
       "tree": "Support",
       "tier_row": 4,
       "col": 4,
-      "name": "mastery_500344",
+      "name": "Evil Eye",
       "static_stat_bonus": null,
-      "conditional_proc": null,
+      "conditional_proc": {
+        "chance": 1.0,
+        "trigger": "first_hit_on_target_with_default_skill",
+        "effect": "reduce target turn meter (20% single-target, 5% AoE)",
+        "target": "enemy_hit_by_default_skill",
+        "source": "game-truth /mastery-info"
+      },
       "is_simple_stat_bonus": false,
       "is_hand_coded": false
     },
