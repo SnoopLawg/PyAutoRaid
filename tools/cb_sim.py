@@ -3091,6 +3091,135 @@ def run_potential_team(pt: dict, cb_element: int = 4,
     return result
 
 
+def _build_team_setup(hero_names: List[str], use_current_gear: bool = True):
+    """Heavy one-shot work for evaluate_team_calibrated / evaluate_team_mc.
+
+    Returns a dict carrying everything needed to rebuild fresh sim
+    champions across trials: team hero records, optimized artifacts,
+    account data, preset opener/priority plan, and the cached element
+    per slot. Used by the MC wrapper to avoid re-doing data loads,
+    calc_stats, and gear optimization for every trial.
+    """
+    from cb_optimizer import calc_stats, optimal_artifacts_for_hero
+    from cb_optimizer import UK_ME_SPD_RANGE
+    base = Path(__file__).parent.parent
+    with open(base / "heroes_6star.json") as f:
+        heroes_data = json.load(f)
+    with open(base / "all_artifacts.json") as f:
+        artifacts_data = json.load(f)
+    with open(base / "account_data.json") as f:
+        account = json.load(f)
+
+    hero_by_name = {}
+    for h in heroes_data["heroes"]:
+        name = h.get("name", "")
+        if name and name not in hero_by_name:
+            hero_by_name[name] = h
+
+    from profile_resolver import make_synthetic_hero_record
+    from cb_profiles import resolve as _resolve_profile
+    from load_game_profiles import load_profiles as _lgp
+    SD, _, _, _ = _lgp()
+
+    team_h, team_p = [], []
+    _dup_count: dict[str, int] = {}
+    for tname in hero_names:
+        key = tname
+        if tname in DUPLICATE_INSTANCE_HEROES:
+            _dup_count[tname] = _dup_count.get(tname, 0) + 1
+            key = _dup_key_for(tname, _dup_count[tname])
+        h = hero_by_name.get(key) or hero_by_name.get(tname)
+        if not h:
+            h = make_synthetic_hero_record(tname)
+            if not h:
+                return {"error": f"Hero not found: {tname}"}
+        team_h.append(h)
+        team_p.append(_resolve_profile(tname, SD.get(tname)))
+
+    if use_current_gear:
+        assigned_arts = []
+        for h in team_h:
+            current = h.get("artifacts", []) or []
+            assigned_arts.append([a for a in current
+                                  if isinstance(a, dict) and a.get("id")])
+    else:
+        all_arts = [a for a in artifacts_data.get("artifacts", []) if not a.get("error")]
+        used = set()
+        from cb_optimizer import stun_priority
+        has_uk = sum(1 for p in team_p if p and p.unkillable) >= 2
+        dps_idx = [i for i, p in enumerate(team_p) if p and not p.unkillable]
+        stun_idx = (min(dps_idx, key=lambda i: stun_priority(team_p[i]))
+                    if dps_idx else -1)
+        priority_order = sorted(range(5), key=lambda i: (
+            0 if (team_p[i] and team_p[i].unkillable) else
+            (3 if i == stun_idx else
+             (1 if (team_p[i] and team_p[i].needs_acc) else 2))
+        ))
+        assigned_arts = [[] for _ in range(5)]
+        for pi in priority_order:
+            if team_h[pi].get("_synthetic"):
+                continue
+            avail = [a for a in all_arts if a.get("id") not in used and a.get("rank", 0) >= 5]
+            spd_max = (UK_ME_SPD_RANGE[1]
+                       if (has_uk and team_p[pi] and team_p[pi].unkillable)
+                       else None)
+            is_stun = has_uk and pi == stun_idx
+            arts, _ = optimal_artifacts_for_hero(
+                team_h[pi], team_p[pi], avail, account,
+                spd_max=spd_max, is_stun_target=is_stun)
+            assigned_arts[pi] = arts
+            for a in arts:
+                used.add(a.get("id"))
+
+    # Pre-compute stats per hero (expensive — calls calc_stats)
+    stats_per_hero = [calc_stats(team_h[i], assigned_arts[i], account)
+                      for i in range(len(hero_names))]
+
+    # Resolve preset opener+priority plan
+    try:
+        from preset_loader import load_preset_for_team
+        preset_plan = load_preset_for_team(hero_names) or {}
+    except Exception:
+        preset_plan = {}
+
+    return {
+        "hero_names": hero_names,
+        "team_h": team_h,
+        "stats_per_hero": stats_per_hero,
+        "preset_plan": preset_plan,
+        "elements": [int(team_h[i].get("element", 4) or 4)
+                     for i in range(len(hero_names))],
+        "masteries": [team_h[i].get("masteries", [])
+                      for i in range(len(hero_names))],
+    }
+
+
+def _build_sim_champs_from_setup(setup: dict):
+    """Build fresh SimChampions from a setup dict (cheap; no calc_stats).
+
+    Called once per Monte Carlo trial to give each run independent
+    mutable hero state (cooldowns, buffs, accumulators).
+    """
+    hero_names = setup["hero_names"]
+    sim_champs = []
+    _opener_dup_count: dict[str, int] = {}
+    for i, tname in enumerate(hero_names):
+        plan = setup["preset_plan"].get(tname) or {}
+        opening = plan.get("opening") or []
+        if not opening and tname in DUPLICATE_INSTANCE_HEROES:
+            _opener_dup_count[tname] = _opener_dup_count.get(tname, 0) + 1
+            opening = _dup_opener_for(tname, _opener_dup_count[tname])
+        champ = build_sim_champion(tname, setup["stats_per_hero"][i], i + 1,
+                                    masteries=setup["masteries"][i],
+                                    opening=opening,
+                                    element=setup["elements"][i])
+        priority = plan.get("priority") or []
+        if priority:
+            champ.skill_priority = list(priority)
+        sim_champs.append(champ)
+    return sim_champs
+
+
 def evaluate_team_calibrated(hero_names: List[str], cb_element: int = 4,
                               use_current_gear: bool = True,
                               force_affinity: bool = True,
@@ -3122,112 +3251,10 @@ def evaluate_team_calibrated(hero_names: List[str], cb_element: int = 4,
     Returns a dict with keys: total, cb_turns, errors, valid (or
     `error` on failure).
     """
-    from cb_optimizer import calc_stats, optimal_artifacts_for_hero, PROFILES
-    from cb_optimizer import UK_ME_SPD_RANGE
-    base = Path(__file__).parent.parent
-    with open(base / "heroes_6star.json") as f:
-        heroes_data = json.load(f)
-    with open(base / "all_artifacts.json") as f:
-        artifacts_data = json.load(f)
-    with open(base / "account_data.json") as f:
-        account = json.load(f)
-
-    hero_by_name = {}
-    for h in heroes_data["heroes"]:
-        name = h.get("name", "")
-        if name and name not in hero_by_name:
-            hero_by_name[name] = h
-
-    # Resolve team — fall back to synthetic record for unowned heroes
-    from profile_resolver import make_synthetic_hero_record
-    from cb_profiles import resolve as _resolve_profile
-    from load_game_profiles import load_profiles as _lgp
-    SD, _, _, _ = _lgp()
-
-    team_h, team_p = [], []
-    _dup_count: dict[str, int] = {}
-    for tname in hero_names:
-        key = tname
-        if tname in DUPLICATE_INSTANCE_HEROES:
-            _dup_count[tname] = _dup_count.get(tname, 0) + 1
-            key = _dup_key_for(tname, _dup_count[tname])
-        h = hero_by_name.get(key) or hero_by_name.get(tname)
-        if not h:
-            h = make_synthetic_hero_record(tname)
-            if not h:
-                return {"error": f"Hero not found: {tname}", "total": 0}
-        team_h.append(h)
-        team_p.append(_resolve_profile(tname, SD.get(tname)))
-
-    # Gear: either current equipped, or re-optimize from full vault
-    if use_current_gear:
-        assigned_arts = []
-        for h in team_h:
-            current = h.get("artifacts", []) or []
-            assigned_arts.append([a for a in current
-                                  if isinstance(a, dict) and a.get("id")])
-    else:
-        all_arts = [a for a in artifacts_data.get("artifacts", []) if not a.get("error")]
-        used = set()
-        has_uk = sum(1 for p in team_p if p and p.unkillable) >= 2
-        dps_idx = [i for i, p in enumerate(team_p) if p and not p.unkillable]
-        from cb_optimizer import stun_priority
-        stun_idx = (min(dps_idx, key=lambda i: stun_priority(team_p[i]))
-                    if dps_idx else -1)
-        priority_order = sorted(range(5), key=lambda i: (
-            0 if (team_p[i] and team_p[i].unkillable) else
-            (3 if i == stun_idx else
-             (1 if (team_p[i] and team_p[i].needs_acc) else 2))
-        ))
-        assigned_arts = [[] for _ in range(5)]
-        for pi in priority_order:
-            if team_h[pi].get("_synthetic"):
-                continue
-            avail = [a for a in all_arts if a.get("id") not in used and a.get("rank", 0) >= 5]
-            spd_max = (UK_ME_SPD_RANGE[1]
-                       if (has_uk and team_p[pi] and team_p[pi].unkillable)
-                       else None)
-            is_stun = has_uk and pi == stun_idx
-            arts, _ = optimal_artifacts_for_hero(
-                team_h[pi], team_p[pi], avail, account,
-                spd_max=spd_max, is_stun_target=is_stun)
-            assigned_arts[pi] = arts
-            for a in arts:
-                used.add(a.get("id"))
-
-    # Build sim champions — preset-driven opener+priority when the
-    # user's flagship preset matches this team; falls back to
-    # DUPLICATE_INSTANCE_OPENERS for duplicate-eligible heroes
-    # otherwise. Without this, the sim hardcoded Maneater opener=A3
-    # while the user's preset id=1 actually opens with Mane A2
-    # (Syphon — fills ally TM); root-cause for the BT1-9 opening
-    # under-prediction documented 2026-06-21.
-    try:
-        from preset_loader import load_preset_for_team
-        preset_plan = load_preset_for_team(hero_names) or {}
-    except Exception:
-        preset_plan = {}
-
-    sim_champs = []
-    _opener_dup_count: dict[str, int] = {}
-    for i, tname in enumerate(hero_names):
-        stats = calc_stats(team_h[i], assigned_arts[i], account)
-        plan = preset_plan.get(tname) or {}
-        opening = plan.get("opening") or []
-        if not opening and tname in DUPLICATE_INSTANCE_HEROES:
-            _opener_dup_count[tname] = _opener_dup_count.get(tname, 0) + 1
-            opening = _dup_opener_for(tname, _opener_dup_count[tname])
-        champ = build_sim_champion(tname, stats, i + 1,
-                                    masteries=team_h[i].get("masteries", []),
-                                    opening=opening,
-                                    element=int(team_h[i].get("element", 4) or 4))
-        # Apply preset skill priority when the user has one set
-        # (else SimChampion uses default-AI ordering A3>A2>A1).
-        priority = plan.get("priority") or []
-        if priority:
-            champ.skill_priority = list(priority)
-        sim_champs.append(champ)
-
+    setup = _build_team_setup(hero_names, use_current_gear=use_current_gear)
+    if "error" in setup:
+        return {"error": setup["error"], "total": 0}
+    sim_champs = _build_sim_champs_from_setup(setup)
     sim = CBSimulator(sim_champs, deterministic=deterministic,
                        rng_seed=rng_seed,
                        verbose=verbose,
@@ -3255,18 +3282,23 @@ def evaluate_team_mc(hero_names: List[str], cb_element: int = 4,
     """
     import statistics as _stats
 
+    # One-shot setup: hero data, gear, stats, preset plan. Reused
+    # across all trials so we only pay the calc_stats / file-load
+    # cost once instead of n_trials times (was ~3s per trial before
+    # refactor, now ~3s setup + ~0.5s/trial after).
+    setup = _build_team_setup(hero_names, use_current_gear=use_current_gear)
+    if "error" in setup:
+        return {"error": setup["error"], "trials": 0}
+
     samples = []
     per_bt = {}  # bt -> list of cumulative damages
     for i in range(n_trials):
-        r = evaluate_team_calibrated(
-            hero_names=hero_names,
-            cb_element=cb_element,
-            use_current_gear=use_current_gear,
-            force_affinity=force_affinity,
-            max_cb_turns=max_cb_turns,
-            deterministic=False,
-            rng_seed=seed_base + i * 7919,
-        )
+        sim_champs = _build_sim_champs_from_setup(setup)
+        sim = CBSimulator(sim_champs, deterministic=False,
+                           rng_seed=seed_base + i * 7919,
+                           cb_element=cb_element,
+                           force_affinity=force_affinity)
+        r = sim.run(max_cb_turns=max_cb_turns)
         if "error" in r:
             continue
         samples.append(r.get("total", 0))
