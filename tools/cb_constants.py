@@ -247,7 +247,7 @@ UNM_RES: int = 250         # CALIBRATED (no live capture yet)
 # (Warmaster, Giant Slayer, Crushing Rend) have no static form. These match
 # the in-game tooltips.
 
-WM_PROC_RATE: float = 0.60   # Warmaster: 60% chance per skill
+WM_PROC_RATE: float = 0.30   # Warmaster: empirical 30% per skill (was 60%, see mastery_manifest.json + project_wm_chance_empirical memory)
 GS_PROC_RATE: float = 0.30   # Giant Slayer: 30% per hit
 
 
