@@ -1494,11 +1494,15 @@ class CBSimulator:
                         # also produces a reflect proportional to the
                         # damage avoided.
                         base_deflect = per_ally_aoe * living_allies * buff_mult("strengthen_15", 0.15)
-                        # Per-ally reflect bonus: skill 48805's
-                        # `'0.03*TRG_HP'` PassiveReflectDamage path,
-                        # capped at 75K (CB DoT cap from skill 200008).
-                        bonus_per_event = 0.30 * 75_000
-                        bonus_total = living_allies * bonus_per_event
+                        # Reflect bonus: skill 48805's `'0.03*TRG_HP'`
+                        # PassiveReflectDamage path, capped at 75K (CB
+                        # DoT cap from skill 200008). 2026-06-22:
+                        # corrected — bonus is ONE event per boss AOE
+                        # (boss is the only enemy/target), not per ally.
+                        # Was: bonus_total = living_allies * 22.5K → 5x
+                        # over-attribution. See dragging-fix downstream
+                        # damage investigation.
+                        bonus_total = 0.30 * 75_000
                         c.damage.passive += base_deflect + bonus_total
 
         elif attack == "stun":
