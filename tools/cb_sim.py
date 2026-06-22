@@ -178,7 +178,9 @@ from cb_constants import (
     MAX_APPLIED_DEBUFF_EFFECTS,
 )
 
-TM_THRESHOLD = 1000
+TM_THRESHOLD = 1430  # Game-truth (per RSL Speedology 201 / MaxMeng77 reddit
+# post). Sim was using 1000 prior to 2026-06-21 which produced the same
+# RATIOS but broke Speed-Division semantics + the dragging effect.
 MAX_CB_TURNS = 50
 # Game-truth from data/static/gameplay.json (`MaxAppliedDebuffEffects`).
 MAX_DEBUFF_SLOTS = MAX_APPLIED_DEBUFF_EFFECTS
@@ -842,14 +844,18 @@ class CBSimulator:
             _f.tm.tick_rate_for_threshold(TM_THRESHOLD)
             if _f is not None else 0.7
         )
-        # Empirical calibration 2026-06-19: tick_log analysis (boss 6.71
-        # game-ticks/turn vs gameplay 7.52, Mane 4.17 vs 4.96) shows
-        # CB has a +12% global TM bonus over gameplay.json's
-        # StaminaByTick=0.07. Source unidentified — could be CB area
-        # aura, runtime constant override, or framerate-based mismatch.
-        # Mane gets additional +6% from masteries (modeled as COM).
-        # Verified: boss cycle 22.5 → 20.1 (matches real 21 closely).
-        TICK_RATE *= 1.12
+        # 2026-06-19 calibration applied TICK_RATE *= 1.12 to fit
+        # observed boss/Mane game-ticks/turn under TM_THRESHOLD=1000.
+        # That calibration is now removed:
+        #   (a) TM_THRESHOLD raised to 1430 (game-truth) — see constant decl
+        #   (b) The "+12% TM" observation was relative to wrong-threshold
+        #       sim, not a real game mechanic
+        #   (c) The "Mane +6% from COM" attribution was based on the wrong
+        #       mastery ID (500344 = Evil Eye, not COM) — see
+        #       project_cycle_of_magic_id_fix memory
+        # With threshold=1430 + no bump, the SD-ceiling effect emerges
+        # naturally. Per-hero residual gap (~0-12%) is the dragging
+        # effect, which would need explicit modeling to close fully.
         while self.cb_turn < effective_max:
             if all(c.is_dead for c in self.champions) or enraged:
                 break
