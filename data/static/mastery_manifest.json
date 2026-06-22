@@ -236,12 +236,12 @@
       "name": "Warmaster",
       "static_stat_bonus": null,
       "conditional_proc": {
-        "chance": 0.30,
+        "chance": 0.60,
         "trigger": "once_per_skill_use_against_boss",
         "damage_basis": "0.10 \u00d7 target_max_hp (4% vs boss)",
         "damage_cap": 67626,
         "stacks_with_def_down_weaken": false,
-        "notes": "Chance updated 2026-06-22 from documented 0.60 to empirical 0.30 \u2014 counted 41 WM events across 140 Mane A1+A2 casts (29% rate) on 7 Magic captures with DAMAGE_HOOK. Documented 60% appears to no longer hold; either Plarium nerfed it or there's an additional condition not in description. P-value vs 0.60: ~10^-15. NEEDS PRIMARY SOURCE re-verification when next il2cpp dump available."
+        "notes": "60% rate VERIFIED 2026-06-22 from in-game mastery description via mod /mastery-info?id=500161: 'Has a 60% chance of inflicting bonus damage when attacking.' Previous empirical observation of 29% rate across 178 casts has unexplained discrepancy \u2014 possible causes: my cast count over-includes events (Syphon TM-drain counted as cast?), or hidden trigger conditions (requires specific hit types). DO NOT change this value again without primary-source justification."
       },
       "is_simple_stat_bonus": false,
       "is_hand_coded": true
