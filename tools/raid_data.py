@@ -145,10 +145,16 @@ MASTERY_IDS = {
     "master_hexer":      500354,  # 30% chance extend debuff by 1T when placing
     "lore_of_steel":     500343,  # +15% to basic set bonuses
     "eagle_eye":         500364,  # +50 ACC
-    "cycle_of_magic":    500344,  # 5% reduce random CD by 1
-    # ^ Was 500342 (verified wrong 2026-06-18 — that's Evil Eye in
-    # Support T4 col 2). Cycle of Magic is Support T4 col 4 = 500344.
-    # Demytha has 500344 in her mastery list, confirmed from heroes_all.
+    "cycle_of_magic":    500342,  # Support T4 col 2 — "5% chance to reduce
+    # cooldown of a random Skill by 1 turn at the start of every turn"
+    # VERIFIED 2026-06-21 by reading MasteryTypeExtensions.GetName(500342)
+    # via mod /mastery-info endpoint. The 2026-06-18 "fix" to 500344 was
+    # WRONG — 500344 is Evil Eye (Support T4 col 4), a boss-TM-drain
+    # mastery that has nothing to do with COM. User confirmed Mane doesn't
+    # have COM. The sim's old "+5% TM per cd-cast" model (commit b9813c0)
+    # was based on the wrong mastery and is also wrong for actual COM.
+    "evil_eye":          500344,  # Support T4 col 4 — drain target TM
+    # 20% (single) / 5% (AoE) on FIRST hit per target. CB: drains boss once.
     # Defense T5
     "retribution":       500253,  # 50% counterattack when losing 25%+ HP
     "deterrence":        500254,  # 20% counterattack on stun/freeze/fear on ally

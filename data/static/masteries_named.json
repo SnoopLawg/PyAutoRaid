@@ -1,0 +1,533 @@
+{
+  "masteries": [
+    {
+      "id": 500112,
+      "name": "Blade Disciple",
+      "description": "ATK +75",
+      "tree": "Attack",
+      "row": 1,
+      "col": 2
+    },
+    {
+      "id": 500113,
+      "name": "Deadly Precision",
+      "description": "C. RATE +5%",
+      "tree": "Attack",
+      "row": 1,
+      "col": 3
+    },
+    {
+      "id": 500121,
+      "name": "Heart of Glory",
+      "description": "Increases damage inflicted by 5% when attacking with full HP",
+      "tree": "Attack",
+      "row": 2,
+      "col": 1
+    },
+    {
+      "id": 500122,
+      "name": "Keen Strike",
+      "description": "C. DMG +10%",
+      "tree": "Attack",
+      "row": 2,
+      "col": 2
+    },
+    {
+      "id": 500123,
+      "name": "Shield Breaker",
+      "description": "Increases damage inflicted to <color=#1ee600>[Shield]</color> buffs on targets by 25%",
+      "tree": "Attack",
+      "row": 2,
+      "col": 3
+    },
+    {
+      "id": 500124,
+      "name": "Grim Resolve",
+      "description": "Increases damage inflicted by 5% when attacking with 50% HP or less",
+      "tree": "Attack",
+      "row": 2,
+      "col": 4
+    },
+    {
+      "id": 500131,
+      "name": "Single Out",
+      "description": "Increases damage inflicted to targets with less than 40% HP by 8%",
+      "tree": "Attack",
+      "row": 3,
+      "col": 1
+    },
+    {
+      "id": 500132,
+      "name": "Life Drinker",
+      "description": "Heals by 5% of damage inflicted when attacking with 50% HP or less",
+      "tree": "Attack",
+      "row": 3,
+      "col": 2
+    },
+    {
+      "id": 500133,
+      "name": "Whirlwind of Death",
+      "description": "Increases SPD by 6 for each enemy killed by this Champion. Stacks across each round in a battle, up to 18 SPD",
+      "tree": "Attack",
+      "row": 3,
+      "col": 3
+    },
+    {
+      "id": 500134,
+      "name": "Ruthless Ambush",
+      "description": "Increases damage inflicted by 8% for the first hit on each enemy",
+      "tree": "Attack",
+      "row": 3,
+      "col": 4
+    },
+    {
+      "id": 500141,
+      "name": "Bring It Down",
+      "description": "Increases damage inflicted by 6% when attacking targets with higher MAX HP",
+      "tree": "Attack",
+      "row": 4,
+      "col": 1
+    },
+    {
+      "id": 500142,
+      "name": "Wrath of the Slain",
+      "description": "Increases damage inflicted by 5% for each dead ally. Stacks up to 10%",
+      "tree": "Attack",
+      "row": 4,
+      "col": 2
+    },
+    {
+      "id": 500143,
+      "name": "Cycle of Violence",
+      "description": "Has a 30% chance of decreasing the cooldown of a random Skill by 1 turn if the damage inflicted by a Skill exceeds 30% of the target's MAX HP. Occurs once per turn",
+      "tree": "Attack",
+      "row": 4,
+      "col": 3
+    },
+    {
+      "id": 500144,
+      "name": "Opportunist",
+      "description": "Increases damage inflicted to targets with <color=#1ee600>[Stun]</color>, <color=#1ee600>[Sleep]</color>, <color=#1ee600>[Fear]</color>, <color=#1ee600>[True Fear]</color>, <color=#1ee600>[Freeze]</color>, <color=#1ee600>[Petrification]</color> debuffs by 12%.",
+      "tree": "Attack",
+      "row": 4,
+      "col": 4
+    },
+    {
+      "id": 500151,
+      "name": "Methodical",
+      "description": "Increases the damage inflicted by this Champion's default Skill by 2% each time it is used during battle. Stacks across each round in a battle, up to 10%",
+      "tree": "Attack",
+      "row": 5,
+      "col": 1
+    },
+    {
+      "id": 500152,
+      "name": "Kill Streak",
+      "description": "Increases damage inflicted by 6% in Arena and Siege battles and 3% in all other locations for each enemy killed by this Champion in battle. Stacks across each Round in a battle, up to 12%",
+      "tree": "Attack",
+      "row": 5,
+      "col": 2
+    },
+    {
+      "id": 500153,
+      "name": "Blood Shield",
+      "description": "Places a <color=#1ee600>[Shield]</color> buff on this Champion for 1 turn when this Champion kills an enemy\u00a0(except Boss' minions). The value of the <color=#1ee600>[Shield]</color> is equal to 15% of this Champion's MAX HP. Occurs once per turn",
+      "tree": "Attack",
+      "row": 5,
+      "col": 3
+    },
+    {
+      "id": 500154,
+      "name": "Stoked To Fury",
+      "description": "Increases damage inflicted by 4% for each debuff on this Champion. Stacks up to 12%",
+      "tree": "Attack",
+      "row": 5,
+      "col": 4
+    },
+    {
+      "id": 500161,
+      "name": "Warmaster",
+      "description": "Has a 60% chance of inflicting bonus damage when attacking. Bonus damage is equal to 10% of the target Champion's MAX HP or 4% of the target's MAX HP when attacking Bosses. Bonus damage can only occur once per Skill and does not count as an extra hit.\r\n\r\nDamage based on: <color=#1EE600FF>[Enemy MAX HP]</color>",
+      "tree": "Attack",
+      "row": 6,
+      "col": 1
+    },
+    {
+      "id": 500162,
+      "name": "Helmsmasher",
+      "description": "Has a 50% chance of ignoring 25% of the target's DEF. For Skills that ignore DEF, this 25% is in addition to the amount ignored by the Skill.",
+      "tree": "Attack",
+      "row": 6,
+      "col": 2
+    },
+    {
+      "id": 500163,
+      "name": "Giant Slayer",
+      "description": "Has a 30% chance of inflicting bonus damage when attacking. Bonus damage is equal to 7.5% of the target Champion's MAX HP or 3% of the target's MAX HP when attacking Bosses. Bonus damage can occur on each hit of a Skill, but does not count as an extra hit.\r\n\r\nDamage based on: <color=#1EE600FF>[Enemy MAX HP]</color>",
+      "tree": "Attack",
+      "row": 6,
+      "col": 3
+    },
+    {
+      "id": 500164,
+      "name": "Flawless Execution",
+      "description": "C. DMG +20%",
+      "tree": "Attack",
+      "row": 6,
+      "col": 4
+    },
+    {
+      "id": 500212,
+      "name": "Tough Skin",
+      "description": "DEF +75",
+      "tree": "Defence",
+      "row": 1,
+      "col": 2
+    },
+    {
+      "id": 500213,
+      "name": "Defiant",
+      "description": "RES +10",
+      "tree": "Defence",
+      "row": 1,
+      "col": 3
+    },
+    {
+      "id": 500221,
+      "name": "Blastproof",
+      "description": "Decreases damage received from AoE attacks by 5%",
+      "tree": "Defence",
+      "row": 2,
+      "col": 1
+    },
+    {
+      "id": 500222,
+      "name": "Rejuvenation",
+      "description": "Increases the amount of healing and the value of <color=#1ee600>[Shield]</color> buffs this Champion receives by 5%",
+      "tree": "Defence",
+      "row": 2,
+      "col": 2
+    },
+    {
+      "id": 500223,
+      "name": "Mighty Endurance",
+      "description": "Decreases the damage received by 10% if this Champion has <color=#1ee600>[Stun]</color>, <color=#1ee600>[Sleep]</color>, <color=#1ee600>[Fear]</color>, <color=#1ee600>[True Fear]</color>, <color=#1ee600>[Freeze]</color>, <color=#1ee600>[Petrification]</color> debuffs.",
+      "tree": "Defence",
+      "row": 2,
+      "col": 3
+    },
+    {
+      "id": 500224,
+      "name": "Improved Parry",
+      "description": "Decreases the damage received by this Champion by 8% when this Champion is hit with a critical hit",
+      "tree": "Defence",
+      "row": 2,
+      "col": 4
+    },
+    {
+      "id": 500231,
+      "name": "Shadow Heal",
+      "description": "Heals this Champion by 6% of their MAX HP each time an enemy is healed. Occurs once per turn.",
+      "tree": "Defence",
+      "row": 3,
+      "col": 1
+    },
+    {
+      "id": 500232,
+      "name": "Resurgent",
+      "description": "Has a 50% chance to remove 1 random debuff from this Champion when they lose 25% of their MAX HP or more from a single enemy Skill",
+      "tree": "Defence",
+      "row": 3,
+      "col": 2
+    },
+    {
+      "id": 500233,
+      "name": "Bloodthirst",
+      "description": "Heals this Champion by 10% of their MAX HP when they kill an enemy target\u00a0(except Boss' minions).\u00a0Cooldown: 1 turn",
+      "tree": "Defence",
+      "row": 3,
+      "col": 3
+    },
+    {
+      "id": 500234,
+      "name": "Wisdom of Battle",
+      "description": "Has a 30% chance of placing a <color=#1ee600>[Block Debuffs]</color> buff on this Champion for 1 turn when <color=#1ee600>[Stun]</color>, <color=#1ee600>[Sleep]</color>, <color=#1ee600>[Fear]</color>, <color=#1ee600>[True Fear]</color>, <color=#1ee600>[Freeze]</color>, <color=#1ee600>[Petrification]</color> debuffs expire on this Champion.",
+      "tree": "Defence",
+      "row": 3,
+      "col": 4
+    },
+    {
+      "id": 500241,
+      "name": "Solidarity",
+      "description": "Increases Ally RES by 5 for each buff placed on them by this Champion",
+      "tree": "Defence",
+      "row": 4,
+      "col": 1
+    },
+    {
+      "id": 500242,
+      "name": "Delay Death",
+      "description": "Reduces the damage this Champion receives from a specific enemy by 0.75% with each hit taken from that enemy. Damage reduction stacks up to 6% for each enemy",
+      "tree": "Defence",
+      "row": 4,
+      "col": 2
+    },
+    {
+      "id": 500243,
+      "name": "Harvest Despair",
+      "description": "Has a 60% chance of placing a <color=#1ee600>[Leech]</color> debuff for 1 turn when placing <color=#1ee600>[Stun]</color>, <color=#1ee600>[Sleep]</color>, <color=#1ee600>[Fear]</color>, <color=#1ee600>[True Fear]</color>, <color=#1ee600>[Freeze]</color>, <color=#1ee600>[Petrification]</color> debuffs.",
+      "tree": "Defence",
+      "row": 4,
+      "col": 3
+    },
+    {
+      "id": 500244,
+      "name": "Stubbornness",
+      "description": "Increases RES by 10 for each debuff on this Champion. Stacks up to 30",
+      "tree": "Defence",
+      "row": 4,
+      "col": 4
+    },
+    {
+      "id": 500251,
+      "name": "Selfless Defender",
+      "description": "Decreases the damage an ally receives from the first enemy hit in each round by 20%. This Champion will receive that damage instead",
+      "tree": "Defence",
+      "row": 5,
+      "col": 1
+    },
+    {
+      "id": 500252,
+      "name": "Cycle of Revenge",
+      "description": "Has a 50% chance of increasing the Turn Meter by 15% when an ally is attacked with a critical hit. Will only increase the Turn Meter once if an ally receives multiple critical hits from a single Skill",
+      "tree": "Defence",
+      "row": 5,
+      "col": 2
+    },
+    {
+      "id": 500253,
+      "name": "Retribution",
+      "description": "Has a 50% chance to counterattack when this Champion loses 25% of their MAX HP or more from a single enemy Skill",
+      "tree": "Defence",
+      "row": 5,
+      "col": 3
+    },
+    {
+      "id": 500254,
+      "name": "Deterrence",
+      "description": "Has a 20% chance to counterattack an enemy when they apply a <color=#1ee600>[Stun]</color>, <color=#1ee600>[Sleep]</color>, <color=#1ee600>[Fear]</color>, <color=#1ee600>[True Fear]</color>, <color=#1ee600>[Freeze]</color>, <color=#1ee600>[Petrification]</color>,\u00a0or <color=#1ee600>[Sheep]</color>\u00a0debuff on an ally. Cooldown: 1 turn",
+      "tree": "Defence",
+      "row": 5,
+      "col": 4
+    },
+    {
+      "id": 500261,
+      "name": "Iron Skin",
+      "description": "DEF +200",
+      "tree": "Defence",
+      "row": 6,
+      "col": 1
+    },
+    {
+      "id": 500262,
+      "name": "Bulwark",
+      "description": "Decreases the damage all allies receive by 5%. This Champion will receive that damage instead",
+      "tree": "Defence",
+      "row": 6,
+      "col": 2
+    },
+    {
+      "id": 500263,
+      "name": "Fearsome Presence",
+      "description": "Increases the chances of placing a <color=#1ee600>[Stun]</color>, <color=#1ee600>[Sleep]</color>, <color=#1ee600>[Freeze]</color>, <color=#1ee600>[Fear]</color>, <color=#1ee600>[True Fear]</color>, <color=#1ee600>[Provoke]</color>,\u00a0or <color=#1ee600>[Sheep]</color> debuff\u00a0from Skills or Artifacts by 5%",
+      "tree": "Defence",
+      "row": 6,
+      "col": 3
+    },
+    {
+      "id": 500264,
+      "name": "Unshakeable",
+      "description": "RES +50",
+      "tree": "Defence",
+      "row": 6,
+      "col": 4
+    },
+    {
+      "id": 500312,
+      "name": "Steadfast",
+      "description": "MAX HP +810",
+      "tree": "Support",
+      "row": 1,
+      "col": 2
+    },
+    {
+      "id": 500313,
+      "name": "Pinpoint Accuracy",
+      "description": "ACC +10",
+      "tree": "Support",
+      "row": 1,
+      "col": 3
+    },
+    {
+      "id": 500321,
+      "name": "Lay On Hands",
+      "description": "Increases the value of heals this Champion casts by 5%",
+      "tree": "Support",
+      "row": 2,
+      "col": 1
+    },
+    {
+      "id": 500322,
+      "name": "Shieldbearer",
+      "description": "Increases the value of <color=#1ee600>[Shield]</color> buffs this Champion casts by 5%",
+      "tree": "Support",
+      "row": 2,
+      "col": 2
+    },
+    {
+      "id": 500323,
+      "name": "Exalt in Death",
+      "description": "Heals this Champion by 10% of their MAX HP the first time an enemy is killed in each round",
+      "tree": "Support",
+      "row": 2,
+      "col": 3
+    },
+    {
+      "id": 500324,
+      "name": "Charged Focus",
+      "description": "Increases ACC by 20 when this Champion has no Skills on cooldown",
+      "tree": "Support",
+      "row": 2,
+      "col": 4
+    },
+    {
+      "id": 500331,
+      "name": "Healing Savior",
+      "description": "Increases the amount of healing and the value of <color=#1ee600>[Shield]</color> buffs placed by this Champion by 10% if the target ally has 40% HP or less",
+      "tree": "Support",
+      "row": 3,
+      "col": 1
+    },
+    {
+      "id": 500332,
+      "name": "Rapid Response",
+      "description": "Has a 30% chance of increasing the Turn Meter by 10% when a <color=#ffe87d>buff</color> cast by this Champion is removed or expires",
+      "tree": "Support",
+      "row": 3,
+      "col": 2
+    },
+    {
+      "id": 500333,
+      "name": "Swarm Smiter",
+      "description": "Increases ACC by 4 for each enemy alive. Stacks up to 16",
+      "tree": "Support",
+      "row": 3,
+      "col": 3
+    },
+    {
+      "id": 500334,
+      "name": "Arcane Celerity",
+      "description": "Has a 30% chance of increasing the Turn Meter by 10% when a <color=#ffe87d>debuff</color> cast by this Champion is removed or expires",
+      "tree": "Support",
+      "row": 3,
+      "col": 4
+    },
+    {
+      "id": 500341,
+      "name": "Merciful Aid",
+      "description": "Increases the amount of healing and the value of <color=#1ee600>[Shield]</color> buffs placed by this Champion by 15% if the target ally has <color=#1ee600>[Stun]</color>, <color=#1ee600>[Sleep]</color>, <color=#1ee600>[Fear]</color>, <color=#1ee600>[True Fear]</color>, or <color=#1ee600>[Freeze]</color> debuffs",
+      "tree": "Support",
+      "row": 4,
+      "col": 1
+    },
+    {
+      "id": 500342,
+      "name": "Cycle of Magic",
+      "description": "Has a 5% chance of decreasing the cooldown of a random Skill by 1 turn at the start of every turn",
+      "tree": "Support",
+      "row": 4,
+      "col": 2
+    },
+    {
+      "id": 500343,
+      "name": "Lore of Steel",
+      "description": "Increases the Base Stat Set Bonuses of all Artifact Sets that increase Base Stats by 15%. This increase is multiplicative, not additive.",
+      "tree": "Support",
+      "row": 4,
+      "col": 3
+    },
+    {
+      "id": 500344,
+      "name": "Evil Eye",
+      "description": "Decreases the target's Turn Meter when this Champion hits them with the default Skill for the first time. Decreases the Turn Meter by 20% with single-target Skills and by 5% with AoE Skills. Occurs once per target.",
+      "tree": "Support",
+      "row": 4,
+      "col": 4
+    },
+    {
+      "id": 500351,
+      "name": "Lasting Gifts",
+      "description": "Has a 30% chance to extend the duration of any buff cast by this Champion by 1 turn.\r\n\r\nIt will not extend <color=#1ee600>[Block Damage]</color>, <color=#1ee600>[Unkillable]</color>, <color=#1ee600>[Revive on Death]</color>, or <color=#1ee600>[Taunt]</color> buffs.",
+      "tree": "Support",
+      "row": 5,
+      "col": 1
+    },
+    {
+      "id": 500352,
+      "name": "Spirit Haste",
+      "description": "Increases SPD by 8 for each dead ally. Stacks up to 24",
+      "tree": "Support",
+      "row": 5,
+      "col": 2
+    },
+    {
+      "id": 500353,
+      "name": "Sniper",
+      "description": "Increases the chances of placing any debuff from Skills or Artifacts by 5%.\r\n\r\nIt will not increase the chances of placing <color=#1ee600>[Stun]</color>, <color=#1ee600>[Sleep]</color>, <color=#1ee600>[Freeze]</color>, <color=#1ee600>[Fear]</color>, <color=#1ee600>[True Fear]</color>, <color=#1ee600>[Provoke]</color>, or <color=#1ee600>[Petrification]</color> debuffs.",
+      "tree": "Support",
+      "row": 5,
+      "col": 3
+    },
+    {
+      "id": 500354,
+      "name": "Master Hexer",
+      "description": "Has a 30% chance to extend the duration of any debuff cast by this Champion by 1 turn. It will not extend <color=#1ee600>[Stun]</color>, <color=#1ee600>[Sleep]</color>, <color=#1ee600>[Freeze]</color>, <color=#1ee600>[Provoke]</color>, <color=#1ee600>[Fear]</color>, <color=#1ee600>[True Fear]</color>, <color=#1ee600>[Bomb]</color>, or <color=#1ee600>[Petrification]</color> debuffs.",
+      "tree": "Support",
+      "row": 5,
+      "col": 4
+    },
+    {
+      "id": 500361,
+      "name": "Elixir of Life",
+      "description": "MAX HP +3,000",
+      "tree": "Support",
+      "row": 6,
+      "col": 1
+    },
+    {
+      "id": 500362,
+      "name": "Timely Intervention",
+      "description": "Increases this Champion's Turn Meter by 20% whenever an ally hero drops below 25% HP",
+      "tree": "Support",
+      "row": 6,
+      "col": 2
+    },
+    {
+      "id": 500363,
+      "name": "Oppressor",
+      "description": "Increases the Turn Meter fill rate by 2.5% for each active debuff cast by this Champion. Stacks up to 10%.",
+      "tree": "Support",
+      "row": 6,
+      "col": 3
+    },
+    {
+      "id": 500364,
+      "name": "Eagle-Eye",
+      "description": "ACC +50",
+      "tree": "Support",
+      "row": 6,
+      "col": 4
+    }
+  ],
+  "count": 66
+}
