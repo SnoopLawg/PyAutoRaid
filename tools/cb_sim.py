@@ -2112,21 +2112,49 @@ class CBSimulator:
         cr_adj = min(100, max(0, cr_adj))
         p_crit = cr_adj / 100.0
         crit_dmg_mult = 1.0 + (effective_cd / 100.0)  # 200%CD → ×3.0 dmg on crit
-        if is_advantage:
-            # 50% crush, 50% normal among non-crits
-            crit_mult = (
-                p_crit * crit_dmg_mult
-                + (1 - p_crit) * (0.50 * 1.30 + 0.50 * 1.0)
-            )
-        elif is_disadvantage:
-            # 35% glance, 65% normal among non-crits
-            crit_mult = (
-                p_crit * crit_dmg_mult
-                + (1 - p_crit) * (0.35 * 0.70 + 0.65 * 1.0)
-            )
+
+        # MC mode: per-hit roll for crit/glance/crush. This is the
+        # dominant source of cycle-level variance (a crit streak boosts
+        # damage by 3x on those hits; a glance streak on weak-affinity
+        # caster gimps an entire cycle). Without per-hit rolls, MC mode
+        # has ~12% damage spread vs real-game ~58% — sim was too
+        # narrow to validate against real fixture variance.
+        # Deterministic mode keeps expected-value formula for stable
+        # point comparison.
+        if self.deterministic:
+            if is_advantage:
+                # 50% crush, 50% normal among non-crits
+                crit_mult = (
+                    p_crit * crit_dmg_mult
+                    + (1 - p_crit) * (0.50 * 1.30 + 0.50 * 1.0)
+                )
+            elif is_disadvantage:
+                # 35% glance, 65% normal among non-crits
+                crit_mult = (
+                    p_crit * crit_dmg_mult
+                    + (1 - p_crit) * (0.35 * 0.70 + 0.65 * 1.0)
+                )
+            else:
+                # Neutral / Void — only crit vs normal
+                crit_mult = p_crit * crit_dmg_mult + (1 - p_crit) * 1.0
         else:
-            # Neutral / Void — only crit vs normal
-            crit_mult = p_crit * crit_dmg_mult + (1 - p_crit) * 1.0
+            # Per-hit Monte Carlo roll. Aggregate over hit_count.
+            crit_mult = 0.0
+            hits = max(1, skill.hit_count)
+            for _ in range(hits):
+                if self.rng.random() < p_crit:
+                    crit_mult += crit_dmg_mult
+                elif is_advantage and self.rng.random() < 0.50:
+                    crit_mult += 1.30  # crush
+                elif is_disadvantage and self.rng.random() < 0.35:
+                    crit_mult += 0.70  # glance
+                else:
+                    crit_mult += 1.0
+            # crit_mult is now a SUM across hits; divide by hit_count
+            # so downstream multiplication by hits stays equivalent.
+            # (Sim doesn't multiply by hit_count in _calc_skill_damage;
+            # crit_mult already represents the per-skill total.)
+            crit_mult /= hits
 
         # DEF reduction (game: DamageReductionByDefence)
         # Phase 4: IgnoreDefenceModifierProcessing — Savage, Helmsmasher modify DEF
