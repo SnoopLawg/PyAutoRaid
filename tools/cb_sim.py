@@ -498,7 +498,7 @@ class SimChampion:
     # the 3.5*ATK multiplier in static; grade scaling is purely the
     # repeat-count effect at grade 6 (modeled as +1 hit there).
     phantom_touch_mult: float = 0.0          # 3.5 when blessed grade 1+, else 0
-    phantom_touch_repeat: int = 1            # +1 extra fire at grade 6
+    phantom_touch_repeat: float = 1.0        # 1.35 at grade 6 (100% first + 35% second per HellHades)
 
     # Passive abilities (detected from game data)
     has_passive_ally_protect: bool = False   # Skullcrusher: permanent Ally Protect
@@ -1913,6 +1913,13 @@ class CBSimulator:
                     multiplier=champ.phantom_touch_mult,
                     scaling_stat="ATK",
                     hit_count=1,  # PT fires per source-damage; loop external
+                    # Game-truth: skill 600050 Effect[0].DamageParams.DefenceModifier
+                    # = -0.30 (ignores 30% of target DEF). Verified 2026-06-22 via
+                    # /static-export depth=6. Approximated here as ignore_def=0.30
+                    # (DEF *= 0.70 in calc) — gives 1.235x damage vs 1.222x exact;
+                    # ~1% noise vs full DefenceModifier impl. Matches HellHades
+                    # blessing tier list description "3.5*ATK ignoring 30% of DEF".
+                    ignore_def=0.30,
                 )
                 pt_per_hit = self._calc_skill_damage(champ, pt_skill)
                 is_weak = (champ.element in (1, 2, 3) and self.cb_element in (1, 2, 3)
@@ -1924,12 +1931,28 @@ class CBSimulator:
                         # Per-hit glance roll handled inside the loop below.
                         pass
                 total_pt = 0.0
-                fires_per_skill_hit = champ.phantom_touch_repeat
-                for _ in range(chosen.hit_count * fires_per_skill_hit):
+                # phantom_touch_repeat may be fractional (1.35 at grade 6).
+                # Deterministic: scale total by float repeat directly.
+                # MC: loop integer hits, treat fractional as Bernoulli on
+                # the last fire (e.g., 1.35 = 1 guaranteed + 35% second).
+                fires_float = champ.phantom_touch_repeat
+                int_fires = int(fires_float)
+                frac = fires_float - int_fires
+                for _ in range(chosen.hit_count * int_fires):
                     if not self.deterministic and is_weak:
                         if self.rng.random() < WEAK_HIT_GLANCE_CHANCE:
                             continue  # glance: PT skips
                     total_pt += pt_per_hit
+                # Fractional extra fire (grade-6 35%-second-PT case)
+                if frac > 0:
+                    if self.deterministic:
+                        total_pt += pt_per_hit * frac * chosen.hit_count
+                    else:
+                        for _ in range(chosen.hit_count):
+                            if self.rng.random() < frac:
+                                if is_weak and self.rng.random() < WEAK_HIT_GLANCE_CHANCE:
+                                    continue
+                                total_pt += pt_per_hit
                 champ.damage.passive += total_pt
 
             # Brimstone [Smite] placement — per hit, brimstone_chance
@@ -2961,13 +2984,18 @@ def build_sim_champion(name: str, stats: dict, position: int,
             #   Grades 0-1: Effect[0] gated by ownersDoubleAscendLevel==1||==2
             #   Grades 2-3: Effect[1] gated by ==3||==4
             #   Grade 4:    Effect[2] gated by ==5
-            #   Grade 5:    Effect[3] gated by ==6 + Effect[4] ChangeEffectRepeatCount (+1 hit)
+            #   Grade 5:    Effect[3] gated by ==6 + Effect[4] ChangeEffectRepeatCount
             # `grade` in /all-heroes is 0-indexed (grade 1 in UI = 0 in field, etc.).
-            # All grades share MultiplierFormula=3.5*ATK.
+            # All grades share MultiplierFormula=3.5*ATK with DefenceModifier=-0.30.
             phantom_touch_mult = 3.5
-            # Grade 5 (UI grade 6) gets +1 repeat per attack.
+            # Grade 5 data (UI grade 6): HellHades describes as "100% first PT
+            # + 35% chance for a second PT" — average 1.35 hits per attack, not
+            # always 2. Effect[4] is ChangeEffectRepeatCount(relationRepeatCount)
+            # — the exact mechanic isn't transparent from static alone. Model
+            # as 1.35x expected hits at grade 6, 1.0x otherwise. Neither MEN
+            # hero is at grade 6 today so this branch is untested live.
             if grade >= 5:
-                phantom_touch_repeat = 2
+                phantom_touch_repeat = 1.35
 
     champ = SimChampion(
         name=name,
