@@ -1114,12 +1114,23 @@ class CBSimulator:
 
     def _cb_turn(self, tick: int):
         self.cb_tm -= TM_THRESHOLD
-        # Determine attack BEFORE Smite check below — Smite only fires
-        # on aoe1/aoe2 in real game, NOT stun. Verified 2026-06-22 via
-        # 5 Magic BT15 captures: Smite damages aligned with boss
-        # aoe1/aoe2 timing only; stun turns were skipped. Sim was
-        # firing on every boss action = ~50% over-attribution per
-        # placement (extra stun proc).
+        # Determine attack BEFORE Smite check below — Brimstone Smite
+        # only fires on AoE active skills (aoe1, aoe2), NOT single-
+        # target ones (stun).
+        #
+        # Empirical: 5 Magic BT15 captures showed 18 Smite damage
+        # events all aligned with aoe1/aoe2 boss casts, ZERO aligned
+        # with stun. Probability of stun-skip being chance: (2/3)^18
+        # = 0.07%.
+        #
+        # Structural cause (verified 2026-06-22 via static export of
+        # skills 222601/222602/222603):
+        #   stun (222601): Damage TargetType=Target (single hero)
+        #   aoe1 (222603): Damage TargetType=AllEnemies
+        #   aoe2 (222602): Damage TargetType=AllEnemies
+        # Brimstone's "uses an Active Skill" trigger has an implicit
+        # multi-target requirement — single-target damage skills are
+        # skipped despite being Group=Active.
         _attack_for_smite = self.cb_pattern[(self.cb_turn) % 3]
 
         # Speed-Division dragging-effect: per Speedology 201, real game
