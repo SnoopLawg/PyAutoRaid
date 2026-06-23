@@ -53,7 +53,9 @@ Maps the hero's game-truth kit → relevant masteries (filtered to the location)
 artifact sets, blessing, and stat focus — and checks the user's **actual ACC**
 against the floor (`[READY: you have 423]` / `[GAP: need +M]`). Set bonuses are
 game-truth (`artifact_sets.json`); the role→set mapping is heuristic. Set names
-are shown in UI form (internal `CriticalDamage` → "Savage/Cruel").
+are shown in UI form (internal `CriticalDamage` → "Savage/Cruel"). It also lists
+**where to farm** each recommended set, joining the set→drop-region tables
+(`drops.json`) so "needs Speed set" → "farm Dragon's Lair".
 
 ### What to pull / build next
 ```bash

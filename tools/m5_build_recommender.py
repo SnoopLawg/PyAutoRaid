@@ -243,13 +243,61 @@ def recommend_sets(hero: dict, location: str, valid_sets: set) -> list:
     if location in ("arena", "tt"):
         picks = ["AttackSpeed", "CriticalDamage", "CriticalChance"] + picks
     # Dedup preserving order, keep only sets that exist in game data.
+    # Returns INTERNAL codes (callers map to UI via SET_UI_NAME for display
+    # and pass codes to recommend_farm for the drop-location lookup).
     seen, out = set(), []
     for s in picks:
         if s in seen or s not in valid_sets:
             continue
         seen.add(s)
-        out.append(SET_UI_NAME.get(s, s))
+        out.append(s)
     return out[:5]
+
+
+# Region code -> readable farm location (named dungeons; RegionN = campaign).
+FARM_REGION_NAME = {
+    "DragonsLair": "Dragon's Lair", "IceGolemCave": "Ice Golem Peak",
+    "FireGolemCave": "Fire Knight Castle", "SpiderCave": "Spider's Den",
+    "MinotaurLabyrinth": "Minotaur", "EventDungeon": "Event Dungeon",
+}
+
+
+def _set_drop_regions() -> dict:
+    """internal set name -> sorted list of readable drop locations (named
+    dungeons first; campaign RegionN bucketed as 'Campaign')."""
+    af = json.loads((STATIC / "artifact_sets.json").read_text(encoding="utf-8"))
+    arows = next((v for k, v in af.items() if k != "_meta" and isinstance(v, list)), [])
+    id_to_name = {r["id"]: r["set"] for r in arows}
+    name_to_id = {r["set"]: r["id"] for r in arows}
+    drops = json.loads((STATIC / "drops.json").read_text(encoding="utf-8")).get("regions", {})
+    from collections import defaultdict
+    id_to_regions = defaultdict(set)
+    for rname, info in drops.items():
+        for diff in info.get("by_difficulty", []):
+            for sid in (diff.get("set_drops") or {}).keys():
+                id_to_regions[int(sid)].add(rname)
+    out = {}
+    for sname, sid in name_to_id.items():
+        locs = []
+        for r in sorted(id_to_regions.get(sid, [])):
+            if r in FARM_REGION_NAME:
+                locs.append(FARM_REGION_NAME[r])
+            elif "Campaign" not in locs:
+                locs.append("Campaign")
+        out[sname] = locs
+    return out
+
+
+def recommend_farm(rec_set_internal: list, drop_map: dict) -> list:
+    """Given recommended internal set codes, return 'Set -> location(s)' lines.
+    Only sets that drop in a named dungeon are actionable to farm."""
+    lines = []
+    for code in rec_set_internal:
+        locs = [l for l in drop_map.get(code, []) if l != "Campaign"]
+        if locs:
+            ui = SET_UI_NAME.get(code, code)
+            lines.append(f"{ui}: {', '.join(locs)}")
+    return lines
 
 
 def recommend_blessing(hero: dict, location: str, brel: list) -> list:
@@ -335,7 +383,13 @@ def main() -> None:
             print(f"    {tree}: {names}")
     print()
     sets = recommend_sets(hero, args.location, _load_valid_sets())
-    print(f"  Artifact sets (role-fit): {', '.join(sets) if sets else '(role-standard)'}")
+    sets_ui = [SET_UI_NAME.get(s, s) for s in sets]
+    print(f"  Artifact sets (role-fit): {', '.join(sets_ui) if sets_ui else '(role-standard)'}")
+    farm = recommend_farm(sets, _set_drop_regions())
+    if farm:
+        print("  Farm sets from:")
+        for f in farm:
+            print(f"    - {f}")
     print()
     bl = recommend_blessing(hero, args.location, brel)
     print(f"  Blessing (relevant + role-fit): {', '.join(bl) if bl else '(role-standard)'}")

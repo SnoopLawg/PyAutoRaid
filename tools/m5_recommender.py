@@ -356,9 +356,10 @@ def main() -> None:
                 f"{t}: {', '.join(p['name'] for p in by_tree[t])}"
                 for t in ("Attack", "Defence", "Support") if by_tree.get(t))
             sets = brmod.recommend_sets(hero, args.location, valid_sets)
+            sets_ui = [brmod.SET_UI_NAME.get(s, s) for s in sets]
             print(f"\n  {name}:")
             print(f"    masteries: {masts}")
-            print(f"    sets:      {', '.join(sets) if sets else '(role-standard)'}")
+            print(f"    sets:      {', '.join(sets_ui) if sets_ui else '(role-standard)'}")
             print(f"    blessing:  {', '.join(bl) if bl else '(role-standard)'}")
             for s in brmod.recommend_stats(hero, args.location, computed):
                 print(f"    stat: {s}")
