@@ -1959,6 +1959,27 @@ class CBSimulator:
                             total_pt += pt_per_proc
                 champ.damage.passive += total_pt
 
+            # DestroyHp (Venom A1 "Toxicity" specifically — verified via
+            # /static-export 2026-06-22: skill 62801 has 2x DestroyHp
+            # effects at 0.75*DEALT_DMG per hit). Per HellHades + AyumiLove,
+            # gated by Heal Reduction on target. Venom A3 places heal_red.
+            # When active: each Venom A1 hit destroys 0.75x of its damage
+            # from boss MAX_HP. In CB telemetry this appears as additional
+            # damage to the boss (counts in dmg_taken).
+            #
+            # Per gameplay.json caps: MaxPossibleHpDestructionPerSkillPercent
+            # = 0.08 (8% of MAX_HP max per skill use). For Venom A1 on
+            # UNM (boss HP 1.17B): 8% cap = 93.6M per cast — never hit
+            # by the ~0.04M per hit, so cap doesn't bind in practice.
+            if (champ.name == "Venomage" and chosen.name == "A1"
+                    and self.debuff_bar.has("heal_reduction")
+                    and chosen.multiplier > 0):
+                # 0.75 × dealt damage per hit, attributed to .passive
+                # for source breakdown clarity.
+                destroy_per_hit = (dmg / max(1, chosen.hit_count)) * 0.75
+                total_destroy = destroy_per_hit * chosen.hit_count
+                champ.damage.passive += total_destroy
+
             # Brimstone [Smite] placement — per hit, brimstone_chance
             # to refresh Smite on boss. Single-Smite-on-team rule per
             # blessing description.
