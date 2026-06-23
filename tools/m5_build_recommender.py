@@ -80,6 +80,12 @@ def _load_blessing_relevance() -> list:
     return raw["blessings"]
 
 
+def _load_valid_sets() -> set:
+    raw = json.loads((STATIC / "artifact_sets.json").read_text(encoding="utf-8"))
+    rows = next((v for k, v in raw.items() if k != "_meta" and isinstance(v, list)), [])
+    return {r["set"] for r in rows}
+
+
 _COMPUTED_COLS = ["base_computed", "artifact_bonus", "mastery_bonus",
                   "affinity_bonus", "classic_arena_bonus", "blessing_bonus",
                   "empower_bonus", "relic_bonus", "faction_guardians_bonus"]
@@ -195,6 +201,57 @@ def recommend_masteries(hero: dict, location: str, mrel: dict) -> dict:
     return by_tree
 
 
+# Artifact set recommendations by kit role. The set BONUSES are game-truth
+# (data/static/artifact_sets.json); the role->set mapping is standard
+# team-building heuristic. Internal set code -> UI name for readability
+# (set names differ from UI, like blessings — see artifact_relic_mechanics).
+SET_UI_NAME = {
+    "CriticalDamage": "Savage/Cruel (C.DMG)", "CriticalChance": "Crit Rate",
+    "AttackPower": "Offense (ATK%)", "IgnoreDefense": "Stalwart-ish / IgnoreDef",
+    "LifeDrain": "Lifesteal", "AttackAndCritRate": "Atk+CR",
+    "AccuracyAndSpeed": "Perception (ACC+SPD)", "Accuracy": "Accuracy",
+    "AttackSpeed": "Speed", "SpeedAndResistance": "Speed+RES",
+    "Hp": "Life (HP%)", "Defense": "Defense", "Shield": "Shield",
+    "Resistance": "Resistance", "HpAndHeal": "Immortal",
+    "Counterattack": "Retaliation", "Stamina": "Relentless (TM)",
+    "DotRate": "Toxic", "BlockDebuff": "Immunity",
+    "ResistanceAndBlockDebuff": "Resist+Immunity",
+    "UnkillableAndSpdAndCrDmg": "Frenzy/Unkillable-ish",
+}
+
+
+def recommend_sets(hero: dict, location: str, valid_sets: set) -> list:
+    provides = set(hero.get("provides", []))
+    role = hero.get("synergy_role", "")
+    game_role = hero.get("game_role", "")
+    is_attacker = game_role == "Attack" or role in ("attacker", "dot")
+    is_debuffer = any(p.startswith("enemy_debuff:") for p in provides) or "dot" in role
+    is_support = role in ("support", "healer/support") or game_role == "Support"
+    is_tank = game_role in ("Defense", "Health")
+
+    picks: list[str] = []
+    # Debuffers/DoT carries lead with Speed + Accuracy (cadence + landing
+    # matter most), then damage. Pure attackers lead with damage sets.
+    if is_debuffer:
+        picks += ["AttackSpeed", "AccuracyAndSpeed", "Accuracy"]
+    if is_attacker:
+        picks += ["CriticalDamage", "AttackPower", "CriticalChance",
+                  "IgnoreDefense", "LifeDrain"]
+    if is_support or is_tank:
+        picks += ["AttackSpeed", "SpeedAndResistance", "Hp", "Defense",
+                  "Resistance", "HpAndHeal", "Shield"]
+    if location in ("arena", "tt"):
+        picks = ["AttackSpeed", "CriticalDamage", "CriticalChance"] + picks
+    # Dedup preserving order, keep only sets that exist in game data.
+    seen, out = set(), []
+    for s in picks:
+        if s in seen or s not in valid_sets:
+            continue
+        seen.add(s)
+        out.append(SET_UI_NAME.get(s, s))
+    return out[:5]
+
+
 def recommend_blessing(hero: dict, location: str, brel: list) -> list:
     provides = set(hero.get("provides", []))
     role = hero.get("synergy_role", "")
@@ -276,6 +333,9 @@ def main() -> None:
         if picks:
             names = ", ".join(p["name"] for p in picks)
             print(f"    {tree}: {names}")
+    print()
+    sets = recommend_sets(hero, args.location, _load_valid_sets())
+    print(f"  Artifact sets (role-fit): {', '.join(sets) if sets else '(role-standard)'}")
     print()
     bl = recommend_blessing(hero, args.location, brel)
     print(f"  Blessing (relevant + role-fit): {', '.join(bl) if bl else '(role-standard)'}")

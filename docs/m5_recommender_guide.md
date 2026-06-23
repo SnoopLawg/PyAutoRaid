@@ -50,8 +50,10 @@ downweighted vs CC-immune bosses; the game-truth ACC floor is surfaced.
 python3 tools/m5_build_recommender.py --hero Venomage --location cb
 ```
 Maps the hero's game-truth kit → relevant masteries (filtered to the location),
-blessing, and stat focus — and checks the user's **actual ACC** against the
-floor (`[READY: you have 423]` / `[GAP: need +M]`).
+artifact sets, blessing, and stat focus — and checks the user's **actual ACC**
+against the floor (`[READY: you have 423]` / `[GAP: need +M]`). Set bonuses are
+game-truth (`artifact_sets.json`); the role→set mapping is heuristic. Set names
+are shown in UI form (internal `CriticalDamage` → "Savage/Cruel").
 
 ### What to pull / build next
 ```bash

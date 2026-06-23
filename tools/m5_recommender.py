@@ -343,6 +343,7 @@ def main() -> None:
         mrel = brmod._load_mastery_relevance()
         brel = brmod._load_blessing_relevance()
         computed = brmod._load_computed_stats()
+        valid_sets = brmod._load_valid_sets()
         print()
         print("=== Per-hero builds ===")
         for name in res["team"]:
@@ -354,8 +355,10 @@ def main() -> None:
             masts = "; ".join(
                 f"{t}: {', '.join(p['name'] for p in by_tree[t])}"
                 for t in ("Attack", "Defence", "Support") if by_tree.get(t))
+            sets = brmod.recommend_sets(hero, args.location, valid_sets)
             print(f"\n  {name}:")
             print(f"    masteries: {masts}")
+            print(f"    sets:      {', '.join(sets) if sets else '(role-standard)'}")
             print(f"    blessing:  {', '.join(bl) if bl else '(role-standard)'}")
             for s in brmod.recommend_stats(hero, args.location, computed):
                 print(f"    stat: {s}")
