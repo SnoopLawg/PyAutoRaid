@@ -80,6 +80,46 @@ def _load_blessing_relevance() -> list:
     return raw["blessings"]
 
 
+_COMPUTED_COLS = ["base_computed", "artifact_bonus", "mastery_bonus",
+                  "affinity_bonus", "classic_arena_bonus", "blessing_bonus",
+                  "empower_bonus", "relic_bonus", "faction_guardians_bonus"]
+
+
+def _load_computed_stats() -> dict:
+    """name(lower) -> {stat: total} summed from the game's column breakdown.
+
+    `hero_computed_stats.json` carries the GAME's own Total-Stats columns for
+    the user's geared heroes; summing them gives the authoritative total stat
+    (matches the in-game Total Stats screen). It is a cached snapshot of the
+    live `/hero-computed-stats` mod endpoint — refresh full-roster coverage with:
+        curl -s "http://localhost:6790/hero-computed-stats?min_grade=4" \
+            -o hero_computed_stats.json
+    Heroes absent from the snapshot simply get no readiness annotation.
+    """
+    p = ROOT / "hero_computed_stats.json"
+    if not p.exists():
+        return {}
+    raw = json.loads(p.read_text(encoding="utf-8"))
+    rows = raw.get("heroes", raw) if isinstance(raw, dict) else raw
+    ha = {x["id"]: x["name"]
+          for x in json.loads((ROOT / "heroes_all.json").read_text(encoding="utf-8"))["heroes"]}
+    out = {}
+    for r in rows:
+        name = ha.get(r.get("id"))
+        if not name:
+            continue
+        totals = {}
+        for c in _COMPUTED_COLS:
+            v = r.get(c) or {}
+            if isinstance(v, dict):
+                for stat, amt in v.items():
+                    totals[stat] = totals.get(stat, 0) + (amt or 0)
+        # keep the highest-stat copy if duplicate names (best geared)
+        if name.lower() not in out or totals.get("ACC", 0) > out[name.lower()].get("ACC", 0):
+            out[name.lower()] = totals
+    return out
+
+
 def _acc_floor(location: str) -> int | None:
     area = {"cb": "AllianceBoss", "dragon": "Dungeon", "spider": "Dungeon",
             "fire_knight": "Dungeon", "ice_golem": "Dungeon",
@@ -179,7 +219,7 @@ def recommend_blessing(hero: dict, location: str, brel: list) -> list:
     return out[:3]
 
 
-def recommend_stats(hero: dict, location: str) -> list:
+def recommend_stats(hero: dict, location: str, computed: dict | None = None) -> list:
     provides = set(hero.get("provides", []))
     role = hero.get("synergy_role", "")
     game_role = hero.get("game_role", "")
@@ -188,7 +228,15 @@ def recommend_stats(hero: dict, location: str) -> list:
     if is_debuffer:
         floor = _acc_floor(location)
         if floor:
-            out.append(f"ACC >= {floor} (game-truth boss RES -- land debuffs at 100% base chance)")
+            line = f"ACC >= {floor} (game-truth boss RES -- land debuffs at 100% base chance)"
+            # Readiness check: compare the user's actual total ACC if known.
+            cur = (computed or {}).get(hero["name"].lower(), {}).get("ACC")
+            if cur is not None:
+                if cur >= floor:
+                    line += f"  [READY: you have {cur:.0f}]"
+                else:
+                    line += f"  [GAP: you have {cur:.0f}, need +{floor - cur:.0f}]"
+            out.append(line)
         else:
             out.append("ACC high enough to land debuffs (check boss RES)")
     if role in ("attacker", "dot"):
@@ -216,6 +264,7 @@ def main() -> None:
         return
     mrel = _load_mastery_relevance()
     brel = _load_blessing_relevance()
+    computed = _load_computed_stats()
 
     print(f"=== Build for {hero['name']} @ {args.location} ===")
     print(f"  kit: role={hero['synergy_role']} | provides: {', '.join(hero['provides'])}")
@@ -232,7 +281,7 @@ def main() -> None:
     print(f"  Blessing (relevant + role-fit): {', '.join(bl) if bl else '(role-standard)'}")
     print()
     print("  Stat focus:")
-    for s in recommend_stats(hero, args.location):
+    for s in recommend_stats(hero, args.location, computed):
         print(f"    - {s}")
 
 

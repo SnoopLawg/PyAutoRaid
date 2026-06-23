@@ -342,6 +342,7 @@ def main() -> None:
         syn = brmod._load_synergy()
         mrel = brmod._load_mastery_relevance()
         brel = brmod._load_blessing_relevance()
+        computed = brmod._load_computed_stats()
         print()
         print("=== Per-hero builds ===")
         for name in res["team"]:
@@ -356,7 +357,7 @@ def main() -> None:
             print(f"\n  {name}:")
             print(f"    masteries: {masts}")
             print(f"    blessing:  {', '.join(bl) if bl else '(role-standard)'}")
-            for s in brmod.recommend_stats(hero, args.location):
+            for s in brmod.recommend_stats(hero, args.location, computed):
                 print(f"    stat: {s}")
 
 
