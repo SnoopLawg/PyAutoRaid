@@ -8,7 +8,7 @@ All 30 blessings, their authoritative proc skill, and each effect's
 
 ## Legendary blessings (proc-bearing)
 
-### LightOrbs (Light)
+### LightOrbs (Light) — UI: **Lightning Cage**
 - **skill 600070** (Lightning Cage):
   - `SetLightOrbsStackCount` EffectStackCount(LightOrbs)+1 → Owner
   - `ApplyBuff` 1 → Owner
@@ -16,12 +16,12 @@ All 30 blessings, their authoritative proc skill, and each effect's
   - `SetLightOrbsStackCount` 0 → Owner
   - `MultiplyEffectChance` 0.75/relationChance → Owner
 
-### LeadershipDomination (Light)
+### LeadershipDomination (Light) — UI: **Intimidating Presence**
 - **skill 600080** (Intimidating Presence):
   - `PassiveBonus` 0.025*((ownersDoubleAscendLevel>=1)*1+(ownersDoubleAscendLevel>=3)*2+(ownersDoubleAscendLevel>=5)*3+(ownersDoubleAscendLevel>=6)*8) → AllAllies
   - `PassiveBonus` -0.05*((ownersDoubleAscendLevel>=1)*1+(ownersDoubleAscendLevel>=3)*1+(ownersDoubleAscendLevel>=5)*2) → AllEnemies
 
-### Necromancy (Dark)
+### Necromancy (Dark) — UI: **Ward of the Fallen**
 - **skill 600010** (Ward of the Fallen):
   - `ApplyBuff` 1 → Owner grades [1, 2]
   - `ApplyBuff` 2 → Owner grades [3, 4, 5]
@@ -30,32 +30,32 @@ All 30 blessings, their authoritative proc skill, and each effect's
   - `ChangeEffectRepeatCount` deadAlliesCount-1 → Owner grades [6]
   - `SetShieldHitCounter` producerHitCounterShieldCount+1 → Owner
 
-### TimeSlowdown (Dark)
+### TimeSlowdown (Dark) — UI: **Temporal Chains**
 - **skill 600020** (Temporal Chains):
   - `PassiveChangeStats` ((targetBuffCountExcludeAppliedOnRoundStarted<=3)*((-0.02*targetBuffCountExcludeAppliedOnRoundStarted)*TRG_B_SPD))+((targetBuffCountExcludeAppliedOnRoundStarted>3)*(-0.06*TRG_B_SPD)) → AllEnemies grades [1, 2]
   - `PassiveChangeStats` ((targetBuffCountExcludeAppliedOnRoundStarted<=3)*((-0.03*targetBuffCountExcludeAppliedOnRoundStarted)*TRG_B_SPD))+((targetBuffCountExcludeAppliedOnRoundStarted>3)*(-0.09*TRG_B_SPD)) → AllEnemies grades [3, 4]
   - `PassiveChangeStats` ((targetBuffCountExcludeAppliedOnRoundStarted<=3)*((-0.05*targetBuffCountExcludeAppliedOnRoundStarted)*TRG_B_SPD))+((targetBuffCountExcludeAppliedOnRoundStarted>3)*(-0.15*TRG_B_SPD)) → AllEnemies grades [5, 6]
   - `ReduceStamina` 0.15*MAX_STAMINA → AllEnemies grades [6]
 
-### Execute (War)
+### Execute (War) — UI: **Soul Reap**
 - **skill 600130** (Soul Reap):
   - `Damage` 1*TRG_CUR_HP → AllEnemies grades [1, 2, 3, 4, 5, 6]
   - `ApplyDebuff` (no formula) → RelationTarget
 
-### SoulDrinker (War)
+### SoulDrinker (War) — UI: **Life Harvest**
 - **skill 600140** (Life Harvest):
   - `DestroyHp` ((ownersDoubleAscendLevel==1||ownersDoubleAscendLevel==2)*0.1*TRG_B_HP)+((ownersDoubleAscendLevel==3||ownersDoubleAscendLevel==4)*0.2*TRG_B_HP)+((ownersDoubleAscendLevel==5)*0.3*TRG_B_HP)+((ownersDoubleAscendLevel==6)*0.4*TRG_B_HP) → RelationTarget
   - `IncreaseStamina` ((ownersDoubleAscendLevel==3||ownersDoubleAscendLevel==4)*0.1*MAX_STAMINA)+((ownersDoubleAscendLevel==5)*0.2*MAX_STAMINA)+((ownersDoubleAscendLevel==6)*0.3*MAX_STAMINA) → Owner
 
-### Meteor (Wisdom)
+### Meteor (Wisdom) — UI: **Brimstone**
 - **skill 600190** (Brimstone):
   - `ApplyDebuff` (no formula) → RelationTarget grades [1, 2, 3, 4, 5, 6]
 
-### Polymorph (Wisdom)
+### Polymorph (Wisdom) — UI: **Polymorph**
 - **skill 600200** (Polymorph):
   - `SheepTransformation` 2 → RelationProducer grades [1, 2, 3, 4, 5, 6]
 
-### WildImpulses (Forest)
+### WildImpulses (Forest) — UI: **Harmonic Impulse**
 - **skill 600250** (Harmonic Impulse):
   - `IncreaseStamina` 0.1*MAX_STAMINA → Owner grades [1, 2]
   - `ReduceCooldown` (no formula) → Owner grades [1, 2, 3, 4, 5, 6]
@@ -63,7 +63,7 @@ All 30 blessings, their authoritative proc skill, and each effect's
   - `IncreaseStamina` 0.25*MAX_STAMINA → Owner grades [5]
   - `IncreaseStamina` 0.5*MAX_STAMINA → Owner grades [6]
 
-### CreepingRoots (Forest)
+### CreepingRoots (Forest) — UI: **Cracking Roots**
 - **skill 600260** (Cracking Roots):
   - `ChangeCalculatedDamage` ((CALCULATED_DMG*1.2<=relationTargetStoneSkinValue)*CALCULATED_DMG*(1.2-1))+((CALCULATED_DMG*1.2>relationTargetStoneSkinValue)*relationTargetStoneSkinValue*(1.2-1)) → RelationTarget grades [1, 2]
   - `ChangeCalculatedDamage` ((CALCULATED_DMG*1.4<=relationTargetStoneSkinValue)*CALCULATED_DMG*(1.4-1))+((CALCULATED_DMG*1.4>relationTargetStoneSkinValue)*relationTargetStoneSkinValue*(1.4-1)) → RelationTarget grades [3, 4]

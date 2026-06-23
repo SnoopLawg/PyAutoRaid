@@ -7,10 +7,18 @@ GetBlessingsTruth Nullable<int> fix) with each proc skill's effect formulas
 `ownersDoubleAscendLevel==N` conditions.
 
 This REPLACES the community-sourced hardcoded blessing values in
-`tools/extract_blessing_manifest.py` with game-truth. Notably it revealed
-that the old manifest's hand-coded names (Brimstone/Cruelty/PerfectHeal/
-PhantomTouch) are NOT in the current 30-blessing set — only MagicOrb (whose
-proc skill 600050 is internally named "Phantom Touch") survives.
+`tools/extract_blessing_manifest.py` with game-truth. NOTE on naming:
+`blessings.json` `id` is the internal CODE enum name, while the UI display
+name = the proc skill's localized name. They differ:
+    code 'MagicOrb'     -> UI 'Phantom Touch' (600050, Rare)
+    code 'Meteor'       -> UI 'Brimstone'     (600190, Legendary)
+    code 'Exterminator' -> UI 'Cruelty'       (600040, Epic)
+    code 'EnhancedWeapon' -> UI 'Heavencast'  (600090, Epic)
+    code 'NatureBalance'  -> UI 'Nature's Wrath' (600270, Epic)
+So the community/cb_sim names (Brimstone/Cruelty/Phantom Touch/Heavencast/
+Nature's Wrath) are UI names and ARE valid — match by EITHER code id or
+ui_name; `skill_type_id` is the authoritative link. Only "PerfectHeal" has
+no current match (renamed/removed).
 
 Output:
     data/static/blessing_procs.json — per-blessing, per-effect, per-grade
@@ -87,8 +95,15 @@ def main() -> None:
                 "skill_name": (sk.get("Name") or {}).get("DefaultValue", ""),
                 "effects": effects,
             })
+        # UI display name = the proc skill's name (Plarium shows the blessing
+        # under its skill's localized name, NOT the internal code enum `id`).
+        # e.g. code id "MagicOrb" displays as "Phantom Touch"; "Meteor" shows
+        # as "Brimstone"; "Exterminator" as "Cruelty". cb_sim's has_brimstone /
+        # phantom_touch / heavencast / natures_wrath key off these UI names.
+        ui_name = next((p.get("skill_name") for p in proc if p.get("skill_name")), None)
         out.append({
-            "blessing": bid,
+            "blessing_code_id": bid,
+            "ui_name": ui_name,
             "rarity": b.get("rarity"),
             "divinity": b.get("divinity"),
             "proc_skills": proc,
@@ -121,7 +136,8 @@ def main() -> None:
         "",
     ]
     for b in [x for x in out if x["rarity"] == "Legendary"]:
-        lines.append(f"### {b['blessing']} ({b['divinity']})")
+        ui = f" — UI: **{b['ui_name']}**" if b.get("ui_name") else ""
+        lines.append(f"### {b['blessing_code_id']} ({b['divinity']}){ui}")
         for p in b["proc_skills"]:
             if p.get("missing"):
                 lines.append(f"- skill {p['skill_id']} — _not in skills_all_")

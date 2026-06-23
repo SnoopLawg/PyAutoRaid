@@ -6,7 +6,8 @@
   },
   "blessings": [
     {
-      "blessing": "LightOrbs",
+      "blessing_code_id": "LightOrbs",
+      "ui_name": "Lightning Cage",
       "rarity": "Legendary",
       "divinity": "Light",
       "proc_skills": [
@@ -54,7 +55,8 @@
       ]
     },
     {
-      "blessing": "LeadershipDomination",
+      "blessing_code_id": "LeadershipDomination",
+      "ui_name": "Intimidating Presence",
       "rarity": "Legendary",
       "divinity": "Light",
       "proc_skills": [
@@ -81,7 +83,8 @@
       ]
     },
     {
-      "blessing": "EnhancedWeapon",
+      "blessing_code_id": "EnhancedWeapon",
+      "ui_name": "Heavencast",
       "rarity": "Epic",
       "divinity": "Light",
       "proc_skills": [
@@ -132,7 +135,8 @@
       ]
     },
     {
-      "blessing": "Vanguard",
+      "blessing_code_id": "Vanguard",
+      "ui_name": "Iron Will",
       "rarity": "Epic",
       "divinity": "Light",
       "proc_skills": [
@@ -183,7 +187,8 @@
       ]
     },
     {
-      "blessing": "AdvancedHeal",
+      "blessing_code_id": "AdvancedHeal",
+      "ui_name": "Miracle Heal",
       "rarity": "Rare",
       "divinity": "Light",
       "proc_skills": [
@@ -234,7 +239,8 @@
       ]
     },
     {
-      "blessing": "Courage",
+      "blessing_code_id": "Courage",
+      "ui_name": "Indomitable Spirit",
       "rarity": "Rare",
       "divinity": "Light",
       "proc_skills": [
@@ -285,7 +291,8 @@
       ]
     },
     {
-      "blessing": "Necromancy",
+      "blessing_code_id": "Necromancy",
+      "ui_name": "Ward of the Fallen",
       "rarity": "Legendary",
       "divinity": "Dark",
       "proc_skills": [
@@ -368,7 +375,8 @@
       ]
     },
     {
-      "blessing": "TimeSlowdown",
+      "blessing_code_id": "TimeSlowdown",
+      "ui_name": "Temporal Chains",
       "rarity": "Legendary",
       "divinity": "Dark",
       "proc_skills": [
@@ -420,7 +428,8 @@
       ]
     },
     {
-      "blessing": "ToxicBlade",
+      "blessing_code_id": "ToxicBlade",
+      "ui_name": "Lethal Dose",
       "rarity": "Epic",
       "divinity": "Dark",
       "proc_skills": [
@@ -472,7 +481,8 @@
       ]
     },
     {
-      "blessing": "Exterminator",
+      "blessing_code_id": "Exterminator",
+      "ui_name": "Cruelty",
       "rarity": "Epic",
       "divinity": "Dark",
       "proc_skills": [
@@ -523,7 +533,8 @@
       ]
     },
     {
-      "blessing": "MagicOrb",
+      "blessing_code_id": "MagicOrb",
+      "ui_name": "Phantom Touch",
       "rarity": "Rare",
       "divinity": "Dark",
       "proc_skills": [
@@ -583,7 +594,8 @@
       ]
     },
     {
-      "blessing": "Fearless",
+      "blessing_code_id": "Fearless",
+      "ui_name": "Dark Resolve",
       "rarity": "Rare",
       "divinity": "Dark",
       "proc_skills": [
@@ -634,7 +646,8 @@
       ]
     },
     {
-      "blessing": "Execute",
+      "blessing_code_id": "Execute",
+      "ui_name": "Soul Reap",
       "rarity": "Legendary",
       "divinity": "War",
       "proc_skills": [
@@ -751,7 +764,8 @@
       ]
     },
     {
-      "blessing": "SoulDrinker",
+      "blessing_code_id": "SoulDrinker",
+      "ui_name": "Life Harvest",
       "rarity": "Legendary",
       "divinity": "War",
       "proc_skills": [
@@ -778,7 +792,8 @@
       ]
     },
     {
-      "blessing": "ChainBreaker",
+      "blessing_code_id": "ChainBreaker",
+      "ui_name": "Chainbreaker",
       "rarity": "Epic",
       "divinity": "War",
       "proc_skills": [
@@ -839,7 +854,8 @@
       ]
     },
     {
-      "blessing": "AdvancedLeadership",
+      "blessing_code_id": "AdvancedLeadership",
+      "ui_name": "Commanding Presence",
       "rarity": "Epic",
       "divinity": "War",
       "proc_skills": [
@@ -859,7 +875,8 @@
       ]
     },
     {
-      "blessing": "Adaptation",
+      "blessing_code_id": "Adaptation",
+      "ui_name": "Faultless Defense",
       "rarity": "Rare",
       "divinity": "War",
       "proc_skills": [
@@ -910,7 +927,8 @@
       ]
     },
     {
-      "blessing": "Amplification",
+      "blessing_code_id": "Amplification",
+      "ui_name": "Hero's Soul",
       "rarity": "Rare",
       "divinity": "War",
       "proc_skills": [
@@ -961,7 +979,8 @@
       ]
     },
     {
-      "blessing": "Meteor",
+      "blessing_code_id": "Meteor",
+      "ui_name": "Brimstone",
       "rarity": "Legendary",
       "divinity": "Wisdom",
       "proc_skills": [
@@ -1012,7 +1031,8 @@
       ]
     },
     {
-      "blessing": "Polymorph",
+      "blessing_code_id": "Polymorph",
+      "ui_name": "Polymorph",
       "rarity": "Legendary",
       "divinity": "Wisdom",
       "proc_skills": [
@@ -1063,7 +1083,8 @@
       ]
     },
     {
-      "blessing": "MagicFlame",
+      "blessing_code_id": "MagicFlame",
+      "ui_name": "Incinerate",
       "rarity": "Epic",
       "divinity": "Wisdom",
       "proc_skills": [
@@ -1115,7 +1136,8 @@
       ]
     },
     {
-      "blessing": "Penetrator",
+      "blessing_code_id": "Penetrator",
+      "ui_name": "Crushing Rend",
       "rarity": "Epic",
       "divinity": "Wisdom",
       "proc_skills": [
@@ -1166,7 +1188,8 @@
       ]
     },
     {
-      "blessing": "Agility",
+      "blessing_code_id": "Agility",
+      "ui_name": "Survival Instinct",
       "rarity": "Rare",
       "divinity": "Wisdom",
       "proc_skills": [
@@ -1217,7 +1240,8 @@
       ]
     },
     {
-      "blessing": "Carapace",
+      "blessing_code_id": "Carapace",
+      "ui_name": "Emergency Heal",
       "rarity": "Rare",
       "divinity": "Wisdom",
       "proc_skills": [
@@ -1268,7 +1292,8 @@
       ]
     },
     {
-      "blessing": "WildImpulses",
+      "blessing_code_id": "WildImpulses",
+      "ui_name": "Harmonic Impulse",
       "rarity": "Legendary",
       "divinity": "Forest",
       "proc_skills": [
@@ -1357,7 +1382,8 @@
       ]
     },
     {
-      "blessing": "CreepingRoots",
+      "blessing_code_id": "CreepingRoots",
+      "ui_name": "Cracking Roots",
       "rarity": "Legendary",
       "divinity": "Forest",
       "proc_skills": [
@@ -1408,7 +1434,8 @@
       ]
     },
     {
-      "blessing": "NatureBalance",
+      "blessing_code_id": "NatureBalance",
+      "ui_name": "Nature's Wrath",
       "rarity": "Epic",
       "divinity": "Forest",
       "proc_skills": [
@@ -1497,7 +1524,8 @@
       ]
     },
     {
-      "blessing": "NatureReach",
+      "blessing_code_id": "NatureReach",
+      "ui_name": "Neutralize",
       "rarity": "Epic",
       "divinity": "Forest",
       "proc_skills": [
@@ -1548,7 +1576,8 @@
       ]
     },
     {
-      "blessing": "WildGrowth",
+      "blessing_code_id": "WildGrowth",
+      "ui_name": "Nature's Bounty",
       "rarity": "Rare",
       "divinity": "Forest",
       "proc_skills": [
@@ -1599,7 +1628,8 @@
       ]
     },
     {
-      "blessing": "Tranquility",
+      "blessing_code_id": "Tranquility",
+      "ui_name": "Nourish",
       "rarity": "Rare",
       "divinity": "Forest",
       "proc_skills": [

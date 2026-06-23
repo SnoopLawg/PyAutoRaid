@@ -133,11 +133,11 @@ CLASSIFICATION: dict[str, dict] = {
         "notes": "skill 600080. Always-on team stat aura + enemy debuff aura.",
     },
     "Meteor": {
-        "sim_handler": None,
-        "proc_source": "verified_game_truth",  # skill 600190 (internally 'Brimstone')
-        "mechanic": "ApplyDebuff to RelationTarget (Smite-style mark; all grades).",
+        "sim_handler": "has_brimstone",  # code id 'Meteor' = UI name 'Brimstone' (skill 600190)
+        "proc_source": "verified_game_truth",
+        "mechanic": "ApplyDebuff [Smite] to RelationTarget (all grades). UI name 'Brimstone'.",
         "relevance": _everywhere(),
-        "notes": "skill 600190. Debuff-mark proc; applies vs any enemy incl bosses.",
+        "notes": "skill 600190. code 'Meteor' == UI 'Brimstone' — already modeled in cb_sim as has_brimstone.",
     },
     "Polymorph": {
         "sim_handler": None,

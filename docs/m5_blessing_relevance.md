@@ -6,7 +6,7 @@ All **34 blessings** classified per location.
 
 ## Modeling status snapshot
 
-- **Modeled with sim handler**: 3
+- **Modeled with sim handler**: 4
 - **Proc source = verified_game_truth**: 15
 - **Proc source = tooltip_public** (needs IL2CPP/`/blessings-truth` proc-formula verification): 19
 
@@ -53,7 +53,7 @@ All **34 blessings** classified per location.
 | PerfectHeal | Legendary | Light |  | verified_game_truth | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | +X% to heals cast (10/15/20/25/30% per grade) |
 | Execute | Legendary | War |  | verified_game_truth | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | Damage = 1*TRG_CUR_HP to AllEnemies (current-HP proportional; gated !targetIsDying). |
 | SoulDrinker | Legendary | War |  | verified_game_truth | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✓ | ✓ | DestroyHp 0.1-0.4*TRG_B_HP (by grade) + IncreaseStamina to self. |
-| Meteor | Legendary | Wisdom |  | verified_game_truth | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ApplyDebuff to RelationTarget (Smite-style mark; all grades). |
+| Meteor | Legendary | Wisdom | `has_brimstone` | verified_game_truth | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ApplyDebuff [Smite] to RelationTarget (all grades). UI name 'Brimstone'. |
 | Polymorph | Legendary | Wisdom |  | verified_game_truth | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | SheepTransformation on RelationProducer (CC; all grades). |
 | Fearless | Rare | Dark |  | tooltip_public | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | Resist Fear-related debuffs / immunity to Fear |
 | MagicOrb | Rare | Dark | `phantom_touch_mult` | verified_game_truth | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | 3.5×ATK direct damage on attack — same proc shape as PhantomTouch (skill 600050) |

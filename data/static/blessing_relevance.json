@@ -16,7 +16,7 @@
       "forest",
       "campaign"
     ],
-    "modeled_in_sim": 3,
+    "modeled_in_sim": 4,
     "needs_verification": 19,
     "verified_game_truth": 15,
     "relevance_by_location": {
@@ -301,9 +301,9 @@
       "rarity": "Legendary",
       "is_hand_coded": false,
       "role": null,
-      "sim_handler": null,
+      "sim_handler": "has_brimstone",
       "proc_source": "verified_game_truth",
-      "mechanic": "ApplyDebuff to RelationTarget (Smite-style mark; all grades).",
+      "mechanic": "ApplyDebuff [Smite] to RelationTarget (all grades). UI name 'Brimstone'.",
       "relevance": {
         "cb": "relevant",
         "arena": "relevant",
@@ -318,7 +318,7 @@
         "forest": "relevant",
         "campaign": "relevant"
       },
-      "notes": "skill 600190. Debuff-mark proc; applies vs any enemy incl bosses."
+      "notes": "skill 600190. code 'Meteor' == UI 'Brimstone' \u2014 already modeled in cb_sim as has_brimstone."
     },
     {
       "id": "Polymorph",
