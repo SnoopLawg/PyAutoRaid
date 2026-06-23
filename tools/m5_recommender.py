@@ -151,6 +151,27 @@ LOCATION_PROFILES: dict[str, dict] = {
 }
 
 
+# Map recommender location → stage area in stage_stat_targets.json, so the
+# ACC floor (game-truth boss RES) can be surfaced per recommendation.
+LOCATION_TO_STAGE_AREA = {
+    "cb": "AllianceBoss", "dragon": "Dungeon", "spider": "Dungeon",
+    "fire_knight": "Dungeon", "ice_golem": "Dungeon",
+    "hydra": "Hydra", "chimera": "Chimera", "arena": None,
+}
+STAT_TARGETS = STATIC / "stage_stat_targets.json"
+
+
+def _acc_floor_for(location: str) -> int | None:
+    """Max ACC floor (effective boss RES) across the location's stages."""
+    area = LOCATION_TO_STAGE_AREA.get(location)
+    if not area or not STAT_TARGETS.exists():
+        return None
+    data = json.loads(STAT_TARGETS.read_text(encoding="utf-8"))
+    floors = [r["acc_floor"] for r in data.get("stages", [])
+              if r.get("area") == area and r.get("acc_floor")]
+    return max(floors) if floors else None
+
+
 def _load_synergy() -> dict[str, dict]:
     recs = {}
     with SYNERGY.open(encoding="utf-8") as fh:
@@ -291,6 +312,10 @@ def main() -> None:
 
     res = recommend(args.location, size=args.size, pool=args.pool)
     print(f"=== Recommended team for {res['label']} ({args.pool} pool) ===\n")
+    acc_floor = _acc_floor_for(args.location)
+    if acc_floor:
+        print(f"  [stat target] debuffers need ACC >= {acc_floor} "
+              f"(game-truth effective boss RES) to land at 100% of skill base chance\n")
     for d in res["detail"]:
         covers = ", ".join(a.split(":")[-1] for a in d["covers_axes"]) or "(filler)"
         print(f"  {d['name']:24s} [{d['role']:14s}] HH={d['hh_rating']:.1f}  covers: {covers}")

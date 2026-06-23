@@ -132,7 +132,7 @@ Pre-req: M1-M4 patterns proven. M5 is the unification step.
 | Hero kit model (1113 heroes) | ✅ — universe-wide skill modeling foundation shipped |
 | Mastery effect map — game-wide hand-code | 🟡 — 10 new procs shipped 2026-06-23 (Oppressor, Heart of Glory, Grim Resolve, Single Out, Ruthless Ambush, Blastproof, Improved Parry, Bulwark, Spirit Haste, Wrath of the Slain). Still queued (need hero-side debuff/crit-incoming-event tracking the sim lacks): Cycle of Revenge (TM on ally crit), Stoked To Fury (dmg per self-debuff), Arcane Celerity (TM on debuff received), Wisdom of Battle (BD on ally crit), Stubbornness (RES per self-debuff). |
 | Blessing effect map — game-wide hand-code | 🟡 — 9 Legendary procs need IL2CPP-verified formulas before sim wiring (CreepingRoots, Execute, Necromancy, Polymorph, Meteor, SoulDrinker, TimeSlowdown, LeadershipDomination, WildImpulses) |
-| Per-location stat targets (`data/targets/*.json`) | 🔴 |
+| Per-location stat targets | 🟡 2026-06-23 — `tools/m5_stat_targets.py` → `data/static/stage_stat_targets.json` + `docs/m5_stat_targets.md`. Game-truth ACC floors (effective boss RES) + boss SPD/ATK/DEF modifiers for 627 boss stages from `stages.json` Modifiers[]. CB UNM ACC floor=225 (30 base+195 mod), matches community canon. Wired into recommender. Still needs per-build damage targets (CR/CD/ATK% — not game-imposed floors). |
 | Per-set bonus model | ✅ — `data/static/artifact_sets.json` |
 | Synergy graph (cross-hero kit interactions) | ✅ 2026-06-23 — `tools/m5_synergy_graph.py` → `docs/m5_synergy_graph.md` + `data/m5_synergy.jsonl`. Per-hero provides/needs tags from game-truth skill descriptions; provider index per synergy axis (Block Damage, Unkillable, Decrease DEF, poison-enable, dot-detonate, TM control, cleanse, revive). Recovered 525 skills omitted from `hero_types.json` skill_ids. |
 | Recommender per location | 🟡 2026-06-23 — prototype shipped (`tools/m5_recommender.py`). Consumes synergy graph + HH per-location signal (additive) + owned roster; greedy axis-coverage team builder with per-location requirement profiles (cb/dragon/spider/fire_knight/ice_golem/hydra/chimera/arena). CC providers correctly downweighted vs CC-immune bosses. Still needs: per-location stat targets (ACC floors / SPD tunes) for gear-aware ranking, and sim-validation of recommended teams. |
@@ -315,7 +315,7 @@ Pattern observation: `Teodor the Savant` (DoT-extender) and `Seeker` (multi-debu
 |---|---|---|
 | Sell rules engine | 🟡 | Per-hero "needed-for-build" lookback (don't sell what one of the user's planned builds wants) |
 | Substat upgrade recommender | 🔴 | Score gear for upgrade-worthiness; flag flat main on Gloves/Chest/Boots as priority sells |
-| Per-location stat targets (`data/targets/*.json`) | 🔴 | DL UNM debuffer ≥ 250 ACC; Dragon-20 DPS CR≥80/CD≥150; etc. |
+| Per-location stat targets | 🟡 | ACC floors now game-truth via `tools/m5_stat_targets.py` (CB UNM=225, derived from stage RES modifiers). DPS CR/CD/ATK% targets still per-build TODO. |
 | Mastery batch apply (`/apply-build`) | 🔴 | Today: 60 individual `/open-mastery` calls per hero |
 
 ### Auto-run modes
