@@ -135,7 +135,7 @@ Pre-req: M1-M4 patterns proven. M5 is the unification step.
 | Per-location stat targets (`data/targets/*.json`) | 🔴 |
 | Per-set bonus model | ✅ — `data/static/artifact_sets.json` |
 | Synergy graph (cross-hero kit interactions) | ✅ 2026-06-23 — `tools/m5_synergy_graph.py` → `docs/m5_synergy_graph.md` + `data/m5_synergy.jsonl`. Per-hero provides/needs tags from game-truth skill descriptions; provider index per synergy axis (Block Damage, Unkillable, Decrease DEF, poison-enable, dot-detonate, TM control, cleanse, revive). Recovered 525 skills omitted from `hero_types.json` skill_ids. |
-| Recommender per location | 🔴 — depends on per-location stat targets + synergy graph |
+| Recommender per location | 🟡 2026-06-23 — prototype shipped (`tools/m5_recommender.py`). Consumes synergy graph + HH per-location signal (additive) + owned roster; greedy axis-coverage team builder with per-location requirement profiles (cb/dragon/spider/fire_knight/ice_golem/hydra/chimera/arena). CC providers correctly downweighted vs CC-immune bosses. Still needs: per-location stat targets (ACC floors / SPD tunes) for gear-aware ranking, and sim-validation of recommended teams. |
 
 **Top sim-coverage gap-kinds across the 440 has_gaps heroes** (drives priority for next round):
 `RemoveBuff` (106 heroes), `RemoveDebuff` (101), `StealBuff` (88), `ReduceBuffLifetime` (44),
