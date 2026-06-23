@@ -462,6 +462,15 @@ curl /context-call?path=...AllianceBossHeroesSelectionDialog&method=StartBattle
 | `tools/loadouts.py` | SQLite-backed artifact loadout snapshot / apply / restore |
 | `tools/hh_picker.py` | HH-driven team picker + per-hero stat targets + greedy gear picker (emits farm_cycle plans) |
 | `tools/farm_cycle.py` | Orchestrator: plan/prepare (snapshot → equip → preset), restore, status, run |
+| `tools/m5_recommender.py` | **M5** per-location team recommender (`--location`, `--builds`, `--pool all`); see `docs/m5_recommender_guide.md` |
+| `tools/m5_build_recommender.py` | M5 per-hero build (masteries/blessing/stats) + ACC-floor readiness vs `/hero-computed-stats` |
+| `tools/m5_roster_gaps.py` | M5 "what to pull/build next" per location (hard gaps, thin axes, best unowned upgrades) |
+| `tools/m5_synergy_graph.py` | M5 cross-hero provides/needs tags from game-truth skill descriptions |
+| `tools/m5_stat_targets.py` | M5 game-truth ACC floors (boss RES) + boss stat modifiers per stage |
+| `tools/m5_inventory.py` / `m5_hero_catalog.py` | M5 universe inventory + per-hero CB sim coverage |
+| `tools/m5_mastery_tagger.py` / `m5_blessing_tagger.py` | M5 mastery/blessing relevance × 12 locations |
+| `tools/extract_blessing_procs.py` | M5 game-truth blessing proc formulas (grade-by-grade) via authoritative skill link |
+| `tools/cb_attribution_diff.py` | per-hero/per-source damage diff (real tick log vs sim) for calibration |
 
 ## Data Files
 
