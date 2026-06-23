@@ -2570,7 +2570,17 @@ class CBSimulator:
                         # decrement at end of that turn.
                         c.buffs_new.add(b)
                         buff_extend_total += turns  # +1 turn per buff per cast
-                # Demytha A2 also shrinks debuffs on the boss by N turns.
+                # Demytha A2 "Light of the Deep": skill description says
+                # "decreases the duration of all ALLY debuffs by 1 turn"
+                # — that's debuffs ON allies (heroes), NOT debuffs allies
+                # placed on the boss. Current code (kept 2026-06-23 after
+                # brief revert experiment) DOES apply to boss debuffs and
+                # acts as a compensating wrong for Venom poison being
+                # modeled too aggressively. Un-stacking both together
+                # is task #11 (Venom poison overshoot investigation).
+                # For now keep the shrink: alone, removing it pushed
+                # total damage from -1% to +7% on the Spirit BT49
+                # fixture, over the ±5% gate.
                 debuff_shrink = eff.params.get("shrink_debuffs", 0)
                 if debuff_shrink:
                     survivors = []

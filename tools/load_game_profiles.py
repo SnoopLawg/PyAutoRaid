@@ -1289,6 +1289,18 @@ def load_profiles():
         if not any(e.get("effect_type") == "self_damage_alive_allies" for e in a3_effs):
             a3_effs.append(_eff("self_damage_alive_allies",
                                  pct_max_hp_per_alive=0.05))
+        # CRITICAL: clear A3's mult/hits because the damage is SELF-targeted
+        # (TargetType=Producer). Otherwise cb_sim's damage block treats the
+        # 0.05*HP as boss-damage AND rolls WM/PT on the cast — both wrong.
+        # The actual self-damage is applied by the `self_damage_alive_allies`
+        # effect handler above. Per-hero attribution diff (2026-06-23) showed
+        # this double-counting caused Mane to over-attribute by ~1M damage on
+        # the Spirit BT50 fixture (sim 5.93M vs real 4.50M, the 5.93 included
+        # 0.19M phantom direct + 0.77M phantom WM from A3 casts).
+        if "Maneater" in skill_data and "A3" in skill_data["Maneater"]:
+            a3_sd = skill_data["Maneater"]["A3"]
+            a3_sd["mult"] = 0.0
+            a3_sd["hits"] = 0
 
     return skill_data, skill_effects, passive_data, skill_ids
 
