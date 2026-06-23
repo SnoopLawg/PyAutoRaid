@@ -299,24 +299,19 @@ class DebuffBar:
     def tick(self) -> List[DebuffSlot]:
         """Tick all durations at start of CB turn. Returns expired slots.
 
-        Game mechanic: debuffs tick AFTER their effects apply on this turn.
-        A 2-turn debuff is active for 2 CB turns:
-          - Placed: remaining=2
-          - CB turn 1: active (remaining=2), then tick → remaining=1
-          - CB turn 2: active (remaining=1), then tick → remaining=0 → expired
-
-        Implementation: decrement first, expire at < 0 (not <= 0).
-        2026-06-23: tried tightening to `<= 0` (which matches real Spirit
-        tick log Venom poison count 69 vs sim 104 at `< 0`) — passed
-        Spirit/Magic but Force regressed to -7%. Force has compensating
-        wrong elsewhere; un-stacking the tick fix alone breaks Force.
-        Reverted pending coordinated multi-fix. See task #11.
+        Game-correct (2026-06-23): a duration-N debuff ticks N times.
+        Real Spirit BT50 tick log shows 69 poison events vs sim's old
+        104 at `< 0` (which gave N+1 ticks). Tightened to `<= 0` to
+        match real. Pairs with the Demy A2 scope fix (boss debuffs are
+        no longer wrongly shrunk by Demy) so the two correct each other:
+        without the fix, Demy shrink removed the "+1 turn" tick; with
+        both fixes, debuffs last exactly N turns regardless of Demy.
         """
         expired = []
         remaining = []
         for s in self.slots:
             s.remaining -= 1
-            if s.remaining < 0:
+            if s.remaining <= 0:
                 expired.append(s)
             else:
                 remaining.append(s)
@@ -2574,24 +2569,17 @@ class CBSimulator:
                         # decrement at end of that turn.
                         c.buffs_new.add(b)
                         buff_extend_total += turns  # +1 turn per buff per cast
-                # Demytha A2: per skill description shrinks ALLY debuffs
-                # (boss debuffs should be no-op) but current behavior
-                # shrinks boss debuffs and acts as compensating wrong
-                # against Venom poison overshoot + debuff_bar tick +1.
-                # Investigation 2026-06-23: removing this alone keeps
-                # totals within ±5% on Magic/Spirit but pushes them over.
-                # Un-stacking needs Venom poison placement count fix +
-                # debuff tick `<= 0` fix in coordinated session. Kept
-                # behavior as-is. See task #11.
+                # Demytha A2 "Light of the Deep" — IL2CPP-verified scope
+                # (2026-06-23): static skill 65102 effect[0] is
+                # `kind=ReduceDebuffLifetime tgt=AllAllies cnt=1`.
+                # AllAllies = HEROES, NOT the boss. So shrinking boss
+                # debuffs is game-incorrect. cb_sim doesn't model
+                # per-hero debuff state (CB rarely debuffs heroes
+                # meaningfully), so this is a no-op. The `_total`
+                # counter is kept for healing math (per-change heal).
                 debuff_shrink = eff.params.get("shrink_debuffs", 0)
                 if debuff_shrink:
-                    survivors = []
-                    for slot in self.debuff_bar.slots:
-                        slot.remaining -= debuff_shrink
-                        debuff_shrink_total += debuff_shrink
-                        if slot.remaining >= 0:
-                            survivors.append(slot)
-                    self.debuff_bar.slots = survivors
+                    debuff_shrink_total += debuff_shrink * len(self.debuff_bar.slots)
                 base_heal_pct = eff.params.get("heal_pct", 0.0)
                 per_change_pct = eff.params.get("heal_per_change_pct", 0.0)
                 # Apply Health book bonus (IL2Cpp SkillBonusType=1).
