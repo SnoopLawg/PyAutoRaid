@@ -360,6 +360,11 @@ SKILLS = {
                "effects": ["dec_atk_2t"]},
     },
     "Ninja": {
+        # NOTE: raid_data.SKILLS is a fallback only — actual sim uses
+        # SKILL_DATA + SKILL_EFFECTS loaded by load_game_profiles from
+        # hero_profiles_game.json (auto-generated from static skill data).
+        # The live SKILL_EFFECTS correctly has A2 with 3× hp_burn placement
+        # + 3× activate_hp_burns. Verified 2026-06-22.
         "a1": {"formula": "4.2*ATK x3", "hits": 3, "stat": "ATK", "mult": 4.2, "effects": []},
         "a2": {"formula": "6.0*ATK", "hits": 1, "stat": "ATK", "mult": 6.0, "cd": 3, "effects": []},
         "a3": {"formula": "3.5*ATK", "hits": 1, "stat": "ATK", "mult": 3.5, "cd": 4,
