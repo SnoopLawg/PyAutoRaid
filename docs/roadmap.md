@@ -125,13 +125,21 @@ Pre-req: M1-M4 patterns proven. M5 is the unification step.
 
 | Sub-goal | Status |
 |---|---|
-| Hero kit model (1076 heroes) | ✅ — universe-wide skill modeling foundation shipped |
-| Mastery effect map (stat-bonus + conditional) | 🟡 — stat-bonus auto-loaded; conditional (WM/GS/Crushing Rend/etc.) hand-coded |
-| Blessing effect map | 🟡 — stat-bonus auto-loaded; conditional hand-coded |
+| Phase 1 — Game-truth inventory (`docs/m5_phase1_inventory.md`) | ✅ 2026-06-23 — 1113 playable + 968 boss entries indexed; 100% hero-referenced skill coverage; mastery + blessing gaps tagged |
+| Phase 2 — Per-hero CB sim coverage catalog (`docs/m5_phase2_hero_catalog.md`) | ✅ 2026-06-23 — every champion classified: 672 fully_modeled / 440 has_gaps / 0 unknown / 1 missing data |
+| Phase 3 — Per-location mastery relevance (`docs/m5_mastery_relevance.md`) | ✅ 2026-06-23 — all 66 masteries tagged per location (cb/arena/tt/dungeon/fw/dt/cc/siege/hydra/chimera/forest/campaign); 24 hand-coded sim handlers (M5 batch: Oppressor / Heart of Glory / Grim Resolve / Single Out / Ruthless Ambush / Blastproof / Improved Parry / Bulwark / Spirit Haste / Wrath of the Slain), 11 stat-bonus auto-loaded |
+| Phase 3 — Per-location blessing relevance (`docs/m5_blessing_relevance.md`) | ✅ 2026-06-23 — all 34 blessings tagged per location; 6 modeled with verified game-truth procs, 28 with tooltip-public mechanics pending IL2CPP verification |
+| Hero kit model (1113 heroes) | ✅ — universe-wide skill modeling foundation shipped |
+| Mastery effect map — game-wide hand-code | 🟡 — 10 new procs shipped 2026-06-23 (Oppressor, Heart of Glory, Grim Resolve, Single Out, Ruthless Ambush, Blastproof, Improved Parry, Bulwark, Spirit Haste, Wrath of the Slain). Still queued (need hero-side debuff/crit-incoming-event tracking the sim lacks): Cycle of Revenge (TM on ally crit), Stoked To Fury (dmg per self-debuff), Arcane Celerity (TM on debuff received), Wisdom of Battle (BD on ally crit), Stubbornness (RES per self-debuff). |
+| Blessing effect map — game-wide hand-code | 🟡 — 9 Legendary procs need IL2CPP-verified formulas before sim wiring (CreepingRoots, Execute, Necromancy, Polymorph, Meteor, SoulDrinker, TimeSlowdown, LeadershipDomination, WildImpulses) |
 | Per-location stat targets (`data/targets/*.json`) | 🔴 |
 | Per-set bonus model | ✅ — `data/static/artifact_sets.json` |
 | Synergy graph (cross-hero kit interactions) | 🔴 |
 | Recommender per location | 🔴 — depends on per-location stat targets + synergy graph |
+
+**Top sim-coverage gap-kinds across the 440 has_gaps heroes** (drives priority for next round):
+`RemoveBuff` (106 heroes), `RemoveDebuff` (101), `StealBuff` (88), `ReduceBuffLifetime` (44),
+`IncreaseCooldown` (39), `TransferDebuff` (36), `ActivateSkill` (30), `MultiplyDebuff` (24).
 
 ---
 

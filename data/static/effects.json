@@ -1,7 +1,7 @@
 {
   "_meta": {
-    "fetched_at": "2026-05-01T17:47:28.481765+00:00",
-    "scene": "Village",
+    "fetched_at": "2026-06-23T20:56:50.282765+00:00",
+    "scene": "HeroShowcaseUndead",
     "mod_version": "2.0-bepinex",
     "unity": "6000.0.60f1"
   },
@@ -101,6 +101,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -243,6 +244,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -324,6 +326,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -333,25 +336,23 @@
         "StrengthInFamily": 1,
         "ForcedTickAllowed": false,
         "LifetimeUpdateType": "OnStartTurn",
-        "SkipProcessingWhenJustApplied": {
-          "hasValue": true,
-          "value": true,
-          "HasValue": true,
-          "Value": false
-        }
+        "SkipProcessingWhenJustApplied": false
       },
       "MultiplierFormula": "delayedDamage",
       "CalcMultiplier": {
         "method_ptr": "<IntPtr>",
         "invoke_impl": "<IntPtr>",
+        "m_target": {},
         "method": "<IntPtr>",
         "delegate_trampoline": "<IntPtr>",
         "extra_arg": "<IntPtr>",
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
-        "Method": "<MethodInfo>"
+        "Method": "<MethodInfo>",
+        "Target": {}
       },
       "PersistsThroughRounds": false,
       "SnapshotRequired": false,
@@ -494,6 +495,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -515,6 +517,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -606,6 +609,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -616,12 +620,7 @@
         "ForcedTickAllowed": false,
         "LifetimeUpdateType": "OnEndTurn"
       },
-      "ApplyInstantEffectMode": {
-        "hasValue": true,
-        "value": "574595968",
-        "HasValue": true,
-        "Value": "Unresistable"
-      },
+      "ApplyInstantEffectMode": "Unresistable",
       "PersistsThroughRounds": false,
       "SnapshotRequired": false,
       "DamageParams": {
@@ -728,6 +727,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -741,12 +741,7 @@
       "PersistsThroughRounds": false,
       "SnapshotRequired": false,
       "BlockEffectParams": {
-        "BlockGuaranteed": {
-          "hasValue": true,
-          "value": true,
-          "HasValue": true,
-          "Value": false
-        }
+        "BlockGuaranteed": false
       },
       "MultiplierNotEvaluatedByAI": false,
       "TargetType": "Target",
@@ -816,6 +811,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -823,26 +819,11 @@
       "StackCount": 1,
       "StatusParams": {
         "StrengthInFamily": 1,
-        "ForcedTickAllowed": true,
+        "ForcedTickAllowed": false,
         "LifetimeUpdateType": "OnEndTurn",
-        "UnapplyWhenProducerDied": {
-          "hasValue": true,
-          "value": true,
-          "HasValue": true,
-          "Value": false
-        },
-        "UnapplyWhenProducerBossDied": {
-          "hasValue": true,
-          "value": true,
-          "HasValue": true,
-          "Value": false
-        },
-        "SkipProcessingWhenJustApplied": {
-          "hasValue": true,
-          "value": true,
-          "HasValue": true,
-          "Value": false
-        }
+        "UnapplyWhenProducerDied": false,
+        "UnapplyWhenProducerBossDied": false,
+        "SkipProcessingWhenJustApplied": false
       },
       "MultiplierFormula": "0.05",
       "CalcMultiplier": {
@@ -855,6 +836,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -917,9 +899,9 @@
       "TargetParams": {
         "TargetType": "OwnerAllies",
         "Exclusion": {
+          "HasValue": false,
           "hasValue": false,
-          "value": "586581328",
-          "HasValue": false
+          "value": "1392380400"
         },
         "Exclusive": false,
         "FirstHitInSelected": false,
@@ -965,6 +947,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -986,6 +969,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -1074,9 +1058,9 @@
       "SharedModel.Battle.AI.IAiEffect.TargetParams": {
         "TargetType": "OwnerAllies",
         "Exclusion": {
+          "HasValue": false,
           "hasValue": false,
-          "value": "586581328",
-          "HasValue": false
+          "value": "1392380400"
         },
         "Exclusive": false,
         "FirstHitInSelected": false,
@@ -1128,7 +1112,7 @@
         ],
         "ActivateOnGlancingHit": false
       },
-      "Condition": "(ownerIsRelatedEffectTarget&&!relationProducerIsBoss&&((phaseThatTriggeredEffect==OnGuardAbsorptionProcessing_Phase&&(IsDamageAbsorbedByOnGuard(relationKindId)||relationTypeId==880))||(phaseThatTriggeredEffect==OnGuardProcessing_Phase&&((relatedEffectIsStatusDebuff&&ownerId==relationOwnerId&&relatedEffectIsAppliedEffect)||!relatedEffectIsStatusDebuff||(relatedEffectIsStatusDebuff&&!relatedEffectIsAppliedEffect))&&IsEffectBlockedByOnGuard(relationKindId))))||(phaseThatTriggeredEffect==TurnFinished_Phase)",
+      "Condition": "(ownerIsRelatedEffectTarget&&!relationProducerIsBoss&&((phaseThatTriggeredEffect==OnGuardAbsorptionProcessing_Phase&&(IsDamageAbsorbedByOnGuard(relationKindId)||relationTypeId==880))||(phaseThatTriggeredEffect==OnGuardProcessing_Phase&&isAllowedBlockByOnGuard&&IsEffectBlockedByOnGuard(relationKindId))))||(phaseThatTriggeredEffect==TurnFinished_Phase)",
       "CalcCondition": {
         "method_ptr": "<IntPtr>",
         "invoke_impl": "<IntPtr>",
@@ -1139,6 +1123,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -1219,6 +1204,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -1299,6 +1285,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -1377,6 +1364,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -1613,6 +1601,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -1691,6 +1680,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -1927,6 +1917,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -2005,6 +1996,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -2300,6 +2292,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -2378,6 +2371,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -2614,6 +2608,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -2692,6 +2687,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -3086,6 +3082,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -3164,6 +3161,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -3441,6 +3439,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -3462,6 +3461,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -3551,12 +3551,7 @@
         "StrengthInFamily": 2,
         "ForcedTickAllowed": false,
         "LifetimeUpdateType": "OnEndTurn",
-        "UnapplyWhenProducerDied": {
-          "hasValue": true,
-          "value": true,
-          "HasValue": true,
-          "Value": false
-        }
+        "UnapplyWhenProducerDied": false
       },
       "PersistsThroughRounds": false,
       "SnapshotRequired": false,
@@ -3646,12 +3641,7 @@
         "StrengthInFamily": 1,
         "ForcedTickAllowed": false,
         "LifetimeUpdateType": "OnEndTurn",
-        "UnapplyWhenProducerDied": {
-          "hasValue": true,
-          "value": true,
-          "HasValue": true,
-          "Value": false
-        }
+        "UnapplyWhenProducerDied": false
       },
       "PersistsThroughRounds": false,
       "SnapshotRequired": false,
@@ -3830,6 +3820,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -3926,12 +3917,7 @@
         "ForcedTickAllowed": false,
         "LifetimeUpdateType": "OnEndTurn"
       },
-      "ApplyInstantEffectMode": {
-        "hasValue": true,
-        "value": "574595968",
-        "HasValue": true,
-        "Value": "Unresistable"
-      },
+      "ApplyInstantEffectMode": "Unresistable",
       "PersistsThroughRounds": false,
       "SnapshotRequired": false,
       "MultiplierNotEvaluatedByAI": false,
@@ -4007,6 +3993,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -4028,6 +4015,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -4130,6 +4118,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -4355,12 +4344,7 @@
         "StrengthInFamily": 1,
         "ForcedTickAllowed": false,
         "LifetimeUpdateType": "OnEndTurn",
-        "UnapplyWhenProducerDied": {
-          "hasValue": true,
-          "value": true,
-          "HasValue": true,
-          "Value": false
-        }
+        "UnapplyWhenProducerDied": false
       },
       "PersistsThroughRounds": false,
       "SnapshotRequired": false,
@@ -4439,6 +4423,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -4448,12 +4433,7 @@
         "StrengthInFamily": 1,
         "ForcedTickAllowed": false,
         "LifetimeUpdateType": "OnEndTurn",
-        "SkipProcessingWhenJustApplied": {
-          "hasValue": true,
-          "value": true,
-          "HasValue": true,
-          "Value": false
-        }
+        "SkipProcessingWhenJustApplied": false
       },
       "MultiplierFormula": "0.15*DEALT_DMG",
       "CalcMultiplier": {
@@ -4466,6 +4446,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -4564,12 +4545,7 @@
         "StrengthInFamily": 2,
         "ForcedTickAllowed": false,
         "LifetimeUpdateType": "OnEndTurn",
-        "SkipProcessingWhenJustApplied": {
-          "hasValue": true,
-          "value": true,
-          "HasValue": true,
-          "Value": false
-        }
+        "SkipProcessingWhenJustApplied": false
       },
       "MultiplierFormula": "0.30*DEALT_DMG",
       "CalcMultiplier": {
@@ -4582,6 +4558,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -4670,6 +4647,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -4691,16 +4669,12 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
       },
-      "ApplyInstantEffectMode": {
-        "hasValue": true,
-        "value": "574595968",
-        "HasValue": true,
-        "Value": "Unresistable"
-      },
+      "ApplyInstantEffectMode": "Unresistable",
       "PersistsThroughRounds": false,
       "SnapshotRequired": false,
       "MultiplierNotEvaluatedByAI": false,
@@ -4775,6 +4749,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -4796,16 +4771,12 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
       },
-      "ApplyInstantEffectMode": {
-        "hasValue": true,
-        "value": "574595968",
-        "HasValue": true,
-        "Value": "Unresistable"
-      },
+      "ApplyInstantEffectMode": "Unresistable",
       "PersistsThroughRounds": false,
       "SnapshotRequired": false,
       "MultiplierNotEvaluatedByAI": false,
@@ -4904,12 +4875,7 @@
         "Method": "<MethodInfo>",
         "Target": {}
       },
-      "ApplyInstantEffectMode": {
-        "hasValue": true,
-        "value": "574595968",
-        "HasValue": true,
-        "Value": "Unresistable"
-      },
+      "ApplyInstantEffectMode": "Unresistable",
       "PersistsThroughRounds": false,
       "SnapshotRequired": false,
       "MultiplierNotEvaluatedByAI": false,
@@ -4984,6 +4950,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -5005,6 +4972,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -5112,6 +5080,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -5212,6 +5181,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -5324,6 +5294,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -5428,6 +5399,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -5592,14 +5564,15 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
       },
       "Chance": {
+        "HasValue": false,
         "hasValue": false,
-        "value": 480.132,
-        "HasValue": false
+        "value": 511.32
       },
       "StackCount": 1,
       "StatusParams": {
@@ -5683,9 +5656,9 @@
         "Target": {}
       },
       "Chance": {
+        "HasValue": false,
         "hasValue": false,
-        "value": 480.132,
-        "HasValue": false
+        "value": 511.32
       },
       "StackCount": 1,
       "StatusParams": {
@@ -5766,6 +5739,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -5780,9 +5754,9 @@
       "SnapshotRequired": false,
       "DamageParams": {
         "HitType": {
+          "HasValue": false,
           "hasValue": false,
-          "value": "586582016",
-          "HasValue": false
+          "value": "1392381088"
         },
         "DefenceModifier": -1,
         "IsFixed": true,
@@ -5817,9 +5791,9 @@
       "SharedModel.Battle.AI.IAiEffect.Count": 1,
       "SharedModel.Battle.AI.IAiEffect.DamageParams": {
         "HitType": {
+          "HasValue": false,
           "hasValue": false,
-          "value": "586582016",
-          "HasValue": false
+          "value": "1392381088"
         },
         "DefenceModifier": -1,
         "IsFixed": true,
@@ -5895,6 +5869,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -5995,6 +5970,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -6097,6 +6073,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -6199,6 +6176,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -6274,6 +6252,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -6284,12 +6263,7 @@
         "ForcedTickAllowed": false,
         "LifetimeUpdateType": "OnEndTurn"
       },
-      "ApplyInstantEffectMode": {
-        "hasValue": true,
-        "value": "574595968",
-        "HasValue": true,
-        "Value": "Unresistable"
-      },
+      "ApplyInstantEffectMode": "Unresistable",
       "PersistsThroughRounds": false,
       "SnapshotRequired": false,
       "CrabShellParams": {
@@ -6367,14 +6341,15 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
       },
       "Chance": {
+        "HasValue": false,
         "hasValue": false,
-        "value": 480.132,
-        "HasValue": false
+        "value": 511.32
       },
       "StackCount": 1,
       "StatusParams": {
@@ -6385,12 +6360,7 @@
       "PersistsThroughRounds": false,
       "SnapshotRequired": false,
       "HitTypeParams": {
-        "HitTypeToChange": {
-          "hasValue": true,
-          "value": "586582016",
-          "HasValue": true,
-          "Value": "Normal"
-        },
+        "HitTypeToChange": "Normal",
         "HitType": "Normal"
       },
       "MultiplierNotEvaluatedByAI": false,
@@ -6467,9 +6437,9 @@
         "Target": {}
       },
       "Chance": {
+        "HasValue": false,
         "hasValue": false,
-        "value": 480.132,
-        "HasValue": false
+        "value": 511.32
       },
       "StackCount": 1,
       "StatusParams": {
@@ -6480,12 +6450,7 @@
       "PersistsThroughRounds": false,
       "SnapshotRequired": false,
       "HitTypeParams": {
-        "HitTypeToChange": {
-          "hasValue": true,
-          "value": "586582016",
-          "HasValue": true,
-          "Value": "Normal"
-        },
+        "HitTypeToChange": "Normal",
         "HitType": "Normal"
       },
       "MultiplierNotEvaluatedByAI": false,
@@ -6562,9 +6527,9 @@
         "Target": {}
       },
       "Chance": {
+        "HasValue": false,
         "hasValue": false,
-        "value": 480.132,
-        "HasValue": false
+        "value": 511.32
       },
       "StackCount": 1,
       "StatusParams": {
@@ -6575,12 +6540,7 @@
       "PersistsThroughRounds": false,
       "SnapshotRequired": false,
       "HitTypeParams": {
-        "HitTypeToChange": {
-          "hasValue": true,
-          "value": "586582016",
-          "HasValue": true,
-          "Value": "Normal"
-        },
+        "HitTypeToChange": "Normal",
         "HitType": "Normal"
       },
       "MultiplierNotEvaluatedByAI": false,
@@ -6657,9 +6617,9 @@
         "Target": {}
       },
       "Chance": {
+        "HasValue": false,
         "hasValue": false,
-        "value": 480.132,
-        "HasValue": false
+        "value": 511.32
       },
       "StackCount": 1,
       "StatusParams": {
@@ -6670,12 +6630,7 @@
       "PersistsThroughRounds": false,
       "SnapshotRequired": false,
       "HitTypeParams": {
-        "HitTypeToChange": {
-          "hasValue": true,
-          "value": "586582016",
-          "HasValue": true,
-          "Value": "Normal"
-        },
+        "HitTypeToChange": "Normal",
         "HitType": "Normal"
       },
       "MultiplierNotEvaluatedByAI": false,
@@ -7284,12 +7239,7 @@
         "StrengthInFamily": 1,
         "ForcedTickAllowed": false,
         "LifetimeUpdateType": "OnEndTurn",
-        "UnapplyWhenProducerBossDied": {
-          "hasValue": true,
-          "value": true,
-          "HasValue": true,
-          "Value": false
-        }
+        "UnapplyWhenProducerBossDied": false
       },
       "PersistsThroughRounds": false,
       "SnapshotRequired": false,
@@ -7362,6 +7312,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -7449,6 +7400,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -7465,18 +7417,8 @@
         "GeneralChangeDamageFactor": 0.15,
         "TimeBombChangeDamageFactor": 3,
         "AoEContinuousDamageChangeDamageFactor": 0.15,
-        "ReflectChance": {
-          "hasValue": true,
-          "value": 480.132,
-          "HasValue": true,
-          "Value": 0
-        },
-        "PetrificationTurns": {
-          "hasValue": true,
-          "value": 539352288,
-          "HasValue": true,
-          "Value": 0
-        }
+        "ReflectChance": 0,
+        "PetrificationTurns": 0
       },
       "MultiplierNotEvaluatedByAI": false,
       "TargetType": "Owner",
@@ -7546,6 +7488,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -7633,6 +7576,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -7642,12 +7586,7 @@
         "StrengthInFamily": 1,
         "ForcedTickAllowed": false,
         "LifetimeUpdateType": "OnEndTurn",
-        "UnapplyWhenProducerDied": {
-          "hasValue": true,
-          "value": true,
-          "HasValue": true,
-          "Value": false
-        }
+        "UnapplyWhenProducerDied": false
       },
       "MultiplierFormula": "0.15*DEALT_DMG",
       "CalcMultiplier": {
@@ -7771,6 +7710,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -7846,6 +7786,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -7867,6 +7808,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -8145,6 +8087,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -8323,6 +8266,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -8398,6 +8342,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -8476,6 +8421,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -8734,6 +8680,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -8831,6 +8778,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -8906,6 +8854,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -8927,6 +8876,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -9071,14 +9021,15 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
       },
       "Chance": {
+        "HasValue": false,
         "hasValue": false,
-        "value": 480.132,
-        "HasValue": false
+        "value": 511.32
       },
       "StackCount": 1,
       "StatusParams": {
@@ -9156,6 +9107,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -9312,12 +9264,7 @@
         "StrengthInFamily": 1,
         "ForcedTickAllowed": false,
         "LifetimeUpdateType": "Custom",
-        "SkipProcessingWhenJustApplied": {
-          "hasValue": true,
-          "value": true,
-          "HasValue": true,
-          "Value": false
-        }
+        "SkipProcessingWhenJustApplied": false
       },
       "MultiplierFormula": "EffectStackCount(SleepCounter)-1",
       "CalcMultiplier": {
@@ -9330,6 +9277,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -9415,12 +9363,7 @@
         "StrengthInFamily": 2,
         "ForcedTickAllowed": true,
         "LifetimeUpdateType": "Custom",
-        "SkipProcessingWhenJustApplied": {
-          "hasValue": true,
-          "value": true,
-          "HasValue": true,
-          "Value": false
-        }
+        "SkipProcessingWhenJustApplied": false
       },
       "MultiplierFormula": "0.05*TRG_HP",
       "CalcMultiplier": {
@@ -9433,6 +9376,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -9587,12 +9531,7 @@
         "StrengthInFamily": 1,
         "ForcedTickAllowed": true,
         "LifetimeUpdateType": "Custom",
-        "SkipProcessingWhenJustApplied": {
-          "hasValue": true,
-          "value": true,
-          "HasValue": true,
-          "Value": false
-        }
+        "SkipProcessingWhenJustApplied": false
       },
       "MultiplierFormula": "0.025*TRG_HP",
       "CalcMultiplier": {
@@ -9605,6 +9544,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -10019,6 +9959,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -10040,6 +9981,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -10119,6 +10061,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -10246,6 +10189,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -10416,6 +10360,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -10425,12 +10370,7 @@
         "StrengthInFamily": 1,
         "ForcedTickAllowed": false,
         "LifetimeUpdateType": "Custom",
-        "SkipProcessingWhenJustApplied": {
-          "hasValue": true,
-          "value": true,
-          "HasValue": true,
-          "Value": false
-        }
+        "SkipProcessingWhenJustApplied": false
       },
       "MultiplierFormula": "0.05*thunderStackCount*DMG_MUL",
       "CalcMultiplier": {
@@ -10443,6 +10383,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -10531,12 +10472,7 @@
         "StrengthInFamily": 1,
         "ForcedTickAllowed": true,
         "LifetimeUpdateType": "Custom",
-        "SkipProcessingWhenJustApplied": {
-          "hasValue": true,
-          "value": true,
-          "HasValue": true,
-          "Value": false
-        }
+        "SkipProcessingWhenJustApplied": false
       },
       "MultiplierFormula": "0.075*TRG_HP",
       "CalcMultiplier": {
@@ -10549,6 +10485,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -10633,12 +10570,7 @@
       "StatusParams": {
         "StrengthInFamily": 1,
         "ForcedTickAllowed": false,
-        "TickCanBeEvaded": {
-          "hasValue": true,
-          "value": true,
-          "HasValue": true,
-          "Value": false
-        },
+        "TickCanBeEvaded": false,
         "LifetimeUpdateType": "Custom"
       },
       "PersistsThroughRounds": false,
@@ -10726,12 +10658,7 @@
         "StrengthInFamily": 2,
         "ForcedTickAllowed": true,
         "LifetimeUpdateType": "Custom",
-        "SkipProcessingWhenJustApplied": {
-          "hasValue": true,
-          "value": true,
-          "HasValue": true,
-          "Value": false
-        }
+        "SkipProcessingWhenJustApplied": false
       },
       "MultiplierFormula": "0.15*TRG_HP",
       "CalcMultiplier": {
@@ -10744,6 +10671,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -10823,6 +10751,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -10832,12 +10761,7 @@
         "StrengthInFamily": 1,
         "ForcedTickAllowed": false,
         "LifetimeUpdateType": "Custom",
-        "UnapplyWhenProducerDied": {
-          "hasValue": true,
-          "value": true,
-          "HasValue": true,
-          "Value": false
-        }
+        "UnapplyWhenProducerDied": false
       },
       "MultiplierFormula": "0.5*DMG_MUL",
       "CalcMultiplier": {
@@ -10850,6 +10774,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -10930,6 +10855,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -10939,12 +10865,7 @@
         "StrengthInFamily": 1,
         "ForcedTickAllowed": false,
         "LifetimeUpdateType": "Custom",
-        "UnapplyWhenProducerDied": {
-          "hasValue": true,
-          "value": true,
-          "HasValue": true,
-          "Value": false
-        }
+        "UnapplyWhenProducerDied": false
       },
       "MultiplierFormula": "0.5*DMG_MUL*(isOwnerProduceRelatedEffect && dependentHeroId == relationTargetId) - 0.5*DMG_MUL*(ownerIsRelatedEffectTarget && dependentHeroId != relationProducerId)",
       "CalcMultiplier": {
@@ -10957,6 +10878,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -11034,6 +10956,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -11124,12 +11047,7 @@
         "StrengthInFamily": 1,
         "ForcedTickAllowed": true,
         "LifetimeUpdateType": "Custom",
-        "SkipProcessingWhenJustApplied": {
-          "hasValue": true,
-          "value": true,
-          "HasValue": true,
-          "Value": false
-        }
+        "SkipProcessingWhenJustApplied": false
       },
       "MultiplierFormula": "0.05*EffectStackCount(Necrosis)*TRG_HP",
       "CalcMultiplier": {
@@ -11142,6 +11060,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -11488,6 +11407,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -11588,6 +11508,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -11609,6 +11530,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -11709,6 +11631,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -11787,6 +11710,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -11808,6 +11732,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}
@@ -11908,6 +11833,7 @@
         "method_code": "<IntPtr>",
         "interp_method": "<IntPtr>",
         "interp_invoke_impl": "<IntPtr>",
+        "method_info": "<MethodInfo>",
         "method_is_virtual": false,
         "Method": "<MethodInfo>",
         "Target": {}

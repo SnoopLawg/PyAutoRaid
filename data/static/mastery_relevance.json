@@ -1,0 +1,1880 @@
+{
+  "_meta": {
+    "generated_by": "tools/m5_mastery_tagger.py",
+    "total_classified": 66,
+    "locations": [
+      "cb",
+      "arena",
+      "tt",
+      "dungeon",
+      "fw",
+      "dt",
+      "cc",
+      "siege",
+      "hydra",
+      "chimera",
+      "forest",
+      "campaign"
+    ],
+    "modeled_in_sim": 24,
+    "auto_loaded_stat": 10,
+    "relevance_by_location": {
+      "cb": {
+        "relevant": 41,
+        "no_op": 14,
+        "stat_bonus": 11,
+        "out_of_scope": 0
+      },
+      "arena": {
+        "relevant": 55,
+        "no_op": 0,
+        "stat_bonus": 11,
+        "out_of_scope": 0
+      },
+      "tt": {
+        "relevant": 55,
+        "no_op": 0,
+        "stat_bonus": 11,
+        "out_of_scope": 0
+      },
+      "dungeon": {
+        "relevant": 53,
+        "no_op": 2,
+        "stat_bonus": 11,
+        "out_of_scope": 0
+      },
+      "fw": {
+        "relevant": 55,
+        "no_op": 0,
+        "stat_bonus": 11,
+        "out_of_scope": 0
+      },
+      "dt": {
+        "relevant": 55,
+        "no_op": 0,
+        "stat_bonus": 11,
+        "out_of_scope": 0
+      },
+      "cc": {
+        "relevant": 53,
+        "no_op": 2,
+        "stat_bonus": 11,
+        "out_of_scope": 0
+      },
+      "siege": {
+        "relevant": 53,
+        "no_op": 2,
+        "stat_bonus": 11,
+        "out_of_scope": 0
+      },
+      "hydra": {
+        "relevant": 53,
+        "no_op": 2,
+        "stat_bonus": 11,
+        "out_of_scope": 0
+      },
+      "chimera": {
+        "relevant": 53,
+        "no_op": 2,
+        "stat_bonus": 11,
+        "out_of_scope": 0
+      },
+      "forest": {
+        "relevant": 52,
+        "no_op": 3,
+        "stat_bonus": 11,
+        "out_of_scope": 0
+      },
+      "campaign": {
+        "relevant": 52,
+        "no_op": 3,
+        "stat_bonus": 11,
+        "out_of_scope": 0
+      }
+    }
+  },
+  "masteries": [
+    {
+      "id": 500112,
+      "name": "Blade Disciple",
+      "tree": "Attack",
+      "row": 1,
+      "col": 2,
+      "description": "ATK +75",
+      "sim_handler": "stat",
+      "triggers": [
+        "always"
+      ],
+      "relevance": {
+        "cb": "stat_bonus",
+        "arena": "stat_bonus",
+        "tt": "stat_bonus",
+        "dungeon": "stat_bonus",
+        "fw": "stat_bonus",
+        "dt": "stat_bonus",
+        "cc": "stat_bonus",
+        "siege": "stat_bonus",
+        "hydra": "stat_bonus",
+        "chimera": "stat_bonus",
+        "forest": "stat_bonus",
+        "campaign": "stat_bonus"
+      },
+      "notes": "Blade Disciple \u2014 ATK +75 auto-loaded"
+    },
+    {
+      "id": 500113,
+      "name": "Deadly Precision",
+      "tree": "Attack",
+      "row": 1,
+      "col": 3,
+      "description": "C. RATE +5%",
+      "sim_handler": "stat",
+      "triggers": [
+        "always"
+      ],
+      "relevance": {
+        "cb": "stat_bonus",
+        "arena": "stat_bonus",
+        "tt": "stat_bonus",
+        "dungeon": "stat_bonus",
+        "fw": "stat_bonus",
+        "dt": "stat_bonus",
+        "cc": "stat_bonus",
+        "siege": "stat_bonus",
+        "hydra": "stat_bonus",
+        "chimera": "stat_bonus",
+        "forest": "stat_bonus",
+        "campaign": "stat_bonus"
+      },
+      "notes": "Deadly Precision \u2014 C.RATE +5% auto-loaded"
+    },
+    {
+      "id": 500121,
+      "name": "Heart of Glory",
+      "tree": "Attack",
+      "row": 2,
+      "col": 1,
+      "description": "Increases damage inflicted by 5% when attacking with full HP",
+      "sim_handler": "has_heart_of_glory",
+      "triggers": [
+        "self_full_hp"
+      ],
+      "relevance": {
+        "cb": "relevant",
+        "arena": "relevant",
+        "tt": "relevant",
+        "dungeon": "relevant",
+        "fw": "relevant",
+        "dt": "relevant",
+        "cc": "relevant",
+        "siege": "relevant",
+        "hydra": "relevant",
+        "chimera": "relevant",
+        "forest": "relevant",
+        "campaign": "relevant"
+      },
+      "notes": "Heart of Glory \u2014 modeled. +5% dmg @ full HP."
+    },
+    {
+      "id": 500122,
+      "name": "Keen Strike",
+      "tree": "Attack",
+      "row": 2,
+      "col": 2,
+      "description": "C. DMG +10%",
+      "sim_handler": "has_keen_strike",
+      "triggers": [
+        "always"
+      ],
+      "relevance": {
+        "cb": "relevant",
+        "arena": "relevant",
+        "tt": "relevant",
+        "dungeon": "relevant",
+        "fw": "relevant",
+        "dt": "relevant",
+        "cc": "relevant",
+        "siege": "relevant",
+        "hydra": "relevant",
+        "chimera": "relevant",
+        "forest": "relevant",
+        "campaign": "relevant"
+      },
+      "notes": "Keen Strike \u2014 +10% C.DMG flat"
+    },
+    {
+      "id": 500123,
+      "name": "Shield Breaker",
+      "tree": "Attack",
+      "row": 2,
+      "col": 3,
+      "description": "Increases damage inflicted to <color=#1ee600>[Shield]</color> buffs on targets by 25%",
+      "sim_handler": null,
+      "triggers": [
+        "target_has_shield"
+      ],
+      "relevance": {
+        "cb": "no_op",
+        "arena": "relevant",
+        "tt": "relevant",
+        "dungeon": "no_op",
+        "fw": "relevant",
+        "dt": "relevant",
+        "cc": "relevant",
+        "siege": "no_op",
+        "hydra": "relevant",
+        "chimera": "relevant",
+        "forest": "no_op",
+        "campaign": "no_op"
+      },
+      "notes": "Shield Breaker \u2014 +25% vs Shield buffs. Relevant where enemies wear Shield (SO FW, DT, Hydra/Chimera, PvP)."
+    },
+    {
+      "id": 500124,
+      "name": "Grim Resolve",
+      "tree": "Attack",
+      "row": 2,
+      "col": 4,
+      "description": "Increases damage inflicted by 5% when attacking with 50% HP or less",
+      "sim_handler": "has_grim_resolve",
+      "triggers": [
+        "self_low_hp"
+      ],
+      "relevance": {
+        "cb": "relevant",
+        "arena": "relevant",
+        "tt": "relevant",
+        "dungeon": "relevant",
+        "fw": "relevant",
+        "dt": "relevant",
+        "cc": "relevant",
+        "siege": "relevant",
+        "hydra": "relevant",
+        "chimera": "relevant",
+        "forest": "relevant",
+        "campaign": "relevant"
+      },
+      "notes": "Grim Resolve \u2014 modeled. +5% dmg @\u226450% HP"
+    },
+    {
+      "id": 500131,
+      "name": "Single Out",
+      "tree": "Attack",
+      "row": 3,
+      "col": 1,
+      "description": "Increases damage inflicted to targets with less than 40% HP by 8%",
+      "sim_handler": "has_single_out",
+      "triggers": [
+        "target_low_hp"
+      ],
+      "relevance": {
+        "cb": "relevant",
+        "arena": "relevant",
+        "tt": "relevant",
+        "dungeon": "relevant",
+        "fw": "relevant",
+        "dt": "relevant",
+        "cc": "relevant",
+        "siege": "relevant",
+        "hydra": "relevant",
+        "chimera": "relevant",
+        "forest": "relevant",
+        "campaign": "relevant"
+      },
+      "notes": "Single Out \u2014 modeled. +8% dmg @ target <40% HP. Boss HP fraction approx via cumul_dmg/UNM_HP."
+    },
+    {
+      "id": 500132,
+      "name": "Life Drinker",
+      "tree": "Attack",
+      "row": 3,
+      "col": 2,
+      "description": "Heals by 5% of damage inflicted when attacking with 50% HP or less",
+      "sim_handler": null,
+      "triggers": [
+        "self_low_hp"
+      ],
+      "relevance": {
+        "cb": "relevant",
+        "arena": "relevant",
+        "tt": "relevant",
+        "dungeon": "relevant",
+        "fw": "relevant",
+        "dt": "relevant",
+        "cc": "relevant",
+        "siege": "relevant",
+        "hydra": "relevant",
+        "chimera": "relevant",
+        "forest": "relevant",
+        "campaign": "relevant"
+      },
+      "notes": "Life Drinker \u2014 heal 5% of dmg @\u226450% HP"
+    },
+    {
+      "id": 500133,
+      "name": "Whirlwind of Death",
+      "tree": "Attack",
+      "row": 3,
+      "col": 3,
+      "description": "Increases SPD by 6 for each enemy killed by this Champion. Stacks across each round in a battle, up to 18 SPD",
+      "sim_handler": null,
+      "triggers": [
+        "killed_enemy"
+      ],
+      "relevance": {
+        "cb": "no_op",
+        "arena": "relevant",
+        "tt": "relevant",
+        "dungeon": "relevant",
+        "fw": "relevant",
+        "dt": "relevant",
+        "cc": "relevant",
+        "siege": "relevant",
+        "hydra": "relevant",
+        "chimera": "relevant",
+        "forest": "relevant",
+        "campaign": "relevant"
+      },
+      "notes": "Whirlwind of Death \u2014 +6 SPD per kill (cap not given). No kills in CB."
+    },
+    {
+      "id": 500134,
+      "name": "Ruthless Ambush",
+      "tree": "Attack",
+      "row": 3,
+      "col": 4,
+      "description": "Increases damage inflicted by 8% for the first hit on each enemy",
+      "sim_handler": "has_ruthless_ambush",
+      "triggers": [
+        "first_hit_per_enemy"
+      ],
+      "relevance": {
+        "cb": "relevant",
+        "arena": "relevant",
+        "tt": "relevant",
+        "dungeon": "relevant",
+        "fw": "relevant",
+        "dt": "relevant",
+        "cc": "relevant",
+        "siege": "relevant",
+        "hydra": "relevant",
+        "chimera": "relevant",
+        "forest": "relevant",
+        "campaign": "relevant"
+      },
+      "notes": "Ruthless Ambush \u2014 modeled (CB-shape: +8% on this hero's first damaging cast). Multi-enemy modes need per-enemy tracking \u2014 future work."
+    },
+    {
+      "id": 500141,
+      "name": "Bring It Down",
+      "tree": "Attack",
+      "row": 4,
+      "col": 1,
+      "description": "Increases damage inflicted by 6% when attacking targets with higher MAX HP",
+      "sim_handler": "has_bring_it_down",
+      "triggers": [
+        "target_higher_max_hp"
+      ],
+      "relevance": {
+        "cb": "relevant",
+        "arena": "relevant",
+        "tt": "relevant",
+        "dungeon": "relevant",
+        "fw": "relevant",
+        "dt": "relevant",
+        "cc": "relevant",
+        "siege": "relevant",
+        "hydra": "relevant",
+        "chimera": "relevant",
+        "forest": "relevant",
+        "campaign": "relevant"
+      },
+      "notes": "Bring It Down \u2014 +6% vs higher-MAX-HP target. Boss = always higher; mostly true vs dungeon bosses too."
+    },
+    {
+      "id": 500142,
+      "name": "Wrath of the Slain",
+      "tree": "Attack",
+      "row": 4,
+      "col": 2,
+      "description": "Increases damage inflicted by 5% for each dead ally. Stacks up to 10%",
+      "sim_handler": "has_wrath_of_slain",
+      "triggers": [
+        "ally_dead"
+      ],
+      "relevance": {
+        "cb": "relevant",
+        "arena": "relevant",
+        "tt": "relevant",
+        "dungeon": "relevant",
+        "fw": "relevant",
+        "dt": "relevant",
+        "cc": "relevant",
+        "siege": "relevant",
+        "hydra": "relevant",
+        "chimera": "relevant",
+        "forest": "relevant",
+        "campaign": "relevant"
+      },
+      "notes": "Wrath of the Slain \u2014 modeled. +5% dmg per dead ally (cap +10%)."
+    },
+    {
+      "id": 500143,
+      "name": "Cycle of Violence",
+      "tree": "Attack",
+      "row": 4,
+      "col": 3,
+      "description": "Has a 30% chance of decreasing the cooldown of a random Skill by 1 turn if the damage inflicted by a Skill exceeds 30% of the target's MAX HP. Occurs once per turn",
+      "sim_handler": null,
+      "triggers": [
+        "killed_enemy"
+      ],
+      "relevance": {
+        "cb": "no_op",
+        "arena": "relevant",
+        "tt": "relevant",
+        "dungeon": "relevant",
+        "fw": "relevant",
+        "dt": "relevant",
+        "cc": "relevant",
+        "siege": "relevant",
+        "hydra": "relevant",
+        "chimera": "relevant",
+        "forest": "relevant",
+        "campaign": "relevant"
+      },
+      "notes": "Cycle of Violence \u2014 30% chance CD reduce on kill. No kills in CB."
+    },
+    {
+      "id": 500144,
+      "name": "Opportunist",
+      "tree": "Attack",
+      "row": 4,
+      "col": 4,
+      "description": "Increases damage inflicted to targets with <color=#1ee600>[Stun]</color>, <color=#1ee600>[Sleep]</color>, <color=#1ee600>[Fear]</color>, <color=#1ee600>[True Fear]</color>, <color=#1ee600>[Freeze]</color>, <color=#1ee600>[Petrification]</color> debuffs by 12%.",
+      "sim_handler": null,
+      "triggers": [
+        "target_has_cc"
+      ],
+      "relevance": {
+        "cb": "no_op",
+        "arena": "relevant",
+        "tt": "relevant",
+        "dungeon": "relevant",
+        "fw": "relevant",
+        "dt": "relevant",
+        "cc": "relevant",
+        "siege": "relevant",
+        "hydra": "relevant",
+        "chimera": "relevant",
+        "forest": "relevant",
+        "campaign": "relevant"
+      },
+      "notes": "Opportunist \u2014 bonus vs Stun/Sleep/Freeze targets. Triggers where target gets CC'd. CB boss immune."
+    },
+    {
+      "id": 500151,
+      "name": "Methodical",
+      "tree": "Attack",
+      "row": 5,
+      "col": 1,
+      "description": "Increases the damage inflicted by this Champion's default Skill by 2% each time it is used during battle. Stacks across each round in a battle, up to 10%",
+      "sim_handler": null,
+      "triggers": [
+        "always"
+      ],
+      "relevance": {
+        "cb": "relevant",
+        "arena": "relevant",
+        "tt": "relevant",
+        "dungeon": "relevant",
+        "fw": "relevant",
+        "dt": "relevant",
+        "cc": "relevant",
+        "siege": "relevant",
+        "hydra": "relevant",
+        "chimera": "relevant",
+        "forest": "relevant",
+        "campaign": "relevant"
+      },
+      "notes": "Methodical \u2014 +2% A1 dmg per A1 use, cap +10%. Universal A1 ramp."
+    },
+    {
+      "id": 500152,
+      "name": "Kill Streak",
+      "tree": "Attack",
+      "row": 5,
+      "col": 2,
+      "description": "Increases damage inflicted by 6% in Arena and Siege battles and 3% in all other locations for each enemy killed by this Champion in battle. Stacks across each Round in a battle, up to 12%",
+      "sim_handler": "has_kill_streak",
+      "triggers": [
+        "arena_or_siege"
+      ],
+      "relevance": {
+        "cb": "relevant",
+        "arena": "relevant",
+        "tt": "relevant",
+        "dungeon": "relevant",
+        "fw": "relevant",
+        "dt": "relevant",
+        "cc": "relevant",
+        "siege": "relevant",
+        "hydra": "relevant",
+        "chimera": "relevant",
+        "forest": "relevant",
+        "campaign": "relevant"
+      },
+      "notes": "Kill Streak \u2014 Arena/Siege get +6%; all other modes get the smaller +3% blanket \u2014 relevant everywhere but stronger in PVP."
+    },
+    {
+      "id": 500153,
+      "name": "Blood Shield",
+      "tree": "Attack",
+      "row": 5,
+      "col": 3,
+      "description": "Places a <color=#1ee600>[Shield]</color> buff on this Champion for 1 turn when this Champion kills an enemy\u00a0(except Boss' minions). The value of the <color=#1ee600>[Shield]</color> is equal to 15% of this Champion's MAX HP. Occurs once per turn",
+      "sim_handler": null,
+      "triggers": [
+        "self_has_cc"
+      ],
+      "relevance": {
+        "cb": "no_op",
+        "arena": "relevant",
+        "tt": "relevant",
+        "dungeon": "relevant",
+        "fw": "relevant",
+        "dt": "relevant",
+        "cc": "relevant",
+        "siege": "relevant",
+        "hydra": "relevant",
+        "chimera": "relevant",
+        "forest": "relevant",
+        "campaign": "relevant"
+      },
+      "notes": "Blood Shield \u2014 Shield buff when self hit by Stun/Sleep/Freeze. CB boss can't apply those."
+    },
+    {
+      "id": 500154,
+      "name": "Stoked To Fury",
+      "tree": "Attack",
+      "row": 5,
+      "col": 4,
+      "description": "Increases damage inflicted by 4% for each debuff on this Champion. Stacks up to 12%",
+      "sim_handler": null,
+      "triggers": [
+        "self_has_debuff"
+      ],
+      "relevance": {
+        "cb": "relevant",
+        "arena": "relevant",
+        "tt": "relevant",
+        "dungeon": "relevant",
+        "fw": "relevant",
+        "dt": "relevant",
+        "cc": "relevant",
+        "siege": "relevant",
+        "hydra": "relevant",
+        "chimera": "relevant",
+        "forest": "relevant",
+        "campaign": "relevant"
+      },
+      "notes": "Stoked To Fury \u2014 +4% per self-debuff (cap +12%). Triggers anywhere enemies apply debuffs."
+    },
+    {
+      "id": 500161,
+      "name": "Warmaster",
+      "tree": "Attack",
+      "row": 6,
+      "col": 1,
+      "description": "Has a 60% chance of inflicting bonus damage when attacking. Bonus damage is equal to 10% of the target Champion's MAX HP or 4% of the target's MAX HP when attacking Bosses. Bonus damage can only occur once per Skill and does not count as an extra hit.\r\n\r\nDamage based on: <color=#1EE600FF>[Enemy MAX HP]</color>",
+      "sim_handler": "has_wm",
+      "triggers": [
+        "per_skill_hit"
+      ],
+      "relevance": {
+        "cb": "relevant",
+        "arena": "relevant",
+        "tt": "relevant",
+        "dungeon": "relevant",
+        "fw": "relevant",
+        "dt": "relevant",
+        "cc": "relevant",
+        "siege": "relevant",
+        "hydra": "relevant",
+        "chimera": "relevant",
+        "forest": "relevant",
+        "campaign": "relevant"
+      },
+      "notes": "Warmaster \u2014 modeled. 60% chance + cap per skill use."
+    },
+    {
+      "id": 500162,
+      "name": "Helmsmasher",
+      "tree": "Attack",
+      "row": 6,
+      "col": 2,
+      "description": "Has a 50% chance of ignoring 25% of the target's DEF. For Skills that ignore DEF, this 25% is in addition to the amount ignored by the Skill.",
+      "sim_handler": "has_helmsmasher",
+      "triggers": [
+        "target_above_50_hp"
+      ],
+      "relevance": {
+        "cb": "relevant",
+        "arena": "relevant",
+        "tt": "relevant",
+        "dungeon": "relevant",
+        "fw": "relevant",
+        "dt": "relevant",
+        "cc": "relevant",
+        "siege": "relevant",
+        "hydra": "relevant",
+        "chimera": "relevant",
+        "forest": "relevant",
+        "campaign": "relevant"
+      },
+      "notes": "Helmsmasher \u2014 modeled. 50% ignore 25% DEF on >50% HP target."
+    },
+    {
+      "id": 500163,
+      "name": "Giant Slayer",
+      "tree": "Attack",
+      "row": 6,
+      "col": 3,
+      "description": "Has a 30% chance of inflicting bonus damage when attacking. Bonus damage is equal to 7.5% of the target Champion's MAX HP or 3% of the target's MAX HP when attacking Bosses. Bonus damage can occur on each hit of a Skill, but does not count as an extra hit.\r\n\r\nDamage based on: <color=#1EE600FF>[Enemy MAX HP]</color>",
+      "sim_handler": "has_gs",
+      "triggers": [
+        "per_hit"
+      ],
+      "relevance": {
+        "cb": "relevant",
+        "arena": "relevant",
+        "tt": "relevant",
+        "dungeon": "relevant",
+        "fw": "relevant",
+        "dt": "relevant",
+        "cc": "relevant",
+        "siege": "relevant",
+        "hydra": "relevant",
+        "chimera": "relevant",
+        "forest": "relevant",
+        "campaign": "relevant"
+      },
+      "notes": "Giant Slayer \u2014 modeled. 30%/hit, 7.5% TRG_HP (capped vs bosses)."
+    },
+    {
+      "id": 500164,
+      "name": "Flawless Execution",
+      "tree": "Attack",
+      "row": 6,
+      "col": 4,
+      "description": "C. DMG +20%",
+      "sim_handler": "has_flawless_exec",
+      "triggers": [
+        "always"
+      ],
+      "relevance": {
+        "cb": "relevant",
+        "arena": "relevant",
+        "tt": "relevant",
+        "dungeon": "relevant",
+        "fw": "relevant",
+        "dt": "relevant",
+        "cc": "relevant",
+        "siege": "relevant",
+        "hydra": "relevant",
+        "chimera": "relevant",
+        "forest": "relevant",
+        "campaign": "relevant"
+      },
+      "notes": "Flawless Execution \u2014 modeled. +20% C.DMG flat."
+    },
+    {
+      "id": 500212,
+      "name": "Tough Skin",
+      "tree": "Defence",
+      "row": 1,
+      "col": 2,
+      "description": "DEF +75",
+      "sim_handler": "stat",
+      "triggers": [
+        "always"
+      ],
+      "relevance": {
+        "cb": "stat_bonus",
+        "arena": "stat_bonus",
+        "tt": "stat_bonus",
+        "dungeon": "stat_bonus",
+        "fw": "stat_bonus",
+        "dt": "stat_bonus",
+        "cc": "stat_bonus",
+        "siege": "stat_bonus",
+        "hydra": "stat_bonus",
+        "chimera": "stat_bonus",
+        "forest": "stat_bonus",
+        "campaign": "stat_bonus"
+      },
+      "notes": "Tough Skin \u2014 DEF +75 auto-loaded"
+    },
+    {
+      "id": 500213,
+      "name": "Defiant",
+      "tree": "Defence",
+      "row": 1,
+      "col": 3,
+      "description": "RES +10",
+      "sim_handler": "stat",
+      "triggers": [
+        "always"
+      ],
+      "relevance": {
+        "cb": "stat_bonus",
+        "arena": "stat_bonus",
+        "tt": "stat_bonus",
+        "dungeon": "stat_bonus",
+        "fw": "stat_bonus",
+        "dt": "stat_bonus",
+        "cc": "stat_bonus",
+        "siege": "stat_bonus",
+        "hydra": "stat_bonus",
+        "chimera": "stat_bonus",
+        "forest": "stat_bonus",
+        "campaign": "stat_bonus"
+      },
+      "notes": "Defiant \u2014 RES +10 auto-loaded"
+    },
+    {
+      "id": 500221,
+      "name": "Blastproof",
+      "tree": "Defence",
+      "row": 2,
+      "col": 1,
+      "description": "Decreases damage received from AoE attacks by 5%",
+      "sim_handler": "has_blastproof",
+      "triggers": [
+        "incoming_aoe"
+      ],
+      "relevance": {
+        "cb": "relevant",
+        "arena": "relevant",
+        "tt": "relevant",
+        "dungeon": "relevant",
+        "fw": "relevant",
+        "dt": "relevant",
+        "cc": "relevant",
+        "siege": "relevant",
+        "hydra": "relevant",
+        "chimera": "relevant",
+        "forest": "relevant",
+        "campaign": "relevant"
+      },
+      "notes": "Blastproof \u2014 modeled. -5% from AoE attacks (all CB boss skills are AoE)."
+    },
+    {
+      "id": 500222,
+      "name": "Rejuvenation",
+      "tree": "Defence",
+      "row": 2,
+      "col": 2,
+      "description": "Increases the amount of healing and the value of <color=#1ee600>[Shield]</color> buffs this Champion receives by 5%",
+      "sim_handler": null,
+      "triggers": [
+        "heal_or_shield_received"
+      ],
+      "relevance": {
+        "cb": "relevant",
+        "arena": "relevant",
+        "tt": "relevant",
+        "dungeon": "relevant",
+        "fw": "relevant",
+        "dt": "relevant",
+        "cc": "relevant",
+        "siege": "relevant",
+        "hydra": "relevant",
+        "chimera": "relevant",
+        "forest": "relevant",
+        "campaign": "relevant"
+      },
+      "notes": "Rejuvenation \u2014 +15% heal+shield value received."
+    },
+    {
+      "id": 500223,
+      "name": "Mighty Endurance",
+      "tree": "Defence",
+      "row": 2,
+      "col": 3,
+      "description": "Decreases the damage received by 10% if this Champion has <color=#1ee600>[Stun]</color>, <color=#1ee600>[Sleep]</color>, <color=#1ee600>[Fear]</color>, <color=#1ee600>[True Fear]</color>, <color=#1ee600>[Freeze]</color>, <color=#1ee600>[Petrification]</color> debuffs.",
+      "sim_handler": null,
+      "triggers": [
+        "self_has_cc"
+      ],
+      "relevance": {
+        "cb": "no_op",
+        "arena": "relevant",
+        "tt": "relevant",
+        "dungeon": "relevant",
+        "fw": "relevant",
+        "dt": "relevant",
+        "cc": "relevant",
+        "siege": "relevant",
+        "hydra": "relevant",
+        "chimera": "relevant",
+        "forest": "relevant",
+        "campaign": "relevant"
+      },
+      "notes": "Mighty Endurance \u2014 -10% dmg when self has Stun/Sleep/Freeze. CB no-op (boss can't apply)."
+    },
+    {
+      "id": 500224,
+      "name": "Improved Parry",
+      "tree": "Defence",
+      "row": 2,
+      "col": 4,
+      "description": "Decreases the damage received by this Champion by 8% when this Champion is hit with a critical hit",
+      "sim_handler": "has_improved_parry",
+      "triggers": [
+        "incoming_crit"
+      ],
+      "relevance": {
+        "cb": "relevant",
+        "arena": "relevant",
+        "tt": "relevant",
+        "dungeon": "relevant",
+        "fw": "relevant",
+        "dt": "relevant",
+        "cc": "relevant",
+        "siege": "relevant",
+        "hydra": "relevant",
+        "chimera": "relevant",
+        "forest": "relevant",
+        "campaign": "relevant"
+      },
+      "notes": "Improved Parry \u2014 modeled. -8% dmg from crits, gated by boss crit share in deterministic mode."
+    },
+    {
+      "id": 500231,
+      "name": "Shadow Heal",
+      "tree": "Defence",
+      "row": 3,
+      "col": 1,
+      "description": "Heals this Champion by 6% of their MAX HP each time an enemy is healed. Occurs once per turn.",
+      "sim_handler": null,
+      "triggers": [
+        "enemy_healed"
+      ],
+      "relevance": {
+        "cb": "no_op",
+        "arena": "relevant",
+        "tt": "relevant",
+        "dungeon": "relevant",
+        "fw": "relevant",
+        "dt": "relevant",
+        "cc": "no_op",
+        "siege": "no_op",
+        "hydra": "no_op",
+        "chimera": "no_op",
+        "forest": "no_op",
+        "campaign": "no_op"
+      },
+      "notes": "Shadow Heal \u2014 heal 6% MAX HP per enemy heal (1/turn). Triggers vs healer enemies (PVP, FW priests, DT)."
+    },
+    {
+      "id": 500232,
+      "name": "Resurgent",
+      "tree": "Defence",
+      "row": 3,
+      "col": 2,
+      "description": "Has a 50% chance to remove 1 random debuff from this Champion when they lose 25% of their MAX HP or more from a single enemy Skill",
+      "sim_handler": null,
+      "triggers": [
+        "self_lost_25_hp"
+      ],
+      "relevance": {
+        "cb": "relevant",
+        "arena": "relevant",
+        "tt": "relevant",
+        "dungeon": "relevant",
+        "fw": "relevant",
+        "dt": "relevant",
+        "cc": "relevant",
+        "siege": "relevant",
+        "hydra": "relevant",
+        "chimera": "relevant",
+        "forest": "relevant",
+        "campaign": "relevant"
+      },
+      "notes": "Resurgent \u2014 50% chance remove 1 debuff from self on 25% HP loss."
+    },
+    {
+      "id": 500233,
+      "name": "Bloodthirst",
+      "tree": "Defence",
+      "row": 3,
+      "col": 3,
+      "description": "Heals this Champion by 10% of their MAX HP when they kill an enemy target\u00a0(except Boss' minions).\u00a0Cooldown: 1 turn",
+      "sim_handler": null,
+      "triggers": [
+        "killed_enemy"
+      ],
+      "relevance": {
+        "cb": "no_op",
+        "arena": "relevant",
+        "tt": "relevant",
+        "dungeon": "relevant",
+        "fw": "relevant",
+        "dt": "relevant",
+        "cc": "relevant",
+        "siege": "relevant",
+        "hydra": "relevant",
+        "chimera": "relevant",
+        "forest": "relevant",
+        "campaign": "relevant"
+      },
+      "notes": "Bloodthirst \u2014 heal 10% MAX HP per kill (no boss minion). No kills in CB."
+    },
+    {
+      "id": 500234,
+      "name": "Wisdom of Battle",
+      "tree": "Defence",
+      "row": 3,
+      "col": 4,
+      "description": "Has a 30% chance of placing a <color=#1ee600>[Block Debuffs]</color> buff on this Champion for 1 turn when <color=#1ee600>[Stun]</color>, <color=#1ee600>[Sleep]</color>, <color=#1ee600>[Fear]</color>, <color=#1ee600>[True Fear]</color>, <color=#1ee600>[Freeze]</color>, <color=#1ee600>[Petrification]</color> debuffs expire on this Champion.",
+      "sim_handler": null,
+      "triggers": [
+        "ally_took_crit"
+      ],
+      "relevance": {
+        "cb": "relevant",
+        "arena": "relevant",
+        "tt": "relevant",
+        "dungeon": "relevant",
+        "fw": "relevant",
+        "dt": "relevant",
+        "cc": "relevant",
+        "siege": "relevant",
+        "hydra": "relevant",
+        "chimera": "relevant",
+        "forest": "relevant",
+        "campaign": "relevant"
+      },
+      "notes": "Wisdom of Battle \u2014 30% chance BD buff on this hero when ally takes crit. Strong vs CB (constant boss crits)."
+    },
+    {
+      "id": 500241,
+      "name": "Solidarity",
+      "tree": "Defence",
+      "row": 4,
+      "col": 1,
+      "description": "Increases Ally RES by 5 for each buff placed on them by this Champion",
+      "sim_handler": null,
+      "triggers": [
+        "self_placed_buff"
+      ],
+      "relevance": {
+        "cb": "relevant",
+        "arena": "relevant",
+        "tt": "relevant",
+        "dungeon": "relevant",
+        "fw": "relevant",
+        "dt": "relevant",
+        "cc": "relevant",
+        "siege": "relevant",
+        "hydra": "relevant",
+        "chimera": "relevant",
+        "forest": "relevant",
+        "campaign": "relevant"
+      },
+      "notes": "Solidarity \u2014 +5 ally RES per buff this hero placed. Stacks with buff-heavy supports."
+    },
+    {
+      "id": 500242,
+      "name": "Delay Death",
+      "tree": "Defence",
+      "row": 4,
+      "col": 2,
+      "description": "Reduces the damage this Champion receives from a specific enemy by 0.75% with each hit taken from that enemy. Damage reduction stacks up to 6% for each enemy",
+      "sim_handler": null,
+      "triggers": [
+        "hit_by_same_enemy"
+      ],
+      "relevance": {
+        "cb": "relevant",
+        "arena": "relevant",
+        "tt": "relevant",
+        "dungeon": "relevant",
+        "fw": "relevant",
+        "dt": "relevant",
+        "cc": "relevant",
+        "siege": "relevant",
+        "hydra": "relevant",
+        "chimera": "relevant",
+        "forest": "relevant",
+        "campaign": "relevant"
+      },
+      "notes": "Delay Death \u2014 -0.75% dmg per hit from same enemy. Boss = always same enemy \u2192 stacks all fight."
+    },
+    {
+      "id": 500243,
+      "name": "Harvest Despair",
+      "tree": "Defence",
+      "row": 4,
+      "col": 3,
+      "description": "Has a 60% chance of placing a <color=#1ee600>[Leech]</color> debuff for 1 turn when placing <color=#1ee600>[Stun]</color>, <color=#1ee600>[Sleep]</color>, <color=#1ee600>[Fear]</color>, <color=#1ee600>[True Fear]</color>, <color=#1ee600>[Freeze]</color>, <color=#1ee600>[Petrification]</color> debuffs.",
+      "sim_handler": null,
+      "triggers": [
+        "placed_debuff"
+      ],
+      "relevance": {
+        "cb": "relevant",
+        "arena": "relevant",
+        "tt": "relevant",
+        "dungeon": "relevant",
+        "fw": "relevant",
+        "dt": "relevant",
+        "cc": "relevant",
+        "siege": "relevant",
+        "hydra": "relevant",
+        "chimera": "relevant",
+        "forest": "relevant",
+        "campaign": "relevant"
+      },
+      "notes": "Harvest Despair \u2014 60% Leech 1T when placing any debuff. Leech IS damage."
+    },
+    {
+      "id": 500244,
+      "name": "Stubbornness",
+      "tree": "Defence",
+      "row": 4,
+      "col": 4,
+      "description": "Increases RES by 10 for each debuff on this Champion. Stacks up to 30",
+      "sim_handler": null,
+      "triggers": [
+        "self_has_debuff"
+      ],
+      "relevance": {
+        "cb": "relevant",
+        "arena": "relevant",
+        "tt": "relevant",
+        "dungeon": "relevant",
+        "fw": "relevant",
+        "dt": "relevant",
+        "cc": "relevant",
+        "siege": "relevant",
+        "hydra": "relevant",
+        "chimera": "relevant",
+        "forest": "relevant",
+        "campaign": "relevant"
+      },
+      "notes": "Stubbornness \u2014 +10 RES per debuff on self (cap +30). Defensive ramp anywhere enemies apply debuffs."
+    },
+    {
+      "id": 500251,
+      "name": "Selfless Defender",
+      "tree": "Defence",
+      "row": 5,
+      "col": 1,
+      "description": "Decreases the damage an ally receives from the first enemy hit in each round by 20%. This Champion will receive that damage instead",
+      "sim_handler": null,
+      "triggers": [
+        "ally_first_hit_per_round"
+      ],
+      "relevance": {
+        "cb": "relevant",
+        "arena": "relevant",
+        "tt": "relevant",
+        "dungeon": "relevant",
+        "fw": "relevant",
+        "dt": "relevant",
+        "cc": "relevant",
+        "siege": "relevant",
+        "hydra": "relevant",
+        "chimera": "relevant",
+        "forest": "relevant",
+        "campaign": "relevant"
+      },
+      "notes": "Selfless Defender \u2014 -20% dmg ally takes from first enemy hit per round. CB = 1 round; multi-round modes get more triggers."
+    },
+    {
+      "id": 500252,
+      "name": "Cycle of Revenge",
+      "tree": "Defence",
+      "row": 5,
+      "col": 2,
+      "description": "Has a 50% chance of increasing the Turn Meter by 15% when an ally is attacked with a critical hit. Will only increase the Turn Meter once if an ally receives multiple critical hits from a single Skill",
+      "sim_handler": null,
+      "triggers": [
+        "ally_took_crit"
+      ],
+      "relevance": {
+        "cb": "relevant",
+        "arena": "relevant",
+        "tt": "relevant",
+        "dungeon": "relevant",
+        "fw": "relevant",
+        "dt": "relevant",
+        "cc": "relevant",
+        "siege": "relevant",
+        "hydra": "relevant",
+        "chimera": "relevant",
+        "forest": "relevant",
+        "campaign": "relevant"
+      },
+      "notes": "Cycle of Revenge \u2014 50% chance +15% TM when ally takes crit. Triggers from enemy crits anywhere."
+    },
+    {
+      "id": 500253,
+      "name": "Retribution",
+      "tree": "Defence",
+      "row": 5,
+      "col": 3,
+      "description": "Has a 50% chance to counterattack when this Champion loses 25% of their MAX HP or more from a single enemy Skill",
+      "sim_handler": "has_retribution",
+      "triggers": [
+        "self_lost_25_hp"
+      ],
+      "relevance": {
+        "cb": "relevant",
+        "arena": "relevant",
+        "tt": "relevant",
+        "dungeon": "relevant",
+        "fw": "relevant",
+        "dt": "relevant",
+        "cc": "relevant",
+        "siege": "relevant",
+        "hydra": "relevant",
+        "chimera": "relevant",
+        "forest": "relevant",
+        "campaign": "relevant"
+      },
+      "notes": "Retribution \u2014 modeled. 50% counter on 25%+ HP loss."
+    },
+    {
+      "id": 500254,
+      "name": "Deterrence",
+      "tree": "Defence",
+      "row": 5,
+      "col": 4,
+      "description": "Has a 20% chance to counterattack an enemy when they apply a <color=#1ee600>[Stun]</color>, <color=#1ee600>[Sleep]</color>, <color=#1ee600>[Fear]</color>, <color=#1ee600>[True Fear]</color>, <color=#1ee600>[Freeze]</color>, <color=#1ee600>[Petrification]</color>,\u00a0or <color=#1ee600>[Sheep]</color>\u00a0debuff on an ally. Cooldown: 1 turn",
+      "sim_handler": null,
+      "triggers": [
+        "ally_got_cc"
+      ],
+      "relevance": {
+        "cb": "no_op",
+        "arena": "relevant",
+        "tt": "relevant",
+        "dungeon": "relevant",
+        "fw": "relevant",
+        "dt": "relevant",
+        "cc": "relevant",
+        "siege": "relevant",
+        "hydra": "relevant",
+        "chimera": "relevant",
+        "forest": "relevant",
+        "campaign": "relevant"
+      },
+      "notes": "Deterrence \u2014 20% counter when ally Stunned/Frozen/Feared. CB no-op."
+    },
+    {
+      "id": 500261,
+      "name": "Iron Skin",
+      "tree": "Defence",
+      "row": 6,
+      "col": 1,
+      "description": "DEF +200",
+      "sim_handler": "stat",
+      "triggers": [
+        "always"
+      ],
+      "relevance": {
+        "cb": "stat_bonus",
+        "arena": "stat_bonus",
+        "tt": "stat_bonus",
+        "dungeon": "stat_bonus",
+        "fw": "stat_bonus",
+        "dt": "stat_bonus",
+        "cc": "stat_bonus",
+        "siege": "stat_bonus",
+        "hydra": "stat_bonus",
+        "chimera": "stat_bonus",
+        "forest": "stat_bonus",
+        "campaign": "stat_bonus"
+      },
+      "notes": "Iron Skin \u2014 DEF +200 auto-loaded"
+    },
+    {
+      "id": 500262,
+      "name": "Bulwark",
+      "tree": "Defence",
+      "row": 6,
+      "col": 2,
+      "description": "Decreases the damage all allies receive by 5%. This Champion will receive that damage instead",
+      "sim_handler": "has_bulwark",
+      "triggers": [
+        "always_team"
+      ],
+      "relevance": {
+        "cb": "relevant",
+        "arena": "relevant",
+        "tt": "relevant",
+        "dungeon": "relevant",
+        "fw": "relevant",
+        "dt": "relevant",
+        "cc": "relevant",
+        "siege": "relevant",
+        "hydra": "relevant",
+        "chimera": "relevant",
+        "forest": "relevant",
+        "campaign": "relevant"
+      },
+      "notes": "Bulwark \u2014 modeled. -5% team dmg (added to team_dmg_reduction pool; redirect-to-self not separately tracked)."
+    },
+    {
+      "id": 500263,
+      "name": "Fearsome Presence",
+      "tree": "Defence",
+      "row": 6,
+      "col": 3,
+      "description": "Increases the chances of placing a <color=#1ee600>[Stun]</color>, <color=#1ee600>[Sleep]</color>, <color=#1ee600>[Freeze]</color>, <color=#1ee600>[Fear]</color>, <color=#1ee600>[True Fear]</color>, <color=#1ee600>[Provoke]</color>,\u00a0or <color=#1ee600>[Sheep]</color> debuff\u00a0from Skills or Artifacts by 5%",
+      "sim_handler": null,
+      "triggers": [
+        "target_can_be_cc"
+      ],
+      "relevance": {
+        "cb": "no_op",
+        "arena": "relevant",
+        "tt": "relevant",
+        "dungeon": "relevant",
+        "fw": "relevant",
+        "dt": "relevant",
+        "cc": "relevant",
+        "siege": "relevant",
+        "hydra": "relevant",
+        "chimera": "relevant",
+        "forest": "relevant",
+        "campaign": "relevant"
+      },
+      "notes": "Fearsome Presence \u2014 +Stun/Sleep/Freeze chance. CB boss immune."
+    },
+    {
+      "id": 500264,
+      "name": "Unshakeable",
+      "tree": "Defence",
+      "row": 6,
+      "col": 4,
+      "description": "RES +50",
+      "sim_handler": "stat",
+      "triggers": [
+        "always"
+      ],
+      "relevance": {
+        "cb": "stat_bonus",
+        "arena": "stat_bonus",
+        "tt": "stat_bonus",
+        "dungeon": "stat_bonus",
+        "fw": "stat_bonus",
+        "dt": "stat_bonus",
+        "cc": "stat_bonus",
+        "siege": "stat_bonus",
+        "hydra": "stat_bonus",
+        "chimera": "stat_bonus",
+        "forest": "stat_bonus",
+        "campaign": "stat_bonus"
+      },
+      "notes": "Unshakeable \u2014 RES +50 auto-loaded"
+    },
+    {
+      "id": 500312,
+      "name": "Steadfast",
+      "tree": "Support",
+      "row": 1,
+      "col": 2,
+      "description": "MAX HP +810",
+      "sim_handler": "stat",
+      "triggers": [
+        "always"
+      ],
+      "relevance": {
+        "cb": "stat_bonus",
+        "arena": "stat_bonus",
+        "tt": "stat_bonus",
+        "dungeon": "stat_bonus",
+        "fw": "stat_bonus",
+        "dt": "stat_bonus",
+        "cc": "stat_bonus",
+        "siege": "stat_bonus",
+        "hydra": "stat_bonus",
+        "chimera": "stat_bonus",
+        "forest": "stat_bonus",
+        "campaign": "stat_bonus"
+      },
+      "notes": "Steadfast \u2014 HP +810 auto-loaded"
+    },
+    {
+      "id": 500313,
+      "name": "Pinpoint Accuracy",
+      "tree": "Support",
+      "row": 1,
+      "col": 3,
+      "description": "ACC +10",
+      "sim_handler": "stat",
+      "triggers": [
+        "always"
+      ],
+      "relevance": {
+        "cb": "stat_bonus",
+        "arena": "stat_bonus",
+        "tt": "stat_bonus",
+        "dungeon": "stat_bonus",
+        "fw": "stat_bonus",
+        "dt": "stat_bonus",
+        "cc": "stat_bonus",
+        "siege": "stat_bonus",
+        "hydra": "stat_bonus",
+        "chimera": "stat_bonus",
+        "forest": "stat_bonus",
+        "campaign": "stat_bonus"
+      },
+      "notes": "Pinpoint Accuracy \u2014 ACC +10 auto-loaded"
+    },
+    {
+      "id": 500321,
+      "name": "Lay On Hands",
+      "tree": "Support",
+      "row": 2,
+      "col": 1,
+      "description": "Increases the value of heals this Champion casts by 5%",
+      "sim_handler": null,
+      "triggers": [
+        "heal_cast"
+      ],
+      "relevance": {
+        "cb": "relevant",
+        "arena": "relevant",
+        "tt": "relevant",
+        "dungeon": "relevant",
+        "fw": "relevant",
+        "dt": "relevant",
+        "cc": "relevant",
+        "siege": "relevant",
+        "hydra": "relevant",
+        "chimera": "relevant",
+        "forest": "relevant",
+        "campaign": "relevant"
+      },
+      "notes": "Lay On Hands \u2014 +5% heal value cast"
+    },
+    {
+      "id": 500322,
+      "name": "Shieldbearer",
+      "tree": "Support",
+      "row": 2,
+      "col": 2,
+      "description": "Increases the value of <color=#1ee600>[Shield]</color> buffs this Champion casts by 5%",
+      "sim_handler": null,
+      "triggers": [
+        "shield_cast"
+      ],
+      "relevance": {
+        "cb": "relevant",
+        "arena": "relevant",
+        "tt": "relevant",
+        "dungeon": "relevant",
+        "fw": "relevant",
+        "dt": "relevant",
+        "cc": "relevant",
+        "siege": "relevant",
+        "hydra": "relevant",
+        "chimera": "relevant",
+        "forest": "relevant",
+        "campaign": "relevant"
+      },
+      "notes": "Shieldbearer \u2014 +5% Shield value cast"
+    },
+    {
+      "id": 500323,
+      "name": "Exalt in Death",
+      "tree": "Support",
+      "row": 2,
+      "col": 3,
+      "description": "Heals this Champion by 10% of their MAX HP the first time an enemy is killed in each round",
+      "sim_handler": null,
+      "triggers": [
+        "killed_enemy"
+      ],
+      "relevance": {
+        "cb": "no_op",
+        "arena": "relevant",
+        "tt": "relevant",
+        "dungeon": "relevant",
+        "fw": "relevant",
+        "dt": "relevant",
+        "cc": "relevant",
+        "siege": "relevant",
+        "hydra": "relevant",
+        "chimera": "relevant",
+        "forest": "relevant",
+        "campaign": "relevant"
+      },
+      "notes": "Exalt in Death \u2014 heal 10% MAX HP first kill per round. No kills in CB."
+    },
+    {
+      "id": 500324,
+      "name": "Charged Focus",
+      "tree": "Support",
+      "row": 2,
+      "col": 4,
+      "description": "Increases ACC by 20 when this Champion has no Skills on cooldown",
+      "sim_handler": null,
+      "triggers": [
+        "all_skills_off_cd"
+      ],
+      "relevance": {
+        "cb": "relevant",
+        "arena": "relevant",
+        "tt": "relevant",
+        "dungeon": "relevant",
+        "fw": "relevant",
+        "dt": "relevant",
+        "cc": "relevant",
+        "siege": "relevant",
+        "hydra": "relevant",
+        "chimera": "relevant",
+        "forest": "relevant",
+        "campaign": "relevant"
+      },
+      "notes": "Charged Focus \u2014 +20 ACC when no skills on CD. Niche; applies to openers and post-rotation lulls."
+    },
+    {
+      "id": 500331,
+      "name": "Healing Savior",
+      "tree": "Support",
+      "row": 3,
+      "col": 1,
+      "description": "Increases the amount of healing and the value of <color=#1ee600>[Shield]</color> buffs placed by this Champion by 10% if the target ally has 40% HP or less",
+      "sim_handler": null,
+      "triggers": [
+        "heal_low_hp_ally"
+      ],
+      "relevance": {
+        "cb": "relevant",
+        "arena": "relevant",
+        "tt": "relevant",
+        "dungeon": "relevant",
+        "fw": "relevant",
+        "dt": "relevant",
+        "cc": "relevant",
+        "siege": "relevant",
+        "hydra": "relevant",
+        "chimera": "relevant",
+        "forest": "relevant",
+        "campaign": "relevant"
+      },
+      "notes": "Healing Savior \u2014 +50% heal value on <50% HP allies"
+    },
+    {
+      "id": 500332,
+      "name": "Rapid Response",
+      "tree": "Support",
+      "row": 3,
+      "col": 2,
+      "description": "Has a 30% chance of increasing the Turn Meter by 10% when a <color=#ffe87d>buff</color> cast by this Champion is removed or expires",
+      "sim_handler": null,
+      "triggers": [
+        "self_buff_dispelled"
+      ],
+      "relevance": {
+        "cb": "no_op",
+        "arena": "relevant",
+        "tt": "relevant",
+        "dungeon": "no_op",
+        "fw": "relevant",
+        "dt": "relevant",
+        "cc": "no_op",
+        "siege": "relevant",
+        "hydra": "no_op",
+        "chimera": "no_op",
+        "forest": "no_op",
+        "campaign": "no_op"
+      },
+      "notes": "Rapid Response \u2014 30% TM when self buff dispelled. Triggers where enemies dispel (PVP, FW, DT)."
+    },
+    {
+      "id": 500333,
+      "name": "Swarm Smiter",
+      "tree": "Support",
+      "row": 3,
+      "col": 3,
+      "description": "Increases ACC by 4 for each enemy alive. Stacks up to 16",
+      "sim_handler": null,
+      "triggers": [
+        "per_alive_enemy"
+      ],
+      "relevance": {
+        "cb": "no_op",
+        "arena": "relevant",
+        "tt": "relevant",
+        "dungeon": "relevant",
+        "fw": "relevant",
+        "dt": "relevant",
+        "cc": "relevant",
+        "siege": "relevant",
+        "hydra": "relevant",
+        "chimera": "relevant",
+        "forest": "relevant",
+        "campaign": "relevant"
+      },
+      "notes": "Swarm Smiter \u2014 +4 ACC per alive enemy (cap +16). CB has 1 enemy = fixed +4 (auto-loaded if at all)."
+    },
+    {
+      "id": 500334,
+      "name": "Arcane Celerity",
+      "tree": "Support",
+      "row": 3,
+      "col": 4,
+      "description": "Has a 30% chance of increasing the Turn Meter by 10% when a <color=#ffe87d>debuff</color> cast by this Champion is removed or expires",
+      "sim_handler": null,
+      "triggers": [
+        "debuff_placed_on_self"
+      ],
+      "relevance": {
+        "cb": "relevant",
+        "arena": "relevant",
+        "tt": "relevant",
+        "dungeon": "relevant",
+        "fw": "relevant",
+        "dt": "relevant",
+        "cc": "relevant",
+        "siege": "relevant",
+        "hydra": "relevant",
+        "chimera": "relevant",
+        "forest": "relevant",
+        "campaign": "relevant"
+      },
+      "notes": "Arcane Celerity \u2014 30% chance +10% TM when debuff placed on self. Triggers wherever enemies apply debuffs."
+    },
+    {
+      "id": 500341,
+      "name": "Merciful Aid",
+      "tree": "Support",
+      "row": 4,
+      "col": 1,
+      "description": "Increases the amount of healing and the value of <color=#1ee600>[Shield]</color> buffs placed by this Champion by 15% if the target ally has <color=#1ee600>[Stun]</color>, <color=#1ee600>[Sleep]</color>, <color=#1ee600>[Fear]</color>, <color=#1ee600>[True Fear]</color>, or <color=#1ee600>[Freeze]</color> debuffs",
+      "sim_handler": null,
+      "triggers": [
+        "heal_debuffed_ally"
+      ],
+      "relevance": {
+        "cb": "relevant",
+        "arena": "relevant",
+        "tt": "relevant",
+        "dungeon": "relevant",
+        "fw": "relevant",
+        "dt": "relevant",
+        "cc": "relevant",
+        "siege": "relevant",
+        "hydra": "relevant",
+        "chimera": "relevant",
+        "forest": "relevant",
+        "campaign": "relevant"
+      },
+      "notes": "Merciful Aid \u2014 +15% heal+shield on debuffed allies."
+    },
+    {
+      "id": 500342,
+      "name": "Cycle of Magic",
+      "tree": "Support",
+      "row": 4,
+      "col": 2,
+      "description": "Has a 5% chance of decreasing the cooldown of a random Skill by 1 turn at the start of every turn",
+      "sim_handler": "has_cycle_of_magic",
+      "triggers": [
+        "per_own_turn"
+      ],
+      "relevance": {
+        "cb": "relevant",
+        "arena": "relevant",
+        "tt": "relevant",
+        "dungeon": "relevant",
+        "fw": "relevant",
+        "dt": "relevant",
+        "cc": "relevant",
+        "siege": "relevant",
+        "hydra": "relevant",
+        "chimera": "relevant",
+        "forest": "relevant",
+        "campaign": "relevant"
+      },
+      "notes": "Cycle of Magic \u2014 modeled. 5%/own-turn CD reduce."
+    },
+    {
+      "id": 500343,
+      "name": "Lore of Steel",
+      "tree": "Support",
+      "row": 4,
+      "col": 3,
+      "description": "Increases the Base Stat Set Bonuses of all Artifact Sets that increase Base Stats by 15%. This increase is multiplicative, not additive.",
+      "sim_handler": "set_bonus_mult",
+      "triggers": [
+        "always_stat"
+      ],
+      "relevance": {
+        "cb": "stat_bonus",
+        "arena": "stat_bonus",
+        "tt": "stat_bonus",
+        "dungeon": "stat_bonus",
+        "fw": "stat_bonus",
+        "dt": "stat_bonus",
+        "cc": "stat_bonus",
+        "siege": "stat_bonus",
+        "hydra": "stat_bonus",
+        "chimera": "stat_bonus",
+        "forest": "stat_bonus",
+        "campaign": "stat_bonus"
+      },
+      "notes": "Lore of Steel \u2014 +15% base set bonuses. Applied in artifact stat calc."
+    },
+    {
+      "id": 500344,
+      "name": "Evil Eye",
+      "tree": "Support",
+      "row": 4,
+      "col": 4,
+      "description": "Decreases the target's Turn Meter when this Champion hits them with the default Skill for the first time. Decreases the Turn Meter by 20% with single-target Skills and by 5% with AoE Skills. Occurs once per target.",
+      "sim_handler": "has_evil_eye",
+      "triggers": [
+        "a1_hit"
+      ],
+      "relevance": {
+        "cb": "no_op",
+        "arena": "relevant",
+        "tt": "relevant",
+        "dungeon": "relevant",
+        "fw": "relevant",
+        "dt": "relevant",
+        "cc": "relevant",
+        "siege": "relevant",
+        "hydra": "relevant",
+        "chimera": "relevant",
+        "forest": "relevant",
+        "campaign": "relevant"
+      },
+      "notes": "Evil Eye \u2014 A1 TM drain. CB boss TM-immune; useful in any other mode."
+    },
+    {
+      "id": 500351,
+      "name": "Lasting Gifts",
+      "tree": "Support",
+      "row": 5,
+      "col": 1,
+      "description": "Has a 30% chance to extend the duration of any buff cast by this Champion by 1 turn.\r\n\r\nIt will not extend <color=#1ee600>[Block Damage]</color>, <color=#1ee600>[Unkillable]</color>, <color=#1ee600>[Revive on Death]</color>, or <color=#1ee600>[Taunt]</color> buffs.",
+      "sim_handler": "has_lasting_gifts",
+      "triggers": [
+        "per_buff_placed"
+      ],
+      "relevance": {
+        "cb": "relevant",
+        "arena": "relevant",
+        "tt": "relevant",
+        "dungeon": "relevant",
+        "fw": "relevant",
+        "dt": "relevant",
+        "cc": "relevant",
+        "siege": "relevant",
+        "hydra": "relevant",
+        "chimera": "relevant",
+        "forest": "relevant",
+        "campaign": "relevant"
+      },
+      "notes": "Lasting Gifts \u2014 modeled. 30% extend buff +1T."
+    },
+    {
+      "id": 500352,
+      "name": "Spirit Haste",
+      "tree": "Support",
+      "row": 5,
+      "col": 2,
+      "description": "Increases SPD by 8 for each dead ally. Stacks up to 24",
+      "sim_handler": "has_spirit_haste",
+      "triggers": [
+        "ally_dead"
+      ],
+      "relevance": {
+        "cb": "relevant",
+        "arena": "relevant",
+        "tt": "relevant",
+        "dungeon": "relevant",
+        "fw": "relevant",
+        "dt": "relevant",
+        "cc": "relevant",
+        "siege": "relevant",
+        "hydra": "relevant",
+        "chimera": "relevant",
+        "forest": "relevant",
+        "campaign": "relevant"
+      },
+      "notes": "Spirit Haste \u2014 modeled. +8 SPD per dead ally (cap +24, flat additive in _eff_speed)."
+    },
+    {
+      "id": 500353,
+      "name": "Sniper",
+      "tree": "Support",
+      "row": 5,
+      "col": 3,
+      "description": "Increases the chances of placing any debuff from Skills or Artifacts by 5%.\r\n\r\nIt will not increase the chances of placing <color=#1ee600>[Stun]</color>, <color=#1ee600>[Sleep]</color>, <color=#1ee600>[Freeze]</color>, <color=#1ee600>[Fear]</color>, <color=#1ee600>[True Fear]</color>, <color=#1ee600>[Provoke]</color>, or <color=#1ee600>[Petrification]</color> debuffs.",
+      "sim_handler": "has_sniper",
+      "triggers": [
+        "per_debuff_placement"
+      ],
+      "relevance": {
+        "cb": "relevant",
+        "arena": "relevant",
+        "tt": "relevant",
+        "dungeon": "relevant",
+        "fw": "relevant",
+        "dt": "relevant",
+        "cc": "relevant",
+        "siege": "relevant",
+        "hydra": "relevant",
+        "chimera": "relevant",
+        "forest": "relevant",
+        "campaign": "relevant"
+      },
+      "notes": "Sniper \u2014 modeled. +5% debuff land chance."
+    },
+    {
+      "id": 500354,
+      "name": "Master Hexer",
+      "tree": "Support",
+      "row": 5,
+      "col": 4,
+      "description": "Has a 30% chance to extend the duration of any debuff cast by this Champion by 1 turn. It will not extend <color=#1ee600>[Stun]</color>, <color=#1ee600>[Sleep]</color>, <color=#1ee600>[Freeze]</color>, <color=#1ee600>[Provoke]</color>, <color=#1ee600>[Fear]</color>, <color=#1ee600>[True Fear]</color>, <color=#1ee600>[Bomb]</color>, or <color=#1ee600>[Petrification]</color> debuffs.",
+      "sim_handler": "has_master_hexer",
+      "triggers": [
+        "per_debuff_placement"
+      ],
+      "relevance": {
+        "cb": "relevant",
+        "arena": "relevant",
+        "tt": "relevant",
+        "dungeon": "relevant",
+        "fw": "relevant",
+        "dt": "relevant",
+        "cc": "relevant",
+        "siege": "relevant",
+        "hydra": "relevant",
+        "chimera": "relevant",
+        "forest": "relevant",
+        "campaign": "relevant"
+      },
+      "notes": "Master Hexer \u2014 modeled. 30% extend debuff +1T."
+    },
+    {
+      "id": 500361,
+      "name": "Elixir of Life",
+      "tree": "Support",
+      "row": 6,
+      "col": 1,
+      "description": "MAX HP +3,000",
+      "sim_handler": "stat",
+      "triggers": [
+        "always"
+      ],
+      "relevance": {
+        "cb": "stat_bonus",
+        "arena": "stat_bonus",
+        "tt": "stat_bonus",
+        "dungeon": "stat_bonus",
+        "fw": "stat_bonus",
+        "dt": "stat_bonus",
+        "cc": "stat_bonus",
+        "siege": "stat_bonus",
+        "hydra": "stat_bonus",
+        "chimera": "stat_bonus",
+        "forest": "stat_bonus",
+        "campaign": "stat_bonus"
+      },
+      "notes": "Elixir of Life \u2014 HP +3000 auto-loaded"
+    },
+    {
+      "id": 500362,
+      "name": "Timely Intervention",
+      "tree": "Support",
+      "row": 6,
+      "col": 2,
+      "description": "Increases this Champion's Turn Meter by 20% whenever an ally hero drops below 25% HP",
+      "sim_handler": null,
+      "triggers": [
+        "ally_below_25_hp"
+      ],
+      "relevance": {
+        "cb": "relevant",
+        "arena": "relevant",
+        "tt": "relevant",
+        "dungeon": "relevant",
+        "fw": "relevant",
+        "dt": "relevant",
+        "cc": "relevant",
+        "siege": "relevant",
+        "hydra": "relevant",
+        "chimera": "relevant",
+        "forest": "relevant",
+        "campaign": "relevant"
+      },
+      "notes": "Timely Intervention \u2014 +20% TM when ally drops below 25% HP. Survival-burst."
+    },
+    {
+      "id": 500363,
+      "name": "Oppressor",
+      "tree": "Support",
+      "row": 6,
+      "col": 3,
+      "description": "Increases the Turn Meter fill rate by 2.5% for each active debuff cast by this Champion. Stacks up to 10%.",
+      "sim_handler": "has_oppressor",
+      "triggers": [
+        "per_active_debuff_self_cast"
+      ],
+      "relevance": {
+        "cb": "relevant",
+        "arena": "relevant",
+        "tt": "relevant",
+        "dungeon": "relevant",
+        "fw": "relevant",
+        "dt": "relevant",
+        "cc": "relevant",
+        "siege": "relevant",
+        "hydra": "relevant",
+        "chimera": "relevant",
+        "forest": "relevant",
+        "campaign": "relevant"
+      },
+      "notes": "Oppressor \u2014 modeled. +2.5% TM rate per active debuff cast by this hero (counted via debuff_bar source==champ.name)."
+    },
+    {
+      "id": 500364,
+      "name": "Eagle-Eye",
+      "tree": "Support",
+      "row": 6,
+      "col": 4,
+      "description": "ACC +50",
+      "sim_handler": "has_eagle_eye",
+      "triggers": [
+        "always"
+      ],
+      "relevance": {
+        "cb": "stat_bonus",
+        "arena": "stat_bonus",
+        "tt": "stat_bonus",
+        "dungeon": "stat_bonus",
+        "fw": "stat_bonus",
+        "dt": "stat_bonus",
+        "cc": "stat_bonus",
+        "siege": "stat_bonus",
+        "hydra": "stat_bonus",
+        "chimera": "stat_bonus",
+        "forest": "stat_bonus",
+        "campaign": "stat_bonus"
+      },
+      "notes": "Eagle-Eye \u2014 ACC +50 flat (stat-bonus-equivalent)"
+    }
+  ]
+}

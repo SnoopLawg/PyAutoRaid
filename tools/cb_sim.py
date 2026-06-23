@@ -486,6 +486,42 @@ class SimChampion:
     # whole-integer crossings reduce a random non-A1 skill's CD by 1.
     _com_accum: float = 0.0
 
+    # Oppressor (mastery 500363): +2.5% TM fill rate per active debuff
+    # cast by this hero. No cap per in-game tooltip; effective cap is
+    # MAX_DEBUFF_SLOTS=10. Applied in _eff_speed by counting debuff_bar
+    # slots where source == this champ's name.
+    has_oppressor: bool = False
+
+    # Heart of Glory (500121): +5% dmg @ full HP. Applied in damage pipe.
+    has_heart_of_glory: bool = False
+    # Grim Resolve (500124): +5% dmg @ ≤50% self HP.
+    has_grim_resolve: bool = False
+    # Single Out (500131): +8% dmg @ target <40% HP.
+    has_single_out: bool = False
+    # Ruthless Ambush (500134): +8% on first hit per enemy. CB = single
+    # boss = +8% only on this hero's first damaging cast.
+    has_ruthless_ambush: bool = False
+    # Cumulative-cast counter for Ruthless Ambush (and any future
+    # first-hit-per-enemy logic). Incremented after damage is dealt.
+    _cast_count: int = 0
+
+    # Defensive masteries (applied to incoming boss damage).
+    # Blastproof (500221): -5% from AoE attacks (all CB boss skills are AoE).
+    has_blastproof: bool = False
+    # Improved Parry (500224): -8% from crit hits.
+    has_improved_parry: bool = False
+    # Bulwark (500262): -5% damage to ALL allies, redirected to this hero.
+    # Modeled as a team-wide team_dmg_reduction set during build (the
+    # redirect-to-self portion is not separately modeled — net team damage
+    # taken is what matters for survival).
+    has_bulwark: bool = False
+    # Spirit Haste (500352): +8 SPD per dead ally, cap +24 (3 allies).
+    # Applied in _eff_speed using the live dead-ally count.
+    has_spirit_haste: bool = False
+    # Wrath of the Slain (500142): +5% dmg per dead ally, cap +10% (2 allies).
+    # Applied in the damage pipeline.
+    has_wrath_of_slain: bool = False
+
     # Special flags
     is_geomancer: bool = False
     is_counterattack_provider: bool = False
@@ -805,11 +841,16 @@ class CBSimulator:
         # Team-wide passive damage reduction propagation. Some heroes
         # (Geomancer Stoneguard -15%, Sepulcher Sentinel -X%, etc.)
         # provide damage reduction to ALL allies, not just themselves.
+        # Bulwark mastery (500262) adds a team-wide -5% from its holder.
         # Compute the team-wide pool here and stamp on each champion.
+        # The pool takes the MAX (not sum) — same-source-type reductions
+        # don't stack in-game (see the incoming-damage application).
         team_red = 0.0
         for c in champions:
             v = float(c.stats.get("team_dmg_reduction", 0) or 0)
             team_red = max(team_red, v)
+            if getattr(c, "has_bulwark", False):
+                team_red = max(team_red, 0.05)
         for c in champions:
             c.team_dmg_reduction = team_red
         # Per-boss-turn protection snapshot: cb_turn -> {hero_name: {uk, bd, sh}}
@@ -871,13 +912,26 @@ class CBSimulator:
         Multipliers come from data/static/effects.json via cb_constants
         BUFF_REGISTRY (Ids 161/171 = +30%/-30% Speed; Ids 160/170 are
         the smaller +15%/-15% variants tracked separately if needed).
+
+        Oppressor (mastery 500363): +2.5% TM fill rate per active debuff
+        cast by this hero. Stacks multiplicatively with SPD buffs/debuffs.
         """
         buff_mod = 0.0
         if c.has_buff("inc_spd"):
             buff_mod += buff_mult("inc_spd_30")
         if c.has_buff("dec_spd"):
             buff_mod -= buff_mult("dec_spd_30")
-        return c.speed * (1.0 + buff_mod)
+        eff = c.speed * (1.0 + buff_mod)
+        if c.has_oppressor:
+            own_debuffs = sum(1 for s in self.debuff_bar.slots
+                              if s.source == c.name)
+            eff *= (1.0 + 0.025 * own_debuffs)
+        # Spirit Haste (500352): +8 flat SPD per dead ally, cap +24.
+        # Additive to the SPD total (flat, not multiplicative).
+        if c.has_spirit_haste:
+            dead_allies = sum(1 for a in self.champions if a.is_dead and a is not c)
+            eff += 8 * min(3, dead_allies)
+        return eff
 
     def run(self, max_cb_turns: int = MAX_CB_TURNS) -> dict:
         """Run full simulation. Set max_cb_turns=0 for unlimited (run until all dead).
@@ -1493,6 +1547,26 @@ class CBSimulator:
                 if c.stats.get("has_stalwart"):
                     aoe_dmg *= 0.70
 
+                # Defensive masteries (per docs/m5_mastery_relevance.md).
+                # All CB boss skills (aoe1/aoe2/stun) hit the whole team, so
+                # Blastproof's "AoE" condition is always satisfied. Boss CR is
+                # modeled as ~15% (UNM) — Improved Parry applies on the crit
+                # fraction only, so its expected reduction is gated by crit
+                # rate in deterministic mode. Bulwark's -5% team reduction is
+                # set up in build (team_dmg_reduction) and already applied via
+                # `effective_red` above, so it is NOT re-applied here.
+                if c.has_blastproof:
+                    aoe_dmg *= 0.95  # -5% from AoE attacks (boss attacks are AoE)
+                if c.has_improved_parry:
+                    # -8% on crit hits. In deterministic mode the crit_factor
+                    # blended crits in already, so apply the expected
+                    # reduction proportional to the crit share of damage.
+                    if self.deterministic:
+                        crit_share = (crit_factor - 1.0) / crit_factor if crit_factor > 0 else 0.0
+                        aoe_dmg *= (1.0 - 0.08 * crit_share)
+                    elif crit_factor > 1.0:
+                        aoe_dmg *= 0.92
+
                 # Strengthen is NOT damage reduction — it increases outgoing damage
 
                 # NO redirect for Ally Protect — user clarification 2026-04-23:
@@ -1939,6 +2013,11 @@ class CBSimulator:
             # Force-Affinity damage cap on the direct-hit total (per-hit-capped, summed).
             dmg = self._cap_fa(dmg, kind="direct", skill_name=chosen.name, hits=chosen.hit_count)
             champ.damage.direct += dmg
+            # Per-cast counter (used by Ruthless Ambush — +8% first hit per
+            # enemy; CB = single boss = +8% only on this hero's first
+            # damaging cast). Incremented AFTER damage calc so the bonus
+            # applies to cast 0 and not cast 1+.
+            champ._cast_count += 1
 
             # WM/GS procs
             wm_gs = self._roll_wm_gs(champ, chosen.hit_count)
@@ -2320,6 +2399,36 @@ class CBSimulator:
         )
         bid = 1.06 if champ.has_bring_it_down else 1.0
 
+        # Conditional damage masteries (per docs/m5_mastery_relevance.md).
+        # Stored as additive bonus to a single multiplier so they compose
+        # multiplicatively with bid / wk / str_mult.
+        mastery_dmg = 1.0
+        # Heart of Glory (500121): +5% @ full HP.
+        if champ.has_heart_of_glory and champ.max_hp > 0:
+            if champ.current_hp >= champ.max_hp - 1e-6:
+                mastery_dmg *= 1.05
+        # Grim Resolve (500124): +5% @ ≤50% HP.
+        if champ.has_grim_resolve and champ.max_hp > 0:
+            if champ.current_hp <= champ.max_hp * 0.5:
+                mastery_dmg *= 1.05
+        # Single Out (500131): +8% @ target <40% HP. Boss HP fraction is
+        # approximated from cumulative team damage vs UNM_HP (we don't
+        # actually run boss HP down in the sim, but cumul_dmg is the
+        # truth-equivalent for "how far through boss HP we are").
+        if champ.has_single_out:
+            cumul = sum(c.damage.total for c in self.champions)
+            boss_hp_pct = max(0.0, 1.0 - cumul / UNM_HP)
+            if boss_hp_pct < 0.40:
+                mastery_dmg *= 1.08
+        # Ruthless Ambush (500134): +8% first hit per enemy. CB = 1
+        # enemy = +8% only on this hero's first damaging cast.
+        if champ.has_ruthless_ambush and champ._cast_count == 0:
+            mastery_dmg *= 1.08
+        # Wrath of the Slain (500142): +5% dmg per dead ally, cap +10%.
+        if champ.has_wrath_of_slain:
+            dead_allies = sum(1 for a in self.champions if a.is_dead and a is not champ)
+            mastery_dmg *= (1.0 + 0.05 * min(2, dead_allies))
+
         # Affinity modifier
         aff_dmg, _ = self._get_affinity_mult(champ)
 
@@ -2370,7 +2479,8 @@ class CBSimulator:
             counter = min(cap, debuff_count)
             bless_mult *= (1.0 + champ.natures_wrath_pct_per_debuff * counter)
 
-        return raw * crit_mult * def_mult * wk * str_mult * bid * aff_dmg * bless_mult
+        return (raw * crit_mult * def_mult * wk * str_mult * bid
+                * mastery_dmg * aff_dmg * bless_mult)
 
     # ----- WM/GS -----
     def _roll_wm_gs(self, champ: SimChampion, hit_count: int) -> float:
@@ -3141,6 +3251,18 @@ def build_sim_champion(name: str, stats: dict, position: int,
         has_retribution=MASTERY_IDS["retribution"] in masteries,
         has_cycle_of_magic=MASTERY_IDS.get("cycle_of_magic", 500342) in masteries,
         has_lasting_gifts=MASTERY_IDS.get("lasting_gifts", 500351) in masteries,
+        # M5 Phase 4 — newly modeled procs (see docs/m5_mastery_relevance.md).
+        # IDs sourced from data/static/masteries_named.json.
+        has_oppressor=500363 in masteries,
+        has_heart_of_glory=500121 in masteries,
+        has_grim_resolve=500124 in masteries,
+        has_single_out=500131 in masteries,
+        has_ruthless_ambush=500134 in masteries,
+        has_blastproof=500221 in masteries,
+        has_improved_parry=500224 in masteries,
+        has_bulwark=500262 in masteries,
+        has_spirit_haste=500352 in masteries,
+        has_wrath_of_slain=500142 in masteries,
         is_geomancer=(name == "Geomancer"),
         is_counterattack_provider=(name == "Skullcrusher"),
         combo_atk_pct=combo_atk_pct,
