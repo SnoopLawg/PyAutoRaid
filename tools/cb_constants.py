@@ -160,15 +160,21 @@ except Exception:
 # is 190). Reverted 2026-06-16 from a brief cb_speed=170 experiment.
 
 CB_SPEED_BY_DIFFICULTY: dict[str, float] = {
-    "easy":             90,
-    "normal":           120,
-    "hard":             140,
-    "brutal":           160,
-    "nightmare":        170,
-    "ultra-nightmare":  190,
-    "ultranightmare":   190,
-    "unm":              190,
-    "nm":               170,
+    # Game-truth +1 over displayed value (per RSL Speedology 201 by
+    # MaxMeng77 — Reddit r/RaidShadowLegends comments/gi578r). The +1
+    # is what gives the player team priority in TM-tie situations: at
+    # the exact tick where boss and a SPD-N hero both cross threshold,
+    # boss's actual N+1 puts it slightly behind, hero takes the turn.
+    # Verified via Wayback Machine 2026-06-22.
+    "easy":             91,
+    "normal":           121,
+    "hard":             141,
+    "brutal":           161,
+    "nightmare":        171,
+    "ultra-nightmare":  191,
+    "ultranightmare":   191,
+    "unm":              191,
+    "nm":               171,
 }
 
 
