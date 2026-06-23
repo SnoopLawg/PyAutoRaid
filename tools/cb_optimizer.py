@@ -266,16 +266,21 @@ def calc_stats(hero, artifacts, account):
                     v *= 100
                 scaled[stat_id] += v
 
-        # Empowerment SPD/ACC/RES/CR/CD aren't in `empower_bonus` (mod
-        # only returns HP/ATK/DEF for that column) — add from table.
+        # Empowerment SPD/ACC/RES/CR/CD: the mod's empower_bonus column
+        # SOMETIMES includes SPD (verified 2026-06-16: 7/49 heroes had it
+        # in the cache) and sometimes doesn't. Only fill in from the
+        # table for stats the mod returned as 0 — adding when the mod
+        # already provided the value double-counts (Geomancer was +5 SPD
+        # over real until this guard).
         emp_table = EMPOWERMENT_BONUSES.get("legendary" if rarity >= 5 else "epic", [])
         if emp_level < len(emp_table):
             _, emp_acc, emp_res, emp_spd, emp_cd, emp_cr = emp_table[emp_level]
-            scaled[SPD] += emp_spd
-            scaled[ACC] += emp_acc
-            scaled[RES] += emp_res
-            scaled[CD]  += emp_cd
-            scaled[CR]  += emp_cr
+            eb = computed.get("empower_bonus", {}) or {}
+            if not eb.get("SPD"): scaled[SPD] += emp_spd
+            if not eb.get("ACC"): scaled[ACC] += emp_acc
+            if not eb.get("RES"): scaled[RES] += emp_res
+            if not eb.get("CD"):  scaled[CD]  += emp_cd
+            if not eb.get("CR"):  scaled[CR]  += emp_cr
     else:
         # Fallback: estimated multipliers for heroes not in computed stats
         # Raid rarity codes: 1=Common, 2=Uncommon, 3=Rare, 4=Epic, 5=Legendary.
@@ -371,28 +376,29 @@ def calc_stats(hero, artifacts, account):
                     set_pct[stat] += val * num_complete
 
     # Lore of Steel (mastery 500343, Support tree): +15% to all set
-    # bonuses. The mod's CalcArtifactsBonus returns substats + set
-    # bonuses WITHOUT the LoS multiplier (verified against Ninja
-    # 2026-05-02: artifact_bonus.SPD=103 = 91 substat + 12 from
-    # 2-piece Speed set, with LoS the game shows total 205 = +2
-    # extra). Game UI attributes that delta to the "Masteries"
-    # column. Compute the delta here so totals match game-truth.
+    # bonuses.
+    #
+    # 2026-06-22 correction (user-flagged stat audit): when
+    # `use_mod_artifact_bonus=True`, the mod's `mastery_bonus` column
+    # ALREADY contains the LoS delta. Verified by comparing Mane (cache
+    # mastery_bonus.SPD=5, exactly matching base 98 × set 36% × 0.15 ≈
+    # 5.3) to game-UI total. Adding the LoS delta here was double-
+    # counting and inflated SPD by 4-6 for LoS+Speed-set heroes:
+    #   Mane:  sim 294 vs game 288 (+6 over)
+    #   Demy:  sim 174 vs game 172 (+2)
+    #   Ninja: sim 210 vs game 206 (+4)
+    # Geo (no LoS) and Venom (no Speed-set stack) matched correctly.
+    #
+    # The earlier 2026-05-02 comment said the mod's CalcArtifactsBonus
+    # returned "without LoS" — that was likely true at the time but the
+    # mod has since been updated to attribute LoS into mastery_bonus
+    # column. With current mod, the LoS delta is included in
+    # `scaled` already via summing mastery_bonus.
+    #
+    # Fallback (no mod cache): still apply LoS by scaling set_pct.
     hero_masteries = hero.get("masteries", []) or []
     has_lore_of_steel = MASTERY_IDS["lore_of_steel"] in hero_masteries  # 500343
-    if use_mod_artifact_bonus and has_lore_of_steel:
-        # LoS multiplies the SET portion of the artifact bonus by 15%.
-        # Set bonuses scale BASE stats — so the LoS delta = base * set% * 0.15.
-        # base_computed (the bare unscaled base) is the reference, NOT
-        # the cumulative `scaled` total.
-        bc_for_los = computed.get("base_computed", {}) if computed else {}
-        bc_lookup = {HP: bc_for_los.get("HP", 0), ATK: bc_for_los.get("ATK", 0),
-                     DEF: bc_for_los.get("DEF", 0), SPD: bc_for_los.get("SPD", 0)}
-        for s in (HP, ATK, DEF, SPD):
-            delta = bc_lookup[s] * (set_pct[s] / 100.0) * 0.15
-            scaled[s] += delta
-        for s in (ACC, RES):
-            scaled[s] += set_flat[s] * 0.15
-    elif not use_mod_artifact_bonus and has_lore_of_steel:
+    if not use_mod_artifact_bonus and has_lore_of_steel:
         for s in range(1, 9):
             set_pct[s] = round(set_pct[s] * 1.15, 2)
 
@@ -410,6 +416,13 @@ def calc_stats(hero, artifacts, account):
         # Total Stats panel; the per-roll cap (100%) is enforced inside
         # the sim's hit loop. Useful to retain for builds where excess
         # CR offsets debuff "Decrease C. RATE" or RES-based crit RNG.
+        # Phase E carry-through: base_HP for CB stun damage (TRG_B_HP
+        # in skill 222601). Bug fix round 24 — this key was being
+        # built in `scaled` but never copied to the returned `stats`,
+        # causing cb_sim to fall back to MAX HP and over-predict stun
+        # damage by ~2x on geared heroes.
+        if "base_HP" in scaled:
+            stats["base_HP"] = scaled["base_HP"]
     else:
         for s in (HP, ATK, DEF):
             stats[s] = scaled[s] * (1 + (pct_b[s] + set_pct.get(s,0) + ARENA_PCT)/100) + flat_b[s] + gh_flat(s)
