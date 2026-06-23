@@ -1321,6 +1321,17 @@ class CBSimulator:
         })
 
         # Tick debuffs
+        # NOTE (2026-06-23): tested reordering the DoT damage loops to run
+        # BEFORE this tick() (so a DoT's expiry turn still deals a tick).
+        # Against Spirit fixture 20260623_162050 that lifted the total from
+        # -5.6% to -1.2% but pushed Venom poison from -9.4% to +16.2% OVER
+        # (50 -> 94 ticks vs real 74). Real has ~72 poison placements
+        # (Venom A3 x2 x16 + Maneater A1 x40) for ~74 ticks ≈ 1 tick/placement,
+        # i.e. poisons are consumed by Venom A1 detonation rather than ticking
+        # their full 2-turn duration. The reorder alone is a compensating-wrong
+        # swap; the real fix needs poison detonation-consumption modeled
+        # together. Reverted to tick-then-deal; see
+        # project_spirit_fixture_attribution_20260623.
         self.debuff_bar.tick()
 
         # Poison ticks — each active poison deals damage
