@@ -56,7 +56,8 @@ def _scan_logs():
     # Canonical, repo root only
     for prefix, key in [("tick_log_cb_", "tick_log"),
                         ("battle_logs_cb_", "battle_log"),
-                        ("poll_log_cb_", "poll_log")]:
+                        ("poll_log_cb_", "poll_log"),
+                        ("presets_cb_", "presets")]:
         for p in PROJECT_ROOT.glob(f"{prefix}*.json"):
             m = TS_RE.search(p.name)
             if not m:
@@ -143,6 +144,7 @@ def build_manifest():
             "tick_log": files.get("tick_log"),
             "battle_log": files.get("battle_log"),
             "poll_log": files.get("poll_log"),
+            "presets": files.get("presets"),
             "boss_element": None,
             "affinity": None,
             "hero_team_type_ids": [],

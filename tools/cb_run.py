@@ -58,8 +58,119 @@ def check_keys():
     return keys
 
 
+def unwind_post_battle_state():
+    """Dismiss any lingering BattleFinish / MessageBox / reward-cascade
+    dialogs left over from a previous CB key. Called at the start of each
+    start_battle() so the second/third key starts from a clean
+    AllianceEnemiesDialog state.
+
+    Bug history:
+      - 2026-05-16: BattleFinishAllianceEnemyDialog stuck → key 2 silent fail
+      - 2026-05-22/23: only 1 of 2 keys per day; same pattern. Added more
+        dialog types since post-key-1 the cascade now includes things like
+        AllianceCheckInOverlay, PrizeInfoOverlay, etc.
+      - 2026-05-24: ROOT CAUSE confirmed. The mod's context-call
+        CreateAllianceBossBattleCmd dispatch works correctly; the failure
+        mode is STUCK error MessageBox from prior attempts (e.g.
+        Arena_OpponentAlreadyDefeated cascading) that block new cmds
+        from reaching the server. Aggressive MessageBox dismissal + dialog
+        close gets us back to a clean state. Verified: with clean state,
+        2 keys → 16.89M on leaderboard."""
+    import urllib.parse
+    # 0a. PRIORITY: check OverlayManager bookkeeping. If a CoroutineTask
+    #     exception orphaned an overlay counter, every UI write silently
+    #     no-ops. /overlay-close-all resets the count dictionary without
+    #     a Raid restart. See project_overlay_manager_wedge.md.
+    try:
+        s = requests.get(f"{MOD_BASE}/overlay-state", timeout=5).json()
+        opened = s.get("opened") or []
+        blocked = bool(s.get("block_ui_state"))
+        if opened or blocked:
+            print(f"  overlay wedge detected: opened={[o.get('key') for o in opened]} blocked={blocked}")
+            requests.get(f"{MOD_BASE}/overlay-close-all", timeout=8)
+            time.sleep(1.0)
+    except Exception:
+        pass
+    # 0b. PRIORITY: dismiss any MessageBox / ErrorBox. These are modal
+    #     and block all subsequent dialog operations. Click the OK button
+    #     repeatedly (server errors can stack).
+    for _ in range(5):
+        try:
+            r = requests.get(f"{MOD_BASE}/messagebox-click?index=0",
+                             timeout=8).json()
+            if not r.get("ok"):
+                break
+            time.sleep(0.5)
+        except Exception:
+            break
+    # 1. Close known post-battle dialogs (Dialogs container).
+    #    Also close dungeon dialogs because a parallel dungeon farm
+    #    (dungeon_run.py super-raid loop) can leave Raid stuck on
+    #    DungeonHeroesSelectionDialog at the 04:15 MDT CB wake-up.
+    #    Without this, /navigate?target=cb bounces silently and the
+    #    scheduled CB run exits 0 with no keys spent (verified pattern
+    #    on 2026-06-03 and 2026-06-04).
+    for dialog_name in ("[DV] BattleFinishAllianceEnemyDialog",
+                        "[DV] BattleFinishStoryDialog",
+                        "[DV] BattleFinishDialog",
+                        "[DV] DungeonHeroesSelectionDialog",
+                        "[DV] DungeonsDialog",
+                        "[DV] PortalDialog",
+                        "[DV] QuestsDialog",
+                        "[DV] CompleteQuestsDialog",
+                        "[DV] ArenaDialog",
+                        "[DV] ArenaHeroesSelectionDialog",
+                        "[DV] ShopAggregatorDialog"):
+        path = f"UIManager/Canvas (Ui Root)/Dialogs/{dialog_name}"
+        encoded = urllib.parse.quote(path, safe='')
+        try:
+            r = requests.get(f"{MOD_BASE}/context-call?path={encoded}&method=Close",
+                             timeout=10).json()
+            if r.get("invoked") == "Close":
+                print(f"  unwound {dialog_name}")
+                time.sleep(2.0)
+        except Exception:
+            pass
+    # 2. Close overlay-cascade dialogs (OverlayDialogs container). After CB
+    #    win, the game can pop a PrizeInfo / LevelUp / Daily-quest-complete
+    #    overlay sequence that blocks /navigate. Sweep all common ones.
+    for overlay_name in ("[OV] PrizeInfoOverlay",
+                         "[OV] LevelUpOverlay",
+                         "[OV] CompletedDailyQuestOverlay",
+                         "[OV] AggressiveOfferOverlay",
+                         "[OV] GiftOfferOverlay",
+                         "[OV] ComboOfferOverlay"):
+        path = f"UIManager/Canvas (Ui Root)/OverlayDialogs/{overlay_name}"
+        encoded = urllib.parse.quote(path, safe='')
+        try:
+            r = requests.get(f"{MOD_BASE}/context-call?path={encoded}&method=Close",
+                             timeout=10).json()
+            if r.get("invoked") == "Close":
+                print(f"  unwound {overlay_name}")
+                time.sleep(1.0)
+        except Exception:
+            pass
+    # 3. Close any MessageBox stuck on screen (rare — usually from
+    #    error popups e.g. CB chest-claim "no chest" errors).
+    path = "UIManager/Canvas (Ui Root)/MessageBoxes/MessageBox"
+    encoded = urllib.parse.quote(path, safe='')
+    for _ in range(3):
+        try:
+            r = requests.get(f"{MOD_BASE}/context-call?path={encoded}&method=Close",
+                             timeout=10).json()
+            if r.get("invoked") != "Close":
+                break
+            print(f"  unwound MessageBox")
+            time.sleep(1.0)
+        except Exception:
+            break
+
+
 def start_battle():
     """Navigate to CB and start battle via context-calls. Returns True if battle started."""
+    # Clean up any leftover dialogs from a previous key before navigating.
+    unwind_post_battle_state()
+
     print("Navigating to CB...")
     r = mod_get("/navigate", {"target": "cb"})
     if "error" in r:
@@ -105,6 +216,19 @@ def start_battle():
     else:
         print("  AllianceBossHeroesSelectionDialog did not appear after 15s")
         return False
+
+    # Force Quick Battle OFF before StartBattle. Quick Battle skips the
+    # BattleScene transition, so the polling loop misses the per-poll
+    # heroes[]/dmg_taken snapshots cb_calibrate.py needs. Wasted a UNM
+    # key 2026-06-13 finding this out. Abort if we can't confirm OFF.
+    qb = mod_get("/cb-quick-battle", {"value": "false"})
+    if "error" in qb:
+        print(f"  /cb-quick-battle failed: {qb['error']}")
+        return False
+    if qb.get("enabled") is not False:
+        print(f"  Quick Battle still ON after toggle attempt: {qb}")
+        return False
+    print(f"  Quick Battle: OFF (changed={qb.get('changed')})")
 
     print("Starting battle (StartBattle)...")
     try:
@@ -165,6 +289,32 @@ def _snapshot_battle_log(snapshot_path):
         pass  # Crash-resilience: snapshot failure shouldn't break polling
 
 
+def _poll_log_path(snapshot_path):
+    """Derive poll_log_*.json companion path from a battle_logs_*.json
+    snapshot path. The poll log captures per-poll /battle-state
+    responses (heroes with buffs/debuffs/HP) which the saved
+    battle_log + tick_log do NOT preserve. Required for cb_truth_diff
+    per docs/cb_workstream_0_audit.md.
+    """
+    if not snapshot_path:
+        return None
+    return str(snapshot_path).replace("battle_logs_cb_", "poll_log_cb_")
+
+
+def _append_poll_record(poll_log_path, record):
+    """Append one poll record to the poll log as JSONL. Crash-resilient
+    — if the process dies mid-battle, every poll up to the crash is
+    durable on disk.
+    """
+    if not poll_log_path:
+        return
+    try:
+        with open(poll_log_path, "a", encoding="utf-8") as f:
+            f.write(json.dumps(record, separators=(",", ":")) + "\n")
+    except Exception:
+        pass
+
+
 def poll_battle(snapshot_path=None, snapshot_every_polls=20):
     """Poll until the battle is truly over.
 
@@ -183,6 +333,12 @@ def poll_battle(snapshot_path=None, snapshot_every_polls=20):
     transitions (APPCRASH in coreclr.dll) and the post-battle
     /battle-log fetch can return ConnectionRefused. Incremental
     snapshots ensure we have data within ~60s of the crash.
+
+    Additionally writes a `poll_log_cb_*.json` JSONL companion with
+    every /battle-state response per poll — this is the source of
+    truth for cb_truth_diff per-CB-turn buff/debuff/HP state. The
+    pure /battle-log endpoint emits only an event stream (skill_cmd /
+    round events) and never includes hero state.
     """
     print("\nPolling battle progress...")
     prev_turn = 0
@@ -191,6 +347,13 @@ def poll_battle(snapshot_path=None, snapshot_every_polls=20):
     transient_err_streak = 0
     no_progress_polls = 0
     MAX_TRANSIENT = 10
+    poll_log_path = _poll_log_path(snapshot_path)
+    # Truncate any stale poll log at start (one battle = one poll log)
+    if poll_log_path:
+        try:
+            Path(poll_log_path).write_text("", encoding="utf-8")
+        except Exception:
+            pass
 
     for i in range(MAX_POLLS):
         # Crash-resilience snapshot. Fire on every Nth poll AND once
@@ -199,6 +362,13 @@ def poll_battle(snapshot_path=None, snapshot_every_polls=20):
         if snapshot_path and (i > 0 and i % snapshot_every_polls == 0):
             _snapshot_battle_log(snapshot_path)
         bs = mod_get("/battle-state")
+        # Persist this poll (success or error) to poll_log for
+        # post-hoc state diffs. JSONL = one entry per line.
+        _append_poll_record(poll_log_path, {
+            "poll": i,
+            "ts": time.time(),
+            "state": bs,
+        })
         if "error" in bs:
             transient_err_streak += 1
             # FIRST transient error often precedes a scene-transition crash:
@@ -237,11 +407,21 @@ def poll_battle(snapshot_path=None, snapshot_every_polls=20):
 
         # Real end detection
         if active is False and (not heroes or all(h.get("side") == "player" and "dead" in (h.get("st") or []) for h in heroes)):
-            # Confirm via scene
+            # Confirm via scene OR BattleFinishAllianceEnemyDialog —
+            # CB battles end with the finish dialog overlaid on the
+            # Dungeon_Clan scene, so the scene-only check misses it
+            # and polls for the full MAX_POLLS×POLL_INTERVAL=~17min
+            # before giving up (saves an empty 64B log + loses key 1
+            # damage data). Adding the dialog probe ends polling within
+            # ~20s of the actual battle finish. Verified 2026-05-16 via
+            # the 4 prior days' 64B+4.1MB log pattern.
             st = mod_get("/status")
             scene = (st or {}).get("scene", "")
-            if scene != "Dungeon_Clan":
-                print(f"  Battle ended at poll {i} (scene={scene}, active=False)")
+            ctxs = (mod_get("/view-contexts") or {}).get("contexts", [])
+            finish_up = any("BattleFinish" in (c.get("dialog") or "") for c in ctxs)
+            if scene != "Dungeon_Clan" or finish_up:
+                print(f"  Battle ended at poll {i} "
+                      f"(scene={scene}, finish_dialog={finish_up})")
                 break
 
         # Stall watchdog — 120 polls with no turn progress AND scene has left CB
@@ -356,6 +536,23 @@ def save_battle_log(filename=None):
             print(f"  Tick log: {len(ticks)} entries ({damage_events} damage), saved: {tick_path.name}")
     except Exception as ex:
         print(f"  [warn] tick-log save skipped: {ex}")
+
+    # Snapshot the live presets at fixture capture time. The user can
+    # edit presets between battles; sim_replay needs the preset that
+    # was actually in force during this run, not whatever is live when
+    # we replay. Skipping this caused 2026-06-21 Force fixtures to
+    # diff against today's preset and overstate sim drift.
+    try:
+        ps = mod_get("/presets", timeout=10)
+        preset_filename = filename.replace("battle_logs_cb_", "presets_cb_")
+        if preset_filename != filename:
+            preset_path = PROJECT_ROOT / preset_filename
+            with open(preset_path, "w") as f:
+                json.dump(ps, f)
+            n = len((ps or {}).get("presets") or [])
+            print(f"  Presets snapshot: {n} entries, saved: {preset_path.name}")
+    except Exception as ex:
+        print(f"  [warn] preset snapshot skipped: {ex}")
 
     return {
         "filepath": str(filepath),

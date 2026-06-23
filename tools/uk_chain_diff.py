@@ -51,8 +51,15 @@ def extract_real_hero_buffs(log_path: Path) -> dict[int, dict[int, dict[int, int
     for e in log:
         if "poll" not in e or "heroes" not in e:
             continue
-        bt = e.get("turn", 0)
-        if bt < 0:
+        # IMPORTANT: e["turn"] is a unit-turn-count (increments per
+        # unit action, ~6-7x per boss turn). Boss turn lives on the
+        # enemy hero's `turn_n` field — that's the authoritative BT.
+        bt = None
+        for h in e.get("heroes", []):
+            if h.get("side") == "enemy":
+                bt = h.get("turn_n")
+                break
+        if bt is None or bt < 0:
             continue
         if bt not in by_turn:
             by_turn[bt] = {}
@@ -79,9 +86,18 @@ def main() -> int:
     ap = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("battle_log", help="Path to battle_logs_cb_<timestamp>.json")
-    ap.add_argument("--cb-element", default="magic")
-    ap.add_argument("--max-turns", type=int, default=25)
+    ap.add_argument("--cb-element", default="magic",
+                    choices=["magic", "force", "spirit", "void"])
+    ap.add_argument("--max-turns", type=int, default=50)
+    ap.add_argument("--only-divergence", action="store_true",
+                    help="Only print rows where sim and real disagree.")
+    ap.add_argument("--preset-snapshot",
+                    help="Path to presets_cb_<ts>.json captured with this "
+                         "fixture. When omitted, uses live mod preset — "
+                         "may differ from what real battle ran with.")
     args = ap.parse_args()
+    elem_map = {"magic": 1, "force": 2, "spirit": 3, "void": 4}
+    cb_element_int = elem_map[args.cb_element]
     log_path = Path(args.battle_log)
     if not log_path.exists():
         print(f"file not found: {log_path}", file=sys.stderr)
@@ -108,38 +124,67 @@ def main() -> int:
     print(f"# Team: {team}")
 
     from cb_calibrate import run_sim_for_team  # type: ignore[import-not-found]
-    sim = run_sim_for_team(team, cb_element=1, force_affinity=True,
-                           max_cb_turns=50, use_preset=True)
+    sim = run_sim_for_team(team, cb_element=cb_element_int, force_affinity=True,
+                           max_cb_turns=50, use_preset=True,
+                           preset_snapshot_path=args.preset_snapshot)
     sim_snapshots = sim.get("turn_snapshots", [])
-    print(f"# Sim: cb_turns={sim['cb_turns']}, total={sim['total']:,.0f}")
+    print(f"# Sim: cb_turns={sim['cb_turns']}, total={sim['total']:,.0f}, element={args.cb_element}")
     print()
 
-    # Side-by-side comparison
-    print(f"{'BT':>3}  {'Hero':<10}  {'Real buffs':<35}  {'Sim buffs':<35}  Match")
-    print("-" * 100)
+    # Stable hero-id ordering: take first poll's player heroes in slot order.
+    team_real_hids = []
+    for bt in sorted(real_buffs.keys()):
+        team_real_hids = sorted(real_buffs[bt].keys())
+        if len(team_real_hids) >= len(team):
+            team_real_hids = team_real_hids[:len(team)]
+            break
+
+    print(f"{'BT':>3}  {'Hero':<10}  {'Real buffs':<25}  {'Sim buffs':<25}  Match")
+    print("-" * 80)
     sim_by_turn = {s["cb_turn"]: s for s in sim_snapshots}
-    max_t = min(args.max_turns, max(real_buffs.keys()) if real_buffs else 0)
+    max_real = max(real_buffs.keys()) if real_buffs else 0
+    max_t = min(args.max_turns, max_real)
+    summary = {"total": 0, "diff": 0, "real_uk_yes_sim_no": 0,
+               "real_uk_no_sim_yes": 0, "real_bd_yes_sim_no": 0,
+               "real_bd_no_sim_yes": 0}
     for bt in range(1, max_t + 1):
         r_h = real_buffs.get(bt, {})
         s_snap = sim_by_turn.get(bt)
         if not s_snap:
             continue
         s_h = s_snap.get("hero_buffs", {})
-        for hid_real, name in zip(sorted(r_h.keys())[:5], team):
-            real_buffs = r_h.get(hid_real, {})
+        for hid_real, name in zip(team_real_hids, team):
+            hero_real = r_h.get(hid_real, {})
             sim_buffs = s_h.get(name, {})
-            # UK = type_id 320, BD = 60, Shield = 280 in real
-            r_uk = real_buffs.get(320, 0)
-            r_bd = real_buffs.get(60, 0)
-            r_sh = real_buffs.get(280, 0)
+            r_uk = hero_real.get(320, 0)
+            r_bd = hero_real.get(60, 0)
+            r_sh = hero_real.get(280, 0)
             s_uk = sim_buffs.get("unkillable", 0)
             s_bd = sim_buffs.get("block_damage", 0)
             s_sh = sim_buffs.get("shield", 0)
-            match = "OK" if (bool(r_uk) == bool(s_uk) and bool(r_bd) == bool(s_bd)
-                              and bool(r_sh) == bool(s_sh)) else "DIFF"
+            uk_diff = bool(r_uk) != bool(s_uk)
+            bd_diff = bool(r_bd) != bool(s_bd)
+            sh_diff = bool(r_sh) != bool(s_sh)
+            is_diff = uk_diff or bd_diff or sh_diff
+            summary["total"] += 1
+            if is_diff:
+                summary["diff"] += 1
+            if r_uk and not s_uk: summary["real_uk_yes_sim_no"] += 1
+            if s_uk and not r_uk: summary["real_uk_no_sim_yes"] += 1
+            if r_bd and not s_bd: summary["real_bd_yes_sim_no"] += 1
+            if s_bd and not r_bd: summary["real_bd_no_sim_yes"] += 1
+            match = "OK" if not is_diff else "DIFF"
+            if args.only_divergence and not is_diff:
+                continue
             r_str = f"UK={r_uk} BD={r_bd} SH={r_sh}"
             s_str = f"UK={s_uk} BD={s_bd} SH={s_sh}"
             print(f"{bt:>3}  {name:<10}  {r_str:<25}  {s_str:<25}  {match}")
+    print()
+    print(f"# Summary: {summary['diff']}/{summary['total']} rows diverge "
+          f"(UK: real-up/sim-down={summary['real_uk_yes_sim_no']}, "
+          f"real-down/sim-up={summary['real_uk_no_sim_yes']}; "
+          f"BD: real-up/sim-down={summary['real_bd_yes_sim_no']}, "
+          f"real-down/sim-up={summary['real_bd_no_sim_yes']})")
     return 0
 
 

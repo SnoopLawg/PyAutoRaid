@@ -87,7 +87,7 @@ def extract_real_data(log_path: Path) -> dict:
 
 def run_sim_for_team(team_names, cb_element, force_affinity, max_cb_turns,
                      use_current_gear=True, bugfix_buff_tick=False,
-                     use_preset=True):
+                     use_preset=True, preset_snapshot_path=None):
     """Run the CB sim and return result with turn snapshots.
 
     `use_preset`: when True (default), loads the saved game preset
@@ -148,7 +148,8 @@ def run_sim_for_team(team_names, cb_element, force_affinity, max_cb_turns,
     if use_preset:
         try:
             from preset_loader import load_preset_for_team
-            plan = load_preset_for_team(team_names)
+            plan = load_preset_for_team(
+                team_names, snapshot_path=preset_snapshot_path)
         except Exception:
             plan = {}
         for champ in sim_champs:

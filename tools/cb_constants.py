@@ -160,12 +160,11 @@ except Exception:
 # is 190). Reverted 2026-06-16 from a brief cb_speed=170 experiment.
 
 CB_SPEED_BY_DIFFICULTY: dict[str, float] = {
-    # Game-truth +1 over displayed value (per RSL Speedology 201 by
-    # MaxMeng77 — Reddit r/RaidShadowLegends comments/gi578r). The +1
-    # is what gives the player team priority in TM-tie situations: at
-    # the exact tick where boss and a SPD-N hero both cross threshold,
-    # boss's actual N+1 puts it slightly behind, hero takes the turn.
-    # Verified via Wayback Machine 2026-06-22.
+    # UNM kept at 191 per user (2026-06-23) — community canon may
+    # reflect an unmodeled +20 SPD source (CB area aura?) that gives
+    # heroes effective +20 SPD vs boss base 170. Cadence diff alone
+    # can't distinguish (boss=170 no aura ≈ boss=190 +20 aura).
+    # See task #14.
     "easy":             91,
     "normal":           121,
     "hard":             141,

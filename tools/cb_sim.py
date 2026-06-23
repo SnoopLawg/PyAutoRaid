@@ -130,6 +130,31 @@ KNOWN_SELF_BUFF_OVERRIDES: dict[str, dict[str, list]] = {
 }
 
 
+# Per-hero scheduler-effect overrides for skills DWJ models that
+# load_game_profiles doesn't yet extract. Mirrors KNOWN_SELF_BUFF_OVERRIDES.
+# Each entry sets one or more SimSkill fields:
+#   "extend_ally_buffs": True → each cast +1 turn to all ally buffs
+#   "reduce_ally_debuffs": True → each cast -1 turn to all ally debuffs
+#   "reduce_caster_cd": "<skill_name>" → -1 cd on that caster skill per cast
+#
+# Justification per entry references DWJ's calc_tunes effect block plus the
+# in-game skill description. As load_game_profiles gains effect-graph
+# awareness these entries should move to the data file.
+KNOWN_SCHEDULER_EFFECT_OVERRIDES: dict[str, dict[str, dict]] = {
+    # NOTE: Demytha A2 "extend_buff / reduce_debuff" is ALREADY modeled
+    # via the `extend_buffs` / `extend_debuffs` effect_type code path
+    # (see _apply_effects around line 2526). Don't double-extend here.
+    "Ninja": {
+        # A3 "Cyan Slash": "Will also decrease the cooldown of the Hailburn
+        # skill by 1 turn" (when targeting boss). DWJ encodes as
+        # add_buff reduce_cd amount=1 self with named="Hailburn".
+        # In cb_sim, Hailburn is Ninja's A2. Without this, Ninja's A2
+        # cycles slower; with it, more pveil + hpburn activations.
+        "A3": {"reduce_caster_cd": "A2"},
+    },
+}
+
+
 def _dup_key_for(name: str, occurrence: int) -> str:
     """Return the lookup key for the Nth occurrence of a duplicate hero
     (1-based). First occurrence is the plain name; subsequent are
@@ -398,6 +423,18 @@ class SimSkill:
     # before this skill can be cast at all. Lets us model tunes that want a
     # skill held until a specific turn (e.g. Turn 6 sync).
     delay_turns: int = 0
+    # Per-cast scheduler effects modeled after DWJ-parity:
+    #   extends_ally_buffs: True → each cast adds +1 turn to all ally buffs
+    #     (e.g. Demytha A2 "Light of the Deep"). Mirrors DWJ's `extend_buff`
+    #     effect handler in calc_parity_sim._apply_extend_buff.
+    #   reduces_ally_debuffs: True → each cast subtracts 1 turn from all
+    #     ally debuffs (e.g. Demytha A2's other half).
+    #   reduces_caster_cd_skill: str | None → name of one caster skill whose
+    #     CD is reduced by 1 each cast (e.g. Ninja A3 "Cyan Slash" reduces
+    #     "A2" / "Hailburn" CD by 1).
+    extends_ally_buffs: bool = False
+    reduces_ally_debuffs: bool = False
+    reduces_caster_cd_skill: Optional[str] = None
 
 
 # =============================================================================
@@ -562,17 +599,13 @@ class SimChampion:
                 # off their own buffs. Real Raid behaves this way for
                 # boss-cycle buffs.
                 #
-                # KNOWN ISSUE (2026-06-16): buffs_new is NOT cleared here.
-                # Buffs placed AFTER our first tick this CB turn (e.g.,
-                # Demytha A3 placing BD on Maneater after Mane's first
-                # action) carry "new" mark into the NEXT cb_turn's tick,
-                # which skips again, extending BD lifetime by 1 cb_turn.
-                # Sim BD coverage on Maneater = 71% vs real ~31%.
-                # Clearing buffs_new here makes Spirit go from +1% to -9%
-                # (the BD over-coverage was a compensating wrong matching
-                # other untracked mechanics). Pair-fix required: clear
-                # buffs_new HERE + restore pattern offset to game-truth
-                # [stun, aoe1, aoe2] simultaneously. See task #11.
+                # Clear buffs_new before returning: buffs PLACED after the
+                # first tick this CB turn (e.g. Demytha A3 placing BD on
+                # Maneater after Mane's first action) shouldn't carry the
+                # "new" mark into the next cb_turn — that would skip its
+                # tick a SECOND time and extend lifetime by 1 cb_turn.
+                # Pre-fix: sim BD coverage 71% vs real 31% on Maneater.
+                self.buffs_new.clear()
                 return
             self.last_ticked_cb_turn = cb_turn
 
@@ -1155,7 +1188,8 @@ class CBSimulator:
         return False
 
     def _cb_turn(self, tick: int):
-        self.cb_tm -= TM_THRESHOLD
+        # DWJ-parity 2026-06-23: reset to 0 (see _champion_turn comment).
+        self.cb_tm = 0.0
         # Determine attack BEFORE Smite check below — Brimstone Smite
         # only fires on AoE active skills (aoe1, aoe2), NOT single-
         # target ones (stun).
@@ -1662,6 +1696,12 @@ class CBSimulator:
             "hero_buffs": {
                 c.name: dict(c.buffs) for c in self.champions
             },
+            # Per-hero cumulative turn count at this BT. Used by
+            # tools/turn_cadence_diff.py to compare sim's hero cadence
+            # against real game's per-hero turn_n field.
+            "hero_turns": {
+                c.name: int(c.turns_taken) for c in self.champions
+            },
         })
 
         if self.verbose:
@@ -1740,7 +1780,13 @@ class CBSimulator:
         target.buffs_new.add(pick)
 
     def _champion_turn(self, champ: SimChampion, tick: int):
-        champ.tm -= TM_THRESHOLD
+        # DWJ-parity 2026-06-23: reset to 0 instead of preserving overflow.
+        # The preserve-overflow path produced strict 1.5 Mane turns/BT;
+        # DWJ produces 1.66 (matches real). After the inner-loop tick
+        # the actor's TM is often well past threshold (e.g. 1442 vs 1430)
+        # — discarding the overflow lets the next selection cycle pick
+        # different actors more often.
+        champ.tm = 0.0
         champ.turns_taken += 1
 
         # Lasting Gifts mastery proc at start of owner turn.
@@ -2015,6 +2061,38 @@ class CBSimulator:
 
         # Apply skill effects
         self._apply_effects(champ, chosen)
+
+        # DWJ-parity per-cast scheduler effects (data-driven via
+        # KNOWN_SCHEDULER_EFFECT_OVERRIDES). These run AFTER _apply_effects
+        # so newly-placed buffs/debuffs on this turn are included.
+        if chosen.extends_ally_buffs:
+            # Demytha A2 "Light of the Deep": +1 turn to every ally's
+            # buffs. Game-spec exclusions match the NonIncreaseable list:
+            # UK, BD, revive, etc. are not extendable.
+            for ally in self.champions:
+                if ally.is_dead:
+                    continue
+                for buff_name, dur in list(ally.buffs.items()):
+                    if buff_name in self._NON_EXTENDABLE_BUFFS_FOR_MASTERY:
+                        continue
+                    ally.buffs[buff_name] = dur + 1
+        if chosen.reduces_ally_debuffs:
+            # Demytha A2 second half: -1 turn to every ally's debuffs.
+            # We track hero-side debuffs as `is_stunned` plus the boss-
+            # side debuff_bar; per-ally debuff durations aren't modeled
+            # at the SimChampion level today, so this is a no-op until
+            # we expand the ally debuff model. Stub kept for parity
+            # signaling.
+            pass
+        if chosen.reduces_caster_cd_skill:
+            # Ninja A3 "Cyan Slash" → -1 CD on Hailburn (A2). DWJ also
+            # excludes the just-cast skill from reduction (which we get
+            # for free since the named skill is different).
+            target_name = chosen.reduces_caster_cd_skill
+            for sk in champ.skills:
+                if sk.name == target_name and sk.current_cd > 0:
+                    sk.current_cd = max(0, sk.current_cd - 1)
+                    break
 
         # Per-turn passive debuff placement. Any hero whose passive
         # skill carries a kind=5000 effect (e.g. Occult Brawler:
@@ -2917,6 +2995,10 @@ def build_sim_champion(name: str, stats: dict, position: int,
         _emp_override = EMPIRICAL_CD_OVERRIDES.get(name, {}).get(sk_name)
         _base_cd = _emp_override if _emp_override is not None else (sd["cd"] if sd["cd"] > 0 else 0)
 
+        # Per-hero scheduler-effect overrides (DWJ-parity for skills
+        # whose effect graph isn't yet auto-extracted).
+        _sched = KNOWN_SCHEDULER_EFFECT_OVERRIDES.get(name, {}).get(sk_name, {})
+
         sim_sk = SimSkill(
             name=sk_name,
             base_cd=_base_cd,
@@ -2934,6 +3016,9 @@ def build_sim_champion(name: str, stats: dict, position: int,
             health_book_bonus=float(sd.get("health_book_bonus", 0.0) or 0.0),
             attack_book_bonus=float(sd.get("attack_book_bonus", 0.0) or 0.0),
             ignore_res_book_bonus=float(sd.get("ignore_res_book_bonus", 0.0) or 0.0),
+            extends_ally_buffs=bool(_sched.get("extend_ally_buffs", False)),
+            reduces_ally_debuffs=bool(_sched.get("reduce_ally_debuffs", False)),
+            reduces_caster_cd_skill=_sched.get("reduce_caster_cd"),
         )
         skills.append(sim_sk)
 
@@ -3271,8 +3356,15 @@ def run_potential_team(pt: dict, cb_element: int = 4,
     return result
 
 
-def _build_team_setup(hero_names: List[str], use_current_gear: bool = True):
+def _build_team_setup(hero_names: List[str], use_current_gear: bool = True,
+                       preset_snapshot_path: Optional[str] = None):
     """Heavy one-shot work for evaluate_team_calibrated / evaluate_team_mc.
+
+    Args:
+      preset_snapshot_path: when set, load the preset from this file
+        instead of the live mod. Required when replaying a historical
+        fixture — the user may have edited presets since capture, and
+        the live preset will not match what the real battle ran.
 
     Returns a dict carrying everything needed to rebuild fresh sim
     champions across trials: team hero records, optimized artifacts,
@@ -3358,7 +3450,8 @@ def _build_team_setup(hero_names: List[str], use_current_gear: bool = True):
     # Resolve preset opener+priority plan
     try:
         from preset_loader import load_preset_for_team
-        preset_plan = load_preset_for_team(hero_names) or {}
+        preset_plan = load_preset_for_team(
+            hero_names, snapshot_path=preset_snapshot_path) or {}
     except Exception:
         preset_plan = {}
 
@@ -3406,7 +3499,8 @@ def evaluate_team_calibrated(hero_names: List[str], cb_element: int = 4,
                               max_cb_turns: int = 50,
                               verbose: bool = False,
                               deterministic: bool = True,
-                              rng_seed: int = None) -> dict:
+                              rng_seed: int = None,
+                              preset_snapshot_path: Optional[str] = None) -> dict:
     """Run the calibrated CB sim on an arbitrary 5-hero team.
 
     Mirrors what `cb_sim.py --team "X,Y,Z" --use-current-gear` does
@@ -3431,7 +3525,8 @@ def evaluate_team_calibrated(hero_names: List[str], cb_element: int = 4,
     Returns a dict with keys: total, cb_turns, errors, valid (or
     `error` on failure).
     """
-    setup = _build_team_setup(hero_names, use_current_gear=use_current_gear)
+    setup = _build_team_setup(hero_names, use_current_gear=use_current_gear,
+                                preset_snapshot_path=preset_snapshot_path)
     if "error" in setup:
         return {"error": setup["error"], "total": 0}
     sim_champs = _build_sim_champs_from_setup(setup)
@@ -3448,7 +3543,8 @@ def evaluate_team_mc(hero_names: List[str], cb_element: int = 4,
                       use_current_gear: bool = True,
                       force_affinity: bool = True,
                       max_cb_turns: int = 50,
-                      seed_base: int = 1000) -> dict:
+                      seed_base: int = 1000,
+                      preset_snapshot_path: Optional[str] = None) -> dict:
     """Monte Carlo wrapper around evaluate_team_calibrated.
 
     Runs the sim `n_trials` times with deterministic=False and varying
@@ -3466,7 +3562,8 @@ def evaluate_team_mc(hero_names: List[str], cb_element: int = 4,
     # across all trials so we only pay the calc_stats / file-load
     # cost once instead of n_trials times (was ~3s per trial before
     # refactor, now ~3s setup + ~0.5s/trial after).
-    setup = _build_team_setup(hero_names, use_current_gear=use_current_gear)
+    setup = _build_team_setup(hero_names, use_current_gear=use_current_gear,
+                                preset_snapshot_path=preset_snapshot_path)
     if "error" in setup:
         return {"error": setup["error"], "trials": 0}
 

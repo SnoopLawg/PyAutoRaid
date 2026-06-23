@@ -73,6 +73,10 @@ def replay_fixture(fixture, max_cb_turns=50, verbose=False, compare_at_bt=None,
 
     # Import lazily — cb_sim is heavy
     from cb_sim import evaluate_team_calibrated, evaluate_team_mc
+    # When the fixture has a preset snapshot, use it — the live preset
+    # may have been edited since capture. Falls back to live mod when
+    # the snapshot is absent (older fixtures pre-2026-06-23).
+    preset_path = fixture.get("presets")
     try:
         result = evaluate_team_calibrated(
             hero_names=team,
@@ -80,6 +84,7 @@ def replay_fixture(fixture, max_cb_turns=50, verbose=False, compare_at_bt=None,
             use_current_gear=True,
             max_cb_turns=max_cb_turns,
             verbose=verbose,
+            preset_snapshot_path=preset_path,
         )
     except Exception as ex:
         out["error"] = f"sim crashed: {ex}"
@@ -118,6 +123,7 @@ def replay_fixture(fixture, max_cb_turns=50, verbose=False, compare_at_bt=None,
                 n_trials=trials,
                 use_current_gear=True,
                 max_cb_turns=max_cb_turns,
+                preset_snapshot_path=preset_path,
             )
         except Exception as ex:
             out["mc"] = {"error": f"mc crashed: {ex}"}

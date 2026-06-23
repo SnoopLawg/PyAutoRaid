@@ -35,8 +35,27 @@ CB_PRESET_TYPE = None  # kept for backwards-compat; ignored when None
 
 
 def _fetch_presets(host: str = "localhost:6790",
-                   timeout: float = 10.0) -> Optional[list[dict]]:
-    """Fetch from live mod, fall back to local cache file."""
+                   timeout: float = 10.0,
+                   snapshot_path: Optional[str] = None) -> Optional[list[dict]]:
+    """Fetch presets — snapshot file first, then live mod, then local cache.
+
+    Args:
+      snapshot_path: when provided, load presets from this file (a
+        `presets_cb_<ts>.json` saved at fixture capture time). Required
+        for replay against historical fixtures where the user may have
+        edited presets between then and now.
+    """
+    if snapshot_path:
+        p = Path(snapshot_path)
+        if not p.is_absolute():
+            p = PROJECT_ROOT / p
+        if p.exists():
+            try:
+                data = json.loads(p.read_text(encoding="utf-8"))
+                return data.get("presets") if isinstance(data, dict) else data
+            except Exception:
+                return None
+        return None  # caller asked for a specific snapshot; don't fall back
     try:
         with urllib.request.urlopen(
                 f"http://{host}/presets", timeout=timeout) as r:
@@ -125,7 +144,8 @@ def _skill_label_for_hero(hero_name: str, skill_id: int) -> str:
 
 def load_preset_for_team(team_names: list[str],
                          preset_id: Optional[int] = None,
-                         preset_type: Optional[int] = None) -> dict[str, dict]:
+                         preset_type: Optional[int] = None,
+                         snapshot_path: Optional[str] = None) -> dict[str, dict]:
     """Find a saved preset matching `team_names` and translate to per-hero plan.
 
     Returns a dict `{hero_name: {"opening": [labels], "priority": [labels],
@@ -146,7 +166,7 @@ def load_preset_for_team(team_names: list[str],
 
     Heroes not present in the preset return an empty entry.
     """
-    presets = _fetch_presets() or []
+    presets = _fetch_presets(snapshot_path=snapshot_path) or []
     id_to_name = _hero_id_to_name_map()
     name_set = set(team_names)
 
@@ -223,11 +243,17 @@ def load_preset_for_team(team_names: list[str],
                 continue
             if label not in seen_labels:
                 seen_labels.add(label)
-                # Default-AI tiebreaker: A2 < A3 < A1 by ascending CD.
+                # Default-AI tiebreaker: A3 > A2 > A1 by DESCENDING CD.
                 # Used when priority ties (both 0 / both unranked).
+                # Verified 2026-06-15 via real tick log: Maneater opens
+                # A1 then fires A3 on his 2nd turn (placing UK on all 5)
+                # — A3 wins over A2 in real game's Default AI. Earlier
+                # ordering (A2 > A3 > A1) caused sim's A3 cycle to wobble
+                # [3,4,3,4] vs real's stable [3,3,3,3] because A2 stole
+                # the priority slot when both were ready, delaying A3.
                 default_idx = (
-                    0 if label == "A2"
-                    else 1 if label == "A3"
+                    0 if label == "A3"
+                    else 1 if label == "A2"
                     else 2 if label == "A1"
                     else 3
                 )
