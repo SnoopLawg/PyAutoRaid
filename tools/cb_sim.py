@@ -306,7 +306,11 @@ class DebuffBar:
           - CB turn 2: active (remaining=1), then tick → remaining=0 → expired
 
         Implementation: decrement first, expire at < 0 (not <= 0).
-        This gives one extra turn of activity matching in-game behavior.
+        2026-06-23: tried tightening to `<= 0` (which matches real Spirit
+        tick log Venom poison count 69 vs sim 104 at `< 0`) — passed
+        Spirit/Magic but Force regressed to -7%. Force has compensating
+        wrong elsewhere; un-stacking the tick fix alone breaks Force.
+        Reverted pending coordinated multi-fix. See task #11.
         """
         expired = []
         remaining = []
@@ -2570,17 +2574,15 @@ class CBSimulator:
                         # decrement at end of that turn.
                         c.buffs_new.add(b)
                         buff_extend_total += turns  # +1 turn per buff per cast
-                # Demytha A2 "Light of the Deep": skill description says
-                # "decreases the duration of all ALLY debuffs by 1 turn"
-                # — that's debuffs ON allies (heroes), NOT debuffs allies
-                # placed on the boss. Current code (kept 2026-06-23 after
-                # brief revert experiment) DOES apply to boss debuffs and
-                # acts as a compensating wrong for Venom poison being
-                # modeled too aggressively. Un-stacking both together
-                # is task #11 (Venom poison overshoot investigation).
-                # For now keep the shrink: alone, removing it pushed
-                # total damage from -1% to +7% on the Spirit BT49
-                # fixture, over the ±5% gate.
+                # Demytha A2: per skill description shrinks ALLY debuffs
+                # (boss debuffs should be no-op) but current behavior
+                # shrinks boss debuffs and acts as compensating wrong
+                # against Venom poison overshoot + debuff_bar tick +1.
+                # Investigation 2026-06-23: removing this alone keeps
+                # totals within ±5% on Magic/Spirit but pushes them over.
+                # Un-stacking needs Venom poison placement count fix +
+                # debuff tick `<= 0` fix in coordinated session. Kept
+                # behavior as-is. See task #11.
                 debuff_shrink = eff.params.get("shrink_debuffs", 0)
                 if debuff_shrink:
                     survivors = []
