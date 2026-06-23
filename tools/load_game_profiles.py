@@ -762,6 +762,18 @@ def load_profiles():
                         except: pass
                 if total_mult > 0:
                     mult = total_mult
+            elif len(dmg_effects) == 1 and mult > 0:
+                # Single damage effect with Count > 1 = multi-hit on same effect
+                # (e.g., Demy A1 65101 Count=2: "Attacks 1 enemy 2 times at 3.2*ATK
+                # each = 6.4*ATK total"). Sim's _calc_skill_damage uses mult as
+                # the TOTAL per-cast multiplier (no hit_count multiplication
+                # downstream). So scale single-effect mult by the effect's Count.
+                # Verified 2026-06-22 against real tick_log Demy events:
+                # raid_data had Demy A1 mult=3.2 hits=1, real shows 2 hits per
+                # cast, sim was -44% on Demy total (-670K).
+                single_count = dmg_effects[0].get('count', 1)
+                if single_count > 1:
+                    mult = mult * single_count
             # Add extra damage
             for ed in extra_dmg:
                 f = ed.get('formula', '')
