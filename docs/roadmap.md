@@ -33,7 +33,7 @@ and verifies leaderboard credit.
 |---|---|---|
 | Sim — Force-day MEN tune | ✅ | **2026-06-23**: -3.4% @ BT24 + -1.8% @ BT19 (2 fixtures within ±5%). DWJ-parity scheduler ported via TM-reset fix. |
 | Sim — Magic-day MEN tune | ✅ | **2026-06-23**: -1.4% / +3.2% / +0.8% @ BT49 (3 BT49 fixtures within ±5%). Was -55% under pre-session. |
-| Sim — Spirit-day MEN tune | ✅ | **2026-06-23 (afternoon)**: 4 fixtures all ±5% (BT28×2 +0.5%/+2.6%, BT48 -1.9%, BT49 full +0.4%). Stale "-55% under" memory was pre-element-fix data — disregarded. |
+| Sim — Spirit-day MEN tune | 🟡 REGRESSED | Was ±5% (4 fixtures) earlier 2026-06-23, but the game-truth debuff fixes (commit 95472fa: Demy A2 scope + debuff `<=0` expiry) shipped after and regressed it. Fresh capture 20260623_162050 = **-12.4%** (boss-HP) / -5.6% (hero-sum). Diagnosed per-source via `cb_attribution_diff.py`: Geo deflect -24.5% (Stoneguard formula under-models) + Venom poison 50 vs 74 ticks. Cadence is PERFECT (sim casts == real). Fix needs a Magic fixture to avoid over-fitting one affinity. See `project_spirit_fixture_attribution_20260623`. |
 | Sim — Void-day MEN tune | 🟡 | Per user 2026-06-23: there is no "Void day" — boss is Void for first 50% HP, then today's affinity. Validating pure-Void calibration requires solo-attack at fresh boss reset. See `project_cb_void_first_half_mechanic`. |
 | Battle log — per-tick state | ✅ | Mod's `/tick-log` captures TM, HP, buffs, debuffs, damage events with intermediates |
 | Battle log — post-battle deltas | 🟡 | Damage attribution per-hero works; quest/leaderboard credit verification added to `cb_daily.py`; item drops not yet structured |
@@ -46,10 +46,17 @@ and verifies leaderboard credit.
 | Daily runner | ✅ | `cb_daily.py` runs all keys, session warm-up, leaderboard verification, silent-fail detection |
 | Preset substrate integration | ✅ | `/save-preset`, `/update-preset`, `/apply-preset` all live; user's flagship preset is id=1 (signal-matched, not type-filtered) |
 
-**Status 2026-06-23 (end of day)**: M1 ±5% gate MET on Magic + Force +
-Spirit (3 of effective 3 affinities — Void doesn't have a "day" in the
-normal rotation, see Void note above). Recommender now eligible to
-ship prescriptive picks for the user's MEN tune on Magic/Force/Spirit.
+**Status 2026-06-23 (end of day) — REVISED**: the ±5% gate was met midday,
+but the afternoon game-truth debuff fixes (commit 95472fa) regressed Spirit
+to -12.4% on a fresh full-T50 capture. The trade was intentional (the fixes
+are game-correct per IL2CPP) but they exposed two under-models the old
+calibration was masking — **compensating wrongs, exactly as MISSION warns**.
+Per-source diagnosis is decisive (Geo Stoneguard deflect formula + Venom
+poison tick count); cadence is verified perfect. The ±5% gate is therefore
+**NOT currently met** — CB-damage-prescriptive recommendations are
+sanity-check-only until the deflect + poison fixes land together (needs a
+Magic fixture next key to avoid over-fitting Spirit). Team-composition
+recommendations (synergy-based, not sim-based) are unaffected.
 
 **Headline fix this session**: cb_sim per-hero cadence was systematically
 8-14% slower than DWJ-parity (which matches real game). Root cause was
