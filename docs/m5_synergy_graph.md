@@ -8,39 +8,40 @@ This is the recommender's matchmaking substrate — works for every location.
 
 ## Synergy-role distribution
 
-- **attacker**: 292
-- **debuffer**: 245
-- **support**: 241
-- **healer/support**: 100
+- **attacker**: 291
+- **debuffer**: 236
+- **support**: 234
+- **healer/support**: 118
 - **defense**: 85
 - **health**: 77
-- **dot**: 73
+- **dot**: 72
 
 ## Provider counts per synergy axis
 
 | Provide tag | # heroes |
 |---|---|
-| `tm_control` | 353 |
-| `heal` | 248 |
-| `tm_drain` | 168 |
+| `tm_control` | 430 |
+| `heal` | 305 |
+| `tm_drain` | 186 |
 | `enemy_debuff:Decrease DEF` | 148 |
+| `cleanse` | 131 |
 | `team_buff:Shield` | 121 |
 | `enemy_debuff:Decrease ATK` | 120 |
 | `team_buff:Increase ATK` | 111 |
-| `cleanse` | 102 |
 | `enemy_debuff:Decrease SPD` | 101 |
 | `enemy_debuff:Stun` | 99 |
+| `revive` | 98 |
+| `cooldown_reduction` | 93 |
 | `team_buff:Increase DEF` | 92 |
 | `enemy_debuff:Provoke` | 88 |
 | `enemy_debuff:Weaken` | 88 |
-| `cooldown_reduction` | 80 |
 | `dot:Poison` | 78 |
-| `revive` | 75 |
 | `team_buff:Continuous Heal` | 72 |
 | `enemy_debuff:Heal Reduction` | 65 |
 | `enemy_debuff:Freeze` | 58 |
 | `team_buff:Increase C. RATE` | 54 |
 | `enemy_debuff:Decrease ACC` | 50 |
+| `dot_detonate` | 49 |
 | `team_buff:Block Damage` | 48 |
 | `team_buff:Increase SPD` | 47 |
 | `enemy_debuff:Block Buffs` | 46 |
@@ -48,7 +49,6 @@ This is the recommender's matchmaking substrate — works for every location.
 | `enemy_debuff:Sleep` | 43 |
 | `team_buff:Block Debuffs` | 43 |
 | `team_buff:Ally Protection` | 39 |
-| `dot_detonate` | 38 |
 | `enemy_debuff:Block Active Skills` | 37 |
 | `enemy_debuff:Fear` | 35 |
 | `enemy_debuff:True Fear` | 34 |
@@ -96,17 +96,17 @@ Aina, Alexandr the Sharpshooter, Anax, Arbiter, Archbishop Pinthroy, Aristocrat,
 ### `enables:poison` — 10 heroes
 Chani, Corvis the Corruptor, Dark Kael, Frozen Banshee, Gravechill Killer, Liburga, Lydia the Deathsiren, Narma the Returned, Teodor the Savant, Urticata
 
-### `dot_detonate` — 38 heroes
-Aphidus the Hivelord, Artak, Ash’nar Dragonsoul, Balar the Lost, Bladechorister Caldor, Crohnam, Dark Kael, Donatello, Elenaril, Ezio Auditore, Fenax, Fren'zi the Cackler … (+26 more)
+### `dot_detonate` — 49 heroes
+Aphidus the Hivelord, Artak, Ash’nar Dragonsoul, Balar the Lost, Bladechorister Caldor, Crohnam, Dark Kael, Donatello, Elenaril, Embrys the Anomaly, Ezio Auditore, Fenax … (+37 more)
 
-### `tm_control` — 353 heroes
-Acolyte, Acolyte of the Slither, Acrizia, Admiral Blacktusk, Aina, Androc the Glorious, April O'Neil, Arachoa Moonspinner, Aragaz Wyldking, Aratheia Corpseflower, Arbais the Stonethorn, Arbiter … (+341 more)
+### `tm_control` — 430 heroes
+Achak the Wendarin, Acolyte, Acolyte of the Slither, Acrizia, Admiral Blacktusk, Ailil, Aina, Alatreon Blademaster, Anax, Androc the Glorious, Anointed, Apothecary … (+418 more)
 
-### `cleanse` — 102 heroes
-Acolyte, Admiral Blacktusk, Alatreon Blademaster, Anchorite, Arwydd Quivergrass, Authoratrix Lamasu, Bad-el-Kazar, Bambus Fourleaf, Battlesage, Blizaar the Howler, Boragar the Elder, Bovos Sharphorn … (+90 more)
+### `cleanse` — 131 heroes
+Acolyte, Admiral Blacktusk, Alatreon Blademaster, Anchorite, Archbishop Pinthroy, Arwydd Quivergrass, Authoratrix Lamasu, Bad-el-Kazar, Bambus Fourleaf, Basim Ibn Ishaq, Battlesage, Blizaar the Howler … (+119 more)
 
-### `revive` — 75 heroes
-Alika, Altan, Arbiter, Astralon, Basilisk, Belletar Mage-slayer, Blind Seer, Broadmaw, Bushi, Cardinal, Dawncaller Sabitha, Daywalker … (+63 more)
+### `revive` — 98 heroes
+Alika, Altan, Arbiter, Arne the White, Astralon, Basilisk, Belletar Mage-slayer, Blind Seer, Blizaar the Howler, Blood Marchioness Mina, Brakus the Shifter, Broadmaw … (+86 more)
 
 ## Files
 - Per-hero detail: `data/m5_synergy.jsonl` (1113 records)

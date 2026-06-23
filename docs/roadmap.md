@@ -126,7 +126,7 @@ Pre-req: M1-M4 patterns proven. M5 is the unification step.
 | Sub-goal | Status |
 |---|---|
 | Phase 1 — Game-truth inventory (`docs/m5_phase1_inventory.md`) | ✅ 2026-06-23 — 1113 playable + 968 boss entries indexed; 100% hero-referenced skill coverage; mastery + blessing gaps tagged |
-| Phase 2 — Per-hero CB sim coverage catalog (`docs/m5_phase2_hero_catalog.md`) | ✅ 2026-06-23 — every champion classified: 672 fully_modeled / 440 has_gaps / 0 unknown / 1 missing data |
+| Phase 2 — Per-hero CB sim coverage catalog (`docs/m5_phase2_hero_catalog.md`) | ✅ 2026-06-23 — every champion classified: 607 fully_modeled / 505 has_gaps / 0 unknown / 1 missing data (after recovering 525 skills omitted from `hero_types.json` skill_ids — earlier 672/440 undercounted gaps) |
 | Phase 3 — Per-location mastery relevance (`docs/m5_mastery_relevance.md`) | ✅ 2026-06-23 — all 66 masteries tagged per location (cb/arena/tt/dungeon/fw/dt/cc/siege/hydra/chimera/forest/campaign); 24 hand-coded sim handlers (M5 batch: Oppressor / Heart of Glory / Grim Resolve / Single Out / Ruthless Ambush / Blastproof / Improved Parry / Bulwark / Spirit Haste / Wrath of the Slain), 11 stat-bonus auto-loaded |
 | Phase 3 — Per-location blessing relevance (`docs/m5_blessing_relevance.md`) | ✅ 2026-06-23 — all 34 blessings tagged per location; 6 modeled with verified game-truth procs, 28 with tooltip-public mechanics pending IL2CPP verification |
 | Hero kit model (1113 heroes) | ✅ — universe-wide skill modeling foundation shipped |

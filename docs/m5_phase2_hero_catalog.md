@@ -8,8 +8,8 @@ Universe: **1113 playable champions** from `hero_types.json` (base ascend, non-b
 
 | Tier | Count | Meaning |
 |---|---|---|
-| **fully_modeled** | 672 | Every effect kind on every skill is either modeled by the sim translator or intentionally no-op vs CB |
-| **has_gaps** | 440 | One or more effect kinds COULD matter for CB but have no sim path today (see gap-kind table below) |
+| **fully_modeled** | 607 | Every effect kind on every skill is either modeled by the sim translator or intentionally no-op vs CB |
+| **has_gaps** | 505 | One or more effect kinds COULD matter for CB but have no sim path today (see gap-kind table below) |
 | **unknown_kinds** | 0 | Has effect kinds not in MODELED/NO_OP/GAP sets — need investigation |
 | **no_skill_data** | 1 | Skill IDs reference missing entries in `skills_all.json` |
 
@@ -19,70 +19,72 @@ How often each unmodeled-but-CB-relevant kind appears, and on how many heroes:
 
 | Kind | Heroes affected |
 |---|---|
-| `RemoveBuff` | 106 |
-| `RemoveDebuff` | 101 |
-| `StealBuff` | 88 |
-| `ReduceBuffLifetime` | 44 |
-| `IncreaseCooldown` | 39 |
-| `TransferDebuff` | 36 |
-| `ActivateSkill` | 30 |
-| `MultiplyDebuff` | 24 |
-| `MultiplyEffectChance` | 16 |
-| `DestroyStats` | 16 |
-| `PassiveCounterattack` | 16 |
-| `ChangeEffectResistance` | 13 |
-| `AddIgnoredEffects` | 13 |
-| `PassiveBlockDebuff` | 12 |
-| `LifeShare` | 12 |
-| `EffectContainer` | 10 |
+| `RemoveDebuff` | 130 |
+| `RemoveBuff` | 114 |
+| `StealBuff` | 91 |
+| `ActivateSkill` | 51 |
+| `ReduceBuffLifetime` | 48 |
+| `IncreaseCooldown` | 44 |
+| `TransferDebuff` | 37 |
+| `PassiveCounterattack` | 37 |
+| `PassiveBlockDebuff` | 36 |
+| `MultiplyDebuff` | 25 |
+| `AddIgnoredEffects` | 20 |
+| `MultiplyEffectChance` | 19 |
+| `DestroyStats` | 18 |
+| `ChangeEffectResistance` | 15 |
+| `LifeShare` | 15 |
+| `GiveTurn` | 11 |
+| `PassiveUnkillable` | 11 |
+| `PassiveBlockEffect` | 11 |
+| `EffectContainer` | 11 |
 | `SwapHealth` | 8 |
+| `ExcludeHitType` | 7 |
+| `MultiplyBuff` | 7 |
+| `PassiveShareDamage` | 7 |
 | `IncreaseShield` | 7 |
-| `MultiplyBuff` | 6 |
+| `ChangeEffectApplyMode` | 6 |
+| `PassiveReflectDamage` | 6 |
 | `ChangeEffectRepeatCount` | 6 |
-| `PassiveBlockEffect` | 5 |
-| `GiveTurn` | 5 |
-| `ChangeEffectApplyMode` | 4 |
-| `PassiveReflectDamage` | 3 |
-| `PassiveUnkillable` | 2 |
-| `ChangeEffectAccuracy` | 2 |
-| `ActivateCounterattack` | 2 |
-| `ReduceShield` | 2 |
-| `ChangeStatForEffect` | 1 |
-| `PassiveShareDamage` | 1 |
+| `ChangeStatForEffect` | 5 |
+| `ChangeHealMultiplier` | 5 |
+| `ActivateCounterattack` | 4 |
+| `ConvertStatusBuffToDebuff` | 3 |
+| `ChangeEffectAccuracy` | 3 |
+| `ChangeEffectProtection` | 3 |
+| `ReduceShield` | 3 |
+| `ConvertStatusDebuffToBuff` | 2 |
+| `CheckTargetForCondition` | 2 |
+| `ChangeShieldMultiplier` | 2 |
 | `ReturnDebuffs` | 1 |
-| `ChangeHealMultiplier` | 1 |
-| `ChangeShieldMultiplier` | 1 |
-| `ChangeEffectProtection` | 1 |
-| `ExcludeHitType` | 1 |
-| `ConvertStatusBuffToDebuff` | 1 |
-| `CheckTargetForCondition` | 1 |
-| `ConvertStatusDebuffToBuff` | 1 |
+| `ChangeCounterattackParams` | 1 |
+| `ReplaceStatusEffectOnApplying` | 1 |
 
 ## Coverage by element
 
 | Element | fully_modeled | has_gaps | unknown_kinds | no_skill_data |
 |---|---|---|---|---|
-| Force | 154 | 132 | 0 | 0 |
-| Magic | 178 | 98 | 0 | 0 |
-| Spirit | 175 | 99 | 0 | 0 |
-| Void | 165 | 111 | 0 | 1 |
+| Force | 145 | 141 | 0 | 0 |
+| Magic | 161 | 115 | 0 | 0 |
+| Spirit | 153 | 121 | 0 | 0 |
+| Void | 148 | 128 | 0 | 1 |
 
 ## Coverage by faction (top 12)
 
 | Faction | fully_modeled | has_gaps | unknown_kinds | no_skill_data |
 |---|---|---|---|---|
-| SacredOrder | 51 | 41 | 0 | 0 |
+| SacredOrder | 45 | 47 | 0 | 0 |
 | Unknown | 67 | 21 | 0 | 1 |
-| BannerLords | 53 | 29 | 0 | 0 |
-| Barbarians | 48 | 29 | 0 | 0 |
-| KnightsRevenant | 43 | 28 | 0 | 0 |
-| UndeadHordes | 42 | 29 | 0 | 0 |
-| Dwarves | 39 | 28 | 0 | 0 |
-| DarkElves | 38 | 29 | 0 | 0 |
-| OgrynTribes | 45 | 20 | 0 | 0 |
-| Orcs | 35 | 29 | 0 | 0 |
-| Demonspawn | 37 | 26 | 0 | 0 |
-| Samurai | 34 | 25 | 0 | 0 |
+| BannerLords | 49 | 33 | 0 | 0 |
+| Barbarians | 39 | 38 | 0 | 0 |
+| KnightsRevenant | 40 | 31 | 0 | 0 |
+| UndeadHordes | 38 | 33 | 0 | 0 |
+| Dwarves | 36 | 31 | 0 | 0 |
+| DarkElves | 34 | 33 | 0 | 0 |
+| OgrynTribes | 37 | 28 | 0 | 0 |
+| Orcs | 34 | 30 | 0 | 0 |
+| Demonspawn | 35 | 28 | 0 | 0 |
+| Samurai | 27 | 32 | 0 | 0 |
 
 ## Sample heroes per tier
 
@@ -92,33 +94,33 @@ How often each unmodeled-but-CB-relevant kind appears, and on how many heroes:
 - **Rocktooth** [Magic/Rare/OgrynTribes]
 - **Xiloco the Encrusted** [Magic/Legendary/LizardMen]
 - **Gladewulf** [Void/Rare/SylvanWatchers]
-- **Predator** [Force/Legendary/LizardMen]
-- **Gaspard the Accused** [Void/Legendary/UndeadHordes]
 - **Shatterbones** [Force/Epic/OgrynTribes]
 - **Thorn Golem** [Void/Epic/SylvanWatchers]
 - **Xenomorph** [Magic/Legendary/DarkElves]
-- **Kroz Wallbreaker** [Spirit/Legendary/OgrynTribes]
 - **Bladerider** [Magic/Rare/Olympians]
 - **Acolyte of the Slither** [Spirit/Rare/Olympians]
-- **Cecilia the Red Hope** [Void/Legendary/BannerLords]
 - **Erinyes** [Force/Epic/Demonspawn]
+- **Galapo the Recluse** [Magic/Epic/LizardMen]
+- **Silvain the Paramour** [Void/Rare/BannerLords]
+- **Alure** [Magic/Epic/Demonspawn]
+- **Tidemaster Dexikos** [Magic/Epic/Olympians]
 
 ### has_gaps (first 15)
 - **Klaazag Keyhulk** [Void/Legendary/OgrynTribes] gaps=['TransferDebuff']
 - **Hilda Arnorndottr** [Force/Epic/Dwarves] gaps=['StealBuff']
 - **Granyt Doorkeep** [Spirit/Legendary/Dwarves] gaps=['RemoveBuff', 'RemoveDebuff']
-- **Pontiff Augustin** [Void/Legendary/KnightsRevenant] gaps=['RemoveBuff']
+- **Predator** [Force/Legendary/LizardMen] gaps=['PassiveCounterattack']
+- **Pontiff Augustin** [Void/Legendary/KnightsRevenant] gaps=['ReduceBuffLifetime', 'RemoveBuff']
 - **Sanguine Maria** [Force/Legendary/UndeadHordes] gaps=['IncreaseCooldown', 'MultiplyEffectChance', 'RemoveBuff']
+- **Gaspard the Accused** [Void/Legendary/UndeadHordes] gaps=['ActivateSkill']
 - **Venalicia Thrallmother** [Force/Legendary/KnightsRevenant] gaps=['IncreaseCooldown', 'RemoveBuff']
-- **Gaellut, Son of the Pact** [Void/Legendary/Orcs] gaps=['ReduceBuffLifetime', 'RemoveDebuff']
+- **Kroz Wallbreaker** [Spirit/Legendary/OgrynTribes] gaps=['GiveTurn']
+- **Gaellut, Son of the Pact** [Void/Legendary/Orcs] gaps=['ActivateSkill', 'ReduceBuffLifetime', 'RemoveDebuff']
 - **Sunken Sentinel** [Void/Rare/Olympians] gaps=['MultiplyEffectChance']
 - **Yukimasa, Demon of Ice** [Force/Legendary/Samurai] gaps=['ActivateSkill', 'ChangeStatForEffect']
-- **Hilve the Rime-called** [Force/Legendary/Dwarves] gaps=['ActivateSkill', 'RemoveBuff']
+- **Cecilia the Red Hope** [Void/Legendary/BannerLords] gaps=['RemoveDebuff']
+- **Hilve the Rime-called** [Force/Legendary/Dwarves] gaps=['ActivateSkill', 'RemoveBuff', 'StealBuff']
 - **Maddak, Eyes of Skyiron** [Magic/Epic/Dwarves] gaps=['MultiplyDebuff', 'RemoveBuff', 'StealBuff', 'TransferDebuff']
-- **Kassandra** [Magic/Legendary/Olympians] gaps=['PassiveUnkillable', 'RemoveDebuff']
-- **Basim Ibn Ishaq** [Force/Legendary/SacredOrder] gaps=['MultiplyDebuff']
-- **Ezio Auditore** [Spirit/Legendary/SacredOrder] gaps=['StealBuff']
-- **Edward Kenway** [Force/Legendary/BannerLords] gaps=['ChangeEffectApplyMode', 'StealBuff']
 
 ### no_skill_data (first 15)
 - **Team Guardian** [Void/Common/Unknown]

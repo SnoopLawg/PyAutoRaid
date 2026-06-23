@@ -238,6 +238,22 @@ def main() -> None:
     skill_rows = _unwrap_list(sa)
     skill_by_id = {s.get("Id") or s.get("id"): s for s in skill_rows}
 
+    # `hero_types.json` skill_ids is incomplete for ~47% of heroes (omits one
+    # skill each — e.g. Demytha's A3 Block Damage). Recover the full kit by
+    # expanding each listed skill's base*100+N family against the skill table,
+    # so coverage isn't understated. Same fix as tools/m5_synergy_graph.py.
+    all_skill_ids = set(skill_by_id.keys())
+
+    def full_skill_family(listed_ids: list[int]) -> list[int]:
+        bases = {s // 100 for s in listed_ids}
+        out = set(listed_ids)
+        for base in bases:
+            for n in range(1, 7):
+                cand = base * 100 + n
+                if cand in all_skill_ids:
+                    out.add(cand)
+        return sorted(out)
+
     # Only base-ascend, non-boss playable champions.
     playable = [r for r in hero_rows if not r.get("is_boss") and r.get("ascend_level") == 0]
 
@@ -247,7 +263,7 @@ def main() -> None:
 
     for hero in playable:
         name = hero["name"]
-        sids = hero.get("skill_ids") or []
+        sids = full_skill_family(hero.get("skill_ids") or [])
         skills_info = []
         hero_kinds: Counter = Counter()
         hero_status_by_kind: dict[str, str] = {}
