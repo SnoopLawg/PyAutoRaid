@@ -31,25 +31,32 @@ and verifies leaderboard credit.
 
 | Sub-goal | Status | Notes |
 |---|---|---|
-| Sim — Force-day MEN tune | ✅ | +6.2% at BT21 (sim 11.4M vs real 10.73M); calibrated via generic glance gate + universe-wide skill modeling |
-| Sim — Spirit-day MEN tune | 🟡 | -55% under-prediction; sim dies T22-23 vs real T50. Suspected: UK refresh gap, COM proc rate, un-modeled survival mechanic |
-| Sim — Magic-day MEN tune | 🟡 | -55% under-prediction; Ninja A1 +15% TM fires 100% on Force/Spirit but only 73% on Magic (70-capture empirical) — root cause for Magic-only cycle desync |
-| Sim — Void-day MEN tune | 🔴 | No recent Void capture; baseline unknown post-element-fix |
+| Sim — Force-day MEN tune | ✅ | **2026-06-23**: -3.4% @ BT24 + -1.8% @ BT19 (2 fixtures within ±5%). DWJ-parity scheduler ported via TM-reset fix. |
+| Sim — Magic-day MEN tune | ✅ | **2026-06-23**: -1.4% / +3.2% / +0.8% @ BT49 (3 BT49 fixtures within ±5%). Was -55% under pre-session. |
+| Sim — Spirit-day MEN tune | 🔴 | No verified fixture post-element-fix (2026-06-18). Stale memory said "-55% under" — disregard pending real capture. |
+| Sim — Void-day MEN tune | 🔴 | No verified fixture post-element-fix. |
 | Battle log — per-tick state | ✅ | Mod's `/tick-log` captures TM, HP, buffs, debuffs, damage events with intermediates |
 | Battle log — post-battle deltas | 🟡 | Damage attribution per-hero works; quest/leaderboard credit verification added to `cb_daily.py`; item drops not yet structured |
-| Death watcher (key conservation) | ✅ | `tools/cb_watcher.py` validated end-to-end 2026-06-21: detected 1/5 dead at boss turn 23, fired `taskkill`, relaunched Raid, key count unchanged (1→1). Trigger fires on `hp_cur<=0`; per-poll JSONL trace lands at `cb_watcher_<tag>_<ts>.poll.jsonl`. Skill: `.claude/skills/cb-key-conservation/` |
-| Fixture library + replay | ✅ | `tools/fixture_archive.py` catalogs all (tick + battle + poll) triples into `data/fixtures/manifest.json` (120 captures, 13 replayable). `tools/sim_replay.py` runs sim against one fixture. `tools/sim_regress.py` runs the full battery — current baseline: Force median -0.7% (n=7), Magic -64.9% (n=1). Zero keys per iteration. |
-| Recommender — team picks | 🟡 | `cb_team_explorer.py` surfaces novel comps; gated below recommendation bar until sim ±5% across all affinities |
+| Death watcher (key conservation) | ✅ | `tools/cb_watcher.py` validated end-to-end. Trigger fires on `hp_cur<=0`; per-poll JSONL trace lands at `cb_watcher_<tag>_<ts>.poll.jsonl`. Skill: `.claude/skills/cb-key-conservation/` |
+| Fixture library + replay | ✅ | `tools/fixture_archive.py` catalogs (tick + battle + poll + **presets** as of 2026-06-23) triples into `data/fixtures/manifest.json`. **New 2026-06-23**: preset snapshot bundled at capture time so historical fixtures replay against the correct preset. |
+| Per-hero turn cadence diagnostic | ✅ | `tools/turn_cadence_diff.py` (NEW 2026-06-23) compares per-hero turn counts between sim and real per BT. Cb_sim cadence now matches DWJ-parity exactly on the MEN tune. |
+| DWJ-parity scheduler | ✅ | **NEW 2026-06-23**: TM-reset (not preserve-overflow) on cast brings cb_sim per-hero cadence within 0 turns of DWJ-parity. See memory `project_cb_sim_tm_reset_fix`. |
+| Recommender — team picks | 🟡 | `cb_team_explorer.py` surfaces novel comps; **gate now passed for Magic+Force MEN** — still gated for Spirit+Void until verified. |
 | Recommender — gear loadouts | ✅ | `global_gear_solver.py` + `cb_optimizer.py` solve per-team stat targets; per-hero stat targets via `hh_picker.py` (HH still in path — to deprecate) |
 | Daily runner | ✅ | `cb_daily.py` runs all keys, session warm-up, leaderboard verification, silent-fail detection |
 | Preset substrate integration | ✅ | `/save-preset`, `/update-preset`, `/apply-preset` all live; user's flagship preset is id=1 (signal-matched, not type-filtered) |
 
-**Blockers / next-action**: Magic-day cycle desync is the headline gap.
-Hypothesis chain: Ninja A1 misfire 27% on Magic → cycle desync → BD/UK
-refresh window misses → death T22. Next capture should hook
-`AfterEffectProcessedOnTarget` on Ninja A1 to confirm/refute the misfire
-mechanism. Death-watcher tool would let us get multiple Magic captures
-without burning the daily 2-key budget.
+**Status 2026-06-23**: M1 ±5% gate now MET on Magic + Force full-battle
+captures for the MEN tune. Spirit + Void need 1 verified fixture each
+to close the milestone for all 4 affinities. Recommender unlocked for
+Magic + Force tunes; Spirit/Void gated pending capture.
+
+**Headline fix this session**: cb_sim per-hero cadence was systematically
+8-14% slower than DWJ-parity (which matches real game). Root cause was
+`champ.tm -= TM_THRESHOLD` (preserve overflow) instead of DWJ's
+`turn_meter = 0` (reset). One-line scheduler fix brought all 5 heroes
+to within 0 turns of DWJ over 50 BTs. Plus: facade encoding bug fixed,
+preset snapshot pipeline added, Ninja A3 reduce_cd Hailburn modeled.
 
 ### M2: Replicate pattern for Hydra / Chimera
 
