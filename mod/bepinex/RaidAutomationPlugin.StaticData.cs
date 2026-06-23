@@ -646,24 +646,19 @@ namespace RaidAutomation
                             gFirst = false;
                             sb.Append("{\"grade_index\":").Append(gradeIdx);
                             gradeIdx++;
-                            // Nullable<int>.HasValue + .Value. Skip 0 — that's
-                            // Plarium's sentinel for "no skill modifier"; only
-                            // emit when the blessing actually targets a skill.
+                            // SkillTypeId is Nullable<int> at offset 0x10. The
+                            // standard .HasValue/.Value reflection returns 0 for
+                            // IL2Cpp-wrapped Nullables (see memory
+                            // project_il2cpp_nullable_enum) — use NullableEnumInt,
+                            // which reads Marshal.ReadInt32(Pointer, 16). This is
+                            // the authoritative blessing -> proc-skill link
+                            // (e.g. Phantom Touch -> 600050, Brimstone -> 600190).
+                            // Skip 0 (Plarium's "no skill modifier" sentinel).
                             if (skillId != null)
                             {
-                                try
-                                {
-                                    var hv = skillId.GetType().GetProperty("HasValue");
-                                    bool has = hv != null && (bool)hv.GetValue(skillId);
-                                    if (has)
-                                    {
-                                        var vv = skillId.GetType().GetProperty("Value")?.GetValue(skillId);
-                                        int sid = vv != null ? Convert.ToInt32(vv) : 0;
-                                        if (sid > 0)
-                                            sb.Append(",\"skill_type_id\":").Append(sid);
-                                    }
-                                }
-                                catch { }
+                                int sid = NullableEnumInt(skillId);
+                                if (sid > 0)
+                                    sb.Append(",\"skill_type_id\":").Append(sid);
                             }
                             if (statCount > 0)
                             {

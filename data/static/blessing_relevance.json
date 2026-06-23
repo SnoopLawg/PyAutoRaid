@@ -17,8 +17,8 @@
       "campaign"
     ],
     "modeled_in_sim": 3,
-    "needs_verification": 28,
-    "verified_game_truth": 6,
+    "needs_verification": 19,
+    "verified_game_truth": 15,
     "relevance_by_location": {
       "cb": {
         "relevant": 30,
@@ -69,14 +69,14 @@
         "out_of_scope": 0
       },
       "hydra": {
-        "relevant": 34,
-        "no_op": 0,
+        "relevant": 33,
+        "no_op": 1,
         "stat_bonus": 0,
         "out_of_scope": 0
       },
       "chimera": {
-        "relevant": 34,
-        "no_op": 0,
+        "relevant": 33,
+        "no_op": 1,
         "stat_bonus": 0,
         "out_of_scope": 0
       },
@@ -227,8 +227,8 @@
       "is_hand_coded": false,
       "role": null,
       "sim_handler": null,
-      "proc_source": "tooltip_public",
-      "mechanic": "Place [Necrosis] debuff on attack \u2014 Necrosis is a stackable damage-over-time",
+      "proc_source": "verified_game_truth",
+      "mechanic": "Grade 6: Damage 3*ATK to AllEnemies when deadAlliesCount>0; lower grades grant a buff. See blessing_procs.json.",
       "relevance": {
         "cb": "relevant",
         "arena": "relevant",
@@ -243,7 +243,7 @@
         "forest": "relevant",
         "campaign": "relevant"
       },
-      "notes": "DoT proc; applies anywhere holder attacks an enemy."
+      "notes": "skill 600010. Damage proc gated on dead allies \u2014 late-game in any mode."
     },
     {
       "id": "Execute",
@@ -252,8 +252,8 @@
       "is_hand_coded": false,
       "role": null,
       "sim_handler": null,
-      "proc_source": "tooltip_public",
-      "mechanic": "Bonus damage to enemies below X% HP",
+      "proc_source": "verified_game_truth",
+      "mechanic": "Damage = 1*TRG_CUR_HP to AllEnemies (current-HP proportional; gated !targetIsDying).",
       "relevance": {
         "cb": "relevant",
         "arena": "relevant",
@@ -268,7 +268,7 @@
         "forest": "relevant",
         "campaign": "relevant"
       },
-      "notes": "Damage amp on low-HP targets; applies vs any boss/mob with HP bar."
+      "notes": "skill 600130. Current-HP-based; huge vs high-HP bosses but likely FA/DoT-capped \u2014 verify before sim."
     },
     {
       "id": "LeadershipDomination",
@@ -277,8 +277,8 @@
       "is_hand_coded": false,
       "role": null,
       "sim_handler": null,
-      "proc_source": "tooltip_public",
-      "mechanic": "Aura effect \u2014 boosts ally stats based on holder's stats",
+      "proc_source": "verified_game_truth",
+      "mechanic": "PassiveBonus +2.5%*tier to AllAllies and -5%*tier to AllEnemies (stat aura).",
       "relevance": {
         "cb": "relevant",
         "arena": "relevant",
@@ -293,7 +293,7 @@
         "forest": "relevant",
         "campaign": "relevant"
       },
-      "notes": "Always-on team buff."
+      "notes": "skill 600080. Always-on team stat aura + enemy debuff aura."
     },
     {
       "id": "Meteor",
@@ -302,8 +302,8 @@
       "is_hand_coded": false,
       "role": null,
       "sim_handler": null,
-      "proc_source": "tooltip_public",
-      "mechanic": "Per-hit chance to call a Meteor for AoE damage to all enemies",
+      "proc_source": "verified_game_truth",
+      "mechanic": "ApplyDebuff to RelationTarget (Smite-style mark; all grades).",
       "relevance": {
         "cb": "relevant",
         "arena": "relevant",
@@ -318,7 +318,7 @@
         "forest": "relevant",
         "campaign": "relevant"
       },
-      "notes": "AoE damage proc \u2014 strong in multi-enemy modes; works vs CB single boss too."
+      "notes": "skill 600190. Debuff-mark proc; applies vs any enemy incl bosses."
     },
     {
       "id": "Polymorph",
@@ -327,8 +327,8 @@
       "is_hand_coded": false,
       "role": null,
       "sim_handler": null,
-      "proc_source": "tooltip_public",
-      "mechanic": "Place Polymorph debuff (sheep transformation) on enemy",
+      "proc_source": "verified_game_truth",
+      "mechanic": "SheepTransformation on RelationProducer (CC; all grades).",
       "relevance": {
         "cb": "no_op",
         "arena": "relevant",
@@ -343,7 +343,7 @@
         "forest": "relevant",
         "campaign": "relevant"
       },
-      "notes": "CC debuff; CB boss is immune. Strong PVP/Faction Wars/DT."
+      "notes": "skill 600200. CC transform; CB & most raid bosses immune. Strong PVP/FW/DT."
     },
     {
       "id": "TimeSlowdown",
@@ -352,8 +352,8 @@
       "is_hand_coded": false,
       "role": null,
       "sim_handler": null,
-      "proc_source": "tooltip_public",
-      "mechanic": "Reduce target Turn Meter on attack",
+      "proc_source": "verified_game_truth",
+      "mechanic": "PassiveChangeStats -SPD per enemy buff + grade-6 ReduceStamina 0.15*MAX_STAMINA.",
       "relevance": {
         "cb": "no_op",
         "arena": "relevant",
@@ -368,7 +368,7 @@
         "forest": "relevant",
         "campaign": "relevant"
       },
-      "notes": "CB boss is TM-immune; relevant in any other mode."
+      "notes": "skill 600020. SPD-debuff + TM drain \u2014 CB boss is SPD-debuffable but TM-immune; fully useful in other modes."
     },
     {
       "id": "SoulDrinker",
@@ -377,33 +377,8 @@
       "is_hand_coded": false,
       "role": null,
       "sim_handler": null,
-      "proc_source": "tooltip_public",
-      "mechanic": "Heal a portion of damage dealt (Lifesteal-style)",
-      "relevance": {
-        "cb": "relevant",
-        "arena": "relevant",
-        "tt": "relevant",
-        "dungeon": "relevant",
-        "fw": "relevant",
-        "dt": "relevant",
-        "cc": "relevant",
-        "siege": "relevant",
-        "hydra": "relevant",
-        "chimera": "relevant",
-        "forest": "relevant",
-        "campaign": "relevant"
-      },
-      "notes": "Self-heal on damage; useful anywhere holder attacks."
-    },
-    {
-      "id": "CreepingRoots",
-      "divinity": "Forest",
-      "rarity": "Legendary",
-      "is_hand_coded": false,
-      "role": null,
-      "sim_handler": null,
-      "proc_source": "tooltip_public",
-      "mechanic": "Place [Ensnare] debuff on enemy on attack",
+      "proc_source": "verified_game_truth",
+      "mechanic": "DestroyHp 0.1-0.4*TRG_B_HP (by grade) + IncreaseStamina to self.",
       "relevance": {
         "cb": "no_op",
         "arena": "relevant",
@@ -413,22 +388,22 @@
         "dt": "relevant",
         "cc": "relevant",
         "siege": "relevant",
-        "hydra": "relevant",
-        "chimera": "relevant",
+        "hydra": "no_op",
+        "chimera": "no_op",
         "forest": "relevant",
         "campaign": "relevant"
       },
-      "notes": "Ensnare reduces TM and prevents attack; CB boss immune."
+      "notes": "skill 600140. DestroyHp is NO-OP vs CB/Hydra/Chimera bosses (immune). Useful vs killable enemies."
     },
     {
-      "id": "WildImpulses",
+      "id": "CreepingRoots",
       "divinity": "Forest",
       "rarity": "Legendary",
       "is_hand_coded": false,
       "role": null,
       "sim_handler": null,
-      "proc_source": "tooltip_public",
-      "mechanic": "Per-hit chance for instant additional attack",
+      "proc_source": "verified_game_truth",
+      "mechanic": "ChangeCalculatedDamage vs StoneSkin targets (1.2-1.6x by grade).",
       "relevance": {
         "cb": "relevant",
         "arena": "relevant",
@@ -443,7 +418,32 @@
         "forest": "relevant",
         "campaign": "relevant"
       },
-      "notes": "Damage proc \u2014 applies anywhere holder attacks."
+      "notes": "skill 600260. Anti-StoneSkin damage amp \u2014 relevant where enemies wear StoneSkin (Ice Golem, some DT)."
+    },
+    {
+      "id": "WildImpulses",
+      "divinity": "Forest",
+      "rarity": "Legendary",
+      "is_hand_coded": false,
+      "role": null,
+      "sim_handler": null,
+      "proc_source": "verified_game_truth",
+      "mechanic": "IncreaseStamina (self TM fill) + ReduceCooldown \u2014 tempo proc.",
+      "relevance": {
+        "cb": "relevant",
+        "arena": "relevant",
+        "tt": "relevant",
+        "dungeon": "relevant",
+        "fw": "relevant",
+        "dt": "relevant",
+        "cc": "relevant",
+        "siege": "relevant",
+        "hydra": "relevant",
+        "chimera": "relevant",
+        "forest": "relevant",
+        "campaign": "relevant"
+      },
+      "notes": "skill 600250. Self TM + CD reduction; applies in any mode."
     },
     {
       "id": "Exterminator",

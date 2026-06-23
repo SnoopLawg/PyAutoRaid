@@ -113,66 +113,68 @@ CLASSIFICATION: dict[str, dict] = {
     # ============== Legendary — NOT yet hand-coded in sim ==============
     "Necromancy": {
         "sim_handler": None,
-        "proc_source": "tooltip_public",
-        "mechanic": "Place [Necrosis] debuff on attack — Necrosis is a stackable damage-over-time",
+        "proc_source": "verified_game_truth",  # skill 600010 (Ward of the Fallen)
+        "mechanic": "Grade 6: Damage 3*ATK to AllEnemies when deadAlliesCount>0; lower grades grant a buff. See blessing_procs.json.",
         "relevance": _everywhere(),
-        "notes": "DoT proc; applies anywhere holder attacks an enemy.",
+        "notes": "skill 600010. Damage proc gated on dead allies — late-game in any mode.",
     },
     "Execute": {
         "sim_handler": None,
-        "proc_source": "tooltip_public",
-        "mechanic": "Bonus damage to enemies below X% HP",
+        "proc_source": "verified_game_truth",  # skill 600130 (Soul Reap)
+        "mechanic": "Damage = 1*TRG_CUR_HP to AllEnemies (current-HP proportional; gated !targetIsDying).",
         "relevance": _everywhere(),
-        "notes": "Damage amp on low-HP targets; applies vs any boss/mob with HP bar.",
+        "notes": "skill 600130. Current-HP-based; huge vs high-HP bosses but likely FA/DoT-capped — verify before sim.",
     },
     "LeadershipDomination": {
         "sim_handler": None,
-        "proc_source": "tooltip_public",
-        "mechanic": "Aura effect — boosts ally stats based on holder's stats",
+        "proc_source": "verified_game_truth",  # skill 600080 (Intimidating Presence)
+        "mechanic": "PassiveBonus +2.5%*tier to AllAllies and -5%*tier to AllEnemies (stat aura).",
         "relevance": _everywhere(),
-        "notes": "Always-on team buff.",
+        "notes": "skill 600080. Always-on team stat aura + enemy debuff aura.",
     },
     "Meteor": {
         "sim_handler": None,
-        "proc_source": "tooltip_public",
-        "mechanic": "Per-hit chance to call a Meteor for AoE damage to all enemies",
+        "proc_source": "verified_game_truth",  # skill 600190 (internally 'Brimstone')
+        "mechanic": "ApplyDebuff to RelationTarget (Smite-style mark; all grades).",
         "relevance": _everywhere(),
-        "notes": "AoE damage proc — strong in multi-enemy modes; works vs CB single boss too.",
+        "notes": "skill 600190. Debuff-mark proc; applies vs any enemy incl bosses.",
     },
     "Polymorph": {
         "sim_handler": None,
-        "proc_source": "tooltip_public",
-        "mechanic": "Place Polymorph debuff (sheep transformation) on enemy",
+        "proc_source": "verified_game_truth",  # skill 600200
+        "mechanic": "SheepTransformation on RelationProducer (CC; all grades).",
         "relevance": _cc_only(),
-        "notes": "CC debuff; CB boss is immune. Strong PVP/Faction Wars/DT.",
+        "notes": "skill 600200. CC transform; CB & most raid bosses immune. Strong PVP/FW/DT.",
     },
     "TimeSlowdown": {
         "sim_handler": None,
-        "proc_source": "tooltip_public",
-        "mechanic": "Reduce target Turn Meter on attack",
+        "proc_source": "verified_game_truth",  # skill 600020 (Temporal Chains)
+        "mechanic": "PassiveChangeStats -SPD per enemy buff + grade-6 ReduceStamina 0.15*MAX_STAMINA.",
         "relevance": _tm_drain(),
-        "notes": "CB boss is TM-immune; relevant in any other mode.",
+        "notes": "skill 600020. SPD-debuff + TM drain — CB boss is SPD-debuffable but TM-immune; fully useful in other modes.",
     },
     "SoulDrinker": {
         "sim_handler": None,
-        "proc_source": "tooltip_public",
-        "mechanic": "Heal a portion of damage dealt (Lifesteal-style)",
-        "relevance": _everywhere(),
-        "notes": "Self-heal on damage; useful anywhere holder attacks.",
+        "proc_source": "verified_game_truth",  # skill 600140 (Life Harvest)
+        "mechanic": "DestroyHp 0.1-0.4*TRG_B_HP (by grade) + IncreaseStamina to self.",
+        # DestroyHp is NO-OP vs CB (Demon Lord immune, task #8) — correct the
+        # earlier 'relevant everywhere' guess with game-truth.
+        "relevance": {**_everywhere(), "cb": "no_op", "hydra": "no_op", "chimera": "no_op"},
+        "notes": "skill 600140. DestroyHp is NO-OP vs CB/Hydra/Chimera bosses (immune). Useful vs killable enemies.",
     },
     "CreepingRoots": {
         "sim_handler": None,
-        "proc_source": "tooltip_public",
-        "mechanic": "Place [Ensnare] debuff on enemy on attack",
-        "relevance": _cc_only(),
-        "notes": "Ensnare reduces TM and prevents attack; CB boss immune.",
+        "proc_source": "verified_game_truth",  # skill 600260 (Cracking Roots)
+        "mechanic": "ChangeCalculatedDamage vs StoneSkin targets (1.2-1.6x by grade).",
+        "relevance": _everywhere(),
+        "notes": "skill 600260. Anti-StoneSkin damage amp — relevant where enemies wear StoneSkin (Ice Golem, some DT).",
     },
     "WildImpulses": {
         "sim_handler": None,
-        "proc_source": "tooltip_public",
-        "mechanic": "Per-hit chance for instant additional attack",
+        "proc_source": "verified_game_truth",  # skill 600250 (Harmonic Impulse)
+        "mechanic": "IncreaseStamina (self TM fill) + ReduceCooldown — tempo proc.",
         "relevance": _everywhere(),
-        "notes": "Damage proc — applies anywhere holder attacks.",
+        "notes": "skill 600250. Self TM + CD reduction; applies in any mode.",
     },
 
     # ============== Epic blessings (10) ==============

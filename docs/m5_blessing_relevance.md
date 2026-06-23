@@ -7,8 +7,8 @@ All **34 blessings** classified per location.
 ## Modeling status snapshot
 
 - **Modeled with sim handler**: 3
-- **Proc source = verified_game_truth**: 6
-- **Proc source = tooltip_public** (needs IL2CPP/`/blessings-truth` proc-formula verification): 28
+- **Proc source = verified_game_truth**: 15
+- **Proc source = tooltip_public** (needs IL2CPP/`/blessings-truth` proc-formula verification): 19
 
 ## Relevance by location (count of blessings that proc usefully)
 
@@ -22,8 +22,8 @@ All **34 blessings** classified per location.
 | **dt** | 34 | 0 | 0 |
 | **cc** | 34 | 0 | 0 |
 | **siege** | 34 | 0 | 0 |
-| **hydra** | 34 | 0 | 0 |
-| **chimera** | 34 | 0 | 0 |
+| **hydra** | 33 | 1 | 0 |
+| **chimera** | 33 | 1 | 0 |
 | **forest** | 34 | 0 | 0 |
 | **campaign** | 34 | 0 | 0 |
 
@@ -41,20 +41,20 @@ All **34 blessings** classified per location.
 | ChainBreaker | Epic | War |  | tooltip_public | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | Cleanse self of debuffs when struck |
 | MagicFlame | Epic | Wisdom |  | tooltip_public | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | Chance to place [HP Burn] debuff on attack |
 | Penetrator | Epic | Wisdom |  | tooltip_public | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | Ignore portion of target DEF |
-| Necromancy | Legendary | Dark |  | tooltip_public | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | Place [Necrosis] debuff on attack — Necrosis is a stackable damage-over-time |
+| Necromancy | Legendary | Dark |  | verified_game_truth | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | Grade 6: Damage 3*ATK to AllEnemies when deadAlliesCount>0; lower grades grant a buff. See |
 | PhantomTouch | Legendary | Dark | `phantom_touch_mult` | verified_game_truth | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | AfterDamageDealt → bonus Damage = 3.5×ATK to producer (skill 600050) |
-| TimeSlowdown | Legendary | Dark |  | tooltip_public | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | Reduce target Turn Meter on attack |
-| CreepingRoots | Legendary | Forest |  | tooltip_public | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | Place [Ensnare] debuff on enemy on attack |
-| WildImpulses | Legendary | Forest |  | tooltip_public | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | Per-hit chance for instant additional attack |
+| TimeSlowdown | Legendary | Dark |  | verified_game_truth | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | PassiveChangeStats -SPD per enemy buff + grade-6 ReduceStamina 0.15*MAX_STAMINA. |
+| CreepingRoots | Legendary | Forest |  | verified_game_truth | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ChangeCalculatedDamage vs StoneSkin targets (1.2-1.6x by grade). |
+| WildImpulses | Legendary | Forest |  | verified_game_truth | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | IncreaseStamina (self TM fill) + ReduceCooldown — tempo proc. |
 | Brimstone | Legendary | Light | `has_brimstone` | verified_game_truth | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | Per-hit chance to place [Smite] debuff. Holder's allies do bonus dmg to smited target. |
 | Cruelty | Legendary | Light |  | verified_game_truth | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | Ignore X% of target's DEF on each attack |
-| LeadershipDomination | Legendary | Light |  | tooltip_public | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | Aura effect — boosts ally stats based on holder's stats |
+| LeadershipDomination | Legendary | Light |  | verified_game_truth | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | PassiveBonus +2.5%*tier to AllAllies and -5%*tier to AllEnemies (stat aura). |
 | LightOrbs | Legendary | Light |  | verified_game_truth | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | Place Shield buff when HP < 50% (10/12/15/18/20% per grade) |
 | PerfectHeal | Legendary | Light |  | verified_game_truth | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | +X% to heals cast (10/15/20/25/30% per grade) |
-| Execute | Legendary | War |  | tooltip_public | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | Bonus damage to enemies below X% HP |
-| SoulDrinker | Legendary | War |  | tooltip_public | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | Heal a portion of damage dealt (Lifesteal-style) |
-| Meteor | Legendary | Wisdom |  | tooltip_public | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | Per-hit chance to call a Meteor for AoE damage to all enemies |
-| Polymorph | Legendary | Wisdom |  | tooltip_public | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | Place Polymorph debuff (sheep transformation) on enemy |
+| Execute | Legendary | War |  | verified_game_truth | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | Damage = 1*TRG_CUR_HP to AllEnemies (current-HP proportional; gated !targetIsDying). |
+| SoulDrinker | Legendary | War |  | verified_game_truth | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✓ | ✓ | DestroyHp 0.1-0.4*TRG_B_HP (by grade) + IncreaseStamina to self. |
+| Meteor | Legendary | Wisdom |  | verified_game_truth | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ApplyDebuff to RelationTarget (Smite-style mark; all grades). |
+| Polymorph | Legendary | Wisdom |  | verified_game_truth | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | SheepTransformation on RelationProducer (CC; all grades). |
 | Fearless | Rare | Dark |  | tooltip_public | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | Resist Fear-related debuffs / immunity to Fear |
 | MagicOrb | Rare | Dark | `phantom_touch_mult` | verified_game_truth | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | 3.5×ATK direct damage on attack — same proc shape as PhantomTouch (skill 600050) |
 | Tranquility | Rare | Forest |  | tooltip_public | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | Reduce duration of debuffs received |

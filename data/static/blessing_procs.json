@@ -1,0 +1,1691 @@
+{
+  "_meta": {
+    "generated_by": "tools/extract_blessing_procs.py",
+    "total_blessings": 30,
+    "note": "Authoritative blessing->skill link from blessings.json skill_type_id (GetBlessingsTruth Nullable fix 2026-06-23). Grade resolved via ownersDoubleAscendLevel==N conditions."
+  },
+  "blessings": [
+    {
+      "blessing": "LightOrbs",
+      "rarity": "Legendary",
+      "divinity": "Light",
+      "proc_skills": [
+        {
+          "skill_id": 600070,
+          "skill_name": "Lightning Cage",
+          "effects": [
+            {
+              "kind": "SetLightOrbsStackCount",
+              "formula": "EffectStackCount(LightOrbs)+1",
+              "target": "Owner",
+              "grades": [],
+              "condition": "!relationTargetIsAlly&&(statusEffectIsApplied||CHANGED_STAMINA_AMOUNT>0)&&(relationKindId!=IncreaseStamina_KindId||ownersDoubleAscendLevel>=3)&&OwnerHasEffectOf"
+            },
+            {
+              "kind": "ApplyBuff",
+              "formula": "1",
+              "target": "Owner",
+              "grades": [],
+              "condition": "!relationTargetIsAlly&&(statusEffectIsApplied||CHANGED_STAMINA_AMOUNT>0)&&(relationKindId!=IncreaseStamina_KindId||ownersDoubleAscendLevel>=3)&&!OwnerHasEffectO"
+            },
+            {
+              "kind": "Damage",
+              "formula": "(ownersDoubleAscendLevel<6)*(!targetIsBoss*0.02*TRG_HP*EffectStackCount(LightOrbs)+targetIsBoss*0.01*TRG_HP*EffectStackCount(LightOrbs))+(ownersDoubleAscendLevel>=6)*(!targetIsBoss*0.05*TRG_HP*EffectStackCount(LightOrbs)+targetIsBoss*0.025*TRG_HP*EffectStackCount(LightOrbs))",
+              "target": "RelationTarget",
+              "grades": [],
+              "condition": "!relationTargetIsDying&&!relationTargetIsAlly&&(!thereIsProcessedSkill||HeroTeamId(skillTargetId)==allyTeamId||targetId==skillTargetId)&&isOwnerProduceRelatedEf"
+            },
+            {
+              "kind": "SetLightOrbsStackCount",
+              "formula": "0",
+              "target": "Owner",
+              "grades": [],
+              "condition": ""
+            },
+            {
+              "kind": "MultiplyEffectChance",
+              "formula": "0.75/relationChance",
+              "target": "Owner",
+              "grades": [],
+              "condition": "relationOwnerId==ownerId&&ownersDoubleAscendLevel>=5"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "blessing": "LeadershipDomination",
+      "rarity": "Legendary",
+      "divinity": "Light",
+      "proc_skills": [
+        {
+          "skill_id": 600080,
+          "skill_name": "Intimidating Presence",
+          "effects": [
+            {
+              "kind": "PassiveBonus",
+              "formula": "0.025*((ownersDoubleAscendLevel>=1)*1+(ownersDoubleAscendLevel>=3)*2+(ownersDoubleAscendLevel>=5)*3+(ownersDoubleAscendLevel>=6)*8)",
+              "target": "AllAllies",
+              "grades": [],
+              "condition": ""
+            },
+            {
+              "kind": "PassiveBonus",
+              "formula": "-0.05*((ownersDoubleAscendLevel>=1)*1+(ownersDoubleAscendLevel>=3)*1+(ownersDoubleAscendLevel>=5)*2)",
+              "target": "AllEnemies",
+              "grades": [],
+              "condition": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "blessing": "EnhancedWeapon",
+      "rarity": "Epic",
+      "divinity": "Light",
+      "proc_skills": [
+        {
+          "skill_id": 600090,
+          "skill_name": "Heavencast",
+          "effects": [
+            {
+              "kind": "ChangeDamageMultiplier",
+              "formula": "0.005*BUFF_COUNT*DMG_MUL",
+              "target": "RelationProducer",
+              "grades": [
+                1,
+                2
+              ],
+              "condition": "isOwnerProduceRelatedEffect&&!relationTargetIsAlly&&(ownersDoubleAscendLevel==1||ownersDoubleAscendLevel==2)&&BUFF_COUNT>0"
+            },
+            {
+              "kind": "ChangeDamageMultiplier",
+              "formula": "0.01*BUFF_COUNT*DMG_MUL",
+              "target": "RelationProducer",
+              "grades": [
+                3,
+                4
+              ],
+              "condition": "isOwnerProduceRelatedEffect&&!relationTargetIsAlly&&(ownersDoubleAscendLevel==3||ownersDoubleAscendLevel==4)&&BUFF_COUNT>0"
+            },
+            {
+              "kind": "ChangeDamageMultiplier",
+              "formula": "0.015*BUFF_COUNT*DMG_MUL",
+              "target": "RelationProducer",
+              "grades": [
+                5
+              ],
+              "condition": "isOwnerProduceRelatedEffect&&!relationTargetIsAlly&&ownersDoubleAscendLevel==5&&BUFF_COUNT>0"
+            },
+            {
+              "kind": "ChangeDamageMultiplier",
+              "formula": "0.02*BUFF_COUNT*DMG_MUL",
+              "target": "RelationProducer",
+              "grades": [
+                6
+              ],
+              "condition": "isOwnerProduceRelatedEffect&&!relationTargetIsAlly&&ownersDoubleAscendLevel==6&&BUFF_COUNT>0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "blessing": "Vanguard",
+      "rarity": "Epic",
+      "divinity": "Light",
+      "proc_skills": [
+        {
+          "skill_id": 600100,
+          "skill_name": "Iron Will",
+          "effects": [
+            {
+              "kind": "ChangeDamageMultiplier",
+              "formula": "-0.005*DEBUFF_COUNT*DMG_MUL",
+              "target": "RelationProducer",
+              "grades": [
+                1,
+                2
+              ],
+              "condition": "ownerIsRelatedEffectTarget&&!relationProducerIsAlly&&(ownersDoubleAscendLevel==1||ownersDoubleAscendLevel==2)&&DEBUFF_COUNT>0"
+            },
+            {
+              "kind": "ChangeDamageMultiplier",
+              "formula": "-0.01*DEBUFF_COUNT*DMG_MUL",
+              "target": "RelationProducer",
+              "grades": [
+                3,
+                4
+              ],
+              "condition": "ownerIsRelatedEffectTarget&&!relationProducerIsAlly&&(ownersDoubleAscendLevel==3||ownersDoubleAscendLevel==4)&&DEBUFF_COUNT>0"
+            },
+            {
+              "kind": "ChangeDamageMultiplier",
+              "formula": "-0.015*DEBUFF_COUNT*DMG_MUL",
+              "target": "RelationProducer",
+              "grades": [
+                5
+              ],
+              "condition": "ownerIsRelatedEffectTarget&&!relationProducerIsAlly&&ownersDoubleAscendLevel==5&&DEBUFF_COUNT>0"
+            },
+            {
+              "kind": "ChangeDamageMultiplier",
+              "formula": "-0.02*DEBUFF_COUNT*DMG_MUL",
+              "target": "RelationProducer",
+              "grades": [
+                6
+              ],
+              "condition": "ownerIsRelatedEffectTarget&&!relationProducerIsAlly&&ownersDoubleAscendLevel==6&&DEBUFF_COUNT>0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "blessing": "AdvancedHeal",
+      "rarity": "Rare",
+      "divinity": "Light",
+      "proc_skills": [
+        {
+          "skill_id": 600110,
+          "skill_name": "Miracle Heal",
+          "effects": [
+            {
+              "kind": "RestoreDestroyedHp",
+              "formula": "0.1*DEALT_HEAL",
+              "target": "RelationTarget",
+              "grades": [
+                1,
+                2
+              ],
+              "condition": "isOwnerProduceRelatedEffect&&(ownersDoubleAscendLevel==1||ownersDoubleAscendLevel==2)"
+            },
+            {
+              "kind": "RestoreDestroyedHp",
+              "formula": "0.15*DEALT_HEAL",
+              "target": "RelationTarget",
+              "grades": [
+                3,
+                4
+              ],
+              "condition": "isOwnerProduceRelatedEffect&&(ownersDoubleAscendLevel==3||ownersDoubleAscendLevel==4)"
+            },
+            {
+              "kind": "RestoreDestroyedHp",
+              "formula": "0.2*DEALT_HEAL",
+              "target": "RelationTarget",
+              "grades": [
+                5
+              ],
+              "condition": "isOwnerProduceRelatedEffect&&ownersDoubleAscendLevel==5"
+            },
+            {
+              "kind": "RestoreDestroyedHp",
+              "formula": "0.3*DEALT_HEAL",
+              "target": "RelationTarget",
+              "grades": [
+                6
+              ],
+              "condition": "isOwnerProduceRelatedEffect&&ownersDoubleAscendLevel==6"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "blessing": "Courage",
+      "rarity": "Rare",
+      "divinity": "Light",
+      "proc_skills": [
+        {
+          "skill_id": 600120,
+          "skill_name": "Indomitable Spirit",
+          "effects": [
+            {
+              "kind": "PassiveBlockDebuff",
+              "formula": "",
+              "target": "Producer",
+              "grades": [
+                1,
+                2
+              ],
+              "condition": "!relationAppliedOnRelationTarget&&!isOwnerProduceRelatedEffect&&ownerIsRelatedEffectTarget&&(ownersDoubleAscendLevel==1||ownersDoubleAscendLevel==2)"
+            },
+            {
+              "kind": "PassiveBlockDebuff",
+              "formula": "",
+              "target": "Producer",
+              "grades": [
+                3,
+                4
+              ],
+              "condition": "!relationAppliedOnRelationTarget&&!isOwnerProduceRelatedEffect&&ownerIsRelatedEffectTarget&&(ownersDoubleAscendLevel==3||ownersDoubleAscendLevel==4)"
+            },
+            {
+              "kind": "PassiveBlockDebuff",
+              "formula": "",
+              "target": "Producer",
+              "grades": [
+                5
+              ],
+              "condition": "!relationAppliedOnRelationTarget&&!isOwnerProduceRelatedEffect&&ownerIsRelatedEffectTarget&&ownersDoubleAscendLevel==5"
+            },
+            {
+              "kind": "PassiveBlockDebuff",
+              "formula": "",
+              "target": "Producer",
+              "grades": [
+                6
+              ],
+              "condition": "!relationAppliedOnRelationTarget&&!isOwnerProduceRelatedEffect&&ownerIsRelatedEffectTarget&&ownersDoubleAscendLevel==6"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "blessing": "Necromancy",
+      "rarity": "Legendary",
+      "divinity": "Dark",
+      "proc_skills": [
+        {
+          "skill_id": 600010,
+          "skill_name": "Ward of the Fallen",
+          "effects": [
+            {
+              "kind": "ApplyBuff",
+              "formula": "1",
+              "target": "Owner",
+              "grades": [
+                1,
+                2
+              ],
+              "condition": "(ownersDoubleAscendLevel==1||ownersDoubleAscendLevel==2)"
+            },
+            {
+              "kind": "ApplyBuff",
+              "formula": "2",
+              "target": "Owner",
+              "grades": [
+                3,
+                4
+              ],
+              "condition": "(ownersDoubleAscendLevel==3||ownersDoubleAscendLevel==4)"
+            },
+            {
+              "kind": "ApplyBuff",
+              "formula": "2",
+              "target": "Owner",
+              "grades": [
+                5
+              ],
+              "condition": "ownersDoubleAscendLevel==5"
+            },
+            {
+              "kind": "ApplyBuff",
+              "formula": "3",
+              "target": "Owner",
+              "grades": [
+                6
+              ],
+              "condition": "ownersDoubleAscendLevel==6"
+            },
+            {
+              "kind": "Damage",
+              "formula": "3*ATK",
+              "target": "AllEnemies",
+              "grades": [
+                6
+              ],
+              "condition": "ownerIsSkillProducer&&deadAlliesCount>0&&ownersDoubleAscendLevel==6&&enemiesTookNonLethalDamageFromProcessedSkill"
+            },
+            {
+              "kind": "ChangeEffectRepeatCount",
+              "formula": "deadAlliesCount-1",
+              "target": "Owner",
+              "grades": [
+                6
+              ],
+              "condition": "ownersDoubleAscendLevel==6&&enemiesTookNonLethalDamageFromProcessedSkill"
+            },
+            {
+              "kind": "SetShieldHitCounter",
+              "formula": "producerHitCounterShieldCount+1",
+              "target": "Owner",
+              "grades": [],
+              "condition": "TargetHasEffectOfKind(BoneShield_KindId)"
+            },
+            {
+              "kind": "ApplyBuff",
+              "formula": "1",
+              "target": "Owner",
+              "grades": [],
+              "condition": "!TargetHasEffectOfKind(BoneShield_KindId)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "blessing": "TimeSlowdown",
+      "rarity": "Legendary",
+      "divinity": "Dark",
+      "proc_skills": [
+        {
+          "skill_id": 600020,
+          "skill_name": "Temporal Chains",
+          "effects": [
+            {
+              "kind": "PassiveChangeStats",
+              "formula": "((targetBuffCountExcludeAppliedOnRoundStarted<=3)*((-0.02*targetBuffCountExcludeAppliedOnRoundStarted)*TRG_B_SPD))+((targetBuffCountExcludeAppliedOnRoundStarted>3)*(-0.06*TRG_B_SPD))",
+              "target": "AllEnemies",
+              "grades": [
+                1,
+                2
+              ],
+              "condition": "(ownersDoubleAscendLevel==1||ownersDoubleAscendLevel==2)"
+            },
+            {
+              "kind": "PassiveChangeStats",
+              "formula": "((targetBuffCountExcludeAppliedOnRoundStarted<=3)*((-0.03*targetBuffCountExcludeAppliedOnRoundStarted)*TRG_B_SPD))+((targetBuffCountExcludeAppliedOnRoundStarted>3)*(-0.09*TRG_B_SPD))",
+              "target": "AllEnemies",
+              "grades": [
+                3,
+                4
+              ],
+              "condition": "(ownersDoubleAscendLevel==3||ownersDoubleAscendLevel==4)"
+            },
+            {
+              "kind": "PassiveChangeStats",
+              "formula": "((targetBuffCountExcludeAppliedOnRoundStarted<=3)*((-0.05*targetBuffCountExcludeAppliedOnRoundStarted)*TRG_B_SPD))+((targetBuffCountExcludeAppliedOnRoundStarted>3)*(-0.15*TRG_B_SPD))",
+              "target": "AllEnemies",
+              "grades": [
+                5,
+                6
+              ],
+              "condition": "(ownersDoubleAscendLevel==5||ownersDoubleAscendLevel==6)"
+            },
+            {
+              "kind": "ReduceStamina",
+              "formula": "0.15*MAX_STAMINA",
+              "target": "AllEnemies",
+              "grades": [
+                6
+              ],
+              "condition": "!relationTargetIsAlly&&REL_TRG_BUFF_COUNT==3&&ownersDoubleAscendLevel==6"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "blessing": "ToxicBlade",
+      "rarity": "Epic",
+      "divinity": "Dark",
+      "proc_skills": [
+        {
+          "skill_id": 600030,
+          "skill_name": "Lethal Dose",
+          "effects": [
+            {
+              "kind": "ChangeDamageMultiplier",
+              "formula": "0.5*DMG_MUL",
+              "target": "Producer",
+              "grades": [
+                1,
+                2
+              ],
+              "condition": "isOwnerProduceRelatedEffect&&!relationTargetIsAlly&&isPvPBattle&&(ownersDoubleAscendLevel==1||ownersDoubleAscendLevel==2)"
+            },
+            {
+              "kind": "ChangeDamageMultiplier",
+              "formula": "1*DMG_MUL",
+              "target": "Producer",
+              "grades": [
+                3,
+                4
+              ],
+              "condition": "isOwnerProduceRelatedEffect&&!relationTargetIsAlly&&isPvPBattle&&(ownersDoubleAscendLevel==3||ownersDoubleAscendLevel==4)"
+            },
+            {
+              "kind": "ChangeDamageMultiplier",
+              "formula": "2*DMG_MUL",
+              "target": "Producer",
+              "grades": [
+                5,
+                6
+              ],
+              "condition": "isOwnerProduceRelatedEffect&&!relationTargetIsAlly&&isPvPBattle&&(ownersDoubleAscendLevel==5||ownersDoubleAscendLevel==6)"
+            },
+            {
+              "kind": "ChangeEffectResistance",
+              "formula": "-0.35*TRG_RES",
+              "target": "RelationTarget",
+              "grades": [
+                6
+              ],
+              "condition": "isOwnerProduceRelatedEffect&&!relationTargetIsAlly&&isPvPBattle&&ownersDoubleAscendLevel==6&&!relationAppliedOnRelationTarget"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "blessing": "Exterminator",
+      "rarity": "Epic",
+      "divinity": "Dark",
+      "proc_skills": [
+        {
+          "skill_id": 600040,
+          "skill_name": "Cruelty",
+          "effects": [
+            {
+              "kind": "DestroyStats",
+              "formula": "0.01*TRG_B_DEF",
+              "target": "RelationTarget",
+              "grades": [
+                1,
+                2
+              ],
+              "condition": "isOwnerProduceRelatedEffect&&!relationTargetIsAlly&&(ownersDoubleAscendLevel==1||ownersDoubleAscendLevel==2)"
+            },
+            {
+              "kind": "DestroyStats",
+              "formula": "0.01*TRG_B_DEF",
+              "target": "RelationTarget",
+              "grades": [
+                3,
+                4
+              ],
+              "condition": "isOwnerProduceRelatedEffect&&!relationTargetIsAlly&&(ownersDoubleAscendLevel==3||ownersDoubleAscendLevel==4)"
+            },
+            {
+              "kind": "DestroyStats",
+              "formula": "0.02*TRG_B_DEF",
+              "target": "RelationTarget",
+              "grades": [
+                5
+              ],
+              "condition": "isOwnerProduceRelatedEffect&&!relationTargetIsAlly&&ownersDoubleAscendLevel==5"
+            },
+            {
+              "kind": "DestroyStats",
+              "formula": "0.04*TRG_B_DEF",
+              "target": "RelationTarget",
+              "grades": [
+                6
+              ],
+              "condition": "isOwnerProduceRelatedEffect&&!relationTargetIsAlly&&ownersDoubleAscendLevel==6"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "blessing": "MagicOrb",
+      "rarity": "Rare",
+      "divinity": "Dark",
+      "proc_skills": [
+        {
+          "skill_id": 600050,
+          "skill_name": "Phantom Touch",
+          "effects": [
+            {
+              "kind": "Damage",
+              "formula": "3.5*ATK",
+              "target": "RelationTarget",
+              "grades": [
+                1,
+                2
+              ],
+              "condition": "isOwnerProduceRelatedEffect&&!relationTargetIsAlly&&!ownerIsRelatedEffectTarget&&(ownersDoubleAscendLevel==1||ownersDoubleAscendLevel==2)&&!targetIsDying"
+            },
+            {
+              "kind": "Damage",
+              "formula": "3.5*ATK",
+              "target": "RelationTarget",
+              "grades": [
+                3,
+                4
+              ],
+              "condition": "isOwnerProduceRelatedEffect&&!relationTargetIsAlly&&!ownerIsRelatedEffectTarget&&(ownersDoubleAscendLevel==3||ownersDoubleAscendLevel==4)&&!targetIsDying"
+            },
+            {
+              "kind": "Damage",
+              "formula": "3.5*ATK",
+              "target": "RelationTarget",
+              "grades": [
+                5
+              ],
+              "condition": "isOwnerProduceRelatedEffect&&!relationTargetIsAlly&&!ownerIsRelatedEffectTarget&&ownersDoubleAscendLevel==5&&!targetIsDying"
+            },
+            {
+              "kind": "Damage",
+              "formula": "3.5*ATK",
+              "target": "RelationTarget",
+              "grades": [
+                6
+              ],
+              "condition": "isOwnerProduceRelatedEffect&&!relationTargetIsAlly&&!ownerIsRelatedEffectTarget&&ownersDoubleAscendLevel==6&&!targetIsDying"
+            },
+            {
+              "kind": "ChangeEffectRepeatCount",
+              "formula": "relationRepeatCount",
+              "target": "Producer",
+              "grades": [
+                6
+              ],
+              "condition": "ownersDoubleAscendLevel==6"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "blessing": "Fearless",
+      "rarity": "Rare",
+      "divinity": "Dark",
+      "proc_skills": [
+        {
+          "skill_id": 600060,
+          "skill_name": "Dark Resolve",
+          "effects": [
+            {
+              "kind": "ChangeDamageMultiplier",
+              "formula": "0.01*deadAlliesCount*DMG_MUL",
+              "target": "RelationProducer",
+              "grades": [
+                1,
+                2
+              ],
+              "condition": "isOwnerProduceRelatedEffect&&(ownersDoubleAscendLevel==1||ownersDoubleAscendLevel==2)&&deadAlliesCount>0"
+            },
+            {
+              "kind": "ChangeDamageMultiplier",
+              "formula": "0.015*deadAlliesCount*DMG_MUL",
+              "target": "RelationProducer",
+              "grades": [
+                3,
+                4
+              ],
+              "condition": "isOwnerProduceRelatedEffect&&(ownersDoubleAscendLevel==3||ownersDoubleAscendLevel==4)&&deadAlliesCount>0"
+            },
+            {
+              "kind": "ChangeDamageMultiplier",
+              "formula": "0.025*deadAlliesCount*DMG_MUL",
+              "target": "RelationProducer",
+              "grades": [
+                5
+              ],
+              "condition": "isOwnerProduceRelatedEffect&&ownersDoubleAscendLevel==5&&deadAlliesCount>0"
+            },
+            {
+              "kind": "ChangeDamageMultiplier",
+              "formula": "0.05*deadAlliesCount*DMG_MUL",
+              "target": "RelationProducer",
+              "grades": [
+                6
+              ],
+              "condition": "isOwnerProduceRelatedEffect&&ownersDoubleAscendLevel==6&&deadAlliesCount>0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "blessing": "Execute",
+      "rarity": "Legendary",
+      "divinity": "War",
+      "proc_skills": [
+        {
+          "skill_id": 600130,
+          "skill_name": "Soul Reap",
+          "effects": [
+            {
+              "kind": "Damage",
+              "formula": "1*TRG_CUR_HP",
+              "target": "AllEnemies",
+              "grades": [
+                1,
+                2
+              ],
+              "condition": "ownerIsSkillProducer&&!targetIsDying&&(ownersDoubleAscendLevel==1||ownersDoubleAscendLevel==2)"
+            },
+            {
+              "kind": "Damage",
+              "formula": "1*TRG_CUR_HP",
+              "target": "AllEnemies",
+              "grades": [
+                3,
+                4
+              ],
+              "condition": "ownerIsSkillProducer&&!targetIsDying&&(ownersDoubleAscendLevel==3||ownersDoubleAscendLevel==4)"
+            },
+            {
+              "kind": "Damage",
+              "formula": "1*TRG_CUR_HP",
+              "target": "AllEnemies",
+              "grades": [
+                5
+              ],
+              "condition": "ownerIsSkillProducer&&!targetIsDying&&ownersDoubleAscendLevel==5"
+            },
+            {
+              "kind": "Damage",
+              "formula": "1*TRG_CUR_HP",
+              "target": "AllEnemies",
+              "grades": [
+                6
+              ],
+              "condition": "ownerIsSkillProducer&&!targetIsDying&&ownersDoubleAscendLevel==6"
+            },
+            {
+              "kind": "ApplyDebuff",
+              "formula": "",
+              "target": "RelationTarget",
+              "grades": [],
+              "condition": ""
+            },
+            {
+              "kind": "ApplyDebuff",
+              "formula": "",
+              "target": "RelationTarget",
+              "grades": [],
+              "condition": ""
+            },
+            {
+              "kind": "Damage",
+              "formula": "1*TRG_CUR_HP",
+              "target": "AllEnemies",
+              "grades": [
+                1,
+                2
+              ],
+              "condition": "ownerIsSkillProducer&&!targetIsDying&&(ownersDoubleAscendLevel==1||ownersDoubleAscendLevel==2)"
+            },
+            {
+              "kind": "Damage",
+              "formula": "1*TRG_CUR_HP",
+              "target": "AllEnemies",
+              "grades": [
+                3,
+                4
+              ],
+              "condition": "ownerIsSkillProducer&&!targetIsDying&&(ownersDoubleAscendLevel==3||ownersDoubleAscendLevel==4)"
+            },
+            {
+              "kind": "Damage",
+              "formula": "1*TRG_CUR_HP",
+              "target": "AllEnemies",
+              "grades": [
+                5
+              ],
+              "condition": "ownerIsSkillProducer&&!targetIsDying&&ownersDoubleAscendLevel==5"
+            },
+            {
+              "kind": "Damage",
+              "formula": "1*TRG_CUR_HP",
+              "target": "AllEnemies",
+              "grades": [
+                6
+              ],
+              "condition": "ownerIsSkillProducer&&!targetIsDying&&ownersDoubleAscendLevel==6"
+            },
+            {
+              "kind": "ApplyDebuff",
+              "formula": "",
+              "target": "RelationTarget",
+              "grades": [],
+              "condition": ""
+            },
+            {
+              "kind": "ApplyDebuff",
+              "formula": "",
+              "target": "RelationTarget",
+              "grades": [],
+              "condition": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "blessing": "SoulDrinker",
+      "rarity": "Legendary",
+      "divinity": "War",
+      "proc_skills": [
+        {
+          "skill_id": 600140,
+          "skill_name": "Life Harvest",
+          "effects": [
+            {
+              "kind": "DestroyHp",
+              "formula": "((ownersDoubleAscendLevel==1||ownersDoubleAscendLevel==2)*0.1*TRG_B_HP)+((ownersDoubleAscendLevel==3||ownersDoubleAscendLevel==4)*0.2*TRG_B_HP)+((ownersDoubleAscendLevel==5)*0.3*TRG_B_HP)+((ownersDoubleAscendLevel==6)*0.4*TRG_B_HP)",
+              "target": "RelationTarget",
+              "grades": [],
+              "condition": "!relationTargetIsAlly&&TRG_HP/TRG_B_HP>0.4"
+            },
+            {
+              "kind": "IncreaseStamina",
+              "formula": "((ownersDoubleAscendLevel==3||ownersDoubleAscendLevel==4)*0.1*MAX_STAMINA)+((ownersDoubleAscendLevel==5)*0.2*MAX_STAMINA)+((ownersDoubleAscendLevel==6)*0.3*MAX_STAMINA)",
+              "target": "Owner",
+              "grades": [],
+              "condition": "!relationTargetIsAlly&&!relatedEffectCancelled&&!relatedReviveBlocked"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "blessing": "ChainBreaker",
+      "rarity": "Epic",
+      "divinity": "War",
+      "proc_skills": [
+        {
+          "skill_id": 600150,
+          "skill_name": "Chainbreaker",
+          "effects": [
+            {
+              "kind": "RemoveDebuff",
+              "formula": "",
+              "target": "Owner",
+              "grades": [
+                1,
+                2
+              ],
+              "condition": "isOwnersTurn&&(ownersDoubleAscendLevel==1||ownersDoubleAscendLevel==2)&&targetHasControlDebuff"
+            },
+            {
+              "kind": "RemoveDebuff",
+              "formula": "",
+              "target": "Owner",
+              "grades": [
+                3,
+                4,
+                5
+              ],
+              "condition": "isOwnersTurn&&(ownersDoubleAscendLevel==3||ownersDoubleAscendLevel==4||ownersDoubleAscendLevel==5)&&targetHasControlDebuff"
+            },
+            {
+              "kind": "RemoveDebuff",
+              "formula": "",
+              "target": "Owner",
+              "grades": [
+                6
+              ],
+              "condition": "isOwnersTurn&&ownersDoubleAscendLevel==6&&targetHasControlDebuff"
+            },
+            {
+              "kind": "IncreaseStamina",
+              "formula": "0.2*MAX_STAMINA",
+              "target": "Owner",
+              "grades": [
+                5
+              ],
+              "condition": "targetHasControlDebuff&&ownerIsRelatedEffectTarget&&!isOwnerProduceRelatedEffect&&!relationProducerIsAlly&&ownersDoubleAscendLevel==5"
+            },
+            {
+              "kind": "IncreaseStamina",
+              "formula": "0.2*MAX_STAMINA",
+              "target": "Owner",
+              "grades": [
+                6
+              ],
+              "condition": "targetHasControlDebuff&&ownerIsRelatedEffectTarget&&!isOwnerProduceRelatedEffect&&!relationProducerIsAlly&&ownersDoubleAscendLevel==6"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "blessing": "AdvancedLeadership",
+      "rarity": "Epic",
+      "divinity": "War",
+      "proc_skills": [
+        {
+          "skill_id": 600160,
+          "skill_name": "Commanding Presence",
+          "effects": [
+            {
+              "kind": "PassiveBonus",
+              "formula": "0.025*((ownersDoubleAscendLevel>=1)*1+(ownersDoubleAscendLevel>=3)*2+(ownersDoubleAscendLevel>=5)*3+(ownersDoubleAscendLevel>=6)*8)",
+              "target": "AllAllies",
+              "grades": [],
+              "condition": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "blessing": "Adaptation",
+      "rarity": "Rare",
+      "divinity": "War",
+      "proc_skills": [
+        {
+          "skill_id": 600170,
+          "skill_name": "Faultless Defense",
+          "effects": [
+            {
+              "kind": "PassiveReflectDamage",
+              "formula": "0.03*DEALT_DMG",
+              "target": "RelationProducer",
+              "grades": [
+                1,
+                2
+              ],
+              "condition": "relationTargetIsAlly&&!relationProducerIsAlly&&RelationTargetHasEffectOfKindPlacedByProducer(StatusIncreaseDefence_KindId)&&(ownersDoubleAscendLevel==1||ownersD"
+            },
+            {
+              "kind": "PassiveReflectDamage",
+              "formula": "0.06*DEALT_DMG",
+              "target": "RelationProducer",
+              "grades": [
+                3,
+                4
+              ],
+              "condition": "relationTargetIsAlly&&!relationProducerIsAlly&&RelationTargetHasEffectOfKindPlacedByProducer(StatusIncreaseDefence_KindId)&&(ownersDoubleAscendLevel==3||ownersD"
+            },
+            {
+              "kind": "PassiveReflectDamage",
+              "formula": "0.09*DEALT_DMG",
+              "target": "RelationProducer",
+              "grades": [
+                5
+              ],
+              "condition": "relationTargetIsAlly&&!relationProducerIsAlly&&RelationTargetHasEffectOfKindPlacedByProducer(StatusIncreaseDefence_KindId)&&ownersDoubleAscendLevel==5"
+            },
+            {
+              "kind": "PassiveReflectDamage",
+              "formula": "0.15*DEALT_DMG",
+              "target": "RelationProducer",
+              "grades": [
+                6
+              ],
+              "condition": "relationTargetIsAlly&&!relationProducerIsAlly&&RelationTargetHasEffectOfKindPlacedByProducer(StatusIncreaseDefence_KindId)&&ownersDoubleAscendLevel==6"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "blessing": "Amplification",
+      "rarity": "Rare",
+      "divinity": "War",
+      "proc_skills": [
+        {
+          "skill_id": 600180,
+          "skill_name": "Hero's Soul",
+          "effects": [
+            {
+              "kind": "ChangeDamageMultiplier",
+              "formula": "DMG_MUL*(0.005*aliveEnemiesCount)",
+              "target": "RelationProducer",
+              "grades": [
+                1,
+                2
+              ],
+              "condition": "isOwnerProduceRelatedEffect&&(relationTargetIsBoss||relationTargetIsMinion)&&(ownersDoubleAscendLevel==1||ownersDoubleAscendLevel==2)"
+            },
+            {
+              "kind": "ChangeDamageMultiplier",
+              "formula": "DMG_MUL*(0.01*aliveEnemiesCount)",
+              "target": "RelationProducer",
+              "grades": [
+                3,
+                4
+              ],
+              "condition": "isOwnerProduceRelatedEffect&&(relationTargetIsBoss||relationTargetIsMinion)&&(ownersDoubleAscendLevel==3||ownersDoubleAscendLevel==4)"
+            },
+            {
+              "kind": "ChangeDamageMultiplier",
+              "formula": "DMG_MUL*(0.015*aliveEnemiesCount)",
+              "target": "RelationProducer",
+              "grades": [
+                5
+              ],
+              "condition": "isOwnerProduceRelatedEffect&&(relationTargetIsBoss||relationTargetIsMinion)&&ownersDoubleAscendLevel==5"
+            },
+            {
+              "kind": "ChangeDamageMultiplier",
+              "formula": "DMG_MUL*(0.03*aliveEnemiesCount)",
+              "target": "RelationProducer",
+              "grades": [
+                6
+              ],
+              "condition": "isOwnerProduceRelatedEffect&&(relationTargetIsBoss||relationTargetIsMinion)&&ownersDoubleAscendLevel==6"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "blessing": "Meteor",
+      "rarity": "Legendary",
+      "divinity": "Wisdom",
+      "proc_skills": [
+        {
+          "skill_id": 600190,
+          "skill_name": "Brimstone",
+          "effects": [
+            {
+              "kind": "ApplyDebuff",
+              "formula": "",
+              "target": "RelationTarget",
+              "grades": [
+                1,
+                2
+              ],
+              "condition": "isOwnerProduceRelatedEffect&&!relationTargetIsAlly&&EnemyTeamAppliedEffectsTotalCountOfKind(FireMark_KindId)==0&&(ownersDoubleAscendLevel==1||ownersDoubleAscend"
+            },
+            {
+              "kind": "ApplyDebuff",
+              "formula": "",
+              "target": "RelationTarget",
+              "grades": [
+                3,
+                4
+              ],
+              "condition": "isOwnerProduceRelatedEffect&&!relationTargetIsAlly&&EnemyTeamAppliedEffectsTotalCountOfKind(FireMark_KindId)==0&&(ownersDoubleAscendLevel==3||ownersDoubleAscend"
+            },
+            {
+              "kind": "ApplyDebuff",
+              "formula": "",
+              "target": "RelationTarget",
+              "grades": [
+                5
+              ],
+              "condition": "isOwnerProduceRelatedEffect&&!relationTargetIsAlly&&EnemyTeamAppliedEffectsTotalCountOfKind(FireMark_KindId)==0&&ownersDoubleAscendLevel==5"
+            },
+            {
+              "kind": "ApplyDebuff",
+              "formula": "",
+              "target": "RelationTarget",
+              "grades": [
+                6
+              ],
+              "condition": "isOwnerProduceRelatedEffect&&!relationTargetIsAlly&&EnemyTeamAppliedEffectsTotalCountOfKind(FireMark_KindId)==0&&ownersDoubleAscendLevel==6"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "blessing": "Polymorph",
+      "rarity": "Legendary",
+      "divinity": "Wisdom",
+      "proc_skills": [
+        {
+          "skill_id": 600200,
+          "skill_name": "Polymorph",
+          "effects": [
+            {
+              "kind": "SheepTransformation",
+              "formula": "2",
+              "target": "RelationProducer",
+              "grades": [
+                1,
+                2
+              ],
+              "condition": "(ownersDoubleAscendLevel==1||ownersDoubleAscendLevel==2)&&ownerIsRelatedEffectTarget&&!relationProducerIsAlly&&((statusEffectIsApplied&&!StatusEffectWithTypeIdI"
+            },
+            {
+              "kind": "SheepTransformation",
+              "formula": "2",
+              "target": "RelationProducer",
+              "grades": [
+                3,
+                4
+              ],
+              "condition": "(ownersDoubleAscendLevel==3||ownersDoubleAscendLevel==4)&&ownerIsRelatedEffectTarget&&!relationProducerIsAlly&&((statusEffectIsApplied&&!StatusEffectWithTypeIdI"
+            },
+            {
+              "kind": "SheepTransformation",
+              "formula": "2",
+              "target": "RelationProducer",
+              "grades": [
+                5
+              ],
+              "condition": "ownersDoubleAscendLevel==5&&ownerIsRelatedEffectTarget&&!relationProducerIsAlly&&((statusEffectIsApplied&&!StatusEffectWithTypeIdIsApplied(BlockRevive))||remove"
+            },
+            {
+              "kind": "SheepTransformation",
+              "formula": "2",
+              "target": "RelationProducer",
+              "grades": [
+                6
+              ],
+              "condition": "ownersDoubleAscendLevel==6&&ownerIsRelatedEffectTarget&&!relationProducerIsAlly&&((statusEffectIsApplied&&!StatusEffectWithTypeIdIsApplied(BlockRevive))||remove"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "blessing": "MagicFlame",
+      "rarity": "Epic",
+      "divinity": "Wisdom",
+      "proc_skills": [
+        {
+          "skill_id": 600210,
+          "skill_name": "Incinerate",
+          "effects": [
+            {
+              "kind": "ChangeDamageMultiplier",
+              "formula": "0.25*DMG_MUL",
+              "target": "Producer",
+              "grades": [
+                1,
+                2
+              ],
+              "condition": "isOwnerProduceRelatedEffect&&!ownerIsRelatedEffectTarget&&!relationTargetIsAlly&&isPvPBattle&&(ownersDoubleAscendLevel==1||ownersDoubleAscendLevel==2)"
+            },
+            {
+              "kind": "ChangeDamageMultiplier",
+              "formula": "0.5*DMG_MUL",
+              "target": "Producer",
+              "grades": [
+                3,
+                4
+              ],
+              "condition": "isOwnerProduceRelatedEffect&&!ownerIsRelatedEffectTarget&&!relationTargetIsAlly&&isPvPBattle&&(ownersDoubleAscendLevel==3||ownersDoubleAscendLevel==4)"
+            },
+            {
+              "kind": "ChangeDamageMultiplier",
+              "formula": "1*DMG_MUL",
+              "target": "Producer",
+              "grades": [
+                5,
+                6
+              ],
+              "condition": "isOwnerProduceRelatedEffect&&!ownerIsRelatedEffectTarget&&!relationTargetIsAlly&&isPvPBattle&&(ownersDoubleAscendLevel==5||ownersDoubleAscendLevel==6)"
+            },
+            {
+              "kind": "ReduceStamina",
+              "formula": "MAX_DEALT_DMG_PERC*100+(damageAbsorbedByShield/TRG_HP*100)",
+              "target": "RelationTarget",
+              "grades": [
+                6
+              ],
+              "condition": "!ownerIsRelatedEffectTarget&&!relationTargetIsAlly&&isOwnerProduceRelatedEffect&&isPvPBattle&&ownersDoubleAscendLevel==6"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "blessing": "Penetrator",
+      "rarity": "Epic",
+      "divinity": "Wisdom",
+      "proc_skills": [
+        {
+          "skill_id": 600220,
+          "skill_name": "Crushing Rend",
+          "effects": [
+            {
+              "kind": "ChangeDefenceModifier",
+              "formula": "-0.01*(targetLevel/50)",
+              "target": "RelationTarget",
+              "grades": [
+                1,
+                2
+              ],
+              "condition": "isOwnerProduceRelatedEffect&&!relationTargetIsAlly&&hitsByTargetCurrentRoundCount==0&&(ownersDoubleAscendLevel==1||ownersDoubleAscendLevel==2)"
+            },
+            {
+              "kind": "ChangeDefenceModifier",
+              "formula": "-0.01*(targetLevel/40)",
+              "target": "RelationTarget",
+              "grades": [
+                3,
+                4
+              ],
+              "condition": "isOwnerProduceRelatedEffect&&!relationTargetIsAlly&&hitsByTargetCurrentRoundCount==0&&(ownersDoubleAscendLevel==3||ownersDoubleAscendLevel==4)"
+            },
+            {
+              "kind": "ChangeDefenceModifier",
+              "formula": "-0.01*(targetLevel/25)",
+              "target": "RelationTarget",
+              "grades": [
+                5
+              ],
+              "condition": "isOwnerProduceRelatedEffect&&!relationTargetIsAlly&&hitsByTargetCurrentRoundCount<2&&ownersDoubleAscendLevel==5"
+            },
+            {
+              "kind": "ChangeDefenceModifier",
+              "formula": "-0.01*(targetLevel/10)",
+              "target": "RelationTarget",
+              "grades": [
+                6
+              ],
+              "condition": "isOwnerProduceRelatedEffect&&!relationTargetIsAlly&&ownersDoubleAscendLevel==6"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "blessing": "Agility",
+      "rarity": "Rare",
+      "divinity": "Wisdom",
+      "proc_skills": [
+        {
+          "skill_id": 600230,
+          "skill_name": "Survival Instinct",
+          "effects": [
+            {
+              "kind": "IncreaseStamina",
+              "formula": "0.05*MAX_STAMINA",
+              "target": "Producer",
+              "grades": [
+                1,
+                2
+              ],
+              "condition": "ownerIsRelatedEffectTarget&&statusEffectIsApplied&&(ownersDoubleAscendLevel==1||ownersDoubleAscendLevel==2)&&canUniqueApplyForSkill"
+            },
+            {
+              "kind": "IncreaseStamina",
+              "formula": "0.07*MAX_STAMINA",
+              "target": "Producer",
+              "grades": [
+                3,
+                4
+              ],
+              "condition": "ownerIsRelatedEffectTarget&&statusEffectIsApplied&&(ownersDoubleAscendLevel==3||ownersDoubleAscendLevel==4)&&canUniqueApplyForSkill"
+            },
+            {
+              "kind": "IncreaseStamina",
+              "formula": "0.1*MAX_STAMINA",
+              "target": "Producer",
+              "grades": [
+                5
+              ],
+              "condition": "ownerIsRelatedEffectTarget&&statusEffectIsApplied&&ownersDoubleAscendLevel==5&&canUniqueApplyForSkill"
+            },
+            {
+              "kind": "IncreaseStamina",
+              "formula": "0.1*MAX_STAMINA",
+              "target": "Producer",
+              "grades": [
+                6
+              ],
+              "condition": "ownerIsRelatedEffectTarget&&statusEffectIsApplied&&ownersDoubleAscendLevel==6"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "blessing": "Carapace",
+      "rarity": "Rare",
+      "divinity": "Wisdom",
+      "proc_skills": [
+        {
+          "skill_id": 600240,
+          "skill_name": "Emergency Heal",
+          "effects": [
+            {
+              "kind": "Heal",
+              "formula": "0.03*HP",
+              "target": "Owner",
+              "grades": [
+                1,
+                2
+              ],
+              "condition": "ownerIsRelatedEffectTarget&&unapplyCause!=RemovedByProcessor_Cause&&(ownersDoubleAscendLevel==1||ownersDoubleAscendLevel==2)"
+            },
+            {
+              "kind": "Heal",
+              "formula": "0.06*HP",
+              "target": "Owner",
+              "grades": [
+                3,
+                4
+              ],
+              "condition": "ownerIsRelatedEffectTarget&&unapplyCause!=RemovedByProcessor_Cause&&(ownersDoubleAscendLevel==3||ownersDoubleAscendLevel==4)"
+            },
+            {
+              "kind": "Heal",
+              "formula": "0.09*HP",
+              "target": "Owner",
+              "grades": [
+                5
+              ],
+              "condition": "ownerIsRelatedEffectTarget&&unapplyCause!=RemovedByProcessor_Cause&&ownersDoubleAscendLevel==5"
+            },
+            {
+              "kind": "Heal",
+              "formula": "0.15*HP",
+              "target": "Owner",
+              "grades": [
+                6
+              ],
+              "condition": "ownerIsRelatedEffectTarget&&unapplyCause!=RemovedByProcessor_Cause&&ownersDoubleAscendLevel==6"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "blessing": "WildImpulses",
+      "rarity": "Legendary",
+      "divinity": "Forest",
+      "proc_skills": [
+        {
+          "skill_id": 600250,
+          "skill_name": "Harmonic Impulse",
+          "effects": [
+            {
+              "kind": "IncreaseStamina",
+              "formula": "0.1*MAX_STAMINA",
+              "target": "Owner",
+              "grades": [
+                1,
+                2
+              ],
+              "condition": "ownerIsRelatedEffectTarget&&relationChanceProcessed&&(ownersDoubleAscendLevel==1||ownersDoubleAscendLevel==2)"
+            },
+            {
+              "kind": "ReduceCooldown",
+              "formula": "",
+              "target": "Owner",
+              "grades": [
+                1,
+                2
+              ],
+              "condition": "ownerIsRelatedEffectTarget&&relationChanceProcessed&&!skillIsDefault&&(ownersDoubleAscendLevel==1||ownersDoubleAscendLevel==2)"
+            },
+            {
+              "kind": "IncreaseStamina",
+              "formula": "0.15*MAX_STAMINA",
+              "target": "Owner",
+              "grades": [
+                3,
+                4
+              ],
+              "condition": "ownerIsRelatedEffectTarget&&relationChanceProcessed&&(ownersDoubleAscendLevel==3||ownersDoubleAscendLevel==4)"
+            },
+            {
+              "kind": "ReduceCooldown",
+              "formula": "",
+              "target": "Owner",
+              "grades": [
+                3,
+                4
+              ],
+              "condition": "ownerIsRelatedEffectTarget&&relationChanceProcessed&&!skillIsDefault&&(ownersDoubleAscendLevel==3||ownersDoubleAscendLevel==4)"
+            },
+            {
+              "kind": "IncreaseStamina",
+              "formula": "0.25*MAX_STAMINA",
+              "target": "Owner",
+              "grades": [
+                5
+              ],
+              "condition": "ownerIsRelatedEffectTarget&&relationChanceProcessed&&ownersDoubleAscendLevel==5"
+            },
+            {
+              "kind": "ReduceCooldown",
+              "formula": "",
+              "target": "Owner",
+              "grades": [
+                5
+              ],
+              "condition": "ownerIsRelatedEffectTarget&&relationChanceProcessed&&!skillIsDefault&&ownersDoubleAscendLevel==5"
+            },
+            {
+              "kind": "IncreaseStamina",
+              "formula": "0.5*MAX_STAMINA",
+              "target": "Owner",
+              "grades": [
+                6
+              ],
+              "condition": "ownerIsRelatedEffectTarget&&relationChanceProcessed&&ownersDoubleAscendLevel==6"
+            },
+            {
+              "kind": "ReduceCooldown",
+              "formula": "",
+              "target": "Owner",
+              "grades": [
+                6
+              ],
+              "condition": "ownerIsRelatedEffectTarget&&relationChanceProcessed&&!skillIsDefault&&ownersDoubleAscendLevel==6"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "blessing": "CreepingRoots",
+      "rarity": "Legendary",
+      "divinity": "Forest",
+      "proc_skills": [
+        {
+          "skill_id": 600260,
+          "skill_name": "Cracking Roots",
+          "effects": [
+            {
+              "kind": "ChangeCalculatedDamage",
+              "formula": "((CALCULATED_DMG*1.2<=relationTargetStoneSkinValue)*CALCULATED_DMG*(1.2-1))+((CALCULATED_DMG*1.2>relationTargetStoneSkinValue)*relationTargetStoneSkinValue*(1.2-1))",
+              "target": "RelationTarget",
+              "grades": [
+                1,
+                2
+              ],
+              "condition": "TargetHasEffectOfKind(StoneSkin_KindId)&&!relationDamageIgnores(StoneSkin_KindId)&&isOwnerProduceRelatedEffect&&!relationTargetIsAlly&&(ownersDoubleAscendLevel="
+            },
+            {
+              "kind": "ChangeCalculatedDamage",
+              "formula": "((CALCULATED_DMG*1.4<=relationTargetStoneSkinValue)*CALCULATED_DMG*(1.4-1))+((CALCULATED_DMG*1.4>relationTargetStoneSkinValue)*relationTargetStoneSkinValue*(1.4-1))",
+              "target": "RelationTarget",
+              "grades": [
+                3,
+                4
+              ],
+              "condition": "TargetHasEffectOfKind(StoneSkin_KindId)&&!relationDamageIgnores(StoneSkin_KindId)&&isOwnerProduceRelatedEffect&&!relationTargetIsAlly&&(ownersDoubleAscendLevel="
+            },
+            {
+              "kind": "ChangeCalculatedDamage",
+              "formula": "((CALCULATED_DMG*1.6<=relationTargetStoneSkinValue)*CALCULATED_DMG*(1.6-1))+((CALCULATED_DMG*1.6>relationTargetStoneSkinValue)*relationTargetStoneSkinValue*(1.6-1))",
+              "target": "RelationTarget",
+              "grades": [
+                5
+              ],
+              "condition": "TargetHasEffectOfKind(StoneSkin_KindId)&&!relationDamageIgnores(StoneSkin_KindId)&&isOwnerProduceRelatedEffect&&!relationTargetIsAlly&&ownersDoubleAscendLevel=="
+            },
+            {
+              "kind": "ChangeCalculatedDamage",
+              "formula": "((CALCULATED_DMG*2<=relationTargetStoneSkinValue)*CALCULATED_DMG)+((CALCULATED_DMG*2>relationTargetStoneSkinValue)*relationTargetStoneSkinValue)",
+              "target": "RelationTarget",
+              "grades": [
+                6
+              ],
+              "condition": "TargetHasEffectOfKind(StoneSkin_KindId)&&!relationDamageIgnores(StoneSkin_KindId)&&isOwnerProduceRelatedEffect&&!relationTargetIsAlly&&ownersDoubleAscendLevel=="
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "blessing": "NatureBalance",
+      "rarity": "Epic",
+      "divinity": "Forest",
+      "proc_skills": [
+        {
+          "skill_id": 600270,
+          "skill_name": "Nature's Wrath",
+          "effects": [
+            {
+              "kind": "SetSpecificHeroCounter",
+              "formula": "HeroCounterWithId(NaturesBalance_Counter)+1",
+              "target": "Owner",
+              "grades": [
+                1,
+                2
+              ],
+              "condition": "isOwnerProduceRelatedEffect&&!relationTargetIsAlly&&statusEffectIsApplied&&relatedSkillSource==Hero_Skill&&(ownersDoubleAscendLevel==1||ownersDoubleAscendLevel="
+            },
+            {
+              "kind": "ChangeDamageMultiplier",
+              "formula": "(0.02*DMG_MUL)*HeroCounterWithId(NaturesBalance_Counter)",
+              "target": "RelationTarget",
+              "grades": [
+                1,
+                2
+              ],
+              "condition": "isOwnerProduceRelatedEffect&&!relationTargetIsAlly&&relatedSkillSource==Hero_Skill&&(ownersDoubleAscendLevel==1||ownersDoubleAscendLevel==2)"
+            },
+            {
+              "kind": "SetSpecificHeroCounter",
+              "formula": "HeroCounterWithId(NaturesBalance_Counter)+1",
+              "target": "Owner",
+              "grades": [
+                3,
+                4
+              ],
+              "condition": "isOwnerProduceRelatedEffect&&!relationTargetIsAlly&&statusEffectIsApplied&&relatedSkillSource==Hero_Skill&&(ownersDoubleAscendLevel==3||ownersDoubleAscendLevel="
+            },
+            {
+              "kind": "ChangeDamageMultiplier",
+              "formula": "(0.02*DMG_MUL)*HeroCounterWithId(NaturesBalance_Counter)",
+              "target": "RelationTarget",
+              "grades": [
+                3,
+                4
+              ],
+              "condition": "isOwnerProduceRelatedEffect&&!relationTargetIsAlly&&relatedSkillSource==Hero_Skill&&(ownersDoubleAscendLevel==3||ownersDoubleAscendLevel==4)"
+            },
+            {
+              "kind": "SetSpecificHeroCounter",
+              "formula": "HeroCounterWithId(NaturesBalance_Counter)+1",
+              "target": "Owner",
+              "grades": [
+                5
+              ],
+              "condition": "isOwnerProduceRelatedEffect&&!relationTargetIsAlly&&statusEffectIsApplied&&relatedSkillSource==Hero_Skill&&ownersDoubleAscendLevel==5"
+            },
+            {
+              "kind": "ChangeDamageMultiplier",
+              "formula": "(0.03*DMG_MUL)*HeroCounterWithId(NaturesBalance_Counter)",
+              "target": "RelationTarget",
+              "grades": [
+                5
+              ],
+              "condition": "isOwnerProduceRelatedEffect&&!relationTargetIsAlly&&relatedSkillSource==Hero_Skill&&ownersDoubleAscendLevel==5"
+            },
+            {
+              "kind": "SetSpecificHeroCounter",
+              "formula": "HeroCounterWithId(NaturesBalance_Counter)+1",
+              "target": "Owner",
+              "grades": [
+                6
+              ],
+              "condition": "isOwnerProduceRelatedEffect&&!relationTargetIsAlly&&statusEffectIsApplied&&relatedSkillSource==Hero_Skill&&ownersDoubleAscendLevel==6"
+            },
+            {
+              "kind": "ChangeDamageMultiplier",
+              "formula": "(0.05*DMG_MUL)*HeroCounterWithId(NaturesBalance_Counter)",
+              "target": "RelationTarget",
+              "grades": [
+                6
+              ],
+              "condition": "isOwnerProduceRelatedEffect&&!relationTargetIsAlly&&relatedSkillSource==Hero_Skill&&ownersDoubleAscendLevel==6"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "blessing": "NatureReach",
+      "rarity": "Epic",
+      "divinity": "Forest",
+      "proc_skills": [
+        {
+          "skill_id": 600280,
+          "skill_name": "Neutralize",
+          "effects": [
+            {
+              "kind": "AddChanceToActivateOnGlancingHit",
+              "formula": "",
+              "target": "RelationTarget",
+              "grades": [
+                1,
+                2
+              ],
+              "condition": "isOwnerProduceRelatedEffect&&!relationTargetIsAlly&&hitType==GlancingHit&&glancingHitReason==PoisonCloud_GlanceReason&&(ownersDoubleAscendLevel==1||ownersDouble"
+            },
+            {
+              "kind": "AddChanceToActivateOnGlancingHit",
+              "formula": "",
+              "target": "RelationTarget",
+              "grades": [
+                3,
+                4
+              ],
+              "condition": "isOwnerProduceRelatedEffect&&!relationTargetIsAlly&&hitType==GlancingHit&&glancingHitReason==PoisonCloud_GlanceReason&&(ownersDoubleAscendLevel==3||ownersDouble"
+            },
+            {
+              "kind": "AddChanceToActivateOnGlancingHit",
+              "formula": "",
+              "target": "RelationTarget",
+              "grades": [
+                5
+              ],
+              "condition": "isOwnerProduceRelatedEffect&&!relationTargetIsAlly&&hitType==GlancingHit&&glancingHitReason==PoisonCloud_GlanceReason&&ownersDoubleAscendLevel==5"
+            },
+            {
+              "kind": "AddChanceToActivateOnGlancingHit",
+              "formula": "",
+              "target": "RelationTarget",
+              "grades": [
+                6
+              ],
+              "condition": "isOwnerProduceRelatedEffect&&!relationTargetIsAlly&&hitType==GlancingHit&&glancingHitReason==PoisonCloud_GlanceReason&&ownersDoubleAscendLevel==6"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "blessing": "WildGrowth",
+      "rarity": "Rare",
+      "divinity": "Forest",
+      "proc_skills": [
+        {
+          "skill_id": 600290,
+          "skill_name": "Nature's Bounty",
+          "effects": [
+            {
+              "kind": "ReplaceStatusEffectOnApplying",
+              "formula": "",
+              "target": "RelationTarget",
+              "grades": [
+                1,
+                2
+              ],
+              "condition": "isOwnerProduceRelatedEffect&&!relationTargetIsAlly&&relatedSkillSource==Hero_Skill&&(ownersDoubleAscendLevel==1||ownersDoubleAscendLevel==2)"
+            },
+            {
+              "kind": "ReplaceStatusEffectOnApplying",
+              "formula": "",
+              "target": "RelationTarget",
+              "grades": [
+                3,
+                4
+              ],
+              "condition": "isOwnerProduceRelatedEffect&&!relationTargetIsAlly&&relatedSkillSource==Hero_Skill&&(ownersDoubleAscendLevel==3||ownersDoubleAscendLevel==4)"
+            },
+            {
+              "kind": "ReplaceStatusEffectOnApplying",
+              "formula": "",
+              "target": "RelationTarget",
+              "grades": [
+                5
+              ],
+              "condition": "isOwnerProduceRelatedEffect&&!relationTargetIsAlly&&relatedSkillSource==Hero_Skill&&ownersDoubleAscendLevel==5"
+            },
+            {
+              "kind": "ReplaceStatusEffectOnApplying",
+              "formula": "",
+              "target": "RelationTarget",
+              "grades": [
+                6
+              ],
+              "condition": "isOwnerProduceRelatedEffect&&!relationTargetIsAlly&&relatedSkillSource==Hero_Skill&&ownersDoubleAscendLevel==6"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "blessing": "Tranquility",
+      "rarity": "Rare",
+      "divinity": "Forest",
+      "proc_skills": [
+        {
+          "skill_id": 600300,
+          "skill_name": "Nourish",
+          "effects": [
+            {
+              "kind": "ChangeHealMultiplier",
+              "formula": "0.05*BaseHealMultiplier",
+              "target": "RelationTarget",
+              "grades": [
+                1,
+                2
+              ],
+              "condition": "RelationTargetHasEffectOfKindPlacedByProducer(ContinuousHeal_KindId)&&(ownersDoubleAscendLevel==1||ownersDoubleAscendLevel==2)"
+            },
+            {
+              "kind": "RestoreDestroyedHp",
+              "formula": "0.05*DEALT_HEAL",
+              "target": "RelationTarget",
+              "grades": [
+                1,
+                2
+              ],
+              "condition": "RelationTargetHasEffectOfKindPlacedByProducer(ContinuousHeal_KindId)&&(ownersDoubleAscendLevel==1||ownersDoubleAscendLevel==2)"
+            },
+            {
+              "kind": "ChangeHealMultiplier",
+              "formula": "0.1*BaseHealMultiplier",
+              "target": "RelationTarget",
+              "grades": [
+                3,
+                4
+              ],
+              "condition": "RelationTargetHasEffectOfKindPlacedByProducer(ContinuousHeal_KindId)&&(ownersDoubleAscendLevel==3||ownersDoubleAscendLevel==4)"
+            },
+            {
+              "kind": "RestoreDestroyedHp",
+              "formula": "0.1*DEALT_HEAL",
+              "target": "RelationTarget",
+              "grades": [
+                3,
+                4
+              ],
+              "condition": "RelationTargetHasEffectOfKindPlacedByProducer(ContinuousHeal_KindId)&&(ownersDoubleAscendLevel==3||ownersDoubleAscendLevel==4)"
+            },
+            {
+              "kind": "ChangeHealMultiplier",
+              "formula": "0.15*BaseHealMultiplier",
+              "target": "RelationTarget",
+              "grades": [
+                5
+              ],
+              "condition": "RelationTargetHasEffectOfKindPlacedByProducer(ContinuousHeal_KindId)&&ownersDoubleAscendLevel==5"
+            },
+            {
+              "kind": "RestoreDestroyedHp",
+              "formula": "0.25*DEALT_HEAL",
+              "target": "RelationTarget",
+              "grades": [
+                5
+              ],
+              "condition": "RelationTargetHasEffectOfKindPlacedByProducer(ContinuousHeal_KindId)&&ownersDoubleAscendLevel==5"
+            },
+            {
+              "kind": "ChangeHealMultiplier",
+              "formula": "0.3*BaseHealMultiplier",
+              "target": "RelationTarget",
+              "grades": [
+                6
+              ],
+              "condition": "RelationTargetHasEffectOfKindPlacedByProducer(ContinuousHeal_KindId)&&ownersDoubleAscendLevel==6"
+            },
+            {
+              "kind": "RestoreDestroyedHp",
+              "formula": "0.3*DEALT_HEAL",
+              "target": "RelationTarget",
+              "grades": [
+                6
+              ],
+              "condition": "RelationTargetHasEffectOfKindPlacedByProducer(ContinuousHeal_KindId)&&ownersDoubleAscendLevel==6"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

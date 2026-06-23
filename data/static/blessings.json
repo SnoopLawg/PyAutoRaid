@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "fetched_at": "2026-05-01T17:47:14.721422+00:00",
+    "fetched_at": "2026-06-23T22:06:43.639189+00:00",
     "scene": "Village",
     "mod_version": "2.0-bepinex",
     "unity": "6000.0.60f1"
@@ -13,6 +13,7 @@
       "grade_bonuses": [
         {
           "grade_index": 0,
+          "skill_type_id": 600070,
           "stat_kinds": [
             "Health"
           ]
@@ -25,6 +26,7 @@
         },
         {
           "grade_index": 2,
+          "skill_type_id": 600070,
           "stat_kinds": [
             "Defence"
           ]
@@ -38,6 +40,7 @@
         },
         {
           "grade_index": 4,
+          "skill_type_id": 600070,
           "stat_kinds": [
             "Resistance",
             "Accuracy"
@@ -45,6 +48,7 @@
         },
         {
           "grade_index": 5,
+          "skill_type_id": 600070,
           "stat_kinds": [
             "Speed"
           ]
@@ -58,6 +62,7 @@
       "grade_bonuses": [
         {
           "grade_index": 0,
+          "skill_type_id": 600080,
           "stat_kinds": [
             "Health"
           ]
@@ -70,6 +75,7 @@
         },
         {
           "grade_index": 2,
+          "skill_type_id": 600080,
           "stat_kinds": [
             "Defence"
           ]
@@ -83,6 +89,7 @@
         },
         {
           "grade_index": 4,
+          "skill_type_id": 600080,
           "stat_kinds": [
             "Resistance",
             "Accuracy"
@@ -90,6 +97,7 @@
         },
         {
           "grade_index": 5,
+          "skill_type_id": 600080,
           "stat_kinds": [
             "Speed"
           ]
@@ -103,6 +111,7 @@
       "grade_bonuses": [
         {
           "grade_index": 0,
+          "skill_type_id": 600090,
           "stat_kinds": [
             "Health"
           ]
@@ -115,6 +124,7 @@
         },
         {
           "grade_index": 2,
+          "skill_type_id": 600090,
           "stat_kinds": [
             "Defence"
           ]
@@ -128,6 +138,7 @@
         },
         {
           "grade_index": 4,
+          "skill_type_id": 600090,
           "stat_kinds": [
             "Resistance",
             "Accuracy"
@@ -135,6 +146,7 @@
         },
         {
           "grade_index": 5,
+          "skill_type_id": 600090,
           "stat_kinds": [
             "Speed"
           ]
@@ -148,6 +160,7 @@
       "grade_bonuses": [
         {
           "grade_index": 0,
+          "skill_type_id": 600100,
           "stat_kinds": [
             "Health"
           ]
@@ -160,6 +173,7 @@
         },
         {
           "grade_index": 2,
+          "skill_type_id": 600100,
           "stat_kinds": [
             "Defence"
           ]
@@ -173,6 +187,7 @@
         },
         {
           "grade_index": 4,
+          "skill_type_id": 600100,
           "stat_kinds": [
             "Resistance",
             "Accuracy"
@@ -180,6 +195,7 @@
         },
         {
           "grade_index": 5,
+          "skill_type_id": 600100,
           "stat_kinds": [
             "Speed"
           ]
@@ -193,6 +209,7 @@
       "grade_bonuses": [
         {
           "grade_index": 0,
+          "skill_type_id": 600110,
           "stat_kinds": [
             "Health"
           ]
@@ -205,6 +222,7 @@
         },
         {
           "grade_index": 2,
+          "skill_type_id": 600110,
           "stat_kinds": [
             "Defence"
           ]
@@ -218,6 +236,7 @@
         },
         {
           "grade_index": 4,
+          "skill_type_id": 600110,
           "stat_kinds": [
             "Resistance",
             "Accuracy"
@@ -225,6 +244,7 @@
         },
         {
           "grade_index": 5,
+          "skill_type_id": 600110,
           "stat_kinds": [
             "Speed"
           ]
@@ -238,6 +258,7 @@
       "grade_bonuses": [
         {
           "grade_index": 0,
+          "skill_type_id": 600120,
           "stat_kinds": [
             "Health"
           ]
@@ -250,6 +271,7 @@
         },
         {
           "grade_index": 2,
+          "skill_type_id": 600120,
           "stat_kinds": [
             "Defence"
           ]
@@ -263,6 +285,7 @@
         },
         {
           "grade_index": 4,
+          "skill_type_id": 600120,
           "stat_kinds": [
             "Resistance",
             "Accuracy"
@@ -270,6 +293,7 @@
         },
         {
           "grade_index": 5,
+          "skill_type_id": 600120,
           "stat_kinds": [
             "Speed"
           ]
@@ -283,6 +307,7 @@
       "grade_bonuses": [
         {
           "grade_index": 0,
+          "skill_type_id": 600010,
           "stat_kinds": [
             "Health"
           ]
@@ -295,6 +320,7 @@
         },
         {
           "grade_index": 2,
+          "skill_type_id": 600010,
           "stat_kinds": [
             "Defence"
           ]
@@ -308,6 +334,7 @@
         },
         {
           "grade_index": 4,
+          "skill_type_id": 600010,
           "stat_kinds": [
             "Resistance",
             "Accuracy"
@@ -315,6 +342,7 @@
         },
         {
           "grade_index": 5,
+          "skill_type_id": 600010,
           "stat_kinds": [
             "Speed"
           ]
@@ -328,6 +356,7 @@
       "grade_bonuses": [
         {
           "grade_index": 0,
+          "skill_type_id": 600020,
           "stat_kinds": [
             "Health"
           ]
@@ -340,6 +369,7 @@
         },
         {
           "grade_index": 2,
+          "skill_type_id": 600020,
           "stat_kinds": [
             "Defence"
           ]
@@ -353,6 +383,7 @@
         },
         {
           "grade_index": 4,
+          "skill_type_id": 600020,
           "stat_kinds": [
             "Resistance",
             "Accuracy"
@@ -360,6 +391,7 @@
         },
         {
           "grade_index": 5,
+          "skill_type_id": 600020,
           "stat_kinds": [
             "Speed"
           ]
@@ -373,6 +405,7 @@
       "grade_bonuses": [
         {
           "grade_index": 0,
+          "skill_type_id": 600030,
           "stat_kinds": [
             "Health"
           ]
@@ -385,6 +418,7 @@
         },
         {
           "grade_index": 2,
+          "skill_type_id": 600030,
           "stat_kinds": [
             "Defence"
           ]
@@ -398,6 +432,7 @@
         },
         {
           "grade_index": 4,
+          "skill_type_id": 600030,
           "stat_kinds": [
             "Resistance",
             "Accuracy"
@@ -405,6 +440,7 @@
         },
         {
           "grade_index": 5,
+          "skill_type_id": 600030,
           "stat_kinds": [
             "Speed"
           ]
@@ -418,6 +454,7 @@
       "grade_bonuses": [
         {
           "grade_index": 0,
+          "skill_type_id": 600040,
           "stat_kinds": [
             "Health"
           ]
@@ -430,6 +467,7 @@
         },
         {
           "grade_index": 2,
+          "skill_type_id": 600040,
           "stat_kinds": [
             "Defence"
           ]
@@ -443,6 +481,7 @@
         },
         {
           "grade_index": 4,
+          "skill_type_id": 600040,
           "stat_kinds": [
             "Resistance",
             "Accuracy"
@@ -450,6 +489,7 @@
         },
         {
           "grade_index": 5,
+          "skill_type_id": 600040,
           "stat_kinds": [
             "Speed"
           ]
@@ -463,6 +503,7 @@
       "grade_bonuses": [
         {
           "grade_index": 0,
+          "skill_type_id": 600050,
           "stat_kinds": [
             "Health"
           ]
@@ -475,6 +516,7 @@
         },
         {
           "grade_index": 2,
+          "skill_type_id": 600050,
           "stat_kinds": [
             "Defence"
           ]
@@ -488,6 +530,7 @@
         },
         {
           "grade_index": 4,
+          "skill_type_id": 600050,
           "stat_kinds": [
             "Resistance",
             "Accuracy"
@@ -495,6 +538,7 @@
         },
         {
           "grade_index": 5,
+          "skill_type_id": 600050,
           "stat_kinds": [
             "Speed"
           ]
@@ -508,6 +552,7 @@
       "grade_bonuses": [
         {
           "grade_index": 0,
+          "skill_type_id": 600060,
           "stat_kinds": [
             "Health"
           ]
@@ -520,6 +565,7 @@
         },
         {
           "grade_index": 2,
+          "skill_type_id": 600060,
           "stat_kinds": [
             "Defence"
           ]
@@ -533,6 +579,7 @@
         },
         {
           "grade_index": 4,
+          "skill_type_id": 600060,
           "stat_kinds": [
             "Resistance",
             "Accuracy"
@@ -540,6 +587,7 @@
         },
         {
           "grade_index": 5,
+          "skill_type_id": 600060,
           "stat_kinds": [
             "Speed"
           ]
@@ -553,6 +601,7 @@
       "grade_bonuses": [
         {
           "grade_index": 0,
+          "skill_type_id": 600130,
           "stat_kinds": [
             "Health"
           ]
@@ -565,6 +614,7 @@
         },
         {
           "grade_index": 2,
+          "skill_type_id": 600130,
           "stat_kinds": [
             "Defence"
           ]
@@ -578,6 +628,7 @@
         },
         {
           "grade_index": 4,
+          "skill_type_id": 600130,
           "stat_kinds": [
             "Resistance",
             "Accuracy"
@@ -585,6 +636,7 @@
         },
         {
           "grade_index": 5,
+          "skill_type_id": 600130,
           "stat_kinds": [
             "Speed"
           ]
@@ -598,6 +650,7 @@
       "grade_bonuses": [
         {
           "grade_index": 0,
+          "skill_type_id": 600140,
           "stat_kinds": [
             "Health"
           ]
@@ -610,6 +663,7 @@
         },
         {
           "grade_index": 2,
+          "skill_type_id": 600140,
           "stat_kinds": [
             "Defence"
           ]
@@ -623,6 +677,7 @@
         },
         {
           "grade_index": 4,
+          "skill_type_id": 600140,
           "stat_kinds": [
             "Resistance",
             "Accuracy"
@@ -630,6 +685,7 @@
         },
         {
           "grade_index": 5,
+          "skill_type_id": 600140,
           "stat_kinds": [
             "Speed"
           ]
@@ -643,6 +699,7 @@
       "grade_bonuses": [
         {
           "grade_index": 0,
+          "skill_type_id": 600150,
           "stat_kinds": [
             "Health"
           ]
@@ -655,6 +712,7 @@
         },
         {
           "grade_index": 2,
+          "skill_type_id": 600150,
           "stat_kinds": [
             "Defence"
           ]
@@ -668,6 +726,7 @@
         },
         {
           "grade_index": 4,
+          "skill_type_id": 600150,
           "stat_kinds": [
             "Resistance",
             "Accuracy"
@@ -675,6 +734,7 @@
         },
         {
           "grade_index": 5,
+          "skill_type_id": 600150,
           "stat_kinds": [
             "Speed"
           ]
@@ -688,6 +748,7 @@
       "grade_bonuses": [
         {
           "grade_index": 0,
+          "skill_type_id": 600160,
           "stat_kinds": [
             "Health"
           ]
@@ -700,6 +761,7 @@
         },
         {
           "grade_index": 2,
+          "skill_type_id": 600160,
           "stat_kinds": [
             "Defence"
           ]
@@ -713,6 +775,7 @@
         },
         {
           "grade_index": 4,
+          "skill_type_id": 600160,
           "stat_kinds": [
             "Resistance",
             "Accuracy"
@@ -720,6 +783,7 @@
         },
         {
           "grade_index": 5,
+          "skill_type_id": 600160,
           "stat_kinds": [
             "Speed"
           ]
@@ -733,6 +797,7 @@
       "grade_bonuses": [
         {
           "grade_index": 0,
+          "skill_type_id": 600170,
           "stat_kinds": [
             "Health"
           ]
@@ -745,6 +810,7 @@
         },
         {
           "grade_index": 2,
+          "skill_type_id": 600170,
           "stat_kinds": [
             "Defence"
           ]
@@ -758,6 +824,7 @@
         },
         {
           "grade_index": 4,
+          "skill_type_id": 600170,
           "stat_kinds": [
             "Resistance",
             "Accuracy"
@@ -765,6 +832,7 @@
         },
         {
           "grade_index": 5,
+          "skill_type_id": 600170,
           "stat_kinds": [
             "Speed"
           ]
@@ -778,6 +846,7 @@
       "grade_bonuses": [
         {
           "grade_index": 0,
+          "skill_type_id": 600180,
           "stat_kinds": [
             "Health"
           ]
@@ -790,6 +859,7 @@
         },
         {
           "grade_index": 2,
+          "skill_type_id": 600180,
           "stat_kinds": [
             "Defence"
           ]
@@ -803,6 +873,7 @@
         },
         {
           "grade_index": 4,
+          "skill_type_id": 600180,
           "stat_kinds": [
             "Resistance",
             "Accuracy"
@@ -810,6 +881,7 @@
         },
         {
           "grade_index": 5,
+          "skill_type_id": 600180,
           "stat_kinds": [
             "Speed"
           ]
@@ -823,6 +895,7 @@
       "grade_bonuses": [
         {
           "grade_index": 0,
+          "skill_type_id": 600190,
           "stat_kinds": [
             "Health"
           ]
@@ -835,6 +908,7 @@
         },
         {
           "grade_index": 2,
+          "skill_type_id": 600190,
           "stat_kinds": [
             "Defence"
           ]
@@ -848,6 +922,7 @@
         },
         {
           "grade_index": 4,
+          "skill_type_id": 600190,
           "stat_kinds": [
             "Resistance",
             "Accuracy"
@@ -855,6 +930,7 @@
         },
         {
           "grade_index": 5,
+          "skill_type_id": 600190,
           "stat_kinds": [
             "Speed"
           ]
@@ -868,6 +944,7 @@
       "grade_bonuses": [
         {
           "grade_index": 0,
+          "skill_type_id": 600200,
           "stat_kinds": [
             "Health"
           ]
@@ -880,6 +957,7 @@
         },
         {
           "grade_index": 2,
+          "skill_type_id": 600200,
           "stat_kinds": [
             "Defence"
           ]
@@ -893,6 +971,7 @@
         },
         {
           "grade_index": 4,
+          "skill_type_id": 600200,
           "stat_kinds": [
             "Resistance",
             "Accuracy"
@@ -900,6 +979,7 @@
         },
         {
           "grade_index": 5,
+          "skill_type_id": 600200,
           "stat_kinds": [
             "Speed"
           ]
@@ -913,6 +993,7 @@
       "grade_bonuses": [
         {
           "grade_index": 0,
+          "skill_type_id": 600210,
           "stat_kinds": [
             "Health"
           ]
@@ -925,6 +1006,7 @@
         },
         {
           "grade_index": 2,
+          "skill_type_id": 600210,
           "stat_kinds": [
             "Defence"
           ]
@@ -938,6 +1020,7 @@
         },
         {
           "grade_index": 4,
+          "skill_type_id": 600210,
           "stat_kinds": [
             "Resistance",
             "Accuracy"
@@ -945,6 +1028,7 @@
         },
         {
           "grade_index": 5,
+          "skill_type_id": 600210,
           "stat_kinds": [
             "Speed"
           ]
@@ -958,6 +1042,7 @@
       "grade_bonuses": [
         {
           "grade_index": 0,
+          "skill_type_id": 600220,
           "stat_kinds": [
             "Health"
           ]
@@ -970,6 +1055,7 @@
         },
         {
           "grade_index": 2,
+          "skill_type_id": 600220,
           "stat_kinds": [
             "Defence"
           ]
@@ -983,6 +1069,7 @@
         },
         {
           "grade_index": 4,
+          "skill_type_id": 600220,
           "stat_kinds": [
             "Resistance",
             "Accuracy"
@@ -990,6 +1077,7 @@
         },
         {
           "grade_index": 5,
+          "skill_type_id": 600220,
           "stat_kinds": [
             "Speed"
           ]
@@ -1003,6 +1091,7 @@
       "grade_bonuses": [
         {
           "grade_index": 0,
+          "skill_type_id": 600230,
           "stat_kinds": [
             "Health"
           ]
@@ -1015,6 +1104,7 @@
         },
         {
           "grade_index": 2,
+          "skill_type_id": 600230,
           "stat_kinds": [
             "Defence"
           ]
@@ -1028,6 +1118,7 @@
         },
         {
           "grade_index": 4,
+          "skill_type_id": 600230,
           "stat_kinds": [
             "Resistance",
             "Accuracy"
@@ -1035,6 +1126,7 @@
         },
         {
           "grade_index": 5,
+          "skill_type_id": 600230,
           "stat_kinds": [
             "Speed"
           ]
@@ -1048,6 +1140,7 @@
       "grade_bonuses": [
         {
           "grade_index": 0,
+          "skill_type_id": 600240,
           "stat_kinds": [
             "Health"
           ]
@@ -1060,6 +1153,7 @@
         },
         {
           "grade_index": 2,
+          "skill_type_id": 600240,
           "stat_kinds": [
             "Defence"
           ]
@@ -1073,6 +1167,7 @@
         },
         {
           "grade_index": 4,
+          "skill_type_id": 600240,
           "stat_kinds": [
             "Resistance",
             "Accuracy"
@@ -1080,6 +1175,7 @@
         },
         {
           "grade_index": 5,
+          "skill_type_id": 600240,
           "stat_kinds": [
             "Speed"
           ]
@@ -1093,6 +1189,7 @@
       "grade_bonuses": [
         {
           "grade_index": 0,
+          "skill_type_id": 600250,
           "stat_kinds": [
             "Health"
           ]
@@ -1105,6 +1202,7 @@
         },
         {
           "grade_index": 2,
+          "skill_type_id": 600250,
           "stat_kinds": [
             "Defence"
           ]
@@ -1118,6 +1216,7 @@
         },
         {
           "grade_index": 4,
+          "skill_type_id": 600250,
           "stat_kinds": [
             "Resistance",
             "Accuracy"
@@ -1125,6 +1224,7 @@
         },
         {
           "grade_index": 5,
+          "skill_type_id": 600250,
           "stat_kinds": [
             "Speed"
           ]
@@ -1138,6 +1238,7 @@
       "grade_bonuses": [
         {
           "grade_index": 0,
+          "skill_type_id": 600260,
           "stat_kinds": [
             "Health"
           ]
@@ -1150,6 +1251,7 @@
         },
         {
           "grade_index": 2,
+          "skill_type_id": 600260,
           "stat_kinds": [
             "Defence"
           ]
@@ -1163,6 +1265,7 @@
         },
         {
           "grade_index": 4,
+          "skill_type_id": 600260,
           "stat_kinds": [
             "Resistance",
             "Accuracy"
@@ -1170,6 +1273,7 @@
         },
         {
           "grade_index": 5,
+          "skill_type_id": 600260,
           "stat_kinds": [
             "Speed"
           ]
@@ -1183,6 +1287,7 @@
       "grade_bonuses": [
         {
           "grade_index": 0,
+          "skill_type_id": 600270,
           "stat_kinds": [
             "Health"
           ]
@@ -1195,6 +1300,7 @@
         },
         {
           "grade_index": 2,
+          "skill_type_id": 600270,
           "stat_kinds": [
             "Defence"
           ]
@@ -1208,6 +1314,7 @@
         },
         {
           "grade_index": 4,
+          "skill_type_id": 600270,
           "stat_kinds": [
             "Resistance",
             "Accuracy"
@@ -1215,6 +1322,7 @@
         },
         {
           "grade_index": 5,
+          "skill_type_id": 600270,
           "stat_kinds": [
             "Speed"
           ]
@@ -1228,6 +1336,7 @@
       "grade_bonuses": [
         {
           "grade_index": 0,
+          "skill_type_id": 600280,
           "stat_kinds": [
             "Health"
           ]
@@ -1240,6 +1349,7 @@
         },
         {
           "grade_index": 2,
+          "skill_type_id": 600280,
           "stat_kinds": [
             "Defence"
           ]
@@ -1253,6 +1363,7 @@
         },
         {
           "grade_index": 4,
+          "skill_type_id": 600280,
           "stat_kinds": [
             "Resistance",
             "Accuracy"
@@ -1260,6 +1371,7 @@
         },
         {
           "grade_index": 5,
+          "skill_type_id": 600280,
           "stat_kinds": [
             "Speed"
           ]
@@ -1273,6 +1385,7 @@
       "grade_bonuses": [
         {
           "grade_index": 0,
+          "skill_type_id": 600290,
           "stat_kinds": [
             "Health"
           ]
@@ -1285,6 +1398,7 @@
         },
         {
           "grade_index": 2,
+          "skill_type_id": 600290,
           "stat_kinds": [
             "Defence"
           ]
@@ -1298,6 +1412,7 @@
         },
         {
           "grade_index": 4,
+          "skill_type_id": 600290,
           "stat_kinds": [
             "Resistance",
             "Accuracy"
@@ -1305,6 +1420,7 @@
         },
         {
           "grade_index": 5,
+          "skill_type_id": 600290,
           "stat_kinds": [
             "Speed"
           ]
@@ -1318,6 +1434,7 @@
       "grade_bonuses": [
         {
           "grade_index": 0,
+          "skill_type_id": 600300,
           "stat_kinds": [
             "Health"
           ]
@@ -1330,6 +1447,7 @@
         },
         {
           "grade_index": 2,
+          "skill_type_id": 600300,
           "stat_kinds": [
             "Defence"
           ]
@@ -1343,6 +1461,7 @@
         },
         {
           "grade_index": 4,
+          "skill_type_id": 600300,
           "stat_kinds": [
             "Resistance",
             "Accuracy"
@@ -1350,6 +1469,7 @@
         },
         {
           "grade_index": 5,
+          "skill_type_id": 600300,
           "stat_kinds": [
             "Speed"
           ]
