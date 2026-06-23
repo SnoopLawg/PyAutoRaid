@@ -298,6 +298,8 @@ def main() -> None:
     ap.add_argument("--pool", choices=["owned", "all"], default="owned",
                     help="'owned' (your roster) or 'all' (whole game)")
     ap.add_argument("--list-locations", action="store_true")
+    ap.add_argument("--builds", action="store_true",
+                    help="also print per-hero mastery/blessing/stat build for each pick")
     args = ap.parse_args()
 
     if args.list_locations or not args.location:
@@ -329,6 +331,33 @@ def main() -> None:
         print("UNCOVERED (roster gap for this location):")
         for a in res["uncovered_axes"]:
             print(f"  - {a}")
+
+    if args.builds:
+        # Per-hero build (masteries/blessing/stats) from m5_build_recommender.
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "m5_build_recommender", ROOT / "tools" / "m5_build_recommender.py")
+        brmod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(brmod)
+        syn = brmod._load_synergy()
+        mrel = brmod._load_mastery_relevance()
+        brel = brmod._load_blessing_relevance()
+        print()
+        print("=== Per-hero builds ===")
+        for name in res["team"]:
+            hero = syn.get(name.lower())
+            if not hero:
+                continue
+            by_tree = brmod.recommend_masteries(hero, args.location, mrel)
+            bl = brmod.recommend_blessing(hero, args.location, brel)
+            masts = "; ".join(
+                f"{t}: {', '.join(p['name'] for p in by_tree[t])}"
+                for t in ("Attack", "Defence", "Support") if by_tree.get(t))
+            print(f"\n  {name}:")
+            print(f"    masteries: {masts}")
+            print(f"    blessing:  {', '.join(bl) if bl else '(role-standard)'}")
+            for s in brmod.recommend_stats(hero, args.location):
+                print(f"    stat: {s}")
 
 
 if __name__ == "__main__":

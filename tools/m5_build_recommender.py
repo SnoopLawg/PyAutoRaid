@@ -1,0 +1,240 @@
+"""Milestone 5 — Per-hero build recommender (masteries + blessing + stat focus).
+
+The team recommender (`m5_recommender.py`) says WHICH heroes to bring. This
+says HOW to build each one for a given location: which masteries to slot,
+which blessing, and what stats to prioritize.
+
+Grounding (game-truth) vs heuristic is kept explicit:
+  - GAME-TRUTH inputs: the hero's actual kit (`data/m5_synergy.jsonl` provides/
+    role, derived from skill descriptions), per-location mastery relevance
+    (`data/static/mastery_relevance.json`), blessing relevance + proc formulas
+    (`data/static/blessing_relevance.json` / `blessing_procs.json`), and ACC
+    floors (`data/static/stage_stat_targets.json`).
+  - HEURISTIC layer: rules mapping a kit profile -> recommended masteries/
+    blessing/stats. These encode standard team-building knowledge and are
+    clearly separated; the game wins on any conflict.
+
+A mastery is only recommended if it is `relevant` (not `no_op`) at the target
+location AND fits the hero's kit. Same for blessings.
+
+CLI:
+    python3 tools/m5_build_recommender.py --hero Venomage --location cb
+    python3 tools/m5_build_recommender.py --hero Geomancer --location dragon
+"""
+from __future__ import annotations
+
+import argparse
+import json
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+STATIC = ROOT / "data" / "static"
+
+# Named mastery IDs we reference in rules (subset; full set in mastery_relevance).
+M = {
+    "warmaster": 500161, "giant_slayer": 500163, "helmsmasher": 500162,
+    "flawless_execution": 500164, "keen_strike": 500122, "methodical": 500151,
+    "heart_of_glory": 500121, "grim_resolve": 500124, "single_out": 500131,
+    "ruthless_ambush": 500134, "wrath_of_slain": 500142,
+    "sniper": 500353, "master_hexer": 500354, "oppressor": 500363,
+    "lore_of_steel": 500343, "lasting_gifts": 500351, "cycle_of_magic": 500342,
+    "eagle_eye": 500364, "evil_eye": 500344, "spirit_haste": 500352,
+    "iron_skin": 500261, "blastproof": 500221, "improved_parry": 500224,
+    "bulwark": 500262, "retribution": 500253, "elixir_of_life": 500361,
+    "healing_savior": 500331, "rapid_response": 500332, "arcane_celerity": 500334,
+    "timely_intervention": 500362, "merciful_aid": 500341, "shieldbearer": 500322,
+    "bring_it_down": 500141,
+}
+ID_TO_KEY = {v: k for k, v in M.items()}
+
+
+# The team recommender uses fine-grained location codes (dragon, spider, ...)
+# but mastery/blessing relevance is tagged by the coarse area code. Map the
+# specific dungeon bosses to the shared `dungeon` relevance bucket.
+LOC_TO_RELEVANCE = {
+    "dragon": "dungeon", "spider": "dungeon", "fire_knight": "dungeon",
+    "ice_golem": "dungeon", "minotaur": "dungeon",
+}
+
+
+def _rel_loc(location: str) -> str:
+    return LOC_TO_RELEVANCE.get(location, location)
+
+
+def _load_synergy() -> dict:
+    out = {}
+    with (ROOT / "data" / "m5_synergy.jsonl").open(encoding="utf-8") as fh:
+        for line in fh:
+            r = json.loads(line)
+            out[r["name"].lower()] = r
+    return out
+
+
+def _load_mastery_relevance() -> dict:
+    raw = json.loads((STATIC / "mastery_relevance.json").read_text(encoding="utf-8"))
+    return {m["id"]: m for m in raw["masteries"]}
+
+
+def _load_blessing_relevance() -> list:
+    raw = json.loads((STATIC / "blessing_relevance.json").read_text(encoding="utf-8"))
+    return raw["blessings"]
+
+
+def _acc_floor(location: str) -> int | None:
+    area = {"cb": "AllianceBoss", "dragon": "Dungeon", "spider": "Dungeon",
+            "fire_knight": "Dungeon", "ice_golem": "Dungeon",
+            "hydra": "Hydra", "chimera": "Chimera"}.get(location)
+    p = STATIC / "stage_stat_targets.json"
+    if not area or not p.exists():
+        return None
+    data = json.loads(p.read_text(encoding="utf-8"))
+    floors = [r["acc_floor"] for r in data["stages"]
+              if r.get("area") == area and r.get("acc_floor")]
+    return max(floors) if floors else None
+
+
+def recommend_masteries(hero: dict, location: str, mrel: dict) -> dict:
+    """Return {tree: [mastery_ids]} recommended, filtered by location relevance."""
+    provides = set(hero.get("provides", []))
+    role = hero.get("synergy_role", "")
+    game_role = hero.get("game_role", "")
+
+    rloc = _rel_loc(location)
+
+    def relevant(mid: int) -> bool:
+        m = mrel.get(mid)
+        if not m:
+            return False
+        return m["relevance"].get(rloc) in ("relevant", "stat_bonus")
+
+    picks: list[int] = []
+    is_attacker = game_role == "Attack" or role in ("attacker", "dot")
+    is_debuffer = any(p.startswith("enemy_debuff:") for p in provides) or "dot" in role
+    is_dot = any(p.startswith("dot:") for p in provides)
+    is_support = role in ("support", "healer/support") or game_role == "Support"
+    is_tank = game_role in ("Defense", "Health")
+
+    # Offense tree
+    if is_attacker:
+        # WM for multi-hit/low-base, GS for high-base nukers — default WM.
+        picks += [M["warmaster"], M["helmsmasher"], M["flawless_execution"],
+                  M["keen_strike"]]
+        picks += [M["bring_it_down"]]   # +6% vs higher-MAX-HP target (always true vs bosses)
+        # First-cast / HP-condition damage where it applies broadly.
+        picks += [M["ruthless_ambush"], M["single_out"]]
+    # Debuff support tree
+    if is_debuffer:
+        picks += [M["sniper"], M["master_hexer"]]
+        if is_dot:
+            picks += [M["oppressor"]]   # TM per active debuff — huge for DoT stackers
+    # Support / utility
+    if is_support:
+        picks += [M["lore_of_steel"], M["lasting_gifts"], M["cycle_of_magic"]]
+        if "heal" in provides:
+            picks += [M["healing_savior"], M["merciful_aid"]]
+        if any(p.startswith("team_buff:Shield") for p in provides):
+            picks += [M["shieldbearer"]]
+    # Tank / defensive
+    if is_tank:
+        picks += [M["iron_skin"], M["blastproof"], M["improved_parry"],
+                  M["bulwark"], M["retribution"], M["elixir_of_life"]]
+    # ACC for debuffers who must land vs high-RES bosses
+    if is_debuffer:
+        picks += [M["eagle_eye"]]
+
+    # Dedup, filter by location relevance, group by tree.
+    seen = set()
+    by_tree: dict[str, list] = {"Attack": [], "Defence": [], "Support": []}
+    for mid in picks:
+        if mid in seen or not relevant(mid):
+            continue
+        seen.add(mid)
+        m = mrel.get(mid, {})
+        by_tree.setdefault(m.get("tree", "?"), []).append(
+            {"id": mid, "name": m.get("name", ID_TO_KEY.get(mid, str(mid)))})
+    return by_tree
+
+
+def recommend_blessing(hero: dict, location: str, brel: list) -> list:
+    provides = set(hero.get("provides", []))
+    role = hero.get("synergy_role", "")
+    is_damage = role in ("attacker", "dot") or any(
+        p.startswith("dot:") for p in provides)
+
+    # Blessing UI/known good picks by role (game-truth procs in blessing_procs).
+    # Damage carries: Phantom Touch (MagicOrb) / Brimstone (Meteor) for raw
+    # damage; supports: utility. Filter to blessings relevant at the location.
+    rloc = _rel_loc(location)
+    rel_by_loc = {b["id"]: b["relevance"].get(rloc) for b in brel}
+    out = []
+    if is_damage:
+        for code in ("MagicOrb", "Meteor", "Necromancy", "WildImpulses"):
+            if rel_by_loc.get(code) == "relevant":
+                out.append(code)
+    else:
+        for code in ("LeadershipDomination", "Tranquility", "AdvancedHeal",
+                     "ChainBreaker"):
+            if rel_by_loc.get(code) == "relevant":
+                out.append(code)
+    return out[:3]
+
+
+def recommend_stats(hero: dict, location: str) -> list:
+    provides = set(hero.get("provides", []))
+    role = hero.get("synergy_role", "")
+    game_role = hero.get("game_role", "")
+    out = []
+    is_debuffer = any(p.startswith("enemy_debuff:") for p in provides) or "dot" in role
+    if is_debuffer:
+        floor = _acc_floor(location)
+        if floor:
+            out.append(f"ACC >= {floor} (game-truth boss RES -- land debuffs at 100% base chance)")
+        else:
+            out.append("ACC high enough to land debuffs (check boss RES)")
+    if role in ("attacker", "dot"):
+        out.append("ATK%, C.RATE -> ~100%, C.DMG (damage)")
+    if game_role in ("Defense", "Health") or role.startswith("heal"):
+        out.append("HP / DEF (survivability)")
+    if "SPD" in str(provides) or location in ("arena", "tt"):
+        out.append("SPD (turn order / speed tune)")
+    if not out:
+        out.append("Role-standard stats")
+    return out
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser(description=__doc__,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--hero", required=True)
+    ap.add_argument("--location", required=True)
+    args = ap.parse_args()
+
+    syn = _load_synergy()
+    hero = syn.get(args.hero.lower())
+    if not hero:
+        print(f"Hero '{args.hero}' not found in synergy graph.")
+        return
+    mrel = _load_mastery_relevance()
+    brel = _load_blessing_relevance()
+
+    print(f"=== Build for {hero['name']} @ {args.location} ===")
+    print(f"  kit: role={hero['synergy_role']} | provides: {', '.join(hero['provides'])}")
+    print()
+    print("  Masteries (relevant at this location, matched to kit):")
+    by_tree = recommend_masteries(hero, args.location, mrel)
+    for tree in ("Attack", "Defence", "Support"):
+        picks = by_tree.get(tree) or []
+        if picks:
+            names = ", ".join(p["name"] for p in picks)
+            print(f"    {tree}: {names}")
+    print()
+    bl = recommend_blessing(hero, args.location, brel)
+    print(f"  Blessing (relevant + role-fit): {', '.join(bl) if bl else '(role-standard)'}")
+    print()
+    print("  Stat focus:")
+    for s in recommend_stats(hero, args.location):
+        print(f"    - {s}")
+
+
+if __name__ == "__main__":
+    main()
