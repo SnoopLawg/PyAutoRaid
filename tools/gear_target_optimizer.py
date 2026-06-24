@@ -104,8 +104,10 @@ class Optimizer:
                 if a.get("kind") in ACCESSORY_SLOTS and a.get("id"):
                     self._acc_faction[a["id"]] = frac
 
-    def candidates(self, slot, hero_fraction):
+    def candidates(self, slot, hero_fraction, exclude_ids=None):
         arts = self.by_slot.get(slot, [])
+        if exclude_ids:
+            arts = [a for a in arts if a.get("id") not in exclude_ids]
         if slot in ACCESSORY_SLOTS:
             return [a for a in arts
                     if self._acc_faction.get(a["id"], hero_fraction) == hero_fraction]
@@ -167,7 +169,8 @@ class Optimizer:
         return reward
 
     def optimize(self, hero_name, targets, require_sets=None, lock_slots=None,
-                 anneal=8, slots=(1, 2, 3, 4, 5, 6, 7, 8, 9), seed=0):
+                 anneal=8, slots=(1, 2, 3, 4, 5, 6, 7, 8, 9), seed=0,
+                 exclude_ids=None):
         hero = self.heroes_by_name.get(hero_name.lower())
         if not hero:
             raise ValueError(f"hero '{hero_name}' not found")
@@ -175,7 +178,10 @@ class Optimizer:
         rng = random.Random(seed)
         equipped = {a.get("kind"): a for a in hero.get("artifacts", [])}
         lock_slots = set(lock_slots or [])
-        cand = {s: self.candidates(s, frac) for s in slots}
+        # exclude_ids = pieces claimed by OTHER heroes (team mode). A hero's own
+        # locked/equipped pieces are never in its own exclude set, so locking
+        # still works. The hero only sees free vault pieces for unlocked slots.
+        cand = {s: self.candidates(s, frac, exclude_ids) for s in slots}
 
         assignment = {}
         for s in slots:
