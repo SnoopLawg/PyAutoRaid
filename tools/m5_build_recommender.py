@@ -431,13 +431,24 @@ def _run_optimizer(hero: dict, location: str) -> None:
             mins[gto.ACC] = floor
     targets = gto.build_targets(mins, {}, {}, mode)
 
+    # Accessory-primary hints from the role. These are standard build levers:
+    # a damage dealer wants a C.DMG amulet; a debuffer wants an ACC banner. The
+    # optimizer honestly falls back if the vault lacks such a piece.
+    slot_primary = {}
+    if mode == "damage":
+        slot_primary[8] = gto.CD          # Amulet -> C.DMG
+    if is_debuffer:
+        slot_primary[9] = gto.ACC         # Banner -> ACC
+
     print()
     print(f"  [optimize] building achievable loadout (mode={mode}"
-          + (f", ACC>={mins[gto.ACC]:.0f}" if mins else "") + ") ...")
+          + (f", ACC>={mins[gto.ACC]:.0f}" if mins else "")
+          + (", Amulet=CD" if slot_primary.get(8) else "")
+          + (", Banner=ACC" if slot_primary.get(9) else "") + ") ...")
     try:
         arts, heroes, account = gto.load_data()
         opt = gto.Optimizer(arts, heroes, account)
-        res = opt.optimize(hero["name"], targets, anneal=6)
+        res = opt.optimize(hero["name"], targets, anneal=10, slot_primary=slot_primary)
     except Exception as ex:
         print(f"    optimizer failed: {ex}")
         return

@@ -43,6 +43,9 @@ STAT_ID_TO_NAME = {v: k for k, v in STAT_NAME_TO_ID.items()}
 # Per-stat scale to normalize importance-weighted contributions (≈ a strong total).
 STAT_SCALE = {HP: 60000, ATK: 5000, DEF: 4000, SPD: 250, RES: 300,
               ACC: 400, CR: 100, CD: 300}
+# Crit RATE caps at 100% per hit; rewarding the optimizer for CR beyond this is
+# wasted (surplus should go to CD/ATK). Soft-cap the importance reward at 100.
+CR_SOFT_CAP = 100
 
 MODE_WEIGHTS = {
     "balanced":      {ACC: 2, SPD: 2, HP: 1, DEF: 1},
@@ -134,7 +137,16 @@ class Optimizer:
                 excess = (val - mx) / max(1.0, STAT_SCALE[sid])
                 s -= 20000 * excess
             if imp:
-                s += imp * (val / STAT_SCALE[sid]) * 100
+                # CR soft-cap: crit RATE above 100% is wasted (per-hit crit
+                # chance caps at 100%), so don't reward the optimizer for
+                # over-investing CR — surplus should flow to CD/ATK. Cap the
+                # REWARDED value, not the stat itself; an explicit CR min above
+                # the cap (e.g. to offset Decrease-C.RATE debuffs) still wins
+                # via the deficit penalty above. (HellHades does the same.)
+                rew_val = val
+                if sid == CR and (mn is None or mn <= CR_SOFT_CAP):
+                    rew_val = min(val, CR_SOFT_CAP)
+                s += imp * (rew_val / STAT_SCALE[sid]) * 100
         return s, met_all_mins
 
     def _stats_for(self, hero, assignment):
