@@ -170,7 +170,7 @@ class Optimizer:
 
     def optimize(self, hero_name, targets, require_sets=None, lock_slots=None,
                  anneal=8, slots=(1, 2, 3, 4, 5, 6, 7, 8, 9), seed=0,
-                 exclude_ids=None):
+                 exclude_ids=None, slot_primary=None):
         hero = self.heroes_by_name.get(hero_name.lower())
         if not hero:
             raise ValueError(f"hero '{hero_name}' not found")
@@ -182,6 +182,16 @@ class Optimizer:
         # locked/equipped pieces are never in its own exclude set, so locking
         # still works. The hero only sees free vault pieces for unlocked slots.
         cand = {s: self.candidates(s, frac, exclude_ids) for s in slots}
+        # slot_primary = {slot_id: stat_id} — require that slot's main stat be a
+        # specific primary (e.g. Ring=CD, Banner=ACC). Restricts candidates to
+        # matching pieces; an empty result is honest (no such piece in vault)
+        # and the slot falls back to the equipped piece below.
+        slot_primary = slot_primary or {}
+        for s, want in slot_primary.items():
+            if s in lock_slots or s not in cand:
+                continue
+            cand[s] = [a for a in cand[s]
+                       if (a.get("primary") or {}).get("stat") == want]
 
         assignment = {}
         for s in slots:
@@ -285,6 +295,28 @@ def parse_kv(s, cast=float):
     return out
 
 
+# Slot-name aliases accepted in --primary (in addition to numeric slot ids).
+SLOT_ALIASES = {"HELMET": 1, "HELM": 1, "CHEST": 2, "GLOVES": 3, "BOOTS": 4,
+                "WEAPON": 5, "SHIELD": 6, "RING": 7, "AMULET": 8, "CLOAK": 8,
+                "BANNER": 9}
+
+
+def parse_slot_primary(s):
+    """'7=CD,9=ACC' or 'Ring=CD,Banner=ACC' -> {slot_id: stat_id}."""
+    out = {}
+    for part in (s or "").split(","):
+        part = part.strip()
+        if "=" not in part:
+            continue
+        k, v = part.split("=", 1)
+        k = k.strip().upper()
+        slot = int(k) if k.isdigit() else SLOT_ALIASES.get(k)
+        sid = STAT_NAME_TO_ID.get(v.strip().upper())
+        if slot is not None and sid is not None:
+            out[slot] = sid
+    return out
+
+
 def build_targets(mins, maxs, weights, mode):
     targets = {}
     if mode and mode in MODE_WEIGHTS:
@@ -310,6 +342,8 @@ def main():
     ap.add_argument("--min-rank", type=int, default=5)
     ap.add_argument("--anneal", type=int, default=8)
     ap.add_argument("--lock", default="", help="slots to keep current piece, e.g. '7,8,9'")
+    ap.add_argument("--primary", default="",
+                    help="require slot primaries, e.g. 'Ring=CD,Banner=ACC' or '7=CD,9=ACC'")
     args = ap.parse_args()
 
     targets = build_targets(parse_kv(args.min), parse_kv(args.max),
@@ -318,10 +352,12 @@ def main():
         print("No targets. Use --min / --weight / --mode.")
         return
     lock = {int(x) for x in args.lock.split(",") if x.strip().isdigit()}
+    slot_primary = parse_slot_primary(args.primary)
 
     arts, heroes, account = load_data()
     opt = Optimizer(arts, heroes, account, min_rank=args.min_rank)
-    res = opt.optimize(args.hero, targets, lock_slots=lock, anneal=args.anneal)
+    res = opt.optimize(args.hero, targets, lock_slots=lock, anneal=args.anneal,
+                       slot_primary=slot_primary)
 
     print(f"=== Optimized build for {res['hero']} ===")
     print(f"  mode={args.mode or '(custom)'}  mins_met={res['mins_met']}  score={res['score']:.1f}\n")

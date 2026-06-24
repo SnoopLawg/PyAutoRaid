@@ -53,8 +53,8 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tools"))
 
 from gear_target_optimizer import (  # noqa: E402
-    Optimizer, load_data, build_targets, parse_kv, MODE_WEIGHTS,
-    STAT_NAME_TO_ID, STAT_ID_TO_NAME,
+    Optimizer, load_data, build_targets, parse_kv, parse_slot_primary,
+    MODE_WEIGHTS, STAT_NAME_TO_ID, STAT_ID_TO_NAME,
 )
 from cb_optimizer import HP, ATK, DEF, SPD, RES, ACC, CR, CD  # noqa: E402
 from gear_constants import SLOT_NAMES  # noqa: E402
@@ -110,7 +110,8 @@ class TeamOptimizer:
             spec = by_name[name]
             used = self._assigned_ids(builds)
             res = self.opt.optimize(name, spec["targets"], lock_slots=spec.get("lock"),
-                                    anneal=anneal, exclude_ids=used)
+                                    anneal=anneal, exclude_ids=used,
+                                    slot_primary=spec.get("slot_primary"))
             builds[name] = res
             if verbose:
                 print(f"  [greedy] {name:14s} score={res['score']:8.1f} "
@@ -124,7 +125,8 @@ class TeamOptimizer:
                 spec = by_name[name]
                 others = self._assigned_ids(builds, exclude_hero=name)
                 res = self.opt.optimize(name, spec["targets"], lock_slots=spec.get("lock"),
-                                        anneal=anneal, exclude_ids=others)
+                                        anneal=anneal, exclude_ids=others,
+                                        slot_primary=spec.get("slot_primary"))
                 if res["score"] > builds[name]["score"] + 1e-6:
                     builds[name] = res
                     improved = True
@@ -164,8 +166,13 @@ def specs_from_json(spec_path):
                    for k, v in (row.get("weight") or {}).items()
                    if k.upper() in STAT_NAME_TO_ID}
         targets = build_targets(mins, maxs, weights, row.get("mode"))
+        # primary: {"7":"CD","9":"ACC"} or {"Ring":"CD"} -> {slot_id: stat_id}
+        slot_primary = {}
+        for k, v in (row.get("primary") or {}).items():
+            slot_primary.update(parse_slot_primary(f"{k}={v}"))
         out.append({"hero": row["hero"], "targets": targets,
-                    "lock": set(row.get("lock") or [])})
+                    "lock": set(row.get("lock") or []),
+                    "slot_primary": slot_primary})
     return out, data.get("priority")
 
 
