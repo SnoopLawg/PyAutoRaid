@@ -868,11 +868,23 @@ namespace RaidAutomation
                             }
                             if (flatBonus != null)
                             {
+                                // Emit ALL 8 stats. RES/ACC/CR/CD are "absolute"
+                                // stats stored in FlatBonus (they were 0 in
+                                // PercentBonus). Summing these across pieces gives
+                                // the game-truth per-artifact contribution
+                                // INCLUDING accessory ascension — which the
+                                // Python-side substat reconstruction can't see.
+                                // CR/CD come out as fractions (0.07 = +7% CR,
+                                // 1.30 = +130% CD); the consumer scales ×100.
                                 sb.Append(",\"flat_bonus\":{");
                                 AppendFixed(sb, flatBonus, "Health", "HP");
                                 sb.Append(","); AppendFixed(sb, flatBonus, "Attack", "ATK");
                                 sb.Append(","); AppendFixed(sb, flatBonus, "Defence", "DEF");
                                 sb.Append(","); AppendFixed(sb, flatBonus, "Speed", "SPD");
+                                sb.Append(","); AppendFixed(sb, flatBonus, "Resistance", "RES");
+                                sb.Append(","); AppendFixed(sb, flatBonus, "Accuracy", "ACC");
+                                sb.Append(","); AppendFixed(sb, flatBonus, "CriticalChance", "CR");
+                                sb.Append(","); AppendFixed(sb, flatBonus, "CriticalDamage", "CD");
                                 sb.Append("}");
                             }
                             // Also output ascend bonus from setup

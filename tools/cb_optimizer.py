@@ -358,41 +358,39 @@ def calc_stats(hero, artifacts, account, hypothetical=False):
         sets[s_id] = sets.get(s_id, 0) + 1
         if use_mod_artifact_bonus:
             continue  # set count tracked, mod's artifact_bonus has the rest
-        # HYBRID: the mod's flat_bonus only aggregates HP/ATK/DEF/SPD and includes Divine
-        # enhancement bonuses (extra flat on 6★ rank-6 artifacts). For those 4 stats, prefer
-        # flat_bonus (catches hidden Divine). For ACC/RES/CR/CD (which flat_bonus doesn't
-        # include), sum substats + primary manually.
+        # GAME-TRUTH per-artifact stats from the mod's ArtifactSetup.FromArtifact:
+        #   flat_bonus — ALL 8 stats now (mod emits RES/ACC/CR/CD since 2026-06-23).
+        #     Includes Divine enhancement AND accessory ASCENSION, which the old
+        #     substat-reconstruction path missed (Maneater CD 123→130, Cardiel
+        #     RES 80→91). CR/CD come out as FRACTIONS (0.12 = +12% CR, 1.30 =
+        #     +130% CD) → scale ×100 to the points convention used downstream.
+        #   pct_bonus — % stats (HP/ATK/DEF/SPD); ACC/RES/CR/CD are 0 here (they
+        #     are absolute stats living in flat_bonus).
         fb = art.get("flat_bonus") or {}
         pb = art.get("pct_bonus") or {}
-        FB_STAT_NAMES = {HP:"HP", ATK:"ATK", DEF:"DEF", SPD:"SPD"}
-        for stat_id, stat_name in FB_STAT_NAMES.items():
+        FB_PCT_NAMES = {HP:"HP", ATK:"ATK", DEF:"DEF", SPD:"SPD"}  # have a % side
+        for stat_id, stat_name in FB_PCT_NAMES.items():
             flat_b[stat_id] += fb.get(stat_name, 0) or 0
             pct_b[stat_id]  += pb.get(stat_name, 0) or 0
-        # Sum substats + primary for ACC/RES/CR/CD only (avoid double-counting HP/ATK/DEF/SPD)
-        for b in [art.get("primary")] + art.get("substats", []):
-            if not b: continue
-            stat = b.get("stat", 0)
-            if stat not in (ACC, RES, CR, CD): continue
-            val = b.get("value", 0) + (b.get("glyph", 0) or 0)
-            is_flat = bool(b.get("flat", True))
-            if project_glyph:
-                val += _glyph_delta(art.get("rarity", 0), stat, b.get("glyph", 0) or 0, is_flat)
-            if is_flat: flat_b[stat] += val
-            else: pct_b[stat] += val
-        # Glyph-max projection for HP/ATK/DEF/SPD: the mod's flat_bonus
-        # already incorporates current glyph values, so we add only the
-        # delta to max-glyph to avoid double-counting.
+        # ACC/RES are flat points; CR/CD are fractions → ×100 to points.
+        flat_b[ACC] += fb.get("ACC", 0) or 0
+        flat_b[RES] += fb.get("RES", 0) or 0
+        flat_b[CR]  += (fb.get("CR", 0) or 0) * 100
+        flat_b[CD]  += (fb.get("CD", 0) or 0) * 100
+        # Glyph-max projection: the mod's flat_bonus already incorporates the
+        # CURRENT glyph values, so add only the delta to max-glyph (per stat),
+        # avoiding double-counting. Applies to all 8 stats now.
         if project_glyph:
             for b in (art.get("substats") or []):
                 stat = b.get("stat", 0)
-                if stat not in (HP, ATK, DEF, SPD):
+                if stat not in (HP, ATK, DEF, SPD, ACC, RES, CR, CD):
                     continue
                 is_flat = bool(b.get("flat", True))
                 delta = _glyph_delta(art.get("rarity", 0), stat,
                                       b.get("glyph", 0) or 0, is_flat)
                 if delta <= 0:
                     continue
-                if is_flat:
+                if is_flat or stat in (ACC, RES, CR, CD):
                     flat_b[stat] += delta
                 else:
                     pct_b[stat] += delta
@@ -454,9 +452,17 @@ def calc_stats(hero, artifacts, account, hypothetical=False):
     # `scaled` already via summing mastery_bonus.
     #
     # Fallback (no mod cache): still apply LoS by scaling set_pct.
+    #
+    # 2026-06-23: gate on the mastery_bonus COLUMN, not on
+    # use_mod_artifact_bonus. Hypothetical mode has use_mod_artifact_bonus=False
+    # but KEEPS the mastery_bonus column in `scaled`, and that column already
+    # carries the LoS delta — scaling set_pct here too double-counted it
+    # (Maneater +5 / Demytha +2 / Ninja +4 SPD over game). Only apply the manual
+    # LoS scaling for true fallback heroes (no mastery_bonus column at all).
+    mastery_col_present = bool(computed and "mastery_bonus" in computed)
     hero_masteries = hero.get("masteries", []) or []
     has_lore_of_steel = MASTERY_IDS["lore_of_steel"] in hero_masteries  # 500343
-    if not use_mod_artifact_bonus and has_lore_of_steel:
+    if not mastery_col_present and has_lore_of_steel:
         for s in range(1, 9):
             set_pct[s] = round(set_pct[s] * 1.15, 2)
 
