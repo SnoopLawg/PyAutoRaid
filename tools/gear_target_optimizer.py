@@ -137,7 +137,10 @@ class Optimizer:
 
     def _stats_for(self, hero, assignment):
         arts = [a for a in assignment.values() if a is not None]
-        return calc_stats(hero, arts, self.account)
+        # hypothetical=True: actually evaluate the PROPOSED gear. Without it
+        # calc_stats returns the hero's CURRENT equipped stats for any input
+        # (it copies the mod's artifact_bonus column), so the search is a no-op.
+        return calc_stats(hero, arts, self.account, hypothetical=True)
 
     def _proxy(self, art, targets):
         score = 0.0

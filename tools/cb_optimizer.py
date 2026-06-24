@@ -192,7 +192,21 @@ def _apply_mastery_stat_bonuses(scaled, mastery_ids):
             scaled[stat_id] = scaled.get(stat_id, 0) + val * 100
 
 
-def calc_stats(hero, artifacts, account):
+def calc_stats(hero, artifacts, account, hypothetical=False):
+    """Compute a hero's total stats.
+
+    Default (hypothetical=False): if the hero is in the computed-stats cache,
+    returns the GAME's current Total Stats (copies the mod's column bonuses,
+    including artifact_bonus for the hero's CURRENTLY EQUIPPED gear). This is
+    the game-truth path the sim uses — but it IGNORES the `artifacts` argument.
+
+    hypothetical=True (for the gear OPTIMIZER): actually evaluate the proposed
+    `artifacts` list. Uses the game's `base_computed` + gear-INDEPENDENT columns
+    (affinity/arena/empower/blessing/relic/faction/great-hall) and re-computes
+    the artifact bonus, set bonuses, mastery stat-bonuses, and Lore-of-Steel
+    from the passed gear. This is what lets the optimizer compare candidate
+    builds — the default path returns the same (current) stats for any input.
+    """
     hero_id = hero.get("id", 0)
     base = hero.get("base_stats", {})
     element = hero.get("element", -1)
@@ -235,22 +249,29 @@ def calc_stats(hero, artifacts, account):
         # Demytha 749+1474+45+22+75+75=2440). Adding ALL columns from
         # the mod is game-truth — sim shouldn't recompute what the mod
         # already provides exactly. (DRY.)
-        bonus_columns = (
-            "blessing_bonus",
-            "empower_bonus",
-            "classic_arena_bonus",
-            "great_hall_bonus",
-            "relic_bonus",
-            "affinity_bonus",
-            "faction_guardians_bonus",
-            "mastery_bonus",
-            "artifact_bonus",
-        )
+        # Hypothetical (optimizer) mode: exclude the gear-DEPENDENT columns
+        # (artifact_bonus carries the CURRENT gear; mastery_bonus carries the
+        # Lore-of-Steel delta for the current gear). They get recomputed below
+        # from the PASSED artifacts so candidate builds differ. The remaining
+        # columns are gear-independent and stay game-truth.
+        if hypothetical:
+            bonus_columns = (
+                "blessing_bonus", "empower_bonus", "classic_arena_bonus",
+                "great_hall_bonus", "relic_bonus", "affinity_bonus",
+                "faction_guardians_bonus",
+            )
+        else:
+            bonus_columns = (
+                "blessing_bonus", "empower_bonus", "classic_arena_bonus",
+                "great_hall_bonus", "relic_bonus", "affinity_bonus",
+                "faction_guardians_bonus", "mastery_bonus", "artifact_bonus",
+            )
         # Skip the manual artifact computation + mastery loop below
         # when the mod has provided artifact_bonus/mastery_bonus —
         # those are GAME TRUTH and re-computing introduces drift.
-        skip_manual_artifacts = "artifact_bonus" in computed
-        skip_manual_masteries = "mastery_bonus" in computed
+        # In hypothetical mode we WANT the manual recompute from passed gear.
+        skip_manual_artifacts = ("artifact_bonus" in computed) and not hypothetical
+        skip_manual_masteries = ("mastery_bonus" in computed) and not hypothetical
         stat_field_names = {HP: "HP", ATK: "ATK", DEF: "DEF", SPD: "SPD",
                              CR: "CR", CD: "CD", RES: "RES", ACC: "ACC"}
         for col in bonus_columns:
@@ -305,7 +326,9 @@ def calc_stats(hero, artifacts, account):
     # summed the user's actual mastery bonuses (game truth, DRY).
     if hero.get("_project_full_masteries"):
         _apply_mastery_stat_bonuses(scaled, _ALL_STAT_BONUS_MASTERY_IDS)
-    elif not (computed and "mastery_bonus" in computed):
+    elif hypothetical or not (computed and "mastery_bonus" in computed):
+        # Hypothetical mode excluded mastery_bonus column — re-apply the
+        # user's actual stat-bonus masteries manually (gear-independent).
         _apply_mastery_stat_bonuses(scaled, hero.get("masteries", []) or [])
     project_glyph = hero.get("_project_max_glyphs", False)
     flat_b, pct_b, sets = {s:0 for s in range(1,9)}, {s:0 for s in range(1,9)}, {}
@@ -314,7 +337,7 @@ def calc_stats(hero, artifacts, account):
     # need detection for "has_lifesteal" etc. flags below, so we still
     # iterate `artifacts` to populate `sets` — just skip the flat/pct
     # accumulation.
-    use_mod_artifact_bonus = bool(computed and "artifact_bonus" in computed)
+    use_mod_artifact_bonus = bool(computed and "artifact_bonus" in computed) and not hypothetical
     for art in artifacts:
         s_id = art.get("set", 0)
         sets[s_id] = sets.get(s_id, 0) + 1
