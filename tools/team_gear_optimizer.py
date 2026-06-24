@@ -222,6 +222,10 @@ def main():
     ap.add_argument("--anneal", type=int, default=25)
     ap.add_argument("--rounds", type=int, default=3)
     ap.add_argument("--json", action="store_true", help="emit machine-readable JSON")
+    ap.add_argument("--equipped-only", action="store_true",
+                    help="restrict the pool to currently-EQUIPPED artifacts (hero_id != 0), "
+                         "so every assignment is a reliable hero<->hero swap. Use when the "
+                         "plan must auto-apply (the mod's vault->hero equip is unreliable).")
     args = ap.parse_args()
 
     if args.spec:
@@ -237,6 +241,12 @@ def main():
         ap.error("provide --spec or --heroes")
 
     arts, heroes, account = load_data()
+    if args.equipped_only:
+        before = len(arts)
+        arts = [a for a in arts if a.get("hero_id")]
+        if not args.json:
+            print(f"[equipped-only] pool restricted to {len(arts)}/{before} "
+                  f"currently-equipped artifacts (vault excluded → swaps auto-apply)")
     opt = Optimizer(arts, heroes, account, min_rank=args.min_rank)
     team_opt = TeamOptimizer(opt)
     result = team_opt.optimize_team(specs, priority=priority,
