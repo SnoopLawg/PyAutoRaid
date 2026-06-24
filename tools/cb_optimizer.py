@@ -219,6 +219,7 @@ def calc_stats(hero, artifacts, account, hypothetical=False):
     computed = _COMPUTED_STATS.get(hero_id)
     if computed and computed.get("grade", 0) != hero.get("grade", 0):
         computed = None  # grade mismatch — hero is being modeled at different grade
+    base_only = None  # pre-column base, set in the computed+hypothetical branch
     if computed:
         bc = computed.get("base_computed", {})
 
@@ -240,6 +241,11 @@ def calc_stats(hero, artifacts, account, hypothetical=False):
             "base_HP": bc.get("HP", 0),
         }
 
+        # Hypothetical mode needs the PRE-COLUMN base (gear % applies to BASE
+        # only; columns are added flat on top). Capture it before the column
+        # loop mutates `scaled`.
+        base_only = {s: scaled[s] for s in (HP, ATK, DEF, SPD, CR, CD, RES, ACC)} if hypothetical else None
+
         # Sum every column-bonus the mod returns. The mod's
         # /hero-computed-stats endpoint exposes the GAME's exact column
         # breakdown (Basic | Artifacts | Affinity | Classic Arena |
@@ -255,10 +261,17 @@ def calc_stats(hero, artifacts, account, hypothetical=False):
         # from the PASSED artifacts so candidate builds differ. The remaining
         # columns are gear-independent and stay game-truth.
         if hypothetical:
+            # Exclude ONLY artifact_bonus (the current gear, recomputed below).
+            # KEEP mastery_bonus: it carries the gear-independent flat masteries
+            # (Eagle-Eye +50 ACC, Elixir +3000 HP, …) which we'd otherwise lose.
+            # Its only gear-DEPENDENT part is the Lore-of-Steel delta (+15% of
+            # set base-bonuses for the CURRENT gear); for a different build that
+            # delta is slightly off (≈ a few SPD), an acceptable optimizer error
+            # vs dropping all flat masteries.
             bonus_columns = (
                 "blessing_bonus", "empower_bonus", "classic_arena_bonus",
                 "great_hall_bonus", "relic_bonus", "affinity_bonus",
-                "faction_guardians_bonus",
+                "faction_guardians_bonus", "mastery_bonus",
             )
         else:
             bonus_columns = (
@@ -269,9 +282,10 @@ def calc_stats(hero, artifacts, account, hypothetical=False):
         # Skip the manual artifact computation + mastery loop below
         # when the mod has provided artifact_bonus/mastery_bonus —
         # those are GAME TRUTH and re-computing introduces drift.
-        # In hypothetical mode we WANT the manual recompute from passed gear.
+        # In hypothetical mode we WANT the manual artifact recompute, but the
+        # mastery_bonus column is now KEPT (above), so DON'T re-apply masteries.
         skip_manual_artifacts = ("artifact_bonus" in computed) and not hypothetical
-        skip_manual_masteries = ("mastery_bonus" in computed) and not hypothetical
+        skip_manual_masteries = "mastery_bonus" in computed
         stat_field_names = {HP: "HP", ATK: "ATK", DEF: "DEF", SPD: "SPD",
                              CR: "CR", CD: "CD", RES: "RES", ACC: "ACC"}
         for col in bonus_columns:
@@ -326,9 +340,10 @@ def calc_stats(hero, artifacts, account, hypothetical=False):
     # summed the user's actual mastery bonuses (game truth, DRY).
     if hero.get("_project_full_masteries"):
         _apply_mastery_stat_bonuses(scaled, _ALL_STAT_BONUS_MASTERY_IDS)
-    elif hypothetical or not (computed and "mastery_bonus" in computed):
-        # Hypothetical mode excluded mastery_bonus column — re-apply the
-        # user's actual stat-bonus masteries manually (gear-independent).
+    elif not (computed and "mastery_bonus" in computed):
+        # Re-apply manual masteries only when the mod didn't provide the
+        # mastery_bonus column (fallback heroes). Hypothetical mode KEEPS the
+        # mastery_bonus column, so no manual re-apply needed.
         _apply_mastery_stat_bonuses(scaled, hero.get("masteries", []) or [])
     project_glyph = hero.get("_project_max_glyphs", False)
     flat_b, pct_b, sets = {s:0 for s in range(1,9)}, {s:0 for s in range(1,9)}, {}
@@ -446,6 +461,24 @@ def calc_stats(hero, artifacts, account, hypothetical=False):
         # damage by ~2x on geared heroes.
         if "base_HP" in scaled:
             stats["base_HP"] = scaled["base_HP"]
+    elif hypothetical and base_only is not None:
+        # ADDITIVE game model: total = base + base*gear_pct + gear_flat + columns.
+        # The gear % multiplies the BASE only; the non-artifact columns (arena,
+        # great-hall, blessing, empower, …) are already summed into `scaled`
+        # and added flat. Do NOT re-add ARENA_PCT / gh_flat — they're in scaled.
+        #
+        # UNITS (important): for HP/ATK/DEF/SPD, `pct_b` is a DECIMAL fraction
+        # (0.65 = 65%, summed from artifact pct_bonus) while `set_pct` is in
+        # INTEGER percent points (12 = Speed set). So multiply base by
+        # (pct_b + set_pct/100). For CR/CD/RES/ACC the contributions are
+        # additive POINTS (pct_b here holds substat points; set bonuses are
+        # routed to set_flat for ACC/RES, set_pct points for CR/CD).
+        for s in (HP, ATK, DEF, SPD):
+            stats[s] = scaled[s] + base_only[s] * (pct_b[s] + set_pct.get(s, 0) / 100) + flat_b[s]
+        stats[CR] = scaled[CR] + pct_b[CR] + set_pct.get(CR, 0) + flat_b[CR]
+        stats[CD] = scaled[CD] + pct_b[CD] + set_pct.get(CD, 0) + flat_b[CD]
+        stats[RES] = scaled[RES] + pct_b[RES] + set_pct.get(RES, 0) + flat_b[RES]
+        stats[ACC] = scaled[ACC] + pct_b[ACC] + set_pct.get(ACC, 0) + flat_b[ACC]
     else:
         for s in (HP, ATK, DEF):
             stats[s] = scaled[s] * (1 + (pct_b[s] + set_pct.get(s,0) + ARENA_PCT)/100) + flat_b[s] + gh_flat(s)
