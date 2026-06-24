@@ -74,18 +74,28 @@ def _validity(res):
     return survived, gaps
 
 
+# Affinity split (this team): Force is the only one with a glance-driven cadence
+# problem (Ninja=Magic is weak into Force AND has a glance-gated self-TM-fill).
+# The other three have no weak-hero-with-a-TM-effect, so they're deterministically
+# stable. A daily-robust tune must hold all 4 — the stable three deterministically,
+# Force by Monte-Carlo consistency.
+_STABLE_AFFINITIES = {"Magic": 1, "Spirit": 3, "Void": 4}
+_FORCE = 2
+
+
 def find(team, vary, cb_element=4, use_current_gear=True, max_combos=400,
-         mc_trials=0, verbose=True):
-    """Search SPD-space using the user's REAL gear + flagship preset (opener +
-    skill priority), overriding only SPD per the grid.
+         mc_trials=0, all_affinities=False, verbose=True):
+    """Search SPD-space using the user's REAL gear + flagship preset, overriding
+    only SPD per the grid.
 
-    mc_trials=0 → deterministic pass/fail (a tune holds iff it survives T50 with
-    no UK/BD gap). Good for affinities the team genuinely holds (Void).
-
-    mc_trials>0 → Monte Carlo: run each combo N times with RNG, so weak-affinity
-    glance variance (Ninja's A1 TM-fill landing or not on Force) actually rolls.
-    Reports per-combo CONSISTENCY (reach-50 rate, median/worst survival turns) so
-    you can rank speeds by leeway even when no combo reaches 50 every time.
+    mc_trials=0 → deterministic pass/fail on `cb_element`.
+    mc_trials>0 → Monte Carlo on `cb_element` (glance variance rolls); ranks by
+        reach-50 rate / median / worst survival.
+    all_affinities=True → DAILY-ROBUST mode: each combo must hold Magic+Spirit+Void
+        (deterministic) AND is scored on Force consistency (MC). Combos that drop
+        any stable affinity are disqualified (so a Force fix can't silently break
+        another day). Short-circuits — skips the expensive Force MC if a stable
+        affinity already fails.
 
     Returns (base, grids, results) where results = [(combo, metrics_dict)]."""
     import statistics
@@ -98,7 +108,6 @@ def find(team, vary, cb_element=4, use_current_gear=True, max_combos=400,
     hero_names = setup["hero_names"]
     base_spd = [int(round(setup["stats_per_hero"][i][SPD])) for i in range(len(hero_names))]
 
-    # Grid is over the VARIED heroes only; others keep their geared SPD.
     grids = [vary.get(nm, [base_spd[i]]) for i, nm in enumerate(hero_names)]
     total = 1
     for g in grids:
@@ -108,34 +117,47 @@ def find(team, vary, cb_element=4, use_current_gear=True, max_combos=400,
                          f"narrow the ranges or raise the cap")
     if verbose:
         nvar = sum(1 for g in grids if len(g) > 1)
-        mode = f"MC×{mc_trials}" if mc_trials else "deterministic"
+        mode = ("all-affinities" if all_affinities
+                else f"MC×{mc_trials}" if mc_trials else "deterministic")
         print(f"Searching {total} SPD combination(s) over {nvar} varied hero(es) "
-              f"with real gear+preset, cb_element={cb_element} [{mode}]...")
+              f"with real gear+preset [{mode}]...")
 
+    def _turns(eid, *, mc_seed=None):
+        ch = _build_sim_champs_from_setup(setup)
+        sim = CBSimulator(ch, cb_difficulty="ultra-nightmare", cb_element=eid,
+                          deterministic=(mc_seed is None), rng_seed=mc_seed,
+                          model_survival=True, force_affinity=True)
+        return sim.run(max_cb_turns=50)["cb_turns"]
+
+    n_mc = mc_trials or 12
     results = []
     for combo in itertools.product(*grids):
         for i, spd in enumerate(combo):
             setup["stats_per_hero"][i][SPD] = float(spd)
-        if mc_trials > 0:
-            ts = []
-            for seed in range(mc_trials):
-                champs = _build_sim_champs_from_setup(setup)
-                sim = CBSimulator(champs, cb_difficulty="ultra-nightmare", cb_element=cb_element,
-                                  deterministic=False, rng_seed=seed,
-                                  model_survival=True, force_affinity=True)
-                ts.append(sim.run(max_cb_turns=50)["cb_turns"])
-            ts.sort()
+
+        if all_affinities:
+            stable = {nm: _turns(eid) >= 50 for nm, eid in _STABLE_AFFINITIES.items()}
+            all_stable = all(stable.values())
+            if all_stable:
+                ts = sorted(_turns(_FORCE, mc_seed=s) for s in range(n_mc))
+                f50 = sum(1 for t in ts if t >= 50) / len(ts)
+                fmed = statistics.median(ts)
+            else:
+                f50, fmed = 0.0, 0  # disqualified; skip Force MC (short-circuit)
+            results.append((combo, {"all_stable": all_stable, **stable,
+                                    "force_reach50": f50, "force_median": fmed}))
+        elif mc_trials > 0:
+            ts = sorted(_turns(cb_element, mc_seed=s) for s in range(mc_trials))
             results.append((combo, {
                 "reach50": sum(1 for t in ts if t >= 50) / len(ts),
                 "median": statistics.median(ts),
-                "p25": ts[max(0, len(ts) // 4 - 1)],  # worst-quartile (bad-luck floor)
-                "min": ts[0], "trials": mc_trials,
+                "p25": ts[max(0, len(ts) // 4 - 1)], "min": ts[0], "trials": mc_trials,
             }))
         else:
-            champs = _build_sim_champs_from_setup(setup)
-            sim = CBSimulator(champs, cb_difficulty="ultra-nightmare", cb_element=cb_element,
-                              deterministic=True, model_survival=True, force_affinity=True)
-            res = sim.run(max_cb_turns=50)
+            ch = _build_sim_champs_from_setup(setup)
+            res = CBSimulator(ch, cb_difficulty="ultra-nightmare", cb_element=cb_element,
+                              deterministic=True, model_survival=True,
+                              force_affinity=True).run(max_cb_turns=50)
             survived, gaps = _validity(res)
             results.append((combo, {"valid": survived and gaps == 0,
                                     "gaps": gaps, "turns": res["cb_turns"]}))
@@ -157,6 +179,11 @@ def main():
     ap.add_argument("--mc", type=int, default=0,
                     help="Monte Carlo trials per combo — rank speeds by Force/weak-affinity "
                          "CONSISTENCY (glance variance rolls). 0 = deterministic pass/fail.")
+    ap.add_argument("--all-affinities", action="store_true",
+                    help="DAILY-ROBUST mode: each combo must hold Magic+Spirit+Void "
+                         "(deterministic) AND is scored on Force consistency (MC). Only "
+                         "surfaces tunes that survive all four — rejects fixes that break "
+                         "another day. Overrides --cb-element/--mc.")
     ap.add_argument("--max-combos", type=int, default=400)
     args = ap.parse_args()
 
@@ -167,8 +194,31 @@ def main():
             raise SystemExit(f"--vary hero '{nm}' is not in --team")
 
     base, grids, results = find(team, vary, ELEMENT_NAME_TO_ID[args.cb_element],
-                                max_combos=args.max_combos, mc_trials=args.mc)
+                                max_combos=args.max_combos, mc_trials=args.mc,
+                                all_affinities=args.all_affinities)
     team = [nm for nm, _ in base]  # canonical order from the setup
+
+    if args.all_affinities:
+        # Rank: daily-robust first (all stable affinities hold), then Force consistency.
+        results.sort(key=lambda r: (r[1]["all_stable"], r[1]["force_reach50"],
+                                    r[1]["force_median"]), reverse=True)
+        robust = [r for r in results if r[1]["all_stable"]]
+        print(f"\n=== Daily-robust tunes — hold Magic/Spirit/Void AND Force "
+              f"({len(robust)}/{len(results)} pass the stable-3 gate) ===")
+        print(f"  {'M':>1} {'S':>1} {'V':>1} {'Force':>7}  combo")
+        for combo, m in results[:25]:
+            flag = lambda b: "Y" if b else "."
+            print(f"  {flag(m['Magic'])} {flag(m['Spirit'])} {flag(m['Void'])} "
+                  f"{m['force_reach50']*100:>5.0f}%  {_fmt_combo(team, combo)}")
+        if robust:
+            best = robust[0]
+            print(f"\n  Best daily-robust: {_fmt_combo(team, best[0])} "
+                  f"→ all 3 stable HOLD, Force {best[1]['force_reach50']*100:.0f}% "
+                  f"(median {best[1]['force_median']:.0f}).")
+        else:
+            print("\n  No combo holds all of Magic/Spirit/Void — every candidate breaks at "
+                  "least one stable day. Widen the search or the tune isn't daily-viable.")
+        return
 
     if args.mc > 0:
         # Rank by consistency: reach-50 rate, then median, then worst-quartile floor.
