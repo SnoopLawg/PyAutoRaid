@@ -83,8 +83,21 @@ _STABLE_AFFINITIES = {"Magic": 1, "Spirit": 3, "Void": 4}
 _FORCE = 2
 
 
+# Default preset variants the co-search tries (protector openers — the cadence
+# levers). Each is {hero: {opening: [...]}}. "current" = the user's flagship
+# preset untouched. The all-affinity gate auto-rejects any variant that breaks a
+# stable day (e.g. Demytha-A3 opener trades Force for Magic/Spirit/Void).
+PRESET_VARIANTS = [
+    ("current", {}),
+    ("Demytha->A3 open", {"Demytha": {"opening": ["A3"]}}),
+    ("Maneater->A3 open", {"Maneater": {"opening": ["A3"]}}),
+    ("Demytha+Maneater A3 open", {"Demytha": {"opening": ["A3"]},
+                                  "Maneater": {"opening": ["A3"]}}),
+]
+
+
 def find(team, vary, cb_element=4, use_current_gear=True, max_combos=400,
-         mc_trials=0, all_affinities=False, verbose=True):
+         mc_trials=0, all_affinities=False, preset_vary=False, verbose=True):
     """Search SPD-space using the user's REAL gear + flagship preset, overriding
     only SPD per the grid.
 
@@ -122,6 +135,9 @@ def find(team, vary, cb_element=4, use_current_gear=True, max_combos=400,
         print(f"Searching {total} SPD combination(s) over {nvar} varied hero(es) "
               f"with real gear+preset [{mode}]...")
 
+    import copy
+    orig_preset = copy.deepcopy(setup["preset_plan"])
+
     def _turns(eid, *, mc_seed=None):
         ch = _build_sim_champs_from_setup(setup)
         sim = CBSimulator(ch, cb_difficulty="ultra-nightmare", cb_element=eid,
@@ -129,6 +145,19 @@ def find(team, vary, cb_element=4, use_current_gear=True, max_combos=400,
                           model_survival=True, force_affinity=True)
         return sim.run(max_cb_turns=50)["cb_turns"]
 
+    def _eval_all_affinities():
+        """All-affinity metrics for the CURRENT setup state (speeds + preset)."""
+        stable = {nm: _turns(eid) >= 50 for nm, eid in _STABLE_AFFINITIES.items()}
+        if all(stable.values()):
+            ts = sorted(_turns(_FORCE, mc_seed=s) for s in range(n_mc))
+            f50 = sum(1 for t in ts if t >= 50) / len(ts)
+            fmed = statistics.median(ts)
+        else:
+            f50, fmed = 0.0, 0  # disqualified; short-circuit (skip Force MC)
+        return {"all_stable": all(stable.values()), **stable,
+                "force_reach50": f50, "force_median": fmed}
+
+    variants = PRESET_VARIANTS if preset_vary else [("current", {})]
     n_mc = mc_trials or 12
     results = []
     for combo in itertools.product(*grids):
@@ -136,16 +165,21 @@ def find(team, vary, cb_element=4, use_current_gear=True, max_combos=400,
             setup["stats_per_hero"][i][SPD] = float(spd)
 
         if all_affinities:
-            stable = {nm: _turns(eid) >= 50 for nm, eid in _STABLE_AFFINITIES.items()}
-            all_stable = all(stable.values())
-            if all_stable:
-                ts = sorted(_turns(_FORCE, mc_seed=s) for s in range(n_mc))
-                f50 = sum(1 for t in ts if t >= 50) / len(ts)
-                fmed = statistics.median(ts)
-            else:
-                f50, fmed = 0.0, 0  # disqualified; skip Force MC (short-circuit)
-            results.append((combo, {"all_stable": all_stable, **stable,
-                                    "force_reach50": f50, "force_median": fmed}))
+            # Try each preset variant; keep the best one that stays daily-robust.
+            # The all-affinity gate auto-rejects preset traps (a variant that
+            # lifts Force but drops a stable day scores all_stable=False).
+            best = None
+            for label, override in variants:
+                setup["preset_plan"] = copy.deepcopy(orig_preset)
+                for h, fields in override.items():
+                    setup["preset_plan"].setdefault(h, {}).update(fields)
+                m = _eval_all_affinities()
+                m["preset"] = label
+                if best is None or (m["all_stable"], m["force_reach50"]) > \
+                        (best["all_stable"], best["force_reach50"]):
+                    best = m
+            setup["preset_plan"] = copy.deepcopy(orig_preset)
+            results.append((combo, best))
         elif mc_trials > 0:
             ts = sorted(_turns(cb_element, mc_seed=s) for s in range(mc_trials))
             results.append((combo, {
@@ -184,6 +218,10 @@ def main():
                          "(deterministic) AND is scored on Force consistency (MC). Only "
                          "surfaces tunes that survive all four — rejects fixes that break "
                          "another day. Overrides --cb-element/--mc.")
+    ap.add_argument("--preset-vary", action="store_true",
+                    help="Also try protector-opener preset variants per combo (free, "
+                         "no re-gear), keeping the best that stays daily-robust. Requires "
+                         "--all-affinities so preset traps are auto-rejected.")
     ap.add_argument("--max-combos", type=int, default=400)
     args = ap.parse_args()
 
@@ -193,9 +231,13 @@ def main():
         if nm not in team:
             raise SystemExit(f"--vary hero '{nm}' is not in --team")
 
+    if args.preset_vary and not args.all_affinities:
+        raise SystemExit("--preset-vary requires --all-affinities (so preset traps are gated)")
+
     base, grids, results = find(team, vary, ELEMENT_NAME_TO_ID[args.cb_element],
                                 max_combos=args.max_combos, mc_trials=args.mc,
-                                all_affinities=args.all_affinities)
+                                all_affinities=args.all_affinities,
+                                preset_vary=args.preset_vary)
     team = [nm for nm, _ in base]  # canonical order from the setup
 
     if args.all_affinities:
@@ -203,16 +245,20 @@ def main():
         results.sort(key=lambda r: (r[1]["all_stable"], r[1]["force_reach50"],
                                     r[1]["force_median"]), reverse=True)
         robust = [r for r in results if r[1]["all_stable"]]
+        pcol = "  preset" if args.preset_vary else ""
         print(f"\n=== Daily-robust tunes — hold Magic/Spirit/Void AND Force "
               f"({len(robust)}/{len(results)} pass the stable-3 gate) ===")
-        print(f"  {'M':>1} {'S':>1} {'V':>1} {'Force':>7}  combo")
+        print(f"  {'M':>1} {'S':>1} {'V':>1} {'Force':>7}  combo{pcol}")
         for combo, m in results[:25]:
             flag = lambda b: "Y" if b else "."
+            ptag = f"   [{m['preset']}]" if args.preset_vary else ""
             print(f"  {flag(m['Magic'])} {flag(m['Spirit'])} {flag(m['Void'])} "
-                  f"{m['force_reach50']*100:>5.0f}%  {_fmt_combo(team, combo)}")
+                  f"{m['force_reach50']*100:>5.0f}%  {_fmt_combo(team, combo)}{ptag}")
         if robust:
             best = robust[0]
-            print(f"\n  Best daily-robust: {_fmt_combo(team, best[0])} "
+            ptag = (f" with preset [{best[1]['preset']}]"
+                    if args.preset_vary and best[1].get("preset") != "current" else "")
+            print(f"\n  Best daily-robust: {_fmt_combo(team, best[0])}{ptag} "
                   f"→ all 3 stable HOLD, Force {best[1]['force_reach50']*100:.0f}% "
                   f"(median {best[1]['force_median']:.0f}).")
         else:
