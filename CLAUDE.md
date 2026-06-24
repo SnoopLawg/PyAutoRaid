@@ -299,7 +299,7 @@ Calibrated to **+0.61%** vs real battle data on Magic UNM (36.36M sim avg / 36.1
 Key mechanics:
 - All fights uncapped (no FA damage caps)
 - CB element defaults Void; pass `--cb-element` for day's affinity (Magic heroes do -30% vs Force)
-- WM/GS: flat 75K per proc, NOT multiplied by DEF Down/Weaken
+- WM/GS: flat 67,626 cap per proc (game-truth 2026-06-22; Plarium tuned down from 75K), NOT multiplied by DEF Down/Weaken. HP Burn cap is a distinct 75K.
 - Debuff placement: >=50% chance places immediately, <50% uses fractional accumulator
 - Debuff duration: `remaining < 0` expiry (2-turn debuff lasts 2 CB turns)
 - Book bonuses on debuff chances auto-applied from skills_db level_bonuses
