@@ -104,25 +104,32 @@ def effective_speed(actor: Actor, aura: float) -> float:
 
 # ---------------- scheduler primitives ----------------
 
+def _engine(actors: list[Actor], aura: float, threshold: float = 100.0,
+            max_safety_ticks: int = 10000) -> "TurnMeterEngine":
+    """Build the shared turn-meter engine for this tick context. The increment
+    is the EXACT DWJ formula `7 * effective_speed / 100` (bit-identical to the
+    prior inline loop — preserved verbatim so a tie never flips and the 4/4
+    DWJ-parity variants stay matched)."""
+    from turn_meter import TurnMeterEngine
+    return TurnMeterEngine(
+        threshold=threshold,
+        increment_fn=lambda a: 7.0 * effective_speed(a, aura) / 100.0,
+        tm_attr="turn_meter",
+        round_ndigits=12,
+        max_safety_ticks=max_safety_ticks,
+    )
+
+
 def tick_until_ready(actors: list[Actor], aura: float, *, threshold: float = 100.0,
                      max_safety_ticks: int = 10000) -> None:
-    """DWJ's `do...while` TM tick loop. Always ticks AT LEAST once, then keeps
-    ticking until at least one actor crosses `threshold`.
+    """DWJ's `do...while` TM tick loop — now delegated to the shared
+    `turn_meter.TurnMeterEngine` (loop structure) with the exact DWJ increment.
 
-    Crucially this is do-while, not while: when an actor enters with TM already
-    above threshold (carry-over from a previous cast's effects), DWJ still
-    burns one tick. Skipping that tick caused a 9%-vs-91% parity miss earlier.
+    Do-while, not while: when an actor enters with TM already above threshold
+    (carry-over from a previous cast's effects), DWJ still burns one tick.
+    Skipping that tick caused a 9%-vs-91% parity miss earlier.
     """
-    safety = 0
-    while True:
-        for a in actors:
-            inc = 7.0 * effective_speed(a, aura) / 100.0
-            a.turn_meter = round(a.turn_meter + inc, 12)
-        safety += 1
-        if any(a.turn_meter >= threshold for a in actors):
-            break
-        if safety > max_safety_ticks:
-            raise RuntimeError("TM tick loop failed to terminate")
+    _engine(actors, aura, threshold, max_safety_ticks).tick_until_ready(actors)
 
 
 def pick_next_actor(actors: list[Actor], aura: float) -> Actor:
@@ -137,9 +144,9 @@ def pick_next_actor(actors: list[Actor], aura: float) -> Actor:
     if actor is not None:
         actor.has_extra_turn = False
         return actor
-    tick_until_ready(actors, aura)
-    max_tm = max(a.turn_meter for a in actors)
-    return next(a for a in actors if a.turn_meter == max_tm)
+    eng = _engine(actors, aura)
+    eng.tick_until_ready(actors)
+    return eng.highest_tm_actor(actors)
 
 
 def pick_skill(actor: Actor) -> Optional[SkillConfig]:
