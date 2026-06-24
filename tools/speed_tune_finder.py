@@ -74,11 +74,21 @@ def _validity(res):
     return survived, gaps
 
 
-def find(team, vary, cb_element=4, use_current_gear=True, max_combos=400, verbose=True):
+def find(team, vary, cb_element=4, use_current_gear=True, max_combos=400,
+         mc_trials=0, verbose=True):
     """Search SPD-space using the user's REAL gear + flagship preset (opener +
-    skill priority), overriding only SPD per the grid. The preset is what lets
-    the calibrated cb_sim hold a stall to T50 — without it (default AI) even a
-    real tune desyncs and dies early. Returns (base, grids, holds)."""
+    skill priority), overriding only SPD per the grid.
+
+    mc_trials=0 → deterministic pass/fail (a tune holds iff it survives T50 with
+    no UK/BD gap). Good for affinities the team genuinely holds (Void).
+
+    mc_trials>0 → Monte Carlo: run each combo N times with RNG, so weak-affinity
+    glance variance (Ninja's A1 TM-fill landing or not on Force) actually rolls.
+    Reports per-combo CONSISTENCY (reach-50 rate, median/worst survival turns) so
+    you can rank speeds by leeway even when no combo reaches 50 every time.
+
+    Returns (base, grids, results) where results = [(combo, metrics_dict)]."""
+    import statistics
     from cb_sim import _build_team_setup, _build_sim_champs_from_setup, CBSimulator, SPD
 
     setup = _build_team_setup(team, use_current_gear=use_current_gear)
@@ -98,23 +108,40 @@ def find(team, vary, cb_element=4, use_current_gear=True, max_combos=400, verbos
                          f"narrow the ranges or raise the cap")
     if verbose:
         nvar = sum(1 for g in grids if len(g) > 1)
+        mode = f"MC×{mc_trials}" if mc_trials else "deterministic"
         print(f"Searching {total} SPD combination(s) over {nvar} varied hero(es) "
-              f"with real gear+preset, cb_element={cb_element}...")
+              f"with real gear+preset, cb_element={cb_element} [{mode}]...")
 
-    holds = []
+    results = []
     for combo in itertools.product(*grids):
         for i, spd in enumerate(combo):
             setup["stats_per_hero"][i][SPD] = float(spd)
-        champs = _build_sim_champs_from_setup(setup)
-        sim = CBSimulator(champs, cb_difficulty="ultra-nightmare", cb_element=cb_element,
-                          deterministic=True, model_survival=True, force_affinity=True)
-        res = sim.run(max_cb_turns=50)
-        survived, gaps = _validity(res)
-        if survived and gaps == 0:
-            holds.append(combo)
+        if mc_trials > 0:
+            ts = []
+            for seed in range(mc_trials):
+                champs = _build_sim_champs_from_setup(setup)
+                sim = CBSimulator(champs, cb_difficulty="ultra-nightmare", cb_element=cb_element,
+                                  deterministic=False, rng_seed=seed,
+                                  model_survival=True, force_affinity=True)
+                ts.append(sim.run(max_cb_turns=50)["cb_turns"])
+            ts.sort()
+            results.append((combo, {
+                "reach50": sum(1 for t in ts if t >= 50) / len(ts),
+                "median": statistics.median(ts),
+                "p25": ts[max(0, len(ts) // 4 - 1)],  # worst-quartile (bad-luck floor)
+                "min": ts[0], "trials": mc_trials,
+            }))
+        else:
+            champs = _build_sim_champs_from_setup(setup)
+            sim = CBSimulator(champs, cb_difficulty="ultra-nightmare", cb_element=cb_element,
+                              deterministic=True, model_survival=True, force_affinity=True)
+            res = sim.run(max_cb_turns=50)
+            survived, gaps = _validity(res)
+            results.append((combo, {"valid": survived and gaps == 0,
+                                    "gaps": gaps, "turns": res["cb_turns"]}))
 
     base = list(zip(hero_names, base_spd))
-    return base, grids, holds
+    return base, grids, results
 
 
 def _fmt_combo(team, combo):
@@ -127,6 +154,9 @@ def main():
     ap.add_argument("--team", required=True, help="comma-separated hero names (5)")
     ap.add_argument("--vary", default="", help="'Maneater=280..292:2,Demytha=168..176'")
     ap.add_argument("--cb-element", default="void", choices=list(ELEMENT_NAME_TO_ID))
+    ap.add_argument("--mc", type=int, default=0,
+                    help="Monte Carlo trials per combo — rank speeds by Force/weak-affinity "
+                         "CONSISTENCY (glance variance rolls). 0 = deterministic pass/fail.")
     ap.add_argument("--max-combos", type=int, default=400)
     args = ap.parse_args()
 
@@ -136,19 +166,41 @@ def main():
         if nm not in team:
             raise SystemExit(f"--vary hero '{nm}' is not in --team")
 
-    base, grids, holds = find(team, vary, ELEMENT_NAME_TO_ID[args.cb_element],
-                              max_combos=args.max_combos)
+    base, grids, results = find(team, vary, ELEMENT_NAME_TO_ID[args.cb_element],
+                                max_combos=args.max_combos, mc_trials=args.mc)
     team = [nm for nm, _ in base]  # canonical order from the setup
 
+    if args.mc > 0:
+        # Rank by consistency: reach-50 rate, then median, then worst-quartile floor.
+        results.sort(key=lambda r: (r[1]["reach50"], r[1]["median"], r[1]["p25"]),
+                     reverse=True)
+        any50 = any(r[1]["reach50"] > 0 for r in results)
+        print(f"\n=== Force/weak-affinity consistency (MC×{args.mc}) — ranked best-first ===")
+        print(f"  {'reach50':>7} {'median':>7} {'p25':>5} {'min':>4}  combo")
+        for combo, m in results[:20]:
+            print(f"  {m['reach50']*100:>6.0f}% {m['median']:>7.0f} {m['p25']:>5.0f} "
+                  f"{m['min']:>4.0f}  {_fmt_combo(team, combo)}")
+        if not any50:
+            best = results[0]
+            print(f"\n  No speed combo reaches T50 even occasionally — the team can't hold "
+                  f"this affinity by SPD alone.\n  Best leeway: {_fmt_combo(team, best[0])} "
+                  f"(median {best[1]['median']:.0f} turns, worst {best[1]['min']:.0f}).")
+        else:
+            n = sum(1 for r in results if r[1]["reach50"] > 0)
+            print(f"\n  {n} combo(s) reach T50 at least sometimes — top one clears "
+                  f"{results[0][1]['reach50']*100:.0f}% of runs. Speed CAN buy Force grace.")
+        return
+
+    holds = [c for c, m in results if m["valid"]]
     print(f"\n=== Holding tunes ({len(holds)} found) — survive T50, 0 UK/BD gaps ===")
     if not holds:
-        print("  (none — widen ranges, try --men-openers, or the team may not hold this affinity)")
+        print("  (none — widen ranges, try --mc N for consistency ranking, "
+              "or the team may not hold this affinity)")
     else:
         for combo in holds[:40]:
             print(f"  {_fmt_combo(team, combo)}")
         if len(holds) > 40:
             print(f"  ... +{len(holds) - 40} more")
-        # Per-varied-hero holding SPD window
         for i, nm in enumerate(team):
             if len(grids[i]) > 1:
                 vals = sorted({c[i] for c in holds})
