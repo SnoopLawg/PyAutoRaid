@@ -107,13 +107,25 @@ class Optimizer:
                 if a.get("kind") in ACCESSORY_SLOTS and a.get("id"):
                     self._acc_faction[a["id"]] = frac
 
+    def _acc_fits(self, a, hero_fraction):
+        """Accessories (Ring/Amulet/Banner) are faction-locked: the game
+        silently no-ops an equip whose RequiredFraction != the hero's faction.
+        Use the artifact's own `req_fraction` (game-truth, from /all-artifacts)
+        — NOT the current wearer's faction, which is unknown for UNEQUIPPED
+        accessories and previously defaulted to 'matches anyone' (the bug that
+        produced un-equippable plans). Fall back to the wearer-faction map only
+        when req_fraction is absent."""
+        req = a.get("req_fraction", None)
+        if req:
+            return req == hero_fraction
+        return self._acc_faction.get(a["id"], hero_fraction) == hero_fraction
+
     def candidates(self, slot, hero_fraction, exclude_ids=None):
         arts = self.by_slot.get(slot, [])
         if exclude_ids:
             arts = [a for a in arts if a.get("id") not in exclude_ids]
         if slot in ACCESSORY_SLOTS:
-            return [a for a in arts
-                    if self._acc_faction.get(a["id"], hero_fraction) == hero_fraction]
+            return [a for a in arts if self._acc_fits(a, hero_fraction)]
         return arts
 
     def score(self, stats, targets):
