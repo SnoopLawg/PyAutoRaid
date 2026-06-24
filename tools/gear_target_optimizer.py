@@ -224,22 +224,30 @@ class Optimizer:
                               if st in wanted_stats})
         for set_id in useful_sets:
             st, need = self.set_stat[set_id]
-            # slots that have a piece of this set, best (by proxy) first
+            # Best piece of this set per gear slot, ranked by proxy value.
             slot_pieces = {}
             for s in gear_slots:
                 pieces = [a for a in cand[s] if a.get("set") == set_id]
                 if pieces:
+                    # for the set's own stat, prefer the highest contributor
                     slot_pieces[s] = max(pieces, key=lambda a: self._proxy(a, targets))
             if len(slot_pieces) < need:
                 continue
-            chosen = sorted(slot_pieces, key=lambda s: self._proxy(slot_pieces[s], targets),
-                            reverse=True)[:need]
-            seed = dict(assignment)
-            for s in chosen:
-                seed[s] = slot_pieces[s]
-            seed, sc = hill_climb(seed)
-            if sc > best:
-                assignment, best = seed, sc
+            ranked = sorted(slot_pieces, key=lambda s: self._proxy(slot_pieces[s], targets),
+                            reverse=True)
+            # 2-piece sets STACK (e.g. 6 Speed pieces = 3 Speed sets = +36%).
+            # Seed at every multiple of `need` from the threshold up to the
+            # max available, so the search sees both a light touch and a full
+            # stack of the set. (Single-slot hill-climb can't build a stack on
+            # its own.) Try maximal fill first.
+            fill_levels = [n for n in range(len(ranked), need - 1, -need)] or [need]
+            for k in fill_levels:
+                seed = dict(assignment)
+                for s in ranked[:k]:
+                    seed[s] = slot_pieces[s]
+                seed, sc = hill_climb(seed)
+                if sc > best:
+                    assignment, best = seed, sc
 
         for _ in range(anneal):
             trial = dict(assignment)
