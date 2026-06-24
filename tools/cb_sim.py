@@ -967,6 +967,31 @@ class CBSimulator:
         # With threshold=1430 + no bump, the SD-ceiling effect emerges
         # naturally. Per-hero residual gap (~0-12%) is the dragging
         # effect, which would need explicit modeling to close fully.
+        #
+        # Scheduling (tick + actor selection) is delegated to the shared
+        # turn_meter.TurnMeterEngine (same core as calc_parity_sim). The boss is
+        # represented by a tiny TM-proxy so it participates in the uniform
+        # actor list; ordering the list as [live champs by position] + [boss]
+        # makes the engine's "max-TM, first-on-tie" rule reproduce cb_sim's
+        # historic (tm, -position) + strict-boss-tiebreak EXACTLY. The increment
+        # is bit-identical to the prior inline loop (TICK_RATE × eff_speed, no
+        # rounding), so no tie can flip.
+        from turn_meter import TurnMeterEngine
+
+        class _BossTM:
+            __slots__ = ("tm",)
+            def __init__(self): self.tm = 0.0
+
+        _boss_tm = _BossTM()
+
+        def _sched_increment(a):
+            return TICK_RATE * (self.cb_speed if a is _boss_tm
+                                else self._eff_speed(a))
+
+        _sched = TurnMeterEngine(
+            threshold=TM_THRESHOLD, increment_fn=_sched_increment,
+            tm_attr="tm", round_ndigits=None, max_safety_ticks=100000,
+        )
         while self.cb_turn < effective_max:
             if all(c.is_dead for c in self.champions) or enraged:
                 break
@@ -980,47 +1005,27 @@ class CBSimulator:
                 actor_kind = "champ"
                 actor = extra
             else:
-                # do-while: ALWAYS tick at least once even if some actor already
-                # has TM >= threshold from a prior cast's overflow. Skipping this
-                # tick is what caused parity to fail at 9% match earlier — the
-                # excess TM accumulated across selections and flipped cast order.
-                # 2026-06-21: tested removing this to fix Geo/Venom same-SD bug
-                # (pure-SD gives them 8/7 turns, sim gives 7/6). Removing did
-                # NOT change calibration outputs — the bug is elsewhere. See
-                # project_sim_sd_dragging_underprediction memory.
-                safety = 0
-                while True:
-                    for c in self.champions:
-                        if not c.is_dead:
-                            c.tm += TICK_RATE * self._eff_speed(c)
-                    self.cb_tm += TICK_RATE * self.cb_speed
-                    safety += 1
-                    if any(c.tm >= TM_THRESHOLD for c in self.champions if not c.is_dead) \
-                            or self.cb_tm >= TM_THRESHOLD:
-                        break
-                    if safety > 100000:
-                        self.errors.append("TM tick loop runaway")
-                        return self._compile_result()
-                tick += safety
-
-                # Pick the actor with the highest TM. Ties go to lowest team
-                # position (= earliest in self.champions, which mirrors DWJ's
-                # actor-array-index tiebreak).
+                # do-while tick + max-TM selection via the shared engine. The
+                # boss proxy's TM mirrors self.cb_tm in/out. Actor list is
+                # [live champs by position] + [boss] so ties resolve exactly as
+                # before (champs beat boss; lowest position wins champ-ties).
+                _boss_tm.tm = self.cb_tm
                 live_champs = [c for c in self.champions if not c.is_dead]
-                top_champ = None
-                if live_champs:
-                    top_champ = max(live_champs,
-                                    key=lambda c: (c.tm, -c.position))
-                if self.cb_tm >= TM_THRESHOLD and (top_champ is None or self.cb_tm > top_champ.tm):
+                sched_actors = live_champs + [_boss_tm]
+                try:
+                    tick += _sched.tick_until_ready(sched_actors)
+                except RuntimeError:
+                    self.errors.append("TM tick loop runaway")
+                    return self._compile_result()
+                self.cb_tm = _boss_tm.tm
+
+                top = _sched.highest_tm_actor(sched_actors)
+                if top is _boss_tm:
                     actor_kind = "cb"
                     actor = None
-                elif top_champ is not None and top_champ.tm >= TM_THRESHOLD:
-                    actor_kind = "champ"
-                    actor = top_champ
                 else:
-                    # Should not happen given the do-while above.
-                    self.errors.append("No ready actor after tick")
-                    break
+                    actor_kind = "champ"
+                    actor = top
 
             if actor_kind == "cb":
                 self._cb_turn(tick)

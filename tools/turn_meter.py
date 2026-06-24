@@ -75,14 +75,16 @@ class TurnMeterEngine:
                 v = round(v, self.round_ndigits)
             self.set_tm(a, v)
 
-    def tick_until_ready(self, actors) -> None:
-        """do-while: tick at least once, then until an actor crosses threshold."""
+    def tick_until_ready(self, actors) -> int:
+        """do-while: tick at least once, then until an actor crosses threshold.
+        Returns the number of ticks elapsed (callers that track a monotonic
+        tick counter use this)."""
         safety = 0
         while True:
             self.tick_once(actors)
             safety += 1
             if any(self.get_tm(a) >= self.threshold for a in actors):
-                return
+                return safety
             if safety > self.max_safety_ticks:
                 raise RuntimeError("TM tick loop failed to terminate")
 
