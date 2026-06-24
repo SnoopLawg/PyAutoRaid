@@ -360,6 +360,9 @@ def main() -> None:
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--hero", required=True)
     ap.add_argument("--location", required=True)
+    ap.add_argument("--optimize", action="store_true",
+                    help="also run the gear optimizer to build an ACHIEVABLE loadout "
+                         "to the recommended targets (slower)")
     args = ap.parse_args()
 
     syn = _load_synergy()
@@ -397,6 +400,54 @@ def main() -> None:
     print("  Stat focus:")
     for s in recommend_stats(hero, args.location, computed):
         print(f"    - {s}")
+
+    if args.optimize:
+        _run_optimizer(hero, args.location)
+
+
+def _run_optimizer(hero: dict, location: str) -> None:
+    """Translate the recommended targets into an achievable gear build via
+    tools/gear_target_optimizer.py (M6 #1). ACC floor -> hard min; role -> mode."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "gear_target_optimizer", ROOT / "tools" / "gear_target_optimizer.py")
+    gto = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(gto)
+
+    role = hero.get("synergy_role", "")
+    provides = set(hero.get("provides", []))
+    is_debuffer = any(p.startswith("enemy_debuff:") for p in provides) or "dot" in role
+    if role in ("attacker", "dot"):
+        mode = "damage"
+    elif role in ("support", "healer/support") or hero.get("game_role") in ("Defense", "Health"):
+        mode = "survivability"
+    else:
+        mode = "balanced"
+
+    mins = {}
+    if is_debuffer:
+        floor = _acc_floor(location)
+        if floor:
+            mins[gto.ACC] = floor
+    targets = gto.build_targets(mins, {}, {}, mode)
+
+    print()
+    print(f"  [optimize] building achievable loadout (mode={mode}"
+          + (f", ACC>={mins[gto.ACC]:.0f}" if mins else "") + ") ...")
+    try:
+        arts, heroes, account = gto.load_data()
+        opt = gto.Optimizer(arts, heroes, account)
+        res = opt.optimize(hero["name"], targets, anneal=6)
+    except Exception as ex:
+        print(f"    optimizer failed: {ex}")
+        return
+    st = res["stats"]
+    line = "  ".join(f"{gto.STAT_ID_TO_NAME[s]}={st.get(s,0):.0f}"
+                     for s in (gto.SPD, gto.ACC, gto.ATK, gto.CR, gto.CD, gto.HP, gto.DEF))
+    print(f"    mins_met={res['mins_met']}  {line}")
+    from collections import Counter
+    setc = Counter(a["set"] for a in res["assignment"].values() if a)
+    print(f"    sets: {dict(setc)}")
 
 
 if __name__ == "__main__":
