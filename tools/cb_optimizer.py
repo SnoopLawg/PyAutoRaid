@@ -64,7 +64,7 @@ STAT_NAMES = {HP:"HP", ATK:"ATK", DEF:"DEF", SPD:"SPD", RES:"RES", ACC:"ACC", CR
 # Set bonuses + names — sourced from data/static/artifact_sets.json via
 # gear_constants. SET_BONUSES is value-correct (live-game derived); SET_NAMES
 # is display-friendly. See gear_constants.py for details.
-from gear_constants import SET_BONUSES, SET_NAMES  # noqa: E402
+from gear_constants import SET_BONUSES, SET_NAMES, SUB_SET_BONUSES  # noqa: E402
 
 # Import canonical slot/set names from central module
 try:
@@ -412,6 +412,26 @@ def calc_stats(hero, artifacts, account, hypothetical=False):
                         flat_b[stat] += val * num_complete
                 else:
                     set_pct[stat] += val * num_complete
+        # Tiered sub-set sets (id 35/36/47/48/58-66): pick the highest tier
+        # whose `pieces` <= owned count; its StatBonuses is the TOTAL (not
+        # multiplied, not cumulative). e.g. set 36 with 1 piece = +20 ACC.
+        ladder = SUB_SET_BONUSES.get(s_id)
+        if ladder:
+            tier = None
+            for pieces, sm in ladder:
+                if cnt >= pieces:
+                    tier = sm
+                else:
+                    break
+            if tier:
+                active_sets.add(s_id)
+                for stat, val in tier.items():
+                    if stat in (ACC, RES):
+                        set_flat[stat] += val
+                        if not use_mod_artifact_bonus:
+                            flat_b[stat] += val
+                    else:
+                        set_pct[stat] += val
 
     # Lore of Steel (mastery 500343, Support tree): +15% to all set
     # bonuses.
