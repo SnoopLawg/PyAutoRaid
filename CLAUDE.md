@@ -471,6 +471,7 @@ curl /context-call?path=...AllianceBossHeroesSelectionDialog&method=StartBattle
 | `tools/m5_mastery_tagger.py` / `m5_blessing_tagger.py` | M5 mastery/blessing relevance × 12 locations |
 | `tools/extract_blessing_procs.py` | M5 game-truth blessing proc formulas (grade-by-grade) via authoritative skill link |
 | `tools/cb_attribution_diff.py` | per-hero/per-source damage diff (real tick log vs sim) for calibration |
+| `tools/gear_target_optimizer.py` | **M6** generalized per-champion gear optimizer — per-stat min/max/importance + modes, any location, set-aware (HellHades-parity flagship) |
 
 ## Data Files
 
