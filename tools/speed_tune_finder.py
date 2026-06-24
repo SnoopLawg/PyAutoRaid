@@ -82,6 +82,13 @@ def _validity(res):
 _STABLE_AFFINITIES = {"Magic": 1, "Spirit": 3, "Void": 4}
 _FORCE = 2
 
+# Tier-1 funnel: in all-affinities mode, the expensive part is the 16-run Force
+# Monte-Carlo. Before paying it, run deterministic Force (1 run = the averaged,
+# best-case-ish survival). If that can't reach this many turns, the harsher
+# glance-variance MC won't either, so skip the MC. Conservative threshold (dies
+# clearly short of T50 enrage) so we don't prune MC-marginal combos.
+FORCE_PRESCREEN_TURNS = 44
+
 
 # Default preset variants the co-search tries (protector openers — the cadence
 # levers). Each is {hero: {opening: [...]}}. "current" = the user's flagship
@@ -145,17 +152,27 @@ def find(team, vary, cb_element=4, use_current_gear=True, max_combos=400,
                           model_survival=True, force_affinity=True)
         return sim.run(max_cb_turns=50)["cb_turns"]
 
+    funnel = {"stable_pruned": 0, "force_prescreen_pruned": 0, "mc_ran": 0}
+
     def _eval_all_affinities():
-        """All-affinity metrics for the CURRENT setup state (speeds + preset)."""
+        """All-affinity metrics for the CURRENT setup state (speeds + preset),
+        via the tier-1 funnel: stable-3 deterministic gate → deterministic Force
+        pre-screen → full Force MC only on survivors."""
         stable = {nm: _turns(eid) >= 50 for nm, eid in _STABLE_AFFINITIES.items()}
-        if all(stable.values()):
-            ts = sorted(_turns(_FORCE, mc_seed=s) for s in range(n_mc))
-            f50 = sum(1 for t in ts if t >= 50) / len(ts)
-            fmed = statistics.median(ts)
-        else:
-            f50, fmed = 0.0, 0  # disqualified; short-circuit (skip Force MC)
-        return {"all_stable": all(stable.values()), **stable,
-                "force_reach50": f50, "force_median": fmed}
+        if not all(stable.values()):
+            funnel["stable_pruned"] += 1
+            return {"all_stable": False, **stable, "force_reach50": 0.0,
+                    "force_median": 0, "tier": "stable-fail"}
+        det = _turns(_FORCE)  # tier-1: deterministic Force, 1 run
+        if det < FORCE_PRESCREEN_TURNS:
+            funnel["force_prescreen_pruned"] += 1
+            return {"all_stable": True, **stable, "force_reach50": 0.0,
+                    "force_median": det, "tier": "force-prescreen"}
+        funnel["mc_ran"] += 1  # tier-2: full Force MC
+        ts = sorted(_turns(_FORCE, mc_seed=s) for s in range(n_mc))
+        return {"all_stable": True, **stable,
+                "force_reach50": sum(1 for t in ts if t >= 50) / len(ts),
+                "force_median": statistics.median(ts), "tier": "mc"}
 
     variants = PRESET_VARIANTS if preset_vary else [("current", {})]
     n_mc = mc_trials or 12
@@ -195,6 +212,15 @@ def find(team, vary, cb_element=4, use_current_gear=True, max_combos=400,
             survived, gaps = _validity(res)
             results.append((combo, {"valid": survived and gaps == 0,
                                     "gaps": gaps, "turns": res["cb_turns"]}))
+
+    if verbose and all_affinities:
+        f = funnel
+        evals = f["stable_pruned"] + f["force_prescreen_pruned"] + f["mc_ran"]
+        saved = (f["stable_pruned"] + f["force_prescreen_pruned"]) * (n_mc - 1)
+        print(f"  [tier-1 funnel] {evals} candidate-evals: {f['stable_pruned']} pruned on "
+              f"stable-3, {f['force_prescreen_pruned']} pruned on deterministic-Force "
+              f"pre-screen, {f['mc_ran']} ran the {n_mc}-run Force MC "
+              f"(~{saved} sim-runs saved).")
 
     base = list(zip(hero_names, base_spd))
     return base, grids, results
