@@ -23,8 +23,6 @@ from raid_data import (SKILLS, POISON_5PCT_DMG, HP_BURN_DMG, WM_DMG, GS_DMG,
                        PROC_RATE, CA_UPTIME, UNM_HP, UNM_RES, calc_poisons_per_turn,
                        get_stat_mult, DEBUFF_UPTIMES, calc_debuff_uptime,
                        calc_acc_land_rate, MASTERY_IDS, EMPOWERMENT_BONUSES)
-from speed_tune import (SpeedTuneSimulator, build_team as build_tune_team,
-                        CHAMPION_SKILLS as TUNE_SKILLS)
 
 # =============================================================================
 # CB Constants (verified from game data — see raid_data.py)
@@ -810,62 +808,74 @@ def simulate_damage(team, team_stats, profiles, account):
 # =============================================================================
 # Speed Tune Validation
 # =============================================================================
-# Budget UK speed requirements (from speed_tune.py sweep, with 2pt buffer)
+# Geared-UK speed bands (the Maneater/stun-target SPD windows a Budget-UK tune
+# needs). Consumed by the gear optimizers (cb_optimizer / cb_potential / cb_sim /
+# gear_optimizer) as a SPD cap on UK heroes — independent of validate_speed_tune.
 UK_ME_SPD_RANGE = (212, 227)   # Maneater speed range (valid 212-229, buffer for rounding)
 UK_DPS_SPD_RANGE = (171, 189)  # DPS speed range
-UK_STUN_SPD_RANGE = (111, 118) # Stun target (slowest DPS)
+UK_STUN_SPD_RANGE = (111, 118)  # Stun target (slowest DPS)
 
-def validate_speed_tune(team_profiles, team_stats):
-    """Run the speed tune simulator on a team's actual stats.
 
-    Returns (valid, errors, details) tuple.
+# Advisory "does this UK team hold its tune?" flag for the potential-teams
+# report. Routed through the VERIFIED cb_sim (full survival model) — NOT a
+# coverage-only sim. A UK/BD-uptime check alone gives false failures because
+# heroes also survive AoEs via Shield + heal + HP, which only cb_sim models
+# (confirmed 2026-06-23: the real MEN team "fails" a coverage check yet clears
+# in-game; see project_maneater_uk_2turns_gametruth). This replaced the old
+# hand-rolled speed_tune.py path (which used placeholder DPS skills + a 3T-UK
+# myth). Because each call runs a full cb_sim, the report computes it only for
+# the TOP-N displayed teams, never inside the combo loop.
+def validate_speed_tune(team_heroes, team_profiles, team_stats):
+    """cb_sim-backed tune validity. Returns (valid, errors, details).
+
+    valid = team survives to turn 50 with no UK/BD coverage gap past the sync
+    turn (the stall-tune criterion cb_sim's --validate-tune uses). Only meaningful
+    for >=2-Unkillable teams; others are a no-op pass.
     """
-    # Build speed tune team: position UK heroes first, then DPS
-    # Stun target = slowest non-UK hero, goes in position 1
     uk_indices = [i for i, p in enumerate(team_profiles) if p and p.unkillable]
-    dps_indices = [i for i, p in enumerate(team_profiles) if p and not p.unkillable]
-
     if len(uk_indices) < 2:
         return True, [], "Non-UK team, no speed tune needed"
 
-    # Sort DPS by speed to find the stun target (slowest)
-    dps_by_spd = sorted(dps_indices, key=lambda i: team_stats[i][SPD])
-    stun_idx = dps_by_spd[0]  # slowest DPS = stun target
-    other_dps = dps_by_spd[1:]
+    from cb_sim import build_champion_minimal, CBSimulator
+    from cb_constants import CB_SPEED_BY_DIFFICULTY
 
-    # Build team specs for simulator: [stun_target, ME1, ME2, dps...]
-    specs = []
-    # Position 1: stun target
-    specs.append((team_profiles[stun_idx].name, team_stats[stun_idx][SPD]))
-    # Position 2-3: Maneaters (faster first)
-    me_sorted = sorted(uk_indices, key=lambda i: -team_stats[i][SPD])
-    for mi in me_sorted:
-        specs.append(("Maneater", team_stats[mi][SPD]))
-    # Position 4+: remaining DPS
-    for di in other_dps:
-        name = team_profiles[di].name
-        # Use generic name if not in tune skills dict
-        tune_name = name if name in TUNE_SKILLS else "DPS"
-        specs.append((tune_name, team_stats[di][SPD]))
+    champs = []
+    for i, hero in enumerate(team_heroes):
+        st = team_stats[i]
+        champs.append(build_champion_minimal(
+            name=(hero.get("name") if isinstance(hero, dict) else getattr(hero, "name", "")),
+            position=i + 1,
+            speed=st[SPD], hp=st[HP], defense=st[DEF],
+            element=(hero.get("element", 4) if isinstance(hero, dict)
+                     else getattr(hero, "element", 4)) or 4,
+        ))
 
-    # Opening rotation: Fast ME opens A3, Slow ME delays
-    openings = {2: ["A3"], 3: ["A1", "A3"]}
+    sim = CBSimulator(
+        champs, cb_speed=CB_SPEED_BY_DIFFICULTY["unm"], cb_element=4,  # Void: 1st-half stall
+        deterministic=True, model_survival=True,
+    )
+    res = sim.run(max_cb_turns=50)
 
-    team = build_tune_team(specs, openings=openings)
-    sim = SpeedTuneSimulator(team, cb_speed=190)
-    result = sim.run(max_cb_turns=50)
+    # Coverage gaps past the sync turn — same criterion as cb_sim --validate-tune:
+    # any ALIVE hero lacking UK or BD on an AoE turn is a gap.
+    sync_turn = 6
+    gaps = []
+    for bt, prot in sorted((res.get("protection_by_turn") or {}).items()):
+        if bt < sync_turn:
+            continue
+        alive = [n for n, p in prot.items() if p.get("alive")]
+        if not alive:
+            continue
+        ukbd = [n for n in alive if prot[n].get("uk") or prot[n].get("bd")]
+        if len(ukbd) < len(alive):
+            gaps.append(bt)
 
-    # Collect speed details
-    me_speeds = [team_stats[i][SPD] for i in me_sorted]
-    stun_speed = team_stats[stun_idx][SPD]
-    details = {
-        "me_speeds": me_speeds,
-        "stun_speed": stun_speed,
-        "me_in_range": all(UK_ME_SPD_RANGE[0] <= s <= UK_ME_SPD_RANGE[1] for s in me_speeds),
-        "stun_ok": stun_speed <= UK_STUN_SPD_RANGE[1],
-    }
-
-    return result["valid"], result["errors"], details
+    cb_turns = res.get("cb_turns", 0)
+    valid = (not gaps) and cb_turns >= 50
+    me_speeds = sorted((team_stats[i][SPD] for i in uk_indices), reverse=True)
+    details = {"me_speeds": me_speeds, "cb_turns": cb_turns, "gaps": len(gaps)}
+    errors = [f"coverage gap at boss turn {bt}" for bt in gaps]
+    return valid, errors, details
 
 
 # =============================================================================
@@ -1098,16 +1108,19 @@ def main():
             team_s.append(calc_stats(team_h[pi], assigned_arts[pi], account))
 
         result = simulate_damage(team_h, team_s, team_p, account)
-
-        # Validate speed tune
-        tune_valid, tune_errors, tune_details = validate_speed_tune(team_p, team_s)
-        result["tune_valid"] = tune_valid
-        result["tune_errors"] = len(tune_errors)
-        result["tune_details"] = tune_details
-
         opt_results.append((result["total"], combo, result, team_s))
 
     opt_results.sort(key=lambda x: -x[0])
+
+    # Tune validity is advisory + runs a full cb_sim per team, so compute it only
+    # for the top-N teams we actually display (not all combos).
+    for _dmg, combo, res, team_s in opt_results[:5]:
+        team_h = [cb_heroes[i][0] for i in combo]
+        team_p = [cb_heroes[i][1] for i in combo]
+        tune_valid, tune_errors, tune_details = validate_speed_tune(team_h, team_p, team_s)
+        res["tune_valid"] = tune_valid
+        res["tune_errors"] = len(tune_errors)
+        res["tune_details"] = tune_details
 
     print(f"\nTOP 5 TEAMS (optimized gear POTENTIAL):")
     print(f"{'Rank':<5} {'Damage':>10} {'Team':<55} {'Tune':>8}")
@@ -1274,8 +1287,8 @@ def main():
 
         result = simulate_damage(team_h, team_s, team_p, account)
 
-        # Validate speed tune
-        tune_valid, tune_errors, tune_details = validate_speed_tune(team_p, team_s)
+        # Validate speed tune (cb_sim-backed)
+        tune_valid, tune_errors, tune_details = validate_speed_tune(team_h, team_p, team_s)
         tune_str = "TUNE:✓" if tune_valid else f"TUNE:✗({len(tune_errors)} gaps)"
         me_spds = tune_details.get("me_speeds", []) if isinstance(tune_details, dict) else []
         me_str = f"ME:{','.join(f'{s:.0f}' for s in me_spds)}" if me_spds else ""
