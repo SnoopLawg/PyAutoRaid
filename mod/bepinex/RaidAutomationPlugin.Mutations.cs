@@ -552,7 +552,15 @@ namespace RaidAutomation
 
                     if (existingArtId > 0)
                     {
-                        // Slot occupied — use SwapArtifactCmd
+                        // Slot occupied — use SwapArtifactCmd.
+                        // VERIFIED LIVE (2026-06-24): this commits reliably on the
+                        // RECEIVER. SwapArtifactCmd(hero, owner, fromId, toId) pulls
+                        // `toId` onto `hero` and sends `hero`'s old piece (`fromId`)
+                        // to the VAULT — the donor `owner` is left with an EMPTY slot
+                        // and does NOT receive `fromId` (the param name is misleading).
+                        // That's correct Raid equip semantics. Execute() applies the
+                        // optimistic edit synchronously on the main thread, so the
+                        // change is visible in /all-heroes immediately after.
                         int ownerId = GetArtifactOwner(equipment, artId);
                         if (ownerId <= 0) ownerId = heroId;
                         if (swapCmdType != null)

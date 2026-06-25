@@ -1,0 +1,11 @@
+{
+  "_doc": "MEN daily-robust Force tune. Exact SPD tuple 292/174/225/178/162 holds Magic/Spirit/Void (Y/Y/Y) and Force 100% (validated 2026-06-24 via speed_tune_finder --all-affinities --mc). Pinned min==max because the 5-hero cadence is COUPLED — overshooting Demytha->175 or Venomage->163 breaks the stable days (see project_cb_tune_equip_flow). Field with: team_gear_optimizer.py --spec this --equipped-only --json, then loadouts.apply (snapshot team+donors first), then re-validate LIVE speeds.",
+  "team": [
+    {"hero": "Maneater",  "mode": "survivability", "min": {"SPD": 292}, "max": {"SPD": 292}},
+    {"hero": "Demytha",   "mode": "survivability", "min": {"SPD": 174}, "max": {"SPD": 174}, "weight": {"ACC": 1}},
+    {"hero": "Ninja",     "mode": "damage",        "min": {"SPD": 225}, "max": {"SPD": 225}},
+    {"hero": "Geomancer", "mode": "survivability", "min": {"SPD": 178}, "max": {"SPD": 178}},
+    {"hero": "Venomage",  "mode": "damage",        "min": {"SPD": 162}, "max": {"SPD": 162}}
+  ],
+  "priority": ["Ninja", "Maneater", "Demytha", "Geomancer", "Venomage"]
+}
