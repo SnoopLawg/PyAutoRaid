@@ -45,6 +45,37 @@ ASSET_DIR = PROJECT_ROOT / "gui" / "dashboard" / "assets"
 LOCALAPPDATA = os.environ.get("LOCALAPPDATA", "")
 BUNDLE_DIR = (Path(LOCALAPPDATA) / "PlariumPlay" / "StandAloneApps" / "raid"
               / "build" / "Raid_Data" / "StreamingAssets" / "AssetBundles")
+# The on-demand DOWNLOAD CACHE (separate from StreamingAssets). The game writes
+# every bundle it fetches from the CDN here, as <Name>_<version>/<hash>/__data.
+# This is where the mastery icons, full hero-avatar set, downloaded skill icons,
+# and ~3000 per-hero splash bundles actually live — StreamingAssets only ships a
+# small core subset. Game-truth + local (no CDN download).
+RESOURCES_DIR = (Path(LOCALAPPDATA) / "PlariumPlay" / "StandAloneApps" / "raid"
+                 / "resources")
+# Prefix -> category for the resources cache (logical name = entry minus the
+# trailing _<version>). Order matters: more specific first.
+RESOURCE_MAP: list[tuple[str, str]] = [
+    ("MasteryIcons", "masteries"),
+    ("Masteries", "masteries"),
+    ("HeroAvatars", "heroes"),
+    ("FractionAvatars", "factions"),
+    ("Arena3X3Avatars", "heroes"),
+    ("Arena3x3EventAvatars", "heroes"),
+    ("CursedCityAvatars", "heroes"),
+    ("DoomTowerAvatars", "heroes"),
+    ("FoggyForestAvatars", "heroes"),
+    ("SkillIcons_", "skills"),
+    ("LeaderSkillIcons", "leader_skills"),
+    ("StatusEffectIcons", "effects"),
+    ("ArtifactSets", "artifact_sets"),
+    ("ArtifactsLocal", "artifacts"),
+    ("ArtifactFractions", "artifacts"),
+    ("ArtifactAscendResourceIcons", "artifacts"),
+    ("ResourceIcons", "resources"),
+    ("AdditionalIcons", "ui"),
+    ("Icons", "ui"),
+]
+_VER_SUFFIX = re.compile(r"_\d+\.\d+(\.\d+)?$")
 # Runtime-cached PNGs the game downloaded on demand (mostly hero portraits
 # + various dialog backgrounds the user has actually opened).
 LOADED_TEXTURES_DIR = (Path(os.environ.get("APPDATA", "")).parent / "LocalLow"
@@ -203,6 +234,72 @@ def _scan_all(bundle_dir: Path, force: bool) -> int:
     return 0
 
 
+def _logical_name(entry: str) -> str:
+    """Strip the trailing _<version> from a resources-cache entry name."""
+    return _VER_SUFFIX.sub("", entry)
+
+
+_HERO_BUNDLE = re.compile(r"^\d{3,4}_[A-Za-z][A-Za-z0-9_]*$")
+
+
+def resource_category(logical: str, include_splash: bool) -> str | None:
+    if logical.endswith("_Res") or logical.endswith("_LOD"):
+        return None  # dependency/LOD companions — no new sprites
+    for prefix, subdir in RESOURCE_MAP:
+        if logical == prefix or logical.startswith(prefix):
+            return subdir
+    if include_splash and _HERO_BUNDLE.match(logical):
+        return "hero_splash"
+    return None
+
+
+def _resource_data_file(entry_dir: Path) -> Path | None:
+    """A resources entry is <Name>_<ver>/<hash>/__data — return the __data file."""
+    if not entry_dir.is_dir():
+        return None
+    for hash_dir in entry_dir.iterdir():
+        data = hash_dir / "__data"
+        if data.is_file():
+            return data
+    return None
+
+
+def _scan_resources(force: bool, include_splash: bool) -> int:
+    """Extract sprites from the on-demand download cache (raid/resources)."""
+    if not RESOURCES_DIR.exists():
+        print(f"resources cache not found: {RESOURCES_DIR}", file=sys.stderr)
+        return 1
+    # Group entries by logical name; keep the highest-version entry of each.
+    groups: dict[str, tuple[str, Path]] = {}  # logical -> (entry_name, dir)
+    for entry in RESOURCES_DIR.iterdir():
+        if not entry.is_dir():
+            continue
+        logical = _logical_name(entry.name)
+        cat = resource_category(logical, include_splash)
+        if cat is None:
+            continue
+        prev = groups.get(logical)
+        if prev is None or entry.name > prev[0]:  # lexical ~ version order
+            groups[logical] = (entry.name, entry)
+    print(f"resources cache: {len(groups)} mapped bundles "
+          f"(splash={'on' if include_splash else 'off'})")
+    total_saved = total_skip = 0
+    for logical in sorted(groups):
+        entry_name, entry_dir = groups[logical]
+        cat = resource_category(logical, include_splash)
+        data = _resource_data_file(entry_dir)
+        if data is None:
+            continue
+        out = ASSET_DIR / cat
+        saved, skipped = extract_bundle(data, out, force=force)
+        total_saved += saved
+        total_skip += skipped
+        if saved:
+            print(f"  {logical:<40} -> {cat:<14} saved={saved:<4} skipped={skipped}")
+    print(f"resources done. saved={total_saved} skipped={total_skip}")
+    return 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--bundle", default=None,
@@ -217,7 +314,17 @@ def main() -> int:
                     help="Extract from EVERY bundle, dumping anything that "
                          "looks like a sprite/texture into assets/_all/<bundle>/. "
                          "Big — ~150-200 MB. Used for one-off discovery.")
+    ap.add_argument("--resources", action="store_true",
+                    help="Extract from the on-demand DOWNLOAD CACHE "
+                         "(raid/resources) — mastery icons, full hero avatars, "
+                         "downloaded skill icons. This is where most assets live.")
+    ap.add_argument("--splash", action="store_true",
+                    help="With --resources, also extract the ~3000 per-hero "
+                         "splash-art bundles (large). Off by default.")
     args = ap.parse_args()
+
+    if args.resources:
+        return _scan_resources(args.force, include_splash=args.splash)
 
     bundle_dir = Path(args.bundle_dir)
     if not bundle_dir.exists():

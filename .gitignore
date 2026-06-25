@@ -52,6 +52,7 @@ mod/bepinex/refs/
 # Extracted game assets (regen via tools/extract_game_assets.py — 299MB,
 # per-install, account-agnostic but too large for git)
 gui/dashboard/assets/_all/
+gui/dashboard/assets/masteries/
 gui/dashboard/assets/heroes/
 gui/dashboard/assets/heroes_fuse/
 gui/dashboard/assets/hero_splash/
