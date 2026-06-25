@@ -1,0 +1,413 @@
+{
+ "_meta": {
+  "source": "blessing_procs.json conditions evaluated against CB facts",
+  "tool": "tools/blessing_cb_effects.py"
+ },
+ "blessings": [
+  {
+   "code": "Vanguard",
+   "ui_name": "Iron Will",
+   "rarity": "Epic",
+   "cb_role": "cb_defense",
+   "damage_amp_by_grade": {},
+   "damage_reduction_by_grade": {
+    "1": "-0.005*DEBUFF_COUNT*DMG_MUL",
+    "2": "-0.005*DEBUFF_COUNT*DMG_MUL",
+    "3": "-0.01*DEBUFF_COUNT*DMG_MUL",
+    "4": "-0.01*DEBUFF_COUNT*DMG_MUL",
+    "5": "-0.015*DEBUFF_COUNT*DMG_MUL",
+    "6": "-0.02*DEBUFF_COUNT*DMG_MUL"
+   },
+   "other_effect_kinds": [],
+   "notes": "Reduces damage TAKEN on CB (survival, not output)."
+  },
+  {
+   "code": "Polymorph",
+   "ui_name": "Polymorph",
+   "rarity": "Legendary",
+   "cb_role": "cb_noop_control_immune",
+   "damage_amp_by_grade": {},
+   "damage_reduction_by_grade": {},
+   "other_effect_kinds": [],
+   "notes": "Control effect \u2014 CB is immune; no effect."
+  },
+  {
+   "code": "SoulDrinker",
+   "ui_name": "Life Harvest",
+   "rarity": "Legendary",
+   "cb_role": "cb_noop_immune",
+   "damage_amp_by_grade": {},
+   "damage_reduction_by_grade": {},
+   "other_effect_kinds": [],
+   "notes": "DestroyHp/stamina vs boss \u2014 CB is immune (task #8); no effect."
+  },
+  {
+   "code": "MagicFlame",
+   "ui_name": "Incinerate",
+   "rarity": "Epic",
+   "cb_role": "cb_noop_pvp_only",
+   "damage_amp_by_grade": {},
+   "damage_reduction_by_grade": {},
+   "other_effect_kinds": [],
+   "notes": "PvP-only (isPvPBattle) \u2014 NO EFFECT on Clan Boss."
+  },
+  {
+   "code": "Agility",
+   "ui_name": "Survival Instinct",
+   "rarity": "Rare",
+   "cb_role": "cb_noop_tm_immune",
+   "damage_amp_by_grade": {},
+   "damage_reduction_by_grade": {},
+   "other_effect_kinds": [],
+   "notes": "Stamina/TM change vs boss \u2014 CB is TM-immune; no effect."
+  },
+  {
+   "code": "Amplification",
+   "ui_name": "Hero's Soul",
+   "rarity": "Rare",
+   "cb_role": "cb_offense",
+   "damage_amp_by_grade": {
+    "1": "DMG_MUL*(0.005*aliveEnemiesCount)",
+    "2": "DMG_MUL*(0.005*aliveEnemiesCount)",
+    "3": "DMG_MUL*(0.01*aliveEnemiesCount)",
+    "4": "DMG_MUL*(0.01*aliveEnemiesCount)",
+    "5": "DMG_MUL*(0.015*aliveEnemiesCount)",
+    "6": "DMG_MUL*(0.03*aliveEnemiesCount)"
+   },
+   "damage_reduction_by_grade": {},
+   "other_effect_kinds": [],
+   "notes": "Increases damage on CB; wire damage_amp_by_grade into cb_sim bless_mult."
+  },
+  {
+   "code": "CreepingRoots",
+   "ui_name": "Cracking Roots",
+   "rarity": "Legendary",
+   "cb_role": "cb_offense",
+   "damage_amp_by_grade": {
+    "1": "((CALCULATED_DMG*1.2<=relationTargetStoneSkinValue)*CALCULATED_DMG*(1.2-1))+((CALCULATED_DMG*1.2>relationTargetStoneSkinValue)*relationTargetStoneSkinValue*(1.2-1))",
+    "2": "((CALCULATED_DMG*1.2<=relationTargetStoneSkinValue)*CALCULATED_DMG*(1.2-1))+((CALCULATED_DMG*1.2>relationTargetStoneSkinValue)*relationTargetStoneSkinValue*(1.2-1))",
+    "3": "((CALCULATED_DMG*1.4<=relationTargetStoneSkinValue)*CALCULATED_DMG*(1.4-1))+((CALCULATED_DMG*1.4>relationTargetStoneSkinValue)*relationTargetStoneSkinValue*(1.4-1))",
+    "4": "((CALCULATED_DMG*1.4<=relationTargetStoneSkinValue)*CALCULATED_DMG*(1.4-1))+((CALCULATED_DMG*1.4>relationTargetStoneSkinValue)*relationTargetStoneSkinValue*(1.4-1))",
+    "5": "((CALCULATED_DMG*1.6<=relationTargetStoneSkinValue)*CALCULATED_DMG*(1.6-1))+((CALCULATED_DMG*1.6>relationTargetStoneSkinValue)*relationTargetStoneSkinValue*(1.6-1))",
+    "6": "((CALCULATED_DMG*2<=relationTargetStoneSkinValue)*CALCULATED_DMG)+((CALCULATED_DMG*2>relationTargetStoneSkinValue)*relationTargetStoneSkinValue)"
+   },
+   "damage_reduction_by_grade": {},
+   "other_effect_kinds": [],
+   "notes": "Increases damage on CB; wire damage_amp_by_grade into cb_sim bless_mult."
+  },
+  {
+   "code": "EnhancedWeapon",
+   "ui_name": "Heavencast",
+   "rarity": "Epic",
+   "cb_role": "cb_offense",
+   "damage_amp_by_grade": {
+    "1": "0.005*BUFF_COUNT*DMG_MUL",
+    "2": "0.005*BUFF_COUNT*DMG_MUL",
+    "3": "0.01*BUFF_COUNT*DMG_MUL",
+    "4": "0.01*BUFF_COUNT*DMG_MUL",
+    "5": "0.015*BUFF_COUNT*DMG_MUL",
+    "6": "0.02*BUFF_COUNT*DMG_MUL"
+   },
+   "damage_reduction_by_grade": {},
+   "other_effect_kinds": [],
+   "notes": "Increases damage on CB; wire damage_amp_by_grade into cb_sim bless_mult."
+  },
+  {
+   "code": "Execute",
+   "ui_name": "Soul Reap",
+   "rarity": "Legendary",
+   "cb_role": "cb_offense",
+   "damage_amp_by_grade": {
+    "1": "1*TRG_CUR_HP",
+    "2": "1*TRG_CUR_HP",
+    "3": "1*TRG_CUR_HP",
+    "4": "1*TRG_CUR_HP",
+    "5": "1*TRG_CUR_HP",
+    "6": "1*TRG_CUR_HP"
+   },
+   "damage_reduction_by_grade": {},
+   "other_effect_kinds": [
+    "ApplyDebuff"
+   ],
+   "notes": "Increases damage on CB; wire damage_amp_by_grade into cb_sim bless_mult."
+  },
+  {
+   "code": "Exterminator",
+   "ui_name": "Cruelty",
+   "rarity": "Epic",
+   "cb_role": "cb_offense",
+   "damage_amp_by_grade": {
+    "1": "0.01*TRG_B_DEF",
+    "2": "0.01*TRG_B_DEF",
+    "3": "0.01*TRG_B_DEF",
+    "4": "0.01*TRG_B_DEF",
+    "5": "0.02*TRG_B_DEF",
+    "6": "0.04*TRG_B_DEF"
+   },
+   "damage_reduction_by_grade": {},
+   "other_effect_kinds": [],
+   "notes": "Increases damage on CB; wire damage_amp_by_grade into cb_sim bless_mult."
+  },
+  {
+   "code": "Fearless",
+   "ui_name": "Dark Resolve",
+   "rarity": "Rare",
+   "cb_role": "cb_offense",
+   "damage_amp_by_grade": {
+    "1": "0.01*deadAlliesCount*DMG_MUL",
+    "2": "0.01*deadAlliesCount*DMG_MUL",
+    "3": "0.015*deadAlliesCount*DMG_MUL",
+    "4": "0.015*deadAlliesCount*DMG_MUL",
+    "5": "0.025*deadAlliesCount*DMG_MUL",
+    "6": "0.05*deadAlliesCount*DMG_MUL"
+   },
+   "damage_reduction_by_grade": {},
+   "other_effect_kinds": [],
+   "notes": "Increases damage on CB; wire damage_amp_by_grade into cb_sim bless_mult."
+  },
+  {
+   "code": "LightOrbs",
+   "ui_name": "Lightning Cage",
+   "rarity": "Legendary",
+   "cb_role": "cb_offense",
+   "damage_amp_by_grade": {
+    "1": "(ownersDoubleAscendLevel<6)*(!targetIsBoss*0.02*TRG_HP*EffectStackCount(LightOrbs)+targetIsBoss*0.01*TRG_HP*EffectStackCount(LightOrbs))+(ownersDoubleAscendLevel>=6)*(!targetIsBoss*0.05*TRG_HP*EffectStackCount(LightOrbs)+targetIsBoss*0.025*TRG_HP*EffectStackCount(LightOrbs))",
+    "2": "(ownersDoubleAscendLevel<6)*(!targetIsBoss*0.02*TRG_HP*EffectStackCount(LightOrbs)+targetIsBoss*0.01*TRG_HP*EffectStackCount(LightOrbs))+(ownersDoubleAscendLevel>=6)*(!targetIsBoss*0.05*TRG_HP*EffectStackCount(LightOrbs)+targetIsBoss*0.025*TRG_HP*EffectStackCount(LightOrbs))",
+    "3": "(ownersDoubleAscendLevel<6)*(!targetIsBoss*0.02*TRG_HP*EffectStackCount(LightOrbs)+targetIsBoss*0.01*TRG_HP*EffectStackCount(LightOrbs))+(ownersDoubleAscendLevel>=6)*(!targetIsBoss*0.05*TRG_HP*EffectStackCount(LightOrbs)+targetIsBoss*0.025*TRG_HP*EffectStackCount(LightOrbs))",
+    "4": "(ownersDoubleAscendLevel<6)*(!targetIsBoss*0.02*TRG_HP*EffectStackCount(LightOrbs)+targetIsBoss*0.01*TRG_HP*EffectStackCount(LightOrbs))+(ownersDoubleAscendLevel>=6)*(!targetIsBoss*0.05*TRG_HP*EffectStackCount(LightOrbs)+targetIsBoss*0.025*TRG_HP*EffectStackCount(LightOrbs))",
+    "5": "(ownersDoubleAscendLevel<6)*(!targetIsBoss*0.02*TRG_HP*EffectStackCount(LightOrbs)+targetIsBoss*0.01*TRG_HP*EffectStackCount(LightOrbs))+(ownersDoubleAscendLevel>=6)*(!targetIsBoss*0.05*TRG_HP*EffectStackCount(LightOrbs)+targetIsBoss*0.025*TRG_HP*EffectStackCount(LightOrbs))",
+    "6": "(ownersDoubleAscendLevel<6)*(!targetIsBoss*0.02*TRG_HP*EffectStackCount(LightOrbs)+targetIsBoss*0.01*TRG_HP*EffectStackCount(LightOrbs))+(ownersDoubleAscendLevel>=6)*(!targetIsBoss*0.05*TRG_HP*EffectStackCount(LightOrbs)+targetIsBoss*0.025*TRG_HP*EffectStackCount(LightOrbs))"
+   },
+   "damage_reduction_by_grade": {},
+   "other_effect_kinds": [
+    "MultiplyEffectChance"
+   ],
+   "notes": "Increases damage on CB; wire damage_amp_by_grade into cb_sim bless_mult."
+  },
+  {
+   "code": "MagicOrb",
+   "ui_name": "Phantom Touch",
+   "rarity": "Rare",
+   "cb_role": "cb_offense",
+   "damage_amp_by_grade": {
+    "1": "3.5*ATK",
+    "2": "3.5*ATK",
+    "3": "3.5*ATK",
+    "4": "3.5*ATK",
+    "5": "3.5*ATK",
+    "6": "3.5*ATK"
+   },
+   "damage_reduction_by_grade": {},
+   "other_effect_kinds": [
+    "ChangeEffectRepeatCount"
+   ],
+   "notes": "Increases damage on CB; wire damage_amp_by_grade into cb_sim bless_mult."
+  },
+  {
+   "code": "NatureBalance",
+   "ui_name": "Nature's Wrath",
+   "rarity": "Epic",
+   "cb_role": "cb_offense",
+   "damage_amp_by_grade": {
+    "1": "(0.02*DMG_MUL)*HeroCounterWithId(NaturesBalance_Counter)",
+    "2": "(0.02*DMG_MUL)*HeroCounterWithId(NaturesBalance_Counter)",
+    "3": "(0.02*DMG_MUL)*HeroCounterWithId(NaturesBalance_Counter)",
+    "4": "(0.02*DMG_MUL)*HeroCounterWithId(NaturesBalance_Counter)",
+    "5": "(0.03*DMG_MUL)*HeroCounterWithId(NaturesBalance_Counter)",
+    "6": "(0.05*DMG_MUL)*HeroCounterWithId(NaturesBalance_Counter)"
+   },
+   "damage_reduction_by_grade": {},
+   "other_effect_kinds": [
+    "SetSpecificHeroCounter"
+   ],
+   "notes": "Increases damage on CB; wire damage_amp_by_grade into cb_sim bless_mult."
+  },
+  {
+   "code": "Necromancy",
+   "ui_name": "Ward of the Fallen",
+   "rarity": "Legendary",
+   "cb_role": "cb_offense",
+   "damage_amp_by_grade": {
+    "6": "3*ATK"
+   },
+   "damage_reduction_by_grade": {},
+   "other_effect_kinds": [
+    "ChangeEffectRepeatCount"
+   ],
+   "notes": "Increases damage on CB; wire damage_amp_by_grade into cb_sim bless_mult."
+  },
+  {
+   "code": "Penetrator",
+   "ui_name": "Crushing Rend",
+   "rarity": "Epic",
+   "cb_role": "cb_offense",
+   "damage_amp_by_grade": {
+    "1": "-0.01*(targetLevel/50)",
+    "2": "-0.01*(targetLevel/50)",
+    "3": "-0.01*(targetLevel/40)",
+    "4": "-0.01*(targetLevel/40)",
+    "5": "-0.01*(targetLevel/25)",
+    "6": "-0.01*(targetLevel/10)"
+   },
+   "damage_reduction_by_grade": {},
+   "other_effect_kinds": [],
+   "notes": "Increases damage on CB; wire damage_amp_by_grade into cb_sim bless_mult."
+  },
+  {
+   "code": "AdvancedLeadership",
+   "ui_name": "Commanding Presence",
+   "rarity": "Epic",
+   "cb_role": "cb_other",
+   "damage_amp_by_grade": {},
+   "damage_reduction_by_grade": {},
+   "other_effect_kinds": [
+    "PassiveBonus"
+   ],
+   "notes": "Buff/passive of a kind not affecting CB damage directly."
+  },
+  {
+   "code": "LeadershipDomination",
+   "ui_name": "Intimidating Presence",
+   "rarity": "Legendary",
+   "cb_role": "cb_other",
+   "damage_amp_by_grade": {},
+   "damage_reduction_by_grade": {},
+   "other_effect_kinds": [
+    "PassiveBonus"
+   ],
+   "notes": "Buff/passive of a kind not affecting CB damage directly."
+  },
+  {
+   "code": "Meteor",
+   "ui_name": "Brimstone",
+   "rarity": "Legendary",
+   "cb_role": "cb_other",
+   "damage_amp_by_grade": {},
+   "damage_reduction_by_grade": {},
+   "other_effect_kinds": [
+    "ApplyDebuff"
+   ],
+   "notes": "Buff/passive of a kind not affecting CB damage directly."
+  },
+  {
+   "code": "NatureReach",
+   "ui_name": "Neutralize",
+   "rarity": "Epic",
+   "cb_role": "cb_other",
+   "damage_amp_by_grade": {},
+   "damage_reduction_by_grade": {},
+   "other_effect_kinds": [
+    "AddChanceToActivateOnGlancingHit"
+   ],
+   "notes": "Buff/passive of a kind not affecting CB damage directly."
+  },
+  {
+   "code": "TimeSlowdown",
+   "ui_name": "Temporal Chains",
+   "rarity": "Legendary",
+   "cb_role": "cb_other",
+   "damage_amp_by_grade": {},
+   "damage_reduction_by_grade": {},
+   "other_effect_kinds": [
+    "PassiveChangeStats"
+   ],
+   "notes": "Buff/passive of a kind not affecting CB damage directly."
+  },
+  {
+   "code": "ToxicBlade",
+   "ui_name": "Lethal Dose",
+   "rarity": "Epic",
+   "cb_role": "cb_other",
+   "damage_amp_by_grade": {},
+   "damage_reduction_by_grade": {},
+   "other_effect_kinds": [
+    "ChangeEffectResistance"
+   ],
+   "notes": "Buff/passive of a kind not affecting CB damage directly."
+  },
+  {
+   "code": "WildGrowth",
+   "ui_name": "Nature's Bounty",
+   "rarity": "Rare",
+   "cb_role": "cb_other",
+   "damage_amp_by_grade": {},
+   "damage_reduction_by_grade": {},
+   "other_effect_kinds": [
+    "ReplaceStatusEffectOnApplying"
+   ],
+   "notes": "Buff/passive of a kind not affecting CB damage directly."
+  },
+  {
+   "code": "WildImpulses",
+   "ui_name": "Harmonic Impulse",
+   "rarity": "Legendary",
+   "cb_role": "cb_other",
+   "damage_amp_by_grade": {},
+   "damage_reduction_by_grade": {},
+   "other_effect_kinds": [
+    "ReduceCooldown"
+   ],
+   "notes": "Buff/passive of a kind not affecting CB damage directly."
+  },
+  {
+   "code": "Adaptation",
+   "ui_name": "Faultless Defense",
+   "rarity": "Rare",
+   "cb_role": "cb_survival",
+   "damage_amp_by_grade": {},
+   "damage_reduction_by_grade": {},
+   "other_effect_kinds": [],
+   "notes": "Heal/shield/cleanse \u2014 affects survival, not damage output."
+  },
+  {
+   "code": "AdvancedHeal",
+   "ui_name": "Miracle Heal",
+   "rarity": "Rare",
+   "cb_role": "cb_survival",
+   "damage_amp_by_grade": {},
+   "damage_reduction_by_grade": {},
+   "other_effect_kinds": [],
+   "notes": "Heal/shield/cleanse \u2014 affects survival, not damage output."
+  },
+  {
+   "code": "Carapace",
+   "ui_name": "Emergency Heal",
+   "rarity": "Rare",
+   "cb_role": "cb_survival",
+   "damage_amp_by_grade": {},
+   "damage_reduction_by_grade": {},
+   "other_effect_kinds": [],
+   "notes": "Heal/shield/cleanse \u2014 affects survival, not damage output."
+  },
+  {
+   "code": "ChainBreaker",
+   "ui_name": "Chainbreaker",
+   "rarity": "Epic",
+   "cb_role": "cb_survival",
+   "damage_amp_by_grade": {},
+   "damage_reduction_by_grade": {},
+   "other_effect_kinds": [],
+   "notes": "Heal/shield/cleanse \u2014 affects survival, not damage output."
+  },
+  {
+   "code": "Courage",
+   "ui_name": "Indomitable Spirit",
+   "rarity": "Rare",
+   "cb_role": "cb_survival",
+   "damage_amp_by_grade": {},
+   "damage_reduction_by_grade": {},
+   "other_effect_kinds": [],
+   "notes": "Heal/shield/cleanse \u2014 affects survival, not damage output."
+  },
+  {
+   "code": "Tranquility",
+   "ui_name": "Nourish",
+   "rarity": "Rare",
+   "cb_role": "cb_survival",
+   "damage_amp_by_grade": {},
+   "damage_reduction_by_grade": {},
+   "other_effect_kinds": [],
+   "notes": "Heal/shield/cleanse \u2014 affects survival, not damage output."
+  }
+ ]
+}
