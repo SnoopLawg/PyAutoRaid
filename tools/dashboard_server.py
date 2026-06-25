@@ -1388,9 +1388,40 @@ def build_cb_history_with_attribution():
     }
 
 
+# Tune Lab is expensive (~25s cold: builds geared sim champions + scores +
+# damage projection for every runnable tune). The inputs are static DWJ data +
+# the roster cache, which change rarely, so memoize per parameter-set with a
+# TTL and a startup pre-warm. Thread-safe: the lock both protects the cache and
+# de-dupes concurrent identical computes (so two page loads don't each pay 25s).
+_TUNE_LAB_CACHE: dict = {}
+_TUNE_LAB_LOCK = threading.Lock()
+_TUNE_LAB_TTL = 3600.0  # seconds; affinity rotates daily, data rarely changes —
+# a long TTL avoids re-paying the ~25s build after short idle gaps. (Server
+# restart or a new game version clears it; the startup pre-warm re-fills it.)
+
+
 def build_tune_lab(slug: str | None = None, runnable_only: bool = False,
                    include_sim: bool = True, affinity: str | None = None,
                    projection: bool = True):
+    """Cached wrapper around `_tune_lab_compute` (see its docstring)."""
+    key = (slug, runnable_only, include_sim, affinity, projection)
+    now = time.time()
+    with _TUNE_LAB_LOCK:
+        hit = _TUNE_LAB_CACHE.get(key)
+        if hit and (now - hit[0]) < _TUNE_LAB_TTL and "error" not in hit[1]:
+            return hit[1]
+        result = _tune_lab_compute(slug=slug, runnable_only=runnable_only,
+                                   include_sim=include_sim, affinity=affinity,
+                                   projection=projection)
+        # Only cache successful builds; let errors retry next request.
+        if isinstance(result, dict) and "error" not in result:
+            _TUNE_LAB_CACHE[key] = (now, result)
+        return result
+
+
+def _tune_lab_compute(slug: str | None = None, runnable_only: bool = False,
+                      include_sim: bool = True, affinity: str | None = None,
+                      projection: bool = True):
     """Per-tune blocker/todo/team output from tools/potential_team.
 
     Today's CB affinity is auto-detected from the latest battle log so
@@ -3132,6 +3163,19 @@ def main():
         except Exception as e:
             logger.info("artifact cache pre-warm failed: %s", e)
     threading.Thread(target=_prewarm, daemon=True, name="art-prewarm").start()
+
+    # Pre-warm the Tune Lab (~25s cold) in the background so the Clan Boss
+    # panel's first hit is served from cache instead of blocking on the build.
+    def _prewarm_tunelab():
+        try:
+            t0 = time.time()
+            r = build_tune_lab(runnable_only=True)
+            n = len(r.get("tunes", [])) if isinstance(r, dict) else 0
+            logger.info("tune-lab pre-warmed: %d tunes in %.1fs", n, time.time() - t0)
+        except Exception as e:
+            logger.info("tune-lab pre-warm failed: %s", e)
+    threading.Thread(target=_prewarm_tunelab, daemon=True, name="tunelab-prewarm").start()
+
     with ReusableServer(("", PORT), Handler) as httpd:
         try:
             httpd.serve_forever()

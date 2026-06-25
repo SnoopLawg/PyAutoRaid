@@ -171,68 +171,16 @@ window.TWEAKS = /*EDITMODE-BEGIN*/{
 })();
 </script>
 
-<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
-
-<script type="text/babel" src="shared.jsx"></script>
-<script type="text/babel" src="direction_b.jsx"></script>
-<script type="text/babel" src="direction_b_pages.jsx"></script>
-
-<script type="text/babel">
-function App() {
-  const [tweaksOn, setTweaksOn] = React.useState(false);
-  const s = useSim();
-
-  // Apply initial TWEAKS.running
-  const bootedRunning = React.useRef(false);
-  React.useEffect(() => {
-    if (!bootedRunning.current) {
-      bootedRunning.current = true;
-      if (window.TWEAKS.running) window.PARSim.setRunning(true);
-    }
-  }, []);
-
-  // Tweaks protocol
-  React.useEffect(() => {
-    function onMsg(e) {
-      if (!e.data) return;
-      if (e.data.type === '__activate_edit_mode') setTweaksOn(true);
-      if (e.data.type === '__deactivate_edit_mode') setTweaksOn(false);
-    }
-    window.addEventListener('message', onMsg);
-    window.parent.postMessage({type:'__edit_mode_available'}, '*');
-    return () => window.removeEventListener('message', onMsg);
-  }, []);
-
-  function setRunningPersist(v) {
-    window.PARSim.setRunning(v);
-    window.parent.postMessage({type:'__edit_mode_set_keys', edits: {running: v}}, '*');
-  }
-
-  return (
-    <>
-      <div className="dash-frame">
-        <DirectionB/>
-      </div>
-
-      {tweaksOn && (
-        <div className="tweaks-panel" data-dir="B">
-          <h4>Tweaks</h4>
-          <div className="tweaks-row">
-            <span>Bot running</span>
-            <div className={`toggle ${s.running ? 'on' : ''}`} onClick={()=>setRunningPersist(!s.running)}/>
-          </div>
-          <div className="tweaks-row">
-            <span style={{fontSize: 11, color:'#999'}}>Reset queue</span>
-            <button className="btn" style={{height: 24, padding:'0 8px', fontSize: 11}} onClick={()=>window.PARSim.reset()}>Reset</button>
-          </div>
-        </div>
-      )}
-    </>
-  );
-}
-ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
-</script>
+<!-- React self-hosted (production UMD) — no unpkg/CDN dependency, so the
+     dashboard loads entirely from localhost and can't hang on a slow CDN. -->
+<script src="vendor/react.production.min.js"></script>
+<script src="vendor/react-dom.production.min.js"></script>
+<!-- Pre-transpiled JSX (tools/build_dashboard.mjs) — no in-browser Babel, so no
+     ~10s transpile-on-load blank window and no @babel/standalone CDN download.
+     Re-run the build after editing any gui/dashboard/*.jsx file. -->
+<script src="shared.js"></script>
+<script src="direction_b.js"></script>
+<script src="direction_b_pages.js"></script>
+<script src="app.js"></script>
 </body>
 </html>

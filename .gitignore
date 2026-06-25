@@ -142,3 +142,6 @@ data/hh/owned_typeids.json
 # Top-level scratch screenshots / scratch
 assets/battleIronTwins.png
 assets/factionWarsStart.png
+node_modules/
+package-lock.json
+package.json
