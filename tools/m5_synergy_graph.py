@@ -184,6 +184,11 @@ def main() -> None:
             provides.add("cooldown_reduction")
         if "Heal" in kinds:
             provides.add("heal")
+        # Buff-duration extension (Demytha-A2 "Increase buff duration" style).
+        # This is the linchpin of BD/UK stall chains: a 2-turn defensive buff
+        # only holds a 50-turn run if an ally re-extends it each cycle.
+        if "IncreaseBuffLifetime" in kinds:
+            provides.add("buff_extension")
 
         # NEEDS — what makes this hero better (matched vs allies' provides).
         needs: set[str] = set()
@@ -198,6 +203,14 @@ def main() -> None:
         # squishy roles want survival support
         if hero.get("role") in ("Attack", "Support"):
             needs.add("survival_support")
+        # A hero supplying a short-lived defensive buff (UK / BD / Shield /
+        # Continuous Heal / Counterattack) needs an ally to re-extend it for a
+        # 50-turn stall — matched against allies' provides:buff_extension.
+        _DEF_BUFFS = ("team_buff:Unkillable", "team_buff:Block Damage",
+                      "team_buff:Shield", "team_buff:Continuous Heal",
+                      "team_buff:Counterattack")
+        if any(p in provides for p in _DEF_BUFFS):
+            needs.add("buff_extension")
 
         # ROLE (coarse)
         n_debuff = sum(1 for p in provides if p.startswith("enemy_debuff:"))
