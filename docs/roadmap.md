@@ -186,6 +186,67 @@ run battles; game-truth IL2CPP extraction (vs HH screen-scrape / DWJ community
 data); calibrated damage sim (DWJ doesn't simulate damage at all); per-tick
 logging; cross-location recommender + build + farm guidance.
 
+### M7: Survival engine + survival-first comp finder (NEXT — scoped 2026-06-25)
+
+**The vision (user, 2026-06-25):** the engine should *mathematically* take our
+modeled heroes + abilities and, without copying DWJ/HH, output novel team comps
+that survive to turn 50 — ranked best-first — and we trust the survive/wipe
+verdict *before* spending a key. Archetypes to cover:
+- **Unkillable comps** — keep a death-preventing buff up the whole fight via
+  Unkillable, Block-Damage, and/or buff-extension chains.
+  - *Automatic*: the saved preset's skill order makes it work from battle start.
+  - *Manual*: the preset can't express the needed stall (e.g. delay A4 N turns),
+    so it needs mid-fight play — must be flagged, never auto-recommended.
+- **Non-Unkillable survive+damage comps** — survive via counterattack walls,
+  Ally-Protect, heal-tank sustain, etc., while pushing high damage.
+
+**Why this is its own milestone (the honest gate):** as of 2026-06-24 the sim's
+*survival* model OVER-PREDICTS (it called the Force tune "T50"; real wipe T32).
+It's validated against ~1 team. Non-UK survival is barely modeled (Ally-Protect
+redirect is OFF; counterattack damage magnitude unwired). So we can enumerate
+comps and know *who provides what* (synergy graph), but we cannot yet *trust* a
+survive-to-50 verdict on a novel comp. M7 earns that trust, then builds the
+finder on top. **Nothing downstream ships prescriptive until Gate A passes.**
+
+> **Definition of done**: given the owned roster, the engine outputs a ranked
+> list of survival comps with a per-affinity survive-to-50 verdict that matches
+> reality within **±2-3 boss turns** (and never mis-classifies survive-vs-wipe)
+> on a *held-out* real fixture — with **zero external-source inputs** in the
+> recommendation path (game-truth synergy + our sim only; DWJ/HH = divergence
+> flags, not inputs).
+
+#### Phase A — Survival-model hardening (the gate)
+| Sub-goal | Status | Notes |
+|---|---|---|
+| A1 — Define survival accuracy bar | 🔴 | Separate from the damage ±5% bar: predicted death-turn within ±2-3 BT of real AND correct survive/wipe classification, across the whole fixture battery. |
+| A2 — Capture a DIVERSE fixture battery | 🔴 (key-gated) | Need real runs (build snapshot now auto-saved per run): MEN stable-day survive-T50 (HAVE none clean+recent); MEN Force wipe-T32 (✅ HAVE `20260624_152252`); ≥1 non-UK archetype (counter / ally-protect / heal-tank) the roster can field; a buff-extension-dependent comp. Use `cb_watcher.py` to grab wipe cases without burning keys. **Rate limiter: 2 keys/day + must own/gear the archetype.** |
+| A3 — Survival-diff harness | 🟡 | Productize the per-CB-turn sim-vs-real HP + coverage(UK/BD/shield/counter/protect) + death-turn diff we hand-rolled on the Force fixture → `tools/cb_survival_diff.py`. |
+| A4 — Un-stack survival compensating wrongs TOGETHER | 🔴 | Against the full battery (mission rule): promote game-truth buff cadence (`bugfix_buff_tick=False`) from finder-only to global + re-derive damage calibration + re-baseline the 2 locked damage tests once. |
+| A5 — Model missing survival mechanics (game-truth) | 🔴 | Ally-Protect redirect (currently OFF), counterattack damage magnitude+uptime (`CounterattackModifier −0.25` unwired), generalized buff-extension cadence, heal-vs-ramp sustain + heal caps. |
+| **GATE A** | 🔴 | Survival sim reproduces EVERY battery fixture within the bar. Until met, survival recs are sanity-check only. |
+
+#### Phase B — Survival-first comp finder (depends on Gate A)
+| Sub-goal | Status | Notes |
+|---|---|---|
+| B1 — Coverage-chain enumerator | 🔴 | From the synergy graph + owned roster, enumerate comps that CAN form a survival pattern (UK-chain / BD+extension / counter-wall / ally-protect / heal-tank); tag archetype + providers. |
+| B2 — Validate per comp via hardened sim | 🔴 | Survive-to-50 per affinity via the finder's MC; **drop HellHades from the scoring path** (`cb_team_explorer` currently scores with `tierlist.json` — mission violation to fix). |
+| B3 — Auto-vs-manual classifier | 🔴 | Mark "automatic" only if the required skill order is preset-expressible; flag "manual" separately, never auto-recommended. |
+| B4 — Rank + output best runs | 🔴 | Output: archetype, providers, per-affinity survival turn, damage, auto/manual. DWJ tunes referenced ONLY as "we independently found this too" divergence flag. New tool `tools/cb_comp_finder.py`. |
+| **GATE B** | 🔴 | Finder independently re-derives ≥N known-good comps the roster can run AND surfaces ≥1 novel comp a real run confirms survives. |
+
+#### Phase C — Damage-survive comps + speed-tune integration
+| Sub-goal | Status | Notes |
+|---|---|---|
+| C1 — High-damage-and-survive archetype | 🔴 | Extend finder to counter/protect/heal comps that also push damage; needs the damage ±5% gate too (so Spirit regression must be closed). |
+| C2 — Speed-tune integration | ✅ (ready) | `speed_tune_finder.py` already finds the SPD tuple that holds a chosen comp; trustworthy once Gate A lands. |
+
+**Critical dependencies / risks:**
+- **Key-gated & roster-gated:** Phase A needs ~5-8 diverse real captures; 2 keys/day, and we can only capture archetypes the user actually owns/gears. Mitigation: capture what the roster supports now; for unowned archetypes, model game-truth from skill data and verify on the closest available fixture.
+- **Re-baselining the damage tests** when `bbt` goes global (A4) is calibration-sensitive — do it once, carefully, with the whole battery, never piecemeal.
+- **Don't reintroduce external inputs:** B2 must remove HH from the recommendation path to stay mission-compliant.
+
+**First concrete step (no key needed):** A3 — productize `cb_survival_diff.py` from the Force fixture we already have, so every future capture instantly yields a survival diff. Then A2 captures begin filling the battery.
+
 ---
 
 ## Overall progress snapshot (last updated 2026-06-21)
