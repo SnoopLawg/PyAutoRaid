@@ -440,6 +440,83 @@ def poll_battle(snapshot_path=None, snapshot_every_polls=20):
     return final_dmg, final_turn
 
 
+def _snapshot_run_build(log_filename, entries, boss_turns):
+    """Save a per-run BUILD snapshot next to the battle log: each team hero's
+    game-computed stats (CB-effective totals + full column breakdown), equipped
+    gear, sets, masteries, blessing, AND the effective speed derived from turn
+    counts. This lets us later answer 'what build/speed produced this run'
+    directly instead of guessing — the per-unit s_spd field read 0 before
+    2026-06-16, so older runs lost their build entirely. Best-effort; never
+    breaks the run.
+    """
+    try:
+        from collections import Counter
+        # team type_ids + per-hero turn counts from the battle log
+        team_types, hero_turns = [], {}
+        for e in entries:
+            for h in e.get("heroes", []) or []:
+                if h.get("side") == "player" and h.get("type_id"):
+                    tid = h["type_id"]
+                    if tid not in team_types:
+                        team_types.append(tid)
+                    hero_turns[tid] = max(hero_turns.get(tid, 0), h.get("turn_n", 0) or 0)
+        if not team_types:
+            return
+        cs = mod_get("/hero-computed-stats?hero_id=0", timeout=20)
+        cs_by_id = {h.get("id"): h for h in (cs.get("heroes", []) if isinstance(cs, dict) else [])}
+        ah = mod_get("/all-heroes?limit=20000", timeout=20)
+        ah_heroes = ah.get("heroes", []) if isinstance(ah, dict) else []
+        # type_id -> hero record; prefer the geared copy (most artifacts) for duplicates.
+        # The battle log truncates the type_id's last digit (form/ascension), so a
+        # /all-heroes type_id 6206 logs as 6200 — match on (tid // 10) * 10.
+        tid_to_hero = {}
+        for h in ah_heroes:
+            tid = h.get("type_id")
+            if tid is None:
+                continue
+            base_tid = (tid // 10) * 10
+            if base_tid in team_types:
+                cur = tid_to_hero.get(base_tid)
+                if cur is None or len(h.get("artifacts") or []) > len(cur.get("artifacts") or []):
+                    tid_to_hero[base_tid] = h
+        BOSS_SPD = 190.0  # UNM CB boss SPD (cb_constants CB_SPEED_BY_DIFFICULTY) — for the
+                          # effective-speed estimate only; the `stats` below are exact.
+        COLS = ["blessing_bonus", "empower_bonus", "affinity_bonus", "artifact_bonus",
+                "relic_bonus", "mastery_bonus", "faction_guardians_bonus"]
+        SLOT = {1: "Helmet", 2: "Chest", 3: "Gloves", 4: "Boots", 5: "Weapon",
+                6: "Shield", 7: "Ring", 8: "Amulet", 9: "Banner"}
+        team_out = []
+        for tid in team_types:
+            hero = tid_to_hero.get(tid)
+            hid = hero.get("id") if hero else None
+            comp = cs_by_id.get(hid)
+            rec = {"type_id": tid, "id": hid, "name": hero.get("name") if hero else None}
+            if comp:
+                base = comp.get("base_computed", {})
+                rec["stats"] = {s: round(base.get(s, 0) + sum(comp.get(c, {}).get(s, 0) for c in COLS), 1)
+                                for s in ("HP", "ATK", "DEF", "SPD", "RES", "ACC", "CR", "CD")}
+                rec["stat_columns"] = {c: comp.get(c) for c in (["base_computed"] + COLS + ["classic_arena_bonus"]) if c in comp}
+            tn = hero_turns.get(tid, 0)
+            rec["turns_taken"] = tn
+            rec["effective_spd"] = round(tn / boss_turns * BOSS_SPD, 1) if boss_turns else None
+            if hero:
+                rec["gear"] = {SLOT.get(a.get("kind"), a.get("kind")): a.get("id") for a in (hero.get("artifacts") or [])}
+                rec["sets"] = dict(Counter(a.get("set") for a in (hero.get("artifacts") or []) if a.get("set")))
+                rec["masteries"] = hero.get("masteries")
+                rec["blessing"] = hero.get("blessing")
+            team_out.append(rec)
+        out = {"run": log_filename, "captured_at": datetime.now().isoformat(timespec="seconds"),
+               "boss_turns": boss_turns, "boss_spd_assumed": BOSS_SPD, "team": team_out}
+        build_filename = log_filename.replace("battle_logs_cb_", "build_cb_")
+        if build_filename != log_filename:
+            path = PROJECT_ROOT / build_filename
+            with open(path, "w") as f:
+                json.dump(out, f, indent=2)
+            print(f"  Build snapshot: {len(team_out)} heroes (stats+gear+eff.spd), saved: {path.name}")
+    except Exception as ex:
+        print(f"  [warn] build snapshot skipped: {ex}")
+
+
 def save_battle_log(filename=None):
     """Fetch and save the battle log from the mod.
 
@@ -553,6 +630,10 @@ def save_battle_log(filename=None):
             print(f"  Presets snapshot: {n} entries, saved: {preset_path.name}")
     except Exception as ex:
         print(f"  [warn] preset snapshot skipped: {ex}")
+
+    # Per-run BUILD snapshot — heroes + game-computed stats + gear + effective
+    # speed, paired to this run so we always know what build produced the result.
+    _snapshot_run_build(filepath.name, entries, max_turn)
 
     return {
         "filepath": str(filepath),
