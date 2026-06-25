@@ -260,12 +260,62 @@ def _diff_mapping(mapping: dict[int, list[int]]) -> dict[int, list[int]]:
     return out
 
 
+def _release_set_for(mapping: dict[int, list[int]]) -> set[int]:
+    """The set of artifacts to release to the vault for a contention-free,
+    SWAP-FREE apply:
+
+      (a) every target piece NOT already on its target hero, AND
+      (b) every piece currently occupying a team hero's slot whose target
+          piece is different (i.e. an "outgoing" piece being replaced).
+
+    After releasing both, each team hero keeps ONLY its already-correct
+    target pieces and every slot that needs a new piece is EMPTY — so the
+    equip phase is PURE ACTIVATE (vault->empty-slot), with ZERO
+    SwapArtifactCmd calls. That matters because:
+      - no hero<->hero swap => no team hero can steal another's speed piece
+        (contention), and
+      - no swap-from-vault with a possibly-stale owner => avoids the
+        Validate-failure that silently wedged hero 2643's command queue
+        when its swap fired first in a burst (live 2026-06-24).
+    Pieces already correct are left in place (no wasted moves)."""
+    arts_resp = _get("/all-artifacts?limit=20000")
+    arts = arts_resp.get("artifacts", []) if isinstance(arts_resp, dict) else []
+    owner_by_id = {int(a["id"]): a.get("hero_id") for a in arts
+                   if isinstance(a, dict) and "id" in a}
+    heroes = _fetch_heroes()
+    release: set[int] = set()
+    for hid, ids in mapping.items():
+        target = set(ids)
+        # (a) target pieces not already on this hero (and currently equipped)
+        for aid in target:
+            if owner_by_id.get(aid) not in (hid, None) and owner_by_id.get(aid):
+                release.add(aid)
+        # (b) pieces currently on this hero that are NOT in its target set
+        #     (free the slot so the incoming piece is an activate, not a swap)
+        h = heroes.get(hid)
+        if h:
+            for slot, cur in _equipped_by_slot(h).items():
+                if cur not in target:
+                    release.add(cur)
+    return release
+
+
 def apply(name: str, mapping: dict[int, list[int]],
           snapshot_first: bool = True, max_passes: int = 4) -> dict:
-    """Equip `mapping` on the live game. Hero-to-hero swaps don't
-    always resolve in a single /bulk-equip pass when many heroes share
-    the same pool, so we re-check and retry up to `max_passes` times
-    until each hero's live equip set matches the desired set.
+    """Equip `mapping` on the live game, CONTENTION-FREE.
+
+    A plan that re-gears several heroes from one shared pool will, if
+    executed as hero<->hero swaps, let earlier-priority heroes STEAL
+    speed pieces from later ones — the greedy bulk-equip + retry then
+    oscillates and starves the tail (live-proven 2026-06-24: a full
+    re-gear left Venomage at 122 SPD vs a 162 target).
+
+    The fix: RELEASE-then-EQUIP. First unequip every piece that must move
+    to the vault, then equip each hero's target set. Because every equip
+    now pulls from the vault (vault->hero is reliable — verified live, the
+    basis the old 'pre-release was counterproductive' note got wrong), no
+    hero<->hero swap happens and contention is impossible. Converges in
+    one equip pass; the multi-pass retry is just a safety net.
 
     If snapshot_first, capture the pre-apply state under `name` so a
     later restore() reverses to it.
@@ -273,18 +323,31 @@ def apply(name: str, mapping: dict[int, list[int]],
     if snapshot_first:
         snapshot(name, list(mapping.keys()))
 
-    # NOTE (2026-06-24): the old "pre-release everything to vault, then
-    # Activate" strategy was COUNTERPRODUCTIVE — it converted reliable
-    # hero<->hero swaps into vault->hero equips, which the mod applies
-    # UNRELIABLY (silently no-ops; pieces stay in the vault, live gear
-    # unchanged). That's why apply() left speeds unchanged while restore()
-    # — which equips directly, no pre-release — always worked. So apply now
-    # mirrors restore: direct multi-pass equip. A genuinely-unequipped
-    # (vault) piece still needs a vault->hero equip and may not land, but
-    # swap-only plans (every piece currently on some hero) apply reliably.
+    # RELEASE phase — move every piece that must change into the vault, so
+    # the equip phase is pure activate (zero swaps). Then VERIFY the
+    # releases actually landed in the vault before equipping: if an
+    # unequip hasn't settled, the slot still looks occupied and bulk-equip
+    # would fall back to a swap (the very thing we're avoiding).
+    release = _release_set_for(mapping)
+    release_results = _release_to_vault(release) if release else {}
+    for _ in range(6):
+        if not release:
+            break
+        time.sleep(1.0)
+        arts_resp = _get("/all-artifacts?limit=20000")
+        arts = arts_resp.get("artifacts", []) if isinstance(arts_resp, dict) else []
+        owner_now = {int(a["id"]): a.get("hero_id") for a in arts
+                     if isinstance(a, dict) and "id" in a}
+        still_equipped = [a for a in release if owner_now.get(a)]
+        if not still_equipped:
+            break
+        # Re-issue the stragglers' unequips.
+        _release_to_vault(set(still_equipped))
+
+    # EQUIP phase — every move is now vault->hero (no contention).
     results = _equip_mapping_once(mapping)
     for _ in range(max_passes - 1):
-        time.sleep(2.0)  # let the prior pass's CmdQueue settle.
+        time.sleep(1.5)  # let the prior pass's CmdQueue settle.
         outstanding = _diff_mapping(mapping)
         if not outstanding:
             break
@@ -292,6 +355,9 @@ def apply(name: str, mapping: dict[int, list[int]],
         retry_results = _equip_mapping_once(outstanding)
         for hid, r in retry_results.items():
             results[hid] = r
+    results["_released"] = {"count": len(release),
+                            "ok": sum(1 for r in release_results.values()
+                                      if r.get("ok"))}
     return results
 
 
