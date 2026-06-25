@@ -147,9 +147,21 @@ def find(team, vary, cb_element=4, use_current_gear=True, max_combos=400,
 
     def _turns(eid, *, mc_seed=None):
         ch = _build_sim_champs_from_setup(setup)
+        # bugfix_buff_tick=False is the GAME-TRUTH buff cadence: UK/BD durations
+        # tick on each hero's OWN turn (not capped once-per-boss-turn). The
+        # CBSimulator default (True) over-preserves UK for fast heroes → gapless
+        # coverage → over-predicts Force survival (the finder wrongly reported a
+        # tune "Force 100%" that wiped at boss turn 32 live, 2026-06-24). With
+        # False the sim reproduces that real wipe (T29 / 15.26M vs real T32 /
+        # 15.77M, -3%) and the finder correctly REJECTS Force-failing tunes while
+        # still passing stable affinities. The global default stays True only
+        # because the locked DAMAGE-calibration tests were baselined against it;
+        # survival evaluation must use game-truth. See project_cb_tune_equip_flow
+        # + project_uk_chain_buff_tick.
         sim = CBSimulator(ch, cb_difficulty="ultra-nightmare", cb_element=eid,
                           deterministic=(mc_seed is None), rng_seed=mc_seed,
-                          model_survival=True, force_affinity=True)
+                          model_survival=True, force_affinity=True,
+                          bugfix_buff_tick=False)
         return sim.run(max_cb_turns=50)["cb_turns"]
 
     funnel = {"stable_pruned": 0, "force_prescreen_pruned": 0, "mc_ran": 0}
@@ -206,9 +218,10 @@ def find(team, vary, cb_element=4, use_current_gear=True, max_combos=400,
             }))
         else:
             ch = _build_sim_champs_from_setup(setup)
+            # bugfix_buff_tick=False: game-truth buff cadence (see _turns above).
             res = CBSimulator(ch, cb_difficulty="ultra-nightmare", cb_element=cb_element,
                               deterministic=True, model_survival=True,
-                              force_affinity=True).run(max_cb_turns=50)
+                              force_affinity=True, bugfix_buff_tick=False).run(max_cb_turns=50)
             survived, gaps = _validity(res)
             results.append((combo, {"valid": survived and gaps == 0,
                                     "gaps": gaps, "turns": res["cb_turns"]}))
@@ -285,7 +298,7 @@ def main():
             ptag = (f" with preset [{best[1]['preset']}]"
                     if args.preset_vary and best[1].get("preset") != "current" else "")
             print(f"\n  Best daily-robust: {_fmt_combo(team, best[0])}{ptag} "
-                  f"→ all 3 stable HOLD, Force {best[1]['force_reach50']*100:.0f}% "
+                  f"-> all 3 stable HOLD, Force {best[1]['force_reach50']*100:.0f}% "
                   f"(median {best[1]['force_median']:.0f}).")
         else:
             print("\n  No combo holds all of Magic/Spirit/Void — every candidate breaks at "

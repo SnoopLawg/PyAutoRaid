@@ -1314,6 +1314,7 @@ class CBSimulator:
                 "bd": c.has_buff("block_damage"),
                 "sh": c.has_buff("shield"),
                 "alive": not c.is_dead,
+                "hp_pct": (c.current_hp / c.max_hp * 100) if c.max_hp else 0,
             }
             for c in self.champions
         }
