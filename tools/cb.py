@@ -43,6 +43,16 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+# Windows consoles default to cp1252, which raises UnicodeEncodeError on the
+# checkmark/arrow glyphs (✓ ✗ →) the DWJ/HH report formatters emit — crashing
+# `cb.py potential`/`gaps` mid-output. Re-encode stdout/stderr as UTF-8 (replace
+# on failure) so the reports render on every platform.
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8", errors="replace")
+    except (AttributeError, ValueError):
+        pass
+
 USAGE = (
     "usage: cb.py {potential|sim|parity|inspect|gaps|dungeon} [args...]\n"
     "       cb.py --help          for full subcommand examples"
