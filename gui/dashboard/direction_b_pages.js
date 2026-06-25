@@ -6417,7 +6417,23 @@ function CBTuneLab() {
   const [lab, setLab] = React.useState(null); // {today_affinity, tunes}
   const [openSlug, setOpenSlug] = React.useState(null);
   React.useEffect(() => {
-    fetch('/api/tune-lab?runnable_only=1').then(r => r.json()).then(setLab);
+    // Guard against setState-after-unmount, and surface fetch/parse failures
+    // as a visible error instead of an eternal "Loading tunes…" (the previous
+    // code had no .catch, so any failure hung the panel silently).
+    let alive = true;
+    fetch('/api/tune-lab?runnable_only=1').then(r => {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    }).then(d => {
+      if (alive) setLab(d);
+    }).catch(e => {
+      if (alive) setLab({
+        error: 'tune-lab load failed: ' + e.message
+      });
+    });
+    return () => {
+      alive = false;
+    };
   }, []);
   const openTune = lab?.tunes?.find(t => t.tune_slug === openSlug) || null;
   return /*#__PURE__*/React.createElement("div", {
