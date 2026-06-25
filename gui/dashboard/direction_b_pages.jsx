@@ -1,5 +1,119 @@
 /* ===================== DIRECTION B — Page components ===================== */
 
+function PanelDailyCollect() {
+  const [state, setState] = React.useState(null);
+  const [busy, setBusy] = React.useState(false);
+  const [err, setErr] = React.useState(null);
+
+  const refresh = React.useCallback(async () => {
+    try {
+      const r = await fetch('/api/daily-collect/status', {cache:'no-store'});
+      if (r.ok) setState(await r.json());
+    } catch(e) { setErr(String(e)); }
+  }, []);
+
+  React.useEffect(() => {
+    refresh();
+    const id = setInterval(refresh, 4000);
+    return () => clearInterval(id);
+  }, [refresh]);
+
+  const start = async (force=false) => {
+    setBusy(true); setErr(null);
+    try {
+      const r = await fetch('/api/daily-collect/start', {
+        method:'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({force, quiet: true}),
+      });
+      const j = await r.json();
+      if (!r.ok) setErr(j.error || `HTTP ${r.status}`);
+    } catch(e) { setErr(String(e)); }
+    finally { setBusy(false); refresh(); }
+  };
+
+  const stop = async () => {
+    setBusy(true);
+    try { await fetch('/api/daily-collect/stop', {method:'POST'}); }
+    catch(e) { setErr(String(e)); }
+    finally { setBusy(false); refresh(); }
+  };
+
+  const phases = state?.phases || [];
+  const doneN = phases.filter(p => p.status === 'done').length;
+  const failN = phases.filter(p => p.status === 'failed').length;
+  const running = state?.running;
+
+  const dot = (status) => {
+    if (status === 'done')    return {color:'var(--ok)',     glyph:'●'};
+    if (status === 'failed')  return {color:'var(--danger)', glyph:'●'};
+    return                           {color:'var(--text-dim)', glyph:'○'};
+  };
+
+  return (
+    <div className="card" style={{padding: 0, overflow:'hidden'}}>
+      <PanelHeader
+        title="daily collect"
+        right={running ? 'running' : `${doneN}/${phases.length}`}
+      />
+      <div style={{padding: 10}}>
+        {phases.map(p => {
+          const d = dot(p.status);
+          return (
+            <div key={p.key} style={{
+              display:'flex', alignItems:'center', gap: 6,
+              padding:'3px 4px', fontSize: 11.5,
+            }}>
+              <span style={{color: d.color, fontSize: 13, lineHeight: 1}}>{d.glyph}</span>
+              <span style={{flex: 1}} className="truncate">{p.label}</span>
+              {p.elapsed_sec != null && (
+                <span className="mono" style={{fontSize: 10, color:'var(--text-dim)'}}>
+                  {p.elapsed_sec.toFixed(1)}s
+                </span>
+              )}
+            </div>
+          );
+        })}
+        <div style={{display:'flex', gap: 6, marginTop: 8}}>
+          <button
+            className="btn btn-sm"
+            disabled={busy || running}
+            onClick={() => start(false)}
+            style={{flex: 1}}
+          >
+            {running ? 'collecting…' : (doneN === phases.length ? 'all done' : 'collect now')}
+          </button>
+          {running ? (
+            <button className="btn btn-sm" disabled={busy} onClick={stop} title="stop">
+              stop
+            </button>
+          ) : doneN === phases.length ? (
+            <button className="btn btn-sm" disabled={busy} onClick={() => start(true)} title="force re-run">
+              force
+            </button>
+          ) : null}
+        </div>
+        {failN > 0 && (
+          <div style={{fontSize: 10.5, color:'var(--danger)', marginTop: 6}}>
+            {failN} phase{failN===1?'':'s'} failed today — see log tail
+          </div>
+        )}
+        {err && <div style={{fontSize: 10, color:'var(--danger)', marginTop: 6}}>{err}</div>}
+        {state?.log_tail && (
+          <details style={{marginTop: 8}}>
+            <summary style={{fontSize: 10.5, color:'var(--text-dim)', cursor:'pointer'}}>log tail</summary>
+            <pre className="mono" style={{
+              maxHeight: 140, overflow:'auto', fontSize: 10,
+              background:'var(--bg-subtle)', padding: 6, borderRadius: 3,
+              marginTop: 4, whiteSpace:'pre-wrap',
+            }}>{state.log_tail.split('\n').slice(-40).join('\n')}</pre>
+          </details>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function PageOverview({s, pct, doneCount, activeTask, running}) {
   const totalMs = s.tasks.reduce((a,t) => a + t.duration, 0);
   const elapsedMs = s.tasks.reduce((a, t, i) => a + (t.status==='done'?t.duration : i===s.queueIdx? t.ms : 0), 0);
@@ -18,7 +132,8 @@ function PageOverview({s, pct, doneCount, activeTask, running}) {
         </div>
         <PanelResources s={s}/>
       </div>
-      <div style={{display:'grid', gridTemplateRows: 'auto auto auto', gap: 10, minHeight: 0}}>
+      <div style={{display:'grid', gridTemplateRows: 'auto auto auto auto', gap: 10, minHeight: 0}}>
+        <PanelDailyCollect/>
         <PanelLayers s={s}/>
         <PanelCB s={s} compact/>
         <PanelArena s={s}/>
@@ -170,63 +285,75 @@ function PageResources({s}) {
   // recently) the trend comes back with fewer points.
   const history = (s.history || []).slice(-7);
   const trend = (getter) => history.map(h => getter(h)).filter(v => v != null);
+  const [openRes, setOpenRes] = React.useState(null);
   const rows = [
-    {icon:'energy', label:'Energy', val: fmt(s.resources.energy),
-     trend: trend(h => h.energy), color:'oklch(0.82 0.17 85)', detail: 'Cap 130. Overflow drains on regen.'},
-    {icon:'silver', label:'Silver', val: fmt(s.resources.silver,'silver'),
-     trend: trend(h => h.silver_m), color:'var(--violet)', detail: 'Account silver. Market buy reserve.'},
-    {icon:'shard',  label:'Gems', val: fmt(s.resources.gems),
-     trend: trend(h => h.gems), color:'var(--accent)', detail: 'Reserved for Arena refreshes only.'},
-    {icon:'arena',  label:'Arena tokens',
+    {key:'energy', icon:'energy', label:'Energy', val: fmt(s.resources.energy),
+     get: h => h.energy, color:'oklch(0.82 0.17 85)', detail: 'Cap 130. Overflow drains on regen.'},
+    {key:'silver', icon:'silver', label:'Silver', val: fmt(s.resources.silver,'silver'),
+     get: h => h.silver_m, color:'var(--violet)', detail: 'Account silver. Market buy reserve.', valueFmt: v => fmt(v*1e6,'silver')},
+    {key:'gems',   icon:'shard',  label:'Gems', val: fmt(s.resources.gems),
+     get: h => h.gems, color:'var(--accent)', detail: 'Reserved for Arena refreshes only.'},
+    {key:'arena',  icon:'arena',  label:'Arena tokens',
      val: s.resources.arena_tokens != null ? Number(s.resources.arena_tokens).toFixed(1) : '—',
-     trend: trend(h => h.arena_tokens), color:'oklch(0.75 0.18 180)', detail: 'Auto-regen 1 / 2h.'},
-    {icon:'cb',     label:'CB keys', val: `${s.resources.cb_keys}/2`,
-     trend: trend(h => h.cb_keys), color:'oklch(0.70 0.20 25)', detail: 'Reset 06:00 UTC.'},
-    {icon:'shard_mystery', label:'Mystery shards',
-     val: s.resources.mystery_shards != null ? s.resources.mystery_shards : '—',
-     trend: trend(h => (h.shards || {}).mystery), color:'var(--text-sub)', detail: 'Weekly quest source.'},
+     get: h => h.arena_tokens, color:'oklch(0.75 0.18 180)', detail: 'Auto-regen 1 / 2h.'},
+    {key:'cb',     icon:'cb',     label:'CB keys', val: `${s.resources.cb_keys}/2`,
+     get: h => h.cb_keys, color:'oklch(0.70 0.20 25)', detail: 'Reset 06:00 UTC.'},
+    // Mystery Shards removed from this row — already rendered in
+    // <ShardsInventory/> below alongside Ancient/Void/Sacred/Primal.
   ];
+  const active = openRes ? rows.find(r => r.key === openRes) : null;
   return (
     <div style={{display:'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10}}>
-      {rows.map(r => (
-        <div key={r.label} className="card" style={{padding: 16}}>
-          <div style={{display:'flex', alignItems:'center', gap:8, fontSize: 11, color:'var(--text-sub)', textTransform:'uppercase', letterSpacing:'0.06em'}}>
-            <Icon name={r.icon} size={14}/> {r.label}
+      {rows.map(r => {
+        const t = trend(r.get);
+        return (
+          <div key={r.label} className="card"
+               onClick={() => setOpenRes(r.key)}
+               style={{padding: 16, cursor:'pointer'}}
+               title="Click for history">
+            <div style={{display:'flex', alignItems:'center', gap:8, fontSize: 11, color:'var(--text-sub)', textTransform:'uppercase', letterSpacing:'0.06em'}}>
+              <Icon name={r.icon} size={14}/> {r.label}
+            </div>
+            <div style={{display:'flex', alignItems:'end', justifyContent:'space-between', marginTop: 8}}>
+              <div style={{fontSize: 26, fontWeight: 600, letterSpacing:'-0.01em'}} className="num">{r.val}</div>
+              {t.length >= 2
+                ? <Spark data={t} color={r.color} width={80} height={32} fill/>
+                : <span style={{fontSize: 10, color:'var(--text-dim)', fontStyle:'italic'}}>collecting…</span>
+              }
+            </div>
+            <div style={{fontSize: 11, color:'var(--text-dim)', marginTop: 10}}>{r.detail}</div>
           </div>
-          <div style={{display:'flex', alignItems:'end', justifyContent:'space-between', marginTop: 8}}>
-            <div style={{fontSize: 26, fontWeight: 600, letterSpacing:'-0.01em'}} className="num">{r.val}</div>
-            {r.trend && r.trend.length >= 2
-              ? <Spark data={r.trend} color={r.color} width={80} height={32} fill/>
-              : <span style={{fontSize: 10, color:'var(--text-dim)', fontStyle:'italic'}}>collecting…</span>
-            }
-          </div>
-          <div style={{fontSize: 11, color:'var(--text-dim)', marginTop: 10}}>{r.detail}</div>
-        </div>
-      ))}
+        );
+      })}
+      {active && <ResourceHistoryModal row={active} history={s.history} onClose={()=>setOpenRes(null)}/>}
       <div className="card" style={{padding: 16, gridColumn: 'span 3'}}>
         <div className="card-title" style={{marginBottom: 10}}>Keys & tokens</div>
         <div style={{display:'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 10}}>
           {[
-            ['Classic Arena',      'classic_arena_tokens', 'arena_token','oklch(0.72 0.18 180)'],
-            ['Tag Arena 3v3',      'tag_arena_tokens',     'arena_token','oklch(0.72 0.18 180)'],
-            ['Live Arena',         'live_arena_tokens',    'live_arena', 'oklch(0.68 0.18 250)'],
-            ['CB (Demon Lord)',    'demon_lord_keys',      'cb_key',     'oklch(0.70 0.20 25)'],
-            ['Hydra',              'hydra_keys',           'hydra',      'oklch(0.72 0.17 145)'],
-            ['Chimera',            'chimera_keys',         'chimera',    'oklch(0.68 0.22 315)'],
-            ['Fortress',           'fortress_keys',        'cb_key',     'oklch(0.78 0.17 85)'],
-            ['Cursed City',        'cursed_city_keys',     'cb_key',     'oklch(0.64 0.24 20)'],
-            ['Doom Tower (Gold)',  'doom_tower_gold_keys', 'doom_gold',  'oklch(0.80 0.16 85)'],
-            ['Doom Tower (Silver)','doom_tower_silver_keys','doom_silver','var(--text-sub)'],
-            ['Faction Wars',       'faction_keys',         'fw',         'oklch(0.66 0.18 30)'],
-            ['Auto tickets',       'auto_tickets',         'auto_ticket','var(--text-sub)'],
-          ].map(([label, key, icon, col]) => {
+            // Numbers all use the unified `--text` color now — icons carry
+            // the visual identity. The previous rainbow palette was loud
+            // and made empty (0) values blend with full ones.
+            ['Classic Arena',      'classic_arena_tokens', 'arena_token'],
+            ['Tag Arena 3v3',      'tag_arena_tokens',     'arena_token'],
+            ['Live Arena',         'live_arena_tokens',    'live_arena' ],
+            ['CB (Demon Lord)',    'demon_lord_keys',      'cb_key'     ],
+            ['Hydra',              'hydra_keys',           'hydra'      ],
+            ['Chimera',            'chimera_keys',         'chimera'    ],
+            ['Fortress',           'fortress_keys',        'cb_key'     ],
+            ['Cursed City',        'cursed_city_keys',     'cb_key'     ],
+            ['Doom Tower (Gold)',  'doom_tower_gold_keys', 'doom_gold'  ],
+            ['Doom Tower (Silver)','doom_tower_silver_keys','doom_silver'],
+            ['Faction Wars',       'faction_keys',         'fw'         ],
+            ['Auto tickets',       'auto_tickets',         'auto_ticket'],
+          ].map(([label, key, icon]) => {
             const v = (s.resources.keys || {})[key];
+            const isEmpty = v == null || v === 0;
             return (
               <div key={key} style={{padding:'10px 12px', background:'var(--bg-subtle)', borderRadius: 6, border:'1px solid var(--border)', display:'flex', alignItems:'center', gap: 10}}>
-                <Icon name={icon} size={22}/>
+                <Icon name={icon} size={22} style={isEmpty ? {opacity: 0.4} : undefined}/>
                 <div style={{minWidth: 0, flex: 1}}>
                   <div style={{fontSize: 10, color:'var(--text-dim)', textTransform:'uppercase', letterSpacing:'0.04em'}} className="truncate">{label}</div>
-                  <div style={{fontSize: 18, fontWeight: 600, color: v == null ? 'var(--text-dim)' : col, marginTop: 2}} className="num">
+                  <div style={{fontSize: 18, fontWeight: 600, color: isEmpty ? 'var(--text-dim)' : 'var(--text)', marginTop: 2}} className="num">
                     {v == null ? '—' : v}
                   </div>
                 </div>
@@ -351,6 +478,100 @@ function ShardsInventory({s}) {
         ))}
       </div>
       {active && <ShardHistoryModal shard={active} history={s.history} onClose={()=>setOpen(null)}/>}
+    </div>
+  );
+}
+
+// Generic resource history modal — works for the top-row Energy/Silver/etc.
+// cards. Same look as ShardHistoryModal but pulls the series via a
+// caller-provided `row.get(historyEntry)` getter.
+function ResourceHistoryModal({row, history, onClose}) {
+  const series = (history || [])
+    .map(h => ({day: h.day, v: row.get(h)}))
+    .filter(p => p.v != null);
+  const hasData = series.length >= 1;
+  const values = series.map(p => p.v);
+  const min = hasData ? Math.min(...values) : 0;
+  const max = hasData ? Math.max(...values) : 0;
+  const W = 560, H = 180, P = 28;
+  const range = max - min || 1;
+  const pts = series.map((p, i) => {
+    const x = P + (series.length > 1 ? i * (W - 2*P) / (series.length - 1) : (W - 2*P)/2);
+    const y = H - P - ((p.v - min) / range) * (H - 2*P);
+    return [x, y, p.v, p.day];
+  });
+  const path = pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
+  const jumps = series.slice(1).map((p, i) => ({
+    day: p.day, delta: p.v - series[i].v
+  })).filter(j => j.delta !== 0).sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta)).slice(0, 5);
+  const fmtV = row.valueFmt || (v => v);
+  return (
+    <div onClick={onClose} style={{
+      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 200,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+    }}>
+      <div onClick={e => e.stopPropagation()} className="card" style={{
+        padding: 20, width: 640, maxWidth: '92vw', maxHeight: '88vh', overflow: 'auto',
+        background: 'var(--bg-elev)', border: '1px solid var(--border-strong)',
+      }}>
+        <div style={{display:'flex', alignItems:'center', gap: 12, marginBottom: 16}}>
+          <Icon name={row.icon} size={32}/>
+          <div style={{flex: 1}}>
+            <div style={{fontSize: 11, color:'var(--text-dim)', textTransform:'uppercase', letterSpacing:'0.06em'}}>{row.label}</div>
+            <div style={{fontSize: 26, fontWeight: 600, color: row.color}} className="num">{row.val}</div>
+          </div>
+          <button className="btn ghost" onClick={onClose} style={{height: 28, padding: '0 10px'}}>Close</button>
+        </div>
+        {!hasData && (
+          <div style={{padding: 28, fontSize: 12, color:'var(--text-dim)', textAlign:'center'}}>
+            No history yet. Snapshots start recording now — come back later.
+          </div>
+        )}
+        {hasData && (
+          <>
+            <svg viewBox={`0 0 ${W} ${H+20}`} width="100%" height={H + 22} style={{display:'block', marginBottom: 12}}>
+              {[0, 0.25, 0.5, 0.75, 1].map((t, i) => (
+                <line key={i} x1={P} x2={W-P} y1={P + t*(H-2*P)} y2={P + t*(H-2*P)} stroke="var(--border)" strokeDasharray="2 4"/>
+              ))}
+              <path d={path + ` L${pts[pts.length-1][0]},${H-P} L${pts[0][0]},${H-P} Z`} fill={row.color} opacity={0.12}/>
+              <path d={path} fill="none" stroke={row.color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              {pts.map((p, i) => (
+                <g key={i}>
+                  <circle cx={p[0]} cy={p[1]} r="3" fill={row.color}/>
+                  <text x={p[0]} y={H+14} fontSize="10" fill="var(--text-dim)" textAnchor="middle" fontFamily="'JetBrains Mono', monospace">{p[3]}</text>
+                </g>
+              ))}
+              <text x={P-6} y={P+4} fontSize="10" fill="var(--text-dim)" textAnchor="end" fontFamily="'JetBrains Mono', monospace">{fmtV(max)}</text>
+              <text x={P-6} y={H-P+4} fontSize="10" fill="var(--text-dim)" textAnchor="end" fontFamily="'JetBrains Mono', monospace">{fmtV(min)}</text>
+            </svg>
+            <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap: 16}}>
+              <div>
+                <div className="card-title" style={{marginBottom: 6}}>Stats</div>
+                <div style={{fontSize: 12, lineHeight: 1.8, color:'var(--text-sub)'}}>
+                  <div>Data points · <span className="mono">{series.length}</span></div>
+                  <div>Min / Max · <span className="mono">{fmtV(min)} / {fmtV(max)}</span></div>
+                  <div>Latest · <span className="mono" style={{color: row.color}}>{fmtV(series[series.length-1].v)}</span></div>
+                </div>
+              </div>
+              <div>
+                <div className="card-title" style={{marginBottom: 6}}>Biggest changes</div>
+                {jumps.length === 0 ? (
+                  <div style={{fontSize: 11.5, color:'var(--text-dim)'}}>No day-over-day changes yet.</div>
+                ) : (
+                  <div style={{fontSize: 12, lineHeight: 1.8}} className="mono">
+                    {jumps.map(j => (
+                      <div key={j.day} style={{display:'flex', justifyContent:'space-between'}}>
+                        <span style={{color:'var(--text-dim)'}}>{j.day}</span>
+                        <span style={{color: j.delta > 0 ? 'var(--ok)' : 'var(--danger)'}}>{j.delta > 0 ? '+' : ''}{fmtV(j.delta)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }
@@ -3161,45 +3382,99 @@ function CBTuneLabModal({tune, onClose}) {
           <div style={{padding:'12px 16px', borderBottom:'1px solid var(--border)'}}>
             <div style={{display:'flex', alignItems:'baseline', justifyContent:'space-between', marginBottom: 8}}>
               <span style={{fontSize: 10.5, color:'var(--text-dim)', textTransform:'uppercase', letterSpacing:'0.06em'}}>
-                Cast timeline · DWJ-parity scheduler
+                Turn-meter timeline · DWJ-parity scheduler
               </span>
               <span style={{fontSize: 10, color:'var(--text-dim)'}}>
                 {parity.boss_turn_count} boss turns · {parity.turn_count} actions{parityBusy ? ' · loading…' : ''}
               </span>
             </div>
-            <div style={{maxHeight: 380, overflowY:'auto', background:'var(--bg-elev)', border:'1px solid var(--border)', borderRadius: 4, padding: 10}}>
+            <div style={{display:'flex', gap:14, alignItems:'center', marginBottom:8, fontSize:9.5, color:'var(--text-dim)'}}>
+              <span style={{display:'flex', alignItems:'center', gap:4}}>
+                <span style={{width:12, height:9, background:'#4ade80', borderRadius:2, display:'inline-block'}}/> champ acts
+              </span>
+              <span style={{display:'flex', alignItems:'center', gap:4}}>
+                <span style={{width:12, height:9, background:'var(--violet)', borderRadius:2, display:'inline-block'}}/> boss acts
+              </span>
+              <span style={{display:'flex', alignItems:'center', gap:4}}>
+                <span style={{width:12, height:9, background:'rgba(255,255,255,0.16)', borderRadius:2, display:'inline-block'}}/> filling TM
+              </span>
+              <span style={{display:'flex', alignItems:'center', gap:4}}>
+                <span style={{width:5, height:5, background:'#fbbf24', borderRadius:'50%', display:'inline-block'}}/> speed fx
+              </span>
+            </div>
+            <div style={{maxHeight: 420, overflowY:'auto', background:'var(--bg-elev)', border:'1px solid var(--border)', borderRadius: 4, padding: 10}}>
               {(() => {
-                const groups = [];
-                let current = {boss_turn: null, actions: []};
-                for (const t of (parity.timeline || [])) {
-                  if (t.actor === 'Clanboss') {
-                    current.actions.push({...t, isBoss: true});
-                    groups.push(current);
-                    current = {boss_turn: t.boss_turn + 1, actions: []};
-                  } else {
-                    if (current.boss_turn === null) current.boss_turn = t.boss_turn;
-                    current.actions.push({...t, isBoss: false});
-                  }
+                const order = parity.actor_order || [];
+                const tmMax = parity.tm_max || 100;
+                const tl = parity.timeline || [];
+                const hasState = order.length > 0 && tl.some(t => t.state && t.state.tm);
+                const shortName = (n) => n === 'Clanboss' ? 'BOSS' : (n.length > 9 ? n.slice(0,9) : n);
+
+                // Fallback: enriched state absent (older cached response) — plain cast list.
+                if (!hasState) {
+                  return tl.map((a, ai) => (
+                    <div key={ai} style={{display:'flex', gap:6, padding:'2px 6px', fontSize:11, lineHeight:1.6,
+                        background: a.actor==='Clanboss' ? 'var(--bg-subtle)' : 'transparent',
+                        color: a.actor==='Clanboss' ? 'var(--violet)' : 'var(--text)', borderRadius:3}}>
+                      <span className="mono" style={{width:36, color:'var(--text-dim)', fontSize:10}}>bt{a.boss_turn}</span>
+                      <span style={{flex:1}}>{a.actor}</span>
+                      <span className="mono" style={{color:'var(--text-sub)', fontSize:10.5}}>{a.skill}</span>
+                    </div>
+                  ));
                 }
-                if (current.actions.length) groups.push(current);
-                return groups.map((g, gi) => (
-                  <div key={gi} style={{marginBottom: 8}}>
-                    {g.actions.map((a, ai) => (
-                      <div key={ai} style={{
-                        display:'flex', gap: 6, padding:'2px 6px', fontSize: 11, lineHeight: 1.6,
-                        background: a.isBoss ? 'var(--bg-subtle)' : 'transparent',
-                        color: a.isBoss ? 'var(--violet)' : 'var(--text)',
-                        borderRadius: 3,
-                      }}>
-                        <span className="mono" style={{width: 36, color:'var(--text-dim)', fontSize: 10}}>
-                          {a.isBoss ? `bt${a.boss_turn}` : ''}
-                        </span>
-                        <span style={{flex: 1}}>{a.actor}</span>
-                        <span className="mono" style={{color: a.isBoss ? 'var(--violet)' : 'var(--text-sub)', fontSize: 10.5}}>{a.skill}</span>
-                      </div>
-                    ))}
+
+                const cols = `52px 104px repeat(${order.length}, minmax(0, 1fr))`;
+                const Row = ({children, sticky}) => (
+                  <div style={{display:'grid', gridTemplateColumns: cols, gap:4, alignItems:'center',
+                    ...(sticky ? {position:'sticky', top:-10, background:'var(--bg-elev)', zIndex:1, paddingBottom:4} : {})}}>
+                    {children}
                   </div>
-                ));
+                );
+                return (
+                  <div>
+                    {/* Column header: champion names (boss last). */}
+                    <Row sticky>
+                      <span style={{fontSize:9, color:'var(--text-dim)', textTransform:'uppercase'}}>turn</span>
+                      <span style={{fontSize:9, color:'var(--text-dim)', textTransform:'uppercase'}}>cast</span>
+                      {order.map(n => (
+                        <span key={n} title={n} style={{fontSize:8.5, textAlign:'center', color: n==='Clanboss' ? 'var(--violet)' : 'var(--text-dim)',
+                          whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis'}}>{shortName(n)}</span>
+                      ))}
+                    </Row>
+                    {tl.map((t, i) => {
+                      const tm = (t.state && t.state.tm) || {};
+                      const spd = (t.state && t.state.speed) || {};
+                      const isBoss = t.actor === 'Clanboss';
+                      return (
+                        <div key={i} style={{display:'grid', gridTemplateColumns: cols, gap:4, alignItems:'center',
+                          fontSize:10, padding:'1px 0', borderBottom:'1px solid rgba(255,255,255,0.03)',
+                          background: isBoss ? 'rgba(167,139,250,0.06)' : 'transparent'}}>
+                          <span className="mono" style={{color:'var(--text-dim)', fontSize:9}}>bt{t.boss_turn}</span>
+                          <span style={{color: isBoss ? 'var(--violet)':'var(--text)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis'}}>
+                            {shortName(t.actor)} <span className="mono" style={{color:'var(--text-sub)', fontSize:9}}>{t.skill}</span>
+                          </span>
+                          {order.map(n => {
+                            const v = tm[n] || 0;
+                            const frac = Math.max(0, Math.min(1, v / tmMax));
+                            const acted = n === t.actor;
+                            const nBoss = n === 'Clanboss';
+                            const hasSpd = (spd[n] || []).length > 0;
+                            const fill = acted ? (nBoss ? 'var(--violet)' : '#4ade80')
+                                               : (nBoss ? 'rgba(167,139,250,0.4)' : 'rgba(255,255,255,0.16)');
+                            return (
+                              <div key={n} title={`${n}: TM ${v}${hasSpd ? ' · speed fx' : ''}${acted ? ' · ACTS' : ''}`}
+                                style={{height:11, background:'rgba(255,255,255,0.05)', borderRadius:2, position:'relative',
+                                  border: acted ? '1px solid '+(nBoss?'var(--violet)':'#4ade80') : '1px solid transparent', overflow:'hidden'}}>
+                                <div style={{position:'absolute', left:0, top:0, bottom:0, width:`${frac*100}%`, background: fill}}/>
+                                {hasSpd && <div style={{position:'absolute', right:1, top:1, width:4, height:4, borderRadius:'50%', background:'#fbbf24'}}/>}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
               })()}
             </div>
           </div>

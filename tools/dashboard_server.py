@@ -921,7 +921,7 @@ def build_cb_parity_sim(hash_: str | None = None, max_boss_turns: int = 25):
         return {"error": "no calc variant to simulate"}
 
     try:
-        turns = cps.simulate(variant, max_boss_turns=max_boss_turns)
+        turns = cps.simulate(variant, max_boss_turns=max_boss_turns, capture_state=True)
     except Exception as e:
         return {"error": f"sim run failed: {e}"}
 
@@ -937,7 +937,16 @@ def build_cb_parity_sim(hash_: str | None = None, max_boss_turns: int = 25):
         "boss_turn": t.boss_turn_number,
         "actor": t.actor_name,
         "skill": t.skill_alias,
+        "state": t.state,   # {tm: {name: meter}, speed: {name: [effects]}} for the visual timeline
     } for t in turns]
+    # Actor order (slots then boss) + the max TM seen, so the frontend can lay
+    # out one row per champion and scale the TM fill bars consistently.
+    actor_order = [s.name for s in variant.slots] + ["Clanboss"]
+    tm_max = 100.0
+    for t in turns:
+        if t.state:
+            for v in t.state.get("tm", {}).values():
+                tm_max = max(tm_max, v)
     return {
         "variant": {
             "hash": variant.hash,
@@ -961,6 +970,8 @@ def build_cb_parity_sim(hash_: str | None = None, max_boss_turns: int = 25):
         "boss_turn_count": cps.count_boss_turns(turns),
         "cast_summary": cast_summary,
         "timeline": timeline,
+        "actor_order": actor_order,
+        "tm_max": round(tm_max, 1),
     }
 
 
@@ -2232,6 +2243,155 @@ def six_star_stop():
         return ({"error": str(ex)}, 500)
 
 
+# ----- Daily collection orchestrator (daily_collect.py) ----------------------
+
+_daily_collect_state = {
+    "pid": None,
+    "started_at": None,
+    "log_file": None,
+    "args": None,
+}
+
+_DAILY_COLLECT_STATE_FILE = (Path(__file__).resolve().parent.parent
+                             / "data" / "daily_collect_state.json")
+_DAILY_COLLECT_LOG_FILE = (Path(__file__).resolve().parent.parent
+                           / "daily_collect.log")
+_DAILY_COLLECT_PHASES = [
+    ("inbox",    "Inbox / mail"),
+    ("timed",    "Playtime rewards"),
+    ("quests",   "Daily quests"),
+    ("shop",     "Free shop offers"),
+    ("clan",     "Clan check-in"),
+    ("gem_mine", "Gem mine"),
+]
+
+
+def _daily_collect_alive(pid: int) -> bool:
+    return _six_star_alive(pid)
+
+
+def _read_daily_collect_state() -> dict:
+    try:
+        return json.loads(_DAILY_COLLECT_STATE_FILE.read_text())
+    except Exception:
+        return {"phases": {}, "history": []}
+
+
+def daily_collect_status():
+    """Per-phase status for today plus running-process snapshot + log tail."""
+    state = _read_daily_collect_state()
+    today = datetime.datetime.now().strftime("%Y-%m-%d")
+    phases = []
+    for key, label in _DAILY_COLLECT_PHASES:
+        rec = (state.get("phases") or {}).get(key) or {}
+        last_ok = rec.get("last_success")
+        last_run = rec.get("last_run")
+        last_status = rec.get("last_status")
+        if last_ok == today:
+            status = "done"
+        elif last_run == today and last_status != "ok":
+            status = "failed"
+        else:
+            status = "pending"
+        phases.append({
+            "key": key, "label": label, "status": status,
+            "last_success": last_ok, "last_run": last_run,
+            "last_status": last_status,
+            "elapsed_sec": rec.get("elapsed_sec"),
+            "last_error": rec.get("last_error"),
+        })
+
+    pid = _daily_collect_state.get("pid")
+    running = bool(pid and _daily_collect_alive(pid))
+    out = {
+        "today": today,
+        "phases": phases,
+        "running": running,
+        "pid": pid,
+        "started_at": _daily_collect_state.get("started_at"),
+        "args": _daily_collect_state.get("args"),
+        "history": (state.get("history") or [])[-5:],
+    }
+    log_path = _daily_collect_state.get("log_file") or str(_DAILY_COLLECT_LOG_FILE)
+    if Path(log_path).exists():
+        try:
+            with open(log_path, encoding="utf-8", errors="replace") as f:
+                out["log_tail"] = "".join(f.readlines()[-80:])
+        except Exception:
+            out["log_tail"] = ""
+    return out
+
+
+def daily_collect_start(body: dict):
+    """Spawn daily_collect.py as a detached subprocess. Body:
+    {only?: ["inbox","shop"], skip?: [...], force?: bool, quiet?: bool}"""
+    if _daily_collect_state["pid"] and _daily_collect_alive(_daily_collect_state["pid"]):
+        return ({"error": "daily_collect already running",
+                 "pid": _daily_collect_state["pid"]}, 409)
+    body = body or {}
+    project_root = Path(__file__).resolve().parent.parent
+    log_path = _DAILY_COLLECT_LOG_FILE
+    log_fd = open(log_path, "a", buffering=1, encoding="utf-8")
+    log_fd.write(f"\n\n=== daily_collect started @ "
+                 f"{datetime.datetime.utcnow().isoformat()}Z ===\n")
+    log_fd.flush()
+
+    args = [sys.executable, "-u", str(project_root / "tools" / "daily_collect.py")]
+    only = body.get("only") or []
+    skip = body.get("skip") or []
+    if isinstance(only, list) and only:
+        valid = [k for k, _ in _DAILY_COLLECT_PHASES]
+        only = [x for x in only if x in valid]
+        if only:
+            args += ["--only"] + only
+    if isinstance(skip, list) and skip:
+        valid = [k for k, _ in _DAILY_COLLECT_PHASES]
+        skip = [x for x in skip if x in valid]
+        if skip:
+            args += ["--skip"] + skip
+    if body.get("force"):
+        args += ["--force"]
+    if body.get("quiet"):
+        args += ["--quiet"]
+
+    creationflags = 0
+    if sys.platform == "win32":
+        DETACHED_PROCESS = 0x00000008
+        CREATE_NEW_PROCESS_GROUP = 0x00000200
+        creationflags = DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP
+    proc = subprocess.Popen(
+        args, cwd=str(project_root),
+        stdout=log_fd, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
+        creationflags=creationflags,
+    )
+    _daily_collect_state.update({
+        "pid": proc.pid,
+        "started_at": datetime.datetime.utcnow().isoformat() + "Z",
+        "log_file": str(log_path),
+        "args": args[2:],  # skip python + -u
+    })
+    return {"ok": True, "pid": proc.pid, "log": str(log_path)}
+
+
+def daily_collect_stop():
+    pid = _daily_collect_state.get("pid")
+    if not pid:
+        return {"ok": True, "note": "nothing running"}
+    if not _daily_collect_alive(pid):
+        _daily_collect_state.update({"pid": None})
+        return {"ok": True, "note": "process already exited"}
+    try:
+        if sys.platform == "win32":
+            subprocess.run(["taskkill", "/F", "/T", "/PID", str(pid)],
+                           capture_output=True, timeout=10)
+        else:
+            os.kill(pid, 15)
+        _daily_collect_state.update({"pid": None})
+        return {"ok": True, "stopped_pid": pid}
+    except Exception as ex:
+        return ({"error": str(ex)}, 500)
+
+
 def build_mod_info():
     """Aggregate live mod state for the Mod & offsets dashboard tab.
     Pulls /status, /hook-diag, plugin DLL hash + game version."""
@@ -2357,10 +2517,21 @@ def build_mod_log(query: dict | None = None):
                 # Synthesize timestamps spread over the recent past so the
                 # UI can sort them — file doesn't include per-line timestamps.
                 t = (mtime - (len(lines) - i - 1) * 1.0) * 1000  # ms
+                # Compact tag — long FQNs like "RaidAutomation" overflow the
+                # narrow tag column and visually concatenate into the message.
+                short_tag = (tag or "mod").lower()
+                _TAG_ALIAS = {
+                    "raidautomation": "raid",
+                    "raidautomate":   "raid",
+                    "bepinex":        "bepin",
+                    "harmony":        "hrmny",
+                    "il2cppinterop":  "il2cp",
+                }
+                short_tag = _TAG_ALIAS.get(short_tag, short_tag)[:6]
                 out.append({
                     "t": int(t),
                     "level": level if level in ("info","warn","warning","error","debug") else "info",
-                    "tag": tag.lower()[:12] if tag else "mod",
+                    "tag": short_tag,
                     "text": text[:400],
                 })
         except Exception as e:
@@ -2729,6 +2900,7 @@ GET_ROUTES = {
     "/api/mod-log":                lambda q: build_mod_log(q),
     "/api/events":                 lambda q: build_events_from_mod(),
     "/api/mod-info":               lambda q: build_mod_info(),
+    "/api/daily-collect/status":   lambda q: daily_collect_status(),
 }
 
 # A couple GET handlers want the raw `parsed.query` string instead of the
@@ -2820,6 +2992,8 @@ POST_ROUTES = {
     "/api/rank-up-chain":         build_rank_up_chain,
     "/api/six-star/start":        six_star_start,
     "/api/six-star/stop":         lambda body: six_star_stop(),
+    "/api/daily-collect/start":   daily_collect_start,
+    "/api/daily-collect/stop":    lambda body: daily_collect_stop(),
 }
 
 # POST handlers matched by regex — the captured group is appended to the body args.

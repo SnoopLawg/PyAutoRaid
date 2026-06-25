@@ -52,6 +52,11 @@ class TurnRecord:
     actor_name: str
     skill_alias: str
     skill_id: str
+    # Optional read-only state snapshot for the visual timeline (TM bars +
+    # speed-effect chips). Populated only when simulate(capture_state=True);
+    # stays None on the verified-parity path so TurnRecord equality is
+    # unchanged for the parity tests.
+    state: dict | None = None
 
 
 def speed_bonus_table(idx: int) -> float:
@@ -393,7 +398,7 @@ def apply_skill_effects(actor: Actor, skill_alias: str, actors: list[Actor], cas
             continue
 
 
-def simulate(variant: DwjVariant, max_turns: int = 1000, max_boss_turns: int = 50, apply_effects: bool = True, trace: bool = False) -> list[TurnRecord]:
+def simulate(variant: DwjVariant, max_turns: int = 1000, max_boss_turns: int = 50, apply_effects: bool = True, trace: bool = False, capture_state: bool = False) -> list[TurnRecord]:
     """Run DWJ-parity simulation. Returns a list of TurnRecord (cast order).
 
     The scheduling primitives (TM ticks, skill pick, cooldown advance) live
@@ -442,6 +447,22 @@ def simulate(variant: DwjVariant, max_turns: int = 1000, max_boss_turns: int = 5
                 print(f"    after-eff: {tm_str}")
 
         drop_expired_effects(actor)
+
+        if capture_state:
+            # Read-only snapshot of post-action state for the visual timeline.
+            # TM is each actor's current meter (0..~100+); `speed` lists the
+            # scheduling effects the DWJ port tracks (speed-buff/-debuff). This
+            # does not influence scheduling — purely for rendering.
+            turns[-1].state = {
+                "tm": {a.name: round(a.turn_meter, 1) for a in actors},
+                "speed": {
+                    a.name: [
+                        {"name": e.name, "amount": round(e.amount, 3), "dur": e.duration}
+                        for e in a.effects
+                    ]
+                    for a in actors if a.effects
+                },
+            }
 
     return turns
 
