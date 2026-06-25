@@ -190,7 +190,48 @@ def _apply_mastery_stat_bonuses(scaled, mastery_ids):
             scaled[stat_id] = scaled.get(stat_id, 0) + val * 100
 
 
-def calc_stats(hero, artifacts, account, hypothetical=False):
+def _set_bonuses_from_gear(gear):
+    """(set_pct, set_flat) for a gear list, using the same game-truth rules
+    as calc_stats' inline loop: SET_BONUSES multiplied by complete-set count
+    (cnt // pieces) + tiered SUB_SET_BONUSES. set_pct is integer percent
+    points for HP/ATK/DEF/SPD/CR/CD; set_flat is points for ACC/RES.
+
+    Standalone so the hypothetical-mode Lore-of-Steel correction can score
+    the BASELINE (currently-equipped) gear's set bonuses without disturbing
+    the main loop. Mirrors the inline logic exactly — keep in sync."""
+    sets = {}
+    for art in gear or []:
+        s_id = art.get("set", 0)
+        sets[s_id] = sets.get(s_id, 0) + 1
+    set_pct = {s: 0 for s in range(1, 9)}
+    set_flat = {s: 0 for s in range(1, 9)}
+    for s_id, cnt in sets.items():
+        info = SET_BONUSES.get(s_id)
+        if info and cnt >= info[0]:
+            for stat, val in info[1].items():
+                if stat in (ACC, RES):
+                    set_flat[stat] += val * (cnt // info[0])
+                else:
+                    set_pct[stat] += val * (cnt // info[0])
+        ladder = SUB_SET_BONUSES.get(s_id)
+        if ladder:
+            tier = None
+            for pieces, sm in ladder:
+                if cnt >= pieces:
+                    tier = sm
+                else:
+                    break
+            if tier:
+                for stat, val in tier.items():
+                    if stat in (ACC, RES):
+                        set_flat[stat] += val
+                    else:
+                        set_pct[stat] += val
+    return set_pct, set_flat
+
+
+def calc_stats(hero, artifacts, account, hypothetical=False,
+               current_artifacts=None):
     """Compute a hero's total stats.
 
     Default (hypothetical=False): if the hero is in the computed-stats cache,
@@ -503,6 +544,27 @@ def calc_stats(hero, artifacts, account, hypothetical=False):
         stats[CD] = scaled[CD] + pct_b[CD] + set_pct.get(CD, 0) + flat_b[CD]
         stats[RES] = scaled[RES] + pct_b[RES] + set_pct.get(RES, 0) + flat_b[RES]
         stats[ACC] = scaled[ACC] + pct_b[ACC] + set_pct.get(ACC, 0) + flat_b[ACC]
+        # Lore-of-Steel gear-correction (optimizer/hypothetical mode only).
+        # The mod's mastery_bonus column (summed into `scaled`) bakes in LoS =
+        # +15% of the hero's CURRENTLY-EQUIPPED set bonuses. When scoring a
+        # DIFFERENT candidate build, that baseline LoS is wrong — it over- or
+        # under-credits by 15% of the set-bonus DELTA between current and
+        # candidate gear (the documented "few SPD" error: Ninja calc 225 vs
+        # live 221, calc 229 vs live 227). Correct it: remove the baseline-gear
+        # LoS and add the candidate-gear LoS. Only when the LoS delta actually
+        # lives in mastery_bonus (mastery_col_present); the no-cache fallback
+        # already scales set_pct by 1.15 above, so it needs no correction.
+        if has_lore_of_steel and mastery_col_present:
+            base_gear = current_artifacts if current_artifacts is not None \
+                else (hero.get("artifacts") or [])
+            sp_base, sf_base = _set_bonuses_from_gear(base_gear)
+            for s in (HP, ATK, DEF, SPD):
+                stats[s] += 0.15 * base_only[s] * (
+                    set_pct.get(s, 0) - sp_base.get(s, 0)) / 100
+            for s in (CR, CD):
+                stats[s] += 0.15 * (set_pct.get(s, 0) - sp_base.get(s, 0))
+            for s in (ACC, RES):
+                stats[s] += 0.15 * (set_flat.get(s, 0) - sf_base.get(s, 0))
     else:
         for s in (HP, ATK, DEF):
             stats[s] = scaled[s] * (1 + (pct_b[s] + set_pct.get(s,0) + ARENA_PCT)/100) + flat_b[s] + gh_flat(s)

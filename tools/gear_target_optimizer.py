@@ -106,6 +106,15 @@ class Optimizer:
             for a in h.get("artifacts", []):
                 if a.get("kind") in ACCESSORY_SLOTS and a.get("id"):
                     self._acc_faction[a["id"]] = frac
+        # Per-hero CURRENTLY-equipped gear, from the artifact vault's hero_id
+        # ownership (the freshest source). Passed to calc_stats so the
+        # Lore-of-Steel hypothetical correction can subtract the baseline-gear
+        # LoS for the right starting build.
+        self._current_gear = {}
+        for a in artifacts:
+            hid = a.get("hero_id")
+            if hid:
+                self._current_gear.setdefault(hid, []).append(a)
 
     def _acc_fits(self, a, hero_fraction):
         """Accessories (Ring/Amulet/Banner) are faction-locked: the game
@@ -166,7 +175,10 @@ class Optimizer:
         # hypothetical=True: actually evaluate the PROPOSED gear. Without it
         # calc_stats returns the hero's CURRENT equipped stats for any input
         # (it copies the mod's artifact_bonus column), so the search is a no-op.
-        return calc_stats(hero, arts, self.account, hypothetical=True)
+        # current_artifacts lets calc_stats correct the Lore-of-Steel baseline
+        # (the mod's mastery_bonus bakes in +15% of the CURRENT gear's sets).
+        return calc_stats(hero, arts, self.account, hypothetical=True,
+                          current_artifacts=self._current_gear.get(hero.get("id")))
 
     def _proxy(self, art, targets):
         score = 0.0
