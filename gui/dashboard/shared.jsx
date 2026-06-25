@@ -203,6 +203,50 @@ function FactionIcon({factionId, size=14}) {
     onError={e => { e.target.style.visibility = 'hidden'; }}/>;
 }
 
+/* ---------- Hero portrait by NAME (resolves via a {name->type_id} map) ---------- */
+// For data that carries only hero names (tune slots, cast-timeline actors).
+function normHeroName(s) { return String(s || '').toLowerCase().replace(/[^a-z0-9]/g, ''); }
+function HeroPortraitByName({name, idMap, size=28, rarity, grade}) {
+  // idMap may be keyed by exact name (backend-resolved) or normalized name.
+  let tid = null;
+  if (idMap) tid = idMap[name] != null ? idMap[name] : idMap[normHeroName(name)];
+  if (!tid) {
+    return <div style={{width:size, height:size, borderRadius:4, border:'1.5px solid #444',
+      background:'var(--bg-subtle)', flexShrink:0}} title={name}/>;
+  }
+  return <HeroPortrait typeId={tid} size={size} name={name} rarity={rarity} grade={grade}/>;
+}
+
+/* ---------- Skill icon (hero type_id + skill slot s1..s4) ---------- */
+const SKILL_ALIAS_IDX = {A1:1, A2:2, A3:3, A4:4};
+function SkillIcon({typeId, index, alias, size=18}) {
+  let idx = index;
+  if (idx == null && alias != null) {
+    idx = SKILL_ALIAS_IDX[alias] != null ? SKILL_ALIAS_IDX[alias]
+        : (/^[1-4]$/.test(String(alias)) ? +alias : null);
+  }
+  if (!typeId || !idx) return null;
+  return <img src={`assets/skills/${typeId}_s${idx}.png`} width={size} height={size}
+    style={{objectFit:'contain', verticalAlign:'middle', borderRadius:3}}
+    alt={alias || `s${idx}`} onError={e => { e.target.style.visibility = 'hidden'; }}/>;
+}
+
+/* ---------- Mastery icon (keyed by mastery id, e.g. 500161) ---------- */
+function MasteryIcon({id, size=18, title}) {
+  if (!id) return null;
+  return <img src={`assets/masteries/${id}.png`} width={size} height={size}
+    style={{objectFit:'contain', verticalAlign:'middle'}} alt={title || `mastery ${id}`}
+    title={title} onError={e => { e.target.style.visibility = 'hidden'; }}/>;
+}
+
+/* ---------- Artifact-set icon (by set name) ---------- */
+function SetIcon({name, size=18}) {
+  if (!name) return null;
+  return <img src={`assets/artifact_sets/${name}.png`} width={size} height={size}
+    style={{objectFit:'contain', verticalAlign:'middle'}} alt={name} title={name}
+    onError={e => { e.target.style.visibility = 'hidden'; }}/>;
+}
+
 /* ---------- Inline SVG icons ---------- */
 const SvgIcon = {
   play: (p) => <svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor" {...p}><path d="M4 2l9 6-9 6z"/></svg>,
@@ -258,18 +302,27 @@ function LogFeed({limit=40, theme='A'}) {
     {rows.map((r, i) => (
       <div key={r.t + '-' + i} style={{
         display: 'grid',
-        gridTemplateColumns: '54px 64px 1fr',
-        gap: 10,
+        gridTemplateColumns: '64px 70px 1fr',
+        gap: 12,
         padding: mono ? '2px 10px' : '5px 10px',
         fontFamily: mono ? "'JetBrains Mono', monospace" : 'inherit',
         fontSize: mono ? 11.5 : 12,
         lineHeight: 1.5,
         borderBottom: mono ? '0' : '1px solid var(--border)',
         opacity: i > 18 ? 0.5 : 1,
+        minWidth: 0,
       }}>
         <span style={{color: 'var(--text-dim)'}} className="mono">{new Date(r.t).toTimeString().slice(0,8)}</span>
-        <span className={`layer-badge layer-${r.tag || 'system'}`} style={{alignSelf:'center', justifySelf:'start'}}>{r.tag || 'sys'}</span>
-        <span className={`log-${r.level}`}>{r.text}</span>
+        <span
+          className={`layer-badge layer-${r.tag || 'system'}`}
+          style={{
+            alignSelf:'center', justifySelf:'start',
+            overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap',
+            maxWidth: '100%',
+          }}>
+          {r.tag || 'sys'}
+        </span>
+        <span className={`log-${r.level}`} style={{minWidth: 0, overflow:'hidden', textOverflow:'ellipsis'}}>{r.text}</span>
       </div>
     ))}
   </div>;

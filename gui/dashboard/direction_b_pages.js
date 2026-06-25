@@ -6561,9 +6561,21 @@ function CBTuneLab() {
       key: i
     }, /*#__PURE__*/React.createElement("span", {
       style: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: 4,
         color: sl.is_generic ? 'var(--text-dim)' : 'var(--text)'
       }
-    }, sl.hero, sl.owned_grade ? ` ${sl.owned_grade}★` : ''), /*#__PURE__*/React.createElement("span", {
+    }, !sl.is_generic && /*#__PURE__*/React.createElement(HeroPortrait, {
+      typeId: sl.type_id,
+      size: 18,
+      grade: sl.owned_grade
+    }), /*#__PURE__*/React.createElement("span", {
+      style: {
+        overflow: 'hidden',
+        textOverflow: 'ellipsis'
+      }
+    }, sl.hero, sl.owned_grade ? ` ${sl.owned_grade}★` : '')), /*#__PURE__*/React.createElement("span", {
       className: "mono",
       style: {
         color: 'var(--text-sub)',
@@ -6611,14 +6623,27 @@ function CBTuneLabModal({
   // Load DWJ-parity cast timeline for the selected variant hash.
   React.useEffect(() => {
     if (!hash) {
+      console.log('[timeline] no hash, skipping');
       setParity(null);
       return;
     }
+    const t0 = performance.now();
+    console.log('[timeline] fetch start hash=', hash);
     setParityBusy(true);
+    let alive = true;
     fetch(`/api/calc-parity-sim?hash=${encodeURIComponent(hash)}&turns=20`).then(r => r.json()).then(d => {
+      console.log('[timeline] resolved in', Math.round(performance.now() - t0), 'ms; error=', d.error, 'tl=', (d.timeline || []).length, 'alive=', alive);
+      if (!alive) return;
       if (!d.error) setParity(d);
       setParityBusy(false);
-    }).catch(() => setParityBusy(false));
+    }).catch(e => {
+      console.log('[timeline] FETCH ERROR', e.message);
+      if (alive) setParityBusy(false);
+    });
+    return () => {
+      console.log('[timeline] cleanup (unmount/hash-change)');
+      alive = false;
+    };
   }, [hash]);
 
   // Lazy-load the gear plan for this tune. Uses a 500-iter SA budget
@@ -6802,18 +6827,30 @@ function CBTuneLabModal({
   }, affTune.potential_team.team.map(sl => /*#__PURE__*/React.createElement(React.Fragment, {
     key: sl.index
   }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    }
+  }, sl.is_generic ? /*#__PURE__*/React.createElement("span", {
     className: "mono",
     style: {
       color: 'var(--text-dim)'
     }
-  }, sl.index), /*#__PURE__*/React.createElement("span", {
+  }, sl.index) : /*#__PURE__*/React.createElement(HeroPortrait, {
+    typeId: sl.type_id,
+    size: 26,
+    grade: sl.owned_grade
+  })), /*#__PURE__*/React.createElement("span", {
     style: {
-      color: sl.is_generic ? 'var(--text-dim)' : 'var(--text)'
+      color: sl.is_generic ? 'var(--text-dim)' : 'var(--text)',
+      alignSelf: 'center'
     }
   }, sl.hero), /*#__PURE__*/React.createElement("span", {
     className: "mono",
     style: {
-      color: 'var(--text-sub)'
+      color: 'var(--text-sub)',
+      alignSelf: 'center'
     }
   }, "SPD ", sl.target_speed), /*#__PURE__*/React.createElement("span", {
     className: "mono",
@@ -6927,6 +6964,7 @@ function CBTuneLabModal({
     const order = parity.actor_order || [];
     const tmMax = parity.tm_max || 100;
     const tl = parity.timeline || [];
+    const idMap = parity.actor_type_ids || {};
     const hasState = order.length > 0 && tl.some(t => t.state && t.state.tm);
     const shortName = n => n === 'Clanboss' ? 'BOSS' : n.length > 9 ? n.slice(0, 9) : n;
 
@@ -7000,14 +7038,27 @@ function CBTuneLabModal({
       key: n,
       title: n,
       style: {
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: 1,
         fontSize: 8.5,
-        textAlign: 'center',
         color: n === 'Clanboss' ? 'var(--violet)' : 'var(--text-dim)',
         whiteSpace: 'nowrap',
         overflow: 'hidden',
         textOverflow: 'ellipsis'
       }
-    }, shortName(n)))), tl.map((t, i) => {
+    }, n !== 'Clanboss' && /*#__PURE__*/React.createElement(HeroPortraitByName, {
+      name: n,
+      idMap: idMap,
+      size: 16
+    }), /*#__PURE__*/React.createElement("span", {
+      style: {
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        maxWidth: '100%'
+      }
+    }, shortName(n))))), tl.map((t, i) => {
       const tm = t.state && t.state.tm || {};
       const spd = t.state && t.state.speed || {};
       const isBoss = t.actor === 'Clanboss';
@@ -7031,8 +7082,23 @@ function CBTuneLabModal({
         }
       }, "bt", t.boss_turn), /*#__PURE__*/React.createElement("span", {
         style: {
+          display: 'flex',
+          alignItems: 'center',
+          gap: 3,
           color: isBoss ? 'var(--violet)' : 'var(--text)',
           whiteSpace: 'nowrap',
+          overflow: 'hidden'
+        }
+      }, !isBoss && /*#__PURE__*/React.createElement(HeroPortraitByName, {
+        name: t.actor,
+        idMap: idMap,
+        size: 15
+      }), !isBoss && /*#__PURE__*/React.createElement(SkillIcon, {
+        typeId: idMap[t.actor],
+        alias: t.skill,
+        size: 14
+      }), /*#__PURE__*/React.createElement("span", {
+        style: {
           overflow: 'hidden',
           textOverflow: 'ellipsis'
         }
@@ -7042,7 +7108,7 @@ function CBTuneLabModal({
           color: 'var(--text-sub)',
           fontSize: 9
         }
-      }, t.skill)), order.map(n => {
+      }, t.skill))), order.map(n => {
         const v = tm[n] || 0;
         const frac = Math.max(0, Math.min(1, v / tmMax));
         const acted = n === t.actor;

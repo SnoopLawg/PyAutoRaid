@@ -890,6 +890,45 @@ def _last_cb_team_names() -> list[str]:
 
 
 
+_HERO_NAME_TO_ID: dict | None = None
+
+
+def _hero_name_type_id() -> dict:
+    """Cached {normalized_hero_name -> type_id} from hero_types.json, so the
+    frontend can show hero portraits / skill icons (keyed by type_id) for data
+    that only carries hero names (tune slots, cast-timeline actors)."""
+    global _HERO_NAME_TO_ID
+    if _HERO_NAME_TO_ID is not None:
+        return _HERO_NAME_TO_ID
+    import re as _re
+    m: dict = {}
+    try:
+        ht = json.loads((ROOT / "data" / "static" / "hero_types.json").read_text(encoding="utf-8"))["hero_types"]
+        for r in ht:
+            nm, hid = r.get("name"), r.get("id")
+            if not nm or hid is None:
+                continue
+            key = _re.sub(r"[^a-z0-9]", "", nm.lower())
+            if key and key not in m:  # first (base ascension) wins
+                m[key] = hid
+    except Exception as e:
+        logger.info("hero name->id map failed: %s", e)
+    _HERO_NAME_TO_ID = m
+    return m
+
+
+def _resolve_type_ids(names) -> dict:
+    """{name -> type_id or None} for a list of hero names (norm-matched)."""
+    import re as _re
+    m = _hero_name_type_id()
+    out = {}
+    for n in names:
+        if not n or n in out:
+            continue
+        out[n] = m.get(_re.sub(r"[^a-z0-9]", "", str(n).lower()))
+    return out
+
+
 # The DWJ-parity cast timeline (/api/calc-parity-sim) runs the scheduler fresh
 # (~6.6s) on every modal open AND every affinity tab switch — the "cast timeline
 # takes forever" symptom. Memoize per (hash, turns) with a TTL; the sim is
@@ -994,6 +1033,7 @@ def _cb_parity_sim_compute(hash_: str | None = None, max_boss_turns: int = 25):
         "cast_summary": cast_summary,
         "timeline": timeline,
         "actor_order": actor_order,
+        "actor_type_ids": _resolve_type_ids(actor_order),  # {name: type_id} for portraits/skill icons
         "tm_max": round(tm_max, 1),
     }
 
@@ -1509,6 +1549,16 @@ def _tune_lab_compute(slug: str | None = None, runnable_only: bool = False,
                         }
                 except Exception as ex:
                     r["sim"] = {"error": str(ex)}
+
+        # Attach type_id to each team slot so the frontend shows hero portraits
+        # (slots otherwise carry only the hero name).
+        for r in results:
+            pt = r.get("potential_team") or {}
+            slots = pt.get("team") or []
+            tid = _resolve_type_ids([s.get("hero") for s in slots])
+            for s in slots:
+                if s.get("hero") and "type_id" not in s:
+                    s["type_id"] = tid.get(s.get("hero"))
 
         return {
             "today_affinity": affinity,

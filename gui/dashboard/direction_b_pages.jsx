@@ -3219,8 +3219,9 @@ function CBTuneLab() {
                   <div style={{display:'grid', gridTemplateColumns:'1fr 60px', gap: 4, fontSize: 10.5, lineHeight: 1.5}}>
                     {t.potential_team.team.map((sl, i) => (
                       <React.Fragment key={i}>
-                        <span style={{color: sl.is_generic ? 'var(--text-dim)' : 'var(--text)'}}>
-                          {sl.hero}{sl.owned_grade ? ` ${sl.owned_grade}★` : ''}
+                        <span style={{display:'flex', alignItems:'center', gap:4, color: sl.is_generic ? 'var(--text-dim)' : 'var(--text)'}}>
+                          {!sl.is_generic && <HeroPortrait typeId={sl.type_id} size={18} grade={sl.owned_grade}/>}
+                          <span style={{overflow:'hidden', textOverflow:'ellipsis'}}>{sl.hero}{sl.owned_grade ? ` ${sl.owned_grade}★` : ''}</span>
                         </span>
                         <span className="mono" style={{color:'var(--text-sub)', textAlign:'right', fontSize: 10}}>
                           SPD {sl.target_speed}
@@ -3277,12 +3278,22 @@ function CBTuneLabModal({tune, onClose}) {
 
   // Load DWJ-parity cast timeline for the selected variant hash.
   React.useEffect(() => {
-    if (!hash) { setParity(null); return; }
+    if (!hash) { console.log('[timeline] no hash, skipping'); setParity(null); return; }
+    const t0 = performance.now();
+    console.log('[timeline] fetch start hash=', hash);
     setParityBusy(true);
+    let alive = true;
     fetch(`/api/calc-parity-sim?hash=${encodeURIComponent(hash)}&turns=20`)
       .then(r => r.json())
-      .then(d => { if (!d.error) setParity(d); setParityBusy(false); })
-      .catch(() => setParityBusy(false));
+      .then(d => {
+        console.log('[timeline] resolved in', Math.round(performance.now()-t0), 'ms; error=', d.error,
+                    'tl=', (d.timeline||[]).length, 'alive=', alive);
+        if (!alive) return;
+        if (!d.error) setParity(d);
+        setParityBusy(false);
+      })
+      .catch(e => { console.log('[timeline] FETCH ERROR', e.message); if (alive) setParityBusy(false); });
+    return () => { console.log('[timeline] cleanup (unmount/hash-change)'); alive = false; };
   }, [hash]);
 
   // Lazy-load the gear plan for this tune. Uses a 500-iter SA budget
@@ -3374,9 +3385,12 @@ function CBTuneLabModal({tune, onClose}) {
             <div style={{display:'grid', gridTemplateColumns:'30px 1fr 80px 80px 100px', gap: 6, fontSize: 11.5}}>
               {affTune.potential_team.team.map(sl => (
                 <React.Fragment key={sl.index}>
-                  <span className="mono" style={{color:'var(--text-dim)'}}>{sl.index}</span>
-                  <span style={{color: sl.is_generic ? 'var(--text-dim)' : 'var(--text)'}}>{sl.hero}</span>
-                  <span className="mono" style={{color:'var(--text-sub)'}}>SPD {sl.target_speed}</span>
+                  <span style={{display:'flex', alignItems:'center', justifyContent:'center'}}>
+                    {sl.is_generic ? <span className="mono" style={{color:'var(--text-dim)'}}>{sl.index}</span>
+                                   : <HeroPortrait typeId={sl.type_id} size={26} grade={sl.owned_grade}/>}
+                  </span>
+                  <span style={{color: sl.is_generic ? 'var(--text-dim)' : 'var(--text)', alignSelf:'center'}}>{sl.hero}</span>
+                  <span className="mono" style={{color:'var(--text-sub)', alignSelf:'center'}}>SPD {sl.target_speed}</span>
                   <span className="mono" style={{color:'var(--text-dim)'}}>base {sl.base_speed || '—'}</span>
                   <span className="mono" style={{color:'var(--text-dim)'}}>{sl.owned_grade ? `${sl.owned_grade}★ lvl ${sl.owned_level}` : '—'}</span>
                 </React.Fragment>
@@ -3415,6 +3429,7 @@ function CBTuneLabModal({tune, onClose}) {
                 const order = parity.actor_order || [];
                 const tmMax = parity.tm_max || 100;
                 const tl = parity.timeline || [];
+                const idMap = parity.actor_type_ids || {};
                 const hasState = order.length > 0 && tl.some(t => t.state && t.state.tm);
                 const shortName = (n) => n === 'Clanboss' ? 'BOSS' : (n.length > 9 ? n.slice(0,9) : n);
 
@@ -3445,8 +3460,12 @@ function CBTuneLabModal({tune, onClose}) {
                       <span style={{fontSize:9, color:'var(--text-dim)', textTransform:'uppercase'}}>turn</span>
                       <span style={{fontSize:9, color:'var(--text-dim)', textTransform:'uppercase'}}>cast</span>
                       {order.map(n => (
-                        <span key={n} title={n} style={{fontSize:8.5, textAlign:'center', color: n==='Clanboss' ? 'var(--violet)' : 'var(--text-dim)',
-                          whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis'}}>{shortName(n)}</span>
+                        <span key={n} title={n} style={{display:'flex', flexDirection:'column', alignItems:'center', gap:1,
+                          fontSize:8.5, color: n==='Clanboss' ? 'var(--violet)' : 'var(--text-dim)',
+                          whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis'}}>
+                          {n !== 'Clanboss' && <HeroPortraitByName name={n} idMap={idMap} size={16}/>}
+                          <span style={{overflow:'hidden', textOverflow:'ellipsis', maxWidth:'100%'}}>{shortName(n)}</span>
+                        </span>
                       ))}
                     </Row>
                     {tl.map((t, i) => {
@@ -3458,8 +3477,10 @@ function CBTuneLabModal({tune, onClose}) {
                           fontSize:10, padding:'1px 0', borderBottom:'1px solid rgba(255,255,255,0.03)',
                           background: isBoss ? 'rgba(167,139,250,0.06)' : 'transparent'}}>
                           <span className="mono" style={{color:'var(--text-dim)', fontSize:9}}>bt{t.boss_turn}</span>
-                          <span style={{color: isBoss ? 'var(--violet)':'var(--text)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis'}}>
-                            {shortName(t.actor)} <span className="mono" style={{color:'var(--text-sub)', fontSize:9}}>{t.skill}</span>
+                          <span style={{display:'flex', alignItems:'center', gap:3, color: isBoss ? 'var(--violet)':'var(--text)', whiteSpace:'nowrap', overflow:'hidden'}}>
+                            {!isBoss && <HeroPortraitByName name={t.actor} idMap={idMap} size={15}/>}
+                            {!isBoss && <SkillIcon typeId={idMap[t.actor]} alias={t.skill} size={14}/>}
+                            <span style={{overflow:'hidden', textOverflow:'ellipsis'}}>{shortName(t.actor)} <span className="mono" style={{color:'var(--text-sub)', fontSize:9}}>{t.skill}</span></span>
                           </span>
                           {order.map(n => {
                             const v = tm[n] || 0;
