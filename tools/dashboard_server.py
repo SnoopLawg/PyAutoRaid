@@ -890,7 +890,30 @@ def _last_cb_team_names() -> list[str]:
 
 
 
+# The DWJ-parity cast timeline (/api/calc-parity-sim) runs the scheduler fresh
+# (~6.6s) on every modal open AND every affinity tab switch — the "cast timeline
+# takes forever" symptom. Memoize per (hash, turns) with a TTL; the sim is
+# deterministic for a given variant so the cached result is exact.
+_PARITY_CACHE: dict = {}
+_PARITY_LOCK = threading.Lock()
+_PARITY_TTL = 3600.0
+
+
 def build_cb_parity_sim(hash_: str | None = None, max_boss_turns: int = 25):
+    """Cached wrapper around `_cb_parity_sim_compute` (see its docstring)."""
+    key = (hash_, max_boss_turns)
+    now = time.time()
+    with _PARITY_LOCK:
+        hit = _PARITY_CACHE.get(key)
+        if hit and (now - hit[0]) < _PARITY_TTL and "error" not in hit[1]:
+            return hit[1]
+        result = _cb_parity_sim_compute(hash_=hash_, max_boss_turns=max_boss_turns)
+        if isinstance(result, dict) and "error" not in result:
+            _PARITY_CACHE[key] = (now, result)
+        return result
+
+
+def _cb_parity_sim_compute(hash_: str | None = None, max_boss_turns: int = 25):
     """Run calc_parity_sim against a specific DWJ calc variant (by hash)
     or — if no hash is given — against the top-ranked runnable tune for
     the user's roster. Returns a cast timeline + summary suitable for the
