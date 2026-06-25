@@ -66,6 +66,8 @@ RESOURCE_EXACT: dict[str, str] = {
     "ArtifactAscendResourceIcons": "resources",
     "DoubleAscendResourceIcons": "resources",
     "ForgeResourceIcons": "resources",
+    "UserAvatarFrames": "avatar_frames",
+    "StarRanks": "ui",
 }
 # Prefix -> category for the resources cache (logical name = entry minus the
 # trailing _<version>). Order matters: more specific first.
@@ -267,6 +269,11 @@ def resource_category(logical: str, include_splash: bool) -> str | None:
             return subdir
     if include_splash and _HERO_BUNDLE.match(logical):
         return "hero_splash"
+    # Catch-all: any remaining icon ATLAS (e.g. ArenaIcons, ChimeraChallengeIcons,
+    # FoggyForestCurioIcons, BigIcons, AchievementsIcons) -> ui. These are small
+    # sprite sheets, not 3D scene bundles, so this stays cheap.
+    if logical.endswith("Icons") or logical.endswith("Icon"):
+        return "ui"
     return None
 
 
