@@ -462,10 +462,22 @@ def _snapshot_run_build(log_filename, entries, boss_turns):
                     hero_turns[tid] = max(hero_turns.get(tid, 0), h.get("turn_n", 0) or 0)
         if not team_types:
             return
-        cs = mod_get("/hero-computed-stats?hero_id=0", timeout=20)
-        cs_by_id = {h.get("id"): h for h in (cs.get("heroes", []) if isinstance(cs, dict) else [])}
-        ah = mod_get("/all-heroes?limit=20000", timeout=20)
-        ah_heroes = ah.get("heroes", []) if isinstance(ah, dict) else []
+        # The mod can still be mid-scene-transition right after the battle, so
+        # /hero-computed-stats returns empty for a few seconds — retry until it
+        # populates (this is why the snapshot silently no-saved on 2026-06-25).
+        cs_by_id, ah_heroes = {}, []
+        for _attempt in range(6):
+            cs = mod_get("/hero-computed-stats?hero_id=0", timeout=20)
+            cs_by_id = {h.get("id"): h for h in (cs.get("heroes", []) if isinstance(cs, dict) else [])}
+            ah = mod_get("/all-heroes?limit=20000", timeout=20)
+            ah_heroes = ah.get("heroes", []) if isinstance(ah, dict) else []
+            if cs_by_id and ah_heroes:
+                break
+            time.sleep(2)
+        if not (cs_by_id and ah_heroes):
+            print("  [warn] build snapshot: computed-stats/all-heroes empty after retries "
+                  "(mod mid-transition?); regenerate later with _snapshot_run_build")
+            return
         # type_id -> hero record; prefer the geared copy (most artifacts) for duplicates.
         # The battle log truncates the type_id's last digit (form/ascension), so a
         # /all-heroes type_id 6206 logs as 6200 — match on (tid // 10) * 10.
