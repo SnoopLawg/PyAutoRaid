@@ -695,6 +695,7 @@ namespace RaidAutomation
                     "/types" => RunOnMainThread(() => SearchTypes(QP(query, "q"))),
                     "/props" => RunOnMainThread(() => InspectType(QP(query, "type"))),
                     "/server-info" => RunOnMainThread(() => GetServerInfo()),
+                    "/cdn-config" => RunOnMainThread(() => GetCdnConfig(), 15000),
                     "/equip" => RunOnMainThread(() => EquipArtifact(QP(query, "hero_id"), QP(query, "artifact_id")), 30000),
                     "/unequip" => RunOnMainThread(() => UnequipArtifact(QP(query, "hero_id"), QP(query, "artifact_id")), 30000),
                     "/swap" => RunOnMainThread(() => SwapArtifact(QP(query, "hero_id"), QP(query, "from_id"), QP(query, "to_id"), QP(query, "owner_id")), 30000),
@@ -1027,6 +1028,50 @@ namespace RaidAutomation
         // =====================================================
         // API: /status, /buttons, /click, /dismiss, /types
         // =====================================================
+
+        // Capture Plarium's asset-CDN base URL(s) from the game's own config:
+        // SharedModelManager.GameParameters.ClientSettings.AllCdnUrls (+ any other
+        // url-like string fields). Used to bulk-download hero/skill/mastery/gear
+        // icons that the game otherwise fetches on demand. Game-truth: it's the
+        // exact CDN the client itself uses.
+        private string GetCdnConfig()
+        {
+            var sb = new StringBuilder();
+            sb.Append("{");
+            try
+            {
+                var smm = FindType("SharedModel.SharedModelManager") ?? FindType("SharedModelManager");
+                if (smm == null) return "{\"error\":\"SharedModelManager type not found\"}";
+                object gp = null;
+                var gpProp = smm.GetProperty("GameParameters", BindingFlags.Public | BindingFlags.Static | BindingFlags.NonPublic);
+                if (gpProp != null) gp = gpProp.GetValue(null);
+                if (gp == null) { var gpField = smm.GetField("GameParameters", BindingFlags.Public | BindingFlags.Static | BindingFlags.NonPublic); if (gpField != null) gp = gpField.GetValue(null); }
+                if (gp == null) { var gpM = smm.GetMethod("get_GameParameters", BindingFlags.Public | BindingFlags.Static | BindingFlags.NonPublic); if (gpM != null) gp = gpM.Invoke(null, null); }
+                if (gp == null) return "{\"error\":\"GameParameters null\"}";
+                var cs = Prop(gp, "ClientSettings");
+                if (cs == null) return "{\"error\":\"ClientSettings null\"}";
+                sb.Append("\"client_settings_type\":\"" + Esc(cs.GetType().Name) + "\"");
+                // Dump every property/field whose value looks like a URL (http/cdn/.com/.net).
+                var seen = new HashSet<string>();
+                Action<string, object> emit = (nm, valObj) =>
+                {
+                    if (valObj == null || !seen.Add(nm)) return;
+                    string v;
+                    try { v = valObj.ToString(); } catch { return; }
+                    if (string.IsNullOrEmpty(v)) return;
+                    var low = v.ToLowerInvariant();
+                    if (low.Contains("http") || low.Contains("cdn") || low.Contains(".com") || low.Contains(".net") || low.Contains(".io") || nm.ToLowerInvariant().Contains("url") || nm.ToLowerInvariant().Contains("cdn"))
+                        sb.Append(",\"" + Esc(nm) + "\":\"" + Esc(v) + "\"");
+                };
+                foreach (var p in cs.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
+                { try { emit(p.Name, p.GetValue(cs)); } catch { } }
+                foreach (var f in cs.GetType().GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
+                { try { emit(f.Name, f.GetValue(cs)); } catch { } }
+            }
+            catch (Exception e) { return "{\"error\":\"" + Esc(e.Message) + "\"}"; }
+            sb.Append("}");
+            return sb.ToString();
+        }
 
         private string GetServerInfo()
         {
