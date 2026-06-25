@@ -52,6 +52,21 @@ BUNDLE_DIR = (Path(LOCALAPPDATA) / "PlariumPlay" / "StandAloneApps" / "raid"
 # small core subset. Game-truth + local (no CDN download).
 RESOURCES_DIR = (Path(LOCALAPPDATA) / "PlariumPlay" / "StandAloneApps" / "raid"
                  / "resources")
+# EXACT logical-name -> category for resources bundles whose name would be
+# ambiguous under prefix matching (e.g. "Artifacts" must NOT also grab the
+# "ArtifactsForge"/"ArtifactsGacha…" dialog bundles).
+RESOURCE_EXACT: dict[str, str] = {
+    "Artifacts": "gear",                  # 602 gear-piece icons named <Set>_<Slot>
+    "BlessingIcons": "blessings",
+    "BlessingIcon": "blessings",
+    "RelicIcons": "relics",
+    "RelicIcons_1": "relics",
+    "DivinityIcon": "divinities",
+    "IconElementCollection": "divinities",
+    "ArtifactAscendResourceIcons": "resources",
+    "DoubleAscendResourceIcons": "resources",
+    "ForgeResourceIcons": "resources",
+}
 # Prefix -> category for the resources cache (logical name = entry minus the
 # trailing _<version>). Order matters: more specific first.
 RESOURCE_MAP: list[tuple[str, str]] = [
@@ -245,6 +260,8 @@ _HERO_BUNDLE = re.compile(r"^\d{3,4}_[A-Za-z][A-Za-z0-9_]*$")
 def resource_category(logical: str, include_splash: bool) -> str | None:
     if logical.endswith("_Res") or logical.endswith("_LOD"):
         return None  # dependency/LOD companions — no new sprites
+    if logical in RESOURCE_EXACT:
+        return RESOURCE_EXACT[logical]
     for prefix, subdir in RESOURCE_MAP:
         if logical == prefix or logical.startswith(prefix):
             return subdir

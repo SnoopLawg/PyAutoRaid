@@ -146,3 +146,6 @@ assets/factionWarsStart.png
 node_modules/
 package-lock.json
 package.json
+gui/dashboard/assets/gear/
+gui/dashboard/assets/relics/
+gui/dashboard/assets/divinities/
