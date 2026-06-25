@@ -237,38 +237,18 @@ def load_dwj_tunes() -> list[dict]:
     return out
 
 
-def load_hh_ratings() -> dict[str, float]:
-    """Return {hero_name -> CB rating 0..10} from HellHades tier list."""
-    p = PROJECT_ROOT / "data" / "hh" / "parsed" / "tierlist.json"
-    if not p.exists():
-        return {}
-    try:
-        data = json.loads(p.read_text(encoding="utf-8"))
-    except Exception:
-        return {}
-    rows = data if isinstance(data, list) else (data.get("ratings") or data)
-    out: dict[str, float] = {}
-    if isinstance(rows, list):
-        for r in rows:
-            if not isinstance(r, dict): continue
-            n = r.get("name")
-            cb = r.get("clan_boss") or r.get("cb") or r.get("CB")
-            if n and cb is not None:
-                try: out[n] = float(cb)
-                except (TypeError, ValueError): pass
-    return out
-
-
 def predict_score(team: list[str],
-                  roles_by_hero: dict[str, set[str]],
-                  hh_ratings: dict[str, float]) -> float:
+                  roles_by_hero: dict[str, set[str]]) -> float:
     """Cheap heuristic for team strength — used to prune candidates
     before paying the full sim cost.
 
     Adds:
       - role-coverage points (UK/BD/heal/def_down/weaken/poisoner/burner)
-      - per-hero HH CB rating (when available)
       - synergy bonuses (poisoner + poison_sens, etc.)
+
+    GAME-TRUTH ONLY: this is a pre-sim prune over our own game-derived role
+    tags. No external tier list (HellHades/DWJ) feeds the score — the full
+    sim (damage + survival) is the authoritative ranking. (M7 B2.)
     """
     team_roles: list[set[str]] = [roles_by_hero.get(h, set()) for h in team]
     flat: set[str] = set().union(*team_roles)
@@ -284,8 +264,6 @@ def predict_score(team: list[str],
     if "ally_protect" in flat: score += 1
     # DPS counts: more DPS = more output potential
     score += sum(1 for r in team_roles if "dps" in r) * 0.5
-    # Per-hero CB rating (HH tier list 0..10)
-    score += sum(hh_ratings.get(h, 0.0) for h in team) * 0.3
     # Synergy: poison + poison_sens
     if "poisoner" in flat and any("poison_sens" in r for r in team_roles):
         score += 2
@@ -399,7 +377,7 @@ def main() -> int:
     ap.add_argument("--novel-margin", type=float, default=0.10,
                     help="Mark a team `novel` only when its damage "
                          "exceeds the closest matching DWJ tune by at "
-                         "least this fraction (default 0.10 = 10%)")
+                         "least this fraction (default 0.10 = 10%%)")
     ap.add_argument("--use-current-gear", action="store_true",
                     help="Skip the artifact optimizer; sim with each "
                          "hero's CURRENTLY equipped artifacts. "
@@ -504,11 +482,11 @@ def main() -> int:
     # Score-based prune: rank candidates by predict_score, keep top
     # `sim-top` for full sim. DWJ-tune teams always get simmed (they're
     # the baseline we compare novel candidates against).
-    print("Pre-scoring candidates...", file=sys.stderr)
-    hh_ratings = load_hh_ratings()
+    print("Pre-scoring candidates (game-truth role coverage; no tier list)...",
+          file=sys.stderr)
     scored: list[tuple[float, list[str]]] = []
     for team in candidates:
-        s = predict_score(team, roles_by_hero, hh_ratings)
+        s = predict_score(team, roles_by_hero)
         scored.append((s, team))
     scored.sort(key=lambda x: -x[0])
     sim_pool = [t for _, t in scored[:args.sim_top]]
