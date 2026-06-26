@@ -768,6 +768,51 @@ def build_cb_last_run():
     )
 
 
+def build_cb_summary():
+    """Lightweight CB headline for the Console: today's damage, last-run damage,
+    a per-key bar series, and the 7-day daily trend. Reads battle-log files +
+    the history snapshot only — no mod, no sim, no potential-teams build — so it
+    stays fast and works offline (unlike the heavy /api/state)."""
+    last = build_cb_last_run() or {}
+    last_run_dmg = int((last.get("last_run") or {}).get("damage") or 0)
+    per_key = build_cb_per_key_history(days=7) or []
+    today_iso = _cb_day_today().isoformat()
+    damage_today = 0
+    for row in per_key:
+        if row.get("date") == today_iso:
+            damage_today = int(row.get("total") or 0)
+            break
+    # Per-key bar series (latest window's individual key runs, fallback to the
+    # daily per-window totals so the chart always has something to draw).
+    bars = []
+    for row in per_key:
+        if row.get("date") == today_iso and isinstance(row.get("keys"), list):
+            bars = [int((k or {}).get("damage") or 0) for k in row["keys"]]
+            break
+    if not bars:
+        bars = [int(r.get("total") or 0) for r in per_key]
+    # 7-day daily trend from the dashboard history snapshots.
+    daily = []
+    if HISTORY_PATH.exists():
+        try:
+            for line in HISTORY_PATH.read_text().splitlines()[-7:]:
+                try:
+                    e = json.loads(line)
+                    daily.append({"day": e.get("day"),
+                                  "dmg": int((e.get("cb_dmg_m") or 0) * 1e6)})
+                except Exception:
+                    pass
+        except Exception:
+            pass
+    return {
+        "damage_today": damage_today,
+        "last_run_damage": last_run_dmg,
+        "bars": bars,
+        "daily": daily,
+        "per_key_history": per_key,
+    }
+
+
 
 
 # ---------- Simulator bridge ------------------------------------------------
@@ -2966,6 +3011,7 @@ GET_ROUTES = {
     "/api/schedule":               lambda q: {"tasks": list_scheduled_tasks()},
     "/api/run":                    lambda q: run_state(),
     "/api/resources":              lambda q: build_resources() or {},
+    "/api/cb-summary":             lambda q: build_cb_summary(),
     "/api/sim-last-run":           lambda q: build_sim_last_run(),
     "/api/tune-library":           lambda q: build_tune_library(),
     "/api/sim-affinity-matrix":    lambda q: build_sim_affinity_matrix(),

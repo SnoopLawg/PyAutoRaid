@@ -48,10 +48,32 @@
     });
   }
 
+  // ---- panel: Clan Boss (damage today / last run / bar chart) -------------
+  function wireCB() {
+    return getJSON("/api/cb-summary").then(function (cb) {
+      if (!cb || typeof cb !== "object") return;
+      var today = cb.damage_today != null ? cb.damage_today : cb.last_run_damage;
+      if (today != null && today > 0) {
+        setText("cbCardDmg", fmtAbbrev(today));
+        setText("cbPageDmg", fmtAbbrev(today));
+        setText("cbTodayDmg", fmtAbbrev(today));
+      }
+      // Re-feed the damage bar chart with the real per-key (or daily) series,
+      // scaled to millions so the design's bar geometry stays comparable.
+      var series = Array.isArray(cb.bars) && cb.bars.length ? cb.bars
+                 : (Array.isArray(cb.daily) ? cb.daily.map(function (d) { return d.dmg; }) : []);
+      series = series.filter(function (v) { return v != null; }).map(function (v) { return v / 1e6; });
+      if (series.length && window.__console && window.__console.cbBars) {
+        window.__console.cbBars(series);
+      }
+    });
+  }
+
   // ---- refresh loop -------------------------------------------------------
   function refreshAll() {
     // Each panel is independent; a failure in one must not stop the others.
     wireResources().catch(function () {});
+    wireCB().catch(function () {});
   }
 
   document.addEventListener("DOMContentLoaded", function () {
