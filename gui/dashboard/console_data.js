@@ -136,6 +136,7 @@
       var footer = "↻ cycle repeats · " + (d.variant.name || "tune") +
                    " · survives to boss turn " + survived;
       window.__console.rotation(champs, groups, footer);
+      if (window.__console.buffMatrix) window.__console.buffMatrix(d.buff_matrix);
     });
   }
 

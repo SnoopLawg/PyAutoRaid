@@ -1058,6 +1058,90 @@ def _dwj_cast_effects(dwj, variant):
     return out
 
 
+def _dwj_buff_matrix(dwj, variant, turns, max_cols: int = 10):
+    """DWJ-style buff/debuff uptime matrix: rows = champions (+ Demon Lord for
+    debuffs), columns = boss turns. Each cell lists the effects active on that
+    target during that boss turn, tagged state="new" (cast this turn, green),
+    "held" (carried from earlier, blue) or "expiring" (last active turn, faded).
+    Buffs target self/allies per the DWJ effect's `champions`; debuffs land on
+    the boss. Only icon-able persistent statuses are tracked (instant TM swings,
+    heals, extra turns are excluded)."""
+    from collections import defaultdict
+    BOSS = "Demon Lord"
+    slot_names = [s.name for s in variant.slots]
+    type_ids = _resolve_type_ids(slot_names)
+    # apps[row_name][effect_name] = [{apply, dur, icon, label, kind}, ...]
+    apps: dict = defaultdict(lambda: defaultdict(list))
+    max_bt = 0
+    for t in turns:
+        max_bt = max(max_bt, t.boss_turn_number)
+        if t.actor_name == "Clanboss":
+            continue
+        ch = dwj.champion(t.actor_name)
+        if ch is None:
+            continue
+        sk = next((s for s in ch.skills if s.alias == t.skill_alias), None)
+        if sk is None:
+            continue
+        for e in sk.effects:
+            name = e.buff or e.debuff
+            if not name:
+                continue
+            meta = _DWJ_EFFECT_LABELS.get(name)
+            if meta is None or meta[2] is None:   # need a status icon
+                continue
+            label, kind, icon = meta
+            dur = int(e.turns or 1) or 1
+            if kind == "debuff" or e.enemy:
+                rows = [BOSS]
+            elif e.champions in ("allies", "all"):
+                rows = list(slot_names)
+            elif e.champions == "notself":
+                rows = [n for n in slot_names if n != t.actor_name]
+            else:                                  # self / single / highest_tm / None
+                rows = [t.actor_name]
+            for r in rows:
+                apps[r][name].append({"apply": t.boss_turn_number, "dur": dur,
+                                      "icon": icon, "label": label, "kind": kind,
+                                      "caster": t.actor_name})
+
+    cols = list(range(0, min(max_bt, max_cols - 1) + 1))
+
+    def covering(applist, t):
+        return [a for a in applist if a["apply"] <= t <= a["apply"] + a["dur"] - 1]
+
+    out_rows = []
+    for rname in slot_names + [BOSS]:
+        if rname not in apps:
+            continue
+        cells = []
+        for t in cols:
+            cell = []
+            for name, applist in apps[rname].items():
+                cov = covering(applist, t)
+                if not cov:
+                    continue
+                # green only on the actual caster's row the turn it's cast (for a
+                # boss debuff there's no ally caster, so any fresh placement is
+                # green); recipients of a team buff this turn are blue (held).
+                if any(a["apply"] == t and (rname == BOSS or a["caster"] == rname)
+                       for a in cov):
+                    state = "new"
+                elif any(a["apply"] == t for a in cov):
+                    state = "held"
+                elif covering(applist, t + 1):
+                    state = "held"
+                else:
+                    state = "expiring"
+                cell.append({"icon": cov[0]["icon"], "label": cov[0]["label"],
+                             "kind": cov[0]["kind"], "state": state})
+            cells.append(cell)
+        out_rows.append({"name": rname, "is_boss": rname == BOSS,
+                         "type_id": None if rname == BOSS else type_ids.get(rname),
+                         "cells": cells})
+    return {"boss_turns": cols, "rows": out_rows}
+
+
 def build_cb_parity_sim(hash_: str | None = None, max_boss_turns: int = 25):
     """Cached wrapper around `_cb_parity_sim_compute` (see its docstring)."""
     key = (hash_, max_boss_turns)
@@ -1157,6 +1241,7 @@ def _cb_parity_sim_compute(hash_: str | None = None, max_boss_turns: int = 25):
         "actor_order": actor_order,
         "actor_type_ids": _resolve_type_ids(actor_order),  # {name: type_id} for portraits/skill icons
         "tm_max": round(tm_max, 1),
+        "buff_matrix": _dwj_buff_matrix(dwj, variant, turns),  # DWJ-style uptime grid
     }
 
 

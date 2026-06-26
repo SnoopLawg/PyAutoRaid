@@ -577,6 +577,13 @@
         </div>
       </div>
       <div id="rotationGrid" style="background:#100c08;border:1px solid #2c241a;border-radius:4px;padding:11px 11px 13px;"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin:24px 0 11px;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.18em;color:#a0734a;text-transform:uppercase;">Buff / debuff uptime</div>
+        <div style="display:flex;align-items:center;gap:9px;font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.05em;text-transform:uppercase;">
+          <span style="color:#6fcf6f;">■ Cast</span><span style="color:#5a8cdc;">■ Held</span><span style="color:#6f6555;">■ Expiring</span>
+        </div>
+      </div>
+      <div id="buffMatrix" style="background:#100c08;border:1px solid #2c241a;border-radius:4px;padding:11px;overflow-x:auto;"></div>
       <button style="width:100%;margin-top:18px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;color:#0c0a07;background:linear-gradient(180deg,#e6b765,#cf9a44);border:none;border-radius:3px;padding:11px;cursor:pointer;text-transform:uppercase;font-weight:700;">Export battle JSON →</button>
     </div>
   </div>
@@ -711,8 +718,47 @@ document.addEventListener("DOMContentLoaded", function() {
       host.appendChild(cell(footer || '&#8635; rotation repeats from Round 1',
         'text-align:center;font-family:\'JetBrains Mono\',monospace;font-size:9px;letter-spacing:.08em;color:#6f6555;margin-top:10px;'));
     };
+    // DWJ-style buff/debuff uptime matrix. m = {boss_turns:[...], rows:[{name,
+    // type_id, is_boss, cells:[ [{icon,label,kind,state}], ... per boss turn ]}]}.
+    // state: 'new' (cast this turn, green), 'held' (carried, blue), 'expiring'
+    // (last active turn, faded).
+    const renderBuffMatrix = (m) => {
+      const host = document.getElementById('buffMatrix');
+      if (!host) return;
+      host.innerHTML = '';
+      if (!m || !m.rows || !m.rows.length) {
+        host.innerHTML = '<div style="font-family:\'JetBrains Mono\',monospace;font-size:9px;color:#6f6555;text-align:center;padding:6px;">No tracked buffs / debuffs.</div>';
+        return;
+      }
+      const cols = m.boss_turns || [];
+      const grid = document.createElement('div');
+      grid.style.cssText = 'display:grid;grid-template-columns:82px repeat(' + cols.length + ',minmax(26px,1fr));gap:3px;align-items:stretch;';
+      grid.appendChild(cell('', ''));   // corner
+      cols.forEach(t => grid.appendChild(cell(t === 0 ? 'Op' : ('T' + t),
+        'text-align:center;font-family:\'JetBrains Mono\',monospace;font-size:8px;color:#6f6555;padding-bottom:3px;')));
+      const stateCss = (st) => st === 'new'
+        ? 'background:rgba(111,207,111,.22);border:1px solid #6fcf6f;'
+        : (st === 'held' ? 'background:rgba(90,140,220,.20);border:1px solid #5a8cdc;'
+                         : 'opacity:.42;border:1px solid #2c241a;');
+      m.rows.forEach(r => {
+        const portrait = r.is_boss
+          ? '<span style="color:#c25a3a;font-size:13px;">&#9760;</span>'
+          : (r.type_id ? '<img src="assets/heroes/' + r.type_id + '.png" alt="" onerror="this.style.visibility=\'hidden\'" style="width:16px;height:16px;border-radius:2px;object-fit:cover;flex:none;">' : '<span style="width:16px;flex:none;"></span>');
+        grid.appendChild(cell(
+          portrait + '<span style="font-family:Cinzel,serif;font-size:9.5px;color:#cdbfa6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + r.name + '</span>',
+          'display:flex;align-items:center;gap:4px;'));
+        (r.cells || []).forEach(cl => {
+          const icons = (cl || []).map(fx =>
+            '<span title="' + fx.label + '" style="display:inline-flex;border-radius:3px;padding:1px;' + stateCss(fx.state) + '"><img src="assets/effects/' + fx.icon + '.png" alt="" onerror="this.style.display=\'none\'" style="width:13px;height:13px;object-fit:contain;"></span>'
+          ).join('');
+          grid.appendChild(cell(icons, 'display:flex;flex-wrap:wrap;gap:2px;align-items:center;justify-content:center;min-height:19px;background:#120d08;border-radius:2px;'));
+        });
+      });
+      host.appendChild(grid);
+    };
     window.__console = window.__console || {};
     window.__console.rotation = renderRotation;
+    window.__console.buffMatrix = renderBuffMatrix;
     // Static default (replaced live by console_data.js when the sim is available)
     renderRotation(
       [{name:'Maneater',el:'void'},{name:'Ninja',el:'magic'},{name:'Geomancer',el:'force'},{name:'Demytha',el:'void'},{name:"Ma'Shalled",el:'spirit'}],
