@@ -817,16 +817,49 @@ document.addEventListener("DOMContentLoaded", function() {
             const tc = colorOf(t.name);
             const pct = Math.round((t.dealt || 0) / totalDealt * 100);
             const por = t.type_id ? '<img src="assets/heroes/' + t.type_id + '.png" alt="" onerror="this.style.visibility=\'hidden\'" style="width:34px;height:34px;border-radius:5px;object-fit:cover;border:1px solid #2c241a;flex:none;">' : '<span style="display:inline-block;width:34px;height:34px;border-radius:5px;background:#1a150e;flex:none;"></span>';
-            return '<div style="background:#15110b;border:1px solid #2c241a;border-top:2px solid ' + tc.b + ';border-radius:5px;padding:12px 13px;">' +
+            // Expandable detail: full Total Stats grid + the saved CB preset rotation.
+            const s = t.stats, seq = t.sequence;
+            const hasDetail = !!(s || (seq && ((seq.opening||[]).length || (seq.priority||[]).length)));
+            let detail = '';
+            if (hasDetail) {
+              const lbl = (k,v) => '<div style="display:flex;justify-content:space-between;gap:6px;"><span style="color:#6f6555;">' + k + '</span><span style="color:#e8dcc4;">' + v + '</span></div>';
+              let grid = '';
+              if (s) {
+                const pc = x => Math.round((x||0)*100) + '%';
+                grid = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 12px;font-family:\'JetBrains Mono\',monospace;font-size:9px;margin-top:9px;">' +
+                  lbl('SPD', s.SPD) + lbl('ACC', s.ACC) +
+                  lbl('HP', fmtN(s.HP)) + lbl('RES', s.RES) +
+                  lbl('ATK', fmtN(s.ATK)) + lbl('C.RATE', pc(s.CR)) +
+                  lbl('DEF', fmtN(s.DEF)) + lbl('C.DMG', pc(s.CD)) + '</div>';
+              }
+              let seqHtml = '';
+              if (seq && ((seq.opening||[]).length || (seq.priority||[]).length)) {
+                const op = (seq.opening||[]).length ? '<span style="color:#6fcf6f;">' + seq.opening.join('›') + '</span> · ' : '';
+                const pr = (seq.priority||[]).join(' › ');
+                seqHtml = '<div style="margin-top:9px;font-family:\'JetBrains Mono\',monospace;font-size:8px;color:#6f6555;letter-spacing:.1em;text-transform:uppercase;">Preset</div>' +
+                  '<div style="font-family:\'JetBrains Mono\',monospace;font-size:9px;color:#c8b89a;margin-top:2px;">' + op + pr + '</div>';
+              }
+              detail = '<div class="hx" style="display:none;border-top:1px solid #2c241a;margin-top:9px;padding-top:2px;">' + grid + seqHtml + '</div>';
+            }
+            const caret = hasDetail ? '<span class="hxc" style="margin-left:auto;color:#6f6555;font-size:9px;flex:none;">▾</span>' : '';
+            const cur = hasDetail ? 'cursor:pointer;' : '';
+            const click = hasDetail ? ' onclick="var d=this.querySelector(\'.hx\'),c=this.querySelector(\'.hxc\');var o=d.style.display===\'none\';d.style.display=o?\'block\':\'none\';if(c)c.textContent=o?\'▴\':\'▾\';"' : '';
+            return '<div' + click + ' style="background:#15110b;border:1px solid #2c241a;border-top:2px solid ' + tc.b + ';border-radius:5px;padding:12px 13px;' + cur + '">' +
               '<div style="display:flex;align-items:center;gap:9px;">' + por +
-              '<div style="font-family:Cinzel,serif;font-size:13px;color:#f3ead8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + t.name + '</div></div>' +
+              '<div style="font-family:Cinzel,serif;font-size:13px;color:#f3ead8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + t.name + '</div>' + caret + '</div>' +
               '<div style="margin-top:10px;font-family:\'JetBrains Mono\',monospace;font-size:8px;letter-spacing:.1em;color:#6f6555;text-transform:uppercase;">Dealt</div>' +
               '<div style="font-family:Cinzel,serif;font-size:18px;color:#d8a657;">' + fmtN(t.dealt || 0) + ' <span style="font-size:10px;color:#6f6555;">' + pct + '%</span></div>' +
               '<div style="height:5px;background:#241d15;border-radius:3px;overflow:hidden;margin:4px 0 9px;"><div style="height:100%;width:' + pct + '%;background:' + tc.b + ';"></div></div>' +
               '<div style="font-family:\'JetBrains Mono\',monospace;font-size:8px;letter-spacing:.1em;color:#6f6555;text-transform:uppercase;">Taken</div>' +
               '<div style="font-family:Cinzel,serif;font-size:14px;color:#c25a3a;">' + fmtN(t.received || 0) + '</div>' +
+              detail +
               '</div>';
           }).join('');
+          // Static-capture mode: expand all cards so screenshots show the detail.
+          if (typeof CAPTURE !== 'undefined' && CAPTURE) {
+            teamHost.querySelectorAll('.hx').forEach(d => { d.style.display = 'block'; });
+            teamHost.querySelectorAll('.hxc').forEach(c => { c.textContent = '▴'; });
+          }
         } else {
           teamHost.style.cssText = 'display:none;';
           teamHost.innerHTML = '';

@@ -254,7 +254,18 @@
   // battle log (window.__replayFile). Re-loads only when the mode/file changes.
   window.__replayFile = null;
   var _tmKey = null;
+  var _tmInit = false;
   window.__loadTmGrid = function () {
+    // On the very first load, honour a ?replay deep-link BEFORE the default sim
+    // fetch can start — otherwise the slow sim load can resolve last and paint
+    // over the replay (and a refresh would drop back to the sim plan).
+    if (!_tmInit) {
+      _tmInit = true;
+      if (!window.__replayFile) {
+        var rp0 = (location.search.match(/[?&]replay=([^&]+)/) || [])[1];
+        if (rp0) window.__replayFile = decodeURIComponent(rp0);
+      }
+    }
     var key = window.__replayFile ? "replay:" + window.__replayFile : "sim";
     if (_tmKey === key) return;
     _tmKey = key;

@@ -381,6 +381,62 @@ def _skill_alias(h, prev_sk, is_boss) -> str:
     return "A1"
 
 
+_STAT_KEYS = ["HP", "ATK", "DEF", "SPD", "RES", "ACC", "CR", "CD"]
+
+
+def _team_extras(root: Path, type_ids: list, names: list) -> tuple[dict, dict]:
+    """(stats_by_type_id, sequence_by_name) for the header cards.
+
+    stats: the game's *Total Stats* per hero (base_computed + every column
+    bonus summed) from hero_computed_stats.json, keyed by type_id. CR/CD are
+    kept as fractions (0..n) — the frontend renders them as percentages.
+    sequence: the saved CB preset's opener + skill priority per hero, via
+    preset_loader (live /presets); empty when no preset/mod is available."""
+    stats_by_tid: dict = {}
+    try:
+        comp = {h["id"]: h for h in
+                json.loads((root / "hero_computed_stats.json").read_text()).get("heroes", [])
+                if isinstance(h, dict) and "id" in h}
+        roster = json.loads((root / "heroes_all.json").read_text())
+        roster = roster if isinstance(roster, list) else roster.get("heroes", [])
+        # type_id -> roster instances; pick the geared/levelled one that also
+        # has computed stats (max level then grade) so dupes resolve sensibly.
+        # Key by NORMALISED type id (//10 drops the ascension digit) — the
+        # battle log stores e.g. 1070 while the roster has 1076 for the same hero.
+        by_type: dict = {}
+        for h in roster:
+            if isinstance(h, dict) and h.get("type_id") and h.get("id") in comp:
+                by_type.setdefault(int(h["type_id"]) // 10, []).append(h)
+        for tid in set(t for t in type_ids if t):
+            cands = by_type.get(int(tid) // 10) or []
+            if not cands:
+                continue
+            best = max(cands, key=lambda h: (h.get("level", 0), h.get("grade", 0)))
+            row = comp[best["id"]]
+            total = {}
+            for k in _STAT_KEYS:
+                s = 0.0
+                for fld, v in row.items():
+                    if fld.endswith("_bonus") or fld == "base_computed":
+                        if isinstance(v, dict):
+                            s += float(v.get(k, 0) or 0)
+                total[k] = round(s, 2) if k in ("CR", "CD") else int(round(s))
+            stats_by_tid[tid] = total
+    except Exception:
+        pass
+
+    seq_by_name: dict = {}
+    try:
+        from tools import preset_loader
+        plan = preset_loader.load_preset_for_team([n for n in names if n]) or {}
+        for nm, p in plan.items():
+            seq_by_name[nm] = {"opening": p.get("opening") or [],
+                               "priority": p.get("priority") or []}
+    except Exception:
+        pass
+    return stats_by_tid, seq_by_name
+
+
 def build_replay(root: Path, log_path: Path, name_map: dict | None = None,
                  max_rows: int = 600) -> dict:
     """Parse one battle log into a tm_grid-shaped replay."""
@@ -546,6 +602,9 @@ def build_replay(root: Path, log_path: Path, name_map: dict | None = None,
         if not r["is_boss_turn"]:
             dealt_by[r["actor"]] += r["damage"]
     recv = (overlay or {}).get("received", {})
+    stats_by_tid, seq_by_name = _team_extras(
+        root, [type_ids.get(c) for c in columns if c != BOSS_NAME],
+        [c for c in columns if c != BOSS_NAME])
     team = []
     for col in columns:
         if col == BOSS_NAME:
@@ -553,7 +612,9 @@ def build_replay(root: Path, log_path: Path, name_map: dict | None = None,
         tid = type_ids.get(col)
         team.append({"name": col, "type_id": tid,
                      "dealt": dealt_by.get(col, 0),
-                     "received": int(recv.get((tid or 0) // 10, 0))})
+                     "received": int(recv.get((tid or 0) // 10, 0)),
+                     "stats": stats_by_tid.get(tid),
+                     "sequence": seq_by_name.get(col)})
 
     return {
         "columns": columns,
