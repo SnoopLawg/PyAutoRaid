@@ -125,9 +125,9 @@
                 : fx.some(function (e) { return e.kind === "debuff"; }) ? "a3"
                 : fx.some(function (e) { return e.kind === "buff"; }) ? "a2"
                 : styleKey(t.skill);
+          var icons = fx.map(function (e) { return e.icon; }).filter(Boolean);
           return {
-            kind: "action", c: ci, s: t.skill, l: label, k: k,
-            cd: cd, typeId: ids[t.actor] || null, idx: SKILL_IDX[t.skill] || null,
+            kind: "action", c: ci, s: t.skill, l: label, k: k, cd: cd, icons: icons,
           };
         }).filter(Boolean);
         return { label: bt === 0 ? "Opener" : "Round " + bt, items: items };

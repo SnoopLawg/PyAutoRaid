@@ -982,34 +982,54 @@ _PARITY_CACHE: dict = {}
 _PARITY_LOCK = threading.Lock()
 _PARITY_TTL = 3600.0
 
-# DWJ effect-name -> (friendly label, kind) for the rotation grid's per-cast
-# buff/debuff readout. kind: "def" (protective buff, green), "buff" (offensive/
-# utility buff, gold), "debuff" (placed on enemy, red). Names not listed are
-# pure scheduler mechanics (extend_buff, reduce_cd, ...) and aren't shown — they
-# modify existing statuses rather than applying a new one.
+# DWJ effect-name -> (friendly label, kind, icon) for the rotation grid's
+# per-cast buff/debuff readout. kind: "def" (protective buff, green), "buff"
+# (offensive/utility buff, gold), "debuff" (placed on enemy, red). icon is the
+# game-truth effect icon name (= effects.json KindId, file
+# gui/dashboard/assets/effects/<icon>.png); None for instant effects with no
+# status icon (TM swing, instant heal, extra turn). Names not listed are pure
+# scheduler mechanics (extend_buff, reduce_cd, ...) and aren't shown.
 _DWJ_EFFECT_LABELS = {
     # protective buffs
-    "unkillable": ("Unkillable", "def"), "block_dmg": ("Block Damage", "def"),
-    "block_debuff": ("Block Debuffs", "def"), "shield": ("Shield", "def"),
-    "continuous_heal": ("Heal/turn", "def"), "Heal": ("Heal", "def"),
-    "allyprotect": ("Ally Protect", "def"), "reflect": ("Reflect Dmg", "def"),
-    "counter_atk": ("Counterattack", "def"), "pveil": ("Perfect Veil", "def"),
-    "rod": ("Revive on Death", "def"), "taunt": ("Taunt", "def"),
+    "unkillable": ("Unkillable", "def", "Unkillable"),
+    "block_dmg": ("Block Damage", "def", "BlockDamage"),
+    "block_debuff": ("Block Debuffs", "def", "BlockDebuff"),
+    "shield": ("Shield", "def", "Shield"),
+    "continuous_heal": ("Heal/turn", "def", "ContinuousHeal"),
+    "Heal": ("Heal", "def", None),
+    "allyprotect": ("Ally Protect", "def", "ShareDamage"),
+    "reflect": ("Reflect Dmg", "def", "ReflectDamage"),
+    "counter_atk": ("Counterattack", "def", "StatusCounterattack"),
+    "pveil": ("Perfect Veil", "def", "Invisible"),
+    "rod": ("Revive on Death", "def", "ReviveOnDeath"),
+    "taunt": ("Taunt", "def", "Taunt"),
     # offensive / utility buffs
-    "atkup": ("Inc ATK", "buff"), "defup": ("Inc DEF", "buff"),
-    "speedup": ("Inc SPD", "buff"), "tm_up": ("TM Boost", "buff"),
-    "crit_dmg_up": ("Inc C.DMG", "buff"), "crit_rate_up": ("Inc C.RATE", "buff"),
-    "accup": ("Inc ACC", "buff"), "str": ("Strengthen", "buff"),
-    "allyatk": ("Ally Attack", "buff"), "extra_turn": ("Extra Turn", "buff"),
+    "atkup": ("Inc ATK", "buff", "StatusIncreaseAttack"),
+    "defup": ("Inc DEF", "buff", "StatusIncreaseDefence"),
+    "speedup": ("Inc SPD", "buff", "StatusIncreaseSpeed"),
+    "tm_up": ("TM Boost", "buff", None),
+    "crit_dmg_up": ("Inc C.DMG", "buff", "StatusIncreaseCriticalDamage"),
+    "crit_rate_up": ("Inc C.RATE", "buff", "StatusIncreaseCriticalChance"),
+    "accup": ("Inc ACC", "buff", "StatusIncreaseAccuracy"),
+    "str": ("Strengthen", "buff", None),
+    "allyatk": ("Ally Attack", "buff", None),
+    "extra_turn": ("Extra Turn", "buff", None),
     # debuffs
-    "atkdown": ("Dec ATK", "debuff"), "defdown": ("Dec DEF", "debuff"),
-    "acc_down": ("Dec ACC", "debuff"), "speeddown": ("Dec SPD", "debuff"),
-    "tm_down": ("TM Drain", "debuff"), "weak": ("Weaken", "debuff"),
-    "poison": ("Poison", "debuff"), "hpburn": ("HP Burn", "debuff"),
-    "poison_sense": ("Poison Sens.", "debuff"), "heal_reduction": ("Heal Reduc.", "debuff"),
-    "fear": ("Fear", "debuff"), "freeze": ("Freeze", "debuff"),
-    "sleep": ("Sleep", "debuff"), "stun": ("Stun", "debuff"),
-    "blockbuff": ("Block Buffs", "debuff"),
+    "atkdown": ("Dec ATK", "debuff", "StatusReduceAttack"),
+    "defdown": ("Dec DEF", "debuff", "StatusReduceDefence"),
+    "acc_down": ("Dec ACC", "debuff", "StatusReduceAccuracy"),
+    "speeddown": ("Dec SPD", "debuff", "StatusReduceSpeed"),
+    "tm_down": ("TM Drain", "debuff", None),
+    "weak": ("Weaken", "debuff", "IncreaseDamageTaken"),
+    "poison": ("Poison", "debuff", "ContinuousDamage"),
+    "hpburn": ("HP Burn", "debuff", "AoEContinuousDamage"),
+    "poison_sense": ("Poison Sens.", "debuff", "IncreasePoisoning"),
+    "heal_reduction": ("Heal Reduc.", "debuff", "BlockHeal"),
+    "fear": ("Fear", "debuff", "Fear"),
+    "freeze": ("Freeze", "debuff", "Freeze"),
+    "sleep": ("Sleep", "debuff", "Sleep"),
+    "stun": ("Stun", "debuff", "Stun"),
+    "blockbuff": ("Block Buffs", "debuff", "BlockBuffs"),
 }
 
 
@@ -1032,7 +1052,7 @@ def _dwj_cast_effects(dwj, variant):
                 if meta is None:
                     continue
                 labels.append({"label": meta[0], "kind": meta[1],
-                               "turns": e.turns or 0})
+                               "icon": meta[2], "turns": e.turns or 0})
             if labels:
                 out[(s.name, sk.alias)] = labels
     return out

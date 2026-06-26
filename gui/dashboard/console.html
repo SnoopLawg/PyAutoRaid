@@ -684,16 +684,20 @@ document.addEventListener("DOMContentLoaded", function() {
         turn++;
         const ch = champs[a.c] || {};
         const s = sty[a.k] || sty.a1;
-        const sk = (a.typeId && a.idx) ? '<img src="assets/skills/' + a.typeId + '_s' + a.idx + '.png" alt="" onerror="this.style.display=\'none\'" style="width:15px;height:15px;object-fit:contain;border-radius:2px;flex:none;">' : '';
+        // Buff/debuff effect icons this cast applies (game-truth), in place of
+        // the skill icon. Plain attacks with no status apply nothing.
+        const fxIcons = (a.icons || []).slice(0, 3).map(ic =>
+          '<img src="assets/effects/' + ic + '.png" alt="" title="' + ic + '" onerror="this.style.display=\'none\'" style="width:17px;height:17px;object-fit:contain;flex:none;">'
+        ).join('');
         const cd = a.cd ? '<span style="font-family:\'JetBrains Mono\',monospace;font-size:7px;color:#7a6f5c;border:1px solid #2c241a;border-radius:2px;padding:0 3px;flex:none;">' + a.cd + '</span>' : '';
-        const fx = a.l ? '<span style="font-family:Spectral,serif;font-size:11px;color:' + s[2] + ';flex:1;">' + a.l + '</span>' : '<span style="flex:1;"></span>';
+        const mid = '<span style="flex:1;display:flex;align-items:center;gap:5px;min-width:0;">' + fxIcons +
+          (a.l ? '<span style="font-family:Spectral,serif;font-size:11px;color:' + s[2] + ';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + a.l + '</span>' : '') + '</span>';
         list.appendChild(cell(
           '<span style="font-family:\'JetBrains Mono\',monospace;font-size:9px;color:#6f6555;width:24px;flex:none;">T' + turn + '</span>' +
           heroIcon(ch) +
           '<span style="font-family:Cinzel,serif;font-size:11px;color:#cdbfa6;width:78px;flex:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + (ch.name || '') + '</span>' +
-          sk +
           '<span style="font-family:\'JetBrains Mono\',monospace;font-size:10px;font-weight:700;color:' + s[3] + ';width:22px;flex:none;">' + a.s + '</span>' +
-          fx + cd,
+          mid + cd,
           'display:flex;align-items:center;gap:7px;padding:5px 8px;background:' + s[0] + ';border:1px solid ' + s[1] + ';border-left:3px solid ' + s[3] + ';border-radius:3px;' + (a.k === 'def' ? 'box-shadow:0 0 11px -4px rgba(111,207,111,.6);' : '')));
       };
       const bossBand = (txt) => list.appendChild(cell(
