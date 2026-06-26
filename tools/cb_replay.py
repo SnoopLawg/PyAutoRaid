@@ -110,12 +110,16 @@ def _merge_effects(held, placed):
     contributed nothing, so callers fall back to the battle-log eff decode."""
     if held is None and placed is None:
         return None
+    hmap = {fx["icon"]: fx for fx in (held or [])}
     merged = {}
     for fx in (held or []):
         merged[fx["icon"]] = {**fx, "state": "held",
                               "faded": int(fx.get("rem") or 0) <= 1}
     for fx in (placed or []):
-        merged[fx["icon"]] = {**fx, "state": "new"}
+        # A placed buff usually appears in the same-turn snapshot too — inherit
+        # its turns-left so the cast turn shows the full duration, not a bare 0.
+        rem = int((hmap.get(fx["icon"]) or {}).get("rem") or fx.get("rem") or 0)
+        merged[fx["icon"]] = {**fx, "state": "new", "rem": rem}
     return list(merged.values())
 
 

@@ -867,16 +867,22 @@ document.addEventListener("DOMContentLoaded", function() {
         // still held (turns-left badge), dimmed = expiring next turn or resisted
         // (red X). Buffs/debuffs come from the tick log (placed + held uptime).
         const icons = (actCell.effects || []).slice(0, 8).map(fx => {
-          const dim = (fx.failed || fx.faded) ? 'opacity:.45;' : '';
+          const expiring = !fx.failed && fx.state === 'held' && fx.rem <= 1;
+          // green ring = placed this turn, blue ring = still held; only resisted
+          // (X) icons are dimmed — a buff on its LAST turn is still active, so
+          // it stays full-opacity with an amber turns-left badge instead.
           const ring = fx.failed ? '' : fx.state === 'new'
             ? 'box-shadow:0 0 0 1px #6fcf6f,0 0 3px rgba(111,207,111,.7);'
-            : fx.state === 'held' ? 'box-shadow:0 0 0 1px #4a86c5;' : '';
-          const img = '<img src="assets/effects/' + fx.icon + '.png" alt="" onerror="this.style.display=\'none\'" style="width:14px;height:14px;object-fit:contain;' + dim + '">';
-          const badge = (fx.state === 'held' && fx.rem > 1)
-            ? '<span style="position:absolute;right:-3px;bottom:-3px;font-family:\'JetBrains Mono\',monospace;font-size:7px;line-height:1;color:#f3ead8;background:#0c0a07;border-radius:2px;padding:0 1px;">' + fx.rem + '</span>' : '';
+            : 'box-shadow:0 0 0 1px ' + (expiring ? '#c98a2e' : '#4a86c5') + ';';
+          const img = '<img src="assets/effects/' + fx.icon + '.png" alt="" onerror="this.style.display=\'none\'" style="width:14px;height:14px;object-fit:contain;' + (fx.failed ? 'opacity:.5;' : '') + '">';
+          // turns-left badge on every timed effect (incl. its last turn); amber
+          // when 1 turn remains so you can see exactly when it drops.
+          const badge = (fx.rem > 0 && !fx.failed)
+            ? '<span style="position:absolute;right:-3px;bottom:-3px;font-family:\'JetBrains Mono\',monospace;font-size:7px;line-height:1;color:' + (expiring ? '#f0c060' : '#f3ead8') + ';background:#0c0a07;border-radius:2px;padding:0 1px;">' + fx.rem + '</span>' : '';
           const x = fx.failed
             ? '<span style="position:absolute;inset:-1px;display:flex;align-items:center;justify-content:center;color:#e8505a;font-size:15px;font-weight:900;text-shadow:0 0 2px #000;">&#10005;</span>' : '';
-          const title = fx.label + (fx.state === 'held' && fx.rem ? ' — ' + fx.rem + 'T left' : '');
+          const verb = fx.state === 'new' ? 'cast' : 'held';
+          const title = fx.label + (fx.rem ? ' — ' + verb + ', ' + fx.rem + 'T left' : (fx.failed ? ' — resisted' : ''));
           return '<span title="' + title + '" style="position:relative;display:inline-flex;line-height:0;border-radius:3px;' + ring + '">' + img + badge + x + '</span>';
         }).join('');
         const rowEl = cell(
