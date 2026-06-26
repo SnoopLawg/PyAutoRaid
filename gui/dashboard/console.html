@@ -790,23 +790,32 @@ document.addEventListener("DOMContentLoaded", function() {
       const tids = g.column_type_ids || {};
       const fxBorder = (st) => st === 'new' ? 'border:1px solid #6fcf6f;'
         : (st === 'held' ? 'border:1px solid #5a8cdc;' : 'opacity:.4;border:1px solid #2c241a;');
+      const portraitOf = (name, size) => (name === 'Demon Lord' || name === 'Clanboss')
+        ? '<span style="color:#c25a3a;font-size:' + size + 'px;line-height:1;">&#9760;</span>'
+        : (tids[name] ? '<img src="assets/heroes/' + tids[name] + '.png" alt="" onerror="this.style.visibility=\'hidden\'" style="width:' + size + 'px;height:' + size + 'px;border-radius:3px;object-fit:cover;border:1px solid #2c241a;flex:none;">' : '<span style="display:inline-block;width:' + size + 'px;height:' + size + 'px;border-radius:3px;background:#1a150e;flex:none;"></span>');
       const grid = document.createElement('div');
-      grid.style.cssText = 'display:grid;grid-template-columns:30px repeat(' + cols.length + ',1fr);gap:3px;align-items:stretch;';
+      grid.style.cssText = 'display:grid;grid-template-columns:96px repeat(' + cols.length + ',1fr);gap:3px;align-items:stretch;';
       // header: champion / boss portraits
-      grid.appendChild(cell('', ''));
+      grid.appendChild(cell('<span style="font-family:\'JetBrains Mono\',monospace;font-size:7px;letter-spacing:.1em;color:#6f6555;">TURN / ACTS</span>',
+        'display:flex;align-items:flex-end;padding-bottom:5px;'));
       cols.forEach(c => {
         const isBoss = c === 'Demon Lord';
-        const icon = isBoss
-          ? '<span style="color:#c25a3a;font-size:14px;">&#9760;</span>'
-          : (tids[c] ? '<img src="assets/heroes/' + tids[c] + '.png" alt="" onerror="this.style.visibility=\'hidden\'" style="width:20px;height:20px;border-radius:3px;object-fit:cover;border:1px solid #2c241a;">' : '<span style="width:20px;height:20px;"></span>');
         grid.appendChild(cell(
-          icon + '<span style="font-family:Cinzel,serif;font-size:9px;color:#cdbfa6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;">' + (isBoss ? 'Boss' : c) + '</span>',
+          portraitOf(c, 20) + '<span style="font-family:Cinzel,serif;font-size:9px;color:#cdbfa6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;">' + (isBoss ? 'Boss' : c) + '</span>',
           'display:flex;flex-direction:column;align-items:center;gap:2px;padding-bottom:5px;'));
       });
       // turn rows
       g.rows.forEach(r => {
-        grid.appendChild(cell('T' + r.turn,
-          'display:flex;align-items:center;justify-content:center;font-family:\'JetBrains Mono\',monospace;font-size:8px;color:' + (r.danger ? '#e8896f' : '#6f6555') + ';'));
+        const actorName = r.actor === 'Clanboss' ? 'Demon Lord' : r.actor;
+        const actCell = (r.cells || []).find(c => c.acting) || {};
+        const actSkill = actCell.skill || '';
+        const skillCol = r.is_boss_turn ? '#e8896f' : '#6fcf6f';
+        grid.appendChild(cell(
+          '<span style="font-family:\'JetBrains Mono\',monospace;font-size:8px;color:' + (r.danger ? '#e8896f' : '#6f6555') + ';flex:none;width:16px;">T' + r.turn + '</span>' +
+          portraitOf(actorName, 15) +
+          '<span style="font-family:Cinzel,serif;font-size:9.5px;color:#e7dcc6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0;">' + (actorName === 'Demon Lord' ? 'Boss' : actorName) + '</span>' +
+          (actSkill ? '<span style="font-family:\'JetBrains Mono\',monospace;font-size:8px;font-weight:700;color:' + skillCol + ';flex:none;">' + actSkill + '</span>' : ''),
+          'display:flex;align-items:center;gap:4px;' + (r.danger ? 'background:rgba(196,72,52,.12);border-radius:3px;' : '')));
         r.cells.forEach((cl, ci) => {
           const col = cols[ci];
           const barCol = cl.acting ? '#6fcf6f' : (cl.tm >= 100 ? '#d8a657' : '#4f6076');
