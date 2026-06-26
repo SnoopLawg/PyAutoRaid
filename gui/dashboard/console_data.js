@@ -69,11 +69,71 @@
     });
   }
 
+  // ---- panel: DWJ-style rotation grid (live calc-parity sim) --------------
+  var SKILL_IDX = { A1: 1, A2: 2, A3: 3, A4: 4 };
+  function styleKey(alias) {
+    if (alias === "A2") return "a2";
+    if (alias === "A3" || alias === "A4") return "a3";
+    return "a1";
+  }
+  function bossSkillLabel(sk) {
+    if (!sk) return "acts";
+    if (/aoe/i.test(sk)) return "AoE slam · " + sk;
+    return sk;
+  }
+  function wireRotation() {
+    if (!window.__console || !window.__console.rotation) return Promise.resolve();
+    return getJSON("/api/calc-parity-sim").then(function (d) {
+      if (!d || d.error || !d.variant || !Array.isArray(d.timeline)) return;
+      var ids = d.actor_type_ids || {};
+      var slots = d.variant.slots || [];
+      var champs = slots.map(function (s) {
+        return { name: s.name, typeId: ids[s.name] || null };
+      });
+      // alias -> cooldown per slot, so we can chip the real CD on each cast.
+      var cdmap = {};
+      slots.forEach(function (s) {
+        var m = {};
+        (s.skill_configs || []).forEach(function (c) { m[c.alias] = c.cooldown; });
+        cdmap[s.name] = m;
+      });
+      var slotIndex = function (name) {
+        for (var i = 0; i < slots.length; i++) if (slots[i].name === name) return i;
+        return -1;
+      };
+      // Group the flat timeline by boss turn; show the opening + first 7 rounds
+      // (enough to see the full speed cycle before it repeats).
+      var byBt = {}, order = [];
+      d.timeline.forEach(function (t) {
+        if (byBt[t.boss_turn] === undefined) { byBt[t.boss_turn] = []; order.push(t.boss_turn); }
+        byBt[t.boss_turn].push(t);
+      });
+      var groups = order.slice(0, 8).map(function (bt) {
+        var items = byBt[bt].map(function (t) {
+          if (t.actor === "Clanboss") return { kind: "boss", text: bossSkillLabel(t.skill) };
+          var ci = slotIndex(t.actor);
+          if (ci < 0) return null;
+          var cd = (cdmap[t.actor] && cdmap[t.actor][t.skill] > 0) ? "CD " + cdmap[t.actor][t.skill] : "";
+          return {
+            kind: "action", c: ci, s: t.skill, l: "", k: styleKey(t.skill),
+            cd: cd, typeId: ids[t.actor] || null, idx: SKILL_IDX[t.skill] || null,
+          };
+        }).filter(Boolean);
+        return { label: bt === 0 ? "Opener" : "Round " + bt, items: items };
+      });
+      var survived = d.boss_turn_count || order.length;
+      var footer = "↻ cycle repeats · " + (d.variant.name || "tune") +
+                   " · survives to boss turn " + survived;
+      window.__console.rotation(champs, groups, footer);
+    });
+  }
+
   // ---- refresh loop -------------------------------------------------------
   function refreshAll() {
     // Each panel is independent; a failure in one must not stop the others.
     wireResources().catch(function () {});
     wireCB().catch(function () {});
+    wireRotation().catch(function () {});
   }
 
   document.addEventListener("DOMContentLoaded", function () {

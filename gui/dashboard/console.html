@@ -660,33 +660,41 @@ document.addEventListener("DOMContentLoaded", function() {
       area: drawArea,
     };
 
-    // Deadwood-Jedi-style speed-tune rotation chart
-    const buildRotation = () => {
+    // Deadwood-Jedi-style speed-tune rotation chart.
+    // Data-driven so console_data.js can re-feed it with the live calc-parity
+    // sim. champs = [{name, el?, typeId?}]; groups = [{label, items}] where each
+    // item is {kind:'action', c, s, l, k, cd, typeId, idx} or {kind:'boss', text}.
+    const sty = { a1:['#1f1a12','#2c241a','#948876','#8a7c64'], a2:['#261c0e','#4a3a1a','#e6c87a','#d8a657'], a3:['#2a1712','#4a2a22','#e8a888','#e08a6a'], def:['#14210f','#2f5a2a','#cfeac0','#6fcf6f'] };
+    const cell = (html, css) => { const d = document.createElement('div'); d.style.cssText = css; if (html != null) d.innerHTML = html; return d; };
+    const renderRotation = (champs, groups, footer) => {
       const host = document.getElementById('rotationGrid');
       if (!host) return;
       host.innerHTML = '';
       const grid = document.createElement('div');
       grid.style.cssText = 'display:grid;grid-template-columns:42px repeat(5,1fr);gap:5px;align-items:stretch;';
-      const champs = [['Maneater','void'],['Ninja','magic'],['Geomancer','force'],['Demytha','void'],["Ma'Shalled",'spirit']];
-      const sty = { a1:['#1f1a12','#2c241a','#948876','#8a7c64'], a2:['#261c0e','#4a3a1a','#e6c87a','#d8a657'], a3:['#2a1712','#4a2a22','#e8a888','#e08a6a'], def:['#14210f','#2f5a2a','#cfeac0','#6fcf6f'] };
-      const cell = (html, css) => { const d = document.createElement('div'); d.style.cssText = css; if (html != null) d.innerHTML = html; return d; };
       // header
       grid.appendChild(cell('TURN', 'display:flex;align-items:flex-end;justify-content:center;padding-bottom:5px;font-family:\'JetBrains Mono\',monospace;font-size:8px;letter-spacing:.08em;color:#6f6555;'));
-      champs.forEach(([n, el]) => grid.appendChild(cell(
-        '<img src="assets/ui/' + el + '.png" alt="" style="width:15px;height:15px;object-fit:contain;"><span style="font-family:Cinzel,serif;font-size:9.5px;color:#cdbfa6;line-height:1;text-align:center;">' + n + '</span>',
-        'display:flex;flex-direction:column;align-items:center;gap:3px;padding-bottom:5px;')));
+      champs.forEach(ch => {
+        const icon = ch.typeId
+          ? '<img src="assets/heroes/' + ch.typeId + '.png" alt="" onerror="this.style.visibility=\'hidden\'" style="width:22px;height:22px;object-fit:cover;border-radius:3px;border:1px solid #2c241a;">'
+          : (ch.el ? '<img src="assets/ui/' + ch.el + '.png" alt="" style="width:15px;height:15px;object-fit:contain;">' : '<span style="width:15px;height:15px;"></span>');
+        grid.appendChild(cell(
+          icon + '<span style="font-family:Cinzel,serif;font-size:9.5px;color:#cdbfa6;line-height:1;text-align:center;">' + ch.name + '</span>',
+          'display:flex;flex-direction:column;align-items:center;gap:3px;padding-bottom:5px;'));
+      });
       let turn = 0;
       const band = (txt, css) => { const b = cell(txt, css); b.style.gridColumn = '1 / -1'; grid.appendChild(b); };
-      const roundLabel = (n) => band('Round ' + n, 'font-family:\'JetBrains Mono\',monospace;font-size:8px;letter-spacing:.18em;color:#5a4d3c;text-transform:uppercase;padding:5px 2px 1px;');
+      const roundLabel = (lbl) => band(lbl, 'font-family:\'JetBrains Mono\',monospace;font-size:8px;letter-spacing:.18em;color:#5a4d3c;text-transform:uppercase;padding:5px 2px 1px;');
       const addAction = (a) => {
         turn++;
         grid.appendChild(cell('T' + turn, 'display:flex;align-items:center;justify-content:center;font-family:\'JetBrains Mono\',monospace;font-size:10px;color:#6f6555;'));
         for (let i = 0; i < 5; i++) {
           if (a.c === i) {
-            const s = sty[a.k];
+            const s = sty[a.k] || sty.a1;
             const cd = a.cd ? '<span style="font-family:\'JetBrains Mono\',monospace;font-size:7px;color:#7a6f5c;border:1px solid #2c241a;border-radius:2px;padding:0 3px;">' + a.cd + '</span>' : '';
+            const sk = (a.typeId && a.idx) ? '<img src="assets/skills/' + a.typeId + '_s' + a.idx + '.png" alt="" onerror="this.style.display=\'none\'" style="width:13px;height:13px;object-fit:contain;border-radius:2px;vertical-align:middle;margin-right:3px;">' : '';
             grid.appendChild(cell(
-              '<div style="display:flex;align-items:center;justify-content:space-between;gap:3px;"><span style="font-family:\'JetBrains Mono\',monospace;font-size:10px;font-weight:700;color:' + s[3] + ';">' + a.s + (a.k === 'def' ? ' ◆' : '') + '</span>' + cd + '</div><div style="font-family:Spectral,serif;font-size:10px;color:' + s[2] + ';line-height:1.12;">' + a.l + '</div>',
+              '<div style="display:flex;align-items:center;justify-content:space-between;gap:3px;"><span style="font-family:\'JetBrains Mono\',monospace;font-size:10px;font-weight:700;color:' + s[3] + ';">' + sk + a.s + (a.k === 'def' ? ' ◆' : '') + '</span>' + cd + '</div>' + (a.l ? '<div style="font-family:Spectral,serif;font-size:10px;color:' + s[2] + ';line-height:1.12;">' + a.l + '</div>' : ''),
               'background:' + s[0] + ';border:1px solid ' + s[1] + ';border-radius:3px;padding:5px 6px;display:flex;flex-direction:column;gap:2px;' + (a.k === 'def' ? 'box-shadow:0 0 11px -3px rgba(111,207,111,.65);' : '')));
           } else {
             grid.appendChild(cell('·', 'display:flex;align-items:center;justify-content:center;color:#352d22;font-size:12px;'));
@@ -694,18 +702,26 @@ document.addEventListener("DOMContentLoaded", function() {
         }
       };
       const bossBand = (txt) => band(
-        '<div style="display:flex;align-items:center;gap:9px;"><span style="color:#c25a3a;font-size:13px;">&#9760;</span><span style="font-family:Cinzel,serif;font-size:12.5px;color:#f0c9bf;">Demon Lord — AoE slam</span><span style="flex:1;"></span><span style="font-family:\'JetBrains Mono\',monospace;font-size:8.5px;letter-spacing:.05em;color:#0c0a07;background:#6fcf6f;border-radius:2px;padding:2px 7px;font-weight:700;">PROTECTED</span><span style="font-family:\'JetBrains Mono\',monospace;font-size:8.5px;color:#7d8f6a;">' + txt + '</span></div>',
+        '<div style="display:flex;align-items:center;gap:9px;"><span style="color:#c25a3a;font-size:13px;">&#9760;</span><span style="font-family:Cinzel,serif;font-size:12.5px;color:#f0c9bf;">Demon Lord</span><span style="flex:1;"></span><span style="font-family:\'JetBrains Mono\',monospace;font-size:8.5px;color:#7d8f6a;">' + txt + '</span></div>',
         'background:#0c0a07;border-left:2px solid #c25a3a;border-radius:3px;padding:8px 11px;margin:3px 0;');
-      const rounds = [
-        { actions: [ {c:0,s:'A2',l:'Unkillable',k:'def'}, {c:1,s:'A3',l:'HP Burn',k:'a3'}, {c:2,s:'A3',l:'Poison',k:'a3'}, {c:4,s:'A2',l:'Counter',k:'a2'}, {c:3,s:'A3',l:'Block Dmg',k:'def'} ], boss:'Unkillable + Block Damage' },
-        { actions: [ {c:0,s:'A1',l:'Attack',cd:'UK 2',k:'a1'}, {c:1,s:'A1',l:'Attack',cd:'A3 3',k:'a1'}, {c:2,s:'A2',l:'Weaken',k:'a2'}, {c:4,s:'A3',l:'Poison',k:'a3'}, {c:3,s:'A1',l:'Attack',cd:'BD 2',k:'a1'} ], boss:'Unkillable refreshed' },
-      ];
-      rounds.forEach((r, i) => { roundLabel(i + 1); r.actions.forEach(addAction); bossBand(r.boss); });
+      groups.forEach(g => {
+        roundLabel(g.label);
+        g.items.forEach(it => { if (it.kind === 'boss') bossBand(it.text); else addAction(it); });
+      });
       host.appendChild(grid);
-      host.appendChild(cell('&#8635; rotation repeats from Round 1 · 0 protection gaps over 50 turns',
+      host.appendChild(cell(footer || '&#8635; rotation repeats from Round 1',
         'text-align:center;font-family:\'JetBrains Mono\',monospace;font-size:9px;letter-spacing:.08em;color:#6f6555;margin-top:10px;'));
     };
-    buildRotation();
+    window.__console = window.__console || {};
+    window.__console.rotation = renderRotation;
+    // Static default (replaced live by console_data.js when the sim is available)
+    renderRotation(
+      [{name:'Maneater',el:'void'},{name:'Ninja',el:'magic'},{name:'Geomancer',el:'force'},{name:'Demytha',el:'void'},{name:"Ma'Shalled",el:'spirit'}],
+      [
+        { label:'Round 1', items:[ {kind:'action',c:0,s:'A2',l:'Unkillable',k:'def'}, {kind:'action',c:1,s:'A3',l:'HP Burn',k:'a3'}, {kind:'action',c:2,s:'A3',l:'Poison',k:'a3'}, {kind:'action',c:4,s:'A2',l:'Counter',k:'a2'}, {kind:'action',c:3,s:'A3',l:'Block Dmg',k:'def'}, {kind:'boss',text:'Unkillable + Block Damage'} ] },
+        { label:'Round 2', items:[ {kind:'action',c:0,s:'A1',l:'Attack',cd:'UK 2',k:'a1'}, {kind:'action',c:1,s:'A1',l:'Attack',cd:'A3 3',k:'a1'}, {kind:'action',c:2,s:'A2',l:'Weaken',k:'a2'}, {kind:'action',c:4,s:'A3',l:'Poison',k:'a3'}, {kind:'action',c:3,s:'A1',l:'Attack',cd:'BD 2',k:'a1'}, {kind:'boss',text:'Unkillable refreshed'} ] },
+      ],
+      '&#8635; rotation repeats from Round 1 · 0 protection gaps over 50 turns');
 
     // embers
     const c = document.getElementById('embers');
@@ -741,11 +757,14 @@ document.addEventListener("DOMContentLoaded", function() {
       window.scrollTo(0, 0);
     };
     document.querySelectorAll('.navitem').forEach(n => {
-      n.addEventListener('click', () => setView(n.getAttribute('data-view')));
+      n.addEventListener('click', () => { location.hash = n.getAttribute('data-view'); setView(n.getAttribute('data-view')); });
     });
     document.querySelectorAll('[data-goto]').forEach(card => {
-      card.addEventListener('click', () => setView(card.getAttribute('data-goto')));
+      card.addEventListener('click', () => { location.hash = card.getAttribute('data-goto'); setView(card.getAttribute('data-goto')); });
     });
+    // Deep-linkable views: #cb, #dungeons, etc. select that view on load.
+    window.addEventListener('hashchange', () => { const v = (location.hash || '').replace('#', ''); if (v) setView(v); });
+    (() => { const v = (location.hash || '').replace('#', ''); if (v) setView(v); })();
 
     // CB interactions
     const toast = (msg) => {
