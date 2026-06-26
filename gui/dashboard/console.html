@@ -666,49 +666,44 @@ document.addEventListener("DOMContentLoaded", function() {
     // item is {kind:'action', c, s, l, k, cd, typeId, idx} or {kind:'boss', text}.
     const sty = { a1:['#1f1a12','#2c241a','#948876','#8a7c64'], a2:['#261c0e','#4a3a1a','#e6c87a','#d8a657'], a3:['#2a1712','#4a2a22','#e8a888','#e08a6a'], def:['#14210f','#2f5a2a','#cfeac0','#6fcf6f'] };
     const cell = (html, css) => { const d = document.createElement('div'); d.style.cssText = css; if (html != null) d.innerHTML = html; return d; };
+    // DWJ cast-timeline layout: one stacked row per hero turn (portrait, skill,
+    // effects), with the Demon Lord's turns as full-width bands between them.
     const renderRotation = (champs, groups, footer) => {
       const host = document.getElementById('rotationGrid');
       if (!host) return;
       host.innerHTML = '';
-      const grid = document.createElement('div');
-      grid.style.cssText = 'display:grid;grid-template-columns:42px repeat(5,1fr);gap:5px;align-items:stretch;';
-      // header
-      grid.appendChild(cell('TURN', 'display:flex;align-items:flex-end;justify-content:center;padding-bottom:5px;font-family:\'JetBrains Mono\',monospace;font-size:8px;letter-spacing:.08em;color:#6f6555;'));
-      champs.forEach(ch => {
-        const icon = ch.typeId
-          ? '<img src="assets/heroes/' + ch.typeId + '.png" alt="" onerror="this.style.visibility=\'hidden\'" style="width:22px;height:22px;object-fit:cover;border-radius:3px;border:1px solid #2c241a;">'
-          : (ch.el ? '<img src="assets/ui/' + ch.el + '.png" alt="" style="width:15px;height:15px;object-fit:contain;">' : '<span style="width:15px;height:15px;"></span>');
-        grid.appendChild(cell(
-          icon + '<span style="font-family:Cinzel,serif;font-size:9.5px;color:#cdbfa6;line-height:1;text-align:center;">' + ch.name + '</span>',
-          'display:flex;flex-direction:column;align-items:center;gap:3px;padding-bottom:5px;'));
-      });
+      const list = document.createElement('div');
+      list.style.cssText = 'display:flex;flex-direction:column;gap:4px;';
       let turn = 0;
-      const band = (txt, css) => { const b = cell(txt, css); b.style.gridColumn = '1 / -1'; grid.appendChild(b); };
-      const roundLabel = (lbl) => band(lbl, 'font-family:\'JetBrains Mono\',monospace;font-size:8px;letter-spacing:.18em;color:#5a4d3c;text-transform:uppercase;padding:5px 2px 1px;');
+      const roundLabel = (lbl) => list.appendChild(cell(lbl,
+        'font-family:\'JetBrains Mono\',monospace;font-size:8px;letter-spacing:.18em;color:#5a4d3c;text-transform:uppercase;padding:7px 2px 2px;'));
+      const heroIcon = (ch) => (ch && ch.typeId)
+        ? '<img src="assets/heroes/' + ch.typeId + '.png" alt="" onerror="this.style.visibility=\'hidden\'" style="width:22px;height:22px;object-fit:cover;border-radius:3px;border:1px solid #2c241a;flex:none;">'
+        : ((ch && ch.el) ? '<img src="assets/ui/' + ch.el + '.png" alt="" style="width:18px;height:18px;object-fit:contain;flex:none;">' : '<span style="width:22px;flex:none;"></span>');
       const addAction = (a) => {
         turn++;
-        grid.appendChild(cell('T' + turn, 'display:flex;align-items:center;justify-content:center;font-family:\'JetBrains Mono\',monospace;font-size:10px;color:#6f6555;'));
-        for (let i = 0; i < 5; i++) {
-          if (a.c === i) {
-            const s = sty[a.k] || sty.a1;
-            const cd = a.cd ? '<span style="font-family:\'JetBrains Mono\',monospace;font-size:7px;color:#7a6f5c;border:1px solid #2c241a;border-radius:2px;padding:0 3px;">' + a.cd + '</span>' : '';
-            const sk = (a.typeId && a.idx) ? '<img src="assets/skills/' + a.typeId + '_s' + a.idx + '.png" alt="" onerror="this.style.display=\'none\'" style="width:13px;height:13px;object-fit:contain;border-radius:2px;vertical-align:middle;margin-right:3px;">' : '';
-            grid.appendChild(cell(
-              '<div style="display:flex;align-items:center;justify-content:space-between;gap:3px;"><span style="font-family:\'JetBrains Mono\',monospace;font-size:10px;font-weight:700;color:' + s[3] + ';">' + sk + a.s + (a.k === 'def' ? ' ◆' : '') + '</span>' + cd + '</div>' + (a.l ? '<div style="font-family:Spectral,serif;font-size:10px;color:' + s[2] + ';line-height:1.12;">' + a.l + '</div>' : ''),
-              'background:' + s[0] + ';border:1px solid ' + s[1] + ';border-radius:3px;padding:5px 6px;display:flex;flex-direction:column;gap:2px;' + (a.k === 'def' ? 'box-shadow:0 0 11px -3px rgba(111,207,111,.65);' : '')));
-          } else {
-            grid.appendChild(cell('·', 'display:flex;align-items:center;justify-content:center;color:#352d22;font-size:12px;'));
-          }
-        }
+        const ch = champs[a.c] || {};
+        const s = sty[a.k] || sty.a1;
+        const sk = (a.typeId && a.idx) ? '<img src="assets/skills/' + a.typeId + '_s' + a.idx + '.png" alt="" onerror="this.style.display=\'none\'" style="width:15px;height:15px;object-fit:contain;border-radius:2px;flex:none;">' : '';
+        const cd = a.cd ? '<span style="font-family:\'JetBrains Mono\',monospace;font-size:7px;color:#7a6f5c;border:1px solid #2c241a;border-radius:2px;padding:0 3px;flex:none;">' + a.cd + '</span>' : '';
+        const fx = a.l ? '<span style="font-family:Spectral,serif;font-size:11px;color:' + s[2] + ';flex:1;">' + a.l + '</span>' : '<span style="flex:1;"></span>';
+        list.appendChild(cell(
+          '<span style="font-family:\'JetBrains Mono\',monospace;font-size:9px;color:#6f6555;width:24px;flex:none;">T' + turn + '</span>' +
+          heroIcon(ch) +
+          '<span style="font-family:Cinzel,serif;font-size:11px;color:#cdbfa6;width:78px;flex:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + (ch.name || '') + '</span>' +
+          sk +
+          '<span style="font-family:\'JetBrains Mono\',monospace;font-size:10px;font-weight:700;color:' + s[3] + ';width:22px;flex:none;">' + a.s + '</span>' +
+          fx + cd,
+          'display:flex;align-items:center;gap:7px;padding:5px 8px;background:' + s[0] + ';border:1px solid ' + s[1] + ';border-left:3px solid ' + s[3] + ';border-radius:3px;' + (a.k === 'def' ? 'box-shadow:0 0 11px -4px rgba(111,207,111,.6);' : '')));
       };
-      const bossBand = (txt) => band(
-        '<div style="display:flex;align-items:center;gap:9px;"><span style="color:#c25a3a;font-size:13px;">&#9760;</span><span style="font-family:Cinzel,serif;font-size:12.5px;color:#f0c9bf;">Demon Lord</span><span style="flex:1;"></span><span style="font-family:\'JetBrains Mono\',monospace;font-size:8.5px;color:#7d8f6a;">' + txt + '</span></div>',
-        'background:#0c0a07;border-left:2px solid #c25a3a;border-radius:3px;padding:8px 11px;margin:3px 0;');
+      const bossBand = (txt) => list.appendChild(cell(
+        '<span style="color:#c25a3a;font-size:13px;">&#9760;</span><span style="font-family:Cinzel,serif;font-size:12.5px;color:#f0c9bf;">Demon Lord</span><span style="flex:1;"></span><span style="font-family:\'JetBrains Mono\',monospace;font-size:8.5px;color:#7d8f6a;">' + txt + '</span>',
+        'display:flex;align-items:center;gap:9px;background:#0c0a07;border-left:2px solid #c25a3a;border-radius:3px;padding:8px 11px;margin:3px 0;'));
       groups.forEach(g => {
         roundLabel(g.label);
         g.items.forEach(it => { if (it.kind === 'boss') bossBand(it.text); else addAction(it); });
       });
-      host.appendChild(grid);
+      host.appendChild(list);
       host.appendChild(cell(footer || '&#8635; rotation repeats from Round 1',
         'text-align:center;font-family:\'JetBrains Mono\',monospace;font-size:9px;letter-spacing:.08em;color:#6f6555;margin-top:10px;'));
     };
