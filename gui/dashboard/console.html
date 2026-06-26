@@ -271,8 +271,8 @@
         </div>
         <div style="flex:1;display:flex;flex-direction:column;gap:18px;">
           <div style="background:#15110b;border:1px solid #2c241a;border-radius:4px;padding:18px 20px;">
-            <div style="display:flex;justify-content:space-between;align-items:baseline;"><div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.18em;color:#a0734a;text-transform:uppercase;">CB Damage · 21 runs</div><div style="font-family:Cinzel,serif;font-size:14px;color:#d8a657;">peak 46M</div></div>
-            <svg id="cbBars" viewBox="0 0 600 120" preserveAspectRatio="none" style="width:100%;height:110px;margin-top:11px;display:block;"></svg>
+            <div style="display:flex;justify-content:space-between;align-items:baseline;"><div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.18em;color:#a0734a;text-transform:uppercase;">CB Damage · <span id="cbRuns">—</span> runs</div><div style="font-family:Cinzel,serif;font-size:14px;color:#d8a657;">peak <span id="cbPeak">—</span></div></div>
+            <svg id="cbBars" viewBox="0 0 600 90" preserveAspectRatio="none" style="width:100%;height:110px;margin-top:11px;display:block;"></svg>
           </div>
           <div style="background:#15110b;border:1px solid #2c241a;border-radius:4px;padding:16px 20px;">
             <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.18em;color:#a0734a;text-transform:uppercase;margin-bottom:11px;">Recent battles</div>
@@ -655,6 +655,7 @@ document.addEventListener("DOMContentLoaded", function() {
     // without reaching into this closure. Exposed read-only.
     window.__console = {
       cbBars: (arr) => drawBars('cbBars', arr, '#7a5a2e', '#e6b765'),
+      cbArea: (arr) => drawArea('cbBars', arr, '#e6b765', 'rgba(230,183,101,.16)'),
       area: drawArea,
     };
 

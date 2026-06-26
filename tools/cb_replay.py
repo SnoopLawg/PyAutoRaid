@@ -158,15 +158,24 @@ def build_replay(root: Path, log_path: Path, name_map: dict | None = None,
             # A cooldown skill flipping ready->not-ready means it was just cast;
             # this is captured a poll BEFORE turn_n increments, so stash it and
             # attribute it to the next action by this unit (A1 has no cooldown).
+            # At first sight, a cooldown skill already on cooldown = the opener.
             cur_rdy = {int(s.get("t")): bool(s.get("rdy")) for s in (h.get("sk") or []) if s.get("t") is not None}
-            prev_rdy = last_rdy.get(uid, {})
+            prev_rdy = last_rdy.get(uid)
+            first_seen = prev_rdy is None
             for t, rdy in cur_rdy.items():
-                if prev_rdy.get(t) and not rdy and (int(t) % 10) != 1:
+                if (int(t) % 10) == 1:
+                    continue
+                if first_seen and not rdy:
+                    pending[uid] = "A" + str(int(t) % 10)
+                elif prev_rdy and prev_rdy.get(t) and not rdy:
                     pending[uid] = "A" + str(int(t) % 10)
             last_rdy[uid] = cur_rdy
 
-            prev = last_tn.get(uid)
-            if prev is not None and tn > prev and len(rows) < max_rows:
+            # Units begin the fight at turn 0; using 0 (not None) as the implicit
+            # previous turn catches each unit's FIRST/opener action even when the
+            # first poll already shows it at turn_n >= 1 (the fast champions).
+            prev = last_tn.get(uid, 0)
+            if tn > prev and len(rows) < max_rows:
                 is_boss = h.get("side") == "enemy"
                 actor = BOSS_NAME if is_boss else id_to_name.get(
                     uid, name_map.get(h.get("type_id"), f"#{uid}"))

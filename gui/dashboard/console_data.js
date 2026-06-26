@@ -59,14 +59,7 @@
         setText("cbTodayDmg", fmtAbbrev(today));
         setText("tmDamage", fmtAbbrev(today));   // turn-by-turn page "Today" stat
       }
-      // Re-feed the damage bar chart with the real per-key (or daily) series,
-      // scaled to millions so the design's bar geometry stays comparable.
-      var series = Array.isArray(cb.bars) && cb.bars.length ? cb.bars
-                 : (Array.isArray(cb.daily) ? cb.daily.map(function (d) { return d.dmg; }) : []);
-      series = series.filter(function (v) { return v != null; }).map(function (v) { return v / 1e6; });
-      if (series.length && window.__console && window.__console.cbBars) {
-        window.__console.cbBars(series);
-      }
+      // (The CB Damage chart is fed from /api/cb-battles in wireRecentBattles.)
     });
   }
 
@@ -220,6 +213,13 @@
         row.addEventListener("mouseenter", function () { row.style.background = "#1d1810"; });
         row.addEventListener("mouseleave", function () { row.style.background = "transparent"; });
       });
+      // Feed the CB Damage chart with the recent battles' damage as a filled
+      // area line (oldest -> newest, left -> right).
+      var series = bs.map(function (b) { return (b.damage || 0) / 1e6; }).reverse();
+      if (series.length && window.__console && window.__console.cbArea) window.__console.cbArea(series);
+      setText("cbRuns", String(bs.length));
+      var peak = bs.reduce(function (m, b) { return Math.max(m, b.damage || 0); }, 0);
+      setText("cbPeak", fmtAbbrev(peak));
     });
   }
 
