@@ -145,8 +145,17 @@
     // Each panel is independent; a failure in one must not stop the others.
     wireResources().catch(function () {});
     wireCB().catch(function () {});
-    wireRotation().catch(function () {});
   }
+
+  // The turn-meter grid is built from /api/calc-parity-sim, which is ~35s cold.
+  // It only lives in the CB telemetry drawer, so load it lazily the first time
+  // the drawer is opened — never on initial page load.
+  var _tmLoaded = false;
+  window.__loadTmGrid = function () {
+    if (_tmLoaded) return;
+    _tmLoaded = true;
+    wireRotation().catch(function () { _tmLoaded = false; });
+  };
 
   document.addEventListener("DOMContentLoaded", function () {
     refreshAll();

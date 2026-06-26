@@ -768,11 +768,19 @@ def build_cb_last_run():
     )
 
 
+_CB_SUMMARY_CACHE: dict = {"ts": 0.0, "data": None}
+_CB_SUMMARY_TTL = 300.0
+
+
 def build_cb_summary():
     """Lightweight CB headline for the Console: today's damage, last-run damage,
     a per-key bar series, and the 7-day daily trend. Reads battle-log files +
-    the history snapshot only — no mod, no sim, no potential-teams build — so it
-    stays fast and works offline (unlike the heavy /api/state)."""
+    the history snapshot only — no mod, no sim, no potential-teams build. Cached
+    (5 min) because parsing the battle logs can take ~20s cold."""
+    now = time.time()
+    c = _CB_SUMMARY_CACHE
+    if c["data"] is not None and (now - c["ts"]) < _CB_SUMMARY_TTL:
+        return c["data"]
     last = build_cb_last_run() or {}
     last_run_dmg = int((last.get("last_run") or {}).get("damage") or 0)
     per_key = build_cb_per_key_history(days=7) or []
@@ -804,13 +812,15 @@ def build_cb_summary():
                     pass
         except Exception:
             pass
-    return {
+    result = {
         "damage_today": damage_today,
         "last_run_damage": last_run_dmg,
         "bars": bars,
         "daily": daily,
         "per_key_history": per_key,
     }
+    c["ts"], c["data"] = now, result
+    return result
 
 
 
@@ -3011,7 +3021,25 @@ def execute_champ_manager(body: dict):
     }
 
 
+_STATE_CACHE: dict = {"ts": 0.0, "data": None}
+_STATE_TTL = 20.0
+
+
 def build_state():
+    """Heavy full-dashboard snapshot (legacy Direction-B dashboard polls this
+    on a loop). Cached for a few seconds so a stray poller can't saturate the
+    server's GIL + the browser's per-host connection pool and starve the
+    Console's static assets."""
+    now = time.time()
+    c = _STATE_CACHE
+    if c["data"] is not None and (now - c["ts"]) < _STATE_TTL:
+        return c["data"]
+    c["data"] = _build_state_uncached()
+    c["ts"] = now
+    return c["data"]
+
+
+def _build_state_uncached():
     cb = build_cb_last_run()
     cb_damage = ((cb or {}).get("last_run") or {}).get("damage", 0)
     # Today's damage is the sum of all CB runs in the current CB window
@@ -3393,6 +3421,17 @@ class Handler(http.server.SimpleHTTPRequestHandler):
     def log_message(self, fmt, *args):
         logger.info("%s - %s", self.address_string(), fmt % args)
 
+    def end_headers(self):
+        # Always serve fresh HTML/JS (so a stale cached console_data.js can't
+        # keep hammering old endpoints), but let the browser cache the heavy
+        # image assets so reloads don't re-fetch hundreds of icons.
+        p = urllib.parse.urlparse(self.path).path.lower()
+        if p.endswith((".html", ".js", ".css")):
+            self.send_header("Cache-Control", "no-store, must-revalidate")
+        elif p.endswith((".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg", ".woff", ".woff2", ".ttf")):
+            self.send_header("Cache-Control", "public, max-age=86400")
+        super().end_headers()
+
     # ---- helpers --------------------------------------------------------
 
     @staticmethod
@@ -3508,6 +3547,19 @@ def main():
         except Exception as e:
             logger.info("tune-lab pre-warm failed: %s", e)
     threading.Thread(target=_prewarm_tunelab, daemon=True, name="tunelab-prewarm").start()
+
+    # Pre-warm the CB headline (battle-log parse) so the Console's CB card is
+    # served from cache. The calc-parity TM grid (~35s, GIL-heavy) is NOT pre-
+    # warmed: it lives only in the lazily-opened telemetry drawer, so warming it
+    # here would just starve the initial page + image loads for no benefit.
+    def _prewarm_cb():
+        try:
+            t0 = time.time()
+            build_cb_summary()
+            logger.info("cb-summary pre-warmed in %.1fs", time.time() - t0)
+        except Exception as e:
+            logger.info("cb-summary pre-warm failed: %s", e)
+    threading.Thread(target=_prewarm_cb, daemon=True, name="cb-prewarm").start()
 
     with ReusableServer(("", PORT), Handler) as httpd:
         try:

@@ -108,6 +108,10 @@ def per_key_history(root: Path, *, days: int = 7) -> list[dict]:
     from tools.cb_day import cb_day_for_timestamp, cb_day_today, cb_affinity_name
 
     name_map = hero_type_to_name(root)
+    # Only files whose CB-day falls inside the requested window are worth
+    # parsing. The glob can hold hundreds of multi-MB logs; statting the mtime
+    # is cheap, json.loads is not, so skip out-of-window files before reading.
+    earliest_day = cb_day_today() - datetime.timedelta(days=days - 1)
     by_day: dict[str, list[dict]] = defaultdict(list)
     for path in glob.glob(str(root / "battle_logs_cb_*.json")):
         name = Path(path).name
@@ -117,6 +121,8 @@ def per_key_history(root: Path, *, days: int = 7) -> list[dict]:
             mt = Path(path).stat().st_mtime
             cb_date = cb_day_for_timestamp(mt)
         except Exception:
+            continue
+        if cb_date < earliest_day:
             continue
         try:
             data = json.loads(Path(path).read_text())

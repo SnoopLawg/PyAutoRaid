@@ -944,6 +944,7 @@ document.addEventListener("DOMContentLoaded", function() {
       const d = document.getElementById('drawer'), bg = document.getElementById('drawerBg');
       if (bg) bg.style.display = 'block';
       if (d) d.style.transform = 'translateX(0)';
+      if (window.__loadTmGrid) window.__loadTmGrid();   // lazy: ~35s cold sim, drawer-only
       document.querySelectorAll('.tbar').forEach(b => { b.style.width = '0'; });
       setTimeout(() => { document.querySelectorAll('.tbar').forEach(b => { b.style.width = (b.getAttribute('data-w') || 0) + '%'; }); }, 90);
     };
