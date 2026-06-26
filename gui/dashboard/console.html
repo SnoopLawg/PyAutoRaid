@@ -819,17 +819,20 @@ document.addEventListener("DOMContentLoaded", function() {
         r.cells.forEach((cl, ci) => {
           const col = cols[ci];
           const barCol = cl.acting ? '#6fcf6f' : (cl.tm >= 100 ? '#d8a657' : '#4f6076');
-          const top = cl.acting
-            ? '<span style="font-family:\'JetBrains Mono\',monospace;font-size:7.5px;font-weight:700;color:#6fcf6f;">&#9656; ' + (cl.skill || '') + '</span>'
-            : '<span style="font-family:\'JetBrains Mono\',monospace;font-size:7.5px;color:#6f6555;">' + cl.raw_tm + '</span>';
+          // The acting unit shows its skill inside the bar; everyone else shows
+          // their turn-meter value inside the bar (right-aligned).
+          const inBar = cl.acting ? ('▸ ' + (cl.skill || '')) : String(cl.raw_tm);
+          const inBarColor = cl.acting ? '#0c0a07' : '#e7dcc6';
           const icons = (cl.effects || []).slice(0, 4).map(fx =>
             '<span title="' + fx.label + (fx.rem ? ' ' + fx.rem + 'T' : '') + '" style="display:inline-flex;border-radius:2px;' + fxBorder(fx.state) + '"><img src="assets/effects/' + fx.icon + '.png" alt="" onerror="this.style.display=\'none\'" style="width:11px;height:11px;object-fit:contain;"></span>'
           ).join('');
           const danger = r.danger && col === 'Demon Lord';
           grid.appendChild(cell(
-            '<div style="display:flex;justify-content:space-between;align-items:center;min-height:9px;">' + top + '</div>' +
-            '<div style="height:4px;background:#241d15;border-radius:2px;overflow:hidden;margin:2px 0;"><div style="height:100%;width:' + cl.tm + '%;background:' + barCol + ';"></div></div>' +
-            (icons ? '<div style="display:flex;flex-wrap:wrap;gap:1px;">' + icons + '</div>' : ''),
+            '<div style="position:relative;height:13px;background:#1c160e;border:1px solid #241d15;border-radius:3px;overflow:hidden;">' +
+              '<div style="position:absolute;left:0;top:0;bottom:0;width:' + cl.tm + '%;background:' + barCol + ';"></div>' +
+              '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:flex-end;padding:0 4px;font-family:\'JetBrains Mono\',monospace;font-size:8px;font-weight:' + (cl.acting ? '700' : '400') + ';color:' + inBarColor + ';text-shadow:0 0 2px rgba(0,0,0,.55);">' + inBar + '</div>' +
+            '</div>' +
+            (icons ? '<div style="display:flex;flex-wrap:wrap;gap:1px;margin-top:2px;">' + icons + '</div>' : ''),
             'padding:3px 4px;border-radius:3px;border-left:2px solid ' + (cl.acting ? '#6fcf6f' : 'transparent') + ';background:' + (danger ? 'rgba(196,72,52,.18)' : (cl.acting ? 'rgba(111,207,111,.10)' : '#120d08')) + ';'));
         });
       });
