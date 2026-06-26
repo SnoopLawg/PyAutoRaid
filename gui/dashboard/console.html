@@ -718,10 +718,11 @@ document.addEventListener("DOMContentLoaded", function() {
       host.appendChild(cell(footer || '&#8635; rotation repeats from Round 1',
         'text-align:center;font-family:\'JetBrains Mono\',monospace;font-size:9px;letter-spacing:.08em;color:#6f6555;margin-top:10px;'));
     };
-    // DWJ-style buff/debuff uptime matrix. m = {boss_turns:[...], rows:[{name,
-    // type_id, is_boss, cells:[ [{icon,label,kind,state}], ... per boss turn ]}]}.
+    // DWJ-style buff/debuff uptime matrix. m = {boss_turns, col_meta:[{turn,
+    // boss, damaging, covered, danger}], protection_gaps, rows:[{name, type_id,
+    // is_boss, cells:[ [{icon,label,kind,state,rem}], ... per boss turn ]}]}.
     // state: 'new' (cast this turn, green), 'held' (carried, blue), 'expiring'
-    // (last active turn, faded).
+    // (last active turn, faded). danger column = boss AoE with a protection gap.
     const renderBuffMatrix = (m) => {
       const host = document.getElementById('buffMatrix');
       if (!host) return;
@@ -731,11 +732,20 @@ document.addEventListener("DOMContentLoaded", function() {
         return;
       }
       const cols = m.boss_turns || [];
+      const meta = m.col_meta || cols.map(t => ({ turn: t }));
+      const bossAbbrev = (b) => !b ? '' : (/aoe2/i.test(b) ? 'AoE2' : /aoe/i.test(b) ? 'AoE1' : b.replace(/^STUN$/i, 'Stun'));
       const grid = document.createElement('div');
-      grid.style.cssText = 'display:grid;grid-template-columns:82px repeat(' + cols.length + ',minmax(26px,1fr));gap:3px;align-items:stretch;';
+      grid.style.cssText = 'display:grid;grid-template-columns:82px repeat(' + cols.length + ',minmax(28px,1fr));gap:3px;align-items:stretch;';
       grid.appendChild(cell('', ''));   // corner
-      cols.forEach(t => grid.appendChild(cell(t === 0 ? 'Op' : ('T' + t),
-        'text-align:center;font-family:\'JetBrains Mono\',monospace;font-size:8px;color:#6f6555;padding-bottom:3px;')));
+      meta.forEach(c => {
+        const head = (c.turn === 0 ? 'Op' : ('T' + c.turn)) +
+          (c.boss ? '<div style="font-size:7px;color:' + (c.danger ? '#e8896f' : '#7d8f6a') + ';">' + bossAbbrev(c.boss) + '</div>' : '');
+        const hcss = c.danger
+          ? 'background:rgba(196,72,52,.22);border-bottom:2px solid #c44834;'
+          : (c.damaging ? 'border-bottom:2px solid #3a5a32;' : '');
+        grid.appendChild(cell(head,
+          'text-align:center;font-family:\'JetBrains Mono\',monospace;font-size:8px;color:#6f6555;padding:1px 0 3px;border-radius:2px 2px 0 0;' + hcss));
+      });
       const stateCss = (st) => st === 'new'
         ? 'background:rgba(111,207,111,.22);border:1px solid #6fcf6f;'
         : (st === 'held' ? 'background:rgba(90,140,220,.20);border:1px solid #5a8cdc;'
@@ -747,14 +757,26 @@ document.addEventListener("DOMContentLoaded", function() {
         grid.appendChild(cell(
           portrait + '<span style="font-family:Cinzel,serif;font-size:9.5px;color:#cdbfa6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + r.name + '</span>',
           'display:flex;align-items:center;gap:4px;'));
-        (r.cells || []).forEach(cl => {
+        (r.cells || []).forEach((cl, ci) => {
           const icons = (cl || []).map(fx =>
-            '<span title="' + fx.label + '" style="display:inline-flex;border-radius:3px;padding:1px;' + stateCss(fx.state) + '"><img src="assets/effects/' + fx.icon + '.png" alt="" onerror="this.style.display=\'none\'" style="width:13px;height:13px;object-fit:contain;"></span>'
+            '<span title="' + fx.label + (fx.rem ? ' (' + fx.rem + 'T)' : '') + '" style="position:relative;display:inline-flex;border-radius:3px;padding:1px;' + stateCss(fx.state) + '">' +
+            '<img src="assets/effects/' + fx.icon + '.png" alt="" onerror="this.style.display=\'none\'" style="width:13px;height:13px;object-fit:contain;">' +
+            (fx.rem > 1 ? '<span style="position:absolute;right:-3px;bottom:-3px;font-family:\'JetBrains Mono\',monospace;font-size:7px;line-height:1;color:#f3ead8;background:#0c0a07;border-radius:2px;padding:0 1px;">' + fx.rem + '</span>' : '') +
+            '</span>'
           ).join('');
-          grid.appendChild(cell(icons, 'display:flex;flex-wrap:wrap;gap:2px;align-items:center;justify-content:center;min-height:19px;background:#120d08;border-radius:2px;'));
+          const danger = (meta[ci] && meta[ci].danger);
+          grid.appendChild(cell(icons, 'display:flex;flex-wrap:wrap;gap:2px;align-items:center;justify-content:center;min-height:19px;border-radius:2px;background:' + (danger ? 'rgba(196,72,52,.10)' : '#120d08') + ';'));
         });
       });
       host.appendChild(grid);
+      // Protection coverage summary
+      const gaps = m.protection_gaps || 0;
+      const dmgTurns = meta.filter(c => c.damaging).length;
+      host.appendChild(cell(
+        gaps > 0
+          ? '&#9888; ' + gaps + ' protection gap' + (gaps > 1 ? 's' : '') + ' — team eats a slam unmitigated'
+          : '&#10003; full protection coverage across ' + dmgTurns + ' boss slam' + (dmgTurns === 1 ? '' : 's'),
+        'margin-top:9px;text-align:center;font-family:\'JetBrains Mono\',monospace;font-size:9px;letter-spacing:.04em;color:' + (gaps > 0 ? '#e8896f' : '#6fcf6f') + ';'));
     };
     window.__console = window.__console || {};
     window.__console.rotation = renderRotation;

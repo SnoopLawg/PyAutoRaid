@@ -1068,14 +1068,18 @@ def _dwj_buff_matrix(dwj, variant, turns, max_cols: int = 10):
     heals, extra turns are excluded)."""
     from collections import defaultdict
     BOSS = "Demon Lord"
+    # Protective statuses that let the team survive a boss AoE slam.
+    PROTECTIVE = {"Unkillable", "BlockDamage", "Shield"}
     slot_names = [s.name for s in variant.slots]
     type_ids = _resolve_type_ids(slot_names)
     # apps[row_name][effect_name] = [{apply, dur, icon, label, kind}, ...]
     apps: dict = defaultdict(lambda: defaultdict(list))
+    boss_actions: dict = {}   # boss_turn -> skill alias (AOE1 / AOE2 / STUN ...)
     max_bt = 0
     for t in turns:
         max_bt = max(max_bt, t.boss_turn_number)
         if t.actor_name == "Clanboss":
+            boss_actions[t.boss_turn_number] = t.skill_alias
             continue
         ch = dwj.champion(t.actor_name)
         if ch is None:
@@ -1110,6 +1114,8 @@ def _dwj_buff_matrix(dwj, variant, turns, max_cols: int = 10):
     def covering(applist, t):
         return [a for a in applist if a["apply"] <= t <= a["apply"] + a["dur"] - 1]
 
+    # protected[champ_row][t] = True if a protective status is active that turn
+    protected: dict = defaultdict(dict)
     out_rows = []
     for rname in slot_names + [BOSS]:
         if rname not in apps:
@@ -1133,13 +1139,32 @@ def _dwj_buff_matrix(dwj, variant, turns, max_cols: int = 10):
                     state = "held"
                 else:
                     state = "expiring"
+                # turns left (incl. current) from the longest-lasting covering app
+                best = max(cov, key=lambda a: a["apply"] + a["dur"])
+                rem = best["apply"] + best["dur"] - t
                 cell.append({"icon": cov[0]["icon"], "label": cov[0]["label"],
-                             "kind": cov[0]["kind"], "state": state})
+                             "kind": cov[0]["kind"], "state": state, "rem": rem})
+                if rname != BOSS and cov[0]["icon"] in PROTECTIVE:
+                    protected[rname][t] = True
             cells.append(cell)
         out_rows.append({"name": rname, "is_boss": rname == BOSS,
                          "type_id": None if rname == BOSS else type_ids.get(rname),
                          "cells": cells})
-    return {"boss_turns": cols, "rows": out_rows}
+
+    # Per-column boss action + protection coverage. A boss turn is a "danger"
+    # turn when the boss does damage (AoE slam) and at least one champion has no
+    # protective status up — i.e. someone eats the hit unmitigated.
+    champ_rows = [r["name"] for r in out_rows if not r["is_boss"]]
+    col_meta = []
+    for t in cols:
+        boss = boss_actions.get(t)
+        damaging = bool(boss and "aoe" in boss.lower())
+        covered = all(protected.get(r, {}).get(t) for r in champ_rows) if champ_rows else False
+        col_meta.append({"turn": t, "boss": boss, "damaging": damaging,
+                         "covered": covered, "danger": damaging and not covered})
+    gaps = sum(1 for c in col_meta if c["danger"])
+    return {"boss_turns": cols, "col_meta": col_meta, "rows": out_rows,
+            "protection_gaps": gaps}
 
 
 def build_cb_parity_sim(hash_: str | None = None, max_boss_turns: int = 25):
