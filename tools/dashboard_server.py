@@ -2965,6 +2965,7 @@ GET_ROUTES = {
     "/api/state":                  lambda q: build_state(),
     "/api/schedule":               lambda q: {"tasks": list_scheduled_tasks()},
     "/api/run":                    lambda q: run_state(),
+    "/api/resources":              lambda q: build_resources() or {},
     "/api/sim-last-run":           lambda q: build_sim_last_run(),
     "/api/tune-library":           lambda q: build_tune_library(),
     "/api/sim-affinity-matrix":    lambda q: build_sim_affinity_matrix(),
