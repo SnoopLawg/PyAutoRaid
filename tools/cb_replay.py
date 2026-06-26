@@ -92,6 +92,73 @@ def _decode_eff(eff, emeta) -> list:
     return out
 
 
+def _tick_overlay(root: Path, ts: str) -> dict | None:
+    """From the matching tick_log_cb_<ts>.json, build each hero slot's ordered
+    per-action damage to the boss (their own hit + their own DoT/effect damage
+    accumulated since their last action) and the skill they cast. Damage is
+    attributed by the event's `producer` — so a poison/burn tick is credited to
+    the champion who applied it, never to whoever's turn it landed on."""
+    p = root / f"tick_log_cb_{ts}.json"
+    if not p.exists():
+        return None
+    try:
+        ticks = json.loads(p.read_text()).get("ticks", [])
+    except Exception:
+        return None
+    from collections import defaultdict
+    BOSS_SLOT = 5
+    # Key by NORMALISED type id (type_id // 10 drops the ascension digit), since
+    # the battle log's hero order differs from the tick log's slot order.
+    hit_by_tick: dict = defaultdict(lambda: defaultdict(int))
+    dot_by_tick: dict = defaultdict(lambda: defaultdict(int))
+    hit_ticks: dict = defaultdict(set)
+    slot_to_nt: dict = {}
+    max_tick = 0
+    for e in ticks:
+        if not isinstance(e, dict):
+            continue
+        tk = e.get("tick") or 0
+        max_tick = max(max_tick, tk)
+        if e.get("kind") == "damage" and e.get("target") == BOSS_SLOT:
+            pr, d, pt = e.get("producer"), int(e.get("dealt") or 0), e.get("p_typeid")
+            if pr is None or pr == BOSS_SLOT or pt is None:
+                continue
+            nt = int(pt) // 10
+            slot_to_nt[pr] = nt
+            if e.get("kind_id") == 6000:
+                hit_by_tick[tk][nt] += d
+                hit_ticks[nt].add(tk)
+            else:
+                dot_by_tick[tk][nt] += d
+    casts: dict = defaultdict(list)
+    for e in ticks:
+        if isinstance(e, dict) and e.get("kind") == "cast":
+            sl = e.get("producer_id")
+            nt = slot_to_nt.get(sl)
+            if nt is not None:
+                casts[nt].append((e.get("tick"), e.get("skill_type_id")))
+
+    out_dmg, out_skill = {}, {}
+    for nt in set(list(casts) + list(hit_ticks)):
+        # One entry per TURN (cast). Each turn absorbs ALL of this champion's
+        # boss damage — multi-hits, counters AND DoT ticks — since their last
+        # turn; the final turn also absorbs DoT that keeps ticking afterwards.
+        cast_list = sorted(casts.get(nt, []), key=lambda x: x[0])
+        if not cast_list:                       # damage but no cast (rare): one bucket
+            cast_list = [(min(hit_ticks[nt]), None)]
+        dmgs, sks, prev = [], [], -1
+        for i, (T, st) in enumerate(cast_list):
+            end = max_tick if i == len(cast_list) - 1 else T
+            tot = sum(hit_by_tick[tk].get(nt, 0) + dot_by_tick[tk].get(nt, 0)
+                      for tk in range(prev + 1, end + 1))
+            dmgs.append(tot)
+            sks.append("A" + str(int(st) % 10) if st else None)
+            prev = T
+        out_dmg[nt] = dmgs
+        out_skill[nt] = sks
+    return {"dmg": out_dmg, "skill": out_skill}
+
+
 def _skill_alias(h, prev_sk, is_boss) -> str:
     if is_boss:
         bt = int(h.get("turn_n") or 0)
@@ -135,6 +202,12 @@ def build_replay(root: Path, log_path: Path, name_map: dict | None = None,
                 id_to_name[h.get("id")] = nm
             break
     columns.append(BOSS_NAME)
+
+    # Accurate per-hero damage from the matching tick log (attributed by the
+    # damage event's producer). Falls back to boss-HP deltas if absent.
+    m = re.search(r"battle_logs_cb_(\d{8}_\d{6})", Path(log_path).name)
+    overlay = _tick_overlay(root, m.group(1)) if m else None
+    action_idx: dict = {}
 
     last_tn, last_rdy, pending = {}, {}, {}
     boss_prev_dmg = 0
@@ -189,6 +262,16 @@ def build_replay(root: Path, log_path: Path, name_map: dict | None = None,
                     skill = _skill_alias(h, None, True)
                 else:
                     skill = pending.pop(uid, None) or "A1"
+                    # Prefer the tick log's exact per-action damage + skill,
+                    # matched by normalised type id (slot orders differ).
+                    nt = int(h.get("type_id") or 0) // 10
+                    if overlay and nt in overlay["dmg"]:
+                        k = action_idx.get(nt, 0)
+                        action_idx[nt] = k + 1
+                        if k < len(overlay["dmg"][nt]):
+                            dmg = overlay["dmg"][nt][k]
+                        if k < len(overlay["skill"][nt]) and overlay["skill"][nt][k]:
+                            skill = overlay["skill"][nt][k]
                 eff_dec = _decode_eff(h.get("eff"), emeta)
                 cells = []
                 for col in columns:
