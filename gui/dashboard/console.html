@@ -863,9 +863,13 @@ document.addEventListener("DOMContentLoaded", function() {
         const actCell = (row.cells || []).find(x => x.acting) || {};
         const dmg = (row.damage != null && row.damage > 0)
           ? '<span style="font-family:\'JetBrains Mono\',monospace;font-size:9px;color:#f3ead8;flex:none;margin-right:8px;">' + fmtN(row.damage) + '</span>' : '';
-        const icons = (actCell.effects || []).slice(0, 7).map(fx =>
-          '<img src="assets/effects/' + fx.icon + '.png" alt="" title="' + fx.label + (fx.rem ? ' ' + fx.rem + 'T' : '') + '" onerror="this.style.display=\'none\'" style="width:14px;height:14px;object-fit:contain;' + (fx.state === 'expiring' ? 'opacity:.45;' : '') + (fx.state === 'new' ? 'filter:drop-shadow(0 0 2px #6fcf6f);' : '') + '">'
-        ).join('');
+        const icons = (actCell.effects || []).slice(0, 7).map(fx => {
+          const img = '<img src="assets/effects/' + fx.icon + '.png" alt="" title="' + fx.label + (fx.rem ? ' ' + fx.rem + 'T' : '') + '" onerror="this.style.display=\'none\'" style="width:14px;height:14px;object-fit:contain;' + (fx.failed ? 'opacity:.5;' : fx.state === 'expiring' ? 'opacity:.45;' : '') + (fx.state === 'new' && !fx.failed ? 'filter:drop-shadow(0 0 2px #6fcf6f);' : '') + '">';
+          // resisted/failed effect (e.g. a stun that missed): icon with a red X
+          return fx.failed
+            ? '<span style="position:relative;display:inline-flex;line-height:0;">' + img + '<span style="position:absolute;inset:-1px;display:flex;align-items:center;justify-content:center;color:#e8505a;font-size:15px;font-weight:900;text-shadow:0 0 2px #000;">&#10005;</span></span>'
+            : img;
+        }).join('');
         const rowEl = cell(
           portraitOf(name, 15) +
           '<span style="font-family:Cinzel,serif;font-size:11px;color:#f6efe0;flex:none;min-width:84px;text-shadow:0 1px 2px rgba(0,0,0,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + name + '</span>' +

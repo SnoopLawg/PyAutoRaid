@@ -164,7 +164,57 @@ def _tick_overlay(root: Path, ts: str) -> dict | None:
             prev = T
         out_dmg[nt] = dmgs
         out_skill[nt] = sks
-    return {"dmg": out_dmg, "skill": out_skill, "received": dict(received)}
+
+    # Boss stun targeting. Landed stuns are apply_status setype=10 (tgtT=target,
+    # fail=0). To also catch RESISTED stuns we learn the boss's stun skill id
+    # from the casts nearest the landed applies, then flag any cast of that
+    # skill with no matching landed apply as resisted. boss_turn from snapshots.
+    STUN = 10
+    boss_tn_at: dict = {}
+    for e in ticks:
+        if isinstance(e, dict) and "units" in e:
+            b = next((u for u in e["units"] if u.get("s") == "e"), None)
+            if b is not None:
+                boss_tn_at[e.get("tick") or 0] = b.get("tn")
+
+    def boss_turn_at(tk):
+        if tk in boss_tn_at:
+            return boss_tn_at[tk]
+        cands = [t for t in boss_tn_at if t <= tk]
+        return boss_tn_at[max(cands)] if cands else None
+
+    applies = [e for e in ticks if isinstance(e, dict) and e.get("kind") == "apply_status" and e.get("setype") == STUN]
+    casts_all = [e for e in ticks if isinstance(e, dict) and e.get("kind") == "cast" and e.get("producer_id") == BOSS_SLOT]
+    # learn the stun skill id (boss cast within 2 ticks of a landed stun apply)
+    from collections import Counter
+    skill_votes = Counter()
+    for a in applies:
+        near = [c for c in casts_all if abs((c.get("tick") or 0) - (a.get("tick") or 0)) <= 2]
+        for c in near:
+            skill_votes[c.get("skill_type_id")] += 1
+    stun_skill = skill_votes.most_common(1)[0][0] if skill_votes else None
+    stuns = []
+    seen_casts = set()
+    for c in casts_all:
+        if stun_skill is not None and c.get("skill_type_id") != stun_skill:
+            continue
+        tk = c.get("tick") or 0
+        if tk in seen_casts:
+            continue
+        seen_casts.add(tk)
+        tslot = c.get("target_id")
+        land = next((a for a in applies if abs((a.get("tick") or 0) - tk) <= 2
+                     and a.get("tgt") == tslot and not a.get("fail")), None)
+        if land is not None:
+            tnt = int(land.get("tgtT") or 0) // 10
+            landed = True
+        else:
+            tnt = slot_to_nt.get(tslot)
+            landed = False
+        if tnt:
+            stuns.append({"boss_turn": boss_turn_at(tk), "target_nt": tnt, "landed": landed})
+
+    return {"dmg": out_dmg, "skill": out_skill, "received": dict(received), "stuns": stuns}
 
 
 def _skill_alias(h, prev_sk, is_boss) -> str:
@@ -301,6 +351,30 @@ def build_replay(root: Path, log_path: Path, name_map: dict | None = None,
                     "is_boss_turn": is_boss, "damage": dmg, "danger": False, "cells": cells,
                 })
             last_tn[uid] = tn
+
+    # Boss stun: mark the victim's first turn at/after the stun with the Stun
+    # icon (X'd if the boss's stun was resisted — shows who was targeted either
+    # way). The turns right after a boss STUN are where this lands.
+    for s in (overlay or {}).get("stuns", []):
+        tnt, bt = s.get("target_nt"), s.get("boss_turn")
+        for r in rows:
+            if r["is_boss_turn"]:
+                continue
+            tid = type_ids.get(r["actor"])
+            if tid is None or (tid // 10) != tnt:
+                continue
+            if bt is not None and r["boss_turn"] < bt:
+                continue
+            if any(e.get("icon") == "Stun" for c in r["cells"] if c["acting"]
+                   for e in c.get("effects", [])):
+                continue   # already marked
+            ac = next((c for c in r["cells"] if c["acting"]), None)
+            if ac is not None:
+                ac["effects"] = (ac.get("effects") or []) + [{
+                    "icon": "Stun", "kind": "debuff", "state": "new", "rem": 0,
+                    "label": "Stunned" if s.get("landed") else "Stun resisted",
+                    "failed": not s.get("landed")}]
+            break
 
     # Team summary: per hero, damage dealt to boss + damage received from boss.
     from collections import defaultdict as _dd
