@@ -64,10 +64,6 @@
         <span class="navlabel" style="font-family:Spectral,serif;font-size:14px;color:#cdbfa6;flex:1;">Clan Boss</span>
         <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#6f6555;">1 key</span>
       </button>
-      <button class="navitem" data-view="cb-telemetry" style="display:flex;align-items:center;gap:11px;background:transparent;border:none;border-radius:5px;padding:8px 12px 8px 30px;cursor:pointer;text-align:left;width:100%;border-left:2px solid transparent;">
-        <span style="width:5px;height:5px;border-radius:50%;background:#5a8cdc;flex:none;"></span>
-        <span class="navlabel" style="font-family:Spectral,serif;font-size:13px;color:#a89b84;flex:1;">Turn-by-Turn</span>
-      </button>
       <button class="navitem" data-view="dungeons" style="display:flex;align-items:center;gap:11px;background:transparent;border:none;border-radius:5px;padding:10px 12px;cursor:pointer;text-align:left;width:100%;border-left:2px solid transparent;">
         <span style="width:7px;height:7px;border-radius:50%;background:#c44834;flex:none;box-shadow:0 0 7px #c44834;animation:blink-soft 2s ease-in-out infinite;"></span>
         <span class="navlabel" style="font-family:Spectral,serif;font-size:14px;color:#cdbfa6;flex:1;">Dungeons</span>
@@ -291,7 +287,7 @@
       <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;">
         <div>
           <button data-goto="cb" style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.16em;color:#a0734a;background:transparent;border:none;cursor:pointer;text-transform:uppercase;padding:0;">&#8592; Clan Boss</button>
-          <div style="font-family:Cinzel,serif;font-weight:700;font-size:30px;color:#f3ead8;margin-top:4px;">Turn-by-Turn Telemetry</div>
+          <div id="tmHeading" style="font-family:Cinzel,serif;font-weight:700;font-size:30px;color:#f3ead8;margin-top:4px;">Battle Replay</div>
         </div>
         <div style="display:flex;align-items:center;gap:11px;"><img id="tmAffinityIcon" src="assets/ui/void.png" alt="" style="width:24px;height:24px;"><span id="tmVariant" style="font-family:Cinzel,serif;font-weight:600;font-size:18px;color:#cdbfa6;">Myth Eater &middot; Void UNM</span></div>
       </div>
@@ -1000,7 +996,13 @@ document.addEventListener("DOMContentLoaded", function() {
     // Turn-by-turn telemetry is its own routed view (cb-telemetry); the CB
     // page's button + last-battle row navigate there. setView() lazy-loads the
     // sim and fires the damage bars (see the cb-telemetry branch above).
-    const goTelemetry = () => { location.hash = 'cb-telemetry'; setView('cb-telemetry'); };
+    window.__setView = setView;
+    const goTelemetry = () => {
+      window.__replayFile = null;
+      try { history.replaceState(null, '', location.pathname + '#cb-telemetry'); } catch (e) {}
+      setView('cb-telemetry');
+      if (window.__loadTmGrid) window.__loadTmGrid();
+    };
     const dBtn = document.getElementById('cbDrawerBtn');
     const dRow = document.getElementById('cbBattle');
     if (dBtn) dBtn.addEventListener('click', goTelemetry);

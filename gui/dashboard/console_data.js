@@ -150,6 +150,7 @@
     return s ? titleCase(s) : "";
   }
   function wireTelemetryHeader(d) {
+    setText("tmHeading", "Turn-by-Turn Plan");
     var v = d.variant || {};
     var aff = (v.boss_affinity || "").toLowerCase();
     setText("tmVariant", titleCase(v.slug || v.name || "tune") +
@@ -229,7 +230,7 @@
       if (!g || g.error || !g.rows) return;
       if (window.__console && window.__console.tmGrid) window.__console.tmGrid(g);
       var m = g.meta || {};
-      var team = (g.columns || []).filter(function (c) { return c !== "Demon Lord"; });
+      setText("tmHeading", "Battle Replay");
       setText("tmVariant", "Battle · " + (m.file || "").replace("battle_logs_cb_", "").replace(".json", ""));
       var affEl = document.getElementById("tmAffinityIcon"); if (affEl) affEl.src = "assets/ui/demon_lord.png";
       setText("tmDamage", fmtAbbrev(m.damage || 0));
@@ -262,7 +263,10 @@
   };
   window.__openReplay = function (file) {
     window.__replayFile = file;
-    location.hash = "cb-telemetry";
+    // Persist the replay in the URL (?replay=…#cb-telemetry) so a refresh keeps
+    // showing the same battle instead of falling back to the sim plan.
+    try { history.replaceState(null, "", location.pathname + "?replay=" + encodeURIComponent(file) + "#cb-telemetry"); } catch (e) {}
+    if (window.__setView) window.__setView("cb-telemetry"); else location.hash = "cb-telemetry";
     window.__loadTmGrid();
   };
 
