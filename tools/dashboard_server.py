@@ -1142,7 +1142,7 @@ def _dwj_cell_state(applist_map, rname, bt, is_boss):
     return out
 
 
-def _dwj_tm_grid(dwj, variant, turns, max_rows: int = 26):
+def _dwj_tm_grid(dwj, variant, turns, max_rows: int = 600):
     """DWJ-style turn-meter timeline. columns = champions + Demon Lord; rows =
     each turn in order. Every cell carries that unit's turn meter (0-100), an
     `acting` flag (turn order — the unit that took this turn, with its skill),

@@ -83,7 +83,7 @@
   }
   function wireRotation() {
     if (!window.__console || !window.__console.rotation) return Promise.resolve();
-    return getJSON("/api/calc-parity-sim").then(function (d) {
+    return getJSON("/api/calc-parity-sim?turns=50").then(function (d) {
       if (!d || d.error || !d.variant || !Array.isArray(d.timeline)) return;
       var ids = d.actor_type_ids || {};
       var slots = d.variant.slots || [];
