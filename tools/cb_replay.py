@@ -92,12 +92,29 @@ def _decode_eff(eff, emeta) -> list:
     return out
 
 
-def _tick_overlay(root: Path, ts: str) -> dict | None:
+def _apply_state(e) -> tuple[bool, bool]:
+    """(landed, failed) for an apply_status event, trusting the game's own
+    ApplyContext (ApplyResult / IsGuaranteedBlocked / IsEvaded) over the coarse
+    `fail` flag. failed => render the icon X'd (blocked/evaded/resisted)."""
+    args = e.get("args") or []
+    a0 = args[0] if args and isinstance(args[0], dict) else {}
+    ac = a0.get("ApplyContext") or {}
+    landed = bool(ac.get("ApplyResult")) if "ApplyResult" in ac else not e.get("fail")
+    blocked = bool(ac.get("IsGuaranteedBlocked")) or bool(a0.get("IsEvaded"))
+    return (landed and not blocked), (not landed) or blocked
+
+
+def _tick_overlay(root: Path, ts: str, emeta: dict | None = None) -> dict | None:
     """From the matching tick_log_cb_<ts>.json, build each hero slot's ordered
     per-action damage to the boss (their own hit + their own DoT/effect damage
     accumulated since their last action) and the skill they cast. Damage is
     attributed by the event's `producer` — so a poison/burn tick is credited to
-    the champion who applied it, never to whoever's turn it landed on."""
+    the champion who applied it, never to whoever's turn it landed on.
+
+    Also overlays the buffs/debuffs each champion PLACES on their action
+    (DWJ-style "green on the caster's turn") from the `apply_status` stream,
+    keyed the same way (normalised producer type id -> per-action list)."""
+    emeta = emeta or {}
     p = root / f"tick_log_cb_{ts}.json"
     if not p.exists():
         return None
@@ -146,24 +163,61 @@ def _tick_overlay(root: Path, ts: str) -> dict | None:
             if nt is not None:
                 casts[nt].append((e.get("tick"), e.get("skill_type_id")))
 
-    out_dmg, out_skill = {}, {}
-    for nt in set(list(casts) + list(hit_ticks)):
+    # Buffs/debuffs a champion PLACES, bucketed by tick under the producer's
+    # normalised type id. The slot->nt map is learned from boss-damage events, so
+    # also seed it from cast producers (a pure-support turn deals no boss damage).
+    for e in ticks:
+        if isinstance(e, dict) and e.get("kind") == "cast":
+            sl, pt = e.get("producer_id"), e.get("p_typeid") or e.get("producer_type")
+            if sl is not None and sl != BOSS_SLOT and pt and sl not in slot_to_nt:
+                slot_to_nt[sl] = int(pt) // 10
+    eff_by_tick: dict = defaultdict(lambda: defaultdict(list))   # nt -> tick -> [eff]
+    for e in ticks:
+        if not isinstance(e, dict) or e.get("kind") != "apply_status":
+            continue
+        pr, pt = e.get("prod"), e.get("prodT")
+        if pr is None or pr == BOSS_SLOT or not pt:
+            continue
+        m = emeta.get(e.get("setype"))
+        if not m:
+            continue
+        landed, failed = _apply_state(e)
+        eff_by_tick[int(pt) // 10][e.get("tick") or 0].append({
+            "icon": m["icon"], "label": m["label"], "kind": m["kind"],
+            "state": "new", "rem": 0, "failed": failed,
+            "on_boss": e.get("tgt") == BOSS_SLOT,
+        })
+
+    out_dmg, out_skill, out_eff = {}, {}, {}
+    for nt in set(list(casts) + list(hit_ticks) + list(eff_by_tick)):
         # One entry per TURN (cast). Each turn absorbs ALL of this champion's
         # boss damage — multi-hits, counters AND DoT ticks — since their last
         # turn; the final turn also absorbs DoT that keeps ticking afterwards.
         cast_list = sorted(casts.get(nt, []), key=lambda x: x[0])
-        if not cast_list:                       # damage but no cast (rare): one bucket
-            cast_list = [(min(hit_ticks[nt]), None)]
-        dmgs, sks, prev = [], [], -1
+        if not cast_list:                       # damage/effects but no cast (rare)
+            anchor = hit_ticks.get(nt) or set(eff_by_tick.get(nt, {}))
+            cast_list = [(min(anchor), None)] if anchor else []
+        dmgs, sks, effs, prev = [], [], [], -1
         for i, (T, st) in enumerate(cast_list):
             end = max_tick if i == len(cast_list) - 1 else T
             tot = sum(hit_by_tick[tk].get(nt, 0) + dot_by_tick[tk].get(nt, 0)
                       for tk in range(prev + 1, end + 1))
             dmgs.append(tot)
             sks.append("A" + str(int(st) % 10) if st else None)
+            # Effects this champion placed during THIS action (up to its cast
+            # tick — trailing DoT ticks aren't fresh placements). Dedupe by icon,
+            # preferring a landed copy when the same effect hit multiple targets.
+            by_icon: dict = {}
+            for tk in range(prev + 1, T + 1):
+                for fx in eff_by_tick.get(nt, {}).get(tk, []):
+                    cur = by_icon.get(fx["icon"])
+                    if cur is None or (cur["failed"] and not fx["failed"]):
+                        by_icon[fx["icon"]] = fx
+            effs.append(list(by_icon.values()))
             prev = T
         out_dmg[nt] = dmgs
         out_skill[nt] = sks
+        out_eff[nt] = effs
 
     # Boss stun targeting. Landed stuns are apply_status setype=10 (tgtT=target,
     # fail=0). To also catch RESISTED stuns we learn the boss's stun skill id
@@ -193,6 +247,25 @@ def _tick_overlay(root: Path, ts: str) -> dict | None:
         for c in near:
             skill_votes[c.get("skill_type_id")] += 1
     stun_skill = skill_votes.most_common(1)[0][0] if skill_votes else None
+    # Did a stun actually COST the target a turn? A landed stun roughly doubles
+    # the gap straddling its tick in that champion's cast cadence. This is the
+    # truthful "landed" signal: the game logs many stuns as applied (ApplyResult
+    # true, not blocked) yet the hero acts on schedule — the debuff was shaken
+    # off before their turn, so it cost nothing.
+    import statistics
+
+    def cost_a_turn(nt, tk):
+        cts = sorted(t for t, _ in casts.get(nt, []))
+        if len(cts) < 4:
+            return None
+        gaps = [b - a for a, b in zip(cts, cts[1:])]
+        med = statistics.median(gaps) or 0
+        before = [t for t in cts if t <= tk]
+        after = [t for t in cts if t > tk]
+        if not before or not after or med <= 0:
+            return None
+        return (after[0] - before[-1]) > 1.6 * med
+
     stuns = []
     seen_casts = set()
     for c in casts_all:
@@ -203,18 +276,25 @@ def _tick_overlay(root: Path, ts: str) -> dict | None:
             continue
         seen_casts.add(tk)
         tslot = c.get("target_id")
-        land = next((a for a in applies if abs((a.get("tick") or 0) - tk) <= 2
-                     and a.get("tgt") == tslot and not a.get("fail")), None)
-        if land is not None:
-            tnt = int(land.get("tgtT") or 0) // 10
-            landed = True
+        ap = next((a for a in applies if abs((a.get("tick") or 0) - tk) <= 2
+                   and a.get("tgt") == tslot), None)
+        if ap is not None:
+            tnt = int(ap.get("tgtT") or 0) // 10
+            _, blocked = _apply_state(ap)
         else:
             tnt = slot_to_nt.get(tslot)
-            landed = False
-        if tnt:
-            stuns.append({"boss_turn": boss_turn_at(tk), "target_nt": tnt, "landed": landed})
+            blocked = True
+        if not tnt:
+            continue
+        skipped = cost_a_turn(tnt, tk)
+        # Landed only if it both applied (not blocked) AND cost a turn. When the
+        # cadence is too short to tell, fall back to the apply verdict.
+        landed = (not blocked) if skipped is None else (skipped and not blocked)
+        stuns.append({"boss_turn": boss_turn_at(tk), "target_nt": tnt,
+                      "landed": bool(landed), "blocked": bool(blocked)})
 
-    return {"dmg": out_dmg, "skill": out_skill, "received": dict(received), "stuns": stuns}
+    return {"dmg": out_dmg, "skill": out_skill, "eff": out_eff,
+            "received": dict(received), "stuns": stuns}
 
 
 def _skill_alias(h, prev_sk, is_boss) -> str:
@@ -264,7 +344,7 @@ def build_replay(root: Path, log_path: Path, name_map: dict | None = None,
     # Accurate per-hero damage from the matching tick log (attributed by the
     # damage event's producer). Falls back to boss-HP deltas if absent.
     m = re.search(r"battle_logs_cb_(\d{8}_\d{6})", Path(log_path).name)
-    overlay = _tick_overlay(root, m.group(1)) if m else None
+    overlay = _tick_overlay(root, m.group(1), emeta) if m else None
     action_idx: dict = {}
 
     last_tn, last_rdy, pending = {}, {}, {}
@@ -316,12 +396,14 @@ def build_replay(root: Path, log_path: Path, name_map: dict | None = None,
                 # is DoT ticks; consume it but don't credit the boss row.
                 if is_boss:
                     dmg = 0
+                overlay_eff = None
                 if is_boss:
                     skill = _skill_alias(h, None, True)
                 else:
                     skill = pending.pop(uid, None) or "A1"
-                    # Prefer the tick log's exact per-action damage + skill,
-                    # matched by normalised type id (slot orders differ).
+                    # Prefer the tick log's exact per-action damage + skill +
+                    # placed effects, matched by normalised type id (slot orders
+                    # differ between the battle log and the tick log).
                     nt = int(h.get("type_id") or 0) // 10
                     if overlay and nt in overlay["dmg"]:
                         k = action_idx.get(nt, 0)
@@ -330,7 +412,10 @@ def build_replay(root: Path, log_path: Path, name_map: dict | None = None,
                             dmg = overlay["dmg"][nt][k]
                         if k < len(overlay["skill"][nt]) and overlay["skill"][nt][k]:
                             skill = overlay["skill"][nt][k]
-                eff_dec = _decode_eff(h.get("eff"), emeta)
+                        if k < len(overlay["eff"][nt]):
+                            overlay_eff = overlay["eff"][nt][k]
+                eff_dec = overlay_eff if overlay_eff is not None \
+                    else _decode_eff(h.get("eff"), emeta)
                 cells = []
                 for col in columns:
                     if col == BOSS_NAME:
@@ -370,10 +455,15 @@ def build_replay(root: Path, log_path: Path, name_map: dict | None = None,
                 continue   # already marked
             ac = next((c for c in r["cells"] if c["acting"]), None)
             if ac is not None:
+                if s.get("landed"):
+                    lbl = "Stunned (lost a turn)"
+                elif s.get("blocked"):
+                    lbl = "Stun blocked (Block Debuffs)"
+                else:
+                    lbl = "Stun shaken off (no turn lost)"
                 ac["effects"] = (ac.get("effects") or []) + [{
                     "icon": "Stun", "kind": "debuff", "state": "new", "rem": 0,
-                    "label": "Stunned" if s.get("landed") else "Stun resisted",
-                    "failed": not s.get("landed")}]
+                    "label": lbl, "failed": not s.get("landed")}]
             break
 
     # Team summary: per hero, damage dealt to boss + damage received from boss.
