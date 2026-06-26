@@ -275,5 +275,8 @@
     if (navTb) navTb.addEventListener("click", function () {
       window.__replayFile = null; window.__loadTmGrid();
     });
+    // Deep link: ?replay=<battle file> opens that replay directly.
+    var rp = (location.search.match(/[?&]replay=([^&]+)/) || [])[1];
+    if (rp) window.__openReplay(decodeURIComponent(rp));
   });
 })();
