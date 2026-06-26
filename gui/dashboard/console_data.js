@@ -194,26 +194,86 @@
     }
   }
 
+  // ---- panel: Recent Battles (CB page) — clickable -> replay --------------
+  function affIcon(aff) {
+    var a = (aff || "").toLowerCase();
+    return (a === "magic" || a === "force" || a === "spirit" || a === "void")
+      ? "assets/ui/" + a + ".png" : "assets/ui/demon_lord.png";
+  }
+  function wireRecentBattles() {
+    return getJSON("/api/cb-battles?n=8").then(function (d) {
+      var host = document.getElementById("recentBattles");
+      if (!host) return;
+      var bs = (d && d.battles) || [];
+      if (!bs.length) { host.innerHTML = '<div style="font-family:\'JetBrains Mono\',monospace;font-size:9px;color:#6f6555;padding:10px 6px;">No captured battles yet.</div>'; return; }
+      host.innerHTML = bs.map(function (b) {
+        var top = (b.team && b.team[0]) ? b.team[0] : (b.affinity || "battle");
+        var sub = (b.date ? b.date.slice(5) : "") + (b.time ? " " + b.time : "") + (b.turns ? " · " + b.turns + "T" : "");
+        return '<div class="replayrow" data-file="' + b.file + '" style="display:flex;justify-content:space-between;align-items:center;padding:8px 6px;border-top:1px solid #241d15;cursor:pointer;border-radius:3px;">' +
+          '<div style="display:flex;align-items:center;gap:8px;"><img src="' + affIcon(b.affinity) + '" alt="" style="width:15px;height:15px;">' +
+          '<div><div style="font-family:\'JetBrains Mono\',monospace;font-size:11px;color:#ece3d2;">' + top + '</div>' +
+          '<div style="font-family:\'JetBrains Mono\',monospace;font-size:8.5px;color:#6f6555;">' + sub + '</div></div></div>' +
+          '<div style="font-family:Cinzel,serif;font-size:16px;color:#d8a657;">' + fmtAbbrev(b.damage) + '</div></div>';
+      }).join("");
+      Array.prototype.forEach.call(host.querySelectorAll(".replayrow"), function (row) {
+        row.addEventListener("click", function () { window.__openReplay(row.getAttribute("data-file")); });
+        row.addEventListener("mouseenter", function () { row.style.background = "#1d1810"; });
+        row.addEventListener("mouseleave", function () { row.style.background = "transparent"; });
+      });
+    });
+  }
+
+  // ---- replay mode (a real battle log) ------------------------------------
+  function wireReplay(file) {
+    return getJSON("/api/cb-replay?file=" + encodeURIComponent(file)).then(function (g) {
+      if (!g || g.error || !g.rows) return;
+      if (window.__console && window.__console.tmGrid) window.__console.tmGrid(g);
+      var m = g.meta || {};
+      var team = (g.columns || []).filter(function (c) { return c !== "Demon Lord"; });
+      setText("tmVariant", "Battle · " + (m.file || "").replace("battle_logs_cb_", "").replace(".json", ""));
+      var affEl = document.getElementById("tmAffinityIcon"); if (affEl) affEl.src = "assets/ui/demon_lord.png";
+      setText("tmDamage", fmtAbbrev(m.damage || 0));
+      setText("tmTurns", String(m.boss_turns || 0));
+      var cleared = (m.boss_turns || 0) >= 50;
+      setText("tmResult", cleared ? "Clear" : "T" + (m.boss_turns || 0));
+      var resEl = document.getElementById("tmResult"); if (resEl) resEl.style.color = cleared ? "#6fcf6f" : "#e8a657";
+    });
+  }
+
   // ---- refresh loop -------------------------------------------------------
   function refreshAll() {
     // Each panel is independent; a failure in one must not stop the others.
     wireResources().catch(function () {});
     wireCB().catch(function () {});
+    wireRecentBattles().catch(function () {});
   }
 
-  // The turn-meter grid is built from /api/calc-parity-sim, which is ~35s cold.
-  // It only lives in the CB telemetry drawer, so load it lazily the first time
-  // the drawer is opened — never on initial page load.
-  var _tmLoaded = false;
+  // The turn grid is built lazily when the Turn-by-Turn view opens. In sim mode
+  // it runs /api/calc-parity-sim (~35s cold); in replay mode it loads a real
+  // battle log (window.__replayFile). Re-loads only when the mode/file changes.
+  window.__replayFile = null;
+  var _tmKey = null;
   window.__loadTmGrid = function () {
-    if (_tmLoaded) return;
-    _tmLoaded = true;
-    wireRotation().catch(function () { _tmLoaded = false; });
+    var key = window.__replayFile ? "replay:" + window.__replayFile : "sim";
+    if (_tmKey === key) return;
+    _tmKey = key;
+    var p = window.__replayFile ? wireReplay(window.__replayFile) : wireRotation();
+    p.catch(function () { _tmKey = null; });
+  };
+  window.__openReplay = function (file) {
+    window.__replayFile = file;
+    location.hash = "cb-telemetry";
+    window.__loadTmGrid();
   };
 
   document.addEventListener("DOMContentLoaded", function () {
     refreshAll();
     // Resources drift slowly (energy regen, key spend); a 60s poll is plenty.
     setInterval(refreshAll, 60000);
+    // The "Turn-by-Turn" nav item shows the sim plan (clears any active replay).
+    var navTb = document.querySelector('.navitem[data-view="cb-telemetry"]');
+    if (navTb) navTb.addEventListener("click", function () {
+      window.__replayFile = null; window.__loadTmGrid();
+    });
   });
 })();

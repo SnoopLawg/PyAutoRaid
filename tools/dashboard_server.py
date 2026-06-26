@@ -683,6 +683,59 @@ def build_events():
 # uses thin wrappers that share its in-memory _battle_log_cache so
 # repeated polls don't re-parse the JSON.
 from tools import cb_history as _cb_history  # noqa: E402
+from tools import cb_replay as _cb_replay  # noqa: E402
+
+_TYPE_ID_TO_NAME = None
+
+
+def _type_id_to_name() -> dict:
+    """Cached {type_id -> display name} from hero_types.json for the replay."""
+    global _TYPE_ID_TO_NAME
+    if _TYPE_ID_TO_NAME is not None:
+        return _TYPE_ID_TO_NAME
+    m = {22270: "Demon Lord"}
+    try:
+        ht = json.loads((ROOT / "data" / "static" / "hero_types.json").read_text(encoding="utf-8"))["hero_types"]
+        for r in ht:
+            nm, hid = r.get("name"), r.get("id")
+            if nm and hid is not None and hid not in m:
+                m[hid] = nm
+    except Exception as e:
+        logger.info("type_id->name map failed: %s", e)
+    _TYPE_ID_TO_NAME = m
+    return m
+
+
+def build_cb_replay(file_name):
+    """Turn-by-turn replay of a captured CB battle log (tm_grid shape)."""
+    import os
+    base = os.path.basename(str(file_name or ""))
+    if not (base.startswith("battle_logs_cb_") and base.endswith(".json")):
+        return {"error": "invalid battle file"}
+    path = ROOT / base
+    if not path.exists():
+        return {"error": f"battle file not found: {base}"}
+    return _cb_replay.build_replay(ROOT, path, _type_id_to_name())
+
+
+def build_cb_battles(limit: int = 12):
+    """Recent CB battles (file + damage + team) for the Recent Battles list."""
+    out = []
+    try:
+        for day in (build_cb_per_key_history(days=7) or []):
+            for k in (day.get("keys") or []):
+                f = k.get("file")
+                if not f:
+                    continue
+                # per_key_history already resolves team to display names.
+                out.append({"file": f, "damage": int(k.get("damage") or 0),
+                            "team": k.get("team") or [], "affinity": k.get("affinity"),
+                            "time": k.get("time"), "date": day.get("date"),
+                            "turns": int(k.get("turns") or 0)})
+    except Exception as e:
+        logger.info("build_cb_battles failed: %s", e)
+    out.sort(key=lambda x: x["file"], reverse=True)
+    return {"battles": out[:limit]}
 
 
 def _most_recent_battle_log():
@@ -3245,6 +3298,8 @@ GET_ROUTES = {
     "/api/run":                    lambda q: run_state(),
     "/api/resources":              lambda q: build_resources() or {},
     "/api/cb-summary":             lambda q: build_cb_summary(),
+    "/api/cb-battles":             lambda q: build_cb_battles(int(_q(q, "n", 12))),
+    "/api/cb-replay":              lambda q: build_cb_replay(_q(q, "file")),
     "/api/sim-last-run":           lambda q: build_sim_last_run(),
     "/api/tune-library":           lambda q: build_tune_library(),
     "/api/sim-affinity-matrix":    lambda q: build_sim_affinity_matrix(),

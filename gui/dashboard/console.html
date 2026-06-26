@@ -276,10 +276,11 @@
           </div>
           <div style="background:#15110b;border:1px solid #2c241a;border-radius:4px;padding:16px 20px;">
             <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.18em;color:#a0734a;text-transform:uppercase;margin-bottom:11px;">Recent battles</div>
-            <div id="cbBattle" class="frow" style="display:flex;justify-content:space-between;align-items:center;padding:8px 6px;border-top:1px solid #241d15;cursor:pointer;border-radius:3px;"><div style="display:flex;align-items:center;gap:8px;"><img src="assets/ui/magic.png" alt="" style="width:15px;height:15px;"><div><div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#ece3d2;">#2214</div><div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;color:#6f6555;">Ninja 17.3M</div></div></div><div style="font-family:Cinzel,serif;font-size:16px;color:#d8a657;">34.7M</div></div>
-            <div class="frow" style="display:flex;justify-content:space-between;align-items:center;padding:8px 6px;border-top:1px solid #241d15;border-radius:3px;"><div style="display:flex;align-items:center;gap:8px;"><img src="assets/ui/magic.png" alt="" style="width:15px;height:15px;"><div><div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#ece3d2;">screen</div><div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;color:#6f6555;">Ninja 16.6M</div></div></div><div style="font-family:Cinzel,serif;font-size:16px;color:#d8a657;">40.2M</div></div>
-            <div class="frow" style="display:flex;justify-content:space-between;align-items:center;padding:8px 6px;border-top:1px solid #241d15;border-bottom:1px solid #241d15;border-radius:3px;"><div style="display:flex;align-items:center;gap:8px;"><img src="assets/ui/void.png" alt="" style="width:15px;height:15px;"><div><div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#ece3d2;">today</div><div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;color:#6f6555;">tick capture</div></div></div><div id="cbTodayDmg" style="font-family:Cinzel,serif;font-size:16px;color:#d8a657;">21.5M</div></div>
-            <button id="cbDrawerBtn" style="width:100%;margin-top:12px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;color:#d8a657;background:transparent;border:1px solid #3a2f1f;border-radius:3px;padding:9px;cursor:pointer;text-transform:uppercase;">Turn-by-turn telemetry →</button>
+            <div id="recentBattles">
+              <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#6f6555;padding:10px 6px;">Loading battles…</div>
+            </div>
+            <div id="cbTodayDmg" style="display:none;"></div>
+            <button id="cbDrawerBtn" style="width:100%;margin-top:12px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;color:#d8a657;background:transparent;border:1px solid #3a2f1f;border-radius:3px;padding:9px;cursor:pointer;text-transform:uppercase;">Turn-by-turn plan (sim) →</button>
           </div>
         </div>
       </div>
