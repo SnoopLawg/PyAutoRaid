@@ -3415,6 +3415,14 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 
     def do_GET(self):
         parsed = urllib.parse.urlparse(self.path)
+        # The Console is the dashboard now: send root and the legacy dashboard
+        # page to /console.html so existing bookmarks land on the new UI.
+        landing = urllib.parse.unquote(parsed.path).rstrip("/") or "/"
+        if landing in ("/", "/index.html", "/PyAutoRaid Dashboard.html"):
+            self.send_response(302)
+            self.send_header("Location", "/console.html")
+            self.end_headers()
+            return
         handler = GET_ROUTES.get(parsed.path)
         if handler is not None:
             data, status = self._unwrap(handler(urllib.parse.parse_qs(parsed.query)))
@@ -3473,7 +3481,7 @@ def main():
     logger.info("Serving %s on http://localhost:%d", DASHBOARD_DIR, PORT)
     logger.info("Mod API target: %s", MOD_URL)
     logger.info("CB reset hour: %02d:00 UTC (PYAUTORAID_CB_RESET_UTC_HOUR to override)", CB_RESET_UTC_HOUR)
-    logger.info("Dashboard: http://localhost:%d/PyAutoRaid%%20Dashboard.html", PORT)
+    logger.info("Dashboard (Console): http://localhost:%d/console.html", PORT)
     # Start autorun worker (disabled by default; opt-in via /api/autorun/enable).
     # _autorun_state is a read-only proxy now; the worker module owns the
     # 'thread_started' flag internally via ensure_thread().
