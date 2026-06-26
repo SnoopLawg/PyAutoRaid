@@ -113,14 +113,18 @@ def _tick_overlay(root: Path, ts: str) -> dict | None:
     dot_by_tick: dict = defaultdict(lambda: defaultdict(int))
     hit_ticks: dict = defaultdict(set)
     slot_to_nt: dict = {}
+    received: dict = defaultdict(int)        # damage each hero took from the boss
     max_tick = 0
     for e in ticks:
         if not isinstance(e, dict):
             continue
         tk = e.get("tick") or 0
         max_tick = max(max_tick, tk)
-        if e.get("kind") == "damage" and e.get("target") == BOSS_SLOT:
-            pr, d, pt = e.get("producer"), int(e.get("dealt") or 0), e.get("p_typeid")
+        if e.get("kind") != "damage":
+            continue
+        d = int(e.get("dealt") or 0)
+        if e.get("target") == BOSS_SLOT:     # damage TO the boss (hero -> boss)
+            pr, pt = e.get("producer"), e.get("p_typeid")
             if pr is None or pr == BOSS_SLOT or pt is None:
                 continue
             nt = int(pt) // 10
@@ -130,6 +134,10 @@ def _tick_overlay(root: Path, ts: str) -> dict | None:
                 hit_ticks[nt].add(tk)
             else:
                 dot_by_tick[tk][nt] += d
+        elif e.get("producer") == BOSS_SLOT:  # damage FROM the boss (boss -> hero)
+            tt = e.get("t_typeid")
+            if tt is not None:
+                received[int(tt) // 10] += d
     casts: dict = defaultdict(list)
     for e in ticks:
         if isinstance(e, dict) and e.get("kind") == "cast":
@@ -156,7 +164,7 @@ def _tick_overlay(root: Path, ts: str) -> dict | None:
             prev = T
         out_dmg[nt] = dmgs
         out_skill[nt] = sks
-    return {"dmg": out_dmg, "skill": out_skill}
+    return {"dmg": out_dmg, "skill": out_skill, "received": dict(received)}
 
 
 def _skill_alias(h, prev_sk, is_boss) -> str:
@@ -294,10 +302,27 @@ def build_replay(root: Path, log_path: Path, name_map: dict | None = None,
                 })
             last_tn[uid] = tn
 
+    # Team summary: per hero, damage dealt to boss + damage received from boss.
+    from collections import defaultdict as _dd
+    dealt_by = _dd(int)
+    for r in rows:
+        if not r["is_boss_turn"]:
+            dealt_by[r["actor"]] += r["damage"]
+    recv = (overlay or {}).get("received", {})
+    team = []
+    for col in columns:
+        if col == BOSS_NAME:
+            continue
+        tid = type_ids.get(col)
+        team.append({"name": col, "type_id": tid,
+                     "dealt": dealt_by.get(col, 0),
+                     "received": int(recv.get((tid or 0) // 10, 0))})
+
     return {
         "columns": columns,
         "column_type_ids": {c: (None if c == BOSS_NAME else type_ids.get(c)) for c in columns},
         "rows": rows,
+        "team": team,
         "protection_gaps": 0,
         "replay": True,
         "meta": {"damage": boss_prev_dmg, "boss_turns": cur_boss_turn,

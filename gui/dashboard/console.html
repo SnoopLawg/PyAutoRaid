@@ -296,6 +296,7 @@
         <div style="flex:1;background:#15110b;border:1px solid #2c241a;border-radius:4px;padding:13px 15px;"><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#948876;text-transform:uppercase;">Turns</div><div id="tmTurns" style="font-family:Cinzel,serif;font-size:25px;color:#f3ead8;margin-top:3px;">—</div></div>
         <div style="flex:1;background:#15110b;border:1px solid #2c241a;border-radius:4px;padding:13px 15px;"><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#948876;text-transform:uppercase;">Result</div><div id="tmResult" style="font-family:Cinzel,serif;font-size:25px;color:#6fcf6f;margin-top:3px;">—</div></div>
       </div>
+      <div id="tmTeam" style="margin-top:24px;"></div>
       <div style="display:flex;align-items:center;justify-content:space-between;margin:26px 0 12px;">
         <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.18em;color:#a0734a;text-transform:uppercase;">Turn order &amp; meters</div>
         <div style="display:flex;align-items:center;gap:9px;font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.05em;text-transform:uppercase;">
@@ -805,6 +806,32 @@ document.addEventListener("DOMContentLoaded", function() {
       const portraitOf = (name, size) => (name === 'Demon Lord' || name === 'Clanboss')
         ? '<span style="color:#f0786a;font-size:' + size + 'px;line-height:1;">&#9760;</span>'
         : (tids[name] ? '<img src="assets/heroes/' + tids[name] + '.png" alt="" onerror="this.style.visibility=\'hidden\'" style="width:' + size + 'px;height:' + size + 'px;border-radius:3px;object-fit:cover;flex:none;">' : '<span style="display:inline-block;width:' + size + 'px;height:' + size + 'px;border-radius:3px;background:#1a150e;flex:none;"></span>');
+
+      // Team summary header: avatars + damage dealt (to boss) + damage taken.
+      const teamHost = document.getElementById('tmTeam');
+      if (teamHost) {
+        if (g.team && g.team.length) {
+          const totalDealt = g.team.reduce((s, t) => s + (t.dealt || 0), 0) || 1;
+          teamHost.style.cssText = 'margin-top:24px;display:grid;grid-template-columns:repeat(' + g.team.length + ',1fr);gap:11px;';
+          teamHost.innerHTML = g.team.map(t => {
+            const tc = colorOf(t.name);
+            const pct = Math.round((t.dealt || 0) / totalDealt * 100);
+            const por = t.type_id ? '<img src="assets/heroes/' + t.type_id + '.png" alt="" onerror="this.style.visibility=\'hidden\'" style="width:34px;height:34px;border-radius:5px;object-fit:cover;border:1px solid #2c241a;flex:none;">' : '<span style="display:inline-block;width:34px;height:34px;border-radius:5px;background:#1a150e;flex:none;"></span>';
+            return '<div style="background:#15110b;border:1px solid #2c241a;border-top:2px solid ' + tc.b + ';border-radius:5px;padding:12px 13px;">' +
+              '<div style="display:flex;align-items:center;gap:9px;">' + por +
+              '<div style="font-family:Cinzel,serif;font-size:13px;color:#f3ead8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + t.name + '</div></div>' +
+              '<div style="margin-top:10px;font-family:\'JetBrains Mono\',monospace;font-size:8px;letter-spacing:.1em;color:#6f6555;text-transform:uppercase;">Dealt</div>' +
+              '<div style="font-family:Cinzel,serif;font-size:18px;color:#d8a657;">' + fmtN(t.dealt || 0) + ' <span style="font-size:10px;color:#6f6555;">' + pct + '%</span></div>' +
+              '<div style="height:5px;background:#241d15;border-radius:3px;overflow:hidden;margin:4px 0 9px;"><div style="height:100%;width:' + pct + '%;background:' + tc.b + ';"></div></div>' +
+              '<div style="font-family:\'JetBrains Mono\',monospace;font-size:8px;letter-spacing:.1em;color:#6f6555;text-transform:uppercase;">Taken</div>' +
+              '<div style="font-family:Cinzel,serif;font-size:14px;color:#c25a3a;">' + fmtN(t.received || 0) + '</div>' +
+              '</div>';
+          }).join('');
+        } else {
+          teamHost.style.cssText = 'display:none;';
+          teamHost.innerHTML = '';
+        }
+      }
 
       // shared "Turnmeters" hover tooltip (DWJ-style)
       let tip = document.getElementById('tmTooltip');
