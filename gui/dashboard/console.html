@@ -571,19 +571,12 @@
         <div><div style="display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:11px;margin-bottom:4px;"><span style="color:#cdbfa6;">Demytha</span><span style="color:#948876;">0.7M · 2%</span></div><div style="height:8px;background:#241d15;border-radius:4px;overflow:hidden;"><div class="tbar" data-w="4" style="width:0;height:100%;background:linear-gradient(90deg,#3a4a5a,#9aa6c2);transition:width .9s cubic-bezier(.2,.8,.2,1) .32s;"></div></div></div>
       </div>
       <div style="display:flex;align-items:center;justify-content:space-between;margin:24px 0 11px;">
-        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.18em;color:#a0734a;text-transform:uppercase;">Speed-tune rotation</div>
-        <div style="display:flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.05em;text-transform:uppercase;">
-          <span style="color:#6f6555;">A1</span><span style="color:#d8a657;">A2</span><span style="color:#e08a6a;">A3</span><span style="color:#6fcf6f;">◆ Defensive</span>
-        </div>
-      </div>
-      <div id="rotationGrid" style="background:#100c08;border:1px solid #2c241a;border-radius:4px;padding:11px 11px 13px;"></div>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin:24px 0 11px;">
-        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.18em;color:#a0734a;text-transform:uppercase;">Buff / debuff uptime</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.18em;color:#a0734a;text-transform:uppercase;">Turn meters &amp; order</div>
         <div style="display:flex;align-items:center;gap:9px;font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.05em;text-transform:uppercase;">
-          <span style="color:#6fcf6f;">■ Cast</span><span style="color:#5a8cdc;">■ Held</span><span style="color:#6f6555;">■ Expiring</span>
+          <span style="color:#6fcf6f;">▸ Acting</span><span style="color:#6fcf6f;">■ Cast</span><span style="color:#5a8cdc;">■ Held</span><span style="color:#6f6555;">■ Expiring</span>
         </div>
       </div>
-      <div id="buffMatrix" style="background:#100c08;border:1px solid #2c241a;border-radius:4px;padding:11px;overflow-x:auto;"></div>
+      <div id="tmGrid" style="background:#100c08;border:1px solid #2c241a;border-radius:4px;padding:11px;overflow-x:auto;"></div>
       <button style="width:100%;margin-top:18px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;color:#0c0a07;background:linear-gradient(180deg,#e6b765,#cf9a44);border:none;border-radius:3px;padding:11px;cursor:pointer;text-transform:uppercase;font-weight:700;">Export battle JSON →</button>
     </div>
   </div>
@@ -781,6 +774,64 @@ document.addEventListener("DOMContentLoaded", function() {
     window.__console = window.__console || {};
     window.__console.rotation = renderRotation;
     window.__console.buffMatrix = renderBuffMatrix;
+
+    // DWJ-style turn-meter timeline (columns = champions + boss, rows = turns).
+    // g = {columns, column_type_ids, protection_gaps, rows:[{turn, danger,
+    // cells:[{tm, raw_tm, acting, skill, effects:[{icon,label,kind,state,rem}]}]}]}.
+    const renderTmGrid = (g) => {
+      const host = document.getElementById('tmGrid');
+      if (!host) return;
+      host.innerHTML = '';
+      if (!g || !g.rows || !g.rows.length) {
+        host.innerHTML = '<div style="font-family:\'JetBrains Mono\',monospace;font-size:9px;color:#6f6555;text-align:center;padding:6px;">No sim data.</div>';
+        return;
+      }
+      const cols = g.columns || [];
+      const tids = g.column_type_ids || {};
+      const fxBorder = (st) => st === 'new' ? 'border:1px solid #6fcf6f;'
+        : (st === 'held' ? 'border:1px solid #5a8cdc;' : 'opacity:.4;border:1px solid #2c241a;');
+      const grid = document.createElement('div');
+      grid.style.cssText = 'display:grid;grid-template-columns:30px repeat(' + cols.length + ',1fr);gap:3px;align-items:stretch;';
+      // header: champion / boss portraits
+      grid.appendChild(cell('', ''));
+      cols.forEach(c => {
+        const isBoss = c === 'Demon Lord';
+        const icon = isBoss
+          ? '<span style="color:#c25a3a;font-size:14px;">&#9760;</span>'
+          : (tids[c] ? '<img src="assets/heroes/' + tids[c] + '.png" alt="" onerror="this.style.visibility=\'hidden\'" style="width:20px;height:20px;border-radius:3px;object-fit:cover;border:1px solid #2c241a;">' : '<span style="width:20px;height:20px;"></span>');
+        grid.appendChild(cell(
+          icon + '<span style="font-family:Cinzel,serif;font-size:9px;color:#cdbfa6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;">' + (isBoss ? 'Boss' : c) + '</span>',
+          'display:flex;flex-direction:column;align-items:center;gap:2px;padding-bottom:5px;'));
+      });
+      // turn rows
+      g.rows.forEach(r => {
+        grid.appendChild(cell('T' + r.turn,
+          'display:flex;align-items:center;justify-content:center;font-family:\'JetBrains Mono\',monospace;font-size:8px;color:' + (r.danger ? '#e8896f' : '#6f6555') + ';'));
+        r.cells.forEach((cl, ci) => {
+          const col = cols[ci];
+          const barCol = cl.acting ? '#6fcf6f' : (cl.tm >= 100 ? '#d8a657' : '#4f6076');
+          const top = cl.acting
+            ? '<span style="font-family:\'JetBrains Mono\',monospace;font-size:7.5px;font-weight:700;color:#6fcf6f;">&#9656; ' + (cl.skill || '') + '</span>'
+            : '<span style="font-family:\'JetBrains Mono\',monospace;font-size:7.5px;color:#6f6555;">' + cl.raw_tm + '</span>';
+          const icons = (cl.effects || []).slice(0, 4).map(fx =>
+            '<span title="' + fx.label + (fx.rem ? ' ' + fx.rem + 'T' : '') + '" style="display:inline-flex;border-radius:2px;' + fxBorder(fx.state) + '"><img src="assets/effects/' + fx.icon + '.png" alt="" onerror="this.style.display=\'none\'" style="width:11px;height:11px;object-fit:contain;"></span>'
+          ).join('');
+          const danger = r.danger && col === 'Demon Lord';
+          grid.appendChild(cell(
+            '<div style="display:flex;justify-content:space-between;align-items:center;min-height:9px;">' + top + '</div>' +
+            '<div style="height:4px;background:#241d15;border-radius:2px;overflow:hidden;margin:2px 0;"><div style="height:100%;width:' + cl.tm + '%;background:' + barCol + ';"></div></div>' +
+            (icons ? '<div style="display:flex;flex-wrap:wrap;gap:1px;">' + icons + '</div>' : ''),
+            'padding:3px 4px;border-radius:3px;border-left:2px solid ' + (cl.acting ? '#6fcf6f' : 'transparent') + ';background:' + (danger ? 'rgba(196,72,52,.18)' : (cl.acting ? 'rgba(111,207,111,.10)' : '#120d08')) + ';'));
+        });
+      });
+      host.appendChild(grid);
+      const gaps = g.protection_gaps || 0;
+      host.appendChild(cell(
+        gaps > 0 ? '&#9888; ' + gaps + ' protection gap' + (gaps > 1 ? 's' : '') + ' — team eats a slam unmitigated'
+                 : '&#10003; no protection gaps in the shown turns',
+        'margin-top:9px;text-align:center;font-family:\'JetBrains Mono\',monospace;font-size:9px;color:' + (gaps > 0 ? '#e8896f' : '#6fcf6f') + ';'));
+    };
+    window.__console.tmGrid = renderTmGrid;
     // Static default (replaced live by console_data.js when the sim is available)
     renderRotation(
       [{name:'Maneater',el:'void'},{name:'Ninja',el:'magic'},{name:'Geomancer',el:'force'},{name:'Demytha',el:'void'},{name:"Ma'Shalled",el:'spirit'}],

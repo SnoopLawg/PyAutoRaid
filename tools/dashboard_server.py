@@ -1058,26 +1058,21 @@ def _dwj_cast_effects(dwj, variant):
     return out
 
 
-def _dwj_buff_matrix(dwj, variant, turns, max_cols: int = 10):
-    """DWJ-style buff/debuff uptime matrix: rows = champions (+ Demon Lord for
-    debuffs), columns = boss turns. Each cell lists the effects active on that
-    target during that boss turn, tagged state="new" (cast this turn, green),
-    "held" (carried from earlier, blue) or "expiring" (last active turn, faded).
-    Buffs target self/allies per the DWJ effect's `champions`; debuffs land on
-    the boss. Only icon-able persistent statuses are tracked (instant TM swings,
-    heals, extra turns are excluded)."""
+_PROTECTIVE_ICONS = {"Unkillable", "BlockDamage", "Shield"}
+
+
+def _dwj_effect_apps(dwj, variant, turns):
+    """Walk the cast timeline and record every buff/debuff application:
+    apps[target_row][effect_name] = [{apply, dur, icon, label, kind, caster}].
+    Buffs target self/allies per the DWJ `champions` field; debuffs -> the boss
+    row. Only icon-able persistent statuses are recorded. Also returns
+    boss_actions {boss_turn: skill alias}."""
     from collections import defaultdict
     BOSS = "Demon Lord"
-    # Protective statuses that let the team survive a boss AoE slam.
-    PROTECTIVE = {"Unkillable", "BlockDamage", "Shield"}
     slot_names = [s.name for s in variant.slots]
-    type_ids = _resolve_type_ids(slot_names)
-    # apps[row_name][effect_name] = [{apply, dur, icon, label, kind}, ...]
     apps: dict = defaultdict(lambda: defaultdict(list))
-    boss_actions: dict = {}   # boss_turn -> skill alias (AOE1 / AOE2 / STUN ...)
-    max_bt = 0
+    boss_actions: dict = {}
     for t in turns:
-        max_bt = max(max_bt, t.boss_turn_number)
         if t.actor_name == "Clanboss":
             boss_actions[t.boss_turn_number] = t.skill_alias
             continue
@@ -1108,63 +1103,86 @@ def _dwj_buff_matrix(dwj, variant, turns, max_cols: int = 10):
                 apps[r][name].append({"apply": t.boss_turn_number, "dur": dur,
                                       "icon": icon, "label": label, "kind": kind,
                                       "caster": t.actor_name})
+    return apps, boss_actions
 
-    cols = list(range(0, min(max_bt, max_cols - 1) + 1))
 
+def _dwj_cell_state(applist_map, rname, bt, is_boss):
+    """Effects active on `rname` at boss turn `bt`, each tagged state=new (cast
+    this turn by this unit / freshly placed on the boss, green), held (carried,
+    blue) or expiring (last active turn, faded) + remaining turns."""
     def covering(applist, t):
         return [a for a in applist if a["apply"] <= t <= a["apply"] + a["dur"] - 1]
-
-    # protected[champ_row][t] = True if a protective status is active that turn
-    protected: dict = defaultdict(dict)
-    out_rows = []
-    for rname in slot_names + [BOSS]:
-        if rname not in apps:
+    out = []
+    for name, applist in applist_map.items():
+        cov = covering(applist, bt)
+        if not cov:
             continue
-        cells = []
-        for t in cols:
-            cell = []
-            for name, applist in apps[rname].items():
-                cov = covering(applist, t)
-                if not cov:
-                    continue
-                # green only on the actual caster's row the turn it's cast (for a
-                # boss debuff there's no ally caster, so any fresh placement is
-                # green); recipients of a team buff this turn are blue (held).
-                if any(a["apply"] == t and (rname == BOSS or a["caster"] == rname)
-                       for a in cov):
-                    state = "new"
-                elif any(a["apply"] == t for a in cov):
-                    state = "held"
-                elif covering(applist, t + 1):
-                    state = "held"
-                else:
-                    state = "expiring"
-                # turns left (incl. current) from the longest-lasting covering app
-                best = max(cov, key=lambda a: a["apply"] + a["dur"])
-                rem = best["apply"] + best["dur"] - t
-                cell.append({"icon": cov[0]["icon"], "label": cov[0]["label"],
-                             "kind": cov[0]["kind"], "state": state, "rem": rem})
-                if rname != BOSS and cov[0]["icon"] in PROTECTIVE:
-                    protected[rname][t] = True
-            cells.append(cell)
-        out_rows.append({"name": rname, "is_boss": rname == BOSS,
-                         "type_id": None if rname == BOSS else type_ids.get(rname),
-                         "cells": cells})
+        if any(a["apply"] == bt and (is_boss or a["caster"] == rname) for a in cov):
+            state = "new"
+        elif any(a["apply"] == bt for a in cov):
+            state = "held"
+        elif covering(applist, bt + 1):
+            state = "held"
+        else:
+            state = "expiring"
+        best = max(cov, key=lambda a: a["apply"] + a["dur"])
+        out.append({"icon": cov[0]["icon"], "label": cov[0]["label"],
+                    "kind": cov[0]["kind"], "state": state,
+                    "rem": best["apply"] + best["dur"] - bt})
+    return out
 
-    # Per-column boss action + protection coverage. A boss turn is a "danger"
-    # turn when the boss does damage (AoE slam) and at least one champion has no
-    # protective status up — i.e. someone eats the hit unmitigated.
-    champ_rows = [r["name"] for r in out_rows if not r["is_boss"]]
-    col_meta = []
-    for t in cols:
-        boss = boss_actions.get(t)
-        damaging = bool(boss and "aoe" in boss.lower())
-        covered = all(protected.get(r, {}).get(t) for r in champ_rows) if champ_rows else False
-        col_meta.append({"turn": t, "boss": boss, "damaging": damaging,
-                         "covered": covered, "danger": damaging and not covered})
-    gaps = sum(1 for c in col_meta if c["danger"])
-    return {"boss_turns": cols, "col_meta": col_meta, "rows": out_rows,
-            "protection_gaps": gaps}
+
+def _dwj_tm_grid(dwj, variant, turns, max_rows: int = 26):
+    """DWJ-style turn-meter timeline. columns = champions + Demon Lord; rows =
+    each turn in order. Every cell carries that unit's turn meter (0-100), an
+    `acting` flag (turn order — the unit that took this turn, with its skill),
+    and its active buffs/debuffs (uptime, green/blue/faded per _dwj_cell_state).
+    Boss AoE-slam rows with a protection gap (a champion with no Unkillable /
+    Block Damage / Shield up) are flagged danger."""
+    BOSS = "Demon Lord"
+    slot_names = [s.name for s in variant.slots]
+    columns = slot_names + [BOSS]
+    type_ids = _resolve_type_ids(slot_names)
+    apps, _ = _dwj_effect_apps(dwj, variant, turns)
+
+    def tm_key(col):
+        return "Clanboss" if col == BOSS else col
+
+    def covered_at(bt):
+        for cn in slot_names:
+            fx = _dwj_cell_state(apps.get(cn, {}), cn, bt, False)
+            if not any(f["icon"] in _PROTECTIVE_ICONS for f in fx):
+                return False
+        return True
+
+    rows = []
+    gaps = 0
+    for t in turns[:max_rows]:
+        bt = t.boss_turn_number
+        actor = t.actor_name
+        is_boss_turn = actor == "Clanboss"
+        damaging = bool(is_boss_turn and "aoe" in (t.skill_alias or "").lower())
+        danger = bool(damaging and not covered_at(bt))
+        if danger:
+            gaps += 1
+        tm = (t.state or {}).get("tm") or {}
+        cells = []
+        for col in columns:
+            acting = (col == BOSS and is_boss_turn) or (col == actor)
+            raw = int(round(tm.get(tm_key(col), 0) or 0))
+            cells.append({
+                "tm": 100 if acting else max(0, min(100, raw)),
+                "raw_tm": raw,
+                "acting": acting,
+                "skill": t.skill_alias if acting else None,
+                "effects": _dwj_cell_state(apps.get(col, {}), col, bt, col == BOSS),
+            })
+        rows.append({"turn": t.turn_number, "boss_turn": bt, "actor": actor,
+                     "is_boss_turn": is_boss_turn, "damaging": damaging,
+                     "danger": danger, "cells": cells})
+    return {"columns": columns,
+            "column_type_ids": {c: (None if c == BOSS else type_ids.get(c)) for c in columns},
+            "rows": rows, "protection_gaps": gaps}
 
 
 def build_cb_parity_sim(hash_: str | None = None, max_boss_turns: int = 25):
@@ -1266,7 +1284,7 @@ def _cb_parity_sim_compute(hash_: str | None = None, max_boss_turns: int = 25):
         "actor_order": actor_order,
         "actor_type_ids": _resolve_type_ids(actor_order),  # {name: type_id} for portraits/skill icons
         "tm_max": round(tm_max, 1),
-        "buff_matrix": _dwj_buff_matrix(dwj, variant, turns),  # DWJ-style uptime grid
+        "tm_grid": _dwj_tm_grid(dwj, variant, turns),  # DWJ turn-meter + buff timeline
     }
 
 

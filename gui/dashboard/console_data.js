@@ -135,8 +135,8 @@
       var survived = d.boss_turn_count || order.length;
       var footer = "↻ cycle repeats · " + (d.variant.name || "tune") +
                    " · survives to boss turn " + survived;
-      window.__console.rotation(champs, groups, footer);
-      if (window.__console.buffMatrix) window.__console.buffMatrix(d.buff_matrix);
+      if (window.__console.rotation) window.__console.rotation(champs, groups, footer);
+      if (window.__console.tmGrid) window.__console.tmGrid(d.tm_grid);
     });
   }
 
