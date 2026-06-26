@@ -207,8 +207,8 @@
       var bs = (d && d.battles) || [];
       if (!bs.length) { host.innerHTML = '<div style="font-family:\'JetBrains Mono\',monospace;font-size:9px;color:#6f6555;padding:10px 6px;">No captured battles yet.</div>'; return; }
       host.innerHTML = bs.map(function (b) {
-        var top = (b.team && b.team[0]) ? b.team[0] : (b.affinity || "battle");
-        var sub = (b.date ? b.date.slice(5) : "") + (b.time ? " " + b.time : "") + (b.turns ? " · " + b.turns + "T" : "");
+        var top = ((b.date ? b.date.slice(5) : "") + (b.time ? " " + b.time : "")).trim() || "battle";
+        var sub = (b.affinity || "") + (b.turns ? " · " + b.turns + "T" : "");
         return '<div class="replayrow" data-file="' + b.file + '" style="display:flex;justify-content:space-between;align-items:center;padding:8px 6px;border-top:1px solid #241d15;cursor:pointer;border-radius:3px;">' +
           '<div style="display:flex;align-items:center;gap:8px;"><img src="' + affIcon(b.affinity) + '" alt="" style="width:15px;height:15px;">' +
           '<div><div style="font-family:\'JetBrains Mono\',monospace;font-size:11px;color:#ece3d2;">' + top + '</div>' +

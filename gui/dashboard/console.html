@@ -853,20 +853,27 @@ document.addEventListener("DOMContentLoaded", function() {
         rowEl.addEventListener('mouseleave', hideTip);
         return rowEl;
       };
-      // Group rows into boss-turn blocks and lay them out across columns (DWJ).
+      // Group into blocks that END with the Clanboss row (DWJ): heroes act,
+      // then the boss slams to close the block. A Clanboss row finishes the
+      // current block; the block is labelled by that boss turn.
       const blocks = [];
-      let cur = null;
+      let cur = { rows: [], bt: null };
       g.rows.forEach(row => {
-        if (!cur || cur.bt !== row.boss_turn) { cur = { bt: row.boss_turn, turn: row.turn, rows: [] }; blocks.push(cur); }
         cur.rows.push(row);
+        if (row.is_boss_turn) {
+          cur.bt = row.boss_turn;
+          blocks.push(cur);
+          cur = { rows: [], bt: null };
+        }
       });
+      if (cur.rows.length) { cur.bt = null; blocks.push(cur); }   // trailing (post-last-slam)
       const grid = document.createElement('div');
       grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:13px 16px;align-items:start;';
       blocks.forEach(block => {
         const b = document.createElement('div');
         b.style.cssText = 'display:flex;flex-direction:column;gap:2px;';
         b.appendChild(cell(
-          '<span>' + (block.bt === 0 ? 'Opener' : 'Boss turn ' + block.bt) + '</span>',
+          '<span>' + (block.bt == null ? 'End' : 'Boss turn ' + block.bt) + '</span>',
           'font-family:\'JetBrains Mono\',monospace;font-size:8px;letter-spacing:.16em;color:#5a4d3c;text-transform:uppercase;padding:1px 2px 3px;'));
         block.rows.forEach(row => b.appendChild(makeRow(row)));
         grid.appendChild(b);

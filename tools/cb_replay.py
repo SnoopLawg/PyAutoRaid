@@ -136,7 +136,7 @@ def build_replay(root: Path, log_path: Path, name_map: dict | None = None,
             break
     columns.append(BOSS_NAME)
 
-    last_tn, last_sk = {}, {}
+    last_tn, last_rdy, pending = {}, {}, {}
     boss_prev_dmg = 0
     cur_boss_turn = 0
     rows: list = []
@@ -155,6 +155,16 @@ def build_replay(root: Path, log_path: Path, name_map: dict | None = None,
             tn = int(h.get("turn_n") or 0)
             if uid is None:
                 continue
+            # A cooldown skill flipping ready->not-ready means it was just cast;
+            # this is captured a poll BEFORE turn_n increments, so stash it and
+            # attribute it to the next action by this unit (A1 has no cooldown).
+            cur_rdy = {int(s.get("t")): bool(s.get("rdy")) for s in (h.get("sk") or []) if s.get("t") is not None}
+            prev_rdy = last_rdy.get(uid, {})
+            for t, rdy in cur_rdy.items():
+                if prev_rdy.get(t) and not rdy and (int(t) % 10) != 1:
+                    pending[uid] = "A" + str(int(t) % 10)
+            last_rdy[uid] = cur_rdy
+
             prev = last_tn.get(uid)
             if prev is not None and tn > prev and len(rows) < max_rows:
                 is_boss = h.get("side") == "enemy"
@@ -166,7 +176,10 @@ def build_replay(root: Path, log_path: Path, name_map: dict | None = None,
                 # is DoT ticks; consume it but don't credit the boss row.
                 if is_boss:
                     dmg = 0
-                skill = _skill_alias(h, last_sk.get(uid), is_boss)
+                if is_boss:
+                    skill = _skill_alias(h, None, True)
+                else:
+                    skill = pending.pop(uid, None) or "A1"
                 eff_dec = _decode_eff(h.get("eff"), emeta)
                 cells = []
                 for col in columns:
@@ -188,7 +201,6 @@ def build_replay(root: Path, log_path: Path, name_map: dict | None = None,
                     "is_boss_turn": is_boss, "damage": dmg, "danger": False, "cells": cells,
                 })
             last_tn[uid] = tn
-            last_sk[uid] = h.get("sk")
 
     return {
         "columns": columns,
