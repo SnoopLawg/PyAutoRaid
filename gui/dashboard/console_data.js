@@ -57,6 +57,7 @@
         setText("cbCardDmg", fmtAbbrev(today));
         setText("cbPageDmg", fmtAbbrev(today));
         setText("cbTodayDmg", fmtAbbrev(today));
+        setText("tmDamage", fmtAbbrev(today));   // turn-by-turn page "Today" stat
       }
       // Re-feed the damage bar chart with the real per-key (or daily) series,
       // scaled to millions so the design's bar geometry stays comparable.
@@ -137,7 +138,60 @@
                    " · survives to boss turn " + survived;
       if (window.__console.rotation) window.__console.rotation(champs, groups, footer);
       if (window.__console.tmGrid) window.__console.tmGrid(d.tm_grid);
+      wireTelemetryHeader(d);
     });
+  }
+
+  // ---- Turn-by-turn page: header (tune/turns/result) + casts-by-champion ---
+  function titleCase(s) {
+    return (s || "").split(/[-_ ]/).map(function (w) {
+      return w ? w.charAt(0).toUpperCase() + w.slice(1) : "";
+    }).join(" ");
+  }
+  function diffAbbrev(s) {
+    s = (s || "").toLowerCase();
+    if (s.indexOf("ultra") >= 0) return "UNM";
+    if (s.indexOf("night") >= 0) return "NM";
+    if (s.indexOf("brutal") >= 0) return "Brutal";
+    if (s.indexOf("hard") >= 0) return "Hard";
+    return s ? titleCase(s) : "";
+  }
+  function wireTelemetryHeader(d) {
+    var v = d.variant || {};
+    var aff = (v.boss_affinity || "").toLowerCase();
+    setText("tmVariant", titleCase(v.slug || v.name || "tune") +
+      (aff ? " · " + titleCase(aff) : "") + " " + diffAbbrev(v.boss_difficulty));
+    var affEl = document.getElementById("tmAffinityIcon");
+    if (affEl && aff) affEl.src = "assets/ui/" + aff + ".png";
+    var survived = d.boss_turn_count || 0;
+    setText("tmTurns", String(survived));
+    var gaps = (d.tm_grid || {}).protection_gaps || 0;
+    var cleared = gaps === 0 && survived >= 50;
+    setText("tmResult", cleared ? "Clear" : (gaps > 0 ? gaps + " gaps" : "T" + survived));
+    var resEl = document.getElementById("tmResult");
+    if (resEl) resEl.style.color = cleared ? "#6fcf6f" : "#e8896f";
+    // Casts by champion (the sim is a scheduler — this is its per-hero metric).
+    var byActor = {};
+    (d.cast_summary || []).forEach(function (c) {
+      if (c.actor === "Clanboss") return;
+      byActor[c.actor] = (byActor[c.actor] || 0) + (c.count || 0);
+    });
+    var arr = Object.keys(byActor).map(function (n) { return { name: n, count: byActor[n] }; })
+      .sort(function (a, b) { return b.count - a.count; });
+    var maxC = arr.length ? arr[0].count : 1;
+    var total = arr.reduce(function (s, x) { return s + x.count; }, 0) || 1;
+    var host = document.getElementById("tmActBars");
+    if (host) {
+      host.innerHTML = arr.map(function (x) {
+        var pct = Math.round(x.count / total * 100);
+        var w = Math.round(x.count / maxC * 100);
+        return '<div><div style="display:flex;justify-content:space-between;font-family:\'JetBrains Mono\',monospace;font-size:11px;margin-bottom:4px;">' +
+          '<span style="color:#f3ead8;">' + x.name + '</span>' +
+          '<span style="color:#caa063;">' + x.count + ' casts · ' + pct + '%</span></div>' +
+          '<div style="height:8px;background:#241d15;border-radius:4px;overflow:hidden;">' +
+          '<div style="width:' + w + '%;height:100%;background:linear-gradient(90deg,#a07a3a,#d8a657);"></div></div></div>';
+      }).join("");
+    }
   }
 
   // ---- refresh loop -------------------------------------------------------
