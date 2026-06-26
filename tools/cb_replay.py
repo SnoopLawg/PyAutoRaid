@@ -104,6 +104,21 @@ def _apply_state(e) -> tuple[bool, bool]:
     return (landed and not blocked), (not landed) or blocked
 
 
+def _merge_effects(held, placed):
+    """Combine held uptime (blue, carries turns-left) with placed-this-turn
+    (green); placed wins on the same icon. Returns None when the tick overlay
+    contributed nothing, so callers fall back to the battle-log eff decode."""
+    if held is None and placed is None:
+        return None
+    merged = {}
+    for fx in (held or []):
+        merged[fx["icon"]] = {**fx, "state": "held",
+                              "faded": int(fx.get("rem") or 0) <= 1}
+    for fx in (placed or []):
+        merged[fx["icon"]] = {**fx, "state": "new"}
+    return list(merged.values())
+
+
 def _tick_overlay(root: Path, ts: str, emeta: dict | None = None) -> dict | None:
     """From the matching tick_log_cb_<ts>.json, build each hero slot's ordered
     per-action damage to the boss (their own hit + their own DoT/effect damage
@@ -188,7 +203,44 @@ def _tick_overlay(root: Path, ts: str, emeta: dict | None = None) -> dict | None
             "on_boss": e.get("tgt") == BOSS_SLOT,
         })
 
-    out_dmg, out_skill, out_eff = {}, {}, {}
+    # Held buff/debuff uptime from effects_snapshot (mod reads the live
+    # HeroState.AppliedEffects list with TurnLeft). h == slot (0-4 heroes,
+    # 5 = boss); each eff carries {t:EffectTypeId, tl:TurnsLeft, pid:slot}.
+    # Captures from before the snapshot-reader fix carry no `effs` -> no held
+    # overlay (placed-only, the grid still renders).
+    nt_to_slot = {nt: sl for sl, nt in slot_to_nt.items()}
+    snaps = []                                  # [(tick, {slot: [eff,...]})]
+    for e in ticks:
+        if not isinstance(e, dict) or e.get("kind") != "effects_snapshot":
+            continue
+        by_slot = {}
+        for h in e.get("heroes", []):
+            fx = h.get("effs")
+            if fx is None:
+                continue
+            decoded = []
+            for it in fx:
+                m = emeta.get(it.get("t"))
+                if m:
+                    decoded.append({"icon": m["icon"], "label": m["label"],
+                                    "kind": m["kind"], "rem": int(it.get("tl") or 0)})
+            by_slot[h.get("h")] = decoded
+        if by_slot:
+            snaps.append((e.get("tick") or 0, by_slot))
+    snaps.sort(key=lambda x: x[0])
+
+    def held_for(slot, tk):
+        """Effects on `slot` from the latest snapshot at/just before tick tk."""
+        best = []
+        for st, by in snaps:
+            if st <= tk + 1:
+                if slot in by:
+                    best = by[slot]
+            else:
+                break
+        return best
+
+    out_dmg, out_skill, out_eff, out_held = {}, {}, {}, {}
     for nt in set(list(casts) + list(hit_ticks) + list(eff_by_tick)):
         # One entry per TURN (cast). Each turn absorbs ALL of this champion's
         # boss damage — multi-hits, counters AND DoT ticks — since their last
@@ -197,7 +249,8 @@ def _tick_overlay(root: Path, ts: str, emeta: dict | None = None) -> dict | None
         if not cast_list:                       # damage/effects but no cast (rare)
             anchor = hit_ticks.get(nt) or set(eff_by_tick.get(nt, {}))
             cast_list = [(min(anchor), None)] if anchor else []
-        dmgs, sks, effs, prev = [], [], [], -1
+        sl_nt = nt_to_slot.get(nt)
+        dmgs, sks, effs, helds, prev = [], [], [], [], -1
         for i, (T, st) in enumerate(cast_list):
             end = max_tick if i == len(cast_list) - 1 else T
             tot = sum(hit_by_tick[tk].get(nt, 0) + dot_by_tick[tk].get(nt, 0)
@@ -214,10 +267,12 @@ def _tick_overlay(root: Path, ts: str, emeta: dict | None = None) -> dict | None
                     if cur is None or (cur["failed"] and not fx["failed"]):
                         by_icon[fx["icon"]] = fx
             effs.append(list(by_icon.values()))
+            helds.append(held_for(sl_nt, T) if sl_nt is not None else [])
             prev = T
         out_dmg[nt] = dmgs
         out_skill[nt] = sks
         out_eff[nt] = effs
+        out_held[nt] = helds
 
     # Boss stun targeting. Landed stuns are apply_status setype=10 (tgtT=target,
     # fail=0). To also catch RESISTED stuns we learn the boss's stun skill id
@@ -293,7 +348,15 @@ def _tick_overlay(root: Path, ts: str, emeta: dict | None = None) -> dict | None
         stuns.append({"boss_turn": boss_turn_at(tk), "target_nt": tnt,
                       "landed": bool(landed), "blocked": bool(blocked)})
 
+    # Debuffs held ON the boss per boss-turn (slot 5) — the DWJ boss-debuff bar.
+    boss_held = {}
+    for st, by in snaps:
+        bt = boss_turn_at(st)
+        if bt is not None and 5 in by:
+            boss_held[bt] = by[5]               # snaps sorted asc -> latest wins
+
     return {"dmg": out_dmg, "skill": out_skill, "eff": out_eff,
+            "held": out_held, "boss_held": boss_held,
             "received": dict(received), "stuns": stuns}
 
 
@@ -396,14 +459,16 @@ def build_replay(root: Path, log_path: Path, name_map: dict | None = None,
                 # is DoT ticks; consume it but don't credit the boss row.
                 if is_boss:
                     dmg = 0
-                overlay_eff = None
+                overlay_eff = overlay_held = None
                 if is_boss:
                     skill = _skill_alias(h, None, True)
+                    if overlay:                 # debuffs currently on the boss
+                        overlay_held = (overlay.get("boss_held") or {}).get(cur_boss_turn)
                 else:
                     skill = pending.pop(uid, None) or "A1"
                     # Prefer the tick log's exact per-action damage + skill +
-                    # placed effects, matched by normalised type id (slot orders
-                    # differ between the battle log and the tick log).
+                    # placed/held effects, matched by normalised type id (slot
+                    # orders differ between the battle log and the tick log).
                     nt = int(h.get("type_id") or 0) // 10
                     if overlay and nt in overlay["dmg"]:
                         k = action_idx.get(nt, 0)
@@ -414,8 +479,12 @@ def build_replay(root: Path, log_path: Path, name_map: dict | None = None,
                             skill = overlay["skill"][nt][k]
                         if k < len(overlay["eff"][nt]):
                             overlay_eff = overlay["eff"][nt][k]
-                eff_dec = overlay_eff if overlay_eff is not None \
-                    else _decode_eff(h.get("eff"), emeta)
+                        held_nt = overlay.get("held", {}).get(nt, [])
+                        if k < len(held_nt):
+                            overlay_held = held_nt[k]
+                eff_dec = _merge_effects(overlay_held, overlay_eff)
+                if eff_dec is None:
+                    eff_dec = _decode_eff(h.get("eff"), emeta)
                 cells = []
                 for col in columns:
                     if col == BOSS_NAME:

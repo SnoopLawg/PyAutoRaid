@@ -2424,6 +2424,49 @@ namespace RaidAutomation
             catch { return ""; }
         }
 
+        // Like ReadActiveEffects but emits a JSON array of objects carrying the
+        // EffectTypeId, TurnLeft (turns remaining — for held-uptime bars) and
+        // ProducerId per active effect: [{"t":470,"tl":2,"pid":3},...]. Returns
+        // "[]" on an empty (but readable) list, "" on any read failure so the
+        // caller can fall back. Offsets confirmed via Il2CppDumper (dump.cs):
+        //   BattleHero._heroState @ 0xC0; HeroState.AppliedEffects @ 0x38;
+        //   List<T> _items@0x10 _size@0x18, items at +0x20;
+        //   AppliedEffect ProducerId@0x14 EffectTypeId@0x38 TurnLeft@0x48.
+        private static string ReadActiveEffectsJson(object hero)
+        {
+            try
+            {
+                IntPtr heroPtr = IL2CPPHandleOf(hero);
+                if ((long)heroPtr <= 0x10000) return "";
+                IntPtr hstate = Marshal.ReadIntPtr(heroPtr + 0xC0);
+                if ((long)hstate <= 0x10000) return "";
+                IntPtr listObj = Marshal.ReadIntPtr(hstate + 0x38);
+                if ((long)listObj <= 0x10000) return "";
+                int sz = Marshal.ReadInt32(listObj + 0x18);
+                if (sz < 0 || sz > 100) return "";
+                if (sz == 0) return "[]";
+                IntPtr items = Marshal.ReadIntPtr(listObj + 0x10);
+                if ((long)items <= 0x10000) return "";
+                var sb = new StringBuilder("[");
+                IntPtr basePtr = items + 0x20;
+                int n = 0;
+                for (int i = 0; i < sz && i < 50; i++)
+                {
+                    IntPtr ae = Marshal.ReadIntPtr(basePtr + (i * 8));
+                    if ((long)ae <= 0x10000) continue;
+                    int etype = Marshal.ReadInt32(ae + 0x38);
+                    int tleft = Marshal.ReadInt32(ae + 0x48);
+                    int pid = Marshal.ReadInt32(ae + 0x14);
+                    if (n > 0) sb.Append(",");
+                    sb.Append("{\"t\":" + etype + ",\"tl\":" + tleft + ",\"pid\":" + pid + "}");
+                    n++;
+                }
+                sb.Append("]");
+                return sb.ToString();
+            }
+            catch { return ""; }
+        }
+
         // Read a BattleHero's primary Element by walking
         // BattleHero.Type.DefaultElement. Returns the Element enum int
         // (1=Magic 2=Force 3=Spirit 4=Void) or -1 on read failure.
@@ -3826,45 +3869,18 @@ namespace RaidAutomation
                                     catch { }
                                 }
                             }
-                            // Try multiple paths to find applied-effects list
-                            object aeByH = Prop(hero, "AppliedEffectsByHeroes");
-                            if (aeByH == null)
+                            // Active applied effects WITH turns-remaining, read by
+                            // walking HeroState.AppliedEffects directly (the dict
+                            // AppliedEffectsByHeroes is serialization-only and stays
+                            // null at runtime — it returned -1 here for every poll).
+                            string effsJson = ReadActiveEffectsJson(hero);
+                            if (effsJson.Length > 0)
                             {
-                                // Fall back to backing field via direct reflection
-                                try
-                                {
-                                    var f = hero.GetType().GetField("_AppliedEffectsByHeroes_k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic);
-                                    if (f != null) aeByH = f.GetValue(hero);
-                                }
-                                catch { }
+                                sbe.Append(",\"effs\":" + effsJson);
                             }
-                            int dictCount = aeByH != null ? IntProp(aeByH, "Count") : -1;
-                            sbe.Append(",\"ae_dict_count\":" + dictCount);
-                            if (aeByH != null && dictCount > 0)
+                            else
                             {
-                                sbe.Append(",\"effs\":[");
-                                int ne = 0;
-                                try
-                                {
-                                    foreach (var list in DictValues(aeByH))
-                                    {
-                                        if (list == null) continue;
-                                        foreach (var eff in ListItems(list))
-                                        {
-                                            int et = IntProp(eff, "EffectTypeId");
-                                            int tl = IntProp(eff, "TurnLeft");
-                                            int pid = IntProp(eff, "ProducerId");
-                                            int eid = IntProp(eff, "Id");
-                                            if (ne > 0) sbe.Append(",");
-                                            sbe.Append("{\"id\":" + eid + ",\"t\":" + et + ",\"tl\":" + tl + ",\"pid\":" + pid + "}");
-                                            ne++;
-                                            if (ne >= 30) break;
-                                        }
-                                        if (ne >= 30) break;
-                                    }
-                                }
-                                catch { }
-                                sbe.Append("]");
+                                sbe.Append(",\"ae_read_fail\":true");
                             }
                             // Also dump _appliedStatModifications — this is a List<AppliedStatModification>
                             // which at least gives us stat-modifying effects (DefDown, Weaken, etc.)
