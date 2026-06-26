@@ -64,6 +64,10 @@
         <span class="navlabel" style="font-family:Spectral,serif;font-size:14px;color:#cdbfa6;flex:1;">Clan Boss</span>
         <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#6f6555;">1 key</span>
       </button>
+      <button class="navitem" data-view="cb-telemetry" style="display:flex;align-items:center;gap:11px;background:transparent;border:none;border-radius:5px;padding:8px 12px 8px 30px;cursor:pointer;text-align:left;width:100%;border-left:2px solid transparent;">
+        <span style="width:5px;height:5px;border-radius:50%;background:#5a8cdc;flex:none;"></span>
+        <span class="navlabel" style="font-family:Spectral,serif;font-size:13px;color:#a89b84;flex:1;">Turn-by-Turn</span>
+      </button>
       <button class="navitem" data-view="dungeons" style="display:flex;align-items:center;gap:11px;background:transparent;border:none;border-radius:5px;padding:10px 12px;cursor:pointer;text-align:left;width:100%;border-left:2px solid transparent;">
         <span style="width:7px;height:7px;border-radius:50%;background:#c44834;flex:none;box-shadow:0 0 7px #c44834;animation:blink-soft 2s ease-in-out infinite;"></span>
         <span class="navlabel" style="font-family:Spectral,serif;font-size:14px;color:#cdbfa6;flex:1;">Dungeons</span>
@@ -277,6 +281,44 @@
             <div class="frow" style="display:flex;justify-content:space-between;align-items:center;padding:8px 6px;border-top:1px solid #241d15;border-bottom:1px solid #241d15;border-radius:3px;"><div style="display:flex;align-items:center;gap:8px;"><img src="assets/ui/void.png" alt="" style="width:15px;height:15px;"><div><div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#ece3d2;">today</div><div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;color:#6f6555;">tick capture</div></div></div><div id="cbTodayDmg" style="font-family:Cinzel,serif;font-size:16px;color:#d8a657;">21.5M</div></div>
             <button id="cbDrawerBtn" style="width:100%;margin-top:12px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;color:#d8a657;background:transparent;border:1px solid #3a2f1f;border-radius:3px;padding:9px;cursor:pointer;text-transform:uppercase;">Turn-by-turn telemetry →</button>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== TURN-BY-TURN TELEMETRY ===== -->
+    <div class="vpanel" data-view-panel="cb-telemetry" style="display:none;">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;">
+        <div>
+          <button data-goto="cb" style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.16em;color:#a0734a;background:transparent;border:none;cursor:pointer;text-transform:uppercase;padding:0;">&#8592; Clan Boss</button>
+          <div style="font-family:Cinzel,serif;font-weight:700;font-size:30px;color:#f3ead8;margin-top:4px;">Turn-by-Turn Telemetry</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:11px;"><img src="assets/ui/magic.png" alt="" style="width:24px;height:24px;"><span style="font-family:Cinzel,serif;font-weight:600;font-size:18px;color:#cdbfa6;">#2214 &middot; Magic UNM</span></div>
+      </div>
+      <div style="display:flex;gap:13px;margin-top:20px;max-width:560px;">
+        <div style="flex:1;background:#15110b;border:1px solid #2c241a;border-radius:4px;padding:13px 15px;"><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#948876;text-transform:uppercase;">Damage</div><div style="font-family:Cinzel,serif;font-size:25px;color:#d8a657;margin-top:3px;">34.7M</div></div>
+        <div style="flex:1;background:#15110b;border:1px solid #2c241a;border-radius:4px;padding:13px 15px;"><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#948876;text-transform:uppercase;">Turns</div><div style="font-family:Cinzel,serif;font-size:25px;color:#f3ead8;margin-top:3px;">50</div></div>
+        <div style="flex:1;background:#15110b;border:1px solid #2c241a;border-radius:4px;padding:13px 15px;"><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#948876;text-transform:uppercase;">Result</div><div style="font-family:Cinzel,serif;font-size:25px;color:#6fcf6f;margin-top:3px;">Clear</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:26px;margin-top:26px;align-items:start;">
+        <div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.18em;color:#a0734a;text-transform:uppercase;margin-bottom:13px;">Damage by champion</div>
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <div><div style="display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:11px;margin-bottom:4px;"><span style="color:#f3ead8;">Ninja</span><span style="color:#d8a657;">17.3M · 50%</span></div><div style="height:8px;background:#241d15;border-radius:4px;overflow:hidden;"><div class="tbar" data-w="100" style="width:0;height:100%;background:linear-gradient(90deg,#caa063,#d8a657);transition:width .9s cubic-bezier(.2,.8,.2,1);"></div></div></div>
+            <div><div style="display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:11px;margin-bottom:4px;"><span style="color:#f3ead8;">Geomancer</span><span style="color:#caa063;">8.1M · 23%</span></div><div style="height:8px;background:#241d15;border-radius:4px;overflow:hidden;"><div class="tbar" data-w="47" style="width:0;height:100%;background:linear-gradient(90deg,#a07a3a,#caa063);transition:width .9s cubic-bezier(.2,.8,.2,1) .08s;"></div></div></div>
+            <div><div style="display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:11px;margin-bottom:4px;"><span style="color:#f3ead8;">Ma'Shalled</span><span style="color:#caa063;">6.2M · 18%</span></div><div style="height:8px;background:#241d15;border-radius:4px;overflow:hidden;"><div class="tbar" data-w="36" style="width:0;height:100%;background:linear-gradient(90deg,#8a6a30,#b89150);transition:width .9s cubic-bezier(.2,.8,.2,1) .16s;"></div></div></div>
+            <div><div style="display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:11px;margin-bottom:4px;"><span style="color:#cdbfa6;">Maneater</span><span style="color:#948876;">2.4M · 7%</span></div><div style="height:8px;background:#241d15;border-radius:4px;overflow:hidden;"><div class="tbar" data-w="14" style="width:0;height:100%;background:linear-gradient(90deg,#5a4a6a,#9aa6c2);transition:width .9s cubic-bezier(.2,.8,.2,1) .24s;"></div></div></div>
+            <div><div style="display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:11px;margin-bottom:4px;"><span style="color:#cdbfa6;">Demytha</span><span style="color:#948876;">0.7M · 2%</span></div><div style="height:8px;background:#241d15;border-radius:4px;overflow:hidden;"><div class="tbar" data-w="4" style="width:0;height:100%;background:linear-gradient(90deg,#3a4a5a,#9aa6c2);transition:width .9s cubic-bezier(.2,.8,.2,1) .32s;"></div></div></div>
+          </div>
+          <button style="width:100%;margin-top:20px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;color:#0c0a07;background:linear-gradient(180deg,#e6b765,#cf9a44);border:none;border-radius:3px;padding:11px;cursor:pointer;text-transform:uppercase;font-weight:700;">Export battle JSON →</button>
+        </div>
+        <div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:11px;">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.18em;color:#a0734a;text-transform:uppercase;">Turn meters &amp; order</div>
+            <div style="display:flex;align-items:center;gap:9px;font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.05em;text-transform:uppercase;">
+              <span style="color:#6fcf6f;">■ Cast</span><span style="color:#5a8cdc;">■ Held</span><span style="color:#6f6555;">■ Expiring</span>
+            </div>
+          </div>
+          <div id="tmGrid" style="background:#100c08;border:1px solid #2c241a;border-radius:4px;padding:11px;"></div>
         </div>
       </div>
     </div>
@@ -549,37 +591,7 @@
     </div>
   </div>
 
-  <!-- telemetry drawer -->
-  <div id="drawerBg" onclick="closeDrawer()" style="display:none;position:fixed;inset:0;z-index:96;background:rgba(8,6,4,.6);animation:fade-in .2s ease;"></div>
-  <div id="drawer" style="position:fixed;top:0;right:0;bottom:0;width:560px;max-width:94vw;z-index:97;transform:translateX(100%);transition:transform .42s cubic-bezier(.2,.9,.2,1);background:linear-gradient(180deg,#181109,#100c08);border-left:1px solid #6e4f24;box-shadow:-30px 0 80px -20px rgba(0,0,0,.8);overflow-y:auto;">
-    <div style="padding:24px 26px 40px;">
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;">
-        <div style="display:flex;align-items:center;gap:11px;"><img src="assets/ui/magic.png" alt="" style="width:22px;height:22px;"><div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.2em;color:#a0734a;text-transform:uppercase;">Turn-by-turn</div><div style="font-family:Cinzel,serif;font-weight:700;font-size:22px;color:#f3ead8;">#2214 · Magic UNM</div></div></div>
-        <button onclick="closeDrawer()" style="font-family:'JetBrains Mono',monospace;font-size:16px;color:#a0734a;background:transparent;border:1px solid #3a2f1f;border-radius:3px;width:34px;height:34px;cursor:pointer;flex:none;">✕</button>
-      </div>
-      <div style="display:flex;gap:11px;margin-top:18px;">
-        <div style="flex:1;background:#15110b;border:1px solid #2c241a;border-radius:3px;padding:12px 14px;"><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#948876;text-transform:uppercase;">Damage</div><div style="font-family:Cinzel,serif;font-size:23px;color:#d8a657;margin-top:3px;">34.7M</div></div>
-        <div style="flex:1;background:#15110b;border:1px solid #2c241a;border-radius:3px;padding:12px 14px;"><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#948876;text-transform:uppercase;">Turns</div><div style="font-family:Cinzel,serif;font-size:23px;color:#f3ead8;margin-top:3px;">50</div></div>
-        <div style="flex:1;background:#15110b;border:1px solid #2c241a;border-radius:3px;padding:12px 14px;"><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#948876;text-transform:uppercase;">Result</div><div style="font-family:Cinzel,serif;font-size:23px;color:#6fcf6f;margin-top:3px;">Clear</div></div>
-      </div>
-      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.18em;color:#a0734a;text-transform:uppercase;margin:22px 0 12px;">Damage by champion</div>
-      <div style="display:flex;flex-direction:column;gap:11px;">
-        <div><div style="display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:11px;margin-bottom:4px;"><span style="color:#f3ead8;">Ninja</span><span style="color:#d8a657;">17.3M · 50%</span></div><div style="height:8px;background:#241d15;border-radius:4px;overflow:hidden;"><div class="tbar" data-w="100" style="width:0;height:100%;background:linear-gradient(90deg,#caa063,#d8a657);transition:width .9s cubic-bezier(.2,.8,.2,1);"></div></div></div>
-        <div><div style="display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:11px;margin-bottom:4px;"><span style="color:#f3ead8;">Geomancer</span><span style="color:#caa063;">8.1M · 23%</span></div><div style="height:8px;background:#241d15;border-radius:4px;overflow:hidden;"><div class="tbar" data-w="47" style="width:0;height:100%;background:linear-gradient(90deg,#a07a3a,#caa063);transition:width .9s cubic-bezier(.2,.8,.2,1) .08s;"></div></div></div>
-        <div><div style="display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:11px;margin-bottom:4px;"><span style="color:#f3ead8;">Ma'Shalled</span><span style="color:#caa063;">6.2M · 18%</span></div><div style="height:8px;background:#241d15;border-radius:4px;overflow:hidden;"><div class="tbar" data-w="36" style="width:0;height:100%;background:linear-gradient(90deg,#8a6a30,#b89150);transition:width .9s cubic-bezier(.2,.8,.2,1) .16s;"></div></div></div>
-        <div><div style="display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:11px;margin-bottom:4px;"><span style="color:#cdbfa6;">Maneater</span><span style="color:#948876;">2.4M · 7%</span></div><div style="height:8px;background:#241d15;border-radius:4px;overflow:hidden;"><div class="tbar" data-w="14" style="width:0;height:100%;background:linear-gradient(90deg,#5a4a6a,#9aa6c2);transition:width .9s cubic-bezier(.2,.8,.2,1) .24s;"></div></div></div>
-        <div><div style="display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:11px;margin-bottom:4px;"><span style="color:#cdbfa6;">Demytha</span><span style="color:#948876;">0.7M · 2%</span></div><div style="height:8px;background:#241d15;border-radius:4px;overflow:hidden;"><div class="tbar" data-w="4" style="width:0;height:100%;background:linear-gradient(90deg,#3a4a5a,#9aa6c2);transition:width .9s cubic-bezier(.2,.8,.2,1) .32s;"></div></div></div>
-      </div>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin:24px 0 11px;">
-        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.18em;color:#a0734a;text-transform:uppercase;">Turn meters &amp; order</div>
-        <div style="display:flex;align-items:center;gap:9px;font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.05em;text-transform:uppercase;">
-          <span style="color:#6fcf6f;">▸ Acting</span><span style="color:#6fcf6f;">■ Cast</span><span style="color:#5a8cdc;">■ Held</span><span style="color:#6f6555;">■ Expiring</span>
-        </div>
-      </div>
-      <div id="tmGrid" style="background:#100c08;border:1px solid #2c241a;border-radius:4px;padding:11px;overflow-x:auto;"></div>
-      <button style="width:100%;margin-top:18px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;color:#0c0a07;background:linear-gradient(180deg,#e6b765,#cf9a44);border:none;border-radius:3px;padding:11px;cursor:pointer;text-transform:uppercase;font-weight:700;">Export battle JSON →</button>
-    </div>
-  </div>
+  <!-- (turn-by-turn telemetry is now the cb-telemetry view panel) -->
 </div>
 <script>
 document.addEventListener("DOMContentLoaded", function() {
@@ -909,6 +921,11 @@ document.addEventListener("DOMContentLoaded", function() {
         const lbl = n.querySelector('.navlabel');
         if (lbl) lbl.style.color = on ? '#f3ead8' : '#cdbfa6';
       });
+      if (view === 'cb-telemetry') {
+        if (window.__loadTmGrid) window.__loadTmGrid();   // lazy: ~35s cold sim
+        document.querySelectorAll('.tbar').forEach(b => { b.style.width = '0'; });
+        setTimeout(() => { document.querySelectorAll('.tbar').forEach(b => { b.style.width = (b.getAttribute('data-w') || 0) + '%'; }); }, 120);
+      }
       if (root) root.scrollTop = 0;
       window.scrollTo(0, 0);
     };
@@ -918,9 +935,16 @@ document.addEventListener("DOMContentLoaded", function() {
     document.querySelectorAll('[data-goto]').forEach(card => {
       card.addEventListener('click', () => { location.hash = card.getAttribute('data-goto'); setView(card.getAttribute('data-goto')); });
     });
-    // Deep-linkable views: #cb, #dungeons, etc. select that view on load.
-    // A "#view-detail" hash (e.g. #cb-rotation) still selects the base view.
-    const viewFromHash = () => (location.hash || '').replace('#', '').split('-')[0];
+    // Deep-linkable views: #cb, #dungeons, #cb-telemetry, etc. An exact panel
+    // name wins; #cb-rotation is a back-compat alias for the telemetry page;
+    // anything else falls back to its base segment.
+    const PANEL_NAMES = new Set(Array.from(document.querySelectorAll('[data-view-panel]')).map(p => p.getAttribute('data-view-panel')));
+    const viewFromHash = () => {
+      let h = (location.hash || '').replace('#', '');
+      if (h === 'cb-rotation') h = 'cb-telemetry';
+      if (PANEL_NAMES.has(h)) return h;
+      return h.split('-')[0];
+    };
     window.addEventListener('hashchange', () => { const v = viewFromHash(); if (v) setView(v); });
     (() => { const v = viewFromHash(); if (v) setView(v); })();
 
@@ -965,30 +989,14 @@ document.addEventListener("DOMContentLoaded", function() {
       toast(gear ? 'Gear plan queued · 14 moves staged for next run' : 'Preset "Myth Eater · UNM Void" written to slot 3 ✓');
     });
 
-    // drawer
-    const openDrawer = () => {
-      const d = document.getElementById('drawer'), bg = document.getElementById('drawerBg');
-      if (bg) bg.style.display = 'block';
-      if (d) d.style.transform = 'translateX(0)';
-      if (window.__loadTmGrid) window.__loadTmGrid();   // lazy: ~35s cold sim, drawer-only
-      document.querySelectorAll('.tbar').forEach(b => { b.style.width = '0'; });
-      setTimeout(() => { document.querySelectorAll('.tbar').forEach(b => { b.style.width = (b.getAttribute('data-w') || 0) + '%'; }); }, 90);
-    };
-    const closeDrawer = () => {
-      const d = document.getElementById('drawer'), bg = document.getElementById('drawerBg');
-      if (bg) bg.style.display = 'none';
-      if (d) d.style.transform = 'translateX(100%)';
-    };
-    window.closeDrawer = closeDrawer;
-    window.openDrawer = openDrawer;
+    // Turn-by-turn telemetry is its own routed view (cb-telemetry); the CB
+    // page's button + last-battle row navigate there. setView() lazy-loads the
+    // sim and fires the damage bars (see the cb-telemetry branch above).
+    const goTelemetry = () => { location.hash = 'cb-telemetry'; setView('cb-telemetry'); };
     const dBtn = document.getElementById('cbDrawerBtn');
     const dRow = document.getElementById('cbBattle');
-    if (dBtn) dBtn.addEventListener('click', openDrawer);
-    if (dRow) dRow.addEventListener('click', openDrawer);
-    // Deep-link #cb-rotation opens the CB view + telemetry drawer directly.
-    const applyDrawerHash = () => { if ((location.hash || '').replace('#', '') === 'cb-rotation') { setView('cb'); openDrawer(); } };
-    window.addEventListener('hashchange', applyDrawerHash);
-    applyDrawerHash();
+    if (dBtn) dBtn.addEventListener('click', goTelemetry);
+    if (dRow) dRow.addEventListener('click', goTelemetry);
 
     // countdown
     const cron = [7, 13, 19];
