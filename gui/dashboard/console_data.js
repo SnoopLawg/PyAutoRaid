@@ -114,8 +114,19 @@
           var ci = slotIndex(t.actor);
           if (ci < 0) return null;
           var cd = (cdmap[t.actor] && cdmap[t.actor][t.skill] > 0) ? "CD " + cdmap[t.actor][t.skill] : "";
+          // Buffs/debuffs this cast applies → cell label + colour. Defensive
+          // buff > debuff > offensive buff wins the cell style; a plain attack
+          // keeps the neutral skill-alias colour.
+          var fx = Array.isArray(t.effects) ? t.effects : [];
+          var label = fx.map(function (e) {
+            return e.label + (e.turns ? " " + e.turns + "T" : "");
+          }).join(" · ");
+          var k = fx.some(function (e) { return e.kind === "def"; }) ? "def"
+                : fx.some(function (e) { return e.kind === "debuff"; }) ? "a3"
+                : fx.some(function (e) { return e.kind === "buff"; }) ? "a2"
+                : styleKey(t.skill);
           return {
-            kind: "action", c: ci, s: t.skill, l: "", k: styleKey(t.skill),
+            kind: "action", c: ci, s: t.skill, l: label, k: k,
             cd: cd, typeId: ids[t.actor] || null, idx: SKILL_IDX[t.skill] || null,
           };
         }).filter(Boolean);

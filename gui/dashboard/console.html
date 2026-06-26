@@ -723,8 +723,11 @@ document.addEventListener("DOMContentLoaded", function() {
       ],
       '&#8635; rotation repeats from Round 1 · 0 protection gaps over 50 turns');
 
+    // ?capture=1 — static-render mode: skip the looping ember/countdown
+    // animations so headless screenshot tools can settle (no visual loops).
+    const CAPTURE = /[?&]capture=1/.test(location.search);
     // embers
-    const c = document.getElementById('embers');
+    const c = CAPTURE ? null : document.getElementById('embers');
     if (c) {
       const dens = 26;
       const colors = ['#d8a657', '#c25a3a', '#caa063'];
@@ -763,8 +766,10 @@ document.addEventListener("DOMContentLoaded", function() {
       card.addEventListener('click', () => { location.hash = card.getAttribute('data-goto'); setView(card.getAttribute('data-goto')); });
     });
     // Deep-linkable views: #cb, #dungeons, etc. select that view on load.
-    window.addEventListener('hashchange', () => { const v = (location.hash || '').replace('#', ''); if (v) setView(v); });
-    (() => { const v = (location.hash || '').replace('#', ''); if (v) setView(v); })();
+    // A "#view-detail" hash (e.g. #cb-rotation) still selects the base view.
+    const viewFromHash = () => (location.hash || '').replace('#', '').split('-')[0];
+    window.addEventListener('hashchange', () => { const v = viewFromHash(); if (v) setView(v); });
+    (() => { const v = viewFromHash(); if (v) setView(v); })();
 
     // CB interactions
     const toast = (msg) => {
@@ -821,10 +826,15 @@ document.addEventListener("DOMContentLoaded", function() {
       if (d) d.style.transform = 'translateX(100%)';
     };
     window.closeDrawer = closeDrawer;
+    window.openDrawer = openDrawer;
     const dBtn = document.getElementById('cbDrawerBtn');
     const dRow = document.getElementById('cbBattle');
     if (dBtn) dBtn.addEventListener('click', openDrawer);
     if (dRow) dRow.addEventListener('click', openDrawer);
+    // Deep-link #cb-rotation opens the CB view + telemetry drawer directly.
+    const applyDrawerHash = () => { if ((location.hash || '').replace('#', '') === 'cb-rotation') { setView('cb'); openDrawer(); } };
+    window.addEventListener('hashchange', applyDrawerHash);
+    applyDrawerHash();
 
     // countdown
     const cron = [7, 13, 19];
@@ -842,7 +852,7 @@ document.addEventListener("DOMContentLoaded", function() {
       if (e) e.textContent = pad(hh) + ':' + pad(mm) + ':' + pad(ss);
     };
     tick();
-    setInterval(tick, 1000);
+    if (!CAPTURE) setInterval(tick, 1000);
 });
 </script>
 <script>document.addEventListener("DOMContentLoaded",function(){var e=document.getElementById("todayStr");if(e)e.textContent=new Date().toISOString().slice(0,10)+" · live";});</script>

@@ -982,6 +982,61 @@ _PARITY_CACHE: dict = {}
 _PARITY_LOCK = threading.Lock()
 _PARITY_TTL = 3600.0
 
+# DWJ effect-name -> (friendly label, kind) for the rotation grid's per-cast
+# buff/debuff readout. kind: "def" (protective buff, green), "buff" (offensive/
+# utility buff, gold), "debuff" (placed on enemy, red). Names not listed are
+# pure scheduler mechanics (extend_buff, reduce_cd, ...) and aren't shown — they
+# modify existing statuses rather than applying a new one.
+_DWJ_EFFECT_LABELS = {
+    # protective buffs
+    "unkillable": ("Unkillable", "def"), "block_dmg": ("Block Damage", "def"),
+    "block_debuff": ("Block Debuffs", "def"), "shield": ("Shield", "def"),
+    "continuous_heal": ("Heal/turn", "def"), "Heal": ("Heal", "def"),
+    "allyprotect": ("Ally Protect", "def"), "reflect": ("Reflect Dmg", "def"),
+    "counter_atk": ("Counterattack", "def"), "pveil": ("Perfect Veil", "def"),
+    "rod": ("Revive on Death", "def"), "taunt": ("Taunt", "def"),
+    # offensive / utility buffs
+    "atkup": ("Inc ATK", "buff"), "defup": ("Inc DEF", "buff"),
+    "speedup": ("Inc SPD", "buff"), "tm_up": ("TM Boost", "buff"),
+    "crit_dmg_up": ("Inc C.DMG", "buff"), "crit_rate_up": ("Inc C.RATE", "buff"),
+    "accup": ("Inc ACC", "buff"), "str": ("Strengthen", "buff"),
+    "allyatk": ("Ally Attack", "buff"), "extra_turn": ("Extra Turn", "buff"),
+    # debuffs
+    "atkdown": ("Dec ATK", "debuff"), "defdown": ("Dec DEF", "debuff"),
+    "acc_down": ("Dec ACC", "debuff"), "speeddown": ("Dec SPD", "debuff"),
+    "tm_down": ("TM Drain", "debuff"), "weak": ("Weaken", "debuff"),
+    "poison": ("Poison", "debuff"), "hpburn": ("HP Burn", "debuff"),
+    "poison_sense": ("Poison Sens.", "debuff"), "heal_reduction": ("Heal Reduc.", "debuff"),
+    "fear": ("Fear", "debuff"), "freeze": ("Freeze", "debuff"),
+    "sleep": ("Sleep", "debuff"), "stun": ("Stun", "debuff"),
+    "blockbuff": ("Block Buffs", "debuff"),
+}
+
+
+def _dwj_cast_effects(dwj, variant):
+    """Build {(slot_name, alias): [{label, kind, turns}]} of the buffs/debuffs
+    each champion's skill applies, for the rotation grid. Generic DWJ DPS roles
+    (no resolved champion) map to nothing."""
+    out: dict = {}
+    for s in variant.slots:
+        ch = dwj.champion(s.name)
+        if ch is None:
+            continue
+        for sk in ch.skills:
+            labels = []
+            for e in sk.effects:
+                name = e.buff or e.debuff
+                if not name:
+                    continue
+                meta = _DWJ_EFFECT_LABELS.get(name)
+                if meta is None:
+                    continue
+                labels.append({"label": meta[0], "kind": meta[1],
+                               "turns": e.turns or 0})
+            if labels:
+                out[(s.name, sk.alias)] = labels
+    return out
+
 
 def build_cb_parity_sim(hash_: str | None = None, max_boss_turns: int = 25):
     """Cached wrapper around `_cb_parity_sim_compute` (see its docstring)."""
@@ -1039,11 +1094,13 @@ def _cb_parity_sim_compute(hash_: str | None = None, max_boss_turns: int = 25):
         {"actor": k[0], "skill": k[1], "count": n}
         for k, n in cast_counts.most_common()
     ]
+    cast_effects = _dwj_cast_effects(dwj, variant)
     timeline = [{
         "turn": t.turn_number,
         "boss_turn": t.boss_turn_number,
         "actor": t.actor_name,
         "skill": t.skill_alias,
+        "effects": cast_effects.get((t.actor_name, t.skill_alias), []),  # buffs/debuffs this cast applies
         "state": t.state,   # {tm: {name: meter}, speed: {name: [effects]}} for the visual timeline
     } for t in turns]
     # Actor order (slots then boss) + the max TM seen, so the frontend can lay
