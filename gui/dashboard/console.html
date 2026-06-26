@@ -299,28 +299,13 @@
         <div style="flex:1;background:#15110b;border:1px solid #2c241a;border-radius:4px;padding:13px 15px;"><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#948876;text-transform:uppercase;">Turns</div><div id="tmTurns" style="font-family:Cinzel,serif;font-size:25px;color:#f3ead8;margin-top:3px;">—</div></div>
         <div style="flex:1;background:#15110b;border:1px solid #2c241a;border-radius:4px;padding:13px 15px;"><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#948876;text-transform:uppercase;">Result</div><div id="tmResult" style="font-family:Cinzel,serif;font-size:25px;color:#6fcf6f;margin-top:3px;">—</div></div>
       </div>
-      <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:26px;margin-top:26px;align-items:start;">
-        <div>
-          <div id="tmActHeader" style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.18em;color:#a0734a;text-transform:uppercase;margin-bottom:13px;">Casts by champion</div>
-          <div id="tmActBars" style="display:flex;flex-direction:column;gap:12px;">
-            <div><div style="display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:11px;margin-bottom:4px;"><span style="color:#f3ead8;">Ninja</span><span style="color:#d8a657;">17.3M · 50%</span></div><div style="height:8px;background:#241d15;border-radius:4px;overflow:hidden;"><div class="tbar" data-w="100" style="width:0;height:100%;background:linear-gradient(90deg,#caa063,#d8a657);transition:width .9s cubic-bezier(.2,.8,.2,1);"></div></div></div>
-            <div><div style="display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:11px;margin-bottom:4px;"><span style="color:#f3ead8;">Geomancer</span><span style="color:#caa063;">8.1M · 23%</span></div><div style="height:8px;background:#241d15;border-radius:4px;overflow:hidden;"><div class="tbar" data-w="47" style="width:0;height:100%;background:linear-gradient(90deg,#a07a3a,#caa063);transition:width .9s cubic-bezier(.2,.8,.2,1) .08s;"></div></div></div>
-            <div><div style="display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:11px;margin-bottom:4px;"><span style="color:#f3ead8;">Ma'Shalled</span><span style="color:#caa063;">6.2M · 18%</span></div><div style="height:8px;background:#241d15;border-radius:4px;overflow:hidden;"><div class="tbar" data-w="36" style="width:0;height:100%;background:linear-gradient(90deg,#8a6a30,#b89150);transition:width .9s cubic-bezier(.2,.8,.2,1) .16s;"></div></div></div>
-            <div><div style="display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:11px;margin-bottom:4px;"><span style="color:#cdbfa6;">Maneater</span><span style="color:#948876;">2.4M · 7%</span></div><div style="height:8px;background:#241d15;border-radius:4px;overflow:hidden;"><div class="tbar" data-w="14" style="width:0;height:100%;background:linear-gradient(90deg,#5a4a6a,#9aa6c2);transition:width .9s cubic-bezier(.2,.8,.2,1) .24s;"></div></div></div>
-            <div><div style="display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:11px;margin-bottom:4px;"><span style="color:#cdbfa6;">Demytha</span><span style="color:#948876;">0.7M · 2%</span></div><div style="height:8px;background:#241d15;border-radius:4px;overflow:hidden;"><div class="tbar" data-w="4" style="width:0;height:100%;background:linear-gradient(90deg,#3a4a5a,#9aa6c2);transition:width .9s cubic-bezier(.2,.8,.2,1) .32s;"></div></div></div>
-          </div>
-          <button style="width:100%;margin-top:20px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;color:#0c0a07;background:linear-gradient(180deg,#e6b765,#cf9a44);border:none;border-radius:3px;padding:11px;cursor:pointer;text-transform:uppercase;font-weight:700;">Export battle JSON →</button>
-        </div>
-        <div>
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:11px;">
-            <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.18em;color:#a0734a;text-transform:uppercase;">Turn meters &amp; order</div>
-            <div style="display:flex;align-items:center;gap:9px;font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.05em;text-transform:uppercase;">
-              <span style="color:#6fcf6f;">■ Cast</span><span style="color:#5a8cdc;">■ Held</span><span style="color:#6f6555;">■ Expiring</span>
-            </div>
-          </div>
-          <div id="tmGrid" style="background:#100c08;border:1px solid #2c241a;border-radius:4px;padding:11px;"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin:26px 0 12px;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.18em;color:#a0734a;text-transform:uppercase;">Turn order &amp; meters</div>
+        <div style="display:flex;align-items:center;gap:9px;font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.05em;text-transform:uppercase;">
+          <span style="color:#6fcf6f;">■ Cast</span><span style="color:#5a8cdc;">■ Held</span><span style="color:#6f6555;">■ Expiring</span>
         </div>
       </div>
+      <div id="tmGrid"></div>
     </div>
 
     <!-- ===== DUNGEONS ===== -->
@@ -801,6 +786,7 @@ document.addEventListener("DOMContentLoaded", function() {
       { b: '#8a46c0', m: '#241236', t: '#cf9ae8' },  // purple
       { b: '#2aa0a0', m: '#0e3030', t: '#86e3e3' },  // teal
     ];
+    const fmtN = (n) => { const a = Math.abs(n); return a >= 1e9 ? (n / 1e9).toFixed(2) + 'B' : a >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : a >= 1e3 ? (n / 1e3).toFixed(1) + 'K' : '' + Math.round(n); };
     const renderTmGrid = (g) => {
       const host = document.getElementById('tmGrid');
       if (!host) return;
@@ -844,39 +830,52 @@ document.addEventListener("DOMContentLoaded", function() {
       };
       const hideTip = () => { tip.style.display = 'none'; };
 
-      const list = document.createElement('div');
-      list.style.cssText = 'display:flex;flex-direction:column;gap:2px;';
-      let lastBt = null;
-      g.rows.forEach(row => {
+      // Build one hero-coloured row element (shared by every block).
+      const makeRow = (row) => {
         const isBoss = row.is_boss_turn;
         const name = isBoss ? 'Clanboss' : row.actor;
         const c = colorOf(name);
         const actCell = (row.cells || []).find(x => x.acting) || {};
+        const dmg = (row.damage != null && row.damage > 0)
+          ? '<span style="font-family:\'JetBrains Mono\',monospace;font-size:9px;color:#f3ead8;flex:none;margin-right:8px;">' + fmtN(row.damage) + '</span>' : '';
         const icons = (actCell.effects || []).slice(0, 7).map(fx =>
-          '<img src="assets/effects/' + fx.icon + '.png" alt="" title="' + fx.label + (fx.rem ? ' ' + fx.rem + 'T' : '') + '" onerror="this.style.display=\'none\'" style="width:15px;height:15px;object-fit:contain;' + (fx.state === 'expiring' ? 'opacity:.45;' : '') + (fx.state === 'new' ? 'filter:drop-shadow(0 0 2px #6fcf6f);' : '') + '">'
+          '<img src="assets/effects/' + fx.icon + '.png" alt="" title="' + fx.label + (fx.rem ? ' ' + fx.rem + 'T' : '') + '" onerror="this.style.display=\'none\'" style="width:14px;height:14px;object-fit:contain;' + (fx.state === 'expiring' ? 'opacity:.45;' : '') + (fx.state === 'new' ? 'filter:drop-shadow(0 0 2px #6fcf6f);' : '') + '">'
         ).join('');
-        const turnLabel = (row.boss_turn !== lastBt)
-          ? '<span style="font-family:\'JetBrains Mono\',monospace;font-size:9px;color:#8a7c64;flex:none;width:30px;text-align:right;">T' + row.turn + '</span>'
-          : '<span style="flex:none;width:30px;"></span>';
-        lastBt = row.boss_turn;
         const rowEl = cell(
-          portraitOf(name, 17) +
-          '<span style="font-family:Cinzel,serif;font-size:12px;color:#f6efe0;flex:none;min-width:96px;text-shadow:0 1px 2px rgba(0,0,0,.7);">' + name + '</span>' +
-          '<span style="flex:1;"></span>' +
-          '<span style="display:flex;align-items:center;gap:3px;margin-right:10px;">' + icons + '</span>' +
-          '<span style="font-family:\'JetBrains Mono\',monospace;font-size:11px;font-weight:700;color:' + (isBoss ? '#f0786a' : c.t) + ';flex:none;min-width:34px;text-align:right;">' + (actCell.skill || '') + '</span>' +
-          turnLabel,
-          'display:flex;align-items:center;gap:7px;padding:5px 9px;border-radius:3px;cursor:default;background:linear-gradient(90deg,' + c.b + ' 0%,' + c.m + ' 82%);' + (row.danger ? 'box-shadow:inset 0 0 0 1px #e8505a;' : ''));
+          portraitOf(name, 15) +
+          '<span style="font-family:Cinzel,serif;font-size:11px;color:#f6efe0;flex:none;min-width:84px;text-shadow:0 1px 2px rgba(0,0,0,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + name + '</span>' +
+          '<span style="flex:1;"></span>' + dmg +
+          '<span style="display:flex;align-items:center;gap:2px;margin-right:8px;">' + icons + '</span>' +
+          '<span style="font-family:\'JetBrains Mono\',monospace;font-size:10px;font-weight:700;color:' + (isBoss ? '#f0786a' : c.t) + ';flex:none;min-width:30px;text-align:right;">' + (actCell.skill || '') + '</span>',
+          'display:flex;align-items:center;gap:6px;padding:4px 8px;border-radius:2px;cursor:default;background:linear-gradient(90deg,' + c.b + ' 0%,' + c.m + ' 84%);' + (row.danger ? 'box-shadow:inset 0 0 0 1px #e8505a;' : ''));
         rowEl.addEventListener('mousemove', (e) => showTip(row, e));
         rowEl.addEventListener('mouseleave', hideTip);
-        list.appendChild(rowEl);
+        return rowEl;
+      };
+      // Group rows into boss-turn blocks and lay them out across columns (DWJ).
+      const blocks = [];
+      let cur = null;
+      g.rows.forEach(row => {
+        if (!cur || cur.bt !== row.boss_turn) { cur = { bt: row.boss_turn, turn: row.turn, rows: [] }; blocks.push(cur); }
+        cur.rows.push(row);
       });
-      host.appendChild(list);
+      const grid = document.createElement('div');
+      grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:13px 16px;align-items:start;';
+      blocks.forEach(block => {
+        const b = document.createElement('div');
+        b.style.cssText = 'display:flex;flex-direction:column;gap:2px;';
+        b.appendChild(cell(
+          '<span>' + (block.bt === 0 ? 'Opener' : 'Boss turn ' + block.bt) + '</span>',
+          'font-family:\'JetBrains Mono\',monospace;font-size:8px;letter-spacing:.16em;color:#5a4d3c;text-transform:uppercase;padding:1px 2px 3px;'));
+        block.rows.forEach(row => b.appendChild(makeRow(row)));
+        grid.appendChild(b);
+      });
+      host.appendChild(grid);
       const gaps = g.protection_gaps || 0;
       host.appendChild(cell(
-        '<span>' + (gaps > 0 ? '&#9888; ' + gaps + ' protection gaps' : '&#10003; no protection gaps in the shown turns') + '</span>' +
+        '<span>' + (gaps > 0 ? '&#9888; ' + gaps + ' protection gaps' : '&#10003; no protection gaps') + '</span>' +
         '<span style="color:#6f6555;"> &middot; hover a row for turn meters</span>',
-        'margin-top:9px;text-align:center;font-family:\'JetBrains Mono\',monospace;font-size:9px;color:' + (gaps > 0 ? '#e8896f' : '#6fcf6f') + ';'));
+        'margin-top:13px;text-align:center;font-family:\'JetBrains Mono\',monospace;font-size:9px;color:' + (gaps > 0 ? '#e8896f' : '#6fcf6f') + ';'));
     };
     window.__console.tmGrid = renderTmGrid;
     // Static default (replaced live by console_data.js when the sim is available)
