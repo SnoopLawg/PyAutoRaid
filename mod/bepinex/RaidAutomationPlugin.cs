@@ -112,6 +112,11 @@ namespace RaidAutomation
         internal static IntPtr _aeProducerIdField;       // AppliedEffect.ProducerId IL2CPP field handle
         internal static bool _hsBuffFieldsResolved;      // true once we've attempted to resolve
         internal static bool _aeFieldsResolved;          // true once we've resolved AppliedEffect fields
+        // PhaseEffects element field handles (AppendActiveEffects -> "eff") so we
+        // can emit the canonical StatusEffectTypeId ("t") + turns-left ("d").
+        internal static IntPtr _phEffTypeField;
+        internal static IntPtr _phEffTurnField;
+        internal static bool _phEffFieldsResolved;
 
         // Queue for artifact commands to dispatch from game context
         internal static readonly ConcurrentQueue<ArtifactCmd> ArtifactCmdQueue = new();

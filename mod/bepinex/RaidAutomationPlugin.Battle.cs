@@ -1259,7 +1259,28 @@ namespace RaidAutomation
                             int kindId = Marshal.ReadInt32(eff + 0x14);
                             int count = Marshal.ReadInt32(eff + 0x68);
                             int stack = Marshal.ReadInt32(eff + 0x6C);
+                            // Resolve the canonical StatusEffectTypeId (-> effects.json -> icon)
+                            // + turns-remaining via IL2CPP field handles, cached once.
+                            if (!_phEffFieldsResolved)
+                            {
+                                _phEffFieldsResolved = true;
+                                IntPtr peCls = il2cpp_object_get_class(eff);
+                                IntPtr fIter = IntPtr.Zero; IntPtr f;
+                                while ((f = il2cpp_class_get_fields(peCls, ref fIter)) != IntPtr.Zero)
+                                {
+                                    string fn = Marshal.PtrToStringAnsi(il2cpp_field_get_name(f));
+                                    if (fn == "EffectTypeId") _phEffTypeField = f;
+                                    else if (fn == "TurnLeft") _phEffTurnField = f;
+                                }
+                            }
+                            int typeId = -1, turns = -1;
+                            IntPtr peBuf = Marshal.AllocHGlobal(8);
+                            if (_phEffTypeField != IntPtr.Zero) { il2cpp_field_get_value(eff, _phEffTypeField, peBuf); typeId = Marshal.ReadInt32(peBuf); }
+                            if (_phEffTurnField != IntPtr.Zero) { il2cpp_field_get_value(eff, _phEffTurnField, peBuf); turns = Marshal.ReadInt32(peBuf); }
+                            Marshal.FreeHGlobal(peBuf);
                             sb.Append("{\"id\":" + effId + ",\"k\":" + kindId);
+                            if (typeId >= 0) sb.Append(",\"t\":" + typeId);
+                            if (turns >= 0) sb.Append(",\"d\":" + turns);
                             if (count > 0) sb.Append(",\"c\":" + count);
                             if (stack > 1) sb.Append(",\"s\":" + stack);
                             sb.Append("}");
