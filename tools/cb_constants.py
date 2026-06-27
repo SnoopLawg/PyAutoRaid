@@ -160,19 +160,20 @@ except Exception:
 # is 190). Reverted 2026-06-16 from a brief cb_speed=170 experiment.
 
 CB_SPEED_BY_DIFFICULTY: dict[str, float] = {
-    # UNM kept at 191 per user (2026-06-23) — community canon may
-    # reflect an unmodeled +20 SPD source (CB area aura?) that gives
-    # heroes effective +20 SPD vs boss base 170. Cadence diff alone
-    # can't distinguish (boss=170 no aura ≈ boss=190 +20 aura).
-    # See task #14.
+    # Game-truth (user-confirmed 2026-06-27): boss SPD = static base_stats.spd
+    # + the UNM stage modifier of +20. alliance_bosses.json gives UNM base
+    # spd=170, so effective = 170 + 20 = 190. This matches DeadwoodJedi's
+    # calculator (boss SPD=190), which has verified parity with the live game —
+    # and DWJ's clean every-3-boss-turn UK cadence depends on exactly 190.
+    # (Was 191 from a 2026-06-23 "+20 aura" off-by-one guess; corrected.)
     "easy":             91,
     "normal":           121,
     "hard":             141,
     "brutal":           161,
     "nightmare":        171,
-    "ultra-nightmare":  191,
-    "ultranightmare":   191,
-    "unm":              191,
+    "ultra-nightmare":  190,
+    "ultranightmare":   190,
+    "unm":              190,
     "nm":               171,
 }
 
