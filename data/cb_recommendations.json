@@ -1,5 +1,5 @@
 {
-  "generated_at": 1782587049,
+  "generated_at": 1782591505,
   "hash": "1538e64c9598e72a",
   "has_sim": true,
   "has_solve": true,
@@ -70,8 +70,8 @@
       "gear_gaps": [],
       "holds_t50": true,
       "dwj_boss_turns": 50,
-      "sim_damage": 15122418,
-      "sim_boss_turns": 27,
+      "sim_damage": 20586720,
+      "sim_boss_turns": 34,
       "sim_team": [
         "Maneater",
         "Demytha",
