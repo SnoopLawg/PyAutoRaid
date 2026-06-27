@@ -369,9 +369,18 @@
               '<span style="font-family:' + mono + ';font-size:9px;color:#948876;">' + topMeta + '</span>' +
             '</div>'
           : '';
+        // Today's CB affinity + where we learned it (live game vs last-known log).
+        var elCol = { magic: "#c46fd0", force: "#d06f6f", spirit: "#7fdca0", void: "#d8a657" }[d.today_element] || "#948876";
+        var elName = d.today_element ? d.today_element.charAt(0).toUpperCase() + d.today_element.slice(1) : null;
+        var srcLive = d.today_element_source === "live";
+        var affChip = elName
+          ? '<span title="' + (srcLive ? "from the live game" : "last battle log — may be a day stale") + '" style="font-family:' + mono + ';font-size:8px;color:' + elCol + ';border:1px solid ' + elCol + '55;border-radius:3px;padding:2px 6px;">Today: ' + elName + ' <span style="color:' + (srcLive ? "#6fcf6f" : "#caa063") + ';">· ' + (d.today_element_source || "?") + '</span></span>'
+          : "";
         host.innerHTML =
-          '<div style="display:flex;align-items:center;justify-content:space-between;">' +
+          '<div style="display:flex;align-items:center;gap:10px;">' +
             '<div style="font-family:' + mono + ';font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#a0734a;">Team Recommendation</div>' +
+            affChip +
+            '<span style="flex:1;"></span>' +
             '<div style="font-family:' + mono + ';font-size:8px;color:#6f6555;">' + ready.length + ' ready · ' + need.length + ' to unlock</div>' +
           '</div>' +
           runToday +
