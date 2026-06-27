@@ -254,7 +254,7 @@
         return;
       }
       var ready = d.ready || [], need = d.need_heroes || [];
-      var state = { tab: "ready", open: {} };
+      var state = { tab: "ready", open: {}, solved: {}, solving: {} };
       var mono = "'JetBrains Mono',monospace";
 
       function mechColor(m) {
@@ -282,6 +282,30 @@
         if (r.sim_damage) parts.push('<span style="color:#caa063;">' + simM(r) + '</span>');
         return parts.join(' · ');
       }
+      function renderSolve(o) {
+        if (!o || o.error) return '<span style="color:#c25a3a;font-size:9px;">solve failed' + (o && o.error ? ': ' + o.error : '') + '</span>';
+        var head = o.feasible
+          ? '<span style="color:#6fcf6f;">✓ Regear-feasible — your vault can hit every speed</span>'
+          : '<span style="color:#c25a3a;">✗ Can\'t reach this tune even with your best gear</span>';
+        var rows = (o.per_hero || []).map(function (h) {
+          var t = h.target ? h.target[0] + '–' + h.target[1] : 'any';
+          var c = h.ok ? '#6fcf6f' : '#c25a3a';
+          return '<div style="display:flex;justify-content:space-between;gap:8px;"><span style="color:#cdbfa6;">' + h.hero + '</span><span style="color:' + c + ';">SPD ' + (h.achieved_spd != null ? h.achieved_spd : '?') + ' / ' + t + (h.ok ? ' ✓' : ' ✗') + '</span></div>';
+        }).join("");
+        var est = o.projected_damage
+          ? '<div style="margin-top:5px;color:#6f6555;">~' + (o.projected_damage / 1e6).toFixed(1) + 'M sim est · calibration-limited</div>' : '';
+        return '<div style="font-family:' + mono + ';font-size:9px;border-top:1px solid #241d15;margin-top:7px;padding-top:7px;">' + head + '<div style="margin-top:5px;display:grid;gap:2px;">' + rows + '</div>' + est + '</div>';
+      }
+      function solveTeam(id, btn) {
+        if (state.solving[id]) return;
+        state.solving[id] = true;
+        if (btn) { btn.textContent = "Solving… (~20s)"; btn.disabled = true; btn.style.opacity = ".6"; }
+        getJSON("/api/cb-solve-gear?id=" + encodeURIComponent(id)).then(function (o) {
+          state.solving[id] = false; state.solved[id] = o || { error: "no response" }; render();
+        }).catch(function () {
+          state.solving[id] = false; state.solved[id] = { error: "request failed" }; render();
+        });
+      }
       function expand(r) {
         var rows = (r.slots || []).map(function (s) {
           if (!s.hero || s.status === "generic") {
@@ -300,6 +324,11 @@
         var sub = state.tab === "ready"
           ? readySub(r)
           : '<span style="color:#6f6555;">' + (r.key_capability || "") + '</span>';
+        var solveBlock = "";
+        if (state.tab === "ready" && r.status === "lacking-gear") {
+          if (state.solved[r.id]) solveBlock = renderSolve(state.solved[r.id]);
+          else solveBlock = '<div style="margin-top:7px;"><button data-solve="' + r.id + '" style="font-family:' + mono + ';font-size:9px;color:#d8a657;background:transparent;border:1px solid #6e4f24;border-radius:3px;padding:5px 10px;cursor:pointer;">' + (state.solving[r.id] ? "Solving… (~20s)" : "Solve gear → can I regear?") + '</button></div>';
+        }
         return '<div data-rid="' + r.id + '" style="background:#1a150e;border:1px solid #2c241a;border-left:2px solid ' + mechColor(r.mechanic) + ';border-radius:4px;padding:9px 11px;margin-bottom:7px;cursor:pointer;">' +
           '<div style="display:flex;align-items:center;gap:8px;">' +
             chip(r.mechanic, mechColor(r.mechanic)) +
@@ -309,6 +338,7 @@
           '<div style="margin-top:5px;font-family:' + mono + ';font-size:9px;color:#948876;">' +
             (state.tab === "ready" ? (r.key_capability || "") + ' · ' : "") + sub +
           '</div>' +
+          solveBlock +
           (open ? expand(r) : "") +
         '</div>';
       }
@@ -348,6 +378,12 @@
             var id = c.getAttribute("data-rid");
             state.open[id] = !state.open[id];
             render();
+          });
+        });
+        Array.prototype.forEach.call(host.querySelectorAll("[data-solve]"), function (b) {
+          b.addEventListener("click", function (e) {
+            e.stopPropagation();          // don't toggle the card expand
+            solveTeam(b.getAttribute("data-solve"), b);
           });
         });
       }

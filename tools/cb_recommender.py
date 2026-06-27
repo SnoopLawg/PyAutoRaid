@@ -259,6 +259,89 @@ def build(root: Path | None = None, force: bool = False,
     return result
 
 
+def solve_gear(template_id: str, root: Path | None = None, anneal: int = 8) -> dict:
+    """On-demand: can the user REGEAR to hit this template's speed tune from their
+    vault, and what damage would it then do? Fits each hero with
+    gear_target_optimizer (SPD as a hard min, then offense) — fast, no sim in the
+    loop — assigning hardest-speed heroes first and removing claimed artifacts so
+    feasibility respects contention. If every hero reaches its target, runs ONE
+    cb_sim on the fitted gear for the projected damage + chest tier."""
+    root = _root(root)
+    if str(root / "tools") not in sys.path:
+        sys.path.insert(0, str(root / "tools"))
+    res = build(root)
+    rec = next((r for r in res.get("ready", []) if r["id"] == template_id), None)
+    if not rec:
+        return {"error": "template not found", "id": template_id}
+    import potential_teams as pt
+    import gear_target_optimizer as gto
+    from cb_optimizer import SPD
+
+    last_team = pt.last_cb_team_names(root)
+    default_dps = getattr(pt, "DEFAULT_DPS_HERO", "Cardiel")
+    names = _team_names(rec, last_team, default_dps)
+    if not names:
+        return {"error": "could not resolve team", "id": template_id}
+    tgt_by_name = {}
+    for s, nm in zip(rec.get("slots", []), names):
+        if s.get("min_spd"):
+            tgt_by_name[nm] = (int(s["min_spd"]), int(s.get("max_spd") or s["min_spd"]))
+
+    arts, heroes, account = gto.load_data()
+    by_idx: dict = {}
+    fitted: dict = {}        # keyed by SLOT INDEX (a team can run 2 of one hero)
+    used: set = set()
+    # Hardest speed target first so the scarce high-SPD pieces go where needed.
+    order = sorted(range(len(names)), key=lambda i: -(tgt_by_name.get(names[i], (0, 0))[0]))
+    for i in order:
+        nm = names[i]
+        tgt = tgt_by_name.get(nm)
+        avail = [a for a in arts if a.get("id") not in used]
+        mins = {SPD: tgt[0]} if tgt else {}
+        maxes = {SPD: tgt[1]} if tgt else {}
+        targets = gto.build_targets(mins, maxes, {}, "damage")
+        try:
+            opt = gto.Optimizer(avail, heroes, account)
+            r = opt.optimize(nm, targets, anneal=anneal)
+        except Exception as e:
+            by_idx[i] = {"hero": nm, "error": str(e), "ok": False}
+            continue
+        stats = r["stats"]
+        for _slot, a in (r.get("assignment") or {}).items():
+            if a and a.get("id") is not None:
+                used.add(a["id"])
+        spd = int(round(stats[SPD]))
+        ok = (tgt is None) or (spd >= tgt[0] - _SPD_TOL)
+        by_idx[i] = {"hero": nm, "achieved_spd": spd,
+                     "target": list(tgt) if tgt else None, "ok": ok,
+                     "short": (tgt[0] - spd if (tgt and spd < tgt[0]) else 0)}
+        fitted[i] = stats
+
+    per_hero = [by_idx.get(i, {"hero": names[i], "ok": False}) for i in range(len(names))]
+    feasible = all(h.get("ok") for h in per_hero)
+    out = {"id": template_id, "name": rec["name"], "feasible": feasible,
+           "per_hero": per_hero}
+
+    if feasible and len(fitted) == len(names):
+        try:
+            from cb_sim import CBSimulator, build_sim_champion
+            from cb_day import today_cb_element_str
+            el = {"magic": 1, "force": 2, "spirit": 3, "void": 4}.get(
+                (today_cb_element_str(root / "battle_logs_cb_latest.json") or "void"), 4)
+            hbn = {h.get("name"): h for h in heroes if h.get("grade", 0) >= 6}
+            champs = [build_sim_champion(names[i], fitted[i], i,
+                                         element=(hbn.get(names[i]) or {}).get("element", 4))
+                      for i in range(len(names))]
+            sres = CBSimulator(champs, cb_element=el, deterministic=True,
+                               force_affinity=True, verbose=False).run(max_cb_turns=50)
+            out["projected_damage"] = int(sres.get("total", 0) or 0)
+            out["chest"] = _chest(out["projected_damage"])
+            out["boss_turns"] = int(sres.get("cb_turns", 0) or 0)
+        except Exception as e:
+            out["sim_error"] = str(e)
+    return out
+
+
 def _write_cache(root: Path, result: dict) -> Path:
     result = dict(result)
     result["generated_at"] = int(time.time())
@@ -275,6 +358,8 @@ def _main() -> int:
     b.add_argument("--force", action="store_true", help="ignore the cache")
     li = sub.add_parser("list", help="print recommendations")
     li.add_argument("--tab", choices=["ready", "need"], default="ready")
+    sg = sub.add_parser("solve", help="solve gear for one template (can you regear?)")
+    sg.add_argument("id", help="template id (slug), e.g. budget-maneater-unkillable")
     args = ap.parse_args()
     root = _root(None)
 
@@ -302,6 +387,20 @@ def _main() -> int:
             else:
                 extra = f"need {', '.join(r['missing_heroes'])}"
             print(f"  [{r['mechanic']:<10}] {r['name'][:22]:<22} {r['key_capability'] or '':<10} {extra}")
+        return 0
+    if args.cmd == "solve":
+        out = solve_gear(args.id, root)
+        if "error" in out:
+            print("ERROR:", out["error"]); return 1
+        print(f"{out['name']}  feasible={out['feasible']}")
+        for h in out["per_hero"]:
+            t = h.get("target")
+            tgt = f"{t[0]}–{t[1]}" if t else "any"
+            print(f"  {h['hero']:<18} SPD {h.get('achieved_spd','?'):>4} / {tgt:<8} "
+                  f"{'OK' if h.get('ok') else 'SHORT ' + str(h.get('short',0))}")
+        if out.get("projected_damage"):
+            print(f"  -> fitted-gear sim: {out['projected_damage']/1e6:.1f}M "
+                  f"{out.get('chest') or ''} (T{out.get('boss_turns',0)})")
         return 0
     return 0
 

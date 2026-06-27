@@ -1003,6 +1003,28 @@ def build_cb_recommendations(force: bool = False):
     return res
 
 
+_SOLVE_GEAR_CACHE: dict = {}
+
+
+def build_cb_solve_gear(template_id: str):
+    """On-demand: can the user regear to hit this template's speed tune (and what
+    would it then do)? Heavy SA fit — cached in-memory per (id, roster hash) so a
+    repeat click is instant. Domain logic in tools/cb_recommender.solve_gear."""
+    if not template_id:
+        return {"error": "missing template id"}
+    try:
+        h = _cb_recommender._roster_hash(ROOT)
+    except Exception:
+        h = ""
+    key = f"{template_id}::{h}"
+    if key in _SOLVE_GEAR_CACHE:
+        return _SOLVE_GEAR_CACHE[key]
+    out = _cb_recommender.solve_gear(template_id, ROOT)
+    if "error" not in out:
+        _SOLVE_GEAR_CACHE[key] = out
+    return out
+
+
 # Back-compat wrappers — older build_X helpers still call these names.
 def _today_cb_element_str() -> str | None:
     return _today_cb_element_str_impl(ROOT / "battle_logs_cb_latest.json")
@@ -3317,6 +3339,7 @@ GET_ROUTES = {
     "/api/cb-battles":             lambda q: build_cb_battles(int(_q(q, "n", 12))),
     "/api/cb-replay":              lambda q: build_cb_replay(_q(q, "file")),
     "/api/cb-recommendations":     lambda q: build_cb_recommendations(_q(q, "force") == "1"),
+    "/api/cb-solve-gear":          lambda q: build_cb_solve_gear(_q(q, "id")),
     "/api/sim-last-run":           lambda q: build_sim_last_run(),
     "/api/tune-library":           lambda q: build_tune_library(),
     "/api/sim-affinity-matrix":    lambda q: build_sim_affinity_matrix(),
