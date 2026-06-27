@@ -987,6 +987,22 @@ def build_potential_teams(max_count: int = 12):
     return _potential_teams.build(max_count=max_count, root=ROOT)
 
 
+from tools import cb_recommender as _cb_recommender  # noqa: E402
+
+
+def build_cb_recommendations(force: bool = False):
+    """Team Recommendation panel: tried-and-true templates split into ready vs
+    need-heroes, with traffic-light status. Cached by roster/vault hash in
+    tools/cb_recommender.py (cheap; no per-team sim in this phase)."""
+    res = _cb_recommender.build(ROOT, force=force)
+    if force and "error" not in res:
+        try:
+            _cb_recommender._write_cache(ROOT, res)
+        except Exception:
+            pass
+    return res
+
+
 # Back-compat wrappers — older build_X helpers still call these names.
 def _today_cb_element_str() -> str | None:
     return _today_cb_element_str_impl(ROOT / "battle_logs_cb_latest.json")
@@ -3300,6 +3316,7 @@ GET_ROUTES = {
     "/api/cb-summary":             lambda q: build_cb_summary(),
     "/api/cb-battles":             lambda q: build_cb_battles(int(_q(q, "n", 12))),
     "/api/cb-replay":              lambda q: build_cb_replay(_q(q, "file")),
+    "/api/cb-recommendations":     lambda q: build_cb_recommendations(_q(q, "force") == "1"),
     "/api/sim-last-run":           lambda q: build_sim_last_run(),
     "/api/tune-library":           lambda q: build_tune_library(),
     "/api/sim-affinity-matrix":    lambda q: build_sim_affinity_matrix(),

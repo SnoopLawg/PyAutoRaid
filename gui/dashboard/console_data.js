@@ -241,11 +241,117 @@
     });
   }
 
+  // ---- team recommendation panel (left side of the CB page) ---------------
+  // Tried-and-true templates split into "ready to build" vs "need heroes", with
+  // a traffic-light status (ready / lacking gear / need heroes). Data is the
+  // cheap ownership + gear-feasibility pass from /api/cb-recommendations.
+  function wireRecommender() {
+    var host = document.getElementById("cbRecommender");
+    if (!host) return Promise.resolve();
+    return getJSON("/api/cb-recommendations").then(function (d) {
+      if (!d || (!d.ready && !d.need_heroes)) {
+        host.innerHTML = '<div style="font-family:\'JetBrains Mono\',monospace;font-size:10px;color:#6f6555;padding:14px 6px;">No recommendations yet.</div>';
+        return;
+      }
+      var ready = d.ready || [], need = d.need_heroes || [];
+      var state = { tab: "ready", open: {} };
+      var mono = "'JetBrains Mono',monospace";
+
+      function mechColor(m) {
+        if (m === "Unkillable") return "#4a86c5";
+        if (m === "Speed") return "#d8a657";
+        return "#6f6555";
+      }
+      function statusDot(r) {
+        if (r.status === "ready") return ['#6fcf6f', 'Ready'];
+        if (r.status === "lacking-gear") return ['#d8a657', 'Lacking gear'];
+        return ['#6f6555', 'Need heroes'];
+      }
+      function chip(text, color) {
+        return '<span style="font-family:' + mono + ';font-size:8px;letter-spacing:.08em;text-transform:uppercase;color:' + color + ';border:1px solid ' + color + '55;border-radius:3px;padding:2px 5px;flex:none;">' + text + '</span>';
+      }
+      function gapText(r) {
+        if (r.status === "ready") return '<span style="color:#6fcf6f;">gear hits the tune</span>';
+        var g = (r.gear_gaps || []).slice(0, 3).map(function (x) {
+          return x.hero + ' −' + x.short;
+        }).join(", ");
+        return '<span style="color:#d8a657;">short SPD: ' + g + (r.gear_gaps && r.gear_gaps.length > 3 ? " …" : "") + '</span>';
+      }
+      function expand(r) {
+        var rows = (r.slots || []).map(function (s) {
+          if (!s.hero || s.status === "generic") {
+            return '<div style="display:flex;justify-content:space-between;color:#6f6555;"><span>' + (s.hero || "flex DPS") + '</span><span>any</span></div>';
+          }
+          var want = s.min_spd ? (s.min_spd + (s.max_spd && s.max_spd !== s.min_spd ? "–" + s.max_spd : "") + " SPD") : "—";
+          return '<div style="display:flex;justify-content:space-between;"><span style="color:#e8dcc4;">' + s.hero + '</span><span style="color:#948876;">' + want + '</span></div>';
+        }).join("");
+        return '<div style="margin-top:8px;border-top:1px solid #241d15;padding-top:7px;font-family:' + mono + ';font-size:9px;display:grid;gap:2px;">' + rows + '</div>';
+      }
+      function card(r) {
+        var d2 = statusDot(r), open = state.open[r.id];
+        var right = state.tab === "ready"
+          ? '<span style="font-family:' + mono + ';font-size:9px;color:' + d2[0] + ';flex:none;">● ' + d2[1] + '</span>'
+          : '<span style="font-family:' + mono + ';font-size:9px;color:#c46f5a;flex:none;">need ' + (r.missing_heroes || []).join(", ") + '</span>';
+        var sub = state.tab === "ready"
+          ? gapText(r)
+          : '<span style="color:#6f6555;">' + (r.key_capability || "") + '</span>';
+        return '<div data-rid="' + r.id + '" style="background:#1a150e;border:1px solid #2c241a;border-left:2px solid ' + mechColor(r.mechanic) + ';border-radius:4px;padding:9px 11px;margin-bottom:7px;cursor:pointer;">' +
+          '<div style="display:flex;align-items:center;gap:8px;">' +
+            chip(r.mechanic, mechColor(r.mechanic)) +
+            '<span style="font-family:Cinzel,serif;font-size:14px;color:#f3ead8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + r.name + '</span>' +
+            '<span style="flex:1;"></span>' + right +
+          '</div>' +
+          '<div style="margin-top:5px;font-family:' + mono + ';font-size:9px;color:#948876;">' +
+            (state.tab === "ready" ? (r.key_capability || "") + ' · ' : "") + sub +
+          '</div>' +
+          (open ? expand(r) : "") +
+        '</div>';
+      }
+      function tabBtn(id, label, n) {
+        var on = state.tab === id;
+        return '<button data-tab="' + id + '" style="font-family:' + mono + ';font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:' + (on ? "#0c0a07" : "#cdbfa6") + ';background:' + (on ? "linear-gradient(180deg,#e6b765,#cf9a44)" : "transparent") + ';border:1px solid ' + (on ? "#cf9a44" : "#3a2f1f") + ';border-radius:3px;padding:6px 12px;cursor:pointer;font-weight:' + (on ? "700" : "400") + ';">' + label + ' (' + n + ')</button>';
+      }
+      function render() {
+        var rows = state.tab === "ready" ? ready : need;
+        var top = ready.filter(function (x) { return x.status === "ready"; })[0];
+        var runToday = top
+          ? '<div style="display:flex;align-items:center;gap:8px;margin:10px 0 14px;padding:10px 12px;background:linear-gradient(100deg,#1f160d,#15110b);border:1px solid #3a2f1f;border-radius:3px;">' +
+              '<span style="font-family:' + mono + ';font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#6fcf6f;flex:none;">▶ Run today</span>' +
+              '<span style="font-family:Cinzel,serif;font-size:15px;color:#f3ead8;">' + top.name + '</span>' +
+              '<span style="font-family:' + mono + ';font-size:9px;color:#948876;">' + (top.key_capability || "") + ' · gear ready</span>' +
+            '</div>'
+          : '';
+        host.innerHTML =
+          '<div style="display:flex;align-items:center;justify-content:space-between;">' +
+            '<div style="font-family:' + mono + ';font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#a0734a;">Team Recommendation</div>' +
+            '<div style="font-family:' + mono + ';font-size:8px;color:#6f6555;">' + ready.length + ' ready · ' + need.length + ' to unlock</div>' +
+          '</div>' +
+          runToday +
+          '<div style="display:flex;gap:8px;margin-bottom:12px;">' + tabBtn("ready", "Ready to build", ready.length) + tabBtn("need", "Need heroes", need.length) + '</div>' +
+          '<div style="max-height:430px;overflow-y:auto;padding-right:4px;">' +
+            (rows.length ? rows.map(card).join("") : '<div style="font-family:' + mono + ';font-size:10px;color:#6f6555;padding:10px;">Nothing here.</div>') +
+          '</div>';
+        Array.prototype.forEach.call(host.querySelectorAll("[data-tab]"), function (b) {
+          b.addEventListener("click", function () { state.tab = b.getAttribute("data-tab"); render(); });
+        });
+        Array.prototype.forEach.call(host.querySelectorAll("[data-rid]"), function (c) {
+          c.addEventListener("click", function () {
+            var id = c.getAttribute("data-rid");
+            state.open[id] = !state.open[id];
+            render();
+          });
+        });
+      }
+      render();
+    }).catch(function () {});
+  }
+
   // ---- refresh loop -------------------------------------------------------
   function refreshAll() {
     // Each panel is independent; a failure in one must not stop the others.
     wireResources().catch(function () {});
     wireCB().catch(function () {});
+    wireRecommender().catch(function () {});
     wireRecentBattles().catch(function () {});
   }
 

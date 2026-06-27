@@ -207,10 +207,15 @@ def parity_survival(variant_hash: str | None, dwj_loader, *, root: Path) -> dict
 # Main — score all tunes vs roster, return top N
 # ============================================================================
 
-def build(max_count: int = 12, *, root: Path | None = None) -> dict:
+def build(max_count: int = 12, *, root: Path | None = None,
+          quick: bool = False) -> dict:
     """Score all DWJ tunes against user's owned roster and return the top.
 
     Returns {"potential_teams": [...]} or {"error": "..."} on failure.
+
+    quick=True skips the per-team parity + cb_sim damage runs (the expensive
+    part) — used by the recommender's cheap ownership/feasibility pass, which
+    fills in real damage separately (and cached).
     """
     if root is None:
         root = Path(__file__).resolve().parent.parent
@@ -298,9 +303,9 @@ def build(max_count: int = 12, *, root: Path | None = None) -> dict:
             })
         unm_link = next((c for c in calc_links if "ultra" in (c.get("name") or "").lower() or "unm" in (c.get("name") or "").lower()), None)
         sim_hash = (unm_link or (calc_links[0] if calc_links else {})).get("hash")
-        parity = parity_survival(sim_hash, _dwj, root=root) if missing == 0 else None
+        parity = parity_survival(sim_hash, _dwj, root=root) if (missing == 0 and not quick) else None
         real_sim = None
-        if missing == 0:
+        if missing == 0 and not quick:
             named_in_tune = {s.get("hero", "").lower(): True
                              for s in slots if s.get("status") != "generic"}
             dps_pool = [n for n in last_team if n.lower() not in named_in_tune]
@@ -379,6 +384,7 @@ def build(max_count: int = 12, *, root: Path | None = None) -> dict:
             "heroes": heroes,
             "note": note,
             "missing": missing,
+            "missing_heroes": ev.get("missing_heroes") or [],
             "ascending": ascending,
             "affinity": t.get("affinity"),
             "key_capability": t.get("key_capability"),
