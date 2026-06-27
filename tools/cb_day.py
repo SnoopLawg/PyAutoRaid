@@ -73,26 +73,57 @@ def reset_info() -> dict:
     }
 
 
-def today_cb_element_str(battle_log_path) -> str | None:
-    """Read the current CB affinity from the most recent battle log.
-    Returns one of 'magic'/'force'/'spirit'/'void' or None if unknown."""
+def _newest_cb_log(directory) -> "str | None":
+    """Newest battle_logs_cb_<YYYYMMDD>_<HHMMSS>.json in `directory`, by the
+    timestamp in the filename (NOT the `battle_logs_cb_latest.json` alias, which
+    can be stale). Returns the path or None."""
+    import glob
+    import re
+    from pathlib import Path
+    best = None
+    for f in glob.glob(str(Path(directory) / "battle_logs_cb_*.json")):
+        m = re.search(r"battle_logs_cb_(\d{8}_\d{6})", Path(f).name)
+        if m and (best is None or m.group(1) > best[0]):
+            best = (m.group(1), f)
+    return best[1] if best else None
+
+
+def _element_from_log(path) -> "str | None":
     import json
     from pathlib import Path
-    p = Path(battle_log_path)
+    p = Path(path)
     if not p.exists():
         return None
     try:
         d = json.loads(p.read_text())
-        for entry in (d.get("log") or [])[:50]:
+        for entry in (d.get("log") or []):
             if not isinstance(entry, dict):
                 continue
             for h in entry.get("heroes") or []:
                 if h.get("side") == "enemy" and h.get("element"):
-                    el = int(h["element"])
-                    return {1: "magic", 2: "force", 3: "spirit", 4: "void"}.get(el)
+                    return {1: "magic", 2: "force", 3: "spirit",
+                            4: "void"}.get(int(h["element"]))
         return None
     except Exception:
         return None
+
+
+def today_cb_element_str(battle_log_path) -> str | None:
+    """Read the current CB affinity from the NEWEST real battle log.
+    Returns one of 'magic'/'force'/'spirit'/'void' or None if unknown.
+
+    `battle_log_path` is treated as a hint for the directory to scan — the actual
+    read is the newest battle_logs_cb_<ts>.json there, because the conventional
+    `battle_logs_cb_latest.json` alias is frequently stale (months old)."""
+    from pathlib import Path
+    p = Path(battle_log_path)
+    directory = p.parent if str(p.parent) not in ("", ".") else Path(".")
+    newest = _newest_cb_log(directory)
+    el = _element_from_log(newest) if newest else None
+    if el:
+        return el
+    # Fall back to the literal path if scanning found nothing usable.
+    return _element_from_log(p) if p.exists() else None
 
 
 def _main() -> int:
