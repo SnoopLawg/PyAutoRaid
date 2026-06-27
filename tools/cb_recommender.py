@@ -54,6 +54,29 @@ def _root(root: Path | None) -> Path:
     return root or Path(__file__).resolve().parent.parent
 
 
+def _today_element(root: Path) -> tuple:
+    """(element, source) for TODAY's CB. The live game is authoritative: query
+    the mod's /alliance-bosses for the current Demon Lord's affinity (NOT
+    /clan-boss, whose element field can lie). Falls back to the newest battle log
+    — which is LAST-KNOWN (often yesterday's), since affinity rotates daily."""
+    try:
+        import urllib.request
+        with urllib.request.urlopen("http://localhost:6790/alliance-bosses", timeout=3) as r:
+            d = json.loads(r.read().decode())
+        for b in d.get("bosses", []):
+            el = (b.get("element") or "").lower()
+            if el in ("magic", "force", "spirit", "void"):
+                return el, "live"
+    except Exception:
+        pass
+    try:
+        from cb_day import today_cb_element_str
+        el = today_cb_element_str(root / "battle_logs_cb_latest.json")
+        return el, ("last-known" if el else None)
+    except Exception:
+        return None, None
+
+
 def _hero_spd_map(root: Path) -> dict:
     """name -> current Total SPD (base_computed + every column bonus), max over
     duplicate copies. The cheap readiness oracle for Phase 1."""
@@ -200,13 +223,9 @@ def build(root: Path | None = None, force: bool = False,
     # attach chest tier + T50 survival. Lacking-gear teams stay un-simmed (their
     # number needs a regear first — the on-demand Solve-gear path).
     has_sim = False
-    today_el = None
+    today_el, today_src = None, None
     if with_sim:
-        try:
-            from cb_day import today_cb_element_str
-            today_el = today_cb_element_str(root / "battle_logs_cb_latest.json")
-        except Exception:
-            today_el = None
+        today_el, today_src = _today_element(root)
         last_team = pt.last_cb_team_names(root)
         default_dps = getattr(pt, "DEFAULT_DPS_HERO", "Cardiel")
         # DWJ-parity scheduler (100%-matching port) is the RELIABLE survival
@@ -272,6 +291,7 @@ def build(root: Path | None = None, force: bool = False,
         "has_sim": has_sim,
         "has_solve": has_solve,
         "today_element": today_el,
+        "today_element_source": today_src,
         "ready": ready,
         "need_heroes": need,
         "counts": {"ready": len(ready), "need_heroes": len(need)},
