@@ -287,14 +287,20 @@
         var head = o.feasible
           ? '<span style="color:#6fcf6f;">✓ Regear-feasible — your vault can hit every speed</span>'
           : '<span style="color:#c25a3a;">✗ Can\'t reach this tune even with your best gear</span>';
+        var outcome = "";
+        if (o.feasible) {
+          var bits = [];
+          if (o.key_capability) bits.push(o.key_capability);
+          if (o.holds_t50) bits.push("holds T50 (DWJ)");
+          else if (o.dwj_boss_turns) bits.push("DWJ holds T" + o.dwj_boss_turns);
+          if (bits.length) outcome = '<div style="margin-top:4px;color:#caa063;">→ ' + bits.join(" · ") + '</div>';
+        }
         var rows = (o.per_hero || []).map(function (h) {
           var t = h.target ? h.target[0] + '–' + h.target[1] : 'any';
           var c = h.ok ? '#6fcf6f' : '#c25a3a';
           return '<div style="display:flex;justify-content:space-between;gap:8px;"><span style="color:#cdbfa6;">' + h.hero + '</span><span style="color:' + c + ';">SPD ' + (h.achieved_spd != null ? h.achieved_spd : '?') + ' / ' + t + (h.ok ? ' ✓' : ' ✗') + '</span></div>';
         }).join("");
-        var est = o.projected_damage
-          ? '<div style="margin-top:5px;color:#6f6555;">~' + (o.projected_damage / 1e6).toFixed(1) + 'M sim est · calibration-limited</div>' : '';
-        return '<div style="font-family:' + mono + ';font-size:9px;border-top:1px solid #241d15;margin-top:7px;padding-top:7px;">' + head + '<div style="margin-top:5px;display:grid;gap:2px;">' + rows + '</div>' + est + '</div>';
+        return '<div style="font-family:' + mono + ';font-size:9px;border-top:1px solid #241d15;margin-top:7px;padding-top:7px;">' + head + outcome + '<div style="margin-top:5px;display:grid;gap:2px;">' + rows + '</div></div>';
       }
       function solveTeam(id, btn) {
         if (state.solving[id]) return;
@@ -388,6 +394,10 @@
         });
       }
       render();
+      // Deep link / capture helper: ?solve=<id> auto-runs that team's gear solve
+      // (server result is cached, so a screenshot shows the verdict).
+      var sp = (location.search.match(/[?&]solve=([^&]+)/) || [])[1];
+      if (sp) { state.tab = "ready"; solveTeam(decodeURIComponent(sp), null); }
     }).catch(function () {});
   }
 

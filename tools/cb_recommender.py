@@ -259,13 +259,14 @@ def build(root: Path | None = None, force: bool = False,
     return result
 
 
-def solve_gear(template_id: str, root: Path | None = None, anneal: int = 8) -> dict:
+def solve_gear(template_id: str, root: Path | None = None, anneal: int = 3) -> dict:
     """On-demand: can the user REGEAR to hit this template's speed tune from their
-    vault, and what damage would it then do? Fits each hero with
-    gear_target_optimizer (SPD as a hard min, then offense) — fast, no sim in the
-    loop — assigning hardest-speed heroes first and removing claimed artifacts so
-    feasibility respects contention. If every hero reaches its target, runs ONE
-    cb_sim on the fitted gear for the projected damage + chest tier."""
+    vault? Fits each hero with gear_target_optimizer targeting SPD only (the
+    binding constraint) — assigning hardest-speed heroes first and removing
+    claimed artifacts (one Optimizer, contention via exclude_ids) so feasibility
+    respects sharing. SPD-only keeps it fast (no damage-mode set sweep). The
+    reliable outcome when feasible is the tune's DWJ-parity survival + rated keys
+    — NOT cb_sim, which under-survives, so no fitted-gear damage number is shown."""
     root = _root(root)
     if str(root / "tools") not in sys.path:
         sys.path.insert(0, str(root / "tools"))
@@ -288,21 +289,19 @@ def solve_gear(template_id: str, root: Path | None = None, anneal: int = 8) -> d
             tgt_by_name[nm] = (int(s["min_spd"]), int(s.get("max_spd") or s["min_spd"]))
 
     arts, heroes, account = gto.load_data()
+    opt = gto.Optimizer(arts, heroes, account)   # built ONCE; contention via exclude_ids
     by_idx: dict = {}
-    fitted: dict = {}        # keyed by SLOT INDEX (a team can run 2 of one hero)
     used: set = set()
     # Hardest speed target first so the scarce high-SPD pieces go where needed.
     order = sorted(range(len(names)), key=lambda i: -(tgt_by_name.get(names[i], (0, 0))[0]))
     for i in order:
         nm = names[i]
         tgt = tgt_by_name.get(nm)
-        avail = [a for a in arts if a.get("id") not in used]
         mins = {SPD: tgt[0]} if tgt else {}
         maxes = {SPD: tgt[1]} if tgt else {}
-        targets = gto.build_targets(mins, maxes, {}, "damage")
+        targets = gto.build_targets(mins, maxes, {}, None)   # SPD-only: fast feasibility
         try:
-            opt = gto.Optimizer(avail, heroes, account)
-            r = opt.optimize(nm, targets, anneal=anneal)
+            r = opt.optimize(nm, targets, anneal=anneal, exclude_ids=used)
         except Exception as e:
             by_idx[i] = {"hero": nm, "error": str(e), "ok": False}
             continue
@@ -315,30 +314,30 @@ def solve_gear(template_id: str, root: Path | None = None, anneal: int = 8) -> d
         by_idx[i] = {"hero": nm, "achieved_spd": spd,
                      "target": list(tgt) if tgt else None, "ok": ok,
                      "short": (tgt[0] - spd if (tgt and spd < tgt[0]) else 0)}
-        fitted[i] = stats
 
     per_hero = [by_idx.get(i, {"hero": names[i], "ok": False}) for i in range(len(names))]
     feasible = all(h.get("ok") for h in per_hero)
     out = {"id": template_id, "name": rec["name"], "feasible": feasible,
-           "per_hero": per_hero}
+           "per_hero": per_hero, "key_capability": rec.get("key_capability")}
 
-    if feasible and len(fitted) == len(names):
+    # Reliable outcome when feasible: the tune's DWJ-parity survival (the
+    # 100%-matching scheduler) — NOT cb_sim, which under-survives. Hitting the
+    # speeds means the tune behaves as DWJ rates it.
+    if feasible and rec.get("sim_hash"):
         try:
-            from cb_sim import CBSimulator, build_sim_champion
-            from cb_day import today_cb_element_str
-            el = {"magic": 1, "force": 2, "spirit": 3, "void": 4}.get(
-                (today_cb_element_str(root / "battle_logs_cb_latest.json") or "void"), 4)
-            hbn = {h.get("name"): h for h in heroes if h.get("grade", 0) >= 6}
-            champs = [build_sim_champion(names[i], fitted[i], i,
-                                         element=(hbn.get(names[i]) or {}).get("element", 4))
-                      for i in range(len(names))]
-            sres = CBSimulator(champs, cb_element=el, deterministic=True,
-                               force_affinity=True, verbose=False).run(max_cb_turns=50)
-            out["projected_damage"] = int(sres.get("total", 0) or 0)
-            out["chest"] = _chest(out["projected_damage"])
-            out["boss_turns"] = int(sres.get("cb_turns", 0) or 0)
-        except Exception as e:
-            out["sim_error"] = str(e)
+            _box = {"d": None}
+
+            def _dwj():
+                if _box["d"] is None:
+                    from dwj_tunes import load_all as _l
+                    _box["d"] = _l()
+                return _box["d"]
+            par = pt.parity_survival(rec["sim_hash"], _dwj, root=root)
+            if par:
+                out["holds_t50"] = bool(par.get("survived"))
+                out["dwj_boss_turns"] = int(par.get("boss_turns") or 0)
+        except Exception:
+            pass
     return out
 
 
@@ -398,9 +397,10 @@ def _main() -> int:
             tgt = f"{t[0]}–{t[1]}" if t else "any"
             print(f"  {h['hero']:<18} SPD {h.get('achieved_spd','?'):>4} / {tgt:<8} "
                   f"{'OK' if h.get('ok') else 'SHORT ' + str(h.get('short',0))}")
-        if out.get("projected_damage"):
-            print(f"  -> fitted-gear sim: {out['projected_damage']/1e6:.1f}M "
-                  f"{out.get('chest') or ''} (T{out.get('boss_turns',0)})")
+        if out["feasible"]:
+            surv = "holds T50 (DWJ)" if out.get("holds_t50") else (
+                f"DWJ T{out['dwj_boss_turns']}" if out.get("dwj_boss_turns") else "")
+            print(f"  -> regear-feasible · {out.get('key_capability') or ''} {surv}".rstrip())
         return 0
     return 0
 
