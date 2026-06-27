@@ -1,7 +1,8 @@
 {
-  "generated_at": 1782529870,
+  "generated_at": 1782582381,
   "hash": "1538e64c9598e72a",
   "has_sim": true,
+  "has_solve": true,
   "today_element": "magic",
   "ready": [
     {
@@ -223,7 +224,67 @@
           "want": 184,
           "short": 41
         }
-      ]
+      ],
+      "solve": {
+        "id": "batmansaladeater",
+        "name": "BatManSaladEater",
+        "feasible": true,
+        "per_hero": [
+          {
+            "hero": "Maneater",
+            "achieved_spd": 287,
+            "target": [
+              286,
+              288
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Maneater",
+            "achieved_spd": 287,
+            "target": [
+              286,
+              288
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Ma'Shalled",
+            "achieved_spd": 238,
+            "target": [
+              238,
+              239
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Seeker",
+            "achieved_spd": 229,
+            "target": [
+              220,
+              238
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Fayne",
+            "achieved_spd": 186,
+            "target": [
+              184,
+              191
+            ],
+            "ok": true,
+            "short": 0
+          }
+        ],
+        "key_capability": "1 Key UNM",
+        "holds_t50": true,
+        "dwj_boss_turns": 50
+      }
     },
     {
       "id": "bateater",
@@ -293,7 +354,65 @@
           "want": 248,
           "short": 105
         }
-      ]
+      ],
+      "solve": {
+        "id": "bateater",
+        "name": "Bateater",
+        "feasible": true,
+        "per_hero": [
+          {
+            "hero": "Maneater",
+            "achieved_spd": 247,
+            "target": [
+              239,
+              247
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Seeker",
+            "achieved_spd": 253,
+            "target": [
+              248,
+              254
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Maneater",
+            "achieved_spd": 239,
+            "target": [
+              239,
+              247
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Pain Keeper",
+            "achieved_spd": 240,
+            "target": [
+              239,
+              247
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Demytha",
+            "achieved_spd": 219,
+            "target": [
+              218,
+              227
+            ],
+            "ok": true,
+            "short": 0
+          }
+        ],
+        "key_capability": "1 Key UNM"
+      }
     },
     {
       "id": "deaconeater",
@@ -369,7 +488,60 @@
           "want": 304,
           "short": 16
         }
-      ]
+      ],
+      "solve": {
+        "id": "deaconeater",
+        "name": "DeaconEater",
+        "feasible": false,
+        "per_hero": [
+          {
+            "hero": "Deacon Armstron",
+            "error": "hero 'Deacon Armstron' not found",
+            "ok": false
+          },
+          {
+            "hero": "Maneater",
+            "achieved_spd": 282,
+            "target": [
+              269,
+              286
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Maneater",
+            "achieved_spd": 273,
+            "target": [
+              269,
+              286
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Pain Keeper",
+            "achieved_spd": 272,
+            "target": [
+              268,
+              285
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Fayne",
+            "achieved_spd": 222,
+            "target": [
+              221,
+              224
+            ],
+            "ok": true,
+            "short": 0
+          }
+        ],
+        "key_capability": "1 Key UNM"
+      }
     },
     {
       "id": "hellbateater",
@@ -445,7 +617,65 @@
           "want": 220,
           "short": 77
         }
-      ]
+      ],
+      "solve": {
+        "id": "hellbateater",
+        "name": "HellBatEater",
+        "feasible": false,
+        "per_hero": [
+          {
+            "hero": "Archmage Hellmut",
+            "achieved_spd": 297,
+            "target": [
+              306,
+              308
+            ],
+            "ok": false,
+            "short": 9
+          },
+          {
+            "hero": "Maneater",
+            "achieved_spd": 286,
+            "target": [
+              286,
+              286
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Maneater",
+            "achieved_spd": 286,
+            "target": [
+              286,
+              286
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Seeker",
+            "achieved_spd": 220,
+            "target": [
+              220,
+              233
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Fayne",
+            "achieved_spd": 221,
+            "target": [
+              220,
+              226
+            ],
+            "ok": true,
+            "short": 0
+          }
+        ],
+        "key_capability": "1 Key UNM"
+      }
     },
     {
       "id": "man-salad",
@@ -521,7 +751,67 @@
           "want": 186,
           "short": 43
         }
-      ]
+      ],
+      "solve": {
+        "id": "man-salad",
+        "name": "Man Salad",
+        "feasible": true,
+        "per_hero": [
+          {
+            "hero": "Ma'Shalled",
+            "achieved_spd": 253,
+            "target": [
+              252,
+              253
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Maneater",
+            "achieved_spd": 204,
+            "target": [
+              203,
+              209
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Maneater",
+            "achieved_spd": 207,
+            "target": [
+              203,
+              209
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Fayne",
+            "achieved_spd": 186,
+            "target": [
+              186,
+              192
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Pain Keeper",
+            "achieved_spd": 252,
+            "target": [
+              250,
+              252
+            ],
+            "ok": true,
+            "short": 0
+          }
+        ],
+        "key_capability": "1 Key UNM",
+        "holds_t50": true,
+        "dwj_boss_turns": 50
+      }
     },
     {
       "id": "myth-heir",
@@ -603,7 +893,60 @@
           "want": 169,
           "short": 26
         }
-      ]
+      ],
+      "solve": {
+        "id": "myth-heir",
+        "name": "Myth Heir",
+        "feasible": false,
+        "per_hero": [
+          {
+            "hero": "Demytha",
+            "achieved_spd": 274,
+            "target": [
+              274,
+              274
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Heiress",
+            "achieved_spd": 245,
+            "target": [
+              245,
+              245
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Deacon",
+            "error": "hero 'Deacon' not found",
+            "ok": false
+          },
+          {
+            "hero": "Seeker",
+            "achieved_spd": 169,
+            "target": [
+              169,
+              169
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Warboy",
+            "achieved_spd": 157,
+            "target": [
+              156,
+              157
+            ],
+            "ok": true,
+            "short": 0
+          }
+        ],
+        "key_capability": "1 Key UNM"
+      }
     },
     {
       "id": "myth-heir-with-no-seeker",
@@ -679,7 +1022,65 @@
           "want": 283,
           "short": 123
         }
-      ]
+      ],
+      "solve": {
+        "id": "myth-heir-with-no-seeker",
+        "name": "Myth Heir Alternate",
+        "feasible": false,
+        "per_hero": [
+          {
+            "hero": "Demytha",
+            "achieved_spd": 306,
+            "target": [
+              348,
+              350
+            ],
+            "ok": false,
+            "short": 42
+          },
+          {
+            "hero": "Heiress",
+            "achieved_spd": 283,
+            "target": [
+              283,
+              295
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Doomscreech",
+            "achieved_spd": 270,
+            "target": [
+              281,
+              294
+            ],
+            "ok": false,
+            "short": 11
+          },
+          {
+            "hero": "Deacon Armstrong",
+            "achieved_spd": 220,
+            "target": [
+              198,
+              224
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Warboy",
+            "achieved_spd": 186,
+            "target": [
+              180,
+              187
+            ],
+            "ok": true,
+            "short": 0
+          }
+        ],
+        "key_capability": "1 Key UNM"
+      }
     },
     {
       "id": "myth-heir-salad",
@@ -767,7 +1168,65 @@
           "want": 197,
           "short": 54
         }
-      ]
+      ],
+      "solve": {
+        "id": "myth-heir-salad",
+        "name": "Myth Heir Salad",
+        "feasible": false,
+        "per_hero": [
+          {
+            "hero": "Demytha",
+            "achieved_spd": 306,
+            "target": [
+              315,
+              320
+            ],
+            "ok": false,
+            "short": 9
+          },
+          {
+            "hero": "Heiress",
+            "achieved_spd": 293,
+            "target": [
+              293,
+              295
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Ma'Shalled",
+            "achieved_spd": 215,
+            "target": [
+              214,
+              222
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Seeker",
+            "achieved_spd": 198,
+            "target": [
+              197,
+              198
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Warboy",
+            "achieved_spd": 216,
+            "target": [
+              214,
+              222
+            ],
+            "ok": true,
+            "short": 0
+          }
+        ],
+        "key_capability": "1 Key UNM"
+      }
     },
     {
       "id": "rabbateater",
@@ -843,7 +1302,67 @@
           "want": 238,
           "short": 95
         }
-      ]
+      ],
+      "solve": {
+        "id": "rabbateater",
+        "name": "RabBatEater",
+        "feasible": true,
+        "per_hero": [
+          {
+            "hero": "Razelvarg",
+            "achieved_spd": 261,
+            "target": [
+              261,
+              262
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Maneater",
+            "achieved_spd": 294,
+            "target": [
+              290,
+              315
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Maneater",
+            "achieved_spd": 292,
+            "target": [
+              290,
+              315
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Seeker",
+            "achieved_spd": 239,
+            "target": [
+              238,
+              239
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Warboy",
+            "achieved_spd": 198,
+            "target": [
+              188,
+              203
+            ],
+            "ok": true,
+            "short": 0
+          }
+        ],
+        "key_capability": "1 Key UNM",
+        "holds_t50": true,
+        "dwj_boss_turns": 50
+      }
     },
     {
       "id": "ultimate-myth-heir-2-seekers",
@@ -931,7 +1450,67 @@
           "want": 204,
           "short": 61
         }
-      ]
+      ],
+      "solve": {
+        "id": "ultimate-myth-heir-2-seekers",
+        "name": "Ultimate Myth Heir - 2 Seekers",
+        "feasible": true,
+        "per_hero": [
+          {
+            "hero": "Demytha",
+            "achieved_spd": 289,
+            "target": [
+              287,
+              309
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Heiress",
+            "achieved_spd": 263,
+            "target": [
+              263,
+              282
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Seeker",
+            "achieved_spd": 204,
+            "target": [
+              204,
+              204
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Seeker",
+            "achieved_spd": 204,
+            "target": [
+              204,
+              204
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Warboy",
+            "achieved_spd": 257,
+            "target": [
+              256,
+              263
+            ],
+            "ok": true,
+            "short": 0
+          }
+        ],
+        "key_capability": "1 Key UNM",
+        "holds_t50": true,
+        "dwj_boss_turns": 50
+      }
     },
     {
       "id": "ultimate-myth-heir-with-31-dps-ninja-works",
@@ -1019,7 +1598,65 @@
           "want": 205,
           "short": 62
         }
-      ]
+      ],
+      "solve": {
+        "id": "ultimate-myth-heir-with-31-dps-ninja-works",
+        "name": "Ultimate Myth Heir with 3:1 DPS",
+        "feasible": false,
+        "per_hero": [
+          {
+            "hero": "Demytha",
+            "achieved_spd": 306,
+            "target": [
+              307,
+              321
+            ],
+            "ok": true,
+            "short": 1
+          },
+          {
+            "hero": "Heiress",
+            "achieved_spd": 284,
+            "target": [
+              284,
+              286
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Deacon Armstrong",
+            "achieved_spd": 220,
+            "target": [
+              214,
+              227
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Seeker",
+            "achieved_spd": 212,
+            "target": [
+              205,
+              214
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Rhazin Scarhide",
+            "achieved_spd": 268,
+            "target": [
+              275,
+              277
+            ],
+            "ok": false,
+            "short": 7
+          }
+        ],
+        "key_capability": "1 Key UNM"
+      }
     },
     {
       "id": "budget-maneater-unkillable",
@@ -1095,7 +1732,67 @@
           "want": 111,
           "short": 9
         }
-      ]
+      ],
+      "solve": {
+        "id": "budget-maneater-unkillable",
+        "name": "Budget Maneater Unkillable",
+        "feasible": true,
+        "per_hero": [
+          {
+            "hero": "Maneater",
+            "achieved_spd": 240,
+            "target": [
+              240,
+              241
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Pain Keeper",
+            "achieved_spd": 220,
+            "target": [
+              218,
+              222
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Rhazin Scarhide",
+            "achieved_spd": 178,
+            "target": [
+              175,
+              178
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Frozen Banshee",
+            "achieved_spd": 177,
+            "target": [
+              175,
+              178
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Skullcrusher",
+            "achieved_spd": 114,
+            "target": [
+              111,
+              118
+            ],
+            "ok": true,
+            "short": 0
+          }
+        ],
+        "key_capability": "2 Key UNM",
+        "holds_t50": true,
+        "dwj_boss_turns": 50
+      }
     },
     {
       "id": "double-demytha",
@@ -1177,7 +1874,67 @@
           "want": 167,
           "short": 41
         }
-      ]
+      ],
+      "solve": {
+        "id": "double-demytha",
+        "name": "Double Demytha",
+        "feasible": true,
+        "per_hero": [
+          {
+            "hero": "Demytha",
+            "achieved_spd": 253,
+            "target": [
+              253,
+              254
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Demytha",
+            "achieved_spd": 253,
+            "target": [
+              253,
+              254
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Doompriest",
+            "achieved_spd": 169,
+            "target": [
+              167,
+              169
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Warboy",
+            "achieved_spd": 168,
+            "target": [
+              167,
+              169
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Warboy",
+            "achieved_spd": 168,
+            "target": [
+              167,
+              169
+            ],
+            "ok": true,
+            "short": 0
+          }
+        ],
+        "key_capability": "2 Key UNM",
+        "holds_t50": true,
+        "dwj_boss_turns": 50
+      }
     },
     {
       "id": "double-warcaster",
@@ -1247,7 +2004,67 @@
           "want": 211,
           "short": 85
         }
-      ]
+      ],
+      "solve": {
+        "id": "double-warcaster",
+        "name": "Double Warcaster",
+        "feasible": true,
+        "per_hero": [
+          {
+            "hero": "Warcaster",
+            "achieved_spd": 256,
+            "target": [
+              255,
+              256
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Warcaster",
+            "achieved_spd": 256,
+            "target": [
+              255,
+              256
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Doompriest",
+            "achieved_spd": 211,
+            "target": [
+              211,
+              211
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Frozen Banshee",
+            "achieved_spd": 210,
+            "target": [
+              210,
+              210
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Bushi",
+            "achieved_spd": 209,
+            "target": [
+              209,
+              209
+            ],
+            "ok": true,
+            "short": 0
+          }
+        ],
+        "key_capability": "2 Key UNM",
+        "holds_t50": true,
+        "dwj_boss_turns": 50
+      }
     },
     {
       "id": "myth-heir-with-double-deacon",
@@ -1323,7 +2140,55 @@
           "want": 284,
           "short": 124
         }
-      ]
+      ],
+      "solve": {
+        "id": "myth-heir-with-double-deacon",
+        "name": "Myth Heir with Double Deacon",
+        "feasible": false,
+        "per_hero": [
+          {
+            "hero": "Demytha",
+            "achieved_spd": 306,
+            "target": [
+              314,
+              320
+            ],
+            "ok": false,
+            "short": 8
+          },
+          {
+            "hero": "Heiress",
+            "achieved_spd": 288,
+            "target": [
+              284,
+              296
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Deacon",
+            "error": "hero 'Deacon' not found",
+            "ok": false
+          },
+          {
+            "hero": "Deacon",
+            "error": "hero 'Deacon' not found",
+            "ok": false
+          },
+          {
+            "hero": "Warboy",
+            "achieved_spd": 224,
+            "target": [
+              214,
+              227
+            ],
+            "ok": true,
+            "short": 0
+          }
+        ],
+        "key_capability": "2 Key UNM"
+      }
     },
     {
       "id": "budget-myth-heir",
@@ -1405,7 +2270,67 @@
           "want": 234,
           "short": 28
         }
-      ]
+      ],
+      "solve": {
+        "id": "budget-myth-heir",
+        "name": "Budget Myth Heir",
+        "feasible": true,
+        "per_hero": [
+          {
+            "hero": "Ninja",
+            "achieved_spd": 234,
+            "target": [
+              234,
+              242
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Pain Keeper",
+            "achieved_spd": 189,
+            "target": [
+              189,
+              189
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Pain Keeper",
+            "achieved_spd": 189,
+            "target": [
+              189,
+              189
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Demytha",
+            "achieved_spd": 262,
+            "target": [
+              255,
+              263
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Heiress",
+            "achieved_spd": 254,
+            "target": [
+              243,
+              254
+            ],
+            "ok": true,
+            "short": 0
+          }
+        ],
+        "key_capability": "3 Key UNM",
+        "holds_t50": true,
+        "dwj_boss_turns": 50
+      }
     },
     {
       "id": "endless-speed",
@@ -1487,7 +2412,67 @@
           "want": 224,
           "short": 7
         }
-      ]
+      ],
+      "solve": {
+        "id": "endless-speed",
+        "name": "Endless Speed",
+        "feasible": true,
+        "per_hero": [
+          {
+            "hero": "Tayrel",
+            "achieved_spd": 241,
+            "target": [
+              240,
+              243
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Iron Brago",
+            "achieved_spd": 231,
+            "target": [
+              229,
+              236
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Apothecary",
+            "achieved_spd": 227,
+            "target": [
+              224,
+              227
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Sandlashed Survivor",
+            "achieved_spd": 197,
+            "target": [
+              197,
+              197
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Rhazin Scarhide",
+            "achieved_spd": 179,
+            "target": [
+              178,
+              180
+            ],
+            "ok": true,
+            "short": 0
+          }
+        ],
+        "key_capability": "3 Key UNM",
+        "holds_t50": true,
+        "dwj_boss_turns": 50
+      }
     },
     {
       "id": "fast-single-43-champ",
@@ -1569,7 +2554,67 @@
           "want": 191,
           "short": 39
         }
-      ]
+      ],
+      "solve": {
+        "id": "fast-single-43-champ",
+        "name": "Fast Single 4:3 Champion",
+        "feasible": true,
+        "per_hero": [
+          {
+            "hero": "Sepulcher Sentinel",
+            "achieved_spd": 259,
+            "target": [
+              256,
+              261
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Skullcrusher",
+            "achieved_spd": 221,
+            "target": [
+              195,
+              224
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Frozen Banshee",
+            "achieved_spd": 216,
+            "target": [
+              193,
+              216
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Tayrel",
+            "achieved_spd": 194,
+            "target": [
+              192,
+              195
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Rhazin Scarhide",
+            "achieved_spd": 193,
+            "target": [
+              191,
+              195
+            ],
+            "ok": true,
+            "short": 0
+          }
+        ],
+        "key_capability": "3 Key UNM",
+        "holds_t50": true,
+        "dwj_boss_turns": 50
+      }
     },
     {
       "id": "three-43-champs",
@@ -1651,7 +2696,67 @@
           "want": 171,
           "short": 19
         }
-      ]
+      ],
+      "solve": {
+        "id": "three-43-champs",
+        "name": "Three 4:3 Champs",
+        "feasible": true,
+        "per_hero": [
+          {
+            "hero": "Jareg",
+            "achieved_spd": 239,
+            "target": [
+              239,
+              239
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Skullcrusher",
+            "achieved_spd": 223,
+            "target": [
+              223,
+              223
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Frozen Banshee",
+            "achieved_spd": 222,
+            "target": [
+              222,
+              222
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Steelskull",
+            "achieved_spd": 222,
+            "target": [
+              222,
+              189
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Rhazin Scarhide",
+            "achieved_spd": 171,
+            "target": [
+              171,
+              171
+            ],
+            "ok": true,
+            "short": 0
+          }
+        ],
+        "key_capability": "3 Key UNM",
+        "holds_t50": true,
+        "dwj_boss_turns": 50
+      }
     },
     {
       "id": "three-43-champs-alternate",
@@ -1739,7 +2844,67 @@
           "want": 176,
           "short": 33
         }
-      ]
+      ],
+      "solve": {
+        "id": "three-43-champs-alternate",
+        "name": "Three 4:3 Champs Alternate",
+        "feasible": true,
+        "per_hero": [
+          {
+            "hero": "Jareg",
+            "achieved_spd": 228,
+            "target": [
+              228,
+              228
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Iron Brago",
+            "achieved_spd": 225,
+            "target": [
+              225,
+              225
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Steelskull",
+            "achieved_spd": 225,
+            "target": [
+              225,
+              225
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Fayne",
+            "achieved_spd": 177,
+            "target": [
+              176,
+              182
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Skullcrusher",
+            "achieved_spd": 172,
+            "target": [
+              172,
+              172
+            ],
+            "ok": true,
+            "short": 0
+          }
+        ],
+        "key_capability": "3 Key UNM",
+        "holds_t50": true,
+        "dwj_boss_turns": 50
+      }
     },
     {
       "id": "two-43-champs",
@@ -1827,7 +2992,67 @@
           "want": 171,
           "short": 19
         }
-      ]
+      ],
+      "solve": {
+        "id": "two-43-champs",
+        "name": "Two 4:3 Champs",
+        "feasible": true,
+        "per_hero": [
+          {
+            "hero": "Sepulcher Sentinel",
+            "achieved_spd": 237,
+            "target": [
+              225,
+              238
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Skullcrusher",
+            "achieved_spd": 227,
+            "target": [
+              225,
+              238
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Occult Brawler",
+            "achieved_spd": 229,
+            "target": [
+              171,
+              229
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Sandlashed Survivor",
+            "achieved_spd": 175,
+            "target": [
+              171,
+              175
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Rhazin Scarhide",
+            "achieved_spd": 175,
+            "target": [
+              171,
+              175
+            ],
+            "ok": true,
+            "short": 0
+          }
+        ],
+        "key_capability": "3 Key UNM",
+        "holds_t50": true,
+        "dwj_boss_turns": 50
+      }
     },
     {
       "id": "two-43-champs-alternate",
@@ -1915,7 +3140,67 @@
           "want": 180,
           "short": 28
         }
-      ]
+      ],
+      "solve": {
+        "id": "two-43-champs-alternate",
+        "name": "Two 4:3 Champs Alternate",
+        "feasible": true,
+        "per_hero": [
+          {
+            "hero": "Sepulcher Sentinel",
+            "achieved_spd": 246,
+            "target": [
+              246,
+              246
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Skullcrusher",
+            "achieved_spd": 239,
+            "target": [
+              239,
+              239
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Steelskull",
+            "achieved_spd": 181,
+            "target": [
+              180,
+              189
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Rhazin Scarhide",
+            "achieved_spd": 187,
+            "target": [
+              180,
+              189
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Frozen Banshee",
+            "achieved_spd": 189,
+            "target": [
+              180,
+              189
+            ],
+            "ok": true,
+            "short": 0
+          }
+        ],
+        "key_capability": "3 Key UNM",
+        "holds_t50": true,
+        "dwj_boss_turns": 50
+      }
     },
     {
       "id": "two-43-champs-with-cleanser",
@@ -1997,7 +3282,67 @@
           "want": 179,
           "short": 53
         }
-      ]
+      ],
+      "solve": {
+        "id": "two-43-champs-with-cleanser",
+        "name": "Two 4:3 Champs with Cleanser",
+        "feasible": true,
+        "per_hero": [
+          {
+            "hero": "Jareg",
+            "achieved_spd": 240,
+            "target": [
+              240,
+              240
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Skullcrusher",
+            "achieved_spd": 239,
+            "target": [
+              239,
+              239
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Steelskull",
+            "achieved_spd": 186,
+            "target": [
+              186,
+              186
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Frozen Banshee",
+            "achieved_spd": 180,
+            "target": [
+              180,
+              180
+            ],
+            "ok": true,
+            "short": 0
+          },
+          {
+            "hero": "Doompriest",
+            "achieved_spd": 179,
+            "target": [
+              179,
+              179
+            ],
+            "ok": true,
+            "short": 0
+          }
+        ],
+        "key_capability": "3 Key UNM",
+        "holds_t50": true,
+        "dwj_boss_turns": 50
+      }
     }
   ],
   "need_heroes": [
