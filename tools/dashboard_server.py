@@ -994,7 +994,7 @@ def build_cb_recommendations(force: bool = False):
     """Team Recommendation panel: tried-and-true templates split into ready vs
     need-heroes, with traffic-light status. Cached by roster/vault hash in
     tools/cb_recommender.py (cheap; no per-team sim in this phase)."""
-    res = _cb_recommender.build(ROOT, force=force)
+    res = _cb_recommender.build(ROOT, force=force, with_sim=force)
     if force and "error" not in res:
         try:
             _cb_recommender._write_cache(ROOT, res)

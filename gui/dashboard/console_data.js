@@ -270,12 +270,17 @@
       function chip(text, color) {
         return '<span style="font-family:' + mono + ';font-size:8px;letter-spacing:.08em;text-transform:uppercase;color:' + color + ';border:1px solid ' + color + '55;border-radius:3px;padding:2px 5px;flex:none;">' + text + '</span>';
       }
-      function gapText(r) {
-        if (r.status === "ready") return '<span style="color:#6fcf6f;">gear hits the tune</span>';
-        var g = (r.gear_gaps || []).slice(0, 3).map(function (x) {
-          return x.hero + ' −' + x.short;
-        }).join(", ");
-        return '<span style="color:#d8a657;">short SPD: ' + g + (r.gear_gaps && r.gear_gaps.length > 3 ? " …" : "") + '</span>';
+      function simM(r) { return '~' + (r.sim_damage / 1e6).toFixed(1) + 'M sim'; }
+      function readySub(r) {
+        if (r.status !== "ready") {
+          var g = (r.gear_gaps || []).slice(0, 3).map(function (x) { return x.hero + ' −' + x.short; }).join(", ");
+          return '<span style="color:#d8a657;">short SPD: ' + g + (r.gear_gaps && r.gear_gaps.length > 3 ? " …" : "") + '</span>';
+        }
+        var parts = ['<span style="color:#6fcf6f;">gear hits the tune</span>'];
+        if (r.holds_t50) parts.push('<span style="color:#6fcf6f;">holds T50 ✓</span>');
+        else if (r.dwj_boss_turns) parts.push('<span style="color:#d8a657;">DWJ holds T' + r.dwj_boss_turns + '</span>');
+        if (r.sim_damage) parts.push('<span style="color:#caa063;">' + simM(r) + '</span>');
+        return parts.join(' · ');
       }
       function expand(r) {
         var rows = (r.slots || []).map(function (s) {
@@ -293,7 +298,7 @@
           ? '<span style="font-family:' + mono + ';font-size:9px;color:' + d2[0] + ';flex:none;">● ' + d2[1] + '</span>'
           : '<span style="font-family:' + mono + ';font-size:9px;color:#c46f5a;flex:none;">need ' + (r.missing_heroes || []).join(", ") + '</span>';
         var sub = state.tab === "ready"
-          ? gapText(r)
+          ? readySub(r)
           : '<span style="color:#6f6555;">' + (r.key_capability || "") + '</span>';
         return '<div data-rid="' + r.id + '" style="background:#1a150e;border:1px solid #2c241a;border-left:2px solid ' + mechColor(r.mechanic) + ';border-radius:4px;padding:9px 11px;margin-bottom:7px;cursor:pointer;">' +
           '<div style="display:flex;align-items:center;gap:8px;">' +
@@ -314,11 +319,15 @@
       function render() {
         var rows = state.tab === "ready" ? ready : need;
         var top = ready.filter(function (x) { return x.status === "ready"; })[0];
+        var topMeta = top
+          ? (top.key_capability || "") + (top.holds_t50 ? ' · holds T50' : (top.dwj_boss_turns ? ' · holds T' + top.dwj_boss_turns : '')) + (top.sim_damage ? ' · ' + simM(top) : '')
+          : "";
         var runToday = top
           ? '<div style="display:flex;align-items:center;gap:8px;margin:10px 0 14px;padding:10px 12px;background:linear-gradient(100deg,#1f160d,#15110b);border:1px solid #3a2f1f;border-radius:3px;">' +
               '<span style="font-family:' + mono + ';font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#6fcf6f;flex:none;">▶ Run today</span>' +
               '<span style="font-family:Cinzel,serif;font-size:15px;color:#f3ead8;">' + top.name + '</span>' +
-              '<span style="font-family:' + mono + ';font-size:9px;color:#948876;">' + (top.key_capability || "") + ' · gear ready</span>' +
+              '<span style="flex:1;"></span>' +
+              '<span style="font-family:' + mono + ';font-size:9px;color:#948876;">' + topMeta + '</span>' +
             '</div>'
           : '';
         host.innerHTML =

@@ -1,0 +1,7234 @@
+{
+  "generated_at": 1782529870,
+  "hash": "1538e64c9598e72a",
+  "has_sim": true,
+  "today_element": "magic",
+  "ready": [
+    {
+      "id": "myth-eater",
+      "name": "Myth Eater",
+      "mechanic": "Unkillable",
+      "key_capability": "2 Key UNM",
+      "key_count": 2,
+      "heroes": [
+        "Maneater",
+        "Demytha",
+        "4:3 DPS",
+        "DPS",
+        "DPS"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Maneater",
+          "status": "filled_6star",
+          "min_spd": 286,
+          "max_spd": 286,
+          "roster_grade": 6
+        },
+        {
+          "index": 2,
+          "hero": "Demytha",
+          "status": "filled_6star",
+          "min_spd": 171,
+          "max_spd": 171,
+          "roster_grade": 6
+        },
+        {
+          "index": 3,
+          "hero": "4:3 DPS",
+          "status": "generic",
+          "min_spd": 224,
+          "max_spd": 230,
+          "roster_grade": null
+        },
+        {
+          "index": 4,
+          "hero": "DPS",
+          "status": "generic",
+          "min_spd": 179,
+          "max_spd": 179,
+          "roster_grade": null
+        },
+        {
+          "index": 5,
+          "hero": "DPS",
+          "status": "generic",
+          "min_spd": 160,
+          "max_spd": 169,
+          "roster_grade": null
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/myth-eater/",
+      "sim_hash": "9f59bf39a2dca1bd9fd46108b89cbf6b00f011de",
+      "est_damage": 30000000,
+      "note": "Maneater and Demytha and 3 dps with one at a 4:3 Ratio.",
+      "status": "ready",
+      "gear_gaps": [],
+      "holds_t50": true,
+      "dwj_boss_turns": 50,
+      "sim_damage": 15737210,
+      "sim_boss_turns": 27,
+      "sim_team": [
+        "Maneater",
+        "Demytha",
+        "Ninja",
+        "Geomancer",
+        "Venomage"
+      ]
+    },
+    {
+      "id": "high-myth-man",
+      "name": "High Myth Man",
+      "mechanic": "Speed",
+      "key_capability": "2 Key UNM",
+      "key_count": 2,
+      "heroes": [
+        "Maneater",
+        "Rhazin Scarhide",
+        "Frozen Banshee",
+        "High Khatun",
+        "Demytha"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Maneater",
+          "status": "filled_6star",
+          "min_spd": 263,
+          "max_spd": 280,
+          "roster_grade": 6
+        },
+        {
+          "index": 2,
+          "hero": "Rhazin Scarhide",
+          "status": "filled_6star",
+          "min_spd": 139,
+          "max_spd": 142,
+          "roster_grade": 6
+        },
+        {
+          "index": 3,
+          "hero": "Frozen Banshee",
+          "status": "filled_ascending",
+          "min_spd": 139,
+          "max_spd": 142,
+          "roster_grade": 5
+        },
+        {
+          "index": 4,
+          "hero": "High Khatun",
+          "status": "filled_ascending",
+          "min_spd": 125,
+          "max_spd": 125,
+          "roster_grade": 5
+        },
+        {
+          "index": 5,
+          "hero": "Demytha",
+          "status": "filled_6star",
+          "min_spd": 131,
+          "max_spd": 131,
+          "roster_grade": 6
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/high-myth-man/",
+      "sim_hash": "99b21955d885b6d81c7c9bde85ec3a31a64bf4d2",
+      "est_damage": 30000000,
+      "note": "ascend Frozen Banshee (5\u2605), High Khatun (5\u2605)",
+      "status": "ready",
+      "gear_gaps": [],
+      "holds_t50": true,
+      "dwj_boss_turns": 50
+    },
+    {
+      "id": "batmansaladeater",
+      "name": "BatManSaladEater",
+      "mechanic": "Speed",
+      "key_capability": "1 Key UNM",
+      "key_count": 1,
+      "heroes": [
+        "Maneater",
+        "Maneater",
+        "Ma'Shalled",
+        "Seeker",
+        "Fayne"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Maneater",
+          "status": "filled_6star",
+          "min_spd": 286,
+          "max_spd": 288,
+          "roster_grade": 6
+        },
+        {
+          "index": 2,
+          "hero": "Maneater",
+          "status": "filled_6star",
+          "min_spd": 286,
+          "max_spd": 288,
+          "roster_grade": 6
+        },
+        {
+          "index": 3,
+          "hero": "Ma'Shalled",
+          "status": "filled_6star",
+          "min_spd": 238,
+          "max_spd": 239,
+          "roster_grade": 6
+        },
+        {
+          "index": 4,
+          "hero": "Seeker",
+          "status": "filled_6star",
+          "min_spd": 220,
+          "max_spd": 238,
+          "roster_grade": 6
+        },
+        {
+          "index": 5,
+          "hero": "Fayne",
+          "status": "filled_6star",
+          "min_spd": 184,
+          "max_spd": 191,
+          "roster_grade": 6
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/batmansaladeater/",
+      "sim_hash": "a4b559b61648ecb047c589d856c3999fe43adc24",
+      "est_damage": 50000000,
+      "note": "BatEater w/ Ma'Shalled instead of Pain Keeper; Maneaters going at a 5:2",
+      "status": "lacking-gear",
+      "gear_gaps": [
+        {
+          "hero": "Ma'Shalled",
+          "have": 153,
+          "want": 238,
+          "short": 85
+        },
+        {
+          "hero": "Seeker",
+          "have": 143,
+          "want": 220,
+          "short": 77
+        },
+        {
+          "hero": "Fayne",
+          "have": 143,
+          "want": 184,
+          "short": 41
+        }
+      ]
+    },
+    {
+      "id": "bateater",
+      "name": "Bateater",
+      "mechanic": "Unkillable",
+      "key_capability": "1 Key UNM",
+      "key_count": 1,
+      "heroes": [
+        "Maneater",
+        "Seeker",
+        "Maneater",
+        "Pain Keeper",
+        "DPS"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Maneater",
+          "status": "filled_6star",
+          "min_spd": 265,
+          "max_spd": 285,
+          "roster_grade": 6
+        },
+        {
+          "index": 2,
+          "hero": "Seeker",
+          "status": "filled_6star",
+          "min_spd": 248,
+          "max_spd": 254,
+          "roster_grade": 6
+        },
+        {
+          "index": 3,
+          "hero": "Maneater",
+          "status": "filled_6star",
+          "min_spd": 239,
+          "max_spd": 247,
+          "roster_grade": 6
+        },
+        {
+          "index": 4,
+          "hero": "Pain Keeper",
+          "status": "filled_ascending",
+          "min_spd": 239,
+          "max_spd": 247,
+          "roster_grade": 5
+        },
+        {
+          "index": 5,
+          "hero": "DPS",
+          "status": "generic",
+          "min_spd": 218,
+          "max_spd": 227,
+          "roster_grade": null
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/bateater/",
+      "sim_hash": "514dc9498952ac2690ba8a23eadb25a9b707e9c7",
+      "est_damage": 50000000,
+      "note": "ascend Pain Keeper (5\u2605)",
+      "status": "lacking-gear",
+      "gear_gaps": [
+        {
+          "hero": "Seeker",
+          "have": 143,
+          "want": 248,
+          "short": 105
+        }
+      ]
+    },
+    {
+      "id": "deaconeater",
+      "name": "DeaconEater",
+      "mechanic": "Unkillable",
+      "key_capability": "1 Key UNM",
+      "key_count": 1,
+      "heroes": [
+        "Deacon Armstron",
+        "Maneater",
+        "Maneater",
+        "Pain Keeper",
+        "Fayne"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Deacon Armstron",
+          "status": "filled_ascending",
+          "min_spd": 245,
+          "max_spd": 253,
+          "roster_grade": 5
+        },
+        {
+          "index": 2,
+          "hero": "Maneater",
+          "status": "filled_6star",
+          "min_spd": 304,
+          "max_spd": 307,
+          "roster_grade": 6
+        },
+        {
+          "index": 3,
+          "hero": "Maneater",
+          "status": "filled_6star",
+          "min_spd": 269,
+          "max_spd": 286,
+          "roster_grade": 6
+        },
+        {
+          "index": 4,
+          "hero": "Pain Keeper",
+          "status": "filled_ascending",
+          "min_spd": 268,
+          "max_spd": 285,
+          "roster_grade": 5
+        },
+        {
+          "index": 5,
+          "hero": "Fayne",
+          "status": "filled_6star",
+          "min_spd": 221,
+          "max_spd": 224,
+          "roster_grade": 6
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/deaconeater/",
+      "sim_hash": "4ed187c510d87a11500840b7b93dd9c2346ec531",
+      "est_damage": 50000000,
+      "note": "ascend Deacon Armstron (5\u2605), Pain Keeper (5\u2605)",
+      "status": "lacking-gear",
+      "gear_gaps": [
+        {
+          "hero": "Fayne",
+          "have": 143,
+          "want": 221,
+          "short": 78
+        },
+        {
+          "hero": "Maneater",
+          "have": 288,
+          "want": 304,
+          "short": 16
+        }
+      ]
+    },
+    {
+      "id": "hellbateater",
+      "name": "HellBatEater",
+      "mechanic": "Speed",
+      "key_capability": "1 Key UNM",
+      "key_count": 1,
+      "heroes": [
+        "Archmage Hellmut",
+        "Maneater",
+        "Maneater",
+        "Seeker",
+        "Fayne"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Archmage Hellmut",
+          "status": "filled_ascending",
+          "min_spd": 306,
+          "max_spd": 308,
+          "roster_grade": 5
+        },
+        {
+          "index": 2,
+          "hero": "Maneater",
+          "status": "filled_6star",
+          "min_spd": 287,
+          "max_spd": 289,
+          "roster_grade": 6
+        },
+        {
+          "index": 3,
+          "hero": "Maneater",
+          "status": "filled_6star",
+          "min_spd": 286,
+          "max_spd": 286,
+          "roster_grade": 6
+        },
+        {
+          "index": 4,
+          "hero": "Seeker",
+          "status": "filled_6star",
+          "min_spd": 220,
+          "max_spd": 233,
+          "roster_grade": 6
+        },
+        {
+          "index": 5,
+          "hero": "Fayne",
+          "status": "filled_6star",
+          "min_spd": 220,
+          "max_spd": 226,
+          "roster_grade": 6
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/hellbateater/",
+      "sim_hash": "7c3e6c5c98de2d7ef29804556ed3d8bc46d3989a",
+      "est_damage": 50000000,
+      "note": "ascend Archmage Hellmut (5\u2605)",
+      "status": "lacking-gear",
+      "gear_gaps": [
+        {
+          "hero": "Seeker",
+          "have": 143,
+          "want": 220,
+          "short": 77
+        },
+        {
+          "hero": "Fayne",
+          "have": 143,
+          "want": 220,
+          "short": 77
+        }
+      ]
+    },
+    {
+      "id": "man-salad",
+      "name": "Man Salad",
+      "mechanic": "Unkillable",
+      "key_capability": "1 Key UNM",
+      "key_count": 1,
+      "heroes": [
+        "Ma'Shalled",
+        "Maneater",
+        "Maneater",
+        "Fayne",
+        "Pain Keeper"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Ma'Shalled",
+          "status": "filled_6star",
+          "min_spd": 252,
+          "max_spd": 253,
+          "roster_grade": 6
+        },
+        {
+          "index": 2,
+          "hero": "Maneater",
+          "status": "filled_6star",
+          "min_spd": 224,
+          "max_spd": 229,
+          "roster_grade": 6
+        },
+        {
+          "index": 3,
+          "hero": "Maneater",
+          "status": "filled_6star",
+          "min_spd": 203,
+          "max_spd": 209,
+          "roster_grade": 6
+        },
+        {
+          "index": 4,
+          "hero": "Fayne",
+          "status": "filled_6star",
+          "min_spd": 186,
+          "max_spd": 192,
+          "roster_grade": 6
+        },
+        {
+          "index": 5,
+          "hero": "Pain Keeper",
+          "status": "filled_ascending",
+          "min_spd": 250,
+          "max_spd": 252,
+          "roster_grade": 5
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/man-salad/",
+      "sim_hash": "56bfc386cd83c1ef03f6201edec45bac35b78213",
+      "est_damage": 50000000,
+      "note": "ascend Pain Keeper (5\u2605)",
+      "status": "lacking-gear",
+      "gear_gaps": [
+        {
+          "hero": "Ma'Shalled",
+          "have": 153,
+          "want": 252,
+          "short": 99
+        },
+        {
+          "hero": "Fayne",
+          "have": 143,
+          "want": 186,
+          "short": 43
+        }
+      ]
+    },
+    {
+      "id": "myth-heir",
+      "name": "Myth Heir",
+      "mechanic": "Unkillable",
+      "key_capability": "1 Key UNM",
+      "key_count": 1,
+      "heroes": [
+        "Demytha",
+        "Heiress",
+        "Deacon",
+        "Seeker",
+        "Warboy"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Demytha",
+          "status": "filled_6star",
+          "min_spd": 274,
+          "max_spd": 274,
+          "roster_grade": 6
+        },
+        {
+          "index": 2,
+          "hero": "Heiress",
+          "status": "filled_6star",
+          "min_spd": 245,
+          "max_spd": 245,
+          "roster_grade": 6
+        },
+        {
+          "index": 3,
+          "hero": "Deacon",
+          "status": "filled_ascending",
+          "min_spd": 185,
+          "max_spd": 185,
+          "roster_grade": 5
+        },
+        {
+          "index": 4,
+          "hero": "Seeker",
+          "status": "filled_6star",
+          "min_spd": 169,
+          "max_spd": 169,
+          "roster_grade": 6
+        },
+        {
+          "index": 5,
+          "hero": "Warboy",
+          "status": "filled_ascending",
+          "min_spd": 156,
+          "max_spd": 157,
+          "roster_grade": 1
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/myth-heir/",
+      "sim_hash": "34f8a7766af615aebef2e06844daa753539a827a",
+      "est_damage": 50000000,
+      "note": "ascend Deacon (5\u2605), Warboy (1\u2605)",
+      "status": "lacking-gear",
+      "gear_gaps": [
+        {
+          "hero": "Demytha",
+          "have": 184,
+          "want": 274,
+          "short": 90
+        },
+        {
+          "hero": "Heiress",
+          "have": 160,
+          "want": 245,
+          "short": 85
+        },
+        {
+          "hero": "Seeker",
+          "have": 143,
+          "want": 169,
+          "short": 26
+        }
+      ]
+    },
+    {
+      "id": "myth-heir-with-no-seeker",
+      "name": "Myth Heir Alternate",
+      "mechanic": "Unkillable",
+      "key_capability": "1 Key UNM",
+      "key_count": 1,
+      "heroes": [
+        "Demytha",
+        "Heiress",
+        "Doomscreech",
+        "Deacon Armstrong",
+        "Warboy"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Demytha",
+          "status": "filled_6star",
+          "min_spd": 348,
+          "max_spd": 350,
+          "roster_grade": 6
+        },
+        {
+          "index": 2,
+          "hero": "Heiress",
+          "status": "filled_6star",
+          "min_spd": 283,
+          "max_spd": 295,
+          "roster_grade": 6
+        },
+        {
+          "index": 3,
+          "hero": "Doomscreech",
+          "status": "filled_ascending",
+          "min_spd": 281,
+          "max_spd": 294,
+          "roster_grade": 4
+        },
+        {
+          "index": 4,
+          "hero": "Deacon Armstrong",
+          "status": "filled_ascending",
+          "min_spd": 198,
+          "max_spd": 224,
+          "roster_grade": 5
+        },
+        {
+          "index": 5,
+          "hero": "Warboy",
+          "status": "filled_ascending",
+          "min_spd": 180,
+          "max_spd": 187,
+          "roster_grade": 1
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/myth-heir-with-no-seeker/",
+      "sim_hash": "b24777bb67f98284b220ae5e04ab1dd0113ffba6",
+      "est_damage": 50000000,
+      "note": "ascend Doomscreech (4\u2605), Deacon Armstrong (5\u2605), Warboy (1\u2605)",
+      "status": "lacking-gear",
+      "gear_gaps": [
+        {
+          "hero": "Demytha",
+          "have": 184,
+          "want": 348,
+          "short": 164
+        },
+        {
+          "hero": "Heiress",
+          "have": 160,
+          "want": 283,
+          "short": 123
+        }
+      ]
+    },
+    {
+      "id": "myth-heir-salad",
+      "name": "Myth Heir Salad",
+      "mechanic": "Unkillable",
+      "key_capability": "1 Key UNM",
+      "key_count": 1,
+      "heroes": [
+        "Demytha",
+        "Heiress",
+        "Ma'Shalled",
+        "Seeker",
+        "Warboy"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Demytha",
+          "status": "filled_6star",
+          "min_spd": 315,
+          "max_spd": 320,
+          "roster_grade": 6
+        },
+        {
+          "index": 2,
+          "hero": "Heiress",
+          "status": "filled_6star",
+          "min_spd": 293,
+          "max_spd": 295,
+          "roster_grade": 6
+        },
+        {
+          "index": 3,
+          "hero": "Ma'Shalled",
+          "status": "filled_6star",
+          "min_spd": 214,
+          "max_spd": 222,
+          "roster_grade": 6
+        },
+        {
+          "index": 4,
+          "hero": "Seeker",
+          "status": "filled_6star",
+          "min_spd": 197,
+          "max_spd": 198,
+          "roster_grade": 6
+        },
+        {
+          "index": 5,
+          "hero": "Warboy",
+          "status": "filled_ascending",
+          "min_spd": 214,
+          "max_spd": 222,
+          "roster_grade": 1
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/myth-heir-salad/",
+      "sim_hash": "177a6c04d04f2b1370b053251e0f7b9b768ae80e",
+      "est_damage": 50000000,
+      "note": "ascend Warboy (1\u2605)",
+      "status": "lacking-gear",
+      "gear_gaps": [
+        {
+          "hero": "Heiress",
+          "have": 160,
+          "want": 293,
+          "short": 133
+        },
+        {
+          "hero": "Demytha",
+          "have": 184,
+          "want": 315,
+          "short": 131
+        },
+        {
+          "hero": "Ma'Shalled",
+          "have": 153,
+          "want": 214,
+          "short": 61
+        },
+        {
+          "hero": "Seeker",
+          "have": 143,
+          "want": 197,
+          "short": 54
+        }
+      ]
+    },
+    {
+      "id": "rabbateater",
+      "name": "RabBatEater",
+      "mechanic": "Unkillable",
+      "key_capability": "1 Key UNM",
+      "key_count": 1,
+      "heroes": [
+        "Razelvarg",
+        "Maneater",
+        "Maneater",
+        "Seeker",
+        "Warboy"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Razelvarg",
+          "status": "filled_6star",
+          "min_spd": 261,
+          "max_spd": 262,
+          "roster_grade": 6
+        },
+        {
+          "index": 2,
+          "hero": "Maneater",
+          "status": "filled_6star",
+          "min_spd": 290,
+          "max_spd": 315,
+          "roster_grade": 6
+        },
+        {
+          "index": 3,
+          "hero": "Maneater",
+          "status": "filled_6star",
+          "min_spd": 290,
+          "max_spd": 315,
+          "roster_grade": 6
+        },
+        {
+          "index": 4,
+          "hero": "Seeker",
+          "status": "filled_6star",
+          "min_spd": 238,
+          "max_spd": 239,
+          "roster_grade": 6
+        },
+        {
+          "index": 5,
+          "hero": "Warboy",
+          "status": "filled_ascending",
+          "min_spd": 188,
+          "max_spd": 203,
+          "roster_grade": 1
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/rabbateater/",
+      "sim_hash": "884908faa6fb6b7f4336ecb9276466c5d10cb104",
+      "est_damage": 50000000,
+      "note": "ascend Warboy (1\u2605)",
+      "status": "lacking-gear",
+      "gear_gaps": [
+        {
+          "hero": "Razelvarg",
+          "have": 146,
+          "want": 261,
+          "short": 115
+        },
+        {
+          "hero": "Seeker",
+          "have": 143,
+          "want": 238,
+          "short": 95
+        }
+      ]
+    },
+    {
+      "id": "ultimate-myth-heir-2-seekers",
+      "name": "Ultimate Myth Heir - 2 Seekers",
+      "mechanic": "Unkillable",
+      "key_capability": "1 Key UNM",
+      "key_count": 1,
+      "heroes": [
+        "Demytha",
+        "Heiress",
+        "Seeker",
+        "Seeker",
+        "Warboy"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Demytha",
+          "status": "filled_6star",
+          "min_spd": 287,
+          "max_spd": 309,
+          "roster_grade": 6
+        },
+        {
+          "index": 2,
+          "hero": "Heiress",
+          "status": "filled_6star",
+          "min_spd": 263,
+          "max_spd": 282,
+          "roster_grade": 6
+        },
+        {
+          "index": 3,
+          "hero": "Seeker",
+          "status": "filled_6star",
+          "min_spd": 205,
+          "max_spd": 211,
+          "roster_grade": 6
+        },
+        {
+          "index": 4,
+          "hero": "Seeker",
+          "status": "filled_6star",
+          "min_spd": 204,
+          "max_spd": 204,
+          "roster_grade": 6
+        },
+        {
+          "index": 5,
+          "hero": "Warboy",
+          "status": "filled_ascending",
+          "min_spd": 256,
+          "max_spd": 263,
+          "roster_grade": 1
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/ultimate-myth-heir-2-seekers/",
+      "sim_hash": "adedb4b2d5e6cf65dcf480be597f218795ab0f27",
+      "est_damage": 50000000,
+      "note": "ascend Warboy (1\u2605)",
+      "status": "lacking-gear",
+      "gear_gaps": [
+        {
+          "hero": "Demytha",
+          "have": 184,
+          "want": 287,
+          "short": 103
+        },
+        {
+          "hero": "Heiress",
+          "have": 160,
+          "want": 263,
+          "short": 103
+        },
+        {
+          "hero": "Seeker",
+          "have": 143,
+          "want": 205,
+          "short": 62
+        },
+        {
+          "hero": "Seeker",
+          "have": 143,
+          "want": 204,
+          "short": 61
+        }
+      ]
+    },
+    {
+      "id": "ultimate-myth-heir-with-31-dps-ninja-works",
+      "name": "Ultimate Myth Heir with 3:1 DPS",
+      "mechanic": "Unkillable",
+      "key_capability": "1 Key UNM",
+      "key_count": 1,
+      "heroes": [
+        "Demytha",
+        "Heiress",
+        "Deacon Armstrong",
+        "Seeker",
+        "Rhazin Scarhide"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Demytha",
+          "status": "filled_6star",
+          "min_spd": 307,
+          "max_spd": 321,
+          "roster_grade": 6
+        },
+        {
+          "index": 2,
+          "hero": "Heiress",
+          "status": "filled_6star",
+          "min_spd": 284,
+          "max_spd": 286,
+          "roster_grade": 6
+        },
+        {
+          "index": 3,
+          "hero": "Deacon Armstrong",
+          "status": "filled_ascending",
+          "min_spd": 214,
+          "max_spd": 227,
+          "roster_grade": 5
+        },
+        {
+          "index": 4,
+          "hero": "Seeker",
+          "status": "filled_6star",
+          "min_spd": 205,
+          "max_spd": 214,
+          "roster_grade": 6
+        },
+        {
+          "index": 5,
+          "hero": "Rhazin Scarhide",
+          "status": "filled_6star",
+          "min_spd": 275,
+          "max_spd": 277,
+          "roster_grade": 6
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/ultimate-myth-heir-with-31-dps-ninja-works/",
+      "sim_hash": "bd95b5fa121fe9ee6c5721b028c5c1ecdddbe0b7",
+      "est_damage": 50000000,
+      "note": "ascend Deacon Armstrong (5\u2605)",
+      "status": "lacking-gear",
+      "gear_gaps": [
+        {
+          "hero": "Heiress",
+          "have": 160,
+          "want": 284,
+          "short": 124
+        },
+        {
+          "hero": "Demytha",
+          "have": 184,
+          "want": 307,
+          "short": 123
+        },
+        {
+          "hero": "Rhazin Scarhide",
+          "have": 152,
+          "want": 275,
+          "short": 123
+        },
+        {
+          "hero": "Seeker",
+          "have": 143,
+          "want": 205,
+          "short": 62
+        }
+      ]
+    },
+    {
+      "id": "budget-maneater-unkillable",
+      "name": "Budget Maneater Unkillable",
+      "mechanic": "Unkillable",
+      "key_capability": "2 Key UNM",
+      "key_count": 2,
+      "heroes": [
+        "Maneater",
+        "Pain Keeper",
+        "Rhazin Scarhide",
+        "Frozen Banshee",
+        "Skullcrusher"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Maneater",
+          "status": "filled_6star",
+          "min_spd": 240,
+          "max_spd": 241,
+          "roster_grade": 6
+        },
+        {
+          "index": 2,
+          "hero": "Pain Keeper",
+          "status": "filled_ascending",
+          "min_spd": 218,
+          "max_spd": 222,
+          "roster_grade": 5
+        },
+        {
+          "index": 3,
+          "hero": "Rhazin Scarhide",
+          "status": "filled_6star",
+          "min_spd": 175,
+          "max_spd": 178,
+          "roster_grade": 6
+        },
+        {
+          "index": 4,
+          "hero": "Frozen Banshee",
+          "status": "filled_ascending",
+          "min_spd": 175,
+          "max_spd": 178,
+          "roster_grade": 5
+        },
+        {
+          "index": 5,
+          "hero": "Skullcrusher",
+          "status": "filled_6star",
+          "min_spd": 111,
+          "max_spd": 118,
+          "roster_grade": 6
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/budget-maneater-unkillable/",
+      "sim_hash": "d7c74e2629b8eda47925b37b26389ee27a43105e",
+      "est_damage": 30000000,
+      "note": "ascend Pain Keeper (5\u2605), Frozen Banshee (5\u2605)",
+      "status": "lacking-gear",
+      "gear_gaps": [
+        {
+          "hero": "Rhazin Scarhide",
+          "have": 152,
+          "want": 175,
+          "short": 23
+        },
+        {
+          "hero": "Skullcrusher",
+          "have": 102,
+          "want": 111,
+          "short": 9
+        }
+      ]
+    },
+    {
+      "id": "double-demytha",
+      "name": "Double Demytha",
+      "mechanic": "Unkillable",
+      "key_capability": "2 Key UNM",
+      "key_count": 2,
+      "heroes": [
+        "Demytha",
+        "Demytha",
+        "Doompriest",
+        "Warboy",
+        "Warboy"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Demytha",
+          "status": "filled_6star",
+          "min_spd": 266,
+          "max_spd": 285,
+          "roster_grade": 6
+        },
+        {
+          "index": 2,
+          "hero": "Demytha",
+          "status": "filled_6star",
+          "min_spd": 253,
+          "max_spd": 254,
+          "roster_grade": 6
+        },
+        {
+          "index": 3,
+          "hero": "Doompriest",
+          "status": "filled_6star",
+          "min_spd": 167,
+          "max_spd": 169,
+          "roster_grade": 6
+        },
+        {
+          "index": 4,
+          "hero": "Warboy",
+          "status": "filled_ascending",
+          "min_spd": 167,
+          "max_spd": 169,
+          "roster_grade": 1
+        },
+        {
+          "index": 5,
+          "hero": "Warboy",
+          "status": "filled_ascending",
+          "min_spd": 167,
+          "max_spd": 169,
+          "roster_grade": 1
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/double-demytha/",
+      "sim_hash": "42d082ab9ed5f1e0ac230cb08b9ce7148847b9f6",
+      "est_damage": 30000000,
+      "note": "ascend Warboy (1\u2605), Warboy (1\u2605)",
+      "status": "lacking-gear",
+      "gear_gaps": [
+        {
+          "hero": "Demytha",
+          "have": 184,
+          "want": 266,
+          "short": 82
+        },
+        {
+          "hero": "Demytha",
+          "have": 184,
+          "want": 253,
+          "short": 69
+        },
+        {
+          "hero": "Doompriest",
+          "have": 126,
+          "want": 167,
+          "short": 41
+        }
+      ]
+    },
+    {
+      "id": "double-warcaster",
+      "name": "Double Warcaster",
+      "mechanic": "Speed",
+      "key_capability": "2 Key UNM",
+      "key_count": 2,
+      "heroes": [
+        "Warcaster",
+        "Warcaster",
+        "Doompriest",
+        "Frozen Banshee",
+        "Bushi"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Warcaster",
+          "status": "filled_ascending",
+          "min_spd": 255,
+          "max_spd": 256,
+          "roster_grade": 4
+        },
+        {
+          "index": 2,
+          "hero": "Warcaster",
+          "status": "filled_ascending",
+          "min_spd": 255,
+          "max_spd": 256,
+          "roster_grade": 4
+        },
+        {
+          "index": 3,
+          "hero": "Doompriest",
+          "status": "filled_6star",
+          "min_spd": 211,
+          "max_spd": 211,
+          "roster_grade": 6
+        },
+        {
+          "index": 4,
+          "hero": "Frozen Banshee",
+          "status": "filled_ascending",
+          "min_spd": 210,
+          "max_spd": 210,
+          "roster_grade": 5
+        },
+        {
+          "index": 5,
+          "hero": "Bushi",
+          "status": "filled_ascending",
+          "min_spd": 209,
+          "max_spd": 209,
+          "roster_grade": 4
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/double-warcaster/",
+      "sim_hash": "6ab012951c83794fec2c68bb4966191cd291aa54",
+      "est_damage": 30000000,
+      "note": "ascend Warcaster (4\u2605), Warcaster (4\u2605), Frozen Banshee (5\u2605), Bushi (4\u2605)",
+      "status": "lacking-gear",
+      "gear_gaps": [
+        {
+          "hero": "Doompriest",
+          "have": 126,
+          "want": 211,
+          "short": 85
+        }
+      ]
+    },
+    {
+      "id": "myth-heir-with-double-deacon",
+      "name": "Myth Heir with Double Deacon",
+      "mechanic": "Unkillable",
+      "key_capability": "2 Key UNM",
+      "key_count": 2,
+      "heroes": [
+        "Demytha",
+        "Heiress",
+        "Deacon",
+        "Deacon",
+        "Warboy"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Demytha",
+          "status": "filled_6star",
+          "min_spd": 314,
+          "max_spd": 320,
+          "roster_grade": 6
+        },
+        {
+          "index": 2,
+          "hero": "Heiress",
+          "status": "filled_6star",
+          "min_spd": 284,
+          "max_spd": 296,
+          "roster_grade": 6
+        },
+        {
+          "index": 3,
+          "hero": "Deacon",
+          "status": "filled_ascending",
+          "min_spd": 231,
+          "max_spd": 232,
+          "roster_grade": 5
+        },
+        {
+          "index": 4,
+          "hero": "Deacon",
+          "status": "filled_ascending",
+          "min_spd": 199,
+          "max_spd": 209,
+          "roster_grade": 5
+        },
+        {
+          "index": 5,
+          "hero": "Warboy",
+          "status": "filled_ascending",
+          "min_spd": 214,
+          "max_spd": 227,
+          "roster_grade": 1
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/myth-heir-with-double-deacon/",
+      "sim_hash": "b5f9fb612cd1b18a5765708781efea5893d95694",
+      "est_damage": 30000000,
+      "note": "ascend Deacon (5\u2605), Deacon (5\u2605), Warboy (1\u2605)",
+      "status": "lacking-gear",
+      "gear_gaps": [
+        {
+          "hero": "Demytha",
+          "have": 184,
+          "want": 314,
+          "short": 130
+        },
+        {
+          "hero": "Heiress",
+          "have": 160,
+          "want": 284,
+          "short": 124
+        }
+      ]
+    },
+    {
+      "id": "budget-myth-heir",
+      "name": "Budget Myth Heir",
+      "mechanic": "Unkillable",
+      "key_capability": "3 Key UNM",
+      "key_count": 3,
+      "heroes": [
+        "Ninja",
+        "Pain Keeper",
+        "Pain Keeper",
+        "Demytha",
+        "Heiress"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Ninja",
+          "status": "filled_6star",
+          "min_spd": 234,
+          "max_spd": 242,
+          "roster_grade": 6
+        },
+        {
+          "index": 2,
+          "hero": "Pain Keeper",
+          "status": "filled_ascending",
+          "min_spd": 188,
+          "max_spd": 188,
+          "roster_grade": 5
+        },
+        {
+          "index": 3,
+          "hero": "Pain Keeper",
+          "status": "filled_ascending",
+          "min_spd": 189,
+          "max_spd": 189,
+          "roster_grade": 5
+        },
+        {
+          "index": 4,
+          "hero": "Demytha",
+          "status": "filled_6star",
+          "min_spd": 255,
+          "max_spd": 263,
+          "roster_grade": 6
+        },
+        {
+          "index": 5,
+          "hero": "Heiress",
+          "status": "filled_6star",
+          "min_spd": 243,
+          "max_spd": 254,
+          "roster_grade": 6
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/budget-myth-heir/",
+      "sim_hash": "728ccd8c0ba2a6fc5b1fd292fe4fda3d9b9d3152",
+      "est_damage": 20000000,
+      "note": "ascend Pain Keeper (5\u2605), Pain Keeper (5\u2605)",
+      "status": "lacking-gear",
+      "gear_gaps": [
+        {
+          "hero": "Heiress",
+          "have": 160,
+          "want": 243,
+          "short": 83
+        },
+        {
+          "hero": "Demytha",
+          "have": 184,
+          "want": 255,
+          "short": 71
+        },
+        {
+          "hero": "Ninja",
+          "have": 206,
+          "want": 234,
+          "short": 28
+        }
+      ]
+    },
+    {
+      "id": "endless-speed",
+      "name": "Endless Speed",
+      "mechanic": "Speed",
+      "key_capability": "3 Key UNM",
+      "key_count": 3,
+      "heroes": [
+        "Tayrel",
+        "Iron Brago",
+        "Apothecary",
+        "Sandlashed Survivor",
+        "Rhazin Scarhide"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Tayrel",
+          "status": "filled_ascending",
+          "min_spd": 240,
+          "max_spd": 243,
+          "roster_grade": 4
+        },
+        {
+          "index": 2,
+          "hero": "Iron Brago",
+          "status": "filled_6star",
+          "min_spd": 229,
+          "max_spd": 236,
+          "roster_grade": 6
+        },
+        {
+          "index": 3,
+          "hero": "Apothecary",
+          "status": "filled_6star",
+          "min_spd": 224,
+          "max_spd": 227,
+          "roster_grade": 6
+        },
+        {
+          "index": 4,
+          "hero": "Sandlashed Survivor",
+          "status": "filled_ascending",
+          "min_spd": 197,
+          "max_spd": 197,
+          "roster_grade": 5
+        },
+        {
+          "index": 5,
+          "hero": "Rhazin Scarhide",
+          "status": "filled_6star",
+          "min_spd": 178,
+          "max_spd": 180,
+          "roster_grade": 6
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/endless-speed/",
+      "sim_hash": "afcf42b22ea88a1550099ff8d44e63ab28d04ba5",
+      "est_damage": 20000000,
+      "note": "ascend Tayrel (4\u2605), Sandlashed Survivor (5\u2605)",
+      "status": "lacking-gear",
+      "gear_gaps": [
+        {
+          "hero": "Iron Brago",
+          "have": 142,
+          "want": 229,
+          "short": 87
+        },
+        {
+          "hero": "Rhazin Scarhide",
+          "have": 152,
+          "want": 178,
+          "short": 26
+        },
+        {
+          "hero": "Apothecary",
+          "have": 217,
+          "want": 224,
+          "short": 7
+        }
+      ]
+    },
+    {
+      "id": "fast-single-43-champ",
+      "name": "Fast Single 4:3 Champion",
+      "mechanic": "Speed",
+      "key_capability": "3 Key UNM",
+      "key_count": 3,
+      "heroes": [
+        "Sepulcher Sentinel",
+        "Skullcrusher",
+        "Frozen Banshee",
+        "Tayrel",
+        "Rhazin Scarhide"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Sepulcher Sentinel",
+          "status": "filled_6star",
+          "min_spd": 256,
+          "max_spd": 261,
+          "roster_grade": 6
+        },
+        {
+          "index": 2,
+          "hero": "Skullcrusher",
+          "status": "filled_6star",
+          "min_spd": 195,
+          "max_spd": 224,
+          "roster_grade": 6
+        },
+        {
+          "index": 3,
+          "hero": "Frozen Banshee",
+          "status": "filled_ascending",
+          "min_spd": 193,
+          "max_spd": 216,
+          "roster_grade": 5
+        },
+        {
+          "index": 4,
+          "hero": "Tayrel",
+          "status": "filled_ascending",
+          "min_spd": 192,
+          "max_spd": 195,
+          "roster_grade": 4
+        },
+        {
+          "index": 5,
+          "hero": "Rhazin Scarhide",
+          "status": "filled_6star",
+          "min_spd": 191,
+          "max_spd": 195,
+          "roster_grade": 6
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/fast-single-43-champ/",
+      "sim_hash": "4626587fbeeee97bc80bbf357e98ed20aedd409e",
+      "est_damage": 20000000,
+      "note": "ascend Frozen Banshee (5\u2605), Tayrel (4\u2605)",
+      "status": "lacking-gear",
+      "gear_gaps": [
+        {
+          "hero": "Sepulcher Sentinel",
+          "have": 126,
+          "want": 256,
+          "short": 130
+        },
+        {
+          "hero": "Skullcrusher",
+          "have": 102,
+          "want": 195,
+          "short": 93
+        },
+        {
+          "hero": "Rhazin Scarhide",
+          "have": 152,
+          "want": 191,
+          "short": 39
+        }
+      ]
+    },
+    {
+      "id": "three-43-champs",
+      "name": "Three 4:3 Champs",
+      "mechanic": "Speed",
+      "key_capability": "3 Key UNM",
+      "key_count": 3,
+      "heroes": [
+        "Jareg",
+        "Skullcrusher",
+        "Frozen Banshee",
+        "Steelskull",
+        "Rhazin Scarhide"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Jareg",
+          "status": "filled_ascending",
+          "min_spd": 239,
+          "max_spd": 239,
+          "roster_grade": 4
+        },
+        {
+          "index": 2,
+          "hero": "Skullcrusher",
+          "status": "filled_6star",
+          "min_spd": 223,
+          "max_spd": 223,
+          "roster_grade": 6
+        },
+        {
+          "index": 3,
+          "hero": "Frozen Banshee",
+          "status": "filled_ascending",
+          "min_spd": 222,
+          "max_spd": 222,
+          "roster_grade": 5
+        },
+        {
+          "index": 4,
+          "hero": "Steelskull",
+          "status": "filled_6star",
+          "min_spd": 222,
+          "max_spd": 189,
+          "roster_grade": 6
+        },
+        {
+          "index": 5,
+          "hero": "Rhazin Scarhide",
+          "status": "filled_6star",
+          "min_spd": 171,
+          "max_spd": 171,
+          "roster_grade": 6
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/three-43-champs/",
+      "sim_hash": "68cffdddb76cb5def422ac39763ab261f1426c7b",
+      "est_damage": 20000000,
+      "note": "ascend Jareg (4\u2605), Frozen Banshee (5\u2605)",
+      "status": "lacking-gear",
+      "gear_gaps": [
+        {
+          "hero": "Skullcrusher",
+          "have": 102,
+          "want": 223,
+          "short": 121
+        },
+        {
+          "hero": "Steelskull",
+          "have": 109,
+          "want": 222,
+          "short": 113
+        },
+        {
+          "hero": "Rhazin Scarhide",
+          "have": 152,
+          "want": 171,
+          "short": 19
+        }
+      ]
+    },
+    {
+      "id": "three-43-champs-alternate",
+      "name": "Three 4:3 Champs Alternate",
+      "mechanic": "Speed",
+      "key_capability": "3 Key UNM",
+      "key_count": 3,
+      "heroes": [
+        "Jareg",
+        "Iron Brago",
+        "Steelskull",
+        "Fayne",
+        "Skullcrusher"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Jareg",
+          "status": "filled_ascending",
+          "min_spd": 228,
+          "max_spd": 228,
+          "roster_grade": 4
+        },
+        {
+          "index": 2,
+          "hero": "Iron Brago",
+          "status": "filled_6star",
+          "min_spd": 225,
+          "max_spd": 225,
+          "roster_grade": 6
+        },
+        {
+          "index": 3,
+          "hero": "Steelskull",
+          "status": "filled_6star",
+          "min_spd": 225,
+          "max_spd": 225,
+          "roster_grade": 6
+        },
+        {
+          "index": 4,
+          "hero": "Fayne",
+          "status": "filled_6star",
+          "min_spd": 176,
+          "max_spd": 182,
+          "roster_grade": 6
+        },
+        {
+          "index": 5,
+          "hero": "Skullcrusher",
+          "status": "filled_6star",
+          "min_spd": 172,
+          "max_spd": 172,
+          "roster_grade": 6
+        }
+      ],
+      "affinity": "Void Only",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/three-43-champs-alternate/",
+      "sim_hash": "ddd572a7b01343a8839a06bdde41da9dc9bd084d",
+      "est_damage": 19000000,
+      "note": "ascend Jareg (4\u2605)",
+      "status": "lacking-gear",
+      "gear_gaps": [
+        {
+          "hero": "Steelskull",
+          "have": 109,
+          "want": 225,
+          "short": 116
+        },
+        {
+          "hero": "Iron Brago",
+          "have": 142,
+          "want": 225,
+          "short": 83
+        },
+        {
+          "hero": "Skullcrusher",
+          "have": 102,
+          "want": 172,
+          "short": 70
+        },
+        {
+          "hero": "Fayne",
+          "have": 143,
+          "want": 176,
+          "short": 33
+        }
+      ]
+    },
+    {
+      "id": "two-43-champs",
+      "name": "Two 4:3 Champs",
+      "mechanic": "Speed",
+      "key_capability": "3 Key UNM",
+      "key_count": 3,
+      "heroes": [
+        "Sepulcher Sentinel",
+        "Skullcrusher",
+        "Occult Brawler",
+        "Sandlashed Survivor",
+        "Rhazin Scarhide"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Sepulcher Sentinel",
+          "status": "filled_6star",
+          "min_spd": 225,
+          "max_spd": 238,
+          "roster_grade": 6
+        },
+        {
+          "index": 2,
+          "hero": "Skullcrusher",
+          "status": "filled_6star",
+          "min_spd": 225,
+          "max_spd": 238,
+          "roster_grade": 6
+        },
+        {
+          "index": 3,
+          "hero": "Occult Brawler",
+          "status": "filled_6star",
+          "min_spd": 171,
+          "max_spd": 229,
+          "roster_grade": 6
+        },
+        {
+          "index": 4,
+          "hero": "Sandlashed Survivor",
+          "status": "filled_ascending",
+          "min_spd": 171,
+          "max_spd": 175,
+          "roster_grade": 5
+        },
+        {
+          "index": 5,
+          "hero": "Rhazin Scarhide",
+          "status": "filled_6star",
+          "min_spd": 171,
+          "max_spd": 175,
+          "roster_grade": 6
+        }
+      ],
+      "affinity": "Void Only",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/two-43-champs/",
+      "sim_hash": "deb47acbaba9109d3f50bb8279f3dcffba631a35",
+      "est_damage": 19000000,
+      "note": "ascend Sandlashed Survivor (5\u2605)",
+      "status": "lacking-gear",
+      "gear_gaps": [
+        {
+          "hero": "Skullcrusher",
+          "have": 102,
+          "want": 225,
+          "short": 123
+        },
+        {
+          "hero": "Sepulcher Sentinel",
+          "have": 126,
+          "want": 225,
+          "short": 99
+        },
+        {
+          "hero": "Occult Brawler",
+          "have": 134,
+          "want": 171,
+          "short": 37
+        },
+        {
+          "hero": "Rhazin Scarhide",
+          "have": 152,
+          "want": 171,
+          "short": 19
+        }
+      ]
+    },
+    {
+      "id": "two-43-champs-alternate",
+      "name": "Two 4:3 Champs Alternate",
+      "mechanic": "Speed",
+      "key_capability": "3 Key UNM",
+      "key_count": 3,
+      "heroes": [
+        "Sepulcher Sentinel",
+        "Skullcrusher",
+        "Steelskull",
+        "Rhazin Scarhide",
+        "Frozen Banshee"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Sepulcher Sentinel",
+          "status": "filled_6star",
+          "min_spd": 246,
+          "max_spd": 246,
+          "roster_grade": 6
+        },
+        {
+          "index": 2,
+          "hero": "Skullcrusher",
+          "status": "filled_6star",
+          "min_spd": 239,
+          "max_spd": 239,
+          "roster_grade": 6
+        },
+        {
+          "index": 3,
+          "hero": "Steelskull",
+          "status": "filled_6star",
+          "min_spd": 180,
+          "max_spd": 189,
+          "roster_grade": 6
+        },
+        {
+          "index": 4,
+          "hero": "Rhazin Scarhide",
+          "status": "filled_6star",
+          "min_spd": 180,
+          "max_spd": 189,
+          "roster_grade": 6
+        },
+        {
+          "index": 5,
+          "hero": "Frozen Banshee",
+          "status": "filled_ascending",
+          "min_spd": 180,
+          "max_spd": 189,
+          "roster_grade": 5
+        }
+      ],
+      "affinity": "Void Only",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/two-43-champs-alternate/",
+      "sim_hash": "7f7b5f5f31323cc8f0988be373aa67a0656bbb8d",
+      "est_damage": 19000000,
+      "note": "ascend Frozen Banshee (5\u2605)",
+      "status": "lacking-gear",
+      "gear_gaps": [
+        {
+          "hero": "Skullcrusher",
+          "have": 102,
+          "want": 239,
+          "short": 137
+        },
+        {
+          "hero": "Sepulcher Sentinel",
+          "have": 126,
+          "want": 246,
+          "short": 120
+        },
+        {
+          "hero": "Steelskull",
+          "have": 109,
+          "want": 180,
+          "short": 71
+        },
+        {
+          "hero": "Rhazin Scarhide",
+          "have": 152,
+          "want": 180,
+          "short": 28
+        }
+      ]
+    },
+    {
+      "id": "two-43-champs-with-cleanser",
+      "name": "Two 4:3 Champs with Cleanser",
+      "mechanic": "Speed",
+      "key_capability": "3 Key UNM",
+      "key_count": 3,
+      "heroes": [
+        "Jareg",
+        "Skullcrusher",
+        "Steelskull",
+        "Frozen Banshee",
+        "Doompriest"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Jareg",
+          "status": "filled_ascending",
+          "min_spd": 240,
+          "max_spd": 240,
+          "roster_grade": 4
+        },
+        {
+          "index": 2,
+          "hero": "Skullcrusher",
+          "status": "filled_6star",
+          "min_spd": 239,
+          "max_spd": 239,
+          "roster_grade": 6
+        },
+        {
+          "index": 3,
+          "hero": "Steelskull",
+          "status": "filled_6star",
+          "min_spd": 186,
+          "max_spd": 186,
+          "roster_grade": 6
+        },
+        {
+          "index": 4,
+          "hero": "Frozen Banshee",
+          "status": "filled_ascending",
+          "min_spd": 180,
+          "max_spd": 180,
+          "roster_grade": 5
+        },
+        {
+          "index": 5,
+          "hero": "Doompriest",
+          "status": "filled_6star",
+          "min_spd": 179,
+          "max_spd": 179,
+          "roster_grade": 6
+        }
+      ],
+      "affinity": "Void Only",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/two-43-champs-with-cleanser/",
+      "sim_hash": "04fed3aecc759bf00c14507d0555f069a533141b",
+      "est_damage": 19000000,
+      "note": "ascend Jareg (4\u2605), Frozen Banshee (5\u2605)",
+      "status": "lacking-gear",
+      "gear_gaps": [
+        {
+          "hero": "Skullcrusher",
+          "have": 102,
+          "want": 239,
+          "short": 137
+        },
+        {
+          "hero": "Steelskull",
+          "have": 109,
+          "want": 186,
+          "short": 77
+        },
+        {
+          "hero": "Doompriest",
+          "have": 126,
+          "want": 179,
+          "short": 53
+        }
+      ]
+    }
+  ],
+  "need_heroes": [
+    {
+      "id": "batman",
+      "name": "Batman",
+      "mechanic": "Speed",
+      "key_capability": "1 Key UNM",
+      "key_count": 1,
+      "heroes": [
+        "Valkyrie",
+        "Seeker",
+        "Iron Brago",
+        "Frozen Banshee",
+        "Rhazin Scarhide"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Valkyrie",
+          "status": "missing",
+          "min_spd": 264,
+          "max_spd": 285,
+          "roster_grade": null
+        },
+        {
+          "index": 2,
+          "hero": "Seeker",
+          "status": "filled_6star",
+          "min_spd": 248,
+          "max_spd": 254,
+          "roster_grade": 6
+        },
+        {
+          "index": 3,
+          "hero": "Iron Brago",
+          "status": "filled_6star",
+          "min_spd": 245,
+          "max_spd": 247,
+          "roster_grade": 6
+        },
+        {
+          "index": 4,
+          "hero": "Frozen Banshee",
+          "status": "filled_ascending",
+          "min_spd": 245,
+          "max_spd": 247,
+          "roster_grade": 5
+        },
+        {
+          "index": 5,
+          "hero": "Rhazin Scarhide",
+          "status": "filled_6star",
+          "min_spd": 217,
+          "max_spd": 227,
+          "roster_grade": 6
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/batman/",
+      "sim_hash": "d6ddb1c511dcb86d17d1395a7ea65685b36a543c",
+      "est_damage": 42500000,
+      "note": "need Valkyrie \u00b7 ascend Frozen Banshee (5\u2605)",
+      "status": "need-heroes",
+      "missing": 1,
+      "missing_heroes": [
+        "Valkyrie"
+      ]
+    },
+    {
+      "id": "man-seeks-god",
+      "name": "Man Seeks God",
+      "mechanic": "Unkillable",
+      "key_capability": "1 Key UNM",
+      "key_count": 1,
+      "heroes": [
+        "Maneater",
+        "Seeker",
+        "Godseeker Aniri",
+        "Dracomorph",
+        "Fahrakin the Fat"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Maneater",
+          "status": "filled_6star",
+          "min_spd": 254,
+          "max_spd": 254,
+          "roster_grade": 6
+        },
+        {
+          "index": 2,
+          "hero": "Seeker",
+          "status": "filled_6star",
+          "min_spd": 217,
+          "max_spd": 218,
+          "roster_grade": 6
+        },
+        {
+          "index": 3,
+          "hero": "Godseeker Aniri",
+          "status": "filled_ascending",
+          "min_spd": 205,
+          "max_spd": 214,
+          "roster_grade": 5
+        },
+        {
+          "index": 4,
+          "hero": "Dracomorph",
+          "status": "missing",
+          "min_spd": 191,
+          "max_spd": 191,
+          "roster_grade": null
+        },
+        {
+          "index": 5,
+          "hero": "Fahrakin the Fat",
+          "status": "filled_6star",
+          "min_spd": 191,
+          "max_spd": 191,
+          "roster_grade": 6
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/man-seeks-god/",
+      "sim_hash": "15582482b4d7479547c5f0834643c88328fec894",
+      "est_damage": 42500000,
+      "note": "need Dracomorph \u00b7 ascend Godseeker Aniri (5\u2605)",
+      "status": "need-heroes",
+      "missing": 1,
+      "missing_heroes": [
+        "Dracomorph"
+      ]
+    },
+    {
+      "id": "myth-buster",
+      "name": "Myth Buster",
+      "mechanic": "Unkillable",
+      "key_capability": "1 Key UNM",
+      "key_count": 1,
+      "heroes": [
+        "Lydia",
+        "Demytha",
+        "Cardiel",
+        "Seeker",
+        "Warboy"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Lydia",
+          "status": "missing",
+          "min_spd": 320,
+          "max_spd": 329,
+          "roster_grade": null
+        },
+        {
+          "index": 2,
+          "hero": "Demytha",
+          "status": "filled_6star",
+          "min_spd": 314,
+          "max_spd": 321,
+          "roster_grade": 6
+        },
+        {
+          "index": 3,
+          "hero": "Cardiel",
+          "status": "filled_6star",
+          "min_spd": 285,
+          "max_spd": 299,
+          "roster_grade": 6
+        },
+        {
+          "index": 4,
+          "hero": "Seeker",
+          "status": "filled_6star",
+          "min_spd": 228,
+          "max_spd": 252,
+          "roster_grade": 6
+        },
+        {
+          "index": 5,
+          "hero": "Warboy",
+          "status": "filled_ascending",
+          "min_spd": 204,
+          "max_spd": 214,
+          "roster_grade": 1
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/myth-buster/",
+      "sim_hash": "ee5bb55af3243b9f73b33c2c413299a3ba86d27e",
+      "est_damage": 42500000,
+      "note": "need Lydia \u00b7 ascend Warboy (1\u2605)",
+      "status": "need-heroes",
+      "missing": 1,
+      "missing_heroes": [
+        "Lydia"
+      ]
+    },
+    {
+      "id": "myth-deacon",
+      "name": "Myth Deacon",
+      "mechanic": "Unkillable",
+      "key_capability": "1 Key UNM",
+      "key_count": 1,
+      "heroes": [
+        "Demytha",
+        "High Khatun",
+        "Deacon Armstrong",
+        "Underpriest Brogni",
+        "Warboy"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Demytha",
+          "status": "filled_6star",
+          "min_spd": 310,
+          "max_spd": 310,
+          "roster_grade": 6
+        },
+        {
+          "index": 2,
+          "hero": "High Khatun",
+          "status": "filled_ascending",
+          "min_spd": 309,
+          "max_spd": 310,
+          "roster_grade": 5
+        },
+        {
+          "index": 3,
+          "hero": "Deacon Armstrong",
+          "status": "filled_ascending",
+          "min_spd": 196,
+          "max_spd": 200,
+          "roster_grade": 5
+        },
+        {
+          "index": 4,
+          "hero": "Underpriest Brogni",
+          "status": "missing",
+          "min_spd": 202,
+          "max_spd": 203,
+          "roster_grade": null
+        },
+        {
+          "index": 5,
+          "hero": "Warboy",
+          "status": "filled_ascending",
+          "min_spd": 172,
+          "max_spd": 179,
+          "roster_grade": 1
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/myth-deacon/",
+      "sim_hash": "2e85cbf25febd4aba294f7527ccd78e72eff8523",
+      "est_damage": 42500000,
+      "note": "need Underpriest Brogni \u00b7 ascend High Khatun (5\u2605), Deacon Armstrong (5\u2605), Warboy (1\u2605)",
+      "status": "need-heroes",
+      "missing": 1,
+      "missing_heroes": [
+        "Underpriest Brogni"
+      ]
+    },
+    {
+      "id": "myth-fu",
+      "name": "Myth Fu",
+      "mechanic": "Unkillable",
+      "key_capability": "1 Key UNM",
+      "key_count": 1,
+      "heroes": [
+        "Demytha",
+        "Heiress",
+        "Fu-Shan",
+        "Seeker",
+        "Warboy"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Demytha",
+          "status": "filled_6star",
+          "min_spd": 290,
+          "max_spd": 291,
+          "roster_grade": 6
+        },
+        {
+          "index": 2,
+          "hero": "Heiress",
+          "status": "filled_6star",
+          "min_spd": 259,
+          "max_spd": 263,
+          "roster_grade": 6
+        },
+        {
+          "index": 3,
+          "hero": "Fu-Shan",
+          "status": "missing",
+          "min_spd": 185,
+          "max_spd": 198,
+          "roster_grade": null
+        },
+        {
+          "index": 4,
+          "hero": "Seeker",
+          "status": "filled_6star",
+          "min_spd": 180,
+          "max_spd": 184,
+          "roster_grade": 6
+        },
+        {
+          "index": 5,
+          "hero": "Warboy",
+          "status": "filled_ascending",
+          "min_spd": 168,
+          "max_spd": 169,
+          "roster_grade": 1
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/myth-fu/",
+      "sim_hash": "4e2a74291eb55911a8bc4e4281b1bccd002af0b2",
+      "est_damage": 42500000,
+      "note": "need Fu-Shan \u00b7 ascend Warboy (1\u2605)",
+      "status": "need-heroes",
+      "missing": 1,
+      "missing_heroes": [
+        "Fu-Shan"
+      ]
+    },
+    {
+      "id": "myth-seeker",
+      "name": "Myth Seeker",
+      "mechanic": "Unkillable",
+      "key_capability": "1 Key UNM",
+      "key_count": 1,
+      "heroes": [
+        "Demytha",
+        "High-Khatun",
+        "Seeker",
+        "Underpriest Brogni",
+        "Warboy"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Demytha",
+          "status": "filled_6star",
+          "min_spd": 292,
+          "max_spd": 322,
+          "roster_grade": 6
+        },
+        {
+          "index": 2,
+          "hero": "High-Khatun",
+          "status": "filled_ascending",
+          "min_spd": 275,
+          "max_spd": 282,
+          "roster_grade": 5
+        },
+        {
+          "index": 3,
+          "hero": "Seeker",
+          "status": "filled_6star",
+          "min_spd": 199,
+          "max_spd": 214,
+          "roster_grade": 6
+        },
+        {
+          "index": 4,
+          "hero": "Underpriest Brogni",
+          "status": "missing",
+          "min_spd": 188,
+          "max_spd": 189,
+          "roster_grade": null
+        },
+        {
+          "index": 5,
+          "hero": "Warboy",
+          "status": "filled_ascending",
+          "min_spd": 163,
+          "max_spd": 184,
+          "roster_grade": 1
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/myth-seeker/",
+      "sim_hash": "ba3a416c1f8b22bc28b23a6ec7a6833280699ca2",
+      "est_damage": 42500000,
+      "note": "need Underpriest Brogni \u00b7 ascend High-Khatun (5\u2605), Warboy (1\u2605)",
+      "status": "need-heroes",
+      "missing": 1,
+      "missing_heroes": [
+        "Underpriest Brogni"
+      ]
+    },
+    {
+      "id": "one-hellmut-of-a-team",
+      "name": "One Hellmut of a Team",
+      "mechanic": "Speed",
+      "key_capability": "1 Key UNM",
+      "key_count": 1,
+      "heroes": [
+        "Archmage Hellmut",
+        "Godseeker Aniri",
+        "Buff Extender / Speed Buffer",
+        "Rhazin Scarhide",
+        "Iron Brago"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Archmage Hellmut",
+          "status": "filled_ascending",
+          "min_spd": 268,
+          "max_spd": 270,
+          "roster_grade": 5
+        },
+        {
+          "index": 2,
+          "hero": "Godseeker Aniri",
+          "status": "filled_ascending",
+          "min_spd": 260,
+          "max_spd": 276,
+          "roster_grade": 5
+        },
+        {
+          "index": 3,
+          "hero": "Buff Extender / Speed Buffer",
+          "status": "missing",
+          "min_spd": 238,
+          "max_spd": 255,
+          "roster_grade": null
+        },
+        {
+          "index": 4,
+          "hero": "Rhazin Scarhide",
+          "status": "filled_6star",
+          "min_spd": 238,
+          "max_spd": 255,
+          "roster_grade": 6
+        },
+        {
+          "index": 5,
+          "hero": "Iron Brago",
+          "status": "filled_6star",
+          "min_spd": 217,
+          "max_spd": 219,
+          "roster_grade": 6
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/one-hellmut-of-a-team/",
+      "sim_hash": "42c04ad9d81bc08a0554ff2bba4bb33d395ae73d",
+      "est_damage": 42500000,
+      "note": "need Buff Extender / Speed Buffer \u00b7 ascend Archmage Hellmut (5\u2605), Godseeker Aniri (5\u2605)",
+      "status": "need-heroes",
+      "missing": 1,
+      "missing_heroes": [
+        "Buff Extender / Speed Buffer"
+      ]
+    },
+    {
+      "id": "basic",
+      "name": "Basic",
+      "mechanic": "Speed",
+      "key_capability": "2 Key UNM",
+      "key_count": 2,
+      "heroes": [
+        "Bulwark",
+        "Nazana",
+        "Frozen Banshee",
+        "Tayrel",
+        "Skullcrusher"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Bulwark",
+          "status": "missing",
+          "min_spd": 171,
+          "max_spd": 209,
+          "roster_grade": null
+        },
+        {
+          "index": 2,
+          "hero": "Nazana",
+          "status": "filled_ascending",
+          "min_spd": 171,
+          "max_spd": 209,
+          "roster_grade": 4
+        },
+        {
+          "index": 3,
+          "hero": "Frozen Banshee",
+          "status": "filled_ascending",
+          "min_spd": 171,
+          "max_spd": 209,
+          "roster_grade": 5
+        },
+        {
+          "index": 4,
+          "hero": "Tayrel",
+          "status": "filled_ascending",
+          "min_spd": 171,
+          "max_spd": 209,
+          "roster_grade": 4
+        },
+        {
+          "index": 5,
+          "hero": "Skullcrusher",
+          "status": "filled_6star",
+          "min_spd": 171,
+          "max_spd": 209,
+          "roster_grade": 6
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/basic/",
+      "sim_hash": "0042dac2ec21fa00d0c5ff70f490c50b799aecaa",
+      "est_damage": 25500000,
+      "note": "need Bulwark \u00b7 ascend Nazana (4\u2605), Frozen Banshee (5\u2605), Tayrel (4\u2605)",
+      "status": "need-heroes",
+      "missing": 1,
+      "missing_heroes": [
+        "Bulwark"
+      ]
+    },
+    {
+      "id": "budget-maneater-unkillable-ninja",
+      "name": "Budget Maneater Unkillable \u2013 Ninja",
+      "mechanic": "Unkillable",
+      "key_capability": "2 Key UNM",
+      "key_count": 2,
+      "heroes": [
+        "Maneater",
+        "Pain Keeper",
+        "Ninja",
+        "Rhazin Scarhide",
+        "Gravechill Killer"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Maneater",
+          "status": "filled_6star",
+          "min_spd": 240,
+          "max_spd": 241,
+          "roster_grade": 6
+        },
+        {
+          "index": 2,
+          "hero": "Pain Keeper",
+          "status": "filled_ascending",
+          "min_spd": 218,
+          "max_spd": 222,
+          "roster_grade": 5
+        },
+        {
+          "index": 3,
+          "hero": "Ninja",
+          "status": "filled_6star",
+          "min_spd": 161,
+          "max_spd": 165,
+          "roster_grade": 6
+        },
+        {
+          "index": 4,
+          "hero": "Rhazin Scarhide",
+          "status": "filled_6star",
+          "min_spd": 175,
+          "max_spd": 178,
+          "roster_grade": 6
+        },
+        {
+          "index": 5,
+          "hero": "Gravechill Killer",
+          "status": "missing",
+          "min_spd": 111,
+          "max_spd": 121,
+          "roster_grade": null
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/budget-maneater-unkillable-ninja/",
+      "sim_hash": "637aea3438628523b82fc7935f8db8a9d98f10bd",
+      "est_damage": 25500000,
+      "note": "need Gravechill Killer \u00b7 ascend Pain Keeper (5\u2605)",
+      "status": "need-heroes",
+      "missing": 1,
+      "missing_heroes": [
+        "Gravechill Killer"
+      ]
+    },
+    {
+      "id": "double-warcaster-v2",
+      "name": "Double Warcaster v2",
+      "mechanic": "Unkillable",
+      "key_capability": "2 Key UNM",
+      "key_count": 2,
+      "heroes": [
+        "Warcaster",
+        "Warcaster",
+        "Fayne",
+        "Tatura Rimehide",
+        "Fahrakin the Fat"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Warcaster",
+          "status": "filled_ascending",
+          "min_spd": 245,
+          "max_spd": 249,
+          "roster_grade": 4
+        },
+        {
+          "index": 2,
+          "hero": "Warcaster",
+          "status": "filled_ascending",
+          "min_spd": 218,
+          "max_spd": 218,
+          "roster_grade": 4
+        },
+        {
+          "index": 3,
+          "hero": "Fayne",
+          "status": "filled_6star",
+          "min_spd": 219,
+          "max_spd": 239,
+          "roster_grade": 6
+        },
+        {
+          "index": 4,
+          "hero": "Tatura Rimehide",
+          "status": "missing",
+          "min_spd": 218,
+          "max_spd": 218,
+          "roster_grade": null
+        },
+        {
+          "index": 5,
+          "hero": "Fahrakin the Fat",
+          "status": "filled_6star",
+          "min_spd": 190,
+          "max_spd": 190,
+          "roster_grade": 6
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/double-warcaster-v2/",
+      "sim_hash": "cf28362d06c7ff110f9751e801ec344983edb6e1",
+      "est_damage": 25500000,
+      "note": "need Tatura Rimehide \u00b7 ascend Warcaster (4\u2605), Warcaster (4\u2605)",
+      "status": "need-heroes",
+      "missing": 1,
+      "missing_heroes": [
+        "Tatura Rimehide"
+      ]
+    },
+    {
+      "id": "easy-double-maneater",
+      "name": "Easy Double Maneater",
+      "mechanic": "Unkillable",
+      "key_capability": "2 Key UNM",
+      "key_count": 2,
+      "heroes": [
+        "Maneater",
+        "Maneater",
+        "Rhazin Scarhide",
+        "Frozen Banshee",
+        "Bulwark"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Maneater",
+          "status": "filled_6star",
+          "min_spd": 218,
+          "max_spd": 221,
+          "roster_grade": 6
+        },
+        {
+          "index": 2,
+          "hero": "Maneater",
+          "status": "filled_6star",
+          "min_spd": 213,
+          "max_spd": 215,
+          "roster_grade": 6
+        },
+        {
+          "index": 3,
+          "hero": "Rhazin Scarhide",
+          "status": "filled_6star",
+          "min_spd": 173,
+          "max_spd": 178,
+          "roster_grade": 6
+        },
+        {
+          "index": 4,
+          "hero": "Frozen Banshee",
+          "status": "filled_ascending",
+          "min_spd": 173,
+          "max_spd": 178,
+          "roster_grade": 5
+        },
+        {
+          "index": 5,
+          "hero": "Bulwark",
+          "status": "missing",
+          "min_spd": 168,
+          "max_spd": 168,
+          "roster_grade": null
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/easy-double-maneater/",
+      "sim_hash": "e45fe7b976359f36d229b89f33cca06fc8f11473",
+      "est_damage": 25500000,
+      "note": "need Bulwark \u00b7 ascend Frozen Banshee (5\u2605)",
+      "status": "need-heroes",
+      "missing": 1,
+      "missing_heroes": [
+        "Bulwark"
+      ]
+    },
+    {
+      "id": "fast-hellcat-unkillable",
+      "name": "Fast Hellcat Unkillable",
+      "mechanic": "Unkillable",
+      "key_capability": "2 Key UNM",
+      "key_count": 2,
+      "heroes": [
+        "4:3 DPS",
+        "Helicath",
+        "Debuff Blocker",
+        "DPS",
+        "Block Debuffer"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "4:3 DPS",
+          "status": "generic",
+          "min_spd": 243,
+          "max_spd": 245,
+          "roster_grade": null
+        },
+        {
+          "index": 2,
+          "hero": "Helicath",
+          "status": "missing",
+          "min_spd": 241,
+          "max_spd": 241,
+          "roster_grade": null
+        },
+        {
+          "index": 3,
+          "hero": "Debuff Blocker",
+          "status": "generic",
+          "min_spd": 195,
+          "max_spd": 196,
+          "roster_grade": null
+        },
+        {
+          "index": 4,
+          "hero": "DPS",
+          "status": "generic",
+          "min_spd": 193,
+          "max_spd": 193,
+          "roster_grade": null
+        },
+        {
+          "index": 5,
+          "hero": "Block Debuffer",
+          "status": "generic",
+          "min_spd": 191,
+          "max_spd": 191,
+          "roster_grade": null
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/fast-hellcat-unkillable/",
+      "sim_hash": "9b98f20934c00a7299f1c7b85dd5058104454718",
+      "est_damage": 25500000,
+      "note": "need Helicath",
+      "status": "need-heroes",
+      "missing": 1,
+      "missing_heroes": [
+        "Helicath"
+      ]
+    },
+    {
+      "id": "mummyman",
+      "name": "MummyMan",
+      "mechanic": "Unkillable",
+      "key_capability": "2 Key UNM",
+      "key_count": 2,
+      "heroes": [
+        "Maneater",
+        "Khafru",
+        "Rathalos",
+        "Fayne",
+        "High Khatun"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Maneater",
+          "status": "filled_6star",
+          "min_spd": 302,
+          "max_spd": 309,
+          "roster_grade": 6
+        },
+        {
+          "index": 2,
+          "hero": "Khafru",
+          "status": "missing",
+          "min_spd": 274,
+          "max_spd": 284,
+          "roster_grade": null
+        },
+        {
+          "index": 3,
+          "hero": "Rathalos",
+          "status": "filled_6star",
+          "min_spd": 191,
+          "max_spd": 194,
+          "roster_grade": 6
+        },
+        {
+          "index": 4,
+          "hero": "Fayne",
+          "status": "filled_6star",
+          "min_spd": 179,
+          "max_spd": 182,
+          "roster_grade": 6
+        },
+        {
+          "index": 5,
+          "hero": "High Khatun",
+          "status": "filled_ascending",
+          "min_spd": 126,
+          "max_spd": 129,
+          "roster_grade": 5
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/mummyman/",
+      "sim_hash": "a866933e937b43252a7b09748341faf05d608509",
+      "est_damage": 25500000,
+      "note": "need Khafru \u00b7 ascend High Khatun (5\u2605)",
+      "status": "need-heroes",
+      "missing": 1,
+      "missing_heroes": [
+        "Khafru"
+      ]
+    },
+    {
+      "id": "myth-salad",
+      "name": "Myth Salad",
+      "mechanic": "Unkillable",
+      "key_capability": "2 Key UNM",
+      "key_count": 2,
+      "heroes": [
+        "Demytha",
+        "Warboy",
+        "Seeker",
+        "Ma'Shalled",
+        "Tatura Rimehide"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Demytha",
+          "status": "filled_6star",
+          "min_spd": 292,
+          "max_spd": 310,
+          "roster_grade": 6
+        },
+        {
+          "index": 2,
+          "hero": "Warboy",
+          "status": "filled_ascending",
+          "min_spd": 220,
+          "max_spd": 224,
+          "roster_grade": 1
+        },
+        {
+          "index": 3,
+          "hero": "Seeker",
+          "status": "filled_6star",
+          "min_spd": 202,
+          "max_spd": 219,
+          "roster_grade": 6
+        },
+        {
+          "index": 4,
+          "hero": "Ma'Shalled",
+          "status": "filled_6star",
+          "min_spd": 190,
+          "max_spd": 194,
+          "roster_grade": 6
+        },
+        {
+          "index": 5,
+          "hero": "Tatura Rimehide",
+          "status": "missing",
+          "min_spd": 169,
+          "max_spd": 183,
+          "roster_grade": null
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/myth-salad/",
+      "sim_hash": "110d12db5f3a1e2da209b0ae032202e27797d310",
+      "est_damage": 25500000,
+      "note": "need Tatura Rimehide \u00b7 ascend Warboy (1\u2605)",
+      "status": "need-heroes",
+      "missing": 1,
+      "missing_heroes": [
+        "Tatura Rimehide"
+      ]
+    },
+    {
+      "id": "myth-tower",
+      "name": "Myth Tower",
+      "mechanic": "Unkillable",
+      "key_capability": "2 Key UNM",
+      "key_count": 2,
+      "heroes": [
+        "Demytha",
+        "Roshcard the Tower",
+        "Doompriest",
+        "Warboy",
+        "Warboy"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Demytha",
+          "status": "filled_6star",
+          "min_spd": 174,
+          "max_spd": 174,
+          "roster_grade": 6
+        },
+        {
+          "index": 2,
+          "hero": "Roshcard the Tower",
+          "status": "missing",
+          "min_spd": 248,
+          "max_spd": 248,
+          "roster_grade": null
+        },
+        {
+          "index": 3,
+          "hero": "Doompriest",
+          "status": "filled_6star",
+          "min_spd": 178,
+          "max_spd": 178,
+          "roster_grade": 6
+        },
+        {
+          "index": 4,
+          "hero": "Warboy",
+          "status": "filled_ascending",
+          "min_spd": 177,
+          "max_spd": 177,
+          "roster_grade": 1
+        },
+        {
+          "index": 5,
+          "hero": "Warboy",
+          "status": "filled_ascending",
+          "min_spd": 186,
+          "max_spd": 186,
+          "roster_grade": 1
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/myth-tower/",
+      "sim_hash": "077469e5a0ca95ce9d5e96b0918f2cac6d361f83",
+      "est_damage": 25500000,
+      "note": "need Roshcard the Tower \u00b7 ascend Warboy (1\u2605), Warboy (1\u2605)",
+      "status": "need-heroes",
+      "missing": 1,
+      "missing_heroes": [
+        "Roshcard the Tower"
+      ]
+    },
+    {
+      "id": "ninja-hellcat-unkillable",
+      "name": "Ninja Hellcat Unkillable",
+      "mechanic": "Unkillable",
+      "key_capability": "2 Key UNM",
+      "key_count": 2,
+      "heroes": [
+        "Helicath",
+        "Doompriest",
+        "Frozen Banshee",
+        "Ninja",
+        "Rhazin Scarhide"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Helicath",
+          "status": "missing",
+          "min_spd": 254,
+          "max_spd": 257,
+          "roster_grade": null
+        },
+        {
+          "index": 2,
+          "hero": "Doompriest",
+          "status": "filled_6star",
+          "min_spd": 186,
+          "max_spd": 188,
+          "roster_grade": 6
+        },
+        {
+          "index": 3,
+          "hero": "Frozen Banshee",
+          "status": "filled_ascending",
+          "min_spd": 175,
+          "max_spd": 177,
+          "roster_grade": 5
+        },
+        {
+          "index": 4,
+          "hero": "Ninja",
+          "status": "filled_6star",
+          "min_spd": 173,
+          "max_spd": 174,
+          "roster_grade": 6
+        },
+        {
+          "index": 5,
+          "hero": "Rhazin Scarhide",
+          "status": "filled_6star",
+          "min_spd": 172,
+          "max_spd": 173,
+          "roster_grade": 6
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/ninja-hellcat-unkillable/",
+      "sim_hash": "21390f8806705da0c3108351b287e2433d7a8b72",
+      "est_damage": 25500000,
+      "note": "need Helicath \u00b7 ascend Frozen Banshee (5\u2605)",
+      "status": "need-heroes",
+      "missing": 1,
+      "missing_heroes": [
+        "Helicath"
+      ]
+    },
+    {
+      "id": "old-budget-maneater-unkillable",
+      "name": "Old Budget Maneater Unkillable",
+      "mechanic": "Unkillable",
+      "key_capability": "2 Key UNM",
+      "key_count": 2,
+      "heroes": [
+        "Maneater",
+        "Pain Keeper",
+        "Rhazin Scarhide",
+        "Frozen Banshee",
+        "Bulwark"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Maneater",
+          "status": "filled_6star",
+          "min_spd": 253,
+          "max_spd": 255,
+          "roster_grade": 6
+        },
+        {
+          "index": 2,
+          "hero": "Pain Keeper",
+          "status": "filled_ascending",
+          "min_spd": 240,
+          "max_spd": 240,
+          "roster_grade": 5
+        },
+        {
+          "index": 3,
+          "hero": "Rhazin Scarhide",
+          "status": "filled_6star",
+          "min_spd": 181,
+          "max_spd": 189,
+          "roster_grade": 6
+        },
+        {
+          "index": 4,
+          "hero": "Frozen Banshee",
+          "status": "filled_ascending",
+          "min_spd": 181,
+          "max_spd": 188,
+          "roster_grade": 5
+        },
+        {
+          "index": 5,
+          "hero": "Bulwark",
+          "status": "missing",
+          "min_spd": 122,
+          "max_spd": 126,
+          "roster_grade": null
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/old-budget-maneater-unkillable/",
+      "sim_hash": "401f571c8e5ac270013f08f5bb922b291a143fc9",
+      "est_damage": 25500000,
+      "note": "need Bulwark \u00b7 ascend Pain Keeper (5\u2605), Frozen Banshee (5\u2605)",
+      "status": "need-heroes",
+      "missing": 1,
+      "missing_heroes": [
+        "Bulwark"
+      ]
+    },
+    {
+      "id": "pain-eater",
+      "name": "Pain-Eater",
+      "mechanic": "Unkillable",
+      "key_capability": "2 Key UNM",
+      "key_count": 2,
+      "heroes": [
+        "Warcaster",
+        "Maneater",
+        "Pain Keeper",
+        "DPS",
+        "Martyr"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Warcaster",
+          "status": "filled_ascending",
+          "min_spd": 245,
+          "max_spd": 247,
+          "roster_grade": 4
+        },
+        {
+          "index": 2,
+          "hero": "Maneater",
+          "status": "filled_6star",
+          "min_spd": 239,
+          "max_spd": 245,
+          "roster_grade": 6
+        },
+        {
+          "index": 3,
+          "hero": "Pain Keeper",
+          "status": "filled_ascending",
+          "min_spd": 215,
+          "max_spd": 215,
+          "roster_grade": 5
+        },
+        {
+          "index": 4,
+          "hero": "DPS",
+          "status": "generic",
+          "min_spd": 171,
+          "max_spd": 178,
+          "roster_grade": null
+        },
+        {
+          "index": 5,
+          "hero": "Martyr",
+          "status": "missing",
+          "min_spd": 171,
+          "max_spd": 178,
+          "roster_grade": null
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/pain-eater/",
+      "sim_hash": "50dcdb1d3f9d4ea6fe89499f42929ecd31ce6793",
+      "est_damage": 25500000,
+      "note": "need Martyr \u00b7 ascend Warcaster (4\u2605), Pain Keeper (5\u2605)",
+      "status": "need-heroes",
+      "missing": 1,
+      "missing_heroes": [
+        "Martyr"
+      ]
+    },
+    {
+      "id": "santa-unkillable-43-stun-target",
+      "name": "Santa Unkillable - 4:3 Stun Target",
+      "mechanic": "Unkillable",
+      "key_capability": "2 Key UNM",
+      "key_count": 2,
+      "heroes": [
+        "Pain Keeper",
+        "Stun Tank (Taurus) ",
+        "Rhazin Scarhide",
+        "Frozen Banshee",
+        "Sir Nicholas"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Pain Keeper",
+          "status": "filled_ascending",
+          "min_spd": 239,
+          "max_spd": 241,
+          "roster_grade": 5
+        },
+        {
+          "index": 2,
+          "hero": "Stun Tank (Taurus) ",
+          "status": "filled_ascending",
+          "min_spd": 228,
+          "max_spd": 238,
+          "roster_grade": 5
+        },
+        {
+          "index": 3,
+          "hero": "Rhazin Scarhide",
+          "status": "filled_6star",
+          "min_spd": 188,
+          "max_spd": 188,
+          "roster_grade": 6
+        },
+        {
+          "index": 4,
+          "hero": "Frozen Banshee",
+          "status": "filled_ascending",
+          "min_spd": 173,
+          "max_spd": 178,
+          "roster_grade": 5
+        },
+        {
+          "index": 5,
+          "hero": "Sir Nicholas",
+          "status": "missing",
+          "min_spd": 173,
+          "max_spd": 176,
+          "roster_grade": null
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/santa-unkillable-43-stun-target/",
+      "sim_hash": "c116b53a82355abfc42d378b9e13de14a7862a89",
+      "est_damage": 25500000,
+      "note": "need Sir Nicholas \u00b7 ascend Pain Keeper (5\u2605), Stun Tank (Taurus)  (5\u2605), Frozen Banshee (5\u2605)",
+      "status": "need-heroes",
+      "missing": 1,
+      "missing_heroes": [
+        "Sir Nicholas"
+      ]
+    },
+    {
+      "id": "super-charged-hellcat",
+      "name": "Super Charged Hellcat",
+      "mechanic": "Unkillable",
+      "key_capability": "2 Key UNM",
+      "key_count": 2,
+      "heroes": [
+        "Helicath",
+        "Fayne",
+        "Sepulcher Sentinel",
+        "Dark Kael",
+        "Venomage"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Helicath",
+          "status": "missing",
+          "min_spd": 240,
+          "max_spd": 240,
+          "roster_grade": null
+        },
+        {
+          "index": 2,
+          "hero": "Fayne",
+          "status": "filled_6star",
+          "min_spd": 221,
+          "max_spd": 221,
+          "roster_grade": 6
+        },
+        {
+          "index": 3,
+          "hero": "Sepulcher Sentinel",
+          "status": "filled_6star",
+          "min_spd": 220,
+          "max_spd": 220,
+          "roster_grade": 6
+        },
+        {
+          "index": 4,
+          "hero": "Dark Kael",
+          "status": "filled_ascending",
+          "min_spd": 190,
+          "max_spd": 192,
+          "roster_grade": 3
+        },
+        {
+          "index": 5,
+          "hero": "Venomage",
+          "status": "filled_6star",
+          "min_spd": 171,
+          "max_spd": 171,
+          "roster_grade": 6
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/super-charged-hellcat/",
+      "sim_hash": "ab1f7f2553d1fcbefc7865e10afac0702a91724e",
+      "est_damage": 25500000,
+      "note": "need Helicath \u00b7 ascend Dark Kael (3\u2605)",
+      "status": "need-heroes",
+      "missing": 1,
+      "missing_heroes": [
+        "Helicath"
+      ]
+    },
+    {
+      "id": "turvold-double-maneater-unkillable",
+      "name": "Turvold Double Maneater Unkillable",
+      "mechanic": "Unkillable",
+      "key_capability": "2 Key UNM",
+      "key_count": 2,
+      "heroes": [
+        "Maneater 1",
+        "Maneater 2",
+        "Rhazin Scarhide",
+        "Frozen Banshee",
+        "Turvold"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Maneater 1",
+          "status": "filled_6star",
+          "min_spd": 214,
+          "max_spd": 218,
+          "roster_grade": 6
+        },
+        {
+          "index": 2,
+          "hero": "Maneater 2",
+          "status": "filled_6star",
+          "min_spd": 214,
+          "max_spd": 218,
+          "roster_grade": 6
+        },
+        {
+          "index": 3,
+          "hero": "Rhazin Scarhide",
+          "status": "filled_6star",
+          "min_spd": 171,
+          "max_spd": 178,
+          "roster_grade": 6
+        },
+        {
+          "index": 4,
+          "hero": "Frozen Banshee",
+          "status": "filled_ascending",
+          "min_spd": 171,
+          "max_spd": 178,
+          "roster_grade": 5
+        },
+        {
+          "index": 5,
+          "hero": "Turvold",
+          "status": "missing",
+          "min_spd": 152,
+          "max_spd": 158,
+          "roster_grade": null
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/turvold-double-maneater-unkillable/",
+      "sim_hash": "c7063bc84441ee3cf72cabe35b8733fd25b49c78",
+      "est_damage": 25500000,
+      "note": "need Turvold \u00b7 ascend Frozen Banshee (5\u2605)",
+      "status": "need-heroes",
+      "missing": 1,
+      "missing_heroes": [
+        "Turvold"
+      ]
+    },
+    {
+      "id": "ultimate-budget-unkillable",
+      "name": "Ultimate Budget Unkillable",
+      "mechanic": "Speed",
+      "key_capability": "2 Key UNM",
+      "key_count": 2,
+      "heroes": [
+        "Maneater",
+        "Pain Keeper",
+        "Fayne",
+        "Vizier Ovelis",
+        "Frozen Banshee"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Maneater",
+          "status": "filled_6star",
+          "min_spd": 256,
+          "max_spd": 257,
+          "roster_grade": 6
+        },
+        {
+          "index": 2,
+          "hero": "Pain Keeper",
+          "status": "filled_ascending",
+          "min_spd": 222,
+          "max_spd": 226,
+          "roster_grade": 5
+        },
+        {
+          "index": 3,
+          "hero": "Fayne",
+          "status": "filled_6star",
+          "min_spd": 187,
+          "max_spd": 189,
+          "roster_grade": 6
+        },
+        {
+          "index": 4,
+          "hero": "Vizier Ovelis",
+          "status": "missing",
+          "min_spd": 179,
+          "max_spd": 185,
+          "roster_grade": null
+        },
+        {
+          "index": 5,
+          "hero": "Frozen Banshee",
+          "status": "filled_ascending",
+          "min_spd": 129,
+          "max_spd": 129,
+          "roster_grade": 5
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/ultimate-budget-unkillable/",
+      "sim_hash": "657c590d00dafc8cb52d0aceeefbdbdd8f2d490e",
+      "est_damage": 25500000,
+      "note": "need Vizier Ovelis \u00b7 ascend Pain Keeper (5\u2605), Frozen Banshee (5\u2605)",
+      "status": "need-heroes",
+      "missing": 1,
+      "missing_heroes": [
+        "Vizier Ovelis"
+      ]
+    },
+    {
+      "id": "un-kreelable",
+      "name": "Un-Kreelable",
+      "mechanic": "Unkillable",
+      "key_capability": "2 Key UNM",
+      "key_count": 2,
+      "heroes": [
+        "Maneater",
+        "Fayne",
+        "Pain Keeper",
+        "Kreela",
+        "Frozen Banshee"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Maneater",
+          "status": "filled_6star",
+          "min_spd": 248,
+          "max_spd": 250,
+          "roster_grade": 6
+        },
+        {
+          "index": 2,
+          "hero": "Fayne",
+          "status": "filled_6star",
+          "min_spd": 224,
+          "max_spd": 232,
+          "roster_grade": 6
+        },
+        {
+          "index": 3,
+          "hero": "Pain Keeper",
+          "status": "filled_ascending",
+          "min_spd": 223,
+          "max_spd": 231,
+          "roster_grade": 5
+        },
+        {
+          "index": 4,
+          "hero": "Kreela",
+          "status": "missing",
+          "min_spd": 172,
+          "max_spd": 172,
+          "roster_grade": null
+        },
+        {
+          "index": 5,
+          "hero": "Frozen Banshee",
+          "status": "filled_ascending",
+          "min_spd": 120,
+          "max_spd": 123,
+          "roster_grade": 5
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/un-kreelable/",
+      "sim_hash": "595b05942cf8f23a4b26e3cf4f63430d74be73b6",
+      "est_damage": 25500000,
+      "note": "need Kreela \u00b7 ascend Pain Keeper (5\u2605), Frozen Banshee (5\u2605)",
+      "status": "need-heroes",
+      "missing": 1,
+      "missing_heroes": [
+        "Kreela"
+      ]
+    },
+    {
+      "id": "white-myth-caster",
+      "name": "White-Myth-Caster",
+      "mechanic": "Unkillable",
+      "key_capability": "2 Key UNM",
+      "key_count": 2,
+      "heroes": [
+        "Demytha",
+        "White Dryad Nia",
+        "Warcaster",
+        "Ninja",
+        "Martyr"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Demytha",
+          "status": "filled_6star",
+          "min_spd": 254,
+          "max_spd": 255,
+          "roster_grade": 6
+        },
+        {
+          "index": 2,
+          "hero": "White Dryad Nia",
+          "status": "filled_6star",
+          "min_spd": 183,
+          "max_spd": 188,
+          "roster_grade": 6
+        },
+        {
+          "index": 3,
+          "hero": "Warcaster",
+          "status": "filled_ascending",
+          "min_spd": 256,
+          "max_spd": 259,
+          "roster_grade": 4
+        },
+        {
+          "index": 4,
+          "hero": "Ninja",
+          "status": "filled_6star",
+          "min_spd": 205,
+          "max_spd": 211,
+          "roster_grade": 6
+        },
+        {
+          "index": 5,
+          "hero": "Martyr",
+          "status": "missing",
+          "min_spd": 193,
+          "max_spd": 205,
+          "roster_grade": null
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/white-myth-caster/",
+      "sim_hash": "23934ade338ccc2546c0341e868c0a575d4d998f",
+      "est_damage": 25500000,
+      "note": "need Martyr \u00b7 ascend Warcaster (4\u2605)",
+      "status": "need-heroes",
+      "missing": 1,
+      "missing_heroes": [
+        "Martyr"
+      ]
+    },
+    {
+      "id": "32-team-with-speed-booster",
+      "name": "32 Team with Speed Booster",
+      "mechanic": "Speed",
+      "key_capability": "3 Key UNM",
+      "key_count": 3,
+      "heroes": [
+        "Tayrel",
+        "Frozen Banshee",
+        "Kreela Witch-Arm",
+        "Iron Brago",
+        "Apothecary"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Tayrel",
+          "status": "filled_ascending",
+          "min_spd": 250,
+          "max_spd": 253,
+          "roster_grade": 4
+        },
+        {
+          "index": 2,
+          "hero": "Frozen Banshee",
+          "status": "filled_ascending",
+          "min_spd": 238,
+          "max_spd": 238,
+          "roster_grade": 5
+        },
+        {
+          "index": 3,
+          "hero": "Kreela Witch-Arm",
+          "status": "missing",
+          "min_spd": 224,
+          "max_spd": 237,
+          "roster_grade": null
+        },
+        {
+          "index": 4,
+          "hero": "Iron Brago",
+          "status": "filled_6star",
+          "min_spd": 215,
+          "max_spd": 217,
+          "roster_grade": 6
+        },
+        {
+          "index": 5,
+          "hero": "Apothecary",
+          "status": "filled_6star",
+          "min_spd": 169,
+          "max_spd": 174,
+          "roster_grade": 6
+        }
+      ],
+      "affinity": "Void Only",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/32-team-with-speed-booster/",
+      "sim_hash": "2b4b678fbc28651f0d562d2118d65a0901a9f08e",
+      "est_damage": 16150000,
+      "note": "need Kreela Witch-Arm \u00b7 ascend Tayrel (4\u2605), Frozen Banshee (5\u2605)",
+      "status": "need-heroes",
+      "missing": 1,
+      "missing_heroes": [
+        "Kreela Witch-Arm"
+      ]
+    },
+    {
+      "id": "krisk-43-slow-tune",
+      "name": "Krisk 4:3 Slow Tune",
+      "mechanic": "Speed",
+      "key_capability": "3 Key UNM",
+      "key_count": 3,
+      "heroes": [
+        "Sepulcher Sentinel",
+        "Krisk the Ageless",
+        "Skullcrusher",
+        "Frozen Banshee",
+        "Tayrel"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Sepulcher Sentinel",
+          "status": "filled_6star",
+          "min_spd": 206,
+          "max_spd": 218,
+          "roster_grade": 6
+        },
+        {
+          "index": 2,
+          "hero": "Krisk the Ageless",
+          "status": "missing",
+          "min_spd": 191,
+          "max_spd": 195,
+          "roster_grade": null
+        },
+        {
+          "index": 3,
+          "hero": "Skullcrusher",
+          "status": "filled_6star",
+          "min_spd": 137,
+          "max_spd": 160,
+          "roster_grade": 6
+        },
+        {
+          "index": 4,
+          "hero": "Frozen Banshee",
+          "status": "filled_ascending",
+          "min_spd": 137,
+          "max_spd": 160,
+          "roster_grade": 5
+        },
+        {
+          "index": 5,
+          "hero": "Tayrel",
+          "status": "filled_ascending",
+          "min_spd": 137,
+          "max_spd": 160,
+          "roster_grade": 4
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/krisk-43-slow-tune/",
+      "sim_hash": "8e4b183b6a4991f09456096eb2268b9d36c068be",
+      "est_damage": 17000000,
+      "note": "need Krisk the Ageless \u00b7 ascend Frozen Banshee (5\u2605), Tayrel (4\u2605)",
+      "status": "need-heroes",
+      "missing": 1,
+      "missing_heroes": [
+        "Krisk the Ageless"
+      ]
+    },
+    {
+      "id": "single-43-champ",
+      "name": "Single 4:3 Champion",
+      "mechanic": "Speed",
+      "key_capability": "3 Key UNM",
+      "key_count": 3,
+      "heroes": [
+        "Kreela Witch-Arm",
+        "Skullcrusher",
+        "Iron Brago",
+        "Frozen Banshee",
+        "Rhazin Scarhide"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Kreela Witch-Arm",
+          "status": "missing",
+          "min_spd": 230,
+          "max_spd": 245,
+          "roster_grade": null
+        },
+        {
+          "index": 2,
+          "hero": "Skullcrusher",
+          "status": "filled_6star",
+          "min_spd": 172,
+          "max_spd": 177,
+          "roster_grade": 6
+        },
+        {
+          "index": 3,
+          "hero": "Iron Brago",
+          "status": "filled_6star",
+          "min_spd": 172,
+          "max_spd": 177,
+          "roster_grade": 6
+        },
+        {
+          "index": 4,
+          "hero": "Frozen Banshee",
+          "status": "filled_ascending",
+          "min_spd": 172,
+          "max_spd": 177,
+          "roster_grade": 5
+        },
+        {
+          "index": 5,
+          "hero": "Rhazin Scarhide",
+          "status": "filled_6star",
+          "min_spd": 172,
+          "max_spd": 177,
+          "roster_grade": 6
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/single-43-champ/",
+      "sim_hash": "e4143c2c32d87ede848b04b7fe74fe6e457bbf03",
+      "est_damage": 17000000,
+      "note": "need Kreela Witch-Arm \u00b7 ascend Frozen Banshee (5\u2605)",
+      "status": "need-heroes",
+      "missing": 1,
+      "missing_heroes": [
+        "Kreela Witch-Arm"
+      ]
+    },
+    {
+      "id": "vergis-magic",
+      "name": "Vergis Magic",
+      "mechanic": "Speed",
+      "key_capability": "3 Key UNM",
+      "key_count": 3,
+      "heroes": [
+        "Sepulcher Sentinel",
+        "Frozen Banshee",
+        "Rhazin Scarhide",
+        "Vergis",
+        "Skullcrusher"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Sepulcher Sentinel",
+          "status": "filled_6star",
+          "min_spd": 205,
+          "max_spd": 210,
+          "roster_grade": 6
+        },
+        {
+          "index": 2,
+          "hero": "Frozen Banshee",
+          "status": "filled_ascending",
+          "min_spd": 191,
+          "max_spd": 194,
+          "roster_grade": 5
+        },
+        {
+          "index": 3,
+          "hero": "Rhazin Scarhide",
+          "status": "filled_6star",
+          "min_spd": 179,
+          "max_spd": 182,
+          "roster_grade": 6
+        },
+        {
+          "index": 4,
+          "hero": "Vergis",
+          "status": "missing",
+          "min_spd": 172,
+          "max_spd": 177,
+          "roster_grade": null
+        },
+        {
+          "index": 5,
+          "hero": "Skullcrusher",
+          "status": "filled_6star",
+          "min_spd": 172,
+          "max_spd": 175,
+          "roster_grade": 6
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/vergis-magic/",
+      "sim_hash": "fc569ad20a199fe90123119a49ab2a7ce10989b1",
+      "est_damage": 17000000,
+      "note": "need Vergis \u00b7 ascend Frozen Banshee (5\u2605)",
+      "status": "need-heroes",
+      "missing": 1,
+      "missing_heroes": [
+        "Vergis"
+      ]
+    },
+    {
+      "id": "fanatic-white-whale",
+      "name": "Fanatic White Whale",
+      "mechanic": "Speed",
+      "key_capability": "4 Key UNM",
+      "key_count": 4,
+      "heroes": [
+        "High Khatun",
+        "Apothecary",
+        "Coffin Smasher",
+        "Frozen Banshee",
+        "Fanatic"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "High Khatun",
+          "status": "filled_ascending",
+          "min_spd": 241,
+          "max_spd": 260,
+          "roster_grade": 5
+        },
+        {
+          "index": 2,
+          "hero": "Apothecary",
+          "status": "filled_6star",
+          "min_spd": 226,
+          "max_spd": 229,
+          "roster_grade": 6
+        },
+        {
+          "index": 3,
+          "hero": "Coffin Smasher",
+          "status": "filled_ascending",
+          "min_spd": 220,
+          "max_spd": 228,
+          "roster_grade": 3
+        },
+        {
+          "index": 4,
+          "hero": "Frozen Banshee",
+          "status": "filled_ascending",
+          "min_spd": 218,
+          "max_spd": 220,
+          "roster_grade": 5
+        },
+        {
+          "index": 5,
+          "hero": "Fanatic",
+          "status": "missing",
+          "min_spd": 134,
+          "max_spd": 148,
+          "roster_grade": null
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/fanatic-white-whale/",
+      "sim_hash": "19e930cdfeb448aa8745eab71dfa777819ba7fb2",
+      "est_damage": 10200000,
+      "note": "need Fanatic \u00b7 ascend High Khatun (5\u2605), Coffin Smasher (3\u2605), Frozen Banshee (5\u2605)",
+      "status": "need-heroes",
+      "missing": 1,
+      "missing_heroes": [
+        "Fanatic"
+      ]
+    },
+    {
+      "id": "fast-double-maneater",
+      "name": "Fast Double Maneater",
+      "mechanic": "Speed",
+      "key_capability": "4 Key UNM",
+      "key_count": 4,
+      "heroes": [
+        "Maneater 1",
+        "Maneater 2",
+        "Rhazin Scarhide",
+        "Frozen Banshee",
+        "Bulwark"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Maneater 1",
+          "status": "filled_6star",
+          "min_spd": 247,
+          "max_spd": 253,
+          "roster_grade": 6
+        },
+        {
+          "index": 2,
+          "hero": "Maneater 2",
+          "status": "filled_6star",
+          "min_spd": 242,
+          "max_spd": 246,
+          "roster_grade": 6
+        },
+        {
+          "index": 3,
+          "hero": "Rhazin Scarhide",
+          "status": "filled_6star",
+          "min_spd": 211,
+          "max_spd": 215,
+          "roster_grade": 6
+        },
+        {
+          "index": 4,
+          "hero": "Frozen Banshee",
+          "status": "filled_ascending",
+          "min_spd": 205,
+          "max_spd": 210,
+          "roster_grade": 5
+        },
+        {
+          "index": 5,
+          "hero": "Bulwark",
+          "status": "missing",
+          "min_spd": 205,
+          "max_spd": 210,
+          "roster_grade": null
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/fast-double-maneater/",
+      "sim_hash": "a94676f8b2f53346fc64b87b9f0a74ca4828f4f8",
+      "est_damage": 10200000,
+      "note": "need Bulwark \u00b7 ascend Frozen Banshee (5\u2605)",
+      "status": "need-heroes",
+      "missing": 1,
+      "missing_heroes": [
+        "Bulwark"
+      ]
+    },
+    {
+      "id": "white-whale-nm-only",
+      "name": "White Whale - NM Only",
+      "mechanic": "Speed",
+      "key_capability": "4 Key UNM",
+      "key_count": 4,
+      "heroes": [
+        "High Khatun",
+        "Apothecary",
+        "Frozen Banshee",
+        "Marked",
+        "Coffin Smasher"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "High Khatun",
+          "status": "filled_ascending",
+          "min_spd": 240,
+          "max_spd": 260,
+          "roster_grade": 5
+        },
+        {
+          "index": 2,
+          "hero": "Apothecary",
+          "status": "filled_6star",
+          "min_spd": 225,
+          "max_spd": 233,
+          "roster_grade": 6
+        },
+        {
+          "index": 3,
+          "hero": "Frozen Banshee",
+          "status": "filled_ascending",
+          "min_spd": 224,
+          "max_spd": 225,
+          "roster_grade": 5
+        },
+        {
+          "index": 4,
+          "hero": "Marked",
+          "status": "missing",
+          "min_spd": 223,
+          "max_spd": 225,
+          "roster_grade": null
+        },
+        {
+          "index": 5,
+          "hero": "Coffin Smasher",
+          "status": "filled_ascending",
+          "min_spd": 195,
+          "max_spd": 195,
+          "roster_grade": 3
+        }
+      ],
+      "affinity": "Void Only",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/white-whale-nm-only/",
+      "sim_hash": "c983fbe8d0be46af46b189a3bf9c11b01ae6396d",
+      "est_damage": 9690000,
+      "note": "need Marked \u00b7 ascend High Khatun (5\u2605), Frozen Banshee (5\u2605), Coffin Smasher (3\u2605)",
+      "status": "need-heroes",
+      "missing": 1,
+      "missing_heroes": [
+        "Marked"
+      ]
+    },
+    {
+      "id": "batman-forever",
+      "name": "Batman Forever",
+      "mechanic": "Unkillable",
+      "key_capability": "1 Key UNM",
+      "key_count": 1,
+      "heroes": [
+        "Unkillable Champion (4 turn CD)",
+        "Seeker",
+        "Warcaster",
+        "Tower/Santa",
+        "Fayne"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Unkillable Champion (4 turn CD)",
+          "status": "missing",
+          "min_spd": 265,
+          "max_spd": 285,
+          "roster_grade": null
+        },
+        {
+          "index": 2,
+          "hero": "Seeker",
+          "status": "filled_6star",
+          "min_spd": 248,
+          "max_spd": 254,
+          "roster_grade": 6
+        },
+        {
+          "index": 3,
+          "hero": "Warcaster",
+          "status": "filled_ascending",
+          "min_spd": 245,
+          "max_spd": 247,
+          "roster_grade": 4
+        },
+        {
+          "index": 4,
+          "hero": "Tower/Santa",
+          "status": "missing",
+          "min_spd": 245,
+          "max_spd": 247,
+          "roster_grade": null
+        },
+        {
+          "index": 5,
+          "hero": "Fayne",
+          "status": "filled_6star",
+          "min_spd": 218,
+          "max_spd": 227,
+          "roster_grade": 6
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/batman-forever/",
+      "sim_hash": "d3edeec70427190fdf16fd1a8f2a39e22a603cd5",
+      "est_damage": 36124999,
+      "note": "need Unkillable Champion (4 turn CD), Tower/Santa \u00b7 ascend Warcaster (4\u2605)",
+      "status": "need-heroes",
+      "missing": 2,
+      "missing_heroes": [
+        "Unkillable Champion (4 turn CD)",
+        "Tower/Santa"
+      ]
+    },
+    {
+      "id": "deacon-forever",
+      "name": "Deacon Forever",
+      "mechanic": "Unkillable",
+      "key_capability": "1 Key UNM",
+      "key_count": 1,
+      "heroes": [
+        "Deacon ",
+        "Roshcard the Tower",
+        "Helicath",
+        "Warboy",
+        "Doompriest"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Deacon ",
+          "status": "filled_ascending",
+          "min_spd": 245,
+          "max_spd": 253,
+          "roster_grade": 5
+        },
+        {
+          "index": 2,
+          "hero": "Roshcard the Tower",
+          "status": "missing",
+          "min_spd": 304,
+          "max_spd": 307,
+          "roster_grade": null
+        },
+        {
+          "index": 3,
+          "hero": "Helicath",
+          "status": "missing",
+          "min_spd": 268,
+          "max_spd": 285,
+          "roster_grade": null
+        },
+        {
+          "index": 4,
+          "hero": "Warboy",
+          "status": "filled_ascending",
+          "min_spd": 268,
+          "max_spd": 285,
+          "roster_grade": 1
+        },
+        {
+          "index": 5,
+          "hero": "Doompriest",
+          "status": "filled_6star",
+          "min_spd": 218,
+          "max_spd": 223,
+          "roster_grade": 6
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/deacon-forever/",
+      "sim_hash": "cc8341c4d47d57a38ed2662da3dbbad833677e4b",
+      "est_damage": 36124999,
+      "note": "need Roshcard the Tower, Helicath \u00b7 ascend Deacon  (5\u2605), Warboy (1\u2605)",
+      "status": "need-heroes",
+      "missing": 2,
+      "missing_heroes": [
+        "Roshcard the Tower",
+        "Helicath"
+      ]
+    },
+    {
+      "id": "heaven-and-hell",
+      "name": "Heaven and Hell",
+      "mechanic": "Speed",
+      "key_capability": "1 Key UNM",
+      "key_count": 1,
+      "heroes": [
+        "Ma'Shalled",
+        "Maneater",
+        "Skullcrusher",
+        "Belanor",
+        "Kymar"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Ma'Shalled",
+          "status": "filled_6star",
+          "min_spd": 251,
+          "max_spd": 253,
+          "roster_grade": 6
+        },
+        {
+          "index": 2,
+          "hero": "Maneater",
+          "status": "filled_6star",
+          "min_spd": 251,
+          "max_spd": 253,
+          "roster_grade": 6
+        },
+        {
+          "index": 3,
+          "hero": "Skullcrusher",
+          "status": "filled_6star",
+          "min_spd": 225,
+          "max_spd": 231,
+          "roster_grade": 6
+        },
+        {
+          "index": 4,
+          "hero": "Belanor",
+          "status": "missing",
+          "min_spd": 204,
+          "max_spd": 212,
+          "roster_grade": null
+        },
+        {
+          "index": 5,
+          "hero": "Kymar",
+          "status": "missing",
+          "min_spd": 187,
+          "max_spd": 189,
+          "roster_grade": null
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/heaven-and-hell/",
+      "sim_hash": "f8002f7095e8565e2305acef640756960d8c9842",
+      "est_damage": 36124999,
+      "note": "need Belanor, Kymar",
+      "status": "need-heroes",
+      "missing": 2,
+      "missing_heroes": [
+        "Belanor",
+        "Kymar"
+      ]
+    },
+    {
+      "id": "myth-hare",
+      "name": "Myth Hare",
+      "mechanic": "Unkillable",
+      "key_capability": "1 Key UNM",
+      "key_count": 1,
+      "heroes": [
+        "Razelvarg",
+        "Demytha",
+        "Underpriest Brogni",
+        "Seeker",
+        "Bully"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Razelvarg",
+          "status": "filled_6star",
+          "min_spd": 210,
+          "max_spd": 240,
+          "roster_grade": 6
+        },
+        {
+          "index": 2,
+          "hero": "Demytha",
+          "status": "filled_6star",
+          "min_spd": 315,
+          "max_spd": 316,
+          "roster_grade": 6
+        },
+        {
+          "index": 3,
+          "hero": "Underpriest Brogni",
+          "status": "missing",
+          "min_spd": 209,
+          "max_spd": 239,
+          "roster_grade": null
+        },
+        {
+          "index": 4,
+          "hero": "Seeker",
+          "status": "filled_6star",
+          "min_spd": 209,
+          "max_spd": 210,
+          "roster_grade": 6
+        },
+        {
+          "index": 5,
+          "hero": "Bully",
+          "status": "missing",
+          "min_spd": 195,
+          "max_spd": 195,
+          "roster_grade": null
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/myth-hare/",
+      "sim_hash": "4657f8748b45e09b10ba2743bc9a6396a9c4e0a9",
+      "est_damage": 36124999,
+      "note": "need Underpriest Brogni, Bully",
+      "status": "need-heroes",
+      "missing": 2,
+      "missing_heroes": [
+        "Underpriest Brogni",
+        "Bully"
+      ]
+    },
+    {
+      "id": "myth-rue-elva",
+      "name": "Myth Rue-Elva",
+      "mechanic": "Unkillable",
+      "key_capability": "1 Key UNM",
+      "key_count": 1,
+      "heroes": [
+        "Demytha",
+        "Ruella",
+        "Elva Autumnborn",
+        "Seeker",
+        "Warboy"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Demytha",
+          "status": "filled_6star",
+          "min_spd": 314,
+          "max_spd": 330,
+          "roster_grade": 6
+        },
+        {
+          "index": 2,
+          "hero": "Ruella",
+          "status": "missing",
+          "min_spd": 315,
+          "max_spd": 331,
+          "roster_grade": null
+        },
+        {
+          "index": 3,
+          "hero": "Elva Autumnborn",
+          "status": "missing",
+          "min_spd": 254,
+          "max_spd": 292,
+          "roster_grade": null
+        },
+        {
+          "index": 4,
+          "hero": "Seeker",
+          "status": "filled_6star",
+          "min_spd": 207,
+          "max_spd": 212,
+          "roster_grade": 6
+        },
+        {
+          "index": 5,
+          "hero": "Warboy",
+          "status": "filled_ascending",
+          "min_spd": 172,
+          "max_spd": 186,
+          "roster_grade": 1
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/myth-rue-elva/",
+      "sim_hash": "c6bd51f133d5a35b9d9159b39918dda133aaef30",
+      "est_damage": 36124999,
+      "note": "need Ruella, Elva Autumnborn \u00b7 ascend Warboy (1\u2605)",
+      "status": "need-heroes",
+      "missing": 2,
+      "missing_heroes": [
+        "Ruella",
+        "Elva Autumnborn"
+      ]
+    },
+    {
+      "id": "razzle-dazzle-counter-attack",
+      "name": "Razzle Dazzle Counter-Attack",
+      "mechanic": "Speed",
+      "key_capability": "1 Key UNM",
+      "key_count": 1,
+      "heroes": [
+        "Razelvarg",
+        "Buff Extender",
+        "Corvis the Corruptor",
+        "Warboy",
+        "Counter-Attack"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Razelvarg",
+          "status": "filled_6star",
+          "min_spd": 258,
+          "max_spd": 263,
+          "roster_grade": 6
+        },
+        {
+          "index": 2,
+          "hero": "Buff Extender",
+          "status": "missing",
+          "min_spd": 263,
+          "max_spd": 263,
+          "roster_grade": null
+        },
+        {
+          "index": 3,
+          "hero": "Corvis the Corruptor",
+          "status": "filled_6star",
+          "min_spd": 251,
+          "max_spd": 252,
+          "roster_grade": 6
+        },
+        {
+          "index": 4,
+          "hero": "Warboy",
+          "status": "filled_ascending",
+          "min_spd": 220,
+          "max_spd": 228,
+          "roster_grade": 1
+        },
+        {
+          "index": 5,
+          "hero": "Counter-Attack",
+          "status": "missing",
+          "min_spd": 198,
+          "max_spd": 204,
+          "roster_grade": null
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/razzle-dazzle-counter-attack/",
+      "sim_hash": "b467e0c12a04fdf8e2f9b3f5f04559e3bf700df6",
+      "est_damage": 36124999,
+      "note": "need Buff Extender, Counter-Attack \u00b7 ascend Warboy (1\u2605)",
+      "status": "need-heroes",
+      "missing": 2,
+      "missing_heroes": [
+        "Buff Extender",
+        "Counter-Attack"
+      ]
+    },
+    {
+      "id": "the-dark-knight-aka-warcrusher",
+      "name": "The Dark Knight - aka, WarCrusher",
+      "mechanic": "Unkillable",
+      "key_capability": "1 Key UNM",
+      "key_count": 1,
+      "heroes": [
+        "Unkillable Champion",
+        "Seeker",
+        "Renegade",
+        "Warcaster",
+        "Support"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Unkillable Champion",
+          "status": "missing",
+          "min_spd": 265,
+          "max_spd": 285,
+          "roster_grade": null
+        },
+        {
+          "index": 2,
+          "hero": "Seeker",
+          "status": "filled_6star",
+          "min_spd": 248,
+          "max_spd": 254,
+          "roster_grade": 6
+        },
+        {
+          "index": 3,
+          "hero": "Renegade",
+          "status": "filled_ascending",
+          "min_spd": 245,
+          "max_spd": 247,
+          "roster_grade": 4
+        },
+        {
+          "index": 4,
+          "hero": "Warcaster",
+          "status": "filled_ascending",
+          "min_spd": 245,
+          "max_spd": 247,
+          "roster_grade": 4
+        },
+        {
+          "index": 5,
+          "hero": "Support",
+          "status": "missing",
+          "min_spd": 218,
+          "max_spd": 227,
+          "roster_grade": null
+        }
+      ],
+      "affinity": "Void Only",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/the-dark-knight-aka-warcrusher/",
+      "sim_hash": "bbda83fa38dfdffb644cd40a34743654f924c0ee",
+      "est_damage": 34318749,
+      "note": "need Unkillable Champion, Support \u00b7 ascend Renegade (4\u2605), Warcaster (4\u2605)",
+      "status": "need-heroes",
+      "missing": 2,
+      "missing_heroes": [
+        "Unkillable Champion",
+        "Support"
+      ]
+    },
+    {
+      "id": "what-in-the-hellmut",
+      "name": "What in the Hellmut",
+      "mechanic": "Unkillable",
+      "key_capability": "1 Key UNM",
+      "key_count": 1,
+      "heroes": [
+        "Archmage Hellmut",
+        "Seeker",
+        "4 Turn Cooldown UK Champ",
+        "4 Turn Cooldown UK Champ ( 2 Turn Duration )",
+        "Fayne"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Archmage Hellmut",
+          "status": "filled_ascending",
+          "min_spd": 301,
+          "max_spd": 306,
+          "roster_grade": 5
+        },
+        {
+          "index": 2,
+          "hero": "Seeker",
+          "status": "filled_6star",
+          "min_spd": 243,
+          "max_spd": 243,
+          "roster_grade": 6
+        },
+        {
+          "index": 3,
+          "hero": "4 Turn Cooldown UK Champ",
+          "status": "missing",
+          "min_spd": 225,
+          "max_spd": 226,
+          "roster_grade": null
+        },
+        {
+          "index": 4,
+          "hero": "4 Turn Cooldown UK Champ ( 2 Turn Duration )",
+          "status": "missing",
+          "min_spd": 200,
+          "max_spd": 204,
+          "roster_grade": null
+        },
+        {
+          "index": 5,
+          "hero": "Fayne",
+          "status": "filled_6star",
+          "min_spd": 186,
+          "max_spd": 186,
+          "roster_grade": 6
+        }
+      ],
+      "affinity": "Void Only",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/what-in-the-hellmut/",
+      "sim_hash": "c0c91f3760f37c014a337065af556dce6a3e9e23",
+      "est_damage": 34318749,
+      "note": "need 4 Turn Cooldown UK Champ, 4 Turn Cooldown UK Champ ( 2 Turn Duration ) \u00b7 ascend Archmage Hellmut (5\u2605)",
+      "status": "need-heroes",
+      "missing": 2,
+      "missing_heroes": [
+        "4 Turn Cooldown UK Champ",
+        "4 Turn Cooldown UK Champ ( 2 Turn Duration )"
+      ]
+    },
+    {
+      "id": "affinity-friendly-valkyrie",
+      "name": "Affinity Friendly Valkyrie",
+      "mechanic": "Speed",
+      "key_capability": "2 Key UNM",
+      "key_count": 2,
+      "heroes": [
+        "Tayrel",
+        "Marked",
+        "Rhazin Scarhide",
+        "Frozen Banshee",
+        "Valkyrie"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Tayrel",
+          "status": "filled_ascending",
+          "min_spd": 189,
+          "max_spd": 189,
+          "roster_grade": 4
+        },
+        {
+          "index": 2,
+          "hero": "Marked",
+          "status": "missing",
+          "min_spd": 187,
+          "max_spd": 189,
+          "roster_grade": null
+        },
+        {
+          "index": 3,
+          "hero": "Rhazin Scarhide",
+          "status": "filled_6star",
+          "min_spd": 187,
+          "max_spd": 189,
+          "roster_grade": 6
+        },
+        {
+          "index": 4,
+          "hero": "Frozen Banshee",
+          "status": "filled_ascending",
+          "min_spd": 187,
+          "max_spd": 189,
+          "roster_grade": 5
+        },
+        {
+          "index": 5,
+          "hero": "Valkyrie",
+          "status": "missing",
+          "min_spd": 171,
+          "max_spd": 172,
+          "roster_grade": null
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/affinity-friendly-valkyrie/",
+      "sim_hash": "818476b217fdeb8534c8da68b62a508361c1ee39",
+      "est_damage": 21674999,
+      "note": "need Marked, Valkyrie \u00b7 ascend Tayrel (4\u2605), Frozen Banshee (5\u2605)",
+      "status": "need-heroes",
+      "missing": 2,
+      "missing_heroes": [
+        "Marked",
+        "Valkyrie"
+      ]
+    },
+    {
+      "id": "affinity-friendly-valkyrie-with-two-43-champs",
+      "name": "Affinity Friendly Valkyrie with two 4:3 Champs",
+      "mechanic": "Speed",
+      "key_capability": "2 Key UNM",
+      "key_count": 2,
+      "heroes": [
+        "Sepulcher Sentinel",
+        "Vizier Ovelis",
+        "Rhazin Scarhide",
+        "Steelskull",
+        "Valkyrie"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Sepulcher Sentinel",
+          "status": "filled_6star",
+          "min_spd": 245,
+          "max_spd": 246,
+          "roster_grade": 6
+        },
+        {
+          "index": 2,
+          "hero": "Vizier Ovelis",
+          "status": "missing",
+          "min_spd": 239,
+          "max_spd": 240,
+          "roster_grade": null
+        },
+        {
+          "index": 3,
+          "hero": "Rhazin Scarhide",
+          "status": "filled_6star",
+          "min_spd": 187,
+          "max_spd": 189,
+          "roster_grade": 6
+        },
+        {
+          "index": 4,
+          "hero": "Steelskull",
+          "status": "filled_6star",
+          "min_spd": 185,
+          "max_spd": 185,
+          "roster_grade": 6
+        },
+        {
+          "index": 5,
+          "hero": "Valkyrie",
+          "status": "missing",
+          "min_spd": 171,
+          "max_spd": 172,
+          "roster_grade": null
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/affinity-friendly-valkyrie-with-two-43-champs/",
+      "sim_hash": "6b5a2e213096042ed8edb80b552f1363085a005a",
+      "est_damage": 21674999,
+      "note": "need Vizier Ovelis, Valkyrie",
+      "status": "need-heroes",
+      "missing": 2,
+      "missing_heroes": [
+        "Vizier Ovelis",
+        "Valkyrie"
+      ]
+    },
+    {
+      "id": "budget-maneater-unkillable-extra-turn",
+      "name": "Budget Maneater Unkillable - Extra Turn",
+      "mechanic": "Unkillable",
+      "key_capability": "2 Key UNM",
+      "key_count": 2,
+      "heroes": [
+        "Maneater",
+        "Pain Keeper",
+        "Dracomorph",
+        "Lord Shazar",
+        "Skullcrusher"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Maneater",
+          "status": "filled_6star",
+          "min_spd": 240,
+          "max_spd": 241,
+          "roster_grade": 6
+        },
+        {
+          "index": 2,
+          "hero": "Pain Keeper",
+          "status": "filled_ascending",
+          "min_spd": 218,
+          "max_spd": 222,
+          "roster_grade": 5
+        },
+        {
+          "index": 3,
+          "hero": "Dracomorph",
+          "status": "missing",
+          "min_spd": 175,
+          "max_spd": 178,
+          "roster_grade": null
+        },
+        {
+          "index": 4,
+          "hero": "Lord Shazar",
+          "status": "missing",
+          "min_spd": 175,
+          "max_spd": 178,
+          "roster_grade": null
+        },
+        {
+          "index": 5,
+          "hero": "Skullcrusher",
+          "status": "filled_6star",
+          "min_spd": 111,
+          "max_spd": 118,
+          "roster_grade": 6
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/budget-maneater-unkillable-extra-turn/",
+      "sim_hash": "9cd660fda73fdae82f34ec9ad93d0eec9903dbc0",
+      "est_damage": 21674999,
+      "note": "need Dracomorph, Lord Shazar \u00b7 ascend Pain Keeper (5\u2605)",
+      "status": "need-heroes",
+      "missing": 2,
+      "missing_heroes": [
+        "Dracomorph",
+        "Lord Shazar"
+      ]
+    },
+    {
+      "id": "double-counter-attack",
+      "name": "Double Counter-Attack",
+      "mechanic": "Speed",
+      "key_capability": "2 Key UNM",
+      "key_count": 2,
+      "heroes": [
+        "Bulwark",
+        "Martyr",
+        "Frozen Banshee",
+        "Tayrel",
+        "Skullcrusher"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Bulwark",
+          "status": "missing",
+          "min_spd": 171,
+          "max_spd": 209,
+          "roster_grade": null
+        },
+        {
+          "index": 2,
+          "hero": "Martyr",
+          "status": "missing",
+          "min_spd": 171,
+          "max_spd": 209,
+          "roster_grade": null
+        },
+        {
+          "index": 3,
+          "hero": "Frozen Banshee",
+          "status": "filled_ascending",
+          "min_spd": 171,
+          "max_spd": 209,
+          "roster_grade": 5
+        },
+        {
+          "index": 4,
+          "hero": "Tayrel",
+          "status": "filled_ascending",
+          "min_spd": 171,
+          "max_spd": 209,
+          "roster_grade": 4
+        },
+        {
+          "index": 5,
+          "hero": "Skullcrusher",
+          "status": "filled_6star",
+          "min_spd": 171,
+          "max_spd": 209,
+          "roster_grade": 6
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/double-counter-attack/",
+      "sim_hash": "44e5e748161ef8ac917676f622f1fb62e90b0260",
+      "est_damage": 21674999,
+      "note": "need Bulwark, Martyr \u00b7 ascend Frozen Banshee (5\u2605), Tayrel (4\u2605)",
+      "status": "need-heroes",
+      "missing": 2,
+      "missing_heroes": [
+        "Bulwark",
+        "Martyr"
+      ]
+    },
+    {
+      "id": "drokgul-unkillable",
+      "name": "Drokgul Unkillable",
+      "mechanic": "Speed",
+      "key_capability": "2 Key UNM",
+      "key_count": 2,
+      "heroes": [
+        "Maneater",
+        "Frozen Banshee",
+        "Rhazin Scarhide",
+        "Bulwark",
+        "Drokgul"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Maneater",
+          "status": "filled_6star",
+          "min_spd": 286,
+          "max_spd": 287,
+          "roster_grade": 6
+        },
+        {
+          "index": 2,
+          "hero": "Frozen Banshee",
+          "status": "filled_ascending",
+          "min_spd": 205,
+          "max_spd": 210,
+          "roster_grade": 5
+        },
+        {
+          "index": 3,
+          "hero": "Rhazin Scarhide",
+          "status": "filled_6star",
+          "min_spd": 172,
+          "max_spd": 178,
+          "roster_grade": 6
+        },
+        {
+          "index": 4,
+          "hero": "Bulwark",
+          "status": "missing",
+          "min_spd": 172,
+          "max_spd": 178,
+          "roster_grade": null
+        },
+        {
+          "index": 5,
+          "hero": "Drokgul",
+          "status": "missing",
+          "min_spd": 172,
+          "max_spd": 176,
+          "roster_grade": null
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/drokgul-unkillable/",
+      "sim_hash": "13dc320a523c65953af4e58698a8ead13ea64a0a",
+      "est_damage": 21674999,
+      "note": "need Bulwark, Drokgul \u00b7 ascend Frozen Banshee (5\u2605)",
+      "status": "need-heroes",
+      "missing": 2,
+      "missing_heroes": [
+        "Bulwark",
+        "Drokgul"
+      ]
+    },
+    {
+      "id": "fast-tower-skullcrusher-w-43",
+      "name": "Fast Tower Skullcrusher w/ 4:3",
+      "mechanic": "Unkillable",
+      "key_capability": "2 Key UNM",
+      "key_count": 2,
+      "heroes": [
+        "Roshcard the Tower",
+        "Skullcrusher",
+        "Fayne",
+        "Frozen Banshee",
+        "Bulwark"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Roshcard the Tower",
+          "status": "missing",
+          "min_spd": 257,
+          "max_spd": 257,
+          "roster_grade": null
+        },
+        {
+          "index": 2,
+          "hero": "Skullcrusher",
+          "status": "filled_6star",
+          "min_spd": 241,
+          "max_spd": 241,
+          "roster_grade": 6
+        },
+        {
+          "index": 3,
+          "hero": "Fayne",
+          "status": "filled_6star",
+          "min_spd": 240,
+          "max_spd": 240,
+          "roster_grade": 6
+        },
+        {
+          "index": 4,
+          "hero": "Frozen Banshee",
+          "status": "filled_ascending",
+          "min_spd": 192,
+          "max_spd": 192,
+          "roster_grade": 5
+        },
+        {
+          "index": 5,
+          "hero": "Bulwark",
+          "status": "missing",
+          "min_spd": 191,
+          "max_spd": 191,
+          "roster_grade": null
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/fast-tower-skullcrusher-w-43/",
+      "sim_hash": "44b25c8fe31c724984d6a48db922cb068cdbc059",
+      "est_damage": 21674999,
+      "note": "need Roshcard the Tower, Bulwark \u00b7 ascend Frozen Banshee (5\u2605)",
+      "status": "need-heroes",
+      "missing": 2,
+      "missing_heroes": [
+        "Roshcard the Tower",
+        "Bulwark"
+      ]
+    },
+    {
+      "id": "manseeknia",
+      "name": "ManSeekNia",
+      "mechanic": "Unkillable",
+      "key_capability": "2 Key UNM",
+      "key_count": 2,
+      "heroes": [
+        "Maneater",
+        "Godseeker Aniri",
+        "White Driad Nia",
+        "White Dryad Nia",
+        "Chani"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Maneater",
+          "status": "filled_6star",
+          "min_spd": 192,
+          "max_spd": 199,
+          "roster_grade": 6
+        },
+        {
+          "index": 2,
+          "hero": "Godseeker Aniri",
+          "status": "filled_ascending",
+          "min_spd": 182,
+          "max_spd": 189,
+          "roster_grade": 5
+        },
+        {
+          "index": 3,
+          "hero": "White Driad Nia",
+          "status": "missing",
+          "min_spd": 181,
+          "max_spd": 189,
+          "roster_grade": null
+        },
+        {
+          "index": 4,
+          "hero": "White Dryad Nia",
+          "status": "filled_6star",
+          "min_spd": 171,
+          "max_spd": 180,
+          "roster_grade": 6
+        },
+        {
+          "index": 5,
+          "hero": "Chani",
+          "status": "missing",
+          "min_spd": 171,
+          "max_spd": 180,
+          "roster_grade": null
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/manseeknia/",
+      "sim_hash": "7bf0e5b0f0352a99a38758a62ad62e3d0468c21c",
+      "est_damage": 21674999,
+      "note": "need White Driad Nia, Chani \u00b7 ascend Godseeker Aniri (5\u2605)",
+      "status": "need-heroes",
+      "missing": 2,
+      "missing_heroes": [
+        "White Driad Nia",
+        "Chani"
+      ]
+    },
+    {
+      "id": "mantower-slow",
+      "name": "ManTower Slow",
+      "mechanic": "Unkillable",
+      "key_capability": "2 Key UNM",
+      "key_count": 2,
+      "heroes": [
+        "Maneater",
+        "4 Turn UK ( 2 Turn Duration )",
+        "Roshcard the Tower",
+        "Doompriest",
+        "Frozen Banshee"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Maneater",
+          "status": "filled_6star",
+          "min_spd": 249,
+          "max_spd": 253,
+          "roster_grade": 6
+        },
+        {
+          "index": 2,
+          "hero": "4 Turn UK ( 2 Turn Duration )",
+          "status": "missing",
+          "min_spd": 191,
+          "max_spd": 204,
+          "roster_grade": null
+        },
+        {
+          "index": 3,
+          "hero": "Roshcard the Tower",
+          "status": "missing",
+          "min_spd": 205,
+          "max_spd": 217,
+          "roster_grade": null
+        },
+        {
+          "index": 4,
+          "hero": "Doompriest",
+          "status": "filled_6star",
+          "min_spd": 193,
+          "max_spd": 216,
+          "roster_grade": 6
+        },
+        {
+          "index": 5,
+          "hero": "Frozen Banshee",
+          "status": "filled_ascending",
+          "min_spd": 191,
+          "max_spd": 204,
+          "roster_grade": 5
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/mantower-slow/",
+      "sim_hash": "6d65a3abaf33b5cd3aa38683ef91d0cff6119b35",
+      "est_damage": 21674999,
+      "note": "need 4 Turn UK ( 2 Turn Duration ), Roshcard the Tower \u00b7 ascend Frozen Banshee (5\u2605)",
+      "status": "need-heroes",
+      "missing": 2,
+      "missing_heroes": [
+        "4 Turn UK ( 2 Turn Duration )",
+        "Roshcard the Tower"
+      ]
+    },
+    {
+      "id": "ninja-cateater",
+      "name": "Ninja CatEater",
+      "mechanic": "Unkillable",
+      "key_capability": "2 Key UNM",
+      "key_count": 2,
+      "heroes": [
+        "Maneater",
+        "Seeker",
+        "Ninja",
+        "Helicath",
+        "Dracomorph"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Maneater",
+          "status": "filled_6star",
+          "min_spd": 255,
+          "max_spd": 255,
+          "roster_grade": 6
+        },
+        {
+          "index": 2,
+          "hero": "Seeker",
+          "status": "filled_6star",
+          "min_spd": 218,
+          "max_spd": 218,
+          "roster_grade": 6
+        },
+        {
+          "index": 3,
+          "hero": "Ninja",
+          "status": "filled_6star",
+          "min_spd": 192,
+          "max_spd": 204,
+          "roster_grade": 6
+        },
+        {
+          "index": 4,
+          "hero": "Helicath",
+          "status": "missing",
+          "min_spd": 192,
+          "max_spd": 194,
+          "roster_grade": null
+        },
+        {
+          "index": 5,
+          "hero": "Dracomorph",
+          "status": "missing",
+          "min_spd": 179,
+          "max_spd": 183,
+          "roster_grade": null
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/ninja-cateater/",
+      "sim_hash": "9dbbc2b22c9ffe8be78d47dae49e676038edb160",
+      "est_damage": 21674999,
+      "note": "need Helicath, Dracomorph",
+      "status": "need-heroes",
+      "missing": 2,
+      "missing_heroes": [
+        "Helicath",
+        "Dracomorph"
+      ]
+    },
+    {
+      "id": "santa-unkillable",
+      "name": "Santa Unkillable",
+      "mechanic": "Unkillable",
+      "key_capability": "2 Key UNM",
+      "key_count": 2,
+      "heroes": [
+        "Pain Keeper",
+        "Stun Tank",
+        "Skullcrusher",
+        "Doompriest",
+        "Sir Nicholas"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Pain Keeper",
+          "status": "filled_ascending",
+          "min_spd": 239,
+          "max_spd": 241,
+          "roster_grade": 5
+        },
+        {
+          "index": 2,
+          "hero": "Stun Tank",
+          "status": "missing",
+          "min_spd": 205,
+          "max_spd": 210,
+          "roster_grade": null
+        },
+        {
+          "index": 3,
+          "hero": "Skullcrusher",
+          "status": "filled_6star",
+          "min_spd": 188,
+          "max_spd": 188,
+          "roster_grade": 6
+        },
+        {
+          "index": 4,
+          "hero": "Doompriest",
+          "status": "filled_6star",
+          "min_spd": 171,
+          "max_spd": 178,
+          "roster_grade": 6
+        },
+        {
+          "index": 5,
+          "hero": "Sir Nicholas",
+          "status": "missing",
+          "min_spd": 171,
+          "max_spd": 176,
+          "roster_grade": null
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/santa-unkillable/",
+      "sim_hash": "f1d4437070f7fb2a71fa12992a386bca49a76d3c",
+      "est_damage": 21674999,
+      "note": "need Stun Tank, Sir Nicholas \u00b7 ascend Pain Keeper (5\u2605)",
+      "status": "need-heroes",
+      "missing": 2,
+      "missing_heroes": [
+        "Stun Tank",
+        "Sir Nicholas"
+      ]
+    },
+    {
+      "id": "slow-tower-skullcrusher-unkillable",
+      "name": "Slow Tower Skullcrusher Unkillable",
+      "mechanic": "Unkillable",
+      "key_capability": "2 Key UNM",
+      "key_count": 2,
+      "heroes": [
+        "Roschard the Tower",
+        "Doompriest",
+        "Roshcard the Tower",
+        "Skullcrusher",
+        "Rhazin Scarhide"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Roschard the Tower",
+          "status": "missing",
+          "min_spd": 246,
+          "max_spd": 248,
+          "roster_grade": null
+        },
+        {
+          "index": 2,
+          "hero": "Doompriest",
+          "status": "filled_6star",
+          "min_spd": 186,
+          "max_spd": 188,
+          "roster_grade": 6
+        },
+        {
+          "index": 3,
+          "hero": "Roshcard the Tower",
+          "status": "missing",
+          "min_spd": 179,
+          "max_spd": 179,
+          "roster_grade": null
+        },
+        {
+          "index": 4,
+          "hero": "Skullcrusher",
+          "status": "filled_6star",
+          "min_spd": 175,
+          "max_spd": 178,
+          "roster_grade": 6
+        },
+        {
+          "index": 5,
+          "hero": "Rhazin Scarhide",
+          "status": "filled_6star",
+          "min_spd": 172,
+          "max_spd": 178,
+          "roster_grade": 6
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/slow-tower-skullcrusher-unkillable/",
+      "sim_hash": "a66f2f9dd30d2f6d864e049063b2ed53b2af6ce0",
+      "est_damage": 21674999,
+      "note": "need Roschard the Tower, Roshcard the Tower",
+      "status": "need-heroes",
+      "missing": 2,
+      "missing_heroes": [
+        "Roschard the Tower",
+        "Roshcard the Tower"
+      ]
+    },
+    {
+      "id": "tuhanarak-and-lydia",
+      "name": "Tuhanarak and Lydia",
+      "mechanic": "Speed",
+      "key_capability": "2 Key UNM",
+      "key_count": 2,
+      "heroes": [
+        "Warboy",
+        "Lydia",
+        "Warboy",
+        "Warboy",
+        "Tuhanarak"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Warboy",
+          "status": "filled_ascending",
+          "min_spd": 269,
+          "max_spd": 276,
+          "roster_grade": 1
+        },
+        {
+          "index": 2,
+          "hero": "Lydia",
+          "status": "missing",
+          "min_spd": 268,
+          "max_spd": 275,
+          "roster_grade": null
+        },
+        {
+          "index": 3,
+          "hero": "Warboy",
+          "status": "filled_ascending",
+          "min_spd": 239,
+          "max_spd": 244,
+          "roster_grade": 1
+        },
+        {
+          "index": 4,
+          "hero": "Warboy",
+          "status": "filled_ascending",
+          "min_spd": 239,
+          "max_spd": 244,
+          "roster_grade": 1
+        },
+        {
+          "index": 5,
+          "hero": "Tuhanarak",
+          "status": "missing",
+          "min_spd": 204,
+          "max_spd": 210,
+          "roster_grade": null
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/tuhanarak-and-lydia/",
+      "sim_hash": "81b380c556719cec96dcda3a20d3ddd249b3e049",
+      "est_damage": 21674999,
+      "note": "need Lydia, Tuhanarak \u00b7 ascend Warboy (1\u2605), Warboy (1\u2605), Warboy (1\u2605)",
+      "status": "need-heroes",
+      "missing": 2,
+      "missing_heroes": [
+        "Lydia",
+        "Tuhanarak"
+      ]
+    },
+    {
+      "id": "wartower",
+      "name": "WarTower",
+      "mechanic": "Unkillable",
+      "key_capability": "2 Key UNM",
+      "key_count": 2,
+      "heroes": [
+        "Warcaster",
+        "Roshcard the Tower",
+        "Doompriest",
+        "Septimus",
+        "Fayne"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Warcaster",
+          "status": "filled_ascending",
+          "min_spd": 246,
+          "max_spd": 249,
+          "roster_grade": 4
+        },
+        {
+          "index": 2,
+          "hero": "Roshcard the Tower",
+          "status": "missing",
+          "min_spd": 240,
+          "max_spd": 240,
+          "roster_grade": null
+        },
+        {
+          "index": 3,
+          "hero": "Doompriest",
+          "status": "filled_6star",
+          "min_spd": 175,
+          "max_spd": 177,
+          "roster_grade": 6
+        },
+        {
+          "index": 4,
+          "hero": "Septimus",
+          "status": "missing",
+          "min_spd": 171,
+          "max_spd": 177,
+          "roster_grade": null
+        },
+        {
+          "index": 5,
+          "hero": "Fayne",
+          "status": "filled_6star",
+          "min_spd": 171,
+          "max_spd": 177,
+          "roster_grade": 6
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/wartower/",
+      "sim_hash": "e57042e0f0842133342b7261540aff1cd32bd14f",
+      "est_damage": 21674999,
+      "note": "need Roshcard the Tower, Septimus \u00b7 ascend Warcaster (4\u2605)",
+      "status": "need-heroes",
+      "missing": 2,
+      "missing_heroes": [
+        "Roshcard the Tower",
+        "Septimus"
+      ]
+    },
+    {
+      "id": "white-whale",
+      "name": "White Whale",
+      "mechanic": "Speed",
+      "key_capability": "2 Key UNM",
+      "key_count": 2,
+      "heroes": [
+        "Speed Champion",
+        "Buff Extender/2nd Speed Champion",
+        "High Khatun",
+        "Sandlashed Survivor",
+        "Frozen Banshee"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Speed Champion",
+          "status": "missing",
+          "min_spd": 248,
+          "max_spd": 248,
+          "roster_grade": null
+        },
+        {
+          "index": 2,
+          "hero": "Buff Extender/2nd Speed Champion",
+          "status": "missing",
+          "min_spd": 227,
+          "max_spd": 227,
+          "roster_grade": null
+        },
+        {
+          "index": 3,
+          "hero": "High Khatun",
+          "status": "filled_ascending",
+          "min_spd": 225,
+          "max_spd": 225,
+          "roster_grade": 5
+        },
+        {
+          "index": 4,
+          "hero": "Sandlashed Survivor",
+          "status": "filled_ascending",
+          "min_spd": 193,
+          "max_spd": 193,
+          "roster_grade": 5
+        },
+        {
+          "index": 5,
+          "hero": "Frozen Banshee",
+          "status": "filled_ascending",
+          "min_spd": 178,
+          "max_spd": 178,
+          "roster_grade": 5
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/white-whale/",
+      "sim_hash": "4c80e5054b1cc7837725aa30017e1315bf6433f0",
+      "est_damage": 21674999,
+      "note": "need Speed Champion, Buff Extender/2nd Speed Champion \u00b7 ascend High Khatun (5\u2605), Sandlashed Survivor (5\u2605), Frozen Banshee (5\u2605)",
+      "status": "need-heroes",
+      "missing": 2,
+      "missing_heroes": [
+        "Speed Champion",
+        "Buff Extender/2nd Speed Champion"
+      ]
+    },
+    {
+      "id": "fast-tower-skullcrusher-unkillable-copy",
+      "name": "Fast Tower Skullcrusher Unkillable",
+      "mechanic": "Unkillable",
+      "key_capability": "3 Key UNM",
+      "key_count": 3,
+      "heroes": [
+        "Skullcrusher",
+        "Roschard the Tower",
+        "Roshcard the Tower",
+        "Rhazin Scarhide",
+        "Frozen Banshee"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Skullcrusher",
+          "status": "filled_6star",
+          "min_spd": 243,
+          "max_spd": 245,
+          "roster_grade": 6
+        },
+        {
+          "index": 2,
+          "hero": "Roschard the Tower",
+          "status": "missing",
+          "min_spd": 241,
+          "max_spd": 241,
+          "roster_grade": null
+        },
+        {
+          "index": 3,
+          "hero": "Roshcard the Tower",
+          "status": "missing",
+          "min_spd": 192,
+          "max_spd": 197,
+          "roster_grade": null
+        },
+        {
+          "index": 4,
+          "hero": "Rhazin Scarhide",
+          "status": "filled_6star",
+          "min_spd": 192,
+          "max_spd": 197,
+          "roster_grade": 6
+        },
+        {
+          "index": 5,
+          "hero": "Frozen Banshee",
+          "status": "filled_ascending",
+          "min_spd": 191,
+          "max_spd": 191,
+          "roster_grade": 5
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/fast-tower-skullcrusher-unkillable-copy/",
+      "sim_hash": "6af320c65b2fe28f8dfc963c60d85352241c0490",
+      "est_damage": 14449999,
+      "note": "need Roschard the Tower, Roshcard the Tower \u00b7 ascend Frozen Banshee (5\u2605)",
+      "status": "need-heroes",
+      "missing": 2,
+      "missing_heroes": [
+        "Roschard the Tower",
+        "Roshcard the Tower"
+      ]
+    },
+    {
+      "id": "single-43-advanced",
+      "name": "Single 4:3 Advanced",
+      "mechanic": "Speed",
+      "key_capability": "3 Key UNM",
+      "key_count": 3,
+      "heroes": [
+        "Sepulcher Sentinel",
+        "Counter-Attacker / Block Debuff Champion / DPS",
+        "Skullcrusher",
+        "Frozen Banshee",
+        "Bulwark"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Sepulcher Sentinel",
+          "status": "filled_6star",
+          "min_spd": 239,
+          "max_spd": 244,
+          "roster_grade": 6
+        },
+        {
+          "index": 2,
+          "hero": "Counter-Attacker / Block Debuff Champion / DPS",
+          "status": "missing",
+          "min_spd": 191,
+          "max_spd": 198,
+          "roster_grade": null
+        },
+        {
+          "index": 3,
+          "hero": "Skullcrusher",
+          "status": "filled_6star",
+          "min_spd": 172,
+          "max_spd": 185,
+          "roster_grade": 6
+        },
+        {
+          "index": 4,
+          "hero": "Frozen Banshee",
+          "status": "filled_ascending",
+          "min_spd": 172,
+          "max_spd": 177,
+          "roster_grade": 5
+        },
+        {
+          "index": 5,
+          "hero": "Bulwark",
+          "status": "missing",
+          "min_spd": 171,
+          "max_spd": 177,
+          "roster_grade": null
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/single-43-advanced/",
+      "sim_hash": "55f338ec8f3b8d14a59e838a4cb319faf2481e4c",
+      "est_damage": 14449999,
+      "note": "need Counter-Attacker / Block Debuff Champion / DPS, Bulwark \u00b7 ascend Frozen Banshee (5\u2605)",
+      "status": "need-heroes",
+      "missing": 2,
+      "missing_heroes": [
+        "Counter-Attacker / Block Debuff Champion / DPS",
+        "Bulwark"
+      ]
+    },
+    {
+      "id": "get-nekh-rekt",
+      "name": "Get Nekh-REKT",
+      "mechanic": "Speed",
+      "key_capability": "1 Key UNM",
+      "key_count": 1,
+      "heroes": [
+        "Krisk",
+        "Martyr",
+        "Ma'Shalled",
+        "Frozen Banshee",
+        "Nekhret"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Krisk",
+          "status": "missing",
+          "min_spd": 259,
+          "max_spd": 265,
+          "roster_grade": null
+        },
+        {
+          "index": 2,
+          "hero": "Martyr",
+          "status": "missing",
+          "min_spd": 230,
+          "max_spd": 238,
+          "roster_grade": null
+        },
+        {
+          "index": 3,
+          "hero": "Ma'Shalled",
+          "status": "filled_6star",
+          "min_spd": 221,
+          "max_spd": 221,
+          "roster_grade": 6
+        },
+        {
+          "index": 4,
+          "hero": "Frozen Banshee",
+          "status": "filled_ascending",
+          "min_spd": 190,
+          "max_spd": 190,
+          "roster_grade": 5
+        },
+        {
+          "index": 5,
+          "hero": "Nekhret",
+          "status": "missing",
+          "min_spd": 184,
+          "max_spd": 185,
+          "roster_grade": null
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/get-nekh-rekt/",
+      "sim_hash": "540b957cf4d06628f3e31e15b37ad45b0aea3900",
+      "est_damage": 30706249,
+      "note": "need Krisk, Martyr, Nekhret \u00b7 ascend Frozen Banshee (5\u2605)",
+      "status": "need-heroes",
+      "missing": 3,
+      "missing_heroes": [
+        "Krisk",
+        "Martyr",
+        "Nekhret"
+      ]
+    },
+    {
+      "id": "mashalled-white-whale",
+      "name": "Ma'shalled White Whale",
+      "mechanic": "Speed",
+      "key_capability": "1 Key UNM",
+      "key_count": 1,
+      "heroes": [
+        "Valkyrie",
+        "Blind Seer",
+        "Ma'Shalled",
+        "Iron Brago",
+        "Dracomorph"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Valkyrie",
+          "status": "missing",
+          "min_spd": 251,
+          "max_spd": 255,
+          "roster_grade": null
+        },
+        {
+          "index": 2,
+          "hero": "Blind Seer",
+          "status": "missing",
+          "min_spd": 230,
+          "max_spd": 251,
+          "roster_grade": null
+        },
+        {
+          "index": 3,
+          "hero": "Ma'Shalled",
+          "status": "filled_6star",
+          "min_spd": 238,
+          "max_spd": 241,
+          "roster_grade": 6
+        },
+        {
+          "index": 4,
+          "hero": "Iron Brago",
+          "status": "filled_6star",
+          "min_spd": 212,
+          "max_spd": 216,
+          "roster_grade": 6
+        },
+        {
+          "index": 5,
+          "hero": "Dracomorph",
+          "status": "missing",
+          "min_spd": 191,
+          "max_spd": 198,
+          "roster_grade": null
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/mashalled-white-whale/",
+      "sim_hash": "072a385d7b9996f0414b558ad5f0357ac16f70ba",
+      "est_damage": 30706249,
+      "note": "need Valkyrie, Blind Seer, Dracomorph",
+      "status": "need-heroes",
+      "missing": 3,
+      "missing_heroes": [
+        "Valkyrie",
+        "Blind Seer",
+        "Dracomorph"
+      ]
+    },
+    {
+      "id": "razzle-dazzle-survival",
+      "name": "Razzle Dazzle Survival",
+      "mechanic": "Speed",
+      "key_capability": "1 Key UNM",
+      "key_count": 1,
+      "heroes": [
+        "Razelvarg",
+        "Protection Block Damage Champion",
+        "Protection/Block Damage Champion",
+        "Toragi the Frog",
+        "Altan"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Razelvarg",
+          "status": "filled_6star",
+          "min_spd": 264,
+          "max_spd": 270,
+          "roster_grade": 6
+        },
+        {
+          "index": 2,
+          "hero": "Protection Block Damage Champion",
+          "status": "missing",
+          "min_spd": 250,
+          "max_spd": 252,
+          "roster_grade": null
+        },
+        {
+          "index": 3,
+          "hero": "Protection/Block Damage Champion",
+          "status": "missing",
+          "min_spd": 250,
+          "max_spd": 252,
+          "roster_grade": null
+        },
+        {
+          "index": 4,
+          "hero": "Toragi the Frog",
+          "status": "filled_6star",
+          "min_spd": 231,
+          "max_spd": 250,
+          "roster_grade": 6
+        },
+        {
+          "index": 5,
+          "hero": "Altan",
+          "status": "missing",
+          "min_spd": 187,
+          "max_spd": 190,
+          "roster_grade": null
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/razzle-dazzle-survival/",
+      "sim_hash": "80d3c21744b7f4c5b67ce1dca10b321101f429c9",
+      "est_damage": 30706249,
+      "note": "need Protection Block Damage Champion, Protection/Block Damage Champion, Altan",
+      "status": "need-heroes",
+      "missing": 3,
+      "missing_heroes": [
+        "Protection Block Damage Champion",
+        "Protection/Block Damage Champion",
+        "Altan"
+      ]
+    },
+    {
+      "id": "ultimate-kyoku-team",
+      "name": "Ultimate Kyoku Team",
+      "mechanic": "Speed",
+      "key_capability": "1 Key UNM",
+      "key_count": 1,
+      "heroes": [
+        "Godseeker Aniri",
+        "Buff Extender",
+        "Krisk",
+        "Sepulcher Sentinel",
+        "Kyoku"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Godseeker Aniri",
+          "status": "filled_ascending",
+          "min_spd": 269,
+          "max_spd": 275,
+          "roster_grade": 5
+        },
+        {
+          "index": 2,
+          "hero": "Buff Extender",
+          "status": "missing",
+          "min_spd": 244,
+          "max_spd": 256,
+          "roster_grade": null
+        },
+        {
+          "index": 3,
+          "hero": "Krisk",
+          "status": "missing",
+          "min_spd": 254,
+          "max_spd": 267,
+          "roster_grade": null
+        },
+        {
+          "index": 4,
+          "hero": "Sepulcher Sentinel",
+          "status": "filled_6star",
+          "min_spd": 220,
+          "max_spd": 229,
+          "roster_grade": 6
+        },
+        {
+          "index": 5,
+          "hero": "Kyoku",
+          "status": "missing",
+          "min_spd": 191,
+          "max_spd": 219,
+          "roster_grade": null
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/ultimate-kyoku-team/",
+      "sim_hash": "a30f7401e09f4d7eee773aa5f1bd65194377cbc5",
+      "est_damage": 30706249,
+      "note": "need Buff Extender, Krisk, Kyoku \u00b7 ascend Godseeker Aniri (5\u2605)",
+      "status": "need-heroes",
+      "missing": 3,
+      "missing_heroes": [
+        "Buff Extender",
+        "Krisk",
+        "Kyoku"
+      ]
+    },
+    {
+      "id": "white-whale-lydia",
+      "name": "White Whale Lydia",
+      "mechanic": "Speed",
+      "key_capability": "1 Key UNM",
+      "key_count": 1,
+      "heroes": [
+        "Lydia",
+        "Godseeker Aniri",
+        "Buff Extender",
+        "Underpriest Brogni",
+        "Toragi the Frog"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Lydia",
+          "status": "missing",
+          "min_spd": 268,
+          "max_spd": 274,
+          "roster_grade": null
+        },
+        {
+          "index": 2,
+          "hero": "Godseeker Aniri",
+          "status": "filled_ascending",
+          "min_spd": 254,
+          "max_spd": 256,
+          "roster_grade": 5
+        },
+        {
+          "index": 3,
+          "hero": "Buff Extender",
+          "status": "missing",
+          "min_spd": 254,
+          "max_spd": 256,
+          "roster_grade": null
+        },
+        {
+          "index": 4,
+          "hero": "Underpriest Brogni",
+          "status": "missing",
+          "min_spd": 224,
+          "max_spd": 230,
+          "roster_grade": null
+        },
+        {
+          "index": 5,
+          "hero": "Toragi the Frog",
+          "status": "filled_6star",
+          "min_spd": 217,
+          "max_spd": 218,
+          "roster_grade": 6
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/white-whale-lydia/",
+      "sim_hash": "03408360584312518396d45756be5c21b9ac788a",
+      "est_damage": 30706249,
+      "note": "need Lydia, Buff Extender, Underpriest Brogni \u00b7 ascend Godseeker Aniri (5\u2605)",
+      "status": "need-heroes",
+      "missing": 3,
+      "missing_heroes": [
+        "Lydia",
+        "Buff Extender",
+        "Underpriest Brogni"
+      ]
+    },
+    {
+      "id": "budget-heartkeeper-unkillable",
+      "name": "Budget HeartKeeper Unkillable",
+      "mechanic": "Unkillable",
+      "key_capability": "2 Key UNM",
+      "key_count": 2,
+      "heroes": [
+        "Emic",
+        "Dracomorph",
+        "Dracomorph",
+        "Painkeeper",
+        "Doompriest"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Emic",
+          "status": "missing",
+          "min_spd": 175,
+          "max_spd": 175,
+          "roster_grade": null
+        },
+        {
+          "index": 2,
+          "hero": "Dracomorph",
+          "status": "missing",
+          "min_spd": 179,
+          "max_spd": 179,
+          "roster_grade": null
+        },
+        {
+          "index": 3,
+          "hero": "Dracomorph",
+          "status": "missing",
+          "min_spd": 176,
+          "max_spd": 178,
+          "roster_grade": null
+        },
+        {
+          "index": 4,
+          "hero": "Painkeeper",
+          "status": "filled_ascending",
+          "min_spd": 175,
+          "max_spd": 177,
+          "roster_grade": 5
+        },
+        {
+          "index": 5,
+          "hero": "Doompriest",
+          "status": "filled_6star",
+          "min_spd": 121,
+          "max_spd": 121,
+          "roster_grade": 6
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/budget-heartkeeper-unkillable/",
+      "sim_hash": "35619889f9592ac0c2344fa13c7e43b53392f439",
+      "est_damage": 18423749,
+      "note": "need Emic, Dracomorph, Dracomorph \u00b7 ascend Painkeeper (5\u2605)",
+      "status": "need-heroes",
+      "missing": 3,
+      "missing_heroes": [
+        "Emic",
+        "Dracomorph",
+        "Dracomorph"
+      ]
+    },
+    {
+      "id": "cateater",
+      "name": "CatEater",
+      "mechanic": "Unkillable",
+      "key_capability": "2 Key UNM",
+      "key_count": 2,
+      "heroes": [
+        "Maneater",
+        "Seeker",
+        "Kreela Witch-Arm",
+        "Helicath",
+        "Dracomorph"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Maneater",
+          "status": "filled_6star",
+          "min_spd": 255,
+          "max_spd": 255,
+          "roster_grade": 6
+        },
+        {
+          "index": 2,
+          "hero": "Seeker",
+          "status": "filled_6star",
+          "min_spd": 218,
+          "max_spd": 218,
+          "roster_grade": 6
+        },
+        {
+          "index": 3,
+          "hero": "Kreela Witch-Arm",
+          "status": "missing",
+          "min_spd": 214,
+          "max_spd": 217,
+          "roster_grade": null
+        },
+        {
+          "index": 4,
+          "hero": "Helicath",
+          "status": "missing",
+          "min_spd": 192,
+          "max_spd": 199,
+          "roster_grade": null
+        },
+        {
+          "index": 5,
+          "hero": "Dracomorph",
+          "status": "missing",
+          "min_spd": 179,
+          "max_spd": 183,
+          "roster_grade": null
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/cateater/",
+      "sim_hash": "41257f31c4c8f18e321f264455c7ac512aa79e53",
+      "est_damage": 18423749,
+      "note": "need Kreela Witch-Arm, Helicath, Dracomorph",
+      "status": "need-heroes",
+      "missing": 3,
+      "missing_heroes": [
+        "Kreela Witch-Arm",
+        "Helicath",
+        "Dracomorph"
+      ]
+    },
+    {
+      "id": "heart-eater",
+      "name": "Heart Eater",
+      "mechanic": "Unkillable",
+      "key_capability": "2 Key UNM",
+      "key_count": 2,
+      "heroes": [
+        "Emic",
+        "Maneater",
+        "Kreela Witch-Arm",
+        "Fahrakin the Fat",
+        "Longbeard"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Emic",
+          "status": "missing",
+          "min_spd": 245,
+          "max_spd": 254,
+          "roster_grade": null
+        },
+        {
+          "index": 2,
+          "hero": "Maneater",
+          "status": "filled_6star",
+          "min_spd": 239,
+          "max_spd": 245,
+          "roster_grade": 6
+        },
+        {
+          "index": 3,
+          "hero": "Kreela Witch-Arm",
+          "status": "missing",
+          "min_spd": 170,
+          "max_spd": 178,
+          "roster_grade": null
+        },
+        {
+          "index": 4,
+          "hero": "Fahrakin the Fat",
+          "status": "filled_6star",
+          "min_spd": 170,
+          "max_spd": 178,
+          "roster_grade": 6
+        },
+        {
+          "index": 5,
+          "hero": "Longbeard",
+          "status": "missing",
+          "min_spd": 170,
+          "max_spd": 178,
+          "roster_grade": null
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/heart-eater/",
+      "sim_hash": "079fca47e3415d6670f632041881c3eb33850ff0",
+      "est_damage": 18423749,
+      "note": "need Emic, Kreela Witch-Arm, Longbeard",
+      "status": "need-heroes",
+      "missing": 3,
+      "missing_heroes": [
+        "Emic",
+        "Kreela Witch-Arm",
+        "Longbeard"
+      ]
+    },
+    {
+      "id": "krisk-slow-tune",
+      "name": "Krisk Slow Tune",
+      "mechanic": "Speed",
+      "key_capability": "2 Key UNM",
+      "key_count": 2,
+      "heroes": [
+        "Krisk the Ageless",
+        "Bulwark",
+        "Rhazin Scarhide",
+        "Frozen Banshee",
+        "Grizzled Jarl"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Krisk the Ageless",
+          "status": "missing",
+          "min_spd": 191,
+          "max_spd": 195,
+          "roster_grade": null
+        },
+        {
+          "index": 2,
+          "hero": "Bulwark",
+          "status": "missing",
+          "min_spd": 137,
+          "max_spd": 147,
+          "roster_grade": null
+        },
+        {
+          "index": 3,
+          "hero": "Rhazin Scarhide",
+          "status": "filled_6star",
+          "min_spd": 137,
+          "max_spd": 147,
+          "roster_grade": 6
+        },
+        {
+          "index": 4,
+          "hero": "Frozen Banshee",
+          "status": "filled_ascending",
+          "min_spd": 137,
+          "max_spd": 147,
+          "roster_grade": 5
+        },
+        {
+          "index": 5,
+          "hero": "Grizzled Jarl",
+          "status": "missing",
+          "min_spd": 137,
+          "max_spd": 147,
+          "roster_grade": null
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/krisk-slow-tune/",
+      "sim_hash": "25ad6569b894c1b1f5969514be168291e1655d0d",
+      "est_damage": 18423749,
+      "note": "need Krisk the Ageless, Bulwark, Grizzled Jarl \u00b7 ascend Frozen Banshee (5\u2605)",
+      "status": "need-heroes",
+      "missing": 3,
+      "missing_heroes": [
+        "Krisk the Ageless",
+        "Bulwark",
+        "Grizzled Jarl"
+      ]
+    },
+    {
+      "id": "slow-beating-trunkheart",
+      "name": "Slow Beating Trunkheart",
+      "mechanic": "Unkillable",
+      "key_capability": "2 Key UNM",
+      "key_count": 2,
+      "heroes": [
+        "Emic Trunkheart",
+        "Doompriest",
+        "Warboy",
+        "Unkillable",
+        "Sir Nicholas"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Emic Trunkheart",
+          "status": "missing",
+          "min_spd": 246,
+          "max_spd": 248,
+          "roster_grade": null
+        },
+        {
+          "index": 2,
+          "hero": "Doompriest",
+          "status": "filled_6star",
+          "min_spd": 187,
+          "max_spd": 188,
+          "roster_grade": 6
+        },
+        {
+          "index": 3,
+          "hero": "Warboy",
+          "status": "filled_ascending",
+          "min_spd": 172,
+          "max_spd": 178,
+          "roster_grade": 1
+        },
+        {
+          "index": 4,
+          "hero": "Unkillable",
+          "status": "missing",
+          "min_spd": 172,
+          "max_spd": 178,
+          "roster_grade": null
+        },
+        {
+          "index": 5,
+          "hero": "Sir Nicholas",
+          "status": "missing",
+          "min_spd": 172,
+          "max_spd": 177,
+          "roster_grade": null
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/slow-beating-trunkheart/",
+      "sim_hash": "18cc0a1ea9cbb6f47edcec035b957f6c71a4b226",
+      "est_damage": 18423749,
+      "note": "need Emic Trunkheart, Unkillable, Sir Nicholas \u00b7 ascend Warboy (1\u2605)",
+      "status": "need-heroes",
+      "missing": 3,
+      "missing_heroes": [
+        "Emic Trunkheart",
+        "Unkillable",
+        "Sir Nicholas"
+      ]
+    },
+    {
+      "id": "slow-hellcat-unkillable",
+      "name": "Slow Hellcat Unkillable",
+      "mechanic": "Unkillable",
+      "key_capability": "2 Key UNM",
+      "key_count": 2,
+      "heroes": [
+        "Helicath",
+        "Doompriest",
+        "Warboy",
+        "Bully",
+        "Marked"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Helicath",
+          "status": "missing",
+          "min_spd": 246,
+          "max_spd": 248,
+          "roster_grade": null
+        },
+        {
+          "index": 2,
+          "hero": "Doompriest",
+          "status": "filled_6star",
+          "min_spd": 186,
+          "max_spd": 188,
+          "roster_grade": 6
+        },
+        {
+          "index": 3,
+          "hero": "Warboy",
+          "status": "filled_ascending",
+          "min_spd": 175,
+          "max_spd": 179,
+          "roster_grade": 1
+        },
+        {
+          "index": 4,
+          "hero": "Bully",
+          "status": "missing",
+          "min_spd": 175,
+          "max_spd": 178,
+          "roster_grade": null
+        },
+        {
+          "index": 5,
+          "hero": "Marked",
+          "status": "missing",
+          "min_spd": 173,
+          "max_spd": 177,
+          "roster_grade": null
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/slow-hellcat-unkillable/",
+      "sim_hash": "25d297df0d13217aa0b1c3617a1826bd6dda8901",
+      "est_damage": 18423749,
+      "note": "need Helicath, Bully, Marked \u00b7 ascend Warboy (1\u2605)",
+      "status": "need-heroes",
+      "missing": 3,
+      "missing_heroes": [
+        "Helicath",
+        "Bully",
+        "Marked"
+      ]
+    },
+    {
+      "id": "santa-and-warcaster",
+      "name": "The North Pole",
+      "mechanic": "Unkillable",
+      "key_capability": "2 Key UNM",
+      "key_count": 2,
+      "heroes": [
+        "4 Turn UK ( 1 or 2 Turn Duration )",
+        "4 Turn UK ( 2 Turn Duration )",
+        "Warcaster",
+        "Sir Nicholas",
+        "Doompriest"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "4 Turn UK ( 1 or 2 Turn Duration )",
+          "status": "missing",
+          "min_spd": 254,
+          "max_spd": 263,
+          "roster_grade": null
+        },
+        {
+          "index": 2,
+          "hero": "4 Turn UK ( 2 Turn Duration )",
+          "status": "missing",
+          "min_spd": 251,
+          "max_spd": 262,
+          "roster_grade": null
+        },
+        {
+          "index": 3,
+          "hero": "Warcaster",
+          "status": "filled_ascending",
+          "min_spd": 200,
+          "max_spd": 204,
+          "roster_grade": 4
+        },
+        {
+          "index": 4,
+          "hero": "Sir Nicholas",
+          "status": "missing",
+          "min_spd": 187,
+          "max_spd": 189,
+          "roster_grade": null
+        },
+        {
+          "index": 5,
+          "hero": "Doompriest",
+          "status": "filled_6star",
+          "min_spd": 186,
+          "max_spd": 189,
+          "roster_grade": 6
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/santa-and-warcaster/",
+      "sim_hash": "dab136e18875c8fda6b035c262f8e93f301e1088",
+      "est_damage": 18423749,
+      "note": "need 4 Turn UK ( 1 or 2 Turn Duration ), 4 Turn UK ( 2 Turn Duration ), Sir Nicholas \u00b7 ascend Warcaster (4\u2605)",
+      "status": "need-heroes",
+      "missing": 3,
+      "missing_heroes": [
+        "4 Turn UK ( 1 or 2 Turn Duration )",
+        "4 Turn UK ( 2 Turn Duration )",
+        "Sir Nicholas"
+      ]
+    },
+    {
+      "id": "the-two-towers",
+      "name": "The Two Towers",
+      "mechanic": "Speed",
+      "key_capability": "2 Key UNM",
+      "key_count": 2,
+      "heroes": [
+        "Roschard the Tower",
+        "Tower",
+        "Roshcard the Tower",
+        "Doompriest",
+        "Fayne"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Roschard the Tower",
+          "status": "missing",
+          "min_spd": 215,
+          "max_spd": 218,
+          "roster_grade": null
+        },
+        {
+          "index": 2,
+          "hero": "Tower",
+          "status": "missing",
+          "min_spd": 215,
+          "max_spd": 217,
+          "roster_grade": null
+        },
+        {
+          "index": 3,
+          "hero": "Roshcard the Tower",
+          "status": "missing",
+          "min_spd": 182,
+          "max_spd": 188,
+          "roster_grade": null
+        },
+        {
+          "index": 4,
+          "hero": "Doompriest",
+          "status": "filled_6star",
+          "min_spd": 174,
+          "max_spd": 178,
+          "roster_grade": 6
+        },
+        {
+          "index": 5,
+          "hero": "Fayne",
+          "status": "filled_6star",
+          "min_spd": 174,
+          "max_spd": 178,
+          "roster_grade": 6
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/the-two-towers/",
+      "sim_hash": "4c1c2de9b691b7696366c12f81be5bfdd36614a1",
+      "est_damage": 18423749,
+      "note": "need Roschard the Tower, Tower, Roshcard the Tower",
+      "status": "need-heroes",
+      "missing": 3,
+      "missing_heroes": [
+        "Roschard the Tower",
+        "Tower",
+        "Roshcard the Tower"
+      ]
+    },
+    {
+      "id": "tower-and-valkyrie-unkillable-with-43-champ",
+      "name": "Tower and Valkyrie Unkillable with 43 Champ",
+      "mechanic": "Unkillable",
+      "key_capability": "2 Key UNM",
+      "key_count": 2,
+      "heroes": [
+        "4 Turn UK ( 2 Turn Duration )",
+        "Roshcard the Tower",
+        "Sepulcher Sentinel",
+        "Rhazin Scarhide",
+        "Valkyrie"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "4 Turn UK ( 2 Turn Duration )",
+          "status": "missing",
+          "min_spd": 240,
+          "max_spd": 244,
+          "roster_grade": null
+        },
+        {
+          "index": 2,
+          "hero": "Roshcard the Tower",
+          "status": "missing",
+          "min_spd": 225,
+          "max_spd": 238,
+          "roster_grade": null
+        },
+        {
+          "index": 3,
+          "hero": "Sepulcher Sentinel",
+          "status": "filled_6star",
+          "min_spd": 172,
+          "max_spd": 178,
+          "roster_grade": 6
+        },
+        {
+          "index": 4,
+          "hero": "Rhazin Scarhide",
+          "status": "filled_6star",
+          "min_spd": 172,
+          "max_spd": 178,
+          "roster_grade": 6
+        },
+        {
+          "index": 5,
+          "hero": "Valkyrie",
+          "status": "missing",
+          "min_spd": 171,
+          "max_spd": 171,
+          "roster_grade": null
+        }
+      ],
+      "affinity": "Void Only",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/tower-and-valkyrie-unkillable-with-43-champ/",
+      "sim_hash": "eafb0c01d9a5266eadac54167f3542a415cba8d3",
+      "est_damage": 17502562,
+      "note": "need 4 Turn UK ( 2 Turn Duration ), Roshcard the Tower, Valkyrie",
+      "status": "need-heroes",
+      "missing": 3,
+      "missing_heroes": [
+        "4 Turn UK ( 2 Turn Duration )",
+        "Roshcard the Tower",
+        "Valkyrie"
+      ]
+    },
+    {
+      "id": "warmbat",
+      "name": "WarMBat",
+      "mechanic": "Unkillable",
+      "key_capability": "2 Key UNM",
+      "key_count": 2,
+      "heroes": [
+        "Maneater",
+        "Seeker",
+        "Kreela Witch-Arm",
+        "4 Turn Cooldown Unkillable",
+        "Dracomorph"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Maneater",
+          "status": "filled_6star",
+          "min_spd": 255,
+          "max_spd": 255,
+          "roster_grade": 6
+        },
+        {
+          "index": 2,
+          "hero": "Seeker",
+          "status": "filled_6star",
+          "min_spd": 218,
+          "max_spd": 218,
+          "roster_grade": 6
+        },
+        {
+          "index": 3,
+          "hero": "Kreela Witch-Arm",
+          "status": "missing",
+          "min_spd": 214,
+          "max_spd": 217,
+          "roster_grade": null
+        },
+        {
+          "index": 4,
+          "hero": "4 Turn Cooldown Unkillable",
+          "status": "missing",
+          "min_spd": 192,
+          "max_spd": 199,
+          "roster_grade": null
+        },
+        {
+          "index": 5,
+          "hero": "Dracomorph",
+          "status": "missing",
+          "min_spd": 179,
+          "max_spd": 183,
+          "roster_grade": null
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/warmbat/",
+      "sim_hash": "41257f31c4c8f18e321f264455c7ac512aa79e53",
+      "est_damage": 18423749,
+      "note": "need Kreela Witch-Arm, 4 Turn Cooldown Unkillable, Dracomorph",
+      "status": "need-heroes",
+      "missing": 3,
+      "missing_heroes": [
+        "Kreela Witch-Arm",
+        "4 Turn Cooldown Unkillable",
+        "Dracomorph"
+      ]
+    },
+    {
+      "id": "heiress-3x-43-champs",
+      "name": "Heiress 3x 43 Champs",
+      "mechanic": "Speed",
+      "key_capability": "3 Key UNM",
+      "key_count": 3,
+      "heroes": [
+        "Sepulcher Sentinel",
+        "165",
+        "209",
+        "Heiress",
+        "221"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Sepulcher Sentinel",
+          "status": "filled_6star",
+          "min_spd": 240,
+          "max_spd": 246,
+          "roster_grade": 6
+        },
+        {
+          "index": 2,
+          "hero": "165",
+          "status": "missing",
+          "min_spd": 221,
+          "max_spd": 238,
+          "roster_grade": null
+        },
+        {
+          "index": 3,
+          "hero": "209",
+          "status": "missing",
+          "min_spd": 209,
+          "max_spd": 211,
+          "roster_grade": null
+        },
+        {
+          "index": 4,
+          "hero": "Heiress",
+          "status": "filled_6star",
+          "min_spd": 166,
+          "max_spd": 166,
+          "roster_grade": 6
+        },
+        {
+          "index": 5,
+          "hero": "221",
+          "status": "missing",
+          "min_spd": 165,
+          "max_spd": 165,
+          "roster_grade": null
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/heiress-3x-43-champs/",
+      "sim_hash": "2f6f248c3066f2584e92f74e57b3807019b730c1",
+      "est_damage": 12282499,
+      "note": "need 165, 209, 221",
+      "status": "need-heroes",
+      "missing": 3,
+      "missing_heroes": [
+        "165",
+        "209",
+        "221"
+      ]
+    },
+    {
+      "id": "pavos-krisk-and-lydia",
+      "name": "A Girl and Her Turtle",
+      "mechanic": "Speed",
+      "key_capability": "1 Key UNM",
+      "key_count": 1,
+      "heroes": [
+        "Brogni",
+        "Lydia",
+        "Krisk",
+        "Valkyrie",
+        "Iron Brago"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Brogni",
+          "status": "missing",
+          "min_spd": 269,
+          "max_spd": 271,
+          "roster_grade": null
+        },
+        {
+          "index": 2,
+          "hero": "Lydia",
+          "status": "missing",
+          "min_spd": 268,
+          "max_spd": 271,
+          "roster_grade": null
+        },
+        {
+          "index": 3,
+          "hero": "Krisk",
+          "status": "missing",
+          "min_spd": 238,
+          "max_spd": 261,
+          "roster_grade": null
+        },
+        {
+          "index": 4,
+          "hero": "Valkyrie",
+          "status": "missing",
+          "min_spd": 199,
+          "max_spd": 219,
+          "roster_grade": null
+        },
+        {
+          "index": 5,
+          "hero": "Iron Brago",
+          "status": "filled_6star",
+          "min_spd": 198,
+          "max_spd": 218,
+          "roster_grade": 6
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/pavos-krisk-and-lydia/",
+      "sim_hash": "242361d7075fa0896077aca3e502018f7144c1f6",
+      "est_damage": 26100312,
+      "note": "need Brogni, Lydia, Krisk, Valkyrie",
+      "status": "need-heroes",
+      "missing": 4,
+      "missing_heroes": [
+        "Brogni",
+        "Lydia",
+        "Krisk",
+        "Valkyrie"
+      ]
+    },
+    {
+      "id": "razzle-dazzle-unkillable",
+      "name": "Razzle Dazzle Unkillable",
+      "mechanic": "Unkillable",
+      "key_capability": "1 Key UNM",
+      "key_count": 1,
+      "heroes": [
+        "Razelvarg",
+        "Unkillable/Block Damage Champion",
+        "Unkillable/Block Damage Champion",
+        "Roshcard the Tower",
+        "Helicath"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Razelvarg",
+          "status": "filled_6star",
+          "min_spd": 264,
+          "max_spd": 270,
+          "roster_grade": 6
+        },
+        {
+          "index": 2,
+          "hero": "Unkillable/Block Damage Champion",
+          "status": "missing",
+          "min_spd": 250,
+          "max_spd": 252,
+          "roster_grade": null
+        },
+        {
+          "index": 3,
+          "hero": "Unkillable/Block Damage Champion",
+          "status": "missing",
+          "min_spd": 250,
+          "max_spd": 252,
+          "roster_grade": null
+        },
+        {
+          "index": 4,
+          "hero": "Roshcard the Tower",
+          "status": "missing",
+          "min_spd": 231,
+          "max_spd": 250,
+          "roster_grade": null
+        },
+        {
+          "index": 5,
+          "hero": "Helicath",
+          "status": "missing",
+          "min_spd": 187,
+          "max_spd": 190,
+          "roster_grade": null
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/razzle-dazzle-unkillable/",
+      "sim_hash": "482e7d72486978ebef707f26369598ef972bf04b",
+      "est_damage": 26100312,
+      "note": "need Unkillable/Block Damage Champion, Unkillable/Block Damage Champion, Roshcard the Tower, Helicath",
+      "status": "need-heroes",
+      "missing": 4,
+      "missing_heroes": [
+        "Unkillable/Block Damage Champion",
+        "Unkillable/Block Damage Champion",
+        "Roshcard the Tower",
+        "Helicath"
+      ]
+    },
+    {
+      "id": "santas-ho-ho-ho-mies",
+      "name": "Santa's Ho-Ho-Ho-mies",
+      "mechanic": "Unkillable",
+      "key_capability": "1 Key UNM",
+      "key_count": 1,
+      "heroes": [
+        "Buff Extender",
+        "Lady Noelle",
+        "Godseeker Aniri",
+        "Sir Nicholas",
+        "Underpriest Brogni"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Buff Extender",
+          "status": "missing",
+          "min_spd": 264,
+          "max_spd": 284,
+          "roster_grade": null
+        },
+        {
+          "index": 2,
+          "hero": "Lady Noelle",
+          "status": "missing",
+          "min_spd": 263,
+          "max_spd": 274,
+          "roster_grade": null
+        },
+        {
+          "index": 3,
+          "hero": "Godseeker Aniri",
+          "status": "filled_ascending",
+          "min_spd": 243,
+          "max_spd": 246,
+          "roster_grade": 5
+        },
+        {
+          "index": 4,
+          "hero": "Sir Nicholas",
+          "status": "missing",
+          "min_spd": 175,
+          "max_spd": 178,
+          "roster_grade": null
+        },
+        {
+          "index": 5,
+          "hero": "Underpriest Brogni",
+          "status": "missing",
+          "min_spd": 175,
+          "max_spd": 178,
+          "roster_grade": null
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/santas-ho-ho-ho-mies/",
+      "sim_hash": "56915015b3b53798d1cb71fff65cccbc1fafcdff",
+      "est_damage": 26100312,
+      "note": "need Buff Extender, Lady Noelle, Sir Nicholas, Underpriest Brogni \u00b7 ascend Godseeker Aniri (5\u2605)",
+      "status": "need-heroes",
+      "missing": 4,
+      "missing_heroes": [
+        "Buff Extender",
+        "Lady Noelle",
+        "Sir Nicholas",
+        "Underpriest Brogni"
+      ]
+    },
+    {
+      "id": "mantower-fast",
+      "name": "ManTower Fast",
+      "mechanic": "Unkillable",
+      "key_capability": "2 Key UNM",
+      "key_count": 2,
+      "heroes": [
+        "Maneater",
+        "4 Turn UK ( 2 Turn Duration )",
+        "Roshcard the Tower",
+        "Dracomorph",
+        "Kreela Witch-Arm"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Maneater",
+          "status": "filled_6star",
+          "min_spd": 287,
+          "max_spd": 288,
+          "roster_grade": 6
+        },
+        {
+          "index": 2,
+          "hero": "4 Turn UK ( 2 Turn Duration )",
+          "status": "missing",
+          "min_spd": 239,
+          "max_spd": 239,
+          "roster_grade": null
+        },
+        {
+          "index": 3,
+          "hero": "Roshcard the Tower",
+          "status": "missing",
+          "min_spd": 221,
+          "max_spd": 221,
+          "roster_grade": null
+        },
+        {
+          "index": 4,
+          "hero": "Dracomorph",
+          "status": "missing",
+          "min_spd": 181,
+          "max_spd": 181,
+          "roster_grade": null
+        },
+        {
+          "index": 5,
+          "hero": "Kreela Witch-Arm",
+          "status": "missing",
+          "min_spd": 171,
+          "max_spd": 171,
+          "roster_grade": null
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/mantower-fast/",
+      "sim_hash": "9d9c3d32755672fc95ca8580c0dd0a27f651c2c5",
+      "est_damage": 15660187,
+      "note": "need 4 Turn UK ( 2 Turn Duration ), Roshcard the Tower, Dracomorph, Kreela Witch-Arm",
+      "status": "need-heroes",
+      "missing": 4,
+      "missing_heroes": [
+        "4 Turn UK ( 2 Turn Duration )",
+        "Roshcard the Tower",
+        "Dracomorph",
+        "Kreela Witch-Arm"
+      ]
+    },
+    {
+      "id": "ninjahelicath-v2",
+      "name": "NinjaHelicath v2",
+      "mechanic": "Unkillable",
+      "key_capability": "2 Key UNM",
+      "key_count": 2,
+      "heroes": [
+        "Helicath",
+        "Ninja",
+        "Counter Attack",
+        "Ally Attack",
+        "Tatura Rimehide"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Helicath",
+          "status": "missing",
+          "min_spd": 253,
+          "max_spd": 255,
+          "roster_grade": null
+        },
+        {
+          "index": 2,
+          "hero": "Ninja",
+          "status": "filled_6star",
+          "min_spd": 171,
+          "max_spd": 171,
+          "roster_grade": 6
+        },
+        {
+          "index": 3,
+          "hero": "Counter Attack",
+          "status": "missing",
+          "min_spd": 174,
+          "max_spd": 177,
+          "roster_grade": null
+        },
+        {
+          "index": 4,
+          "hero": "Ally Attack",
+          "status": "missing",
+          "min_spd": 205,
+          "max_spd": 209,
+          "roster_grade": null
+        },
+        {
+          "index": 5,
+          "hero": "Tatura Rimehide",
+          "status": "missing",
+          "min_spd": 170,
+          "max_spd": 171,
+          "roster_grade": null
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/ninjahelicath-v2/",
+      "sim_hash": "e86c246e6946fd5eda897fd02e173e2525464273",
+      "est_damage": 15660187,
+      "note": "need Helicath, Counter Attack, Ally Attack, Tatura Rimehide",
+      "status": "need-heroes",
+      "missing": 4,
+      "missing_heroes": [
+        "Helicath",
+        "Counter Attack",
+        "Ally Attack",
+        "Tatura Rimehide"
+      ]
+    },
+    {
+      "id": "slow-tuned-man-tower-unkillable",
+      "name": "Slow Tuned Man Tower Unkillable",
+      "mechanic": "Unkillable",
+      "key_capability": "2 Key UNM",
+      "key_count": 2,
+      "heroes": [
+        "Maneater",
+        "4 Turn UK",
+        "Roshcard the Tower",
+        "Dracomorph",
+        "Septimus"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "Maneater",
+          "status": "filled_6star",
+          "min_spd": 255,
+          "max_spd": 257,
+          "roster_grade": 6
+        },
+        {
+          "index": 2,
+          "hero": "4 Turn UK",
+          "status": "missing",
+          "min_spd": 214,
+          "max_spd": 217,
+          "roster_grade": null
+        },
+        {
+          "index": 3,
+          "hero": "Roshcard the Tower",
+          "status": "missing",
+          "min_spd": 205,
+          "max_spd": 209,
+          "roster_grade": null
+        },
+        {
+          "index": 4,
+          "hero": "Dracomorph",
+          "status": "missing",
+          "min_spd": 157,
+          "max_spd": 158,
+          "roster_grade": null
+        },
+        {
+          "index": 5,
+          "hero": "Septimus",
+          "status": "missing",
+          "min_spd": 130,
+          "max_spd": 130,
+          "roster_grade": null
+        }
+      ],
+      "affinity": "All Affinities",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/slow-tuned-man-tower-unkillable/",
+      "sim_hash": "fc7a77280f4da78383152b44a30041ce2c364447",
+      "est_damage": 15660187,
+      "note": "need 4 Turn UK, Roshcard the Tower, Dracomorph, Septimus",
+      "status": "need-heroes",
+      "missing": 4,
+      "missing_heroes": [
+        "4 Turn UK",
+        "Roshcard the Tower",
+        "Dracomorph",
+        "Septimus"
+      ]
+    },
+    {
+      "id": "tower-and-warcaster-with-43-champ",
+      "name": "The North Pole with 4:3 Champ",
+      "mechanic": "Unkillable",
+      "key_capability": "2 Key UNM",
+      "key_count": 2,
+      "heroes": [
+        "4 Turn UK ( 1 or 2 Turn Duration )",
+        "4 Turn UK ( 2 Turn Duration )",
+        "Warcaster",
+        "Roshcard the Tower",
+        "Kreela Witch-Arm"
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "hero": "4 Turn UK ( 1 or 2 Turn Duration )",
+          "status": "missing",
+          "min_spd": 240,
+          "max_spd": 244,
+          "roster_grade": null
+        },
+        {
+          "index": 2,
+          "hero": "4 Turn UK ( 2 Turn Duration )",
+          "status": "missing",
+          "min_spd": 239,
+          "max_spd": 244,
+          "roster_grade": null
+        },
+        {
+          "index": 3,
+          "hero": "Warcaster",
+          "status": "filled_ascending",
+          "min_spd": 220,
+          "max_spd": 238,
+          "roster_grade": 4
+        },
+        {
+          "index": 4,
+          "hero": "Roshcard the Tower",
+          "status": "missing",
+          "min_spd": 171,
+          "max_spd": 189,
+          "roster_grade": null
+        },
+        {
+          "index": 5,
+          "hero": "Kreela Witch-Arm",
+          "status": "missing",
+          "min_spd": 171,
+          "max_spd": 178,
+          "roster_grade": null
+        }
+      ],
+      "affinity": "Void Only",
+      "dwj_url": "https://deadwoodjedi.com/speed-tunes/tower-and-warcaster-with-43-champ/",
+      "sim_hash": "eb97d9e3de7a99ecfe85e0ce069ea2f855fb098a",
+      "est_damage": 14877178,
+      "note": "need 4 Turn UK ( 1 or 2 Turn Duration ), 4 Turn UK ( 2 Turn Duration ), Roshcard the Tower, Kreela Witch-Arm \u00b7 ascend Warcaster (4\u2605)",
+      "status": "need-heroes",
+      "missing": 4,
+      "missing_heroes": [
+        "4 Turn UK ( 1 or 2 Turn Duration )",
+        "4 Turn UK ( 2 Turn Duration )",
+        "Roshcard the Tower",
+        "Kreela Witch-Arm"
+      ]
+    }
+  ],
+  "counts": {
+    "ready": 25,
+    "need_heroes": 78
+  }
+}
