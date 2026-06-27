@@ -135,21 +135,26 @@ def _team_names(rec: dict, last_team: list, default_dps: str) -> list | None:
 
 
 def build(root: Path | None = None, force: bool = False,
-          with_sim: bool = False) -> dict:
+          with_sim: bool = False, with_solve: bool = False) -> dict:
     """Assemble the recommendation lists, using the cache when the roster/vault
     is unchanged. Returns {generated_at, hash, ready:[...], need_heroes:[...]}.
 
-    with_sim=True runs cb_sim (current gear) ONLY on the templates whose gear
-    already fits the tune (status 'ready') — a small set — to attach projected
-    damage, chest tier and T50 survival, and ranks ready teams by damage. The
-    heavy 'regear to hit the tune' fit stays an on-demand action, not a batch."""
+    with_sim=True runs cb_sim (current gear) on the gear-fits templates ('ready')
+    to attach projected damage + T50 survival, ranking ready teams by damage.
+    with_solve=True ALSO auto-solves gear for every lacking-gear template (shared
+    Optimizer, so the whole batch is one heavy setup) and attaches the verdict as
+    rec['solve'] — so the cards are pre-populated with no per-click waits. Both
+    are background work; the cache (has_sim/has_solve flags) is read instantly."""
     root = _root(root)
     cache = root / "data" / CACHE_NAME
     cur_hash = _roster_hash(root)
     if not force and cache.exists():
         try:
             cached = json.loads(cache.read_text())
-            if cached.get("hash") == cur_hash and (cached.get("has_sim") or not with_sim):
+            fresh = cached.get("hash") == cur_hash
+            have = (cached.get("has_sim") or not with_sim) and \
+                   (cached.get("has_solve") or not with_solve)
+            if fresh and have:
                 return cached
         except Exception:
             pass
@@ -237,6 +242,20 @@ def build(root: Path | None = None, force: bool = False,
                     r["sim_team"] = names
                     has_sim = True
 
+    # Auto-solve gear for every lacking-gear team (background): one shared
+    # Optimizer for the whole batch, so the heavy vault setup happens once.
+    has_solve = False
+    if with_solve:
+        lacking = [r for r in ready if r["status"] == "lacking-gear"]
+        if lacking:
+            try:
+                ctx = _SolveCtx(root)
+                for r in lacking:
+                    r["solve"] = _solve_rec(r, ctx)
+                has_solve = True
+            except Exception:
+                pass
+
     # Ready first (gear fits), ranked by: holds-T50 (DWJ, reliable) -> fewest
     # keys -> sim-damage tiebreak. Lacking-gear teams sink below, by fewest keys.
     def _ready_key(r):
@@ -251,6 +270,7 @@ def build(root: Path | None = None, force: bool = False,
         "generated_at": None,        # stamped by the caller / CLI (no clock in lib)
         "hash": cur_hash,
         "has_sim": has_sim,
+        "has_solve": has_solve,
         "today_element": today_el,
         "ready": ready,
         "need_heroes": need,
@@ -259,40 +279,45 @@ def build(root: Path | None = None, force: bool = False,
     return result
 
 
-def solve_gear(template_id: str, root: Path | None = None, anneal: int = 3) -> dict:
-    """On-demand: can the user REGEAR to hit this template's speed tune from their
-    vault? Fits each hero with gear_target_optimizer targeting SPD only (the
-    binding constraint) — assigning hardest-speed heroes first and removing
-    claimed artifacts (one Optimizer, contention via exclude_ids) so feasibility
-    respects sharing. SPD-only keeps it fast (no damage-mode set sweep). The
-    reliable outcome when feasible is the tune's DWJ-parity survival + rated keys
-    — NOT cb_sim, which under-survives, so no fitted-gear damage number is shown."""
-    root = _root(root)
-    if str(root / "tools") not in sys.path:
-        sys.path.insert(0, str(root / "tools"))
-    res = build(root)
-    rec = next((r for r in res.get("ready", []) if r["id"] == template_id), None)
-    if not rec:
-        return {"error": "template not found", "id": template_id}
-    import potential_teams as pt
-    import gear_target_optimizer as gto
-    from cb_optimizer import SPD
+class _SolveCtx:
+    """Shared, reusable context for a batch of gear solves: one Optimizer over
+    the whole vault, the DPS-fill team, and a lazy DWJ loader — so auto-solving
+    every lacking-gear team builds the heavy bits ONCE, not per team."""
+    def __init__(self, root):
+        import potential_teams as pt
+        import gear_target_optimizer as gto
+        self.root = root
+        self.pt = pt
+        self.gto = gto
+        arts, heroes, account = gto.load_data()
+        self.opt = gto.Optimizer(arts, heroes, account)
+        self.last_team = pt.last_cb_team_names(root)
+        self.default_dps = getattr(pt, "DEFAULT_DPS_HERO", "Cardiel")
+        self._dwj = None
 
-    last_team = pt.last_cb_team_names(root)
-    default_dps = getattr(pt, "DEFAULT_DPS_HERO", "Cardiel")
-    names = _team_names(rec, last_team, default_dps)
+    def dwj(self):
+        if self._dwj is None:
+            from dwj_tunes import load_all as _l
+            self._dwj = _l()
+        return self._dwj
+
+
+def _solve_rec(rec: dict, ctx: "_SolveCtx", anneal: int = 3) -> dict:
+    """Gear-solve one template record using a shared context. Targets SPD only
+    (the binding constraint) — fast, no damage-mode set sweep — fits hardest-
+    speed heroes first and removes claimed artifacts (contention). Verdict:
+    regear-feasible + which hero is short. DWJ-parity survival when feasible."""
+    from cb_optimizer import SPD
+    gto, pt = ctx.gto, ctx.pt
+    names = _team_names(rec, ctx.last_team, ctx.default_dps)
     if not names:
-        return {"error": "could not resolve team", "id": template_id}
+        return {"id": rec.get("id"), "error": "could not resolve team"}
     tgt_by_name = {}
     for s, nm in zip(rec.get("slots", []), names):
         if s.get("min_spd"):
             tgt_by_name[nm] = (int(s["min_spd"]), int(s.get("max_spd") or s["min_spd"]))
-
-    arts, heroes, account = gto.load_data()
-    opt = gto.Optimizer(arts, heroes, account)   # built ONCE; contention via exclude_ids
     by_idx: dict = {}
     used: set = set()
-    # Hardest speed target first so the scarce high-SPD pieces go where needed.
     order = sorted(range(len(names)), key=lambda i: -(tgt_by_name.get(names[i], (0, 0))[0]))
     for i in order:
         nm = names[i]
@@ -301,7 +326,7 @@ def solve_gear(template_id: str, root: Path | None = None, anneal: int = 3) -> d
         maxes = {SPD: tgt[1]} if tgt else {}
         targets = gto.build_targets(mins, maxes, {}, None)   # SPD-only: fast feasibility
         try:
-            r = opt.optimize(nm, targets, anneal=anneal, exclude_ids=used)
+            r = ctx.opt.optimize(nm, targets, anneal=anneal, exclude_ids=used)
         except Exception as e:
             by_idx[i] = {"hero": nm, "error": str(e), "ok": False}
             continue
@@ -317,28 +342,31 @@ def solve_gear(template_id: str, root: Path | None = None, anneal: int = 3) -> d
 
     per_hero = [by_idx.get(i, {"hero": names[i], "ok": False}) for i in range(len(names))]
     feasible = all(h.get("ok") for h in per_hero)
-    out = {"id": template_id, "name": rec["name"], "feasible": feasible,
+    out = {"id": rec.get("id"), "name": rec.get("name"), "feasible": feasible,
            "per_hero": per_hero, "key_capability": rec.get("key_capability")}
-
-    # Reliable outcome when feasible: the tune's DWJ-parity survival (the
-    # 100%-matching scheduler) — NOT cb_sim, which under-survives. Hitting the
-    # speeds means the tune behaves as DWJ rates it.
     if feasible and rec.get("sim_hash"):
         try:
-            _box = {"d": None}
-
-            def _dwj():
-                if _box["d"] is None:
-                    from dwj_tunes import load_all as _l
-                    _box["d"] = _l()
-                return _box["d"]
-            par = pt.parity_survival(rec["sim_hash"], _dwj, root=root)
+            par = pt.parity_survival(rec["sim_hash"], ctx.dwj, root=ctx.root)
             if par:
                 out["holds_t50"] = bool(par.get("survived"))
                 out["dwj_boss_turns"] = int(par.get("boss_turns") or 0)
         except Exception:
             pass
     return out
+
+
+def solve_gear(template_id: str, root: Path | None = None, anneal: int = 3) -> dict:
+    """On-demand single-team gear solve (the /api/cb-solve-gear path). Builds a
+    one-off context and delegates to _solve_rec; batch auto-solve reuses a shared
+    context (see build(with_solve=True))."""
+    root = _root(root)
+    if str(root / "tools") not in sys.path:
+        sys.path.insert(0, str(root / "tools"))
+    res = build(root)
+    rec = next((r for r in res.get("ready", []) if r["id"] == template_id), None)
+    if not rec:
+        return {"error": "template not found", "id": template_id}
+    return _solve_rec(rec, _SolveCtx(root), anneal=anneal)
 
 
 def _write_cache(root: Path, result: dict) -> Path:
@@ -355,6 +383,8 @@ def _main() -> int:
     sub = ap.add_subparsers(dest="cmd")
     b = sub.add_parser("build", help="(re)build the recommendation cache")
     b.add_argument("--force", action="store_true", help="ignore the cache")
+    b.add_argument("--no-sim", action="store_true", help="skip cb_sim damage pass")
+    b.add_argument("--no-solve", action="store_true", help="skip gear auto-solve pass")
     li = sub.add_parser("list", help="print recommendations")
     li.add_argument("--tab", choices=["ready", "need"], default="ready")
     sg = sub.add_parser("solve", help="solve gear for one template (can you regear?)")
@@ -363,13 +393,16 @@ def _main() -> int:
     root = _root(None)
 
     if args.cmd == "build" or args.cmd is None:
-        res = build(root, force=True, with_sim=not getattr(args, "no_sim", False))
+        res = build(root, force=True,
+                    with_sim=not getattr(args, "no_sim", False),
+                    with_solve=not getattr(args, "no_solve", False))
         if "error" in res:
             print("ERROR:", res["error"]); return 1
         p = _write_cache(root, res)
         print(f"built: {res['counts']['ready']} ready, "
               f"{res['counts']['need_heroes']} need-heroes "
-              f"(sim={'yes' if res.get('has_sim') else 'no'}) -> {p}")
+              f"(sim={'yes' if res.get('has_sim') else 'no'}, "
+              f"solve={'yes' if res.get('has_solve') else 'no'}) -> {p}")
         return 0
     if args.cmd == "list":
         res = build(root)

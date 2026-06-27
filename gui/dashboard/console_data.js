@@ -332,7 +332,10 @@
           : '<span style="color:#6f6555;">' + (r.key_capability || "") + '</span>';
         var solveBlock = "";
         if (state.tab === "ready" && r.status === "lacking-gear") {
-          if (state.solved[r.id]) solveBlock = renderSolve(state.solved[r.id]);
+          // Prefer a fresh manual solve, else the background-built verdict (r.solve),
+          // else offer the manual button (cache not warmed yet).
+          var sv = state.solved[r.id] || r.solve;
+          if (sv) solveBlock = renderSolve(sv);
           else solveBlock = '<div style="margin-top:7px;"><button data-solve="' + r.id + '" style="font-family:' + mono + ';font-size:9px;color:#d8a657;background:transparent;border:1px solid #6e4f24;border-radius:3px;padding:5px 10px;cursor:pointer;">' + (state.solving[r.id] ? "Solving… (~20s)" : "Solve gear → can I regear?") + '</button></div>';
         }
         return '<div data-rid="' + r.id + '" style="background:#1a150e;border:1px solid #2c241a;border-left:2px solid ' + mechColor(r.mechanic) + ';border-radius:4px;padding:9px 11px;margin-bottom:7px;cursor:pointer;">' +
