@@ -3455,11 +3455,37 @@ namespace RaidAutomation
                 object tgt = Prop(sc, "Target");
                 if (prod != null) prodId = IntProp(prod, "HeroId");
                 if (tgt != null) tgtId = IntProp(tgt, "HeroId");
+                // FULL-PRECISION stamina (TM) at cast time, for the caster and the
+                // boss — to measure Syphon's self-fill (the ~8% Maneater TM gap).
+                // Stamina @ BattleHero+0x80 (Fixed 32.32) as a double. -1 if unread.
+                double casterTm = -1, bossTm = -1;
+                try {
+                    var stE = Prop(__instance, "State");
+                    if (stE != null) {
+                        foreach (var tg in new[] { "PlayerTeam", "EnemyTeam" }) {
+                            var team = Prop(stE, tg); if (team == null) continue;
+                            var heroes = Prop(team, "HeroesWithGuardian") ?? Prop(team, "Heroes");
+                            if (heroes == null) continue;
+                            int cnt = IntProp(heroes, "Count");
+                            var idx = heroes.GetType().GetProperty("Item");
+                            for (int i = 0; i < cnt && i < 10; i++) {
+                                object h = null; try { h = idx?.GetValue(heroes, new object[] { i }); } catch {}
+                                if (h == null) continue;
+                                IntPtr hp = IL2CPPHandleOf(h); if ((long)hp <= 0x10000) continue;
+                                double tm = Marshal.ReadInt64(hp + 0x80) / 4294967296.0;
+                                if (tg == "EnemyTeam") { bossTm = tm; }
+                                else if (IntProp(h, "Id") == prodId) { casterTm = tm; }
+                            }
+                        }
+                    }
+                } catch {}
                 string entry = "{\"kind\":\"cast\",\"tick\":" + _battleCommandCount
                               + ",\"bc_type\":" + bcType
                               + ",\"producer_id\":" + prodId
                               + ",\"target_id\":" + tgtId
                               + ",\"skill_type_id\":" + skillId
+                              + ",\"caster_tm\":" + casterTm.ToString(System.Globalization.CultureInfo.InvariantCulture)
+                              + ",\"boss_tm\":" + bossTm.ToString(System.Globalization.CultureInfo.InvariantCulture)
                               + ",\"source\":" + source + "}";
                 lock (_tickLog) { if (_tickLog.Count < 20000) _tickLog.Add(entry); }
             }
