@@ -1,9 +1,10 @@
 {
-  "generated_at": 1782582381,
+  "generated_at": 1782587049,
   "hash": "1538e64c9598e72a",
   "has_sim": true,
   "has_solve": true,
-  "today_element": "magic",
+  "today_element": "spirit",
+  "today_element_source": "live",
   "ready": [
     {
       "id": "myth-eater",
@@ -69,7 +70,7 @@
       "gear_gaps": [],
       "holds_t50": true,
       "dwj_boss_turns": 50,
-      "sim_damage": 15737210,
+      "sim_damage": 15122418,
       "sim_boss_turns": 27,
       "sim_team": [
         "Maneater",
