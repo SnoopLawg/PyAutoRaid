@@ -299,19 +299,28 @@ class DebuffBar:
     def tick(self) -> List[DebuffSlot]:
         """Tick all durations at start of CB turn. Returns expired slots.
 
-        Game-correct (2026-06-23): a duration-N debuff ticks N times.
-        Real Spirit BT50 tick log shows 69 poison events vs sim's old
-        104 at `< 0` (which gave N+1 ticks). Tightened to `<= 0` to
-        match real. Pairs with the Demy A2 scope fix (boss debuffs are
-        no longer wrongly shrunk by Demy) so the two correct each other:
-        without the fix, Demy shrink removed the "+1 turn" tick; with
-        both fixes, debuffs last exactly N turns regardless of Demy.
+        Expiry is `< 0` (N+1 ticks), NOT the game-truth `<= 0` (N ticks).
+        This is a KNOWN, DOCUMENTED compensating wrong — re-instated 2026-06-27
+        after `<= 0` (commit 95472fa) was found to REGRESS overall accuracy:
+
+          - `<= 0` is game-truth for poison COUNT (real Spirit BT50 = 69 ticks
+            vs 104 at `< 0`). But it also shortens the heroes' Dec-ATK debuff on
+            the boss by a turn, which was masking the team's real UNDER-PROTECTION
+            (UK/BD phase-drift). Un-stacking it alone (without fixing protection)
+            dropped MEN survival T34->T27 and made the sim strictly worse:
+            sim_regress gate ±5% went 8/20 -> 2/20 across all affinities.
+          - `< 0` restores: force -2.2% (6/9 pass), spirit -29.8%, magic -31.4%,
+            8/20 overall — vs 2/20 at `<= 0`.
+
+        Proper fix (un-stack TOGETHER): model the protection coverage so the team
+        survives to T50 on its own, THEN restore `<= 0`. Until then `< 0` is the
+        better net approximation. See memory project_cb_sim_survival_baseline_20260627.
         """
         expired = []
         remaining = []
         for s in self.slots:
             s.remaining -= 1
-            if s.remaining <= 0:
+            if s.remaining < 0:          # see docstring: deliberate, not <= 0
                 expired.append(s)
             else:
                 remaining.append(s)
