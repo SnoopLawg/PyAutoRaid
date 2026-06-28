@@ -1263,7 +1263,7 @@ class CBSimulator:
         return False
 
     def _cb_turn(self, tick: int):
-        # DWJ-parity 2026-06-23: reset to 0 (see _champion_turn comment).
+        # Zero-reset (game-truth, A/B verified — see _champion_turn).
         self.cb_tm = 0.0
         # Determine attack BEFORE Smite check below — Brimstone Smite
         # only fires on AoE active skills (aoe1, aoe2), NOT single-
@@ -1887,12 +1887,12 @@ class CBSimulator:
         target.buffs_new.add(pick)
 
     def _champion_turn(self, champ: SimChampion, tick: int):
-        # DWJ-parity 2026-06-23: reset to 0 instead of preserving overflow.
-        # The preserve-overflow path produced strict 1.5 Mane turns/BT;
-        # DWJ produces 1.66 (matches real). After the inner-loop tick
-        # the actor's TM is often well past threshold (e.g. 1442 vs 1430)
-        # — discarding the overflow lets the next selection cycle pick
-        # different actors more often.
+        # Reset mode: ZERO-RESET is game-truth — A/B verified 2026-06-28 vs real
+        # per-hero turn counts (tick_log_cb_clean2): zero-reset gives Mane51/Demy34/
+        # Ninja40/Geo31/Venom31 (real 52/32/39/32/31, within 1-2); overflow-preserve
+        # is far worse (Mane38, death BT26). The game's per-tick gain is
+        # 0.07*Speed*(1+StaminaRecoveryBonus) (TickManager.CalculateStamina, disasm);
+        # team recovery bonuses are ~0 here so flat 0.07*Speed matches.
         champ.tm = 0.0
         champ.turns_taken += 1
 
