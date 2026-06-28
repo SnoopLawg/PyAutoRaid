@@ -3800,50 +3800,15 @@ namespace RaidAutomation
                                             sbtl.Append("]");
                                         }
                                     }
-                                    // Read applied effects from HeroState.AppliedEffects (List<AppliedEffect>)
-                                    //   BattleHero._heroState @ 0xC0
-                                    //   HeroState.AppliedEffects @ 0x38, AppliedBuffs @ 0x58, AppliedDebuffs @ 0x60
-                                    //   List<T>: _items@0x10, _size@0x18; Array header 0x20, items at +0x20
-                                    //   AppliedEffect: Id@0x10 ProducerId@0x14 SkillTypeId@0x28 EffectTypeId@0x38
-                                    //     ApplyTurn@0x40 Lifetime@0x44 TurnLeft@0x48
-                                    IntPtr hstate = Marshal.ReadIntPtr(heroObj + 0xC0);
-                                    if ((long)hstate > 0x10000)
-                                    {
-                                        sbtl.Append(",\"hs\":1");
-                                        foreach (var (fname, offL) in new[] {
-                                            ("ae", 0x38), ("bf", 0x58), ("db", 0x60)
-                                        })
-                                        {
-                                            IntPtr listObj = Marshal.ReadIntPtr(hstate + offL);
-                                            if ((long)listObj <= 0x10000) continue;
-                                            int listSize = Marshal.ReadInt32(listObj + 0x18);
-                                            if (listSize <= 0 || listSize > 100) { sbtl.Append(",\"" + fname + "_n\":" + listSize); continue; }
-                                            IntPtr listItems = Marshal.ReadIntPtr(listObj + 0x10);
-                                            if ((long)listItems <= 0x10000) continue;
-                                            sbtl.Append(",\"" + fname + "\":[");
-                                            IntPtr itemsBase = listItems + 0x20;
-                                            for (int li = 0; li < listSize && li < 50; li++)
-                                            {
-                                                IntPtr eff = Marshal.ReadIntPtr(itemsBase + (li * 8));
-                                                if ((long)eff <= 0x10000) continue;
-                                                int effId = Marshal.ReadInt32(eff + 0x10);
-                                                int pid = Marshal.ReadInt32(eff + 0x14);
-                                                int stid = Marshal.ReadInt32(eff + 0x28);
-                                                int etype = Marshal.ReadInt32(eff + 0x38);
-                                                int aTurn = Marshal.ReadInt32(eff + 0x40);
-                                                int life = Marshal.ReadInt32(eff + 0x44);
-                                                int tleft = Marshal.ReadInt32(eff + 0x48);
-                                                if (li > 0) sbtl.Append(",");
-                                                sbtl.Append("{\"id\":" + effId + ",\"t\":" + etype + ",\"tl\":" + tleft
-                                                    + ",\"l\":" + life + ",\"at\":" + aTurn + ",\"p\":" + pid + ",\"s\":" + stid + "}");
-                                            }
-                                            sbtl.Append("]");
-                                        }
-                                    }
-                                    else
-                                    {
-                                        sbtl.Append(",\"hs\":0");
-                                    }
+                                    // Applied buffs/debuffs via the WORKING dynamic-offset reader.
+                                    // AppendAppliedBuffsDebuffs resolves HeroState.AppliedBuffs /
+                                    // .AppliedDebuffs by FIELD NAME (reflection) and emits
+                                    // ,"buffs":[{t,d,...}],"debuffs":[...] — same schema the poll
+                                    // battle-log uses. The previous HARDCODED 0x38/0x58/0x60 walk
+                                    // returned null every command (bf_n/ae_n empty in tm_f capture)
+                                    // because those HeroState field offsets drift across game
+                                    // versions; the name-resolved offsets are version-robust.
+                                    if (Instance != null) Instance.AppendAppliedBuffsDebuffs(sbtl, heroObj);
                                 }
                                 catch (Exception exAe) { sbtl.Append(",\"ae_err\":\"" + Esc(exAe.Message) + "\""); }
 
