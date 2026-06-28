@@ -80,15 +80,19 @@ class TestCbSimCadenceLock(unittest.TestCase):
     """Lock cb_sim's MEN turn order. Captured 2026-06-23 from the verified
     DWJ-parity cadence (commit da59b52, TM-reset-to-0)."""
 
-    # 18 boss turns is current correct behavior (see test_cb_sim_regression
-    # re-baseline note: 599297f Maneater-A3-self-hit + da59b52 cadence +
-    # 95472fa debuff fixes). Per-hero action counts and the full cast-order
-    # signature are the scheduler-cadence invariants.
-    LOCKED_TIMELINE_LEN = 109
-    LOCKED_TIMELINE_SIG = "a485d1cff0e269ec"
-    LOCKED_TURNS = {"Maneater": 25, "Demytha": 15, "Ninja": 20,
-                    "Geomancer": 17, "Venomage": 15}
-    LOCKED_CB_TURNS = 18
+    # Re-baselined 2026-06-28 for the ASYMMETRIC TM-reset fix (cb_sim
+    # _champion_turn): heroes overflow-preserve, boss zero-resets. This matches
+    # the live game's per-hero ticks/turn from tick_log_cb_clean2 (Demytha runs
+    # at her true continuous rate ~8.3 gain-ticks/turn, not ceil 9; boss fixed
+    # at 8/turn). Restores slow heroes' real cadence so Demytha's Block Damage
+    # stays locked to the boss aoe1 cycle (the survival interlock) — the default-
+    # gear team now survives to cb_turn 25 instead of dying at 18. Per-hero turn
+    # counts on the captured build match real to err=5 (see survival memory).
+    LOCKED_TIMELINE_LEN = 156
+    LOCKED_TIMELINE_SIG = "032c5b236a21c7d0"
+    LOCKED_TURNS = {"Maneater": 37, "Demytha": 22, "Ninja": 27,
+                    "Geomancer": 23, "Venomage": 22}
+    LOCKED_CB_TURNS = 25
 
     def test_men_cadence_signature(self):
         ln, sig, turns, cb_turns = cb_sim_timeline_signature()

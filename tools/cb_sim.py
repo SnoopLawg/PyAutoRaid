@@ -1887,13 +1887,20 @@ class CBSimulator:
         target.buffs_new.add(pick)
 
     def _champion_turn(self, champ: SimChampion, tick: int):
-        # Reset mode: ZERO-RESET is game-truth — A/B verified 2026-06-28 vs real
-        # per-hero turn counts (tick_log_cb_clean2): zero-reset gives Mane51/Demy34/
-        # Ninja40/Geo31/Venom31 (real 52/32/39/32/31, within 1-2); overflow-preserve
-        # is far worse (Mane38, death BT26). The game's per-tick gain is
-        # 0.07*Speed*(1+StaminaRecoveryBonus) (TickManager.CalculateStamina, disasm);
-        # team recovery bonuses are ~0 here so flat 0.07*Speed matches.
-        champ.tm = 0.0
+        # Reset mode: ASYMMETRIC — HEROES OVERFLOW-PRESERVE, BOSS ZERO-RESETS.
+        # Game-truth from clean2 tick-log per-hero ticks/turn (2026-06-28): every
+        # hero acts at its true CONTINUOUS rate (Demytha 8.1 gain-ticks/turn ≈
+        # 100/(0.07*172)=8.31, NOT the ceil of 9), while the boss is on a fixed
+        # 8-ticks/turn cadence (ceil(100/(0.07*190))=8). Modelling heroes as
+        # overflow-preserve + boss as zero-reset reproduces real turn counts to
+        # err=5 over 32 boss turns (Mane51 Demy30 Ninja36 Geo31 Venom28 vs real
+        # 51/31/38/31/30 — the residual is exactly the hero TM-fill skills like
+        # Ninja A1 +15%). The earlier "overflow is far worse (Mane38)" A/B made
+        # the BOSS overflow too, which is wrong; the ASYMMETRY is the key. This
+        # restores the slow heroes' true cadence so Demytha's A3 (Block Damage)
+        # stays locked to the boss aoe1 cycle (the survival interlock). DWJ's calc
+        # zero-resets everyone, which is why it under-counts slow heroes' turns.
+        champ.tm = max(0.0, champ.tm - TM_THRESHOLD)
         champ.turns_taken += 1
 
         # Lasting Gifts mastery proc at start of owner turn.

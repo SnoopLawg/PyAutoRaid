@@ -66,8 +66,14 @@ class TestCBSimDeterministicSmoke(unittest.TestCase):
     #         drop (25->18 boss turns — A3 now correctly self-damages).
     #       * da59b52 — DWJ-parity cadence (TM reset to 0).
     #       * 95472fa — 3 game-truth debuff fixes (IL2CPP-verified).
-    LOCKED_CB_TURNS = 18
-    LOCKED_TOTAL_DMG = 7_354_476.70
+    #   Re-baselined 2026-06-28 — ASYMMETRIC TM reset (heroes overflow-preserve,
+    #   boss zero-resets), matching live-game per-hero ticks/turn from
+    #   tick_log_cb_clean2 (slow heroes run at true continuous rate, boss fixed
+    #   8/turn). Restores the survival interlock (Demytha BD locked to aoe1):
+    #   minimal-team survives to 25 boss turns again; damage re-baselines as the
+    #   old number was inflated to compensate for the under-counted cadence.
+    LOCKED_CB_TURNS = 25
+    LOCKED_TOTAL_DMG = 11_074_802.64
     LOCKED_TOTAL_TOL = 20.0  # widened for additive arithmetic noise
 
     def _build_men_team(self):
