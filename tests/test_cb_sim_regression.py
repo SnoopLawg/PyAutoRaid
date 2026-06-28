@@ -72,8 +72,11 @@ class TestCBSimDeterministicSmoke(unittest.TestCase):
     #   8/turn). Restores the survival interlock (Demytha BD locked to aoe1):
     #   minimal-team survives to 25 boss turns again; damage re-baselines as the
     #   old number was inflated to compensate for the under-counted cadence.
+    #   Bumped 2026-06-28 — Geomancer Stoneguard deflect: 30% bonus proc now
+    #   fires per damaged ally per boss hit (CB_ATTACK_HITS aoe1=4/aoe2=2),
+    #   matching real clean2 deflect bursts (~450K/aoe1), not once per AOE.
     LOCKED_CB_TURNS = 25
-    LOCKED_TOTAL_DMG = 11_074_802.64
+    LOCKED_TOTAL_DMG = 11_322_302.64
     LOCKED_TOTAL_TOL = 20.0  # widened for additive arithmetic noise
 
     def _build_men_team(self):

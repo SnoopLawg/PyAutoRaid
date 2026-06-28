@@ -772,6 +772,11 @@ DEFAULT_SKILL_DATA = {
 # CB_ATK is CALIBRATED (back-solved from BT 1 AOE1 data 2026-04-23). The
 # CB_ATTACK_MULT dict is sourced from SkillData via /static-export at
 # import time of cb_constants. GATHERING_FURY values are also there.
+# Boss hits-per-ally per attack (game-truth from clean2 tick log: boss→ally
+# damage events per cast are 4 for aoe1 (Count=4, confirmed) and 2 for aoe2;
+# stun is single-hit). Used by Geomancer Stoneguard deflect to fire the 30%
+# bonus proc per deflect event (= per damaged ally per boss hit), not once/AOE.
+CB_ATTACK_HITS = {"aoe1": 4, "aoe2": 2, "stun": 1}
 CB_AOE_MULT = 3.5      # legacy AoE multiplier (used when per-attack mult unset)
 CB_STUN_MULT = 5.0     # legacy — stun now uses 0.2*MAX_HP directly (see _cb_turn)
 GATHERING_FURY_START_ROUND = 4  # legacy — no longer used (see per-turn model)
@@ -1711,14 +1716,23 @@ class CBSimulator:
                         # across UNPROTECTED allies only.
                         base_deflect = per_ally_aoe * unprotected_allies * buff_mult("strengthen_15", 0.15)
                         # Reflect bonus: skill 48805's `'0.03*TRG_HP'`
-                        # PassiveReflectDamage path, capped at 75K (CB
-                        # DoT cap from skill 200008). 2026-06-22:
-                        # corrected — bonus is ONE event per boss AOE
-                        # (boss is the only enemy/target), not per ally.
-                        # Was: bonus_total = living_allies * 22.5K → 5x
-                        # over-attribution. See dragging-fix downstream
-                        # damage investigation.
-                        bonus_total = 0.30 * 75_000
+                        # PassiveReflectDamage path, capped at 75K (CB DoT cap
+                        # from skill 200008). GAME-TRUTH (clean2 tick log, kind
+                        # 4017): the deflect fires ONE event PER DAMAGED ALLY
+                        # PER BOSS HIT, and the 30% bonus rolls on each such
+                        # event — NOT once per AOE. Real: 215 deflect events /
+                        # 51 capped 75K procs = 3.8M of Geo's 4.26M deflect over
+                        # 32 boss turns. The boss AOE multi-hits (aoe1 Count=4),
+                        # so each unprotected ally generates `hits_per_aoe`
+                        # deflect events. Modelling the bonus as
+                        # unprotected_allies * hits * 0.30 * 75K matches the
+                        # observed proc count. (Prior "once per AOE" gave 22.5K/
+                        # turn -> 5x+ under once BD coverage rose post survival-
+                        # fix.) BD-blocked allies take 0 damage -> no deflect
+                        # (median real deflect value is 0 for those events).
+                        hits_per_aoe = CB_ATTACK_HITS.get(attack, 1)
+                        bonus_total = (unprotected_allies * hits_per_aoe
+                                       * 0.30 * 75_000)
                         c.damage.passive += base_deflect + bonus_total
 
         elif attack == "stun":
