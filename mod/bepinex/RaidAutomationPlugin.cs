@@ -1369,6 +1369,15 @@ namespace RaidAutomation
                     _ctxDiagLogged = false;
                     _lastStatsLogTurn = -1;
                     lock (_battleLog) { _battleLog.Clear(); }
+                    // ALSO clear the tick log here. The Harmony ProcessStartBattle
+                    // hook clears it (line ~1921), but that hook can miss a
+                    // battle-start (game-version drift), leaving a PRIOR battle's
+                    // ticks to mix into this capture (observed: a 4v4 fight bled
+                    // into a CB 5v1 tick log -> phantom buffs/speeds). This HUD-
+                    // based detection reliably fires at battle start (it already
+                    // clears _battleLog here without data loss), so clearing
+                    // _tickLog here too guarantees one-battle-per-capture.
+                    lock (_tickLog) { _tickLog.Clear(); }
                 }
                 else if (!inBattle && _battleActive)
                 {

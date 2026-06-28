@@ -20,6 +20,16 @@ def main():
     print(f"# tick log: {path}")
     d = json.load(open(path, encoding="utf-8"))
     ticks = d.get("ticks", [])
+    # Defensive: keep only CB snapshots (exactly 1 enemy unit). A prior non-CB
+    # battle (e.g. 4v4) can bleed into the tick log; those have >1 enemy and
+    # different heroes/speeds -> phantom buffs. Filter them out.
+    def n_enemy(t):
+        return sum(1 for u in (t.get("units") or []) if u.get("s") == "e")
+    before = len([t for t in ticks if t.get("units")])
+    ticks = [t for t in ticks if not t.get("units") or n_enemy(t) == 1]
+    after = len([t for t in ticks if t.get("units")])
+    if after < before:
+        print(f"# filtered {before - after} non-CB (multi-enemy) snapshots")
     # Does any unit now carry populated buffs?
     nb = sum(1 for t in ticks for u in (t.get("units") or []) if u.get("buffs"))
     print(f"# unit-snapshots with populated buffs: {nb}")
