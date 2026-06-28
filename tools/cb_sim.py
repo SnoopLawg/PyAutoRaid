@@ -779,7 +779,7 @@ GATHERING_FURY_RATE = 0.02     # legacy
 
 
 class CBSimulator:
-    def __init__(self, champions: List[SimChampion], cb_speed: float = 191,
+    def __init__(self, champions: List[SimChampion], cb_speed: float = 190,
                  cb_element: int = 4, deterministic: bool = True,
                  rng_seed: int = None, verbose: bool = False,
                  model_survival: bool = True, force_affinity: bool = False,
