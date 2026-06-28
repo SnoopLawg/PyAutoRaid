@@ -87,7 +87,8 @@ def extract_real_data(log_path: Path) -> dict:
 
 def run_sim_for_team(team_names, cb_element, force_affinity, max_cb_turns,
                      use_current_gear=True, bugfix_buff_tick=False,
-                     use_preset=True, preset_snapshot_path=None):
+                     use_preset=True, preset_snapshot_path=None,
+                     build_snapshot_path=None):
     """Run the CB sim and return result with turn snapshots.
 
     `use_preset`: when True (default), loads the saved game preset
@@ -105,6 +106,19 @@ def run_sim_for_team(team_names, cb_element, force_affinity, max_cb_turns,
         account = json.load(f)
 
     all_arts = [a for a in artifacts_data.get("artifacts", []) if not a.get("error")]
+
+    # Build-snapshot override: per-hero captured stats {name: {HP,ATK,...}}.
+    # When calibrating against a fixture, use the build it was captured with.
+    _BUILD_OVERRIDE = {}
+    if build_snapshot_path:
+        try:
+            with open(build_snapshot_path) as _bf:
+                _bsnap = json.load(_bf)
+            for _h in (_bsnap.get("team") or []):
+                if _h.get("name") and _h.get("stats"):
+                    _BUILD_OVERRIDE[_h["name"]] = _h["stats"]
+        except Exception as _e:
+            print(f"  WARN: build snapshot load failed: {_e}", file=sys.stderr)
 
     # Resolve heroes
     hero_by_name = {}
@@ -138,6 +152,19 @@ def run_sim_for_team(team_names, cb_element, force_affinity, max_cb_turns,
 
         stats = calc_stats(hero, hero_arts, account)
         stats = apply_leader_aura(stats, leader_aura)
+        # Calibration: override per-hero stats with the CAPTURE's actual build
+        # (build_cb_*.json) so the sim runs the SAME build as the fixture, not
+        # current gear. Current gear drifts (clean2: +34-42% HP, different SPD)
+        # -> invalid sim-vs-real comparison. Captured stats keyed by NAME with
+        # string stat keys (HP/ATK/DEF/SPD/RES/ACC/CR/CD); sim uses int ids 1-8.
+        cap = _BUILD_OVERRIDE.get(name)
+        if cap:
+            _SKEY = {"HP": 1, "ATK": 2, "DEF": 3, "SPD": 4,
+                     "RES": 5, "ACC": 6, "CR": 7, "CD": 8}
+            for sk, sid in _SKEY.items():
+                if sk in cap and cap[sk] is not None:
+                    stats[sid] = cap[sk]
+            stats["base_speed"] = 0  # force recompute from overridden SPD
         element = hero.get("element", 4)
         champ = build_sim_champion(name, stats, idx, element=element)
         sim_champs.append(champ)
