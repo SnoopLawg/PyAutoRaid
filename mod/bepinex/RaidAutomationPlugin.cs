@@ -3652,7 +3652,11 @@ namespace RaidAutomation
                     if (stateObj != IntPtr.Zero)
                     {
                         var sbtl = new StringBuilder();
-                        sbtl.Append("{\"tick\":" + _battleCommandCount + ",\"units\":[");
+                        // frame = Unity frame counter at this command snapshot. Lets the
+                        // analyzer measure REAL spacing between boss turns (uniform 190 vs
+                        // gapped/effective-slower) instead of only command-index spacing.
+                        int _frameNow = 0; try { _frameNow = UnityEngine.Time.frameCount; } catch {}
+                        sbtl.Append("{\"tick\":" + _battleCommandCount + ",\"frame\":" + _frameNow + ",\"units\":[");
                         int uidx = 0;
                         foreach (var teamGetter in new[] { "get_PlayerTeam", "get_EnemyTeam" })
                         {
@@ -3728,7 +3732,15 @@ namespace RaidAutomation
                                     }
                                 } catch { }
                                 if (uidx > 0) sbtl.Append(",");
-                                sbtl.Append("{\"s\":\"" + side + "\",\"id\":" + id + ",\"tm\":" + tmDisplay + ",\"tn\":" + turnN + ",\"s_spd\":" + sSpd
+                                // tm_f = FULL-PRECISION stamina (Fixed 32.32 -> double). The
+                                // integer `tm` (tmRaw>>32) discards the fractional part needed
+                                // to measure exact per-command TM accumulation. Diffing tm_f
+                                // across consecutive (simultaneous) command snapshots gives the
+                                // exact boss-vs-Maneater speed ratio + reveals discrete TM fills.
+                                double tmF = tmRaw / 4294967296.0;
+                                sbtl.Append("{\"s\":\"" + side + "\",\"id\":" + id + ",\"tm\":" + tmDisplay
+                                    + ",\"tm_f\":" + tmF.ToString(System.Globalization.CultureInfo.InvariantCulture)
+                                    + ",\"tn\":" + turnN + ",\"s_spd\":" + sSpd
                                     + ",\"hp\":" + hpCur + ",\"hp_max\":" + hpMax);
                                 // Read AppliedEffectsByHeroes dict pointer directly from field offset 0x108
                                 // (getter is inlined by IL2CPP AOT — field offset found via Il2CppDumper against GameAssembly.dll).

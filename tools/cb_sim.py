@@ -1005,51 +1005,59 @@ class CBSimulator:
             if all(c.is_dead for c in self.champions) or enraged:
                 break
 
-            # Pick the next actor — extra-turn first, otherwise do-while tick + max-TM.
+            # Extra-turn actors act immediately, one at a time.
             extra = next((c for c in self.champions
                           if not c.is_dead and getattr(c, "has_extra_turn", False)),
                          None)
             if extra is not None:
                 extra.has_extra_turn = False
-                actor_kind = "champ"
-                actor = extra
-            else:
-                # do-while tick + max-TM selection via the shared engine. The
-                # boss proxy's TM mirrors self.cb_tm in/out. Actor list is
-                # [live champs by position] + [boss] so ties resolve exactly as
-                # before (champs beat boss; lowest position wins champ-ties).
-                _boss_tm.tm = self.cb_tm
-                live_champs = [c for c in self.champions if not c.is_dead]
-                sched_actors = live_champs + [_boss_tm]
-                try:
-                    tick += _sched.tick_until_ready(sched_actors)
-                except RuntimeError:
-                    self.errors.append("TM tick loop runaway")
-                    return self._compile_result()
-                self.cb_tm = _boss_tm.tm
+                self._champion_turn(extra, tick)
+                continue
 
-                top = _sched.highest_tm_actor(sched_actors)
-                if top is _boss_tm:
-                    actor_kind = "cb"
-                    actor = None
-                else:
-                    actor_kind = "champ"
-                    actor = top
+            # Tick until at least one actor reaches threshold. Boss proxy TM
+            # mirrors self.cb_tm in/out.
+            _boss_tm.tm = self.cb_tm
+            live_champs = [c for c in self.champions if not c.is_dead]
+            sched_actors = live_champs + [_boss_tm]
+            try:
+                tick += _sched.tick_until_ready(sched_actors)
+            except RuntimeError:
+                self.errors.append("TM tick loop runaway")
+                return self._compile_result()
+            self.cb_tm = _boss_tm.tm
 
-            if actor_kind == "cb":
-                self._cb_turn(tick)
-                # Turn-50 enrage trigger: facade-backed for game-truth.
-                # Demon Lord skill 222904 fires at this turn; bypasses
-                # BlockDamage + Unkillable (see project_cb_boss_turn_50_bypass).
-                _f = _facade()
-                _enrage_turn = (
-                    _f.boss.turn_50_trigger if _f is not None else ENRAGE_TURN
-                )
-                if self.cb_turn >= _enrage_turn:
-                    enraged = True
+            # GAME-TRUTH cadence (verified 2026-06-27 via full-precision tm_f
+            # capture, tick_log_cb_tmf_capture): EVERY unit that reached the
+            # turn threshold this tick takes its turn before TM resumes
+            # accumulating, and simultaneous crossers act FASTER-FIRST (by SPD).
+            # The old "act only highest_tm_actor, then re-tick" dropped a turn
+            # from the faster unit every LCM cycle (the slower boss overshoots
+            # MORE, so highest-TM wrongly pre-empted the faster champ) — it
+            # under-ran Maneater's cadence 1.50 vs the real 1.60 (8/5: Mane 5
+            # ticks/turn, boss 8) and broke UK tiling. Faster-first also means
+            # champs recast UK/BD BEFORE the boss AOEs on a collision turn —
+            # the real Unkillable-tune ordering. Speeds (288/190) untouched.
+            crossed = [a for a in sched_actors if _sched.get_tm(a) >= _sched.threshold]
+            crossed.sort(key=lambda a: -(self.cb_speed if a is _boss_tm
+                                         else getattr(a, "speed", 0.0)))
+            for top in crossed:
+                if all(c.is_dead for c in self.champions):
                     break
-            else:
-                self._champion_turn(actor, tick)
+                if top is _boss_tm:
+                    self._cb_turn(tick)
+                    _boss_tm.tm = self.cb_tm  # _cb_turn zeroed self.cb_tm
+                    # Turn-50 enrage trigger: facade-backed for game-truth.
+                    # Demon Lord skill 222904 bypasses BlockDamage + Unkillable
+                    # (see project_cb_boss_turn_50_bypass).
+                    _f = _facade()
+                    _enrage_turn = (
+                        _f.boss.turn_50_trigger if _f is not None else ENRAGE_TURN
+                    )
+                    if self.cb_turn >= _enrage_turn:
+                        enraged = True
+                        break
+                elif not top.is_dead:
+                    self._champion_turn(top, tick)
 
         return self._compile_result()
 
