@@ -102,12 +102,20 @@ class TestCBSimDeterministicSmoke(unittest.TestCase):
     #   ramp (1.909->2.362 on 20260626_161910). Minimal-team delta is tiny
     #   (-555; synthetic CR is low so crit rarely fires) but non-zero.
     #   Re-baselined 2026-06-29 — per-skill GAME-TRUTH multiplier corrections
-    #   (hero_profiles_game.json): Maneater A1 5.5->3.0 (wrong skill "Face Down"
-    #   -> real "Pummel"), Ninja A3 dropped its !targetIsBoss 3.95x splash
+    #   (hero_profiles_game.json): Ninja A3 dropped its !targetIsBoss 3.95x splash
     #   (boss-suppressed) -> 3.0x/1hit, Geo A2 de-duped two mutually-exclusive 6x
-    #   effects -> 6.0x/1hit. All verified vs data/static/skills_all.json. Minimal
-    #   team total drops accordingly. (Root pipeline fix: auto_profile must keep
-    #   the effect Condition so it stops summing boss-suppressed/exclusive Damage.)
+    #   effects -> 6.0x/1hit. Both now durably reproduced by the generator
+    #   (build_all_hero_profiles, #31) from snapshot Conditions.
+    #   Re-baselined 2026-06-29 — Maneater A1 RESTORED to game-truth 5.5x
+    #   (skill 10701). The earlier "3.0 Pummel" was NOT a different skill: DWJ's
+    #   "Pummel" == the game's internal DefaultValue "Face Down" == 10701 (same
+    #   crit-DecATK rider; confirmed via DWJ calc_champions + skills_all). Both
+    #   skills_db and skills_all give 10701 = 5.5*ATK, so 5.5 is game-truth and
+    #   the 3.0 hand-patch was a DWJ-derived COMPENSATING WRONG masking the
+    #   DEF-mitigation-under bug on regular hits (#32). At game-truth 5.5 the
+    #   attribution TOTAL improves (-6.0% -> -4.6% on 090946) and the profile is
+    #   fully regeneratable (no hand-patch). Remaining honest residual: Maneater
+    #   +12% over (WM/A2/cast-count) — task #34, un-stack with #32 DEF capture.
     #   Re-baselined 2026-06-29 — Geo Stoneguard deflect base now = 15% of the
     #   ACTUAL ramped+mitigated aoe damage allies take (team_aoe_dmg_taken), not
     #   a flat pre-Gathering-Fury estimate (deflect was -78% under on T50).
@@ -116,7 +124,7 @@ class TestCBSimDeterministicSmoke(unittest.TestCase):
     #   the cast applying an enemy debuff (Venom A1 / Maneater A2 place none ->
     #   no PT). Both reduce the minimal-team total. Grounded on 090946.
     LOCKED_CB_TURNS = 23
-    LOCKED_TOTAL_DMG = 8_439_133.98
+    LOCKED_TOTAL_DMG = 8_525_739.10  # game-truth Maneater A1 5.5x (was 3.0 patch)
     LOCKED_TOTAL_TOL = 20.0  # widened for additive arithmetic noise
 
     def _build_men_team(self):
