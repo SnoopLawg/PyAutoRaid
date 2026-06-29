@@ -108,8 +108,11 @@ class TestCBSimDeterministicSmoke(unittest.TestCase):
     #   effects -> 6.0x/1hit. All verified vs data/static/skills_all.json. Minimal
     #   team total drops accordingly. (Root pipeline fix: auto_profile must keep
     #   the effect Condition so it stops summing boss-suppressed/exclusive Damage.)
+    #   Re-baselined 2026-06-29 — Geo Stoneguard deflect base now = 15% of the
+    #   ACTUAL ramped+mitigated aoe damage allies take (team_aoe_dmg_taken), not
+    #   a flat pre-Gathering-Fury estimate (deflect was -78% under on T50).
     LOCKED_CB_TURNS = 23
-    LOCKED_TOTAL_DMG = 8_532_331.02
+    LOCKED_TOTAL_DMG = 8_539_133.98
     LOCKED_TOTAL_TOL = 20.0  # widened for additive arithmetic noise
 
     def _build_men_team(self):

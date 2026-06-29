@@ -1469,6 +1469,10 @@ class CBSimulator:
             _t50_bypass = self.cb_turn >= 50
 
             # Calculate and apply damage to each hero (no AP redirect — see below)
+            # Accumulate the ACTUAL aoe damage allies take this turn (incl the
+            # Gathering-Fury ramp + DEF mitigation) so the Geo Stoneguard deflect
+            # can reflect 15% of the REAL damage, not a flat pre-ramp estimate.
+            team_aoe_dmg_taken = 0.0
             for c in self.champions:
                 if c.is_dead:
                     continue
@@ -1651,6 +1655,11 @@ class CBSimulator:
                     elif crit_factor > 1.0:
                         aoe_dmg *= 0.92
 
+                # Record the actual damage this (unprotected) ally takes from the
+                # boss aoe — the Geo Stoneguard deflect reflects 15% of it. BD
+                # allies already `continue`d above (took 0), so they don't add.
+                team_aoe_dmg_taken += aoe_dmg
+
                 # Strengthen is NOT damage reduction — it increases outgoing damage
 
                 # NO redirect for Ally Protect — user clarification 2026-04-23:
@@ -1757,10 +1766,15 @@ class CBSimulator:
                             1 for a in self.champions
                             if not a.is_dead and not a.has_buff("block_damage")
                         )
-                        # Base deflect: 15% of the actual AoE damage allies
-                        # took this turn (BD-absorbed allies take 0 -> no base),
-                        # summed across UNPROTECTED allies.
-                        base_deflect = per_ally_aoe * unprotected_allies * buff_mult("strengthen_15", 0.15)
+                        # Base deflect = 15% of the ACTUAL aoe damage allies took
+                        # this turn (team_aoe_dmg_taken, accumulated above — incl
+                        # the Gathering-Fury ramp + DEF mitigation; BD-absorbed
+                        # allies contributed 0). Fixed 2026-06-29: was a FLAT
+                        # per_ally_aoe estimate (no fury ramp) -> deflect -78%
+                        # under on T50 (real ramps 37K->78K/event as the boss
+                        # damage ramps). Grounded: Geo deflect was the biggest
+                        # remaining per-hero gap (Geo -53.8% @ Spirit 090946).
+                        base_deflect = team_aoe_dmg_taken * buff_mult("strengthen_15", 0.15)
                         # Reflect bonus (skill 48805 Effects 488055/488056,
                         # "0.03*TRG_HP" capped at the CB 75K DoT cap): ONE 30%
                         # roll per boss AoE while a Geo-placed burn is on the
