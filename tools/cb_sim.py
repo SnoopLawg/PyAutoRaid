@@ -2180,7 +2180,19 @@ class CBSimulator:
             #   - DefenceModifier=-0.30 (ignores 30% target DEF).
             #   - ActivateOnGlancingHit=false (weak attackers skip on glance).
             # Attributed to .passive for clarity in per-source breakdowns.
-            if champ.phantom_touch_mult > 0:
+            # Phantom Touch (skill 600050) condition: isOwnerProduceRelatedEffect
+            # — fires only when THIS cast applies an enemy debuff. Venom A1 places
+            # none (no PT); A2/A3 do. Maneater A1 places Dec ATK (PT fires); his
+            # A2 Syphon places none vs CB (no PT). Capability-gate via SKILL_EFFECTS
+            # (NOT chosen.effects — SimSkill.effects is never populated). Grounded
+            # 2026-06-29 (Venom A1 had 16 spurious PT procs; Maneater A2 had 25).
+            _pt_effs = SKILL_EFFECTS.get(champ.name, {}).get(chosen.name, [])
+            _pt_places_debuff = any(
+                (e.get("effect_type") if isinstance(e, dict) else getattr(e, "effect_type", None))
+                in ("debuff", "conditional_debuff")
+                for e in _pt_effs
+            )
+            if champ.phantom_touch_mult > 0 and _pt_places_debuff:
                 # Compute PT damage WITHOUT crit roll. Reuse the
                 # def/affinity pipeline by computing raw and applying
                 # only the static modifiers (no crit_mult).
@@ -2756,6 +2768,11 @@ class CBSimulator:
         # effect per hit, so dedupe to a single activation per cast — otherwise
         # Ninja A2 (3 hits) triggers each burn 3x, ~3x over-attributing burn.
         _burns_activated_this_cast = False
+        # Same once-per-cast guard for poison activation: Venom A1 loads TWO
+        # activate_poisons effects (one per hit) but "activate up to 2 poisons"
+        # is ONE budget per cast, not per hit. Grounded (090946): sim 22 vs real
+        # ~6 activation ticks. Fixed 2026-06-29.
+        _poisons_activated_this_cast = False
         for eff_raw in effects:
             # Handle both SkillEffect objects and dicts (from auto_skills)
             if isinstance(eff_raw, dict):
@@ -2945,6 +2962,11 @@ class CBSimulator:
                                 break
 
             elif eff.effect_type == "activate_poisons":
+                # One activation budget per cast (A1's 2 hits share it), not per
+                # ForceStatusEffectTick effect. Mirrors the burn dedupe above.
+                if _poisons_activated_this_cast:
+                    continue
+                _poisons_activated_this_cast = True
                 # Venomage A1: "Each hit has a 35% chance of activating up to
                 # two [Poison] debuffs". GROUNDED (cb_attribution_diff on
                 # 20260626_161910 + 20260623_162050): natural poison ticks are

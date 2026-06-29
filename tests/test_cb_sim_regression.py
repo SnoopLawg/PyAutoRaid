@@ -111,8 +111,12 @@ class TestCBSimDeterministicSmoke(unittest.TestCase):
     #   Re-baselined 2026-06-29 — Geo Stoneguard deflect base now = 15% of the
     #   ACTUAL ramped+mitigated aoe damage allies take (team_aoe_dmg_taken), not
     #   a flat pre-Gathering-Fury estimate (deflect was -78% under on T50).
+    #   Re-baselined 2026-06-29 — Venom poison single-budget (A1's two
+    #   ForceStatusEffectTick share ONE activation/cast) + Phantom Touch gated on
+    #   the cast applying an enemy debuff (Venom A1 / Maneater A2 place none ->
+    #   no PT). Both reduce the minimal-team total. Grounded on 090946.
     LOCKED_CB_TURNS = 23
-    LOCKED_TOTAL_DMG = 8_539_133.98
+    LOCKED_TOTAL_DMG = 8_439_133.98
     LOCKED_TOTAL_TOL = 20.0  # widened for additive arithmetic noise
 
     def _build_men_team(self):
