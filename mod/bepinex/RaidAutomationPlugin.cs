@@ -2759,6 +2759,22 @@ namespace RaidAutomation
                             {
                                 skillTypeId = IntProp(ae, "SkillTypeId");
                             }
+                            // Direct hits have no AppliedEffect — the CAUSING
+                            // skill is EffectContext.SkillContext.TypeId (dump:
+                            // EffectContext.SkillContext @0xA0, SkillContext.TypeId
+                            // @0xBC). Clean managed read; this is the ACCURATE
+                            // per-hit causing skill. (The native walk below used
+                            // 0x98 = BattleContext — wrong — which is why direct
+                            // hits never got a skill before. Fixed 2026-06-29.)
+                            if (skillTypeId == 0)
+                            {
+                                try
+                                {
+                                    var skc = Prop(eff, "SkillContext");
+                                    if (skc != null) skillTypeId = IntProp(skc, "TypeId");
+                                }
+                                catch { }
+                            }
                             // Fallback: native memory walk via EffectContext.
                             // Boss-source events have AppliedEffect=null at
                             // the EffectContext+0x40 offset; the actual skill
@@ -2778,28 +2794,17 @@ namespace RaidAutomation
                                         {
                                             skillTypeId = Marshal.ReadInt32(aePtr + 0x28);
                                         }
-                                        // SkillContext path: offset 0x98 →
-                                        // walk to find skill TypeId. Per the
-                                        // diag schema dump 2026-04-13: EffectContext.
-                                        // SkillContext:0x98 → BattleSkill → Type:0x10
-                                        // → SkillType.Id:0x10
+                                        // SkillContext path (corrected via dump
+                                        // 2026-06-29): EffectContext.SkillContext
+                                        // @0xA0 (NOT 0x98 = BattleContext), and
+                                        // SkillContext.TypeId @0xBC directly. The
+                                        // old 0x98 -> BattleSkill walk was wrong.
                                         if (skillTypeId == 0)
                                         {
-                                            IntPtr skCtx = Marshal.ReadIntPtr(effPtr + 0x98);
+                                            IntPtr skCtx = Marshal.ReadIntPtr(effPtr + 0xA0);
                                             if ((long)skCtx > 0x10000)
                                             {
-                                                // SkillContext.Skill (BattleSkill) @0x28 typically
-                                                IntPtr battleSk = Marshal.ReadIntPtr(skCtx + 0x28);
-                                                if ((long)battleSk > 0x10000)
-                                                {
-                                                    // BattleSkill.Type (SkillType) @0x10
-                                                    IntPtr skType = Marshal.ReadIntPtr(battleSk + 0x10);
-                                                    if ((long)skType > 0x10000)
-                                                    {
-                                                        // SkillType.Id @0x10
-                                                        skillTypeId = Marshal.ReadInt32(skType + 0x10);
-                                                    }
-                                                }
+                                                skillTypeId = Marshal.ReadInt32(skCtx + 0xBC);
                                             }
                                         }
                                     }
