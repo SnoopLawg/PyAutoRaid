@@ -75,8 +75,14 @@ class TestCBSimDeterministicSmoke(unittest.TestCase):
     #   Bumped 2026-06-28 — Geomancer Stoneguard deflect: 30% bonus proc now
     #   fires per damaged ally per boss hit (CB_ATTACK_HITS aoe1=4/aoe2=2),
     #   matching real clean2 deflect bursts (~450K/aoe1), not once per AOE.
+    #   Lowered 2026-06-28 (11.32M -> 9.75M) — HP-Burn activation (effect 9002)
+    #   now fires ONCE PER SKILL (game-truth) instead of once per hit; the prior
+    #   per-hit firing tripled Ninja A2's burn activation, inflating burn. This
+    #   un-stacks a compensating wrong (the inflated burn was masking Geo-deflect
+    #   / Demytha under-attribution), so the per-hero split is more correct even
+    #   though the aggregate dips.
     LOCKED_CB_TURNS = 25
-    LOCKED_TOTAL_DMG = 11_322_302.64
+    LOCKED_TOTAL_DMG = 9_747_302.64
     LOCKED_TOTAL_TOL = 20.0  # widened for additive arithmetic noise
 
     def _build_men_team(self):

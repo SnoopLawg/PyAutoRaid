@@ -265,12 +265,15 @@ class DebuffBar:
     # and frees bar slots that were previously hogged by Venomage placing
     # the same def_down twice etc.
     #
-    # HP Burn (effect Id 470) is `StackCount: 1` in data/static/effects.json
-    # — game-truth singular. Ninja A2 hitting 3 times still places one burn
-    # per target (refresh on re-place). Poison (Id 80, StackCount=10) does
-    # stack. Earlier ticklog (2026-04-24) suggested ~1.6 active stacks, but
-    # that was end-of-turn ticks PLUS A2 activation ticks combined; with
-    # singular burns and proper activation, today's 84 ticks/50 turns matches.
+    # HP Burn (effect Id 470) is CanStack=False / StackCount=1. Treated as
+    # GLOBALLY singular here (one active burn on the target; re-place refreshes
+    # + reassigns owner). NOTE: a per-SOURCE model was tried 2026-06-28 (each
+    # caster keeps an independent burn) — it fixed the clean2 Ninja/Geo split
+    # but ballooned burn-heavy teams +37% (minimal-team regression) and rested
+    # on AMBIGUOUS evidence (one "coexistence" tick that may be a coarse-log
+    # artifact). Reverted as over-fit/uncertain. The real Ninja-over/Geo-under
+    # split (ownership alternation vs the sim's most-recent-placer) is still
+    # open — needs finer-resolution telemetry or more fixtures to settle.
     SINGULAR_BY_TYPE = {"def_down", "def_down_30", "weaken", "weaken_15",
                         "dec_atk", "dec_atk_25", "poison_sensitivity",
                         "poison_sensitivity_50", "heal_reduction",
@@ -290,7 +293,7 @@ class DebuffBar:
                     s.remaining = max(s.remaining, duration)
                     s.source = source  # update attribution to most recent placer
                     return True
-        # Otherwise stack (poisons, HP burns, etc.)
+        # Otherwise stack (poisons, etc.)
         if len(self.slots) >= MAX_DEBUFF_SLOTS:
             return False
         self.slots.append(DebuffSlot(debuff_type, duration, source))
@@ -2661,6 +2664,11 @@ class CBSimulator:
             # applied at the calc-damage call site.
             return
 
+        # HP-Burn activation is once PER SKILL (game-truth: effect 9002 fires
+        # once/skill, not per hit). load_game_profiles emits one activate
+        # effect per hit, so dedupe to a single activation per cast — otherwise
+        # Ninja A2 (3 hits) triggers each burn 3x, ~3x over-attributing burn.
+        _burns_activated_this_cast = False
         for eff_raw in effects:
             # Handle both SkillEffect objects and dicts (from auto_skills)
             if isinstance(eff_raw, dict):
@@ -2828,15 +2836,26 @@ class CBSimulator:
                                           if s.debuff_type != "poison_5pct"]
 
             elif eff.effect_type == "activate_hp_burns":
+                # Once per skill cast (see _burns_activated_this_cast above) —
+                # NOT once per hit.
+                if _burns_activated_this_cast:
+                    continue
+                _burns_activated_this_cast = True
                 # Ninja A2 / Sicia A2: instantly trigger all HP Burn debuffs
-                # (1 tick each). Activation damage attributes to the
-                # ACTIVATING champion (the one who cast this skill), not
-                # the original placer — matches in-game UI breakdown which
-                # credits the triggering hero with the activated tick damage.
+                # (1 tick each). GAME-TRUTH (clean2 tick log, kind 3014):
+                # activated tick damage credits the BURN'S OWNER (placer =
+                # slot.source), NOT the activating champion. Proof: the real
+                # 3014 producer shifts Ninja(early)->Geo(later) tracking
+                # OWNERSHIP, not the constant activator (Ninja). The prior
+                # "credit the activator" model over-attributed ~2x HP burn to
+                # Ninja (sim 4.35M vs real 2.03M) and starved Geo.
                 for slot in list(self.debuff_bar.slots):
                     if slot.debuff_type == "hp_burn":
                         dmg = self._cap_fa(HP_BURN_DMG, kind="dot")
-                        champ.damage.hp_burn += dmg
+                        for c in self.champions:
+                            if c.name == slot.source:
+                                c.damage.hp_burn += dmg
+                                break
 
             elif eff.effect_type == "activate_poisons":
                 # Venomage A1: "Each hit has a 35% chance of activating up to
