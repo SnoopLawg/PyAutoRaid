@@ -2881,7 +2881,7 @@ namespace RaidAutomation
                 // ApplySkillCommand) so per-skill Warmaster/Giant-Slayer
                 // eligibility can be derived from the tick log. DoTs already
                 // have their own SkillTypeId so they skip this.
-                if (skillTypeId == 0 && producerId != 0)
+                if (skillTypeId == 0 && producerId >= 0)
                 {
                     lock (_curCastSkillByProducer)
                     {
@@ -3487,7 +3487,9 @@ namespace RaidAutomation
                 // Remember the casting skill so the DamageChange hook can stamp
                 // it onto this producer's DIRECT damage events (which lack an
                 // AppliedEffect SkillTypeId). Enables per-skill WM/GS analysis.
-                if (skillId != 0 && prodId != 0)
+                // NOTE: HeroId 0 is a VALID hero (battle hero ids are 0-4, boss
+                // is 5) — do NOT exclude prodId==0 (that dropped Maneater, slot 0).
+                if (skillId != 0 && prodId >= 0)
                     lock (_curCastSkillByProducer) { _curCastSkillByProducer[prodId] = skillId; }
                 // FULL-PRECISION stamina (TM) at cast time, for the caster and the
                 // boss — to measure Syphon's self-fill (the ~8% Maneater TM gap).
