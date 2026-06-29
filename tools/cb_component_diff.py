@@ -39,7 +39,13 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tools"))
 
-WM_FLAT_CALC_RAW = 75000  # the Warmaster/Giant-Slayer flat proc, pre-mitigation
+# The Warmaster/Giant-Slayer flat proc, pre-mitigation. 75000 = base cap on UNM;
+# 93750 = 75000 x 1.25 when the boss is Weakened (game-truth: WM IS multiplied by
+# Weaken — calc_raw 93750 vs 75000 proves the x1.25). BOTH must be isolated or the
+# Weaken-boosted procs (the majority, given ~98% Weaken uptime) get misclassified
+# as direct, falsely inflating real direct and deflating real WM (the cause of the
+# bogus "+320% WM / -42% direct" split seen 2026-06-29 before this fix).
+WM_FLAT_CALC_RAW = {75000, 93750}
 DEFAULT_TEAM = "Maneater,Demytha,Ninja,Geomancer,Venomage"
 
 
@@ -60,7 +66,7 @@ def real_components(ts: str, team: list[str]) -> dict:
         kid = e.get("kind_id")
         dealt = e.get("dealt") or 0
         if kid == 6000:
-            if (e.get("calc_raw") or 0) == WM_FLAT_CALC_RAW:
+            if (e.get("calc_raw") or 0) in WM_FLAT_CALC_RAW:
                 out[n]["wm"] += dealt
                 counts[n]["wm"] += 1
             else:
