@@ -101,8 +101,15 @@ class TestCBSimDeterministicSmoke(unittest.TestCase):
     #   (x1.25 cap) instead of additive (+25), per game desc + grounded p_cd
     #   ramp (1.909->2.362 on 20260626_161910). Minimal-team delta is tiny
     #   (-555; synthetic CR is low so crit rarely fires) but non-zero.
+    #   Re-baselined 2026-06-29 — per-skill GAME-TRUTH multiplier corrections
+    #   (hero_profiles_game.json): Maneater A1 5.5->3.0 (wrong skill "Face Down"
+    #   -> real "Pummel"), Ninja A3 dropped its !targetIsBoss 3.95x splash
+    #   (boss-suppressed) -> 3.0x/1hit, Geo A2 de-duped two mutually-exclusive 6x
+    #   effects -> 6.0x/1hit. All verified vs data/static/skills_all.json. Minimal
+    #   team total drops accordingly. (Root pipeline fix: auto_profile must keep
+    #   the effect Condition so it stops summing boss-suppressed/exclusive Damage.)
     LOCKED_CB_TURNS = 23
-    LOCKED_TOTAL_DMG = 8_869_397.25
+    LOCKED_TOTAL_DMG = 8_532_331.02
     LOCKED_TOTAL_TOL = 20.0  # widened for additive arithmetic noise
 
     def _build_men_team(self):

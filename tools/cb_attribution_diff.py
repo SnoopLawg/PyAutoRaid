@@ -97,12 +97,30 @@ def main() -> None:
 
     elem = args.cb_element
     if elem is None:
-        # Try battle log boss_element.
+        # GROUND TRUTH: read the boss's in-battle element from the tick log
+        # damage events (t_elem on hero->boss hits). battle_logs `boss_element`
+        # is often null/wrong (it defaulted to 4=Void, which made 090946/112351
+        # — actually SPIRIT, t_elem=3 — calibrate at the wrong affinity). The CB
+        # boss is Void only below 50% HP, which the MEN team never reaches, so the
+        # in-battle element is the day's affinity, captured per-hit here.
+        from collections import Counter
         try:
-            bl = json.loads((ROOT / f"battle_logs_cb_{ts}.json").read_text(encoding="utf-8"))
-            elem = bl.get("boss_element") or 4
+            d = json.loads((ROOT / f"tick_log_cb_{ts}.json").read_text(encoding="utf-8"))
+            ticks = d.get("ticks") or d
+            c = Counter(e.get("t_elem") for e in ticks
+                        if isinstance(e, dict) and e.get("kind") == "damage"
+                        and e.get("target") == 5 and e.get("t_elem"))
+            elem = c.most_common(1)[0][0] if c else None
         except Exception:
-            elem = 4
+            elem = None
+        if elem is None:
+            try:
+                bl = json.loads((ROOT / f"battle_logs_cb_{ts}.json").read_text(encoding="utf-8"))
+                elem = bl.get("boss_element") or 4
+            except Exception:
+                elem = 4
+        print(f"  [element] in-battle boss element = {elem} "
+              f"(1=Magic 2=Force 3=Spirit 4=Void), from tick-log t_elem")
 
     real = real_per_hero(ts, team)
     sim = sim_per_hero(team, elem, ts)
