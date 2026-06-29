@@ -1058,30 +1058,30 @@ class CBSimulator:
             # first when the tune made it cross first. This ONLY reorders
             # simultaneous crossers — it does NOT change WHEN a unit crosses, so
             # Maneater's 8/5 cadence is preserved.
-            crossed = [a for a in sched_actors if _sched.get_tm(a) >= _sched.threshold]
-            def _cross_order(a):
-                spd = self.cb_speed if a is _boss_tm else getattr(a, "speed", 0.0)
-                gain = 0.07 * spd
-                return -((_sched.get_tm(a) - _sched.threshold) / gain) if gain > 0 else 0.0
-            crossed.sort(key=_cross_order)
-            for top in crossed:
-                if all(c.is_dead for c in self.champions):
-                    break
-                if top is _boss_tm:
-                    self._cb_turn(tick)
-                    _boss_tm.tm = self.cb_tm  # _cb_turn zeroed self.cb_tm
-                    # Turn-50 enrage trigger: facade-backed for game-truth.
-                    # Demon Lord skill 222904 bypasses BlockDamage + Unkillable
-                    # (see project_cb_boss_turn_50_bypass).
-                    _f = _facade()
-                    _enrage_turn = (
-                        _f.boss.turn_50_trigger if _f is not None else ENRAGE_TURN
-                    )
-                    if self.cb_turn >= _enrage_turn:
-                        enraged = True
-                        break
-                elif not top.is_dead:
-                    self._champion_turn(top, tick)
+            # GAME-TRUTH scheduler (tm_f-confirmed 2026-06-28, clean2): PICK the
+            # single highest-TM actor each step and ZERO-reset it (overshoot
+            # discarded — post-turn tm_f=0 for both Maneater and boss). A unit
+            # that crosses while a higher-TM unit is processed first WAITS and
+            # overshoots (Maneater seen at 121 = 6 steps), then zero-resets. This
+            # is the DWJ/live-game model. Replaces the prior drain-all + hero-
+            # OVERFLOW (a compensating wrong: it matched turn counts but its
+            # discrete jitter drifted Maneater's UK phase off the aoe2 cycle ->
+            # false Magic/Void wipes). Ties: max() returns the first max and
+            # sched_actors lists champs before the boss, so the TEAM wins TM ties
+            # vs the boss (the PvE tie-break rule). Hero TM-fill skills (Ninja A1
+            # +15%) layer on top to restore the fast heroes' real counts.
+            top = max(sched_actors, key=_sched.get_tm)
+            if top is _boss_tm:
+                self._cb_turn(tick)
+                _boss_tm.tm = self.cb_tm  # _cb_turn zeroed self.cb_tm
+                _f = _facade()
+                _enrage_turn = (
+                    _f.boss.turn_50_trigger if _f is not None else ENRAGE_TURN
+                )
+                if self.cb_turn >= _enrage_turn:
+                    enraged = True
+            elif not top.is_dead:
+                self._champion_turn(top, tick)
 
         return self._compile_result()
 
@@ -1923,8 +1923,8 @@ class CBSimulator:
         # restores the slow heroes' true cadence so Demytha's A3 (Block Damage)
         # stays locked to the boss aoe1 cycle (the survival interlock). DWJ's calc
         # zero-resets everyone, which is why it under-counts slow heroes' turns.
-        champ.tm = max(0.0, champ.tm - TM_THRESHOLD)
-        champ.turns_taken += 1
+        champ.tm = 0.0  # ZERO-reset (tm_f game-truth: post-turn=0). With pick-max
+        champ.turns_taken += 1  # processing, overshoot is discarded — matches clean2.
 
         # Brimstone placement cooldown ticks on the holder's own turn
         # (skill 600190 Cooldown=4). See _try_place_smite.

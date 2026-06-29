@@ -88,16 +88,18 @@ class TestCbSimCadenceLock(unittest.TestCase):
     # stays locked to the boss aoe1 cycle (the survival interlock) — the default-
     # gear team now survives to cb_turn 25 instead of dying at 18. Per-hero turn
     # counts on the captured build match real to err=5 (see survival memory).
-    # Re-baselined 2026-06-28 again for the CROSSING-ORDER fix (simultaneous TM
-    # crossers resolve earliest-crosser-first, not faster-first) — protectors
-    # (Demytha BD / Maneater UK) act before the boss when the tune times them to
-    # cross first, closing coverage gaps. Reorders within-tick only; Maneater
-    # cadence preserved (36 turns). len 156->155, Maneater 37->36.
-    LOCKED_TIMELINE_LEN = 155
-    LOCKED_TIMELINE_SIG = "53a7ccff3121b462"
-    LOCKED_TURNS = {"Maneater": 36, "Demytha": 22, "Ninja": 27,
-                    "Geomancer": 23, "Venomage": 22}
-    LOCKED_CB_TURNS = 25
+    # Re-baselined 2026-06-28 for the GAME-TRUTH SCHEDULER (pick-max-one +
+    # zero-reset, tm_f-confirmed): replaced drain-all + hero-overflow. This is
+    # the DWJ/live-game model (highest-TM acts, overshoot discarded). Fixes the
+    # affinity survival pattern — Magic/Spirit/Void survive to T50, Force wipes
+    # (matches real). Default-gear team now lasts 23 cb_turns. Per-hero counts
+    # on the captured build: Mane82/Demy49/Ninja65/Geo49/Venom48 vs real
+    # 80/48/59/48/47 (close; Ninja A1 TM-fill still slightly high).
+    LOCKED_TIMELINE_LEN = 142
+    LOCKED_TIMELINE_SIG = "d468b89575f42c64"
+    LOCKED_TURNS = {"Maneater": 31, "Demytha": 19, "Ninja": 27,
+                    "Geomancer": 22, "Venomage": 21}
+    LOCKED_CB_TURNS = 23
 
     def test_men_cadence_signature(self):
         ln, sig, turns, cb_turns = cb_sim_timeline_signature()

@@ -81,12 +81,14 @@ class TestCBSimDeterministicSmoke(unittest.TestCase):
     #   un-stacks a compensating wrong (the inflated burn was masking Geo-deflect
     #   / Demytha under-attribution), so the per-hero split is more correct even
     #   though the aggregate dips.
-    #   Nudged 2026-06-28 (9.747M -> 9.674M) — CROSSING-ORDER fix (simultaneous
-    #   TM crossers resolve earliest-first, not faster-first) shifts within-tick
-    #   action order so protectors place BD/UK before the boss attacks; small
-    #   damage-timing delta, closes coverage gaps (Force flips wipe->survive).
-    LOCKED_CB_TURNS = 25
-    LOCKED_TOTAL_DMG = 9_673_758.68
+    #   Re-baselined 2026-06-28 — GAME-TRUTH SCHEDULER (pick-max-one + zero-reset,
+    #   tm_f-confirmed) replaced drain-all + hero-overflow. Fixes affinity survival
+    #   (Magic/Spirit/Void survive T50, Force wipes — matches real). Default-gear
+    #   minimal team now lasts 23 cb_turns. NOTE: damage total is an ANCHOR only —
+    #   per-affinity damage reconciliation is the NEXT phase (after TM/survival,
+    #   per user); Force battery already improved 17/58 -> 36/58 pass from this.
+    LOCKED_CB_TURNS = 23
+    LOCKED_TOTAL_DMG = 9_172_452.57
     LOCKED_TOTAL_TOL = 20.0  # widened for additive arithmetic noise
 
     def _build_men_team(self):
