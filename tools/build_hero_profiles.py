@@ -25,18 +25,51 @@ def _skill_type(sk):
 
 
 def _parse_mult_stat(effects):
-    """First kind=6000 (damage) effect's formula → (mult, stat, hits)."""
+    """Sum across ALL kind=6000 (damage) effects → (TOTAL mult, stat, total hits).
+
+    The sim's `_calc_skill_damage` multiplies the scaling stat by `mult` ONCE
+    (it does NOT multiply by hit_count), so `mult` must be the TOTAL multiplier
+    across every hit of the skill:
+        Demytha A1 = 3.2*ATK x Count 2         -> mult 6.4, hits 2
+        Ninja  A2  = three separate 2*ATK      -> mult 6.0, hits 3
+        Venom  A1  = two separate 2.4*ATK      -> mult 4.8, hits 2
+        Maneater A1= one 5.5*ATK               -> mult 5.5, hits 1 (unchanged)
+    This mirrors `build_all_hero_profiles._parse_mult_stat_from_static` (the
+    un-owned path, which already sums). Previously this returned only the FIRST
+    effect's per-hit mult, halving/thirding multi-hit OWNED heroes' direct
+    damage — the dominant CB direct-under (task #35: real direct vs sim -42%
+    team-wide). Caller passes boss-applicable effects only (Condition-filtered
+    upstream), so summing here won't pull in !targetIsBoss splashes.
+    """
+    total_mult = 0.0
+    total_hits = 0
+    stat = "ATK"
     for eff in effects or []:
         if eff.get("kind") != 6000:
             continue
         f = (eff.get("formula") or "").strip()
+        count = eff.get("count", 1) or 1
         m = re.match(r"^([\d.]+)\*(ATK|DEF|HP)", f)
         if m:
-            return float(m.group(1)), m.group(2), eff.get("count", 1) or 1
+            total_mult += float(m.group(1)) * count
+            stat = m.group(2)
+            total_hits += count
+            continue
         m = re.match(r"^(ATK|DEF|HP)\*([\d.]+)", f)
         if m:
-            return float(m.group(2)), m.group(1), eff.get("count", 1) or 1
-    return 0.0, "ATK", 1
+            stat = m.group(1)
+            total_mult += float(m.group(2)) * count
+            total_hits += count
+            continue
+        m = re.match(r"^(ATK|DEF|HP)$", f)
+        if m:
+            stat = m.group(1)
+            total_mult += 1.0 * count
+            total_hits += count
+            continue
+    if total_hits == 0:
+        return 0.0, "ATK", 1
+    return total_mult, stat, total_hits
 
 
 def main():

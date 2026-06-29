@@ -123,8 +123,15 @@ class TestCBSimDeterministicSmoke(unittest.TestCase):
     #   ForceStatusEffectTick share ONE activation/cast) + Phantom Touch gated on
     #   the cast applying an enemy debuff (Venom A1 / Maneater A2 place none ->
     #   no PT). Both reduce the minimal-team total. Grounded on 090946.
+    #   Re-baselined 2026-06-29 — owned-hero multi-hit parser fix (#35):
+    #   build_hero_profiles._parse_mult_stat now SUMS all boss-applicable Damage
+    #   effects into the TOTAL per-cast mult (was: first effect's per-hit mult),
+    #   matching the static parser. Fixes the single-effect Count>1 case for
+    #   owned heroes (Demytha A1 3.2x Count2 -> 6.4 total): Demytha direct
+    #   -54.5% -> -8.9% on 090946. (Multi-effect heroes Venom/Ninja were already
+    #   summed by load_game_profiles.) Minimal-team total rises accordingly.
     LOCKED_CB_TURNS = 23
-    LOCKED_TOTAL_DMG = 8_525_739.10  # game-truth Maneater A1 5.5x (was 3.0 patch)
+    LOCKED_TOTAL_DMG = 8_628_236.84  # +multi-hit owned parser (Demytha 6.4x)
     LOCKED_TOTAL_TOL = 20.0  # widened for additive arithmetic noise
 
     def _build_men_team(self):
