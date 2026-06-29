@@ -594,6 +594,8 @@ class SimChampion:
     # documentation, calibrated against per-event captures 2026-06-22.
     heavencast_pct_per_buff: float = 0.0   # Demy (blessing 2201 EnhancedWeapon)
     natures_wrath_pct_per_debuff: float = 0.0  # Geo (blessing 5201 NatureBalance)
+    heros_soul_pct: float = 0.0  # Hero's Soul (Amplification blessing 3302): flat
+                                 # dmg amp vs boss (rate x aliveEnemiesCount; CB=1)
     # Phantom Touch (MagicOrb blessing 1301, internal skill 600050):
     # AfterDamageDealt → bonus Damage = phantom_touch_mult × ATK to the
     # same target. Game-truth verified 2026-06-22 via /static-export on
@@ -2597,6 +2599,12 @@ class CBSimulator:
                 cap = 3  # grades 1-2 default; 4 for grades 3-4
             counter = min(cap, debuff_count)
             bless_mult *= (1.0 + champ.natures_wrath_pct_per_debuff * counter)
+        if champ.heros_soul_pct > 0:
+            # Hero's Soul (Amplification blessing 3302, skill 600180): game-truth
+            # DMG_MUL * (rate * aliveEnemiesCount), condition relationTargetIsBoss
+            # || relationTargetIsMinion. On Clan Boss there is exactly ONE enemy
+            # (the boss), so aliveEnemiesCount=1 -> a flat amp by grade tier.
+            bless_mult *= (1.0 + champ.heros_soul_pct)
 
         return (raw * crit_mult * def_mult * wk * str_mult * bid
                 * mastery_dmg * aff_dmg * bless_mult)
@@ -3317,6 +3325,7 @@ def build_sim_champion(name: str, stats: dict, position: int,
     # grade later when better source available.
     heavencast_pct = 0.0
     natures_wrath_pct = 0.0
+    heros_soul_pct = 0.0
     phantom_touch_mult = 0.0
     phantom_touch_repeat = 1
     bl = stats.get("blessing") if isinstance(stats.get("blessing"), dict) else None
@@ -3345,6 +3354,22 @@ def build_sim_champion(name: str, stats: dict, position: int,
                 natures_wrath_pct = 0.03  # cap 5
             else:
                 natures_wrath_pct = 0.02  # cap 3-4
+        elif bid == 3302:  # Amplification / Hero's Soul (skill 600180)
+            # Game-truth (blessing_procs 600180): DMG_MUL * (rate *
+            # aliveEnemiesCount) vs boss/minion. rate by grade tier (grade is
+            # 0-indexed): g0-1 0.005, g2-3 0.01, g4 0.015, g5 0.03. On Clan Boss
+            # aliveEnemiesCount=1 (boss only) -> flat amp. (Many other 600XXX
+            # blessings are NO-OP vs CB: PvP-gated (ToxicBlade/MagicFlame),
+            # boss-excluded (LightOrbs !targetIsBoss), dead-allies (Necromancy/
+            # Fearless), or StoneSkin-only (CreepingRoots). See docs.)
+            if grade >= 5:
+                heros_soul_pct = 0.03
+            elif grade >= 4:
+                heros_soul_pct = 0.015
+            elif grade >= 2:
+                heros_soul_pct = 0.01
+            else:
+                heros_soul_pct = 0.005
         elif bid == 1301:  # MagicOrb / Phantom Touch — 3.5*ATK bonus dmg per attack
             # Per static skill 600050 (verified 2026-06-22):
             #   Grades 0-1: Effect[0] gated by ownersDoubleAscendLevel==1||==2
@@ -3377,6 +3402,7 @@ def build_sim_champion(name: str, stats: dict, position: int,
         brimstone_chance=brimstone_chance,
         heavencast_pct_per_buff=heavencast_pct,
         natures_wrath_pct_per_debuff=natures_wrath_pct,
+        heros_soul_pct=heros_soul_pct,
         phantom_touch_mult=phantom_touch_mult,
         phantom_touch_repeat=phantom_touch_repeat,
         has_passive_ally_protect=passive_ally_protect,
