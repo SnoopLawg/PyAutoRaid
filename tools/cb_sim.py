@@ -2379,11 +2379,17 @@ class CBSimulator:
         if champ.has_buff("inc_cd_30"):
             effective_cd += 30
 
-        # Ninja passive: +combo_cd_pct per combo counter (capped at +25% CD)
+        # Ninja Escalation [P]: "+5% C.DMG (up to 25%) each time all 3 of his
+        # skills hit a target in a round. This effect is MULTIPLICATIVE." The
+        # sim applied it ADDITIVELY (effective_cd += 25 -> 210), but game-truth
+        # is multiplicative: base CD x (1+bonus) capped at x1.25. GROUNDED
+        # (20260626_161910 damage events): Ninja real p_cd ramps 1.909 -> 2.362
+        # = x1.237; additive gave only ~210 (3.10x crit) vs real ~236 (3.36x),
+        # ~half his -1.6M direct gap. Ninja-only (combo_cd_pct set for Ninja
+        # alone) so it does NOT touch the over-predictors. Fixed 2026-06-29.
         if champ.combo_cd_pct > 0:
-            max_cd_stacks = int(0.25 / champ.combo_cd_pct) if champ.combo_cd_pct > 0 else 0
-            effective_stacks = min(champ.combo_counter, max_cd_stacks)
-            effective_cd += champ.combo_cd_pct * 100 * effective_stacks
+            cd_bonus = min(0.25, champ.combo_cd_pct * champ.combo_counter)
+            effective_cd *= (1.0 + cd_bonus)
 
         effective_cr = champ.stats.get(CR, 15)
         # Inc C.RATE buff (Fahrakin A3, Cardiel A3: +30% CR)

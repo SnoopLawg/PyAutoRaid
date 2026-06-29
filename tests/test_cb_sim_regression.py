@@ -97,8 +97,12 @@ class TestCBSimDeterministicSmoke(unittest.TestCase):
     #   is a synthetic ANCHOR (crit-off); real calibration is judged on the
     #   COMPLETE fixtures vs the T50-surviving run, not this number or single-run
     #   sim_regress (real damage varies 13-38M/same build).
+    #   Re-baselined 2026-06-29 — Ninja Escalation C.DMG made MULTIPLICATIVE
+    #   (x1.25 cap) instead of additive (+25), per game desc + grounded p_cd
+    #   ramp (1.909->2.362 on 20260626_161910). Minimal-team delta is tiny
+    #   (-555; synthetic CR is low so crit rarely fires) but non-zero.
     LOCKED_CB_TURNS = 23
-    LOCKED_TOTAL_DMG = 8_869_952.57
+    LOCKED_TOTAL_DMG = 8_869_397.25
     LOCKED_TOTAL_TOL = 20.0  # widened for additive arithmetic noise
 
     def _build_men_team(self):
