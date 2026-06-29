@@ -861,6 +861,16 @@ def def_mitigation_factor(defence: float,
     Mirrors DamageCalculator.DamageReductionByDefence exactly when
     ONE = K = 1 (the observed defaults) and acc_mod = 0 (empty loop).
 
+    GOLD-STANDARD VERIFIED 2026-06-29 (task #32): the live mod hook captured
+    572 DamageReductionByDefence calls (tick_log_cb_defcap_20260629_155556);
+    this function reproduces the game's returned factor to within +/-0.03%
+    across all 13 (defence, acc_mod, defence_modifier) combos observed, incl.
+    DEF-Down modifiers (-0.32/-0.52), full ignore (-1.0), and the base
+    armor-pierce -0.02. NOTE the game passes -0.02 as `defence_modifier`,
+    identical to acc_mod = defence*0.02: (D - 0.02D)*1 == D*(1-0.02). So the
+    regular-hit attribution gap is NOT a DEF-mitigation bug — look at crit /
+    Warmaster / DoT / cast-count instead (task #35).
+
     Args:
         defence: target.Stats.Defence value (post-DEF-Down/IncDEF).
         acc_mod: accumulator from the AppliedEffects loop filtering on
