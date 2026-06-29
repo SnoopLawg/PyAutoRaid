@@ -296,6 +296,30 @@ read the same data.
 
 Calibrated to **+0.61%** vs real battle data on Magic UNM (36.36M sim avg / 36.14M real, σ=0.88M, 10 runs). The DEF mitigation formula is now extracted *literally* from `GameAssembly.dll` (see Reverse-Engineering section below).
 
+### ⚠️ Turn-meter scheduler — DO NOT re-derive (the #1 repeated mistake)
+
+The CB turn-meter model is **PICK-MAX-ONE + ZERO-RESET** (tm_f-confirmed from
+`tick_log_cb_clean2`, = DeadwoodJedi / live-game model):
+tick every unit by `0.07 × SPD` (discrete 0.07-steps); when ≥1 unit reaches the
+threshold, the **single highest-TM unit acts and ZERO-resets** (overshoot
+DISCARDED — a unit that crosses while a higher-TM unit is processed first WAITS
+and overshoots, then resets to 0). **Ties → the team beats the boss** (PvE rule).
+`tools/cb_scheduler.py` implements this; `cb_sim.py`'s main loop uses it.
+
+**NEVER** switch this to "drain-all crossed" processing or "hero TM-overflow
+preserve" — both are COMPENSATING WRONGS that match per-hero turn counts but
+drift Maneater's `[Unkillable]` phase off the boss aoe2 cycle, falsely wiping
+Magic/Void. Settled facts: **UNM boss SPD = 190** (base 170 + 20 UNM-stage
+modifier); **Ninja is MAGIC** (weak vs Force → glances → his A1 +15% TM burst is
+glance-gated → skipped on Force → tune desync → Force is the ONLY affinity that
+fails). In-battle SPD = base `stats.SPD` (mod `s_spd`), NOT `effective_spd`.
+
+**Real-game survival pattern (the MEN tune):** Magic / Spirit / Void survive to
+T50; **Force NEVER lasts 50.** This is LOCKED by `tests/test_cb_affinity_survival.py`
+(fixtures in `tests/cb_fixtures/`). If that test fails, the scheduler regressed —
+restore pick-max+zero-reset; do not just edit the assertions. Full detail:
+`.claude/skills/cb-sim-truths` + memory `project_cb_sim_survival_baseline_20260627`.
+
 Key mechanics:
 - All fights uncapped (no FA damage caps)
 - CB element defaults Void; pass `--cb-element` for day's affinity (Magic heroes do -30% vs Force)
