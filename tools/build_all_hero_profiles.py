@@ -102,6 +102,57 @@ def _legacy_effects_from_static(effects: list[dict]) -> list[dict]:
     return out
 
 
+def _eff_is_damage(e: dict) -> bool:
+    """True for a Damage effect in either format (legacy kind 6000 / static
+    KindId / tagged)."""
+    return (e.get("kind") == 6000 or e.get("KindId") == "Damage"
+            or e.get("tag") == "damage")
+
+
+def _filter_boss_damage_effects(effects: list[dict],
+                                conditions: list[str] | None = None) -> list[dict]:
+    """Keep only Damage effects that fire vs the CB boss; collapse
+    mutually-exclusive cond/!cond Damage pairs to ONE. Non-Damage effects and
+    genuine multi-hit Damage (unconditional, or distinct non-complementary
+    conditions) pass through untouched.
+
+    This is the durable root-fix for the skill-mult double-count (task #31):
+    `skills_db.json` strips per-effect Condition, so the generator used to sum
+    a skill's `!targetIsBoss` AllEnemies splash (Ninja A3 -> 6.95x/2) and its
+    mutually-exclusive conditional Damage variants (Geo A2 -> 12x/2) into the
+    boss multiplier. `conditions` is sourced from the index-aligned depth-8
+    snapshot Effects (which DO carry Condition) so it works for owned effects
+    too. CB-boss eligibility is delegated to load_game_profiles
+    `_condition_fires_vs_cb_boss` (one source of truth).
+    """
+    from load_game_profiles import _condition_fires_vs_cb_boss
+    conditions = conditions or []
+
+    def cond_of(i: int, e: dict) -> str:
+        if i < len(conditions) and conditions[i]:
+            return conditions[i]
+        return e.get("condition") or e.get("Condition") or ""
+
+    dmg_conds = {cond_of(i, e) for i, e in enumerate(effects)
+                 if _eff_is_damage(e)}
+    out, collapsed_seen = [], set()
+    for i, e in enumerate(effects):
+        if not _eff_is_damage(e):
+            out.append(e)
+            continue
+        cond = cond_of(i, e)
+        if not _condition_fires_vs_cb_boss(cond):
+            continue  # !targetIsBoss splash / kill-gated revenge damage
+        comp = cond[1:] if cond.startswith("!") else "!" + cond
+        if cond and comp in dmg_conds:            # complementary pair present
+            key = cond.lstrip("!").strip()
+            if key in collapsed_seen:
+                continue
+            collapsed_seen.add(key)
+        out.append(e)
+    return out
+
+
 # Minimal KindId→legacy number map (matches what cb_sim has historically).
 # Most are placeholder; downstream uses kind_id string via effect_engine.
 _LEGACY_KIND = {
@@ -204,15 +255,19 @@ def main() -> int:
             static = skills_static.get(str(sid))
             if not static:
                 continue
+            # Conditions for THIS skill's effects come from the index-aligned
+            # depth-8 snapshot (skills_db strips Condition). Used to drop
+            # !targetIsBoss / kill-gated Damage + collapse cond/!cond pairs.
+            static_conds = [(e.get("Condition") or "")
+                            for e in (static.get("Effects") or [])]
             owned = owned_sid_map.get(sid)
             if owned:
                 # Use owned data — it has book-applied cooldowns + correct
                 # effects from the legacy parser
-                mult = 0.0
-                stat = "ATK"
-                hits = 1
                 from build_hero_profiles import _parse_mult_stat, _skill_type
-                mult, stat, hits = _parse_mult_stat(owned.get("effects") or [])
+                owned_effects = _filter_boss_damage_effects(
+                    owned.get("effects") or [], static_conds)
+                mult, stat, hits = _parse_mult_stat(owned_effects)
                 profile_skills.append({
                     "id": sid,
                     "type": _skill_type(owned),
@@ -220,11 +275,12 @@ def main() -> int:
                     "hits": hits,
                     "mult": mult,
                     "stat": stat,
-                    "effects": owned.get("effects") or [],
+                    "effects": owned_effects,
                 })
             else:
                 # Derive from static depth-8 snapshot
-                effects_static = static.get("Effects") or []
+                effects_static = _filter_boss_damage_effects(
+                    static.get("Effects") or [], static_conds)
                 mult, stat, hits = _parse_mult_stat_from_static(effects_static)
                 group = static.get("Group", "")
                 # Skill type heuristic

@@ -440,22 +440,61 @@ namespace RaidAutomation
                 //   at DMD<BattleProcessor::ApplyCommand>
                 lock (_hookPatchLog) { _hookPatchLog.Add("EffectManagerProcess:permanently_disabled_breaks_game"); }
 
-                // DamageReductionByDefence + Fixed.op_Subtraction hooks
-                // were used to extract the literal DEF mitigation formula
-                // (factor = 1 - 0.85 * (1 - exp((Defence - acc_mod) *
-                //  (1 + defence_modifier) * (-1/1500)))) and the -0.02
-                // base armor pierce. See `cb_constants.def_mitigation_factor`
-                // and commit 8501dc7. The hooks are now DISABLED because
-                // they triggered a coreclr.dll APPCRASH (c0000005 access
-                // violation) at battle teardown — the BattleHero pointers
-                // we read via Marshal.ReadIntPtr are freed before the
-                // final DamageReductionByDefence call completes.
+                // DamageReductionByDefence + Fixed.op_Subtraction hooks —
+                // RE-ENABLED (hardened, task #32). They extract the literal
+                // DEF mitigation formula (factor = 1 - 0.85 * (1 - exp(
+                // (Defence - acc_mod) * (1 + defence_modifier) * (-1/1500))))
+                // for REGULAR (non-WM) hits — the remaining CB sim residual.
+                // See `cb_constants.def_mitigation_factor` and commit 8501dc7.
                 //
-                // Re-enable only when:
-                //   (a) acc_mod or defence_modifier needs re-derivation
-                //       after a game patch, AND
-                //   (b) the Marshal.ReadIntPtr walks have been wrapped in
-                //       try/catch with pointer-validity checks.
+                // Crash history: previously caused coreclr.dll APPCRASH
+                // (c0000005) at battle TEARDOWN — the BattleHero pointers read
+                // via Marshal.ReadIntPtr (ReadActiveEffects) are freed before
+                // the final DamageReductionByDefence call. Hardening:
+                //   (1) every hook gates on _battleActive (set false at
+                //       teardown 1415/1987/1989), so the final freed-pointer
+                //       call is skipped entirely;
+                //   (2) IsReadablePtr() VirtualQuery probe before any raw read;
+                //   (3) the raw-Marshal ReadActiveEffects walk is DROPPED from
+                //       this hook — buffs/debuffs are not inputs to the factor.
+                // Capture protocol: run a ~25-turn battle killed mid-fight so
+                // teardown is never reached (kill-Raid-mid-CB preserves the key).
+                // NOTE arg[2] is `defenceModifier` (the (1+def_mod) term),
+                // NOT input damage — emitted as `in_raw` for back-compat.
+                try
+                {
+                    var dcType = FindTypeStatic("SharedModel.Battle.Core.DamageCalculator");
+                    var fixedType = FindTypeStatic("Plarium.Common.Numerics.Fixed");
+                    if (dcType == null) { lock (_hookPatchLog) { _hookPatchLog.Add("DefReduction:dc_type_not_found"); } }
+                    else if (fixedType == null) { lock (_hookPatchLog) { _hookPatchLog.Add("DefReduction:fixed_type_not_found"); } }
+                    else
+                    {
+                        var drMethod = dcType.GetMethod("DamageReductionByDefence",
+                            BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+                        var subMethod = fixedType.GetMethod("op_Subtraction",
+                            BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+                        if (drMethod == null) { lock (_hookPatchLog) { _hookPatchLog.Add("DefReduction:no_DamageReductionByDefence"); } }
+                        else if (subMethod == null) { lock (_hookPatchLog) { _hookPatchLog.Add("DefReduction:no_op_Subtraction"); } }
+                        else
+                        {
+                            var pre = new HarmonyMethod(typeof(RaidAutomationPlugin)
+                                .GetMethod("BattleHook_DefReduction_Prefix", BindingFlags.Static | BindingFlags.Public));
+                            var post = new HarmonyMethod(typeof(RaidAutomationPlugin)
+                                .GetMethod("BattleHook_DefReduction", BindingFlags.Static | BindingFlags.Public));
+                            var subPost = new HarmonyMethod(typeof(RaidAutomationPlugin)
+                                .GetMethod("BattleHook_FixedSubtraction", BindingFlags.Static | BindingFlags.Public));
+                            // Patch the sub-hook FIRST so it's armed for the very first DR call.
+                            try { harmony.Patch(subMethod, postfix: subPost);
+                                  lock (_hookPatchLog) { _hookPatchLog.Add("FixedSubtraction:patched"); } }
+                            catch (Exception ex) { lock (_hookPatchLog) { _hookPatchLog.Add("FixedSubtraction:patch_err:" + ex.Message); } }
+                            try { harmony.Patch(drMethod, prefix: pre, postfix: post);
+                                  lock (_hookPatchLog) { _hookPatchLog.Add("DefReduction:patched"); }
+                                  Logger.LogInfo("Harmony: patched DamageCalculator.DamageReductionByDefence"); }
+                            catch (Exception ex) { lock (_hookPatchLog) { _hookPatchLog.Add("DefReduction:patch_err:" + ex.Message); } }
+                        }
+                    }
+                }
+                catch (Exception ex) { lock (_hookPatchLog) { _hookPatchLog.Add("DefReduction:err:" + ex.Message); } }
 
                 // OpenStageCmd..ctor(int) postfix — capture the real
                 // numeric stage id every time the user (or any code) opens
@@ -2508,6 +2547,52 @@ namespace RaidAutomation
             return IntPtr.Zero;
         }
 
+        [StructLayout(LayoutKind.Sequential)]
+        private struct MEMORY_BASIC_INFORMATION
+        {
+            public IntPtr BaseAddress; public IntPtr AllocationBase;
+            public uint AllocationProtect; public IntPtr RegionSize;
+            public uint State; public uint Protect; public uint Type;
+        }
+        [DllImport("kernel32.dll")]
+        private static extern IntPtr VirtualQuery(IntPtr lpAddress,
+            out MEMORY_BASIC_INFORMATION lpBuffer, IntPtr dwLength);
+
+        // True only if [ptr, ptr+size) is committed and readable. Prevents the
+        // access violation on a freed/unmapped page that .NET 6 turns into an
+        // uncatchable corrupted-state exception (the DefReduction teardown crash).
+        private static bool IsReadablePtr(IntPtr ptr, int size = 8)
+        {
+            try
+            {
+                if ((long)ptr <= 0x10000) return false;
+                MEMORY_BASIC_INFORMATION mbi;
+                if (VirtualQuery(ptr, out mbi, (IntPtr)Marshal.SizeOf<MEMORY_BASIC_INFORMATION>()) == IntPtr.Zero)
+                    return false;
+                const uint MEM_COMMIT = 0x1000;
+                const uint READABLE = 0x02 | 0x04 | 0x20 | 0x40 | 0x80 | 0x08;
+                const uint PAGE_GUARD = 0x100, PAGE_NOACCESS = 0x01;
+                if (mbi.State != MEM_COMMIT) return false;
+                if ((mbi.Protect & (PAGE_GUARD | PAGE_NOACCESS)) != 0) return false;
+                if ((mbi.Protect & READABLE) == 0) return false;
+                long end = (long)mbi.BaseAddress + (long)mbi.RegionSize;
+                return ((long)ptr + size) <= end;
+            }
+            catch { return false; }
+        }
+
+        // Validate an il2cpp object handle is still mapped (klass ptr @ obj+0x0).
+        private static bool IsLiveIl2CppObject(IntPtr obj)
+        {
+            if (!IsReadablePtr(obj, 8)) return false;
+            try
+            {
+                IntPtr klass = Marshal.ReadIntPtr(obj);   // safe: probed above
+                return IsReadablePtr(klass, 0x18);
+            }
+            catch { return false; }
+        }
+
         // Counter for diagnostic visibility in /battle-state output.
         private static int _hookDiag_DefReduction = 0;
 
@@ -2521,6 +2606,7 @@ namespace RaidAutomation
 
         public static void BattleHook_DefReduction_Prefix()
         {
+            if (!_battleActive) return;   // never arm during teardown/menus (crash gate)
             _inDefReduction = true;
             _defReductionSubCount = 0;
             _defReductionAccModRaw = 0;
@@ -2532,7 +2618,7 @@ namespace RaidAutomation
         // is `Stats.Defence - acc_mod` — capture its second arg.
         public static void BattleHook_FixedSubtraction(object[] __args)
         {
-            if (!_inDefReduction) return;
+            if (!_battleActive || !_inDefReduction) return;
             _defReductionSubCount++;
             if (_defReductionSubCount != 1) return;
             // Args: [0] = Fixed x (Stats.Defence), [1] = Fixed y (acc_mod)
@@ -2553,6 +2639,7 @@ namespace RaidAutomation
         public static void BattleHook_DefReduction(object[] __args, object __result)
         {
             _hookDiag_DefReduction++;
+            if (!_battleActive) { _inDefReduction = false; return; }   // skip teardown calls (crash gate)
             try
             {
                 if (__args == null || __args.Length < 3) return;
@@ -2569,7 +2656,8 @@ namespace RaidAutomation
                 try
                 {
                     // arg[0] = EffectContext, arg[1] = BattleHero (target),
-                    // arg[2] = Fixed input damage value.
+                    // arg[2] = Fixed defenceModifier (the (1+def_mod) term),
+                    // NOT input damage. Emitted as "in_raw" for back-compat.
                     var ctx = __args[0];
                     object prodHero = null, tgtHero = null;
                     if (ctx != null)
@@ -2578,7 +2666,11 @@ namespace RaidAutomation
                         try { tgtHero  = Prop(ctx, "Target");   if (tgtHero  != null) targetId   = IntProp(tgtHero,  "Id"); } catch { }
                     }
                     var battleHero = __args[1] ?? tgtHero;
-                    if (battleHero != null)
+                    // Probe the il2cpp handle before any read: a freed BattleHero
+                    // pointer is the c0000005 crash source. ReadActiveEffects
+                    // (raw Marshal walk) is dropped — buffs/debuffs are not inputs
+                    // to the mitigation factor.
+                    if (battleHero != null && IsLiveIl2CppObject(IL2CPPHandleOf(battleHero)))
                     {
                         try
                         {
@@ -2587,9 +2679,8 @@ namespace RaidAutomation
                         } catch { }
                         try { tLevel  = IntProp(battleHero, "Level"); } catch { }
                         try { tTypeId = IntProp(battleHero, "TypeId"); } catch { }
-                        try { tDebuffs = ReadActiveEffects(battleHero); } catch { }
                     }
-                    if (prodHero != null)
+                    if (prodHero != null && IsLiveIl2CppObject(IL2CPPHandleOf(prodHero)))
                     {
                         try
                         {
@@ -2602,7 +2693,6 @@ namespace RaidAutomation
                         } catch { }
                         try { pLevel  = IntProp(prodHero, "Level"); } catch { }
                         try { pTypeId = IntProp(prodHero, "TypeId"); } catch { }
-                        try { pBuffs  = ReadActiveEffects(prodHero); } catch { }
                     }
                     var fixedIn = __args[2];
                     if (fixedIn != null)

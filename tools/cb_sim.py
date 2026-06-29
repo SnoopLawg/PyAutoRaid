@@ -753,12 +753,17 @@ except (ImportError, FileNotFoundError) as _e:
     import sys as _sys
     print(f"[cb_sim] Warning: {_e.__class__.__name__}: {_e} — running without game-extracted profiles", file=_sys.stderr)
 
-# Glance-gate lookup: skill_id (int) → set of effect indices with
-# Relation.ActivateOnGlancingHit=false. Built by tools/build_glance_gates.py
-# from live-mod /static-export at depth=8. We don't use the per-index info;
-# the model is "if the skill has ANY gated effect AND attacker is weak, roll
-# one glance per cast and skip the cast's secondary effects on a hit."
-# This matches game behavior (glance is a property of the attack roll).
+# Glance-gate lookup. Built by tools/build_glance_gates.py from depth=8 skill
+# data. Two views of the same data:
+#   GLANCE_GATED_SKILL_IDS  — skills with ANY glance-gated effect (legacy set).
+#   GLANCE_GATE_SIGNATURES  — skill_id → set of gated effect SIGNATURES.
+# A signature is the effect in cb_sim's namespace: the sim debuff/buff NAME for
+# ApplyDebuff/ApplyBuff effects (e.g. "hp_burn", "def_down"), or the raw KindId
+# otherwise (e.g. "IncreaseStamina"). cb_sim iterates PROFILED effects (sim
+# names), so the signature is the bridge that lets us gate PER-EFFECT instead of
+# collapsing to a skill-level boolean. Game behavior: a glance is one attack
+# roll per cast; on a glance ONLY the effects with ActivateOnGlancingHit=false
+# are skipped — not every secondary on the skill.
 try:
     import json as _json
     from pathlib import Path as _Path
@@ -766,8 +771,13 @@ try:
                 / "data" / "static" / "glance_gates.json")
     _gg_raw = _json.loads(_gg_path.read_text(encoding="utf-8"))
     GLANCE_GATED_SKILL_IDS = {int(k) for k in (_gg_raw.get("gates") or {}).keys()}
+    GLANCE_GATE_SIGNATURES = {
+        int(k): frozenset(v)
+        for k, v in (_gg_raw.get("gate_signatures") or {}).items()
+    }
 except Exception as _e:
     GLANCE_GATED_SKILL_IDS = set()
+    GLANCE_GATE_SIGNATURES = {}
     import sys as _sys
     print(f"[cb_sim] Warning: glance_gates.json load failed ({_e}); "
           f"generic glance gating disabled", file=_sys.stderr)
@@ -2729,39 +2739,46 @@ class CBSimulator:
         ):
             champ.add_buff(sb_name, sb_dur)
 
-        # GLANCE GATING (generic, 2026-06-18): weak-affinity attacks have a
-        # ~35% chance to glance (gameplay.json GlancingHitChance). When they
-        # glance, every secondary effect with Relation.ActivateOnGlancingHit=
-        # false on the cast skill is SUPPRESSED. This is the missing piece
-        # that explains MEN's Force-UNM failure: Ninja+Venom (Magic) glance
-        # ~35% on Force boss, losing DEC DEF / poisons / TM boost / HP burns
-        # → boss tankier, team takes more damage, BD/UK cycle drifts.
+        # GLANCE GATING (per-effect, 2026-06-29): weak-affinity attacks have a
+        # ~35% chance to glance (gameplay.json GlancingHitChance). On a glance,
+        # ONLY the secondary effects with Relation.ActivateOnGlancingHit=false
+        # are SUPPRESSED — NOT every effect on the skill. glance_gates.json
+        # carries the per-skill SET of gated effect SIGNATURES; we dampen a
+        # profiled effect only when its signature is in that set.
+        #
+        # This fixes Geo A3 (48804): its ONLY gated effect is the TM-burst
+        # (IncreaseStamina, handled separately by self_tm_fill above). The old
+        # skill-level boolean wrongly dampened A3's HP-burn + Weaken placements
+        # (aog=true → NOT gated), gutting Geo's burn + downstream deflect.
+        # MEN Force survival is preserved: Ninja+Venom (Magic) glance on Force
+        # and ALL their debuff placements (def_down/hp_burn/poison/dec_atk) are
+        # aog=false, so they stay in the gated set and stay suppressed.
         # Damage rolls (the kind=6000 damage effect) still apply (at the
-        # GlancingHitCoef penalty modeled elsewhere); we only gate the
-        # secondaries lumped into SKILL_EFFECTS[].
+        # GlancingHitCoef penalty modeled elsewhere).
         is_weak = (
             champ.element in (1, 2, 3) and self.cb_element in (1, 2, 3)
             and WEAK_AFFINITY.get(champ.element) == self.cb_element
         )
         skill_id = SKILL_IDS_BY_HERO.get(champ.name, {}).get(skill.name, 0)
-        skill_has_gate = skill_id in GLANCE_GATED_SKILL_IDS
-        glance_blocks_secondaries = False
-        glance_avg_dampen = 1.0   # for deterministic mode
-        if is_weak and skill_has_gate:
-            if self.deterministic:
-                # In deterministic mode, scale debuff land + per-cast effect
-                # firing by (1 - glance_chance) — averages the binary roll.
-                glance_avg_dampen = 1.0 - WEAK_HIT_GLANCE_CHANCE
-            else:
-                # Monte Carlo: binary roll per cast. If it glances, gate
-                # blocks ALL of this cast's secondary effects.
-                if self.rng.random() < WEAK_HIT_GLANCE_CHANCE:
-                    glance_blocks_secondaries = True
+        gated_sigs = GLANCE_GATE_SIGNATURES.get(skill_id, frozenset())
+        # One attack roll per cast decides the glance (MC); resolve it once so
+        # every gated effect on this cast shares the same outcome.
+        glance_this_cast = (
+            is_weak and bool(gated_sigs) and not self.deterministic
+            and self.rng.random() < WEAK_HIT_GLANCE_CHANCE
+        )
 
-        if glance_blocks_secondaries:
-            # MC glance: skip the entire effects list. Damage already
-            # applied at the calc-damage call site.
-            return
+        def _glance_dampen(sig: str) -> float:
+            """Per-effect glance multiplier for this cast. 1.0 unless this is a
+            weak-affinity attack whose effect `sig` is glance-gated. Then:
+            deterministic → average by (1 - glance_chance); MC → 0.0 if this
+            cast glanced (effect fully skipped), else 1.0 (no glance this cast).
+            """
+            if not is_weak or sig not in gated_sigs:
+                return 1.0
+            if self.deterministic:
+                return 1.0 - WEAK_HIT_GLANCE_CHANCE
+            return 0.0 if glance_this_cast else 1.0
 
         # HP-Burn activation is once PER SKILL (game-truth: effect 9002 fires
         # once/skill, not per hit). load_game_profiles emits one activate
@@ -2788,13 +2805,14 @@ class CBSimulator:
                 count = eff.params.get("count", 1)
                 per_hit = eff.params.get("per_hit", False)
                 hits = skill.hit_count if per_hit else 1
+                _dampen = _glance_dampen(eff.params["debuff"])
                 for _ in range(hits):
                     for _ in range(count):
                         self._try_place_debuff(
                             champ, eff.params["debuff"],
                             eff.params.get("duration", 2),
                             base_chance * acc_rate * aff_debuff_mult
-                            * glance_avg_dampen)
+                            * _dampen)
 
             elif eff.effect_type == "conditional_debuff":
                 if eff.params.get("requires") == "poison_sensitivity":
@@ -2803,11 +2821,12 @@ class CBSimulator:
                 base_chance = eff.params.get("chance", 1.0) + sniper_bonus
                 per_hit = eff.params.get("per_hit", False)
                 hits = skill.hit_count if per_hit else 1
+                _dampen = _glance_dampen(eff.params["debuff"])
                 for _ in range(hits):
                     self._try_place_debuff(
                         champ, eff.params["debuff"],
                         eff.params.get("duration", 2),
-                        base_chance * acc_rate * glance_avg_dampen)
+                        base_chance * acc_rate * _dampen)
 
             elif eff.effect_type == "extend_debuffs":
                 turns = eff.params.get("turns", 1)
