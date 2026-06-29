@@ -261,6 +261,18 @@ class DebuffSlot:
 class DebuffBar:
     def __init__(self):
         self.slots: List[DebuffSlot] = []
+        # Cumulative HP-burn placement count per hero. HP burn is GLOBALLY
+        # singular (one slot, owner = most-recent placer), so the natural
+        # boss-turn tick can only credit ONE hero — but on the real game each
+        # placer's burn ticks credit THAT placer, and ownership of the singular
+        # slot churns with placement frequency. Crediting only the last placer
+        # mis-splits (grounded 20260626_161910: stale Geo source won 2/3 ticks
+        # -> sim 52/48 vs real Ninja 81% / Geo 19%). We instead split each
+        # natural tick proportional to cumulative placements (a placer who
+        # (re)places 3x as often owns ~3x the singular slot's tick-time). This
+        # is TOTAL-NEUTRAL (per-tick damage + tick count unchanged; only the
+        # per-hero share moves) so it cannot affect totals or survival.
+        self.hp_burn_placements: dict = {}
 
     # Singular-by-type debuffs: only ONE active on the target regardless of
     # source. New placements refresh duration (game also picks higher amount
@@ -289,6 +301,9 @@ class DebuffBar:
         Returns True if the debuff is now on the bar (placed or refreshed),
         False if rejected (bar full).
         """
+        if debuff_type == "hp_burn" and source:
+            self.hp_burn_placements[source] = (
+                self.hp_burn_placements.get(source, 0) + 1)
         # Singular-by-type: any source places same type → refresh duration
         if debuff_type in self.SINGULAR_BY_TYPE:
             for s in self.slots:
@@ -1396,10 +1411,22 @@ class CBSimulator:
         for slot in list(self.debuff_bar.slots):
             if slot.debuff_type == "hp_burn":
                 burn_dmg = self._cap_fa(HP_BURN_DMG, kind="dot")
-                for c in self.champions:
-                    if c.name == slot.source:
-                        c.damage.hp_burn += burn_dmg
-                        break
+                # Split this tick across placers proportional to cumulative
+                # HP-burn placement count (see DebuffBar.__init__). Total per
+                # tick is unchanged; only the per-hero attribution moves. Falls
+                # back to the slot's last placer if no placement history.
+                pl = self.debuff_bar.hp_burn_placements
+                total = sum(pl.values())
+                if total > 0:
+                    for c in self.champions:
+                        w = pl.get(c.name, 0)
+                        if w:
+                            c.damage.hp_burn += burn_dmg * w / total
+                else:
+                    for c in self.champions:
+                        if c.name == slot.source:
+                            c.damage.hp_burn += burn_dmg
+                            break
 
         # AoE — deal damage to all heroes
         if attack in ("aoe1", "aoe2"):
