@@ -552,10 +552,16 @@ class SimChampion:
     # Effect StatusEffectTypeId 740 (internal name "FireMark"), kind 3021.
     # Damage caps at the absolute floor 250,000 on UNM (skill 200008).
     has_brimstone: bool = False
-    # Brimstone proc chance per hit (varies by blessing grade):
-    # level 1 (410101) = 15%, level 3 = 30%, level 5 = 60%, level 6 = 100%.
-    # Default 30% — typical mid-grade. Override via build_sim_champion.
+    # Brimstone proc chance — LEGACY/unused after the 2026-06-28 game-truth
+    # rewrite. Placement is NOT a random chance: skill 600190 places FireMark
+    # GUARANTEED (Chance=-1) AfterDamageDealt when off cooldown + no FireMark
+    # present (singular). Kept for back-compat with old stats dicts.
     brimstone_chance: float = 0.30
+    # Brimstone placement skill cooldown (game-truth: skill 600190 Cooldown=4).
+    # Counts down on the holder's own turns; FireMark can only be (re)placed
+    # when this hits 0. This is the real rate-limiter (~38 Ninja turns / 4 ≈ 9
+    # placements -> ~7 detonations on Magic UNM, matching clean2).
+    brimstone_cd: int = 0
 
     # Blessing damage amplifiers (in addition to Brimstone Smite which
     # is handled separately as a debuff-on-target). Resolved from
@@ -1100,37 +1106,30 @@ class CBSimulator:
         return (1.0, 1.0)
 
     def _try_place_smite(self, champ: SimChampion, hit_count: int) -> None:
-        """Brimstone blessing: each of `hit_count` hits has
-        `champ.brimstone_chance` chance to refresh Smite on boss.
-        Single-Smite rule means later procs refresh duration to 2
-        turns and reassign holder to the latest placer.
+        """Brimstone [FireMark] placement — GAME-TRUTH (skill 600190,
+        static-verified 2026-06-28; supersedes the old random-chance model).
 
-        Use the same RNG path in deterministic and Monte Carlo modes —
-        the simulator's rng is seedable so deterministic still produces
-        a fixed result. Refreshing on every cast (the previous bug)
-        forced 100% Smite uptime → ~5× over-prediction of Smite damage.
+        Mechanic: when the holder DEALS DAMAGE (this is called from the
+        attack flow = AfterDamageDealt), if the Brimstone skill is off
+        cooldown AND no FireMark is currently on the boss (singular gate),
+        place a FireMark for 2 turns and put Brimstone on its 4-turn cd.
+        Placement is GUARANTEED when those gates pass (Chance=-1) — NOT a
+        per-hit dice roll. The cd=4 is the real rate-limiter (Ninja ~38
+        turns / 4 ≈ 9 placements → ~7 detonations on Magic UNM = clean2).
+
+        Deterministic: fully deterministic now (no RNG) — the cd + singular
+        gates make placement a pure function of the schedule.
         """
-        chance = champ.brimstone_chance
-        # Probability at least one of `hit_count` rolls procs:
-        # 1 - (1 - chance)^hit_count
-        p_any = 1.0 - (1.0 - chance) ** max(1, hit_count)
-        # Deterministic mode uses per-champ fractional accumulator so
-        # score_team / cb_calibrate produce identical results across runs.
-        # Without this branch, each sim used self.rng (random.Random
-        # initialized with system time when rng_seed=None) which caused
-        # ~1.3M damage variance per run on the MEN team. Bug discovered
-        # round 25 via score_team determinism check.
-        if self.deterministic:
-            key = ("brimstone_smite", champ.name)
-            self._placement_debt[key] = self._placement_debt.get(key, 0.0) + p_any
-            if self._placement_debt[key] >= 1.0:
-                self._placement_debt[key] -= 1.0
-                self.smite_holder = champ.name
-                self.smite_turns_left = 2
+        # Off-cooldown gate (the rate-limiter we were missing).
+        if champ.brimstone_cd > 0:
             return
-        if self.rng.random() < p_any:
-            self.smite_holder = champ.name
-            self.smite_turns_left = 2
+        # Singular gate: only one FireMark on the boss at a time.
+        if self.smite_turns_left > 0:
+            return
+        # Guaranteed placement (owner dealt damage to the boss = non-ally).
+        self.smite_holder = champ.name
+        self.smite_turns_left = 2          # FireMark Duration=2 (effect 740)
+        champ.brimstone_cd = 4             # skill 600190 Cooldown=4
 
     def _try_lethal_save(self, victim: "SimChampion") -> bool:
         """Attempt to save a dying champion via any registered
@@ -1313,19 +1312,16 @@ class CBSimulator:
         self.cb_turn += 1
         attack = self.cb_pattern[(self.cb_turn - 1) % 3]
 
-        # Brimstone [Smite] meteorite — fires when the boss uses an
-        # Active Skill (every CB turn = AOE1 / AOE2 / Stun, all are
-        # active). Damage = 25% MAX_HP capped at 250K floor (skill
-        # 200008 ScalesByTargetHp >= 250000 path). Boss has skill
-        # 200012 = -70% Smite damage reduction, but raw still exceeds
-        # the cap so observed damage = 250K flat.
-        if self.smite_turns_left > 0 and self.smite_holder:
-            holder = next((c for c in self.champions if c.name == self.smite_holder), None)
-            # Smite only fires on aoe1/aoe2 — NOT stun (empirical from
-            # Magic BT15 captures 2026-06-22).
-            if holder is not None and not holder.is_dead and _attack_for_smite != "stun":
-                holder.damage.passive += self.SMITE_CAP_DMG
+        # Brimstone [FireMark] EXPIRY tick. Game-truth (2026-06-28): the
+        # FireMark does NOT detonate on the boss's action — it detonates on
+        # the HOLDER's own non-default skill (see _champion_turn). Here we
+        # only age the FireMark (Duration=2, LifetimeUpdateType=OnEndTurn on
+        # the boss) so an undetonated mark expires. The old "detonate on boss
+        # aoe1/aoe2" model was structurally wrong (over-procced ~10 vs real 7).
+        if self.smite_turns_left > 0:
             self.smite_turns_left -= 1
+            if self.smite_turns_left == 0:
+                self.smite_holder = None
 
         # Capture per-hero protection snapshot at the moment of CB action
         # (BEFORE any ticks / damage are applied this turn). Matches the
@@ -1917,6 +1913,11 @@ class CBSimulator:
         champ.tm = max(0.0, champ.tm - TM_THRESHOLD)
         champ.turns_taken += 1
 
+        # Brimstone placement cooldown ticks on the holder's own turn
+        # (skill 600190 Cooldown=4). See _try_place_smite.
+        if champ.brimstone_cd > 0:
+            champ.brimstone_cd -= 1
+
         # Lasting Gifts mastery proc at start of owner turn.
         self._apply_lasting_gifts(champ)
 
@@ -2003,6 +2004,21 @@ class CBSimulator:
             "skill": chosen.name,
             "position": champ.position,
         })
+
+        # Brimstone [FireMark] DETONATION — game-truth (FireMark effect 740,
+        # Relation AfterSkillUsed, cond skillProducerId==ownerId && !skillIsDefault).
+        # Detonates when the FireMark's OWNER (smite_holder) casts a NON-DEFAULT
+        # skill (anything but A1). Fires here — AFTER the skill is chosen but
+        # BEFORE this turn's attack re-places a mark (_try_place_smite, below) —
+        # so a mark placed THIS turn doesn't detonate on its own placing skill
+        # (it was just applied); only a pre-existing mark detonates. Damage is
+        # 0.05*boss_HP capped at the CB 250K floor. Replaces the wrong
+        # "detonate on boss aoe1/aoe2" model.
+        if (self.smite_turns_left > 0 and self.smite_holder == champ.name
+                and chosen.name != "A1" and not champ.is_dead):
+            champ.damage.passive += self.SMITE_CAP_DMG
+            self.smite_turns_left = 0
+            self.smite_holder = None
 
         # Apply team buffs. Buffs with custom targeting / amount rules
         # (e.g. shield with lowest-HP target + 10% caster max_hp) route
