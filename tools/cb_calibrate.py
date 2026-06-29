@@ -110,6 +110,7 @@ def run_sim_for_team(team_names, cb_element, force_affinity, max_cb_turns,
     # Build-snapshot override: per-hero captured stats {name: {HP,ATK,...}}.
     # When calibrating against a fixture, use the build it was captured with.
     _BUILD_OVERRIDE = {}
+    _MASTERY_OVERRIDE = {}
     if build_snapshot_path:
         try:
             with open(build_snapshot_path) as _bf:
@@ -117,6 +118,12 @@ def run_sim_for_team(team_names, cb_element, force_affinity, max_cb_turns,
             for _h in (_bsnap.get("team") or []):
                 if _h.get("name") and _h.get("stats"):
                     _BUILD_OVERRIDE[_h["name"]] = _h["stats"]
+                # Load the captured masteries too — run_sim_for_team otherwise
+                # passes none and build_sim_champion auto-assigns ONLY WM/GS,
+                # leaving Bring It Down / Methodical / Heart of Glory etc.
+                # inactive. The captured set is the battle's ground truth.
+                if _h.get("name") and _h.get("masteries"):
+                    _MASTERY_OVERRIDE[_h["name"]] = _h["masteries"]
         except Exception as _e:
             print(f"  WARN: build snapshot load failed: {_e}", file=sys.stderr)
 
@@ -181,7 +188,9 @@ def run_sim_for_team(team_names, cb_element, force_affinity, max_cb_turns,
                     stats[sid] = val
             stats["base_speed"] = 0  # force recompute from overridden SPD
         element = hero.get("element", 4)
-        champ = build_sim_champion(name, stats, idx, element=element)
+        champ = build_sim_champion(name, stats, idx,
+                                   masteries=_MASTERY_OVERRIDE.get(name),
+                                   element=element)
         sim_champs.append(champ)
 
     # Apply saved game preset (starter_ids + skill priorities) to the
