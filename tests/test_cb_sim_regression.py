@@ -81,8 +81,12 @@ class TestCBSimDeterministicSmoke(unittest.TestCase):
     #   un-stacks a compensating wrong (the inflated burn was masking Geo-deflect
     #   / Demytha under-attribution), so the per-hero split is more correct even
     #   though the aggregate dips.
+    #   Nudged 2026-06-28 (9.747M -> 9.674M) — CROSSING-ORDER fix (simultaneous
+    #   TM crossers resolve earliest-first, not faster-first) shifts within-tick
+    #   action order so protectors place BD/UK before the boss attacks; small
+    #   damage-timing delta, closes coverage gaps (Force flips wipe->survive).
     LOCKED_CB_TURNS = 25
-    LOCKED_TOTAL_DMG = 9_747_302.64
+    LOCKED_TOTAL_DMG = 9_673_758.68
     LOCKED_TOTAL_TOL = 20.0  # widened for additive arithmetic noise
 
     def _build_men_team(self):

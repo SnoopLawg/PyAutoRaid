@@ -88,9 +88,14 @@ class TestCbSimCadenceLock(unittest.TestCase):
     # stays locked to the boss aoe1 cycle (the survival interlock) — the default-
     # gear team now survives to cb_turn 25 instead of dying at 18. Per-hero turn
     # counts on the captured build match real to err=5 (see survival memory).
-    LOCKED_TIMELINE_LEN = 156
-    LOCKED_TIMELINE_SIG = "032c5b236a21c7d0"
-    LOCKED_TURNS = {"Maneater": 37, "Demytha": 22, "Ninja": 27,
+    # Re-baselined 2026-06-28 again for the CROSSING-ORDER fix (simultaneous TM
+    # crossers resolve earliest-crosser-first, not faster-first) — protectors
+    # (Demytha BD / Maneater UK) act before the boss when the tune times them to
+    # cross first, closing coverage gaps. Reorders within-tick only; Maneater
+    # cadence preserved (36 turns). len 156->155, Maneater 37->36.
+    LOCKED_TIMELINE_LEN = 155
+    LOCKED_TIMELINE_SIG = "53a7ccff3121b462"
+    LOCKED_TURNS = {"Maneater": 36, "Demytha": 22, "Ninja": 27,
                     "Geomancer": 23, "Venomage": 22}
     LOCKED_CB_TURNS = 25
 

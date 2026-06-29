@@ -1040,20 +1040,30 @@ class CBSimulator:
                 return self._compile_result()
             self.cb_tm = _boss_tm.tm
 
-            # GAME-TRUTH cadence (verified 2026-06-27 via full-precision tm_f
-            # capture, tick_log_cb_tmf_capture): EVERY unit that reached the
-            # turn threshold this tick takes its turn before TM resumes
-            # accumulating, and simultaneous crossers act FASTER-FIRST (by SPD).
-            # The old "act only highest_tm_actor, then re-tick" dropped a turn
-            # from the faster unit every LCM cycle (the slower boss overshoots
-            # MORE, so highest-TM wrongly pre-empted the faster champ) — it
-            # under-ran Maneater's cadence 1.50 vs the real 1.60 (8/5: Mane 5
-            # ticks/turn, boss 8) and broke UK tiling. Faster-first also means
-            # champs recast UK/BD BEFORE the boss AOEs on a collision turn —
-            # the real Unkillable-tune ordering. Speeds (288/190) untouched.
+            # GAME-TRUTH cadence: EVERY unit that reached the turn threshold this
+            # tick takes its turn before TM resumes accumulating. Simultaneous
+            # crossers act in ACTUAL CROSSING ORDER — the unit that reached 100
+            # EARLIEST goes first. Within the resolving tick a unit crossed at
+            # fraction f = 1 - overshoot/gain of the way in, so earliest crosser
+            # = LARGEST (tm-threshold)/(0.07*spd). Sort by that descending.
+            #
+            # This replaces the old `-speed` (faster-first) proxy, which was WRONG
+            # for slower protectors: the user's speed tune times Demytha (172) and
+            # Maneater (288) to place team [Block Damage]/[Unkillable] JUST BEFORE
+            # each boss attack so coverage is ALWAYS up (user-confirmed design).
+            # Faster-first put the boss (190) ahead of Demytha (172) on collision
+            # turns, so her BD landed a beat late and the boss hit into the gap
+            # (e.g. bt25 aoe1 bd=0, bt26 aoe2 Ninja exposed → false deaths on
+            # crushing affinities). Ordering by crossing time puts the protector
+            # first when the tune made it cross first. This ONLY reorders
+            # simultaneous crossers — it does NOT change WHEN a unit crosses, so
+            # Maneater's 8/5 cadence is preserved.
             crossed = [a for a in sched_actors if _sched.get_tm(a) >= _sched.threshold]
-            crossed.sort(key=lambda a: -(self.cb_speed if a is _boss_tm
-                                         else getattr(a, "speed", 0.0)))
+            def _cross_order(a):
+                spd = self.cb_speed if a is _boss_tm else getattr(a, "speed", 0.0)
+                gain = 0.07 * spd
+                return -((_sched.get_tm(a) - _sched.threshold) / gain) if gain > 0 else 0.0
+            crossed.sort(key=_cross_order)
             for top in crossed:
                 if all(c.is_dead for c in self.champions):
                     break
