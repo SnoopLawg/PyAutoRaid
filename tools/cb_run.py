@@ -494,7 +494,7 @@ def _snapshot_run_build(log_filename, entries, boss_turns):
         BOSS_SPD = 190.0  # UNM CB boss SPD (cb_constants CB_SPEED_BY_DIFFICULTY) — for the
                           # effective-speed estimate only; the `stats` below are exact.
         COLS = ["blessing_bonus", "empower_bonus", "affinity_bonus", "artifact_bonus",
-                "relic_bonus", "mastery_bonus", "faction_guardians_bonus"]
+                "relic_bonus", "mastery_bonus", "faction_guardians_bonus", "area_bonus"]
         SLOT = {1: "Helmet", 2: "Chest", 3: "Gloves", 4: "Boots", 5: "Weapon",
                 6: "Shield", 7: "Ring", 8: "Amulet", 9: "Banner"}
         team_out = []

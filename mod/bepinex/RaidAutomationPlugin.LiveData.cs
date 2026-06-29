@@ -1586,6 +1586,41 @@ namespace RaidAutomation
                                     {
                                         sb.Append(",\"_gh_err\":\"villageData=" + (villageData != null) + " element=" + heroElement + "\"");
                                     }
+                                    // Observatory "Area Bonuses" column (in-game Total
+                                    // Stats _areaBonus). Per-LOCATION (not per-element),
+                                    // so uniform across heroes for a given area. CB =
+                                    // ObservatoryLocationId.AllianceBoss (=7). This is the
+                                    // static +C.DMG the damage calibration found missing
+                                    // from every hero (grounded 2026-06-29).
+                                    try
+                                    {
+                                        if (villageData != null)
+                                        {
+                                            var obsMethod = buildSetupType.GetMethod("BuildObservatoryBonus");
+                                            if (obsMethod != null)
+                                            {
+                                                var locType = FindType("SharedModel.Meta.Village.ObservatoryLocationId");
+                                                object locEnum = 7; // AllianceBoss
+                                                if (locType != null)
+                                                    try { locEnum = Enum.ToObject(locType, 7); } catch { }
+                                                var obsSetup = obsMethod.Invoke(null, new object[] { villageData, locEnum });
+                                                if (obsSetup != null)
+                                                {
+                                                    var obsBuildMethod = heroExtType.GetMethod("CalcBuildingsBonus");
+                                                    var obsFormType = FindType("SharedModel.Meta.Heroes.HeroMetamorphForm");
+                                                    object obsForm = 0;
+                                                    if (obsFormType != null) try { obsForm = Enum.ToObject(obsFormType, 0); } catch { }
+                                                    var obsStats = obsBuildMethod.Invoke(null, new object[] { hero, obsSetup, obsForm });
+                                                    if (obsStats != null)
+                                                    {
+                                                        sb.Append(",\"area_bonus\":");
+                                                        AppendAllStats(sb, obsStats);
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                    catch (Exception aex) { sb.Append(",\"_area_err\":\"" + Esc(aex.InnerException != null ? aex.InnerException.Message : aex.Message) + "\""); }
                                 }
                             }
                         }
