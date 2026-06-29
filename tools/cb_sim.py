@@ -531,6 +531,8 @@ class SimChampion:
     # Ruthless Ambush (500134): +8% on first hit per enemy. CB = single
     # boss = +8% only on this hero's first damaging cast.
     has_ruthless_ambush: bool = False
+    has_methodical: bool = False   # Methodical (500151): +2% A1 dmg per A1 use,
+    _methodical_stacks: int = 0    # max 5 (+10%); resets on any non-A1 cast
     # Cumulative-cast counter for Ruthless Ambush (and any future
     # first-hit-per-enemy logic). Incremented after damage is dealt.
     _cast_count: int = 0
@@ -2124,6 +2126,13 @@ class CBSimulator:
                 champ.combo_counter += 1
                 champ._combo_skills_used = set()
 
+        # Methodical (500151): the A1-use stack resets the moment a NON-A1 skill
+        # is cast (game-truth: "resets if any other Skill is used"). Done before
+        # the damage calc; the A1 increment happens after (read-before-increment
+        # so the current A1 uses prior stacks).
+        if champ.has_methodical and chosen.name != "A1":
+            champ._methodical_stacks = 0
+
         # Calculate hit damage
         if chosen.multiplier > 0 and chosen.hit_count > 0:
             dmg = self._calc_skill_damage(champ, chosen)
@@ -2135,6 +2144,10 @@ class CBSimulator:
             # damaging cast). Incremented AFTER damage calc so the bonus
             # applies to cast 0 and not cast 1+.
             champ._cast_count += 1
+            # Methodical: increment the A1-use stack AFTER this cast's damage so
+            # the bonus applies to the NEXT A1 (first A1 = +0%).
+            if champ.has_methodical and chosen.name == "A1":
+                champ._methodical_stacks = min(5, champ._methodical_stacks + 1)
 
             # WM/GS procs
             wm_gs = self._roll_wm_gs(champ, chosen.hit_count)
@@ -2552,6 +2565,10 @@ class CBSimulator:
         if champ.has_wrath_of_slain:
             dead_allies = sum(1 for a in self.champions if a.is_dead and a is not champ)
             mastery_dmg *= (1.0 + 0.05 * min(2, dead_allies))
+        # Methodical (500151): +2% per prior A1 use this fight (cap +10%),
+        # applies to A1 (default-skill) damage only. All 5 MEN heroes carry it.
+        if champ.has_methodical and skill.name == "A1":
+            mastery_dmg *= (1.0 + 0.02 * min(5, champ._methodical_stacks))
 
         # Affinity modifier
         aff_dmg, _ = self._get_affinity_mult(champ)
@@ -3452,6 +3469,7 @@ def build_sim_champion(name: str, stats: dict, position: int,
         has_grim_resolve=500124 in masteries,
         has_single_out=500131 in masteries,
         has_ruthless_ambush=500134 in masteries,
+        has_methodical=500151 in masteries,
         has_blastproof=500221 in masteries,
         has_improved_parry=500224 in masteries,
         has_bulwark=500262 in masteries,
