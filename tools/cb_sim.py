@@ -596,6 +596,8 @@ class SimChampion:
     natures_wrath_pct_per_debuff: float = 0.0  # Geo (blessing 5201 NatureBalance)
     heros_soul_pct: float = 0.0  # Hero's Soul (Amplification blessing 3302): flat
                                  # dmg amp vs boss (rate x aliveEnemiesCount; CB=1)
+    crushing_rend_mod: float = 0.0  # Crushing Rend (Penetrator 4202): extra
+                                    # (negative) defence_modifier = boss DEF pierce
     # Phantom Touch (MagicOrb blessing 1301, internal skill 600050):
     # AfterDamageDealt → bonus Damage = phantom_touch_mult × ATK to the
     # same target. Game-truth verified 2026-06-22 via /static-export on
@@ -2506,7 +2508,8 @@ class CBSimulator:
         # 2026-05-02). Skill-level ignore_def is already applied above
         # by reducing effective_def, so we pass the base only here.
         def_mult = max(0.05, def_mitigation_factor(
-            effective_def, defence_modifier=HERO_BASE_ARMOR_PIERCE))
+            effective_def,
+            defence_modifier=HERO_BASE_ARMOR_PIERCE + champ.crushing_rend_mod))
 
         # Weaken multiplier from data/static/effects.json Id 350
         # (IncreaseDamageTaken25): MultiplierFormula = 1.25. Applied
@@ -3326,6 +3329,7 @@ def build_sim_champion(name: str, stats: dict, position: int,
     heavencast_pct = 0.0
     natures_wrath_pct = 0.0
     heros_soul_pct = 0.0
+    crushing_rend_mod = 0.0
     phantom_touch_mult = 0.0
     phantom_touch_repeat = 1
     bl = stats.get("blessing") if isinstance(stats.get("blessing"), dict) else None
@@ -3370,6 +3374,25 @@ def build_sim_champion(name: str, stats: dict, position: int,
                 heros_soul_pct = 0.01
             else:
                 heros_soul_pct = 0.005
+        elif bid == 4202:  # Penetrator / Crushing Rend (skill 600220)
+            # Game-truth (blessing_procs 600220): ChangeDefenceModifier =
+            # -0.01*(targetLevel/D) on the FIRST hit of the round
+            # (hitsByTargetCurrentRoundCount==0; <2 at g5-6). CB boss level=250.
+            # D by grade tier (0-indexed): g0-1 50, g2-3 40, g4 25, g5 10 ->
+            # -0.05/-0.0625/-0.10/-0.25 extra DEF pierce. Approximation: applied
+            # to ALL of the owner's hits (heroes act before the boss each round
+            # so the first-hit gate usually holds); exact per-round gating would
+            # need round-hit tracking. NO-OP for the MEN team (no hero carries
+            # Penetrator) so it cannot affect the calibrated fixtures.
+            BOSS_LVL = 250
+            if grade >= 5:
+                crushing_rend_mod = -0.01 * (BOSS_LVL / 10.0)
+            elif grade >= 4:
+                crushing_rend_mod = -0.01 * (BOSS_LVL / 25.0)
+            elif grade >= 2:
+                crushing_rend_mod = -0.01 * (BOSS_LVL / 40.0)
+            else:
+                crushing_rend_mod = -0.01 * (BOSS_LVL / 50.0)
         elif bid == 1301:  # MagicOrb / Phantom Touch — 3.5*ATK bonus dmg per attack
             # Per static skill 600050 (verified 2026-06-22):
             #   Grades 0-1: Effect[0] gated by ownersDoubleAscendLevel==1||==2
@@ -3403,6 +3426,7 @@ def build_sim_champion(name: str, stats: dict, position: int,
         heavencast_pct_per_buff=heavencast_pct,
         natures_wrath_pct_per_debuff=natures_wrath_pct,
         heros_soul_pct=heros_soul_pct,
+        crushing_rend_mod=crushing_rend_mod,
         phantom_touch_mult=phantom_touch_mult,
         phantom_touch_repeat=phantom_touch_repeat,
         has_passive_ally_protect=passive_ally_protect,

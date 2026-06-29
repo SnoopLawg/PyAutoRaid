@@ -20,13 +20,13 @@ handful actually affect CB damage.
 | Heavencast | EnhancedWeapon | 2201 | 600090 | +0.5–1.5%/buff dmg amp |
 | Nature's Wrath | NatureBalance | 5201 | 600270 | +2–5%/debuff (capped) amp |
 | **Hero's Soul** | **Amplification** | **3302** | **600180** | **flat +0.5/1/1.5/3% vs boss (×1 enemy) — added 2026-06-29** |
+| **Crushing Rend** | **Penetrator** | **4202** | **600220** | **boss DEF pierce −0.05/−0.0625/−0.10/−0.25 by grade (bossLvl 250) via defence_modifier — added 2026-06-29; first-hit/round gate approximated as always-on** |
 
-## CB-applicable but NOT yet wired (real damage effect on CB; needs a hero w/ it to validate)
+## CB-applicable but NOT yet wired (stochastic/unknown-cap — needs a hero w/ it to validate; wiring blind = deflect-overfire risk)
 | Blessing (UI) | code | int id | skill | game-truth effect on CB |
 |---|---|---|---|---|
-| Crushing Rend | Penetrator | 4202 | 600220 | boss DEF −0.01×(bossLvl/[50/40/25/10]) on FIRST hit/round → ≈ −5% to −25% DEF by grade. Needs DEF-mod + per-round gate + boss level. |
-| Faultless Defense | Adaptation | 3301 | 600170 | reflect 3/6/9/15% of damage an ALLY took (when ally hit by enemy & owner-placed effect on them) — Geo-Stoneguard-like deflect. |
-| Soul Reap | Execute | 3101 | 600130 | damage = 1×TRG_CUR_HP when target not dying — HP-based, **CB-capped** (cap TBD). |
+| Faultless Defense | Adaptation | 3301 | 600170 | reflect 3/6/9/15% of damage an ALLY took (when ally hit by enemy & owner-placed effect on them) — Geo-Stoneguard-like deflect. Proc frequency/condition needs validation. |
+| Soul Reap | Execute | 3101 | 600130 | damage = 1×TRG_CUR_HP when target not dying — HP-based, **CB-capped** (cap unknown — don't wire without it). |
 
 ## NO-OP vs Clan Boss (correctly absent)
 - **PvP-only** (`isPvPBattle`): Lethal Dose (ToxicBlade 1201), Incinerate (MagicFlame 4201).
