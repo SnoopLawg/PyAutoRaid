@@ -87,8 +87,18 @@ class TestCBSimDeterministicSmoke(unittest.TestCase):
     #   minimal team now lasts 23 cb_turns. NOTE: damage total is an ANCHOR only —
     #   per-affinity damage reconciliation is the NEXT phase (after TM/survival,
     #   per user); Force battery already improved 17/58 -> 36/58 pass from this.
+    #   Re-baselined 2026-06-28 — GROUNDED damage-reconciliation (complete
+    #   fixtures w/ events+build, e.g. 20260626_161910). Two grounded fixes:
+    #   (1) Geo Stoneguard deflect bonus was `unprotected_allies*hits*0.30*75K`
+    #   (up to 20x over) -> ONE 30%x75K roll per boss aoe (real ~1.1M not 2.74M);
+    #   (2) Venom A1 poison activation capped at 0.35 chance + once-per-poison
+    #   (real 9 activation ticks not 32). Total dips as the deflect over-fire is
+    #   removed. cb_turns unchanged (damage-only). NOTE: this minimal-team total
+    #   is a synthetic ANCHOR (crit-off); real calibration is judged on the
+    #   COMPLETE fixtures vs the T50-surviving run, not this number or single-run
+    #   sim_regress (real damage varies 13-38M/same build).
     LOCKED_CB_TURNS = 23
-    LOCKED_TOTAL_DMG = 9_172_452.57
+    LOCKED_TOTAL_DMG = 8_869_952.57
     LOCKED_TOTAL_TOL = 20.0  # widened for additive arithmetic noise
 
     def _build_men_team(self):

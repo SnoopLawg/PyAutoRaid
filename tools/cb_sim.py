@@ -253,6 +253,9 @@ class DebuffSlot:
     debuff_type: str   # "poison_5pct", "hp_burn", "def_down", "weaken", "poison_sens", "leech", "dec_atk"
     remaining: int     # turns remaining (ticks at start of CB turn)
     source: str = ""   # hero who placed it (for damage attribution)
+    force_ticked: bool = False  # already force-activated once (Venom A1) — a
+                                # poison can be "activated" at most once in its
+                                # lifetime, not re-ticked on every A1 hit.
 
 
 class DebuffBar:
@@ -1721,27 +1724,26 @@ class CBSimulator:
                             1 for a in self.champions
                             if not a.is_dead and not a.has_buff("block_damage")
                         )
-                        # Base deflect: 15% of per-ally damage, summed
-                        # across UNPROTECTED allies only.
+                        # Base deflect: 15% of the actual AoE damage allies
+                        # took this turn (BD-absorbed allies take 0 -> no base),
+                        # summed across UNPROTECTED allies.
                         base_deflect = per_ally_aoe * unprotected_allies * buff_mult("strengthen_15", 0.15)
-                        # Reflect bonus: skill 48805's `'0.03*TRG_HP'`
-                        # PassiveReflectDamage path, capped at 75K (CB DoT cap
-                        # from skill 200008). GAME-TRUTH (clean2 tick log, kind
-                        # 4017): the deflect fires ONE event PER DAMAGED ALLY
-                        # PER BOSS HIT, and the 30% bonus rolls on each such
-                        # event — NOT once per AOE. Real: 215 deflect events /
-                        # 51 capped 75K procs = 3.8M of Geo's 4.26M deflect over
-                        # 32 boss turns. The boss AOE multi-hits (aoe1 Count=4),
-                        # so each unprotected ally generates `hits_per_aoe`
-                        # deflect events. Modelling the bonus as
-                        # unprotected_allies * hits * 0.30 * 75K matches the
-                        # observed proc count. (Prior "once per AOE" gave 22.5K/
-                        # turn -> 5x+ under once BD coverage rose post survival-
-                        # fix.) BD-blocked allies take 0 damage -> no deflect
-                        # (median real deflect value is 0 for those events).
-                        hits_per_aoe = CB_ATTACK_HITS.get(attack, 1)
-                        bonus_total = (unprotected_allies * hits_per_aoe
-                                       * 0.30 * 75_000)
+                        # Reflect bonus (skill 48805 Effects 488055/488056,
+                        # "0.03*TRG_HP" capped at the CB 75K DoT cap): ONE 30%
+                        # roll per boss AoE while a Geo-placed burn is on the
+                        # boss — NOT scaled by ally count or hit count, and
+                        # BD-independent (fires even when allies absorb the hit).
+                        # GROUNDED (cb_attribution_diff on COMPLETE fixtures
+                        # 20260626_161910 + 20260623_162050): real deflect ~1.1M
+                        # on BOTH surviving runs = ~15 base events + ~5-6 capped
+                        # 75K bonus procs. The prior
+                        # `unprotected_allies * hits_per_aoe * 0.30 * 75K` model
+                        # over-fired up to 20x (sim 2.74M vs real 1.11M) and
+                        # rested on a FABRICATED "clean2 kind-4017 215-event"
+                        # claim — clean2 is a state-poll log with NO damage
+                        # events. Boss HP (>=~2.5M) makes the 3% always hit the
+                        # 75K cap. Fixed 2026-06-28 (grounded damage-recon).
+                        bonus_total = 0.30 * 75_000
                         c.damage.passive += base_deflect + bonus_total
 
         elif attack == "stun":
@@ -2869,10 +2871,17 @@ class CBSimulator:
 
             elif eff.effect_type == "activate_poisons":
                 # Venomage A1: "Each hit has a 35% chance of activating up to
-                # two [Poison] debuffs". Books boost +15% → 50% effective.
-                # The chance is per-hit; load_game_profiles emits one effect
-                # per hit so the chance applies per effect occurrence.
-                chance = eff.params.get("chance", 1.0)
+                # two [Poison] debuffs". GROUNDED (cb_attribution_diff on
+                # 20260626_161910 + 20260623_162050): natural poison ticks are
+                # already correct (sim ~64 vs real ~66), but the sim
+                # OVER-activated (sim 32 activation-ticks vs real 9). Two causes,
+                # both fixed here: (1) the booked A1 desc still reads 35% — the
+                # +15% EffectChance book bonus does NOT apply to the kind-9002
+                # activation — so cap the activation chance at 0.35; (2) a poison
+                # was re-activated on every passing A1 hit — game-truth is each
+                # poison is "activated" (consumed) at most ONCE in its lifetime,
+                # so skip already-activated slots. Fixed 2026-06-28.
+                chance = min(eff.params.get("chance", 1.0), 0.35)
                 if chance < 1.0:
                     # Deterministic mode: fractional accumulator across casts
                     # (matches debuff-placement convention).
@@ -2886,12 +2895,14 @@ class CBSimulator:
                 max_count = eff.params.get("max_count", 99)
                 activated = 0
                 for slot in list(self.debuff_bar.slots):
-                    if slot.debuff_type == "poison_5pct" and activated < max_count:
+                    if (slot.debuff_type == "poison_5pct" and not slot.force_ticked
+                            and activated < max_count):
                         dmg = self._cap_fa(POISON_5PCT_DMG * psens, kind="dot")
                         for c in self.champions:
                             if c.name == slot.source:
                                 c.damage.poison += dmg
                                 break
+                        slot.force_ticked = True
                         activated += 1
 
             elif eff.effect_type == "activate_dots":
