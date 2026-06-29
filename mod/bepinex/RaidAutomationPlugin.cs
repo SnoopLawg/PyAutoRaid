@@ -1927,6 +1927,7 @@ namespace RaidAutomation
                     _battleLog.Add("{\"event\":\"battle_start\"}");
                 }
                 lock (_tickLog) { _tickLog.Clear(); }
+                lock (_curCastSkillByProducer) { _curCastSkillByProducer.Clear(); }
             }
             catch { }
         }
@@ -2031,6 +2032,11 @@ namespace RaidAutomation
         private static int _hookDiag_RemoveStatus = 0;
         private static int _hookDiag_DurationChange = 0;
         internal static readonly Dictionary<string, int> _applyCmdClasses = new();
+        // Current casting skill per producer HeroId (set in ApplySkillCommand).
+        // Used to stamp the casting skill onto DIRECT damage events (kind_id
+        // 6000), which carry no AppliedEffect SkillTypeId — so per-skill
+        // Warmaster/Giant-Slayer eligibility can be derived from the tick log.
+        internal static readonly Dictionary<int, int> _curCastSkillByProducer = new();
 
         // Best-effort dump of an Il2Cpp/wrapper object's fields via reflection.
         // Used for processor event logging where we don't know exact param types.
@@ -2869,6 +2875,21 @@ namespace RaidAutomation
                 }
                 catch { }
 
+                // Fallback: DIRECT hits (kind_id 6000) carry no AppliedEffect
+                // SkillTypeId, so the resolution above leaves skillTypeId=0.
+                // Stamp the producer's current casting skill (recorded in
+                // ApplySkillCommand) so per-skill Warmaster/Giant-Slayer
+                // eligibility can be derived from the tick log. DoTs already
+                // have their own SkillTypeId so they skip this.
+                if (skillTypeId == 0 && producerId != 0)
+                {
+                    lock (_curCastSkillByProducer)
+                    {
+                        if (_curCastSkillByProducer.TryGetValue(producerId, out int castSkill))
+                            skillTypeId = castSkill;
+                    }
+                }
+
                 var sb = new StringBuilder();
                 sb.Append("{\"kind\":\"damage\",\"tick\":").Append(_battleCommandCount);
                 sb.Append(",\"producer\":").Append(producerId);
@@ -3463,6 +3484,11 @@ namespace RaidAutomation
                 object tgt = Prop(sc, "Target");
                 if (prod != null) prodId = IntProp(prod, "HeroId");
                 if (tgt != null) tgtId = IntProp(tgt, "HeroId");
+                // Remember the casting skill so the DamageChange hook can stamp
+                // it onto this producer's DIRECT damage events (which lack an
+                // AppliedEffect SkillTypeId). Enables per-skill WM/GS analysis.
+                if (skillId != 0 && prodId != 0)
+                    lock (_curCastSkillByProducer) { _curCastSkillByProducer[prodId] = skillId; }
                 // FULL-PRECISION stamina (TM) at cast time, for the caster and the
                 // boss — to measure Syphon's self-fill (the ~8% Maneater TM gap).
                 // Stamina @ BattleHero+0x80 (Fixed 32.32) as a double. -1 if unread.
