@@ -55,25 +55,32 @@ def real_per_hero(ts: str, team: list[str]) -> dict:
 
 
 def sim_per_hero(team: list[str], cb_element: int, ts: str) -> dict:
-    import cb_sim as CB
-    preset_path = str(ROOT / f"presets_cb_{ts}.json")
-    if not Path(preset_path).exists():
-        preset_path = None
-    setup = CB._build_team_setup(team, use_current_gear=True,
-                                 preset_snapshot_path=preset_path)
-    if "error" in setup:
-        raise RuntimeError(setup["error"])
-    champs = CB._build_sim_champs_from_setup(setup)
-    sim = CB.CBSimulator(champs, deterministic=True, cb_element=cb_element,
-                         force_affinity=True)
-    sim.run(max_cb_turns=50)
+    """Run the sim against the fixture's CAPTURED build + preset (not current
+    gear) so the comparison is valid. Using current gear was a bug: gear drifts
+    after capture, so the sim ran a different ATK/SPD/HP than the real battle ->
+    spurious deltas + early death. The build snapshot (build_cb_<ts>.json) is
+    the same one run_sim_for_team replays for calibration."""
+    from cb_calibrate import run_sim_for_team
+    preset_path = ROOT / f"presets_cb_{ts}.json"
+    build_path = ROOT / f"build_cb_{ts}.json"
+    if not build_path.exists():
+        print(f"  WARN: no build_cb_{ts}.json — sim runs CURRENT gear, deltas "
+              f"are NOT a valid attribution comparison (gear drift).",
+              file=sys.stderr)
+    res = run_sim_for_team(
+        team, cb_element=cb_element, force_affinity=True, max_cb_turns=50,
+        use_preset=True,
+        preset_snapshot_path=str(preset_path) if preset_path.exists() else None,
+        build_snapshot_path=str(build_path) if build_path.exists() else None,
+    )
     out = {}
-    for c in sim.champions:
-        dm = c.damage
-        out[c.name] = {
-            "direct": dm.direct, "poison": dm.poison, "hp_burn": dm.hp_burn,
-            "wm_gs": dm.wm_gs, "passive": dm.passive, "total": dm.total,
+    for h in res.get("heroes", []):
+        out[h["name"]] = {
+            "direct": h.get("direct", 0.0), "poison": h.get("poison", 0.0),
+            "hp_burn": h.get("hp_burn", 0.0), "wm_gs": h.get("wm_gs", 0.0),
+            "passive": h.get("passive", 0.0), "total": h.get("total", 0.0),
         }
+    out["_cb_turns"] = res.get("cb_turns")
     return out
 
 

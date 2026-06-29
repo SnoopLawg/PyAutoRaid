@@ -163,7 +163,22 @@ def run_sim_for_team(team_names, cb_element, force_affinity, max_cb_turns,
                      "RES": 5, "ACC": 6, "CR": 7, "CD": 8}
             for sk, sid in _SKEY.items():
                 if sk in cap and cap[sk] is not None:
-                    stats[sid] = cap[sk]
+                    val = cap[sk]
+                    # build_cb_*.json stores CR/CD as FRACTIONS (CR 0.6 = 60%,
+                    # CD 1.3 = 130%); the sim treats CR/CD as PERCENTS. Without
+                    # this, the override clobbers calc_stats' percent values ->
+                    # crit_mult ~= 1.0 -> NO hero crits in any build-snapshot
+                    # replay. GROUNDED on the complete fixtures (events+build,
+                    # e.g. 20260626_161910 T50): the sim is UNDER on surviving
+                    # runs (Ninja direct+wm 4.89M vs real 9.27M, ~half) and crit
+                    # closes most of it (-16% -> ~-5% total). Guard the multiply
+                    # to fraction range so a percent-format snapshot isn't
+                    # double-scaled. Fixed 2026-06-28 (damage-reconciliation).
+                    if sk == "CR" and val <= 1.5:
+                        val *= 100.0
+                    elif sk == "CD" and val <= 10.0:
+                        val *= 100.0
+                    stats[sid] = val
             stats["base_speed"] = 0  # force recompute from overridden SPD
         element = hero.get("element", 4)
         champ = build_sim_champion(name, stats, idx, element=element)
