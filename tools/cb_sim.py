@@ -289,6 +289,18 @@ class DebuffBar:
     # artifact). Reverted as over-fit/uncertain. The real Ninja-over/Geo-under
     # split (ownership alternation vs the sim's most-recent-placer) is still
     # open — needs finer-resolution telemetry or more fixtures to settle.
+    # hp_burn KEPT singular. The real burn under (-32%) is NOT solved by allowing
+    # coexistence: tried 2026-06-29, it BALLOONED hp_burn to +77.6% (sim 13.05M vs
+    # real 7.35M) because it treats every placed burn as a sustained 2-turn DoT.
+    # Game-truth mechanism (skills_all 62002 + tick log 20260629_090946): Ninja A2
+    # has THREE ApplyDebuff(HP Burn)+ForceStatusEffectTick pairs (one per hit), so
+    # each A2 cast deals ~3 INSTANT force-ticks; real Ninja = 83 ticks from ~21 A2
+    # casts x3 ~= 1.3 ticks/burn -> burns are FORCE-TICK-DOMINATED, short-lived,
+    # NOT sustained stacks. The correct fix is to model the per-hit force-tick
+    # COUNT (sim force-ticks once/skill, real does 3) with short duration, not a
+    # singular/coexist toggle. Until then singular (burn -32%) is healthier than
+    # coexist (+78%), and burn-under partly compensates Geo deflect-over (+26%) for
+    # a healthy ~-3% total. See memory project_cb_per_skill_fitting_20260629.
     SINGULAR_BY_TYPE = {"def_down", "def_down_30", "weaken", "weaken_15",
                         "dec_atk", "dec_atk_25", "poison_sensitivity",
                         "poison_sensitivity_50", "heal_reduction",
