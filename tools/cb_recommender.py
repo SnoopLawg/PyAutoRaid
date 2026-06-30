@@ -663,6 +663,21 @@ def _main() -> int:
                     help="skip the DWJ rediscovered-tune overlay")
     gn.add_argument("--force", action="store_true", help="ignore the cache")
     gn.add_argument("--json", action="store_true")
+    # Stage-2 hook: speed-TUNE + score generated/named comps so they compare
+    # tune-vs-tune (delegates to tools/team_tune.py; see task #46).
+    tn = sub.add_parser("tune",
+                        help="STAGE 2: speed-tune comps and rank by TUNED damage")
+    tn.add_argument("--team", help="comma-separated 5 hero names (single tune)")
+    tn.add_argument("--teams", help="'A,B,C,D,E; F,G,H,I,J' for a side-by-side")
+    tn.add_argument("--validate", action="store_true",
+                    help="tune the novel pick vs MEN side by side")
+    tn.add_argument("--from-generator", dest="from_generator",
+                    help="tune the top-K generated comps for this location")
+    tn.add_argument("--top", type=int, default=5)
+    tn.add_argument("--element", default="spirit",
+                    choices=["magic", "force", "spirit", "void"])
+    tn.add_argument("--gear", default="current", choices=["current", "potential"])
+    tn.add_argument("--max-combos", type=int, default=243)
     args = ap.parse_args()
     root = _root(None)
 
@@ -708,6 +723,33 @@ def _main() -> int:
             surv = "holds T50 (DWJ)" if out.get("holds_t50") else (
                 f"DWJ T{out['dwj_boss_turns']}" if out.get("dwj_boss_turns") else "")
             print(f"  -> regear-feasible · {out.get('key_capability') or ''} {surv}".rstrip())
+        return 0
+    if args.cmd == "tune":
+        import team_tune
+        if args.team and not (args.teams or args.validate or args.from_generator):
+            team = [t.strip() for t in args.team.split(",") if t.strip()]
+            res = team_tune.tune_and_score(
+                team, element=args.element, gear=args.gear,
+                max_combos=args.max_combos)
+            team_tune._print_single(team, res)
+            return 0
+
+        class _A:  # reuse team_tune's comp-gathering
+            pass
+        a = _A()
+        a.validate = args.validate
+        a.teams = args.teams
+        a.from_generator = args.from_generator
+        a.top = args.top
+        a.element = args.element
+        comps = team_tune._gather_comps(a)
+        if not comps:
+            print("ERROR: pass --team / --teams / --validate / --from-generator")
+            return 1
+        rows = team_tune.compare(comps, element=args.element, gear=args.gear,
+                                 max_combos=args.max_combos)
+        team_tune._print_compare(
+            rows, team_tune.ELEMENT_NAME_TO_ID[args.element])
         return 0
     if args.cmd == "generate":
         res = generate_recommendations(
