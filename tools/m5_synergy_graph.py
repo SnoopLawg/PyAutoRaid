@@ -42,8 +42,14 @@ from __future__ import annotations
 
 import json
 import re
+import sys
 from collections import Counter, defaultdict
 from pathlib import Path
+
+# cb_profiles lives alongside this script (tools/). It carries the hand-curated
+# `breaks_speed_tune` signal that seeds the per-hero tune-compatibility field.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import cb_profiles  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 STATIC = ROOT / "data" / "static"
@@ -124,6 +130,29 @@ _FOR_TURNS = re.compile(r"for (\d+) turn")
 _N_TIMES = re.compile(r"attacks[^.]*?(\d+)\s+times", re.IGNORECASE)
 _MAXHP_DMG = re.compile(r"(?:proportional to|equal to|based on)\s+([^.]{0,40}?max hp)",
                         re.IGNORECASE)
+
+# A skill is a DAMAGING HIT when its text opens with the game's canonical attack
+# clause ("Attacks 1 enemy", "Attacks all enemies", "Attacks 1 enemy 3 times",
+# "Attacks at random", ...). DoT/utility application casts (Geomancer's
+# "Fully depletes the target's Turn Meter", Teodor's "Increases the duration of
+# all [Poison] debuffs") have NO such clause — they place effects without
+# dealing ATK-scaled damage. This is the discriminator the amplifier-channel
+# rider rule needs: a Dec-DEF/Weaken on a damaging hit is a real hit-amplifier;
+# the same debuff on a pure DoT-application cast is just a rider on the package.
+_ATTACK_CLAUSE = re.compile(r"\bAttacks\s+(?:\d+|all|an?\b|the\b|at\s+random)",
+                            re.IGNORECASE)
+
+# A genuine TEAM-WIDE extra turn (granted to allies, not just the caster) shifts
+# the whole team's action order and breaks any fixed shared speed-tune. The
+# game's self extra turns read "Grants an Extra Turn" (to this Champion); only an
+# ally-targeted grant qualifies here.
+_TEAM_EXTRA_TURN = re.compile(
+    r"[Gg]rants?\s+an?\s+[Ee]xtra\s+[Tt]urn\s+to\s+"
+    r"(?:all\s+allies|a\s+random\s+ally|each\s+ally|all\s+other\s+allies)")
+
+
+def _is_attack(text: str) -> bool:
+    return bool(_ATTACK_CLAUSE.search(text or ""))
 
 
 def _buff_duration(text: str, names: list[str]):
@@ -268,11 +297,17 @@ def main() -> None:
                     dot_kinds.add(nm)
                     if nm in DOT_AMP_BLOCKERS:
                         sk_has_dot = True
-            # A Dec-DEF/Weaken that rides on the SAME skill as a Poison/HP-Burn
-            # application is part of the DoT package (e.g. Geomancer A3 = HP Burn
-            # + Weaken on one cast), NOT a dedicated hit-amplifier role. Only a
-            # non-rider placement flags the hero as a hit-channel amplifier.
-            if sk_hit_amp and not sk_has_dot:
+            # A Dec-DEF/Weaken is a real HIT-CHANNEL amplifier when it lands on a
+            # DAMAGING HIT (e.g. Venomage A2 "Attacks 1 enemy" + Dec DEF, Fayne
+            # A3, Ninja A1). It is only a "rider" — part of a DoT package, not a
+            # dedicated amplifier role — when it co-places a DoT on a cast that is
+            # PRIMARILY a DoT/utility application with no direct damage (e.g.
+            # Geomancer's "Fully depletes Turn Meter" + HP Burn + Weaken, Teodor's
+            # duration-extension cast + Weaken). The old rule keyed only on
+            # DoT co-placement and so wrongly suppressed amplifiers on damaging
+            # hits whose text merely *references* [Poison] as a condition.
+            sk_is_attack = _is_attack(txt)
+            if sk_hit_amp and (sk_is_attack or not sk_has_dot):
                 nonrider_hit_amp = True
             if _is_multi_hit(txt):
                 multi_hit = True
@@ -354,6 +389,27 @@ def main() -> None:
         else:
             amplifier_channel = "none"
 
+        # tune_compat — how compatible the kit is with a FIXED shared speed-tune
+        # (the basis of every CB Unkillable/Block-Damage stall). Base signal is
+        # cb_profiles' hand-curated `breaks_speed_tune`; refined by provide tags:
+        #   * hard_breaker — provides a FLAT TEAM [Increase SPD] buff (shifts
+        #     everyone's SPD mid-fight, so NO fixed tune holds) or a team-wide
+        #     extra-turn (re-orders the whole team's cadence). e.g. Teodor.
+        #   * manageable — breaks_speed_tune is True but only via a CONDITIONAL /
+        #     self TM effect a tune can be built AROUND (e.g. Ninja's TM-on-burn
+        #     passive — the MEN tune is built around it).
+        #   * ok — no tune-breaking behaviour.
+        breaks_tune = cb_profiles.resolve(name).breaks_speed_tune
+        team_inc_spd = "team_buff:Increase SPD" in provides
+        team_extra_turn = any(_TEAM_EXTRA_TURN.search(t)
+                              for t in skill_texts.values())
+        if team_inc_spd or team_extra_turn:
+            tune_compat = "hard_breaker"
+        elif breaks_tune:
+            tune_compat = "manageable"
+        else:
+            tune_compat = "ok"
+
         # engine_channel — which damage channel(s) this hero's own damage flows
         # through (multi allowed). DoT channels come straight from the DoTs the
         # kit places; hit / wm_gs apply to direct-damage attackers.
@@ -416,6 +472,7 @@ def main() -> None:
             "needs": sorted(needs),
             "debuffs_control_only": control_only and n_debuff > 0,
             "amplifier_channel": amplifier_channel,
+            "tune_compat": tune_compat,
             "engine_channel": engine_channel,
             "survival_currency": survival_currency,
             "enabler": enabler,
