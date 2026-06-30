@@ -19,7 +19,12 @@ import team_tune  # noqa: E402
 
 MEN = ["Maneater", "Demytha", "Ninja", "Geomancer", "Venomage"]
 NOVEL = ["Arbiter", "Coldheart", "Demytha", "Ninja", "Teodor the Savant"]
-SCHEMA = ("spd_assignment", "tuned_fitness", "holds_t50", "tune_found", "notes")
+# MEN with the hard_breaker Teodor the Savant swapped in for Venomage — a comp
+# that is UNTUNABLE by construction (Teodor's flat team Increase SPD breaks any
+# fixed speed-tune). 4/5 heroes are MEN so it sets up on current gear.
+TEODOR_COMP = ["Maneater", "Demytha", "Ninja", "Geomancer", "Teodor the Savant"]
+SCHEMA = ("spd_assignment", "tuned_fitness", "holds_t50", "tune_found",
+          "tunable", "untunable_reason", "notes")
 
 
 def test_resolve_element():
@@ -74,6 +79,52 @@ def test_tune_and_score_men_schema():
     # natural speeds were evaluated (offset-0 always in the grid).
     assert res["natural"] is not None
     assert res["base_spd"]["Demytha"] in (174, 184)
+
+
+def test_tune_compat_classifier():
+    """tune_compat is read from m5_synergy.jsonl with a safe 'ok' default; the
+    hard_breaker scan flags exactly the offending member(s)."""
+    assert team_tune._tune_compat("Teodor the Savant") == "hard_breaker"
+    assert team_tune._tune_compat("Ninja") == "manageable"  # NOT a breaker
+    assert team_tune._tune_compat("Maneater") == "ok"
+    assert team_tune._tune_compat("Definitely Not A Hero") == "ok"  # safe default
+    # MEN (Ninja is manageable, allowed) has no hard_breaker; Teodor comp does.
+    assert team_tune._hard_breakers(MEN) == []
+    assert team_tune._hard_breakers(TEODOR_COMP) == ["Teodor the Savant"]
+
+
+def test_hard_breaker_comp_is_flagged_untunable():
+    """A comp containing a hard_breaker (Teodor the Savant) is reported as
+    UNTUNABLE: tunable=False + a non-empty reason naming the SPD break, and it
+    does NOT claim a holding speed-tune (tune_found=False, no SPD search). MEN —
+    whose Ninja is `manageable` (allowed) — still tunes normally (tunable=True).
+    """
+    res = team_tune.tune_and_score(TEODOR_COMP, element="spirit", gear="current")
+    # full schema still present
+    for k in SCHEMA:
+        assert k in res, f"missing schema key {k}"
+    # untunable verdict
+    assert res["tunable"] is False
+    assert res["untunable_reason"]                       # non-empty
+    assert "SPD" in res["untunable_reason"]              # mentions the SPD break
+    assert "Teodor the Savant" in res["untunable_reason"]
+    # does NOT claim a found holding speed-tune
+    assert res["tune_found"] is False
+    # scored as a STALL on natural speeds: a SINGLE sim, no SPD search
+    assert res["combos_evaluated"] == 1
+    assert res["natural"] is not None
+    assert isinstance(res["tuned_fitness"], float)
+    # a note explains it was scored as a stall (untunable)
+    assert any("stall" in n.lower() and "untunable" in n.lower()
+               for n in res["notes"])
+
+    # MEN still tunes normally (tunable=True, no untunable reason). Tiny explicit
+    # vary keeps it to ~2 sims.
+    men = team_tune.tune_and_score(MEN, element="spirit", gear="current",
+                                   vary={"Demytha": [174, 184]})
+    assert men["tunable"] is True
+    assert men["untunable_reason"] == ""
+    assert set(men["spd_assignment"]) == set(MEN)
 
 
 @pytest.fixture(scope="module")

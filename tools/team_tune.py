@@ -210,6 +210,47 @@ def _base_name(name: str) -> str:
     return name
 
 
+# ---- tune_compat (UNTUNABLE-by-construction detection, task #50 B2) --------- #
+# A comp containing a `hard_breaker` (a hero whose kit puts FLAT, team-wide
+# Increase SPD on every cycle — e.g. Teodor the Savant) cannot hold a FIXED
+# speed-tune: the recurring SPD buff shifts every champion's turn-meter gain, so
+# any cadence the search "finds" desyncs the moment the buff lands/expires. The
+# M1 record's `tune_compat` field (data/m5_synergy.jsonl) flags this:
+#   hard_breaker = flat team Increase SPD -> NO fixed tune holds (untunable).
+#   manageable   = conditional/self TM only (Ninja) -> tunes build around it.
+#   ok           = no cadence interference.
+# We DETECT hard_breaker and EXPLAIN it instead of reporting a doomed tune.
+def _tune_compat(name: str) -> str:
+    """`tune_compat` for one hero (hard_breaker | manageable | ok), safe-default
+    'ok' if the hero is missing from m5_synergy.jsonl or the loader is absent."""
+    try:
+        import fitness.synergy_data as sd
+        rec = sd.get_record(_base_name(name))
+        if rec:
+            return str(rec.get("tune_compat") or "ok").lower()
+    except Exception:
+        pass
+    return "ok"
+
+
+def _hard_breakers(comp: list[str]) -> list[str]:
+    """Names in `comp` flagged hard_breaker (flat team Increase SPD). A non-empty
+    list means the comp is UNTUNABLE by construction — no fixed speed-tune holds.
+    `manageable` (Ninja) and `ok` are NOT breakers (full tune search as today)."""
+    return [nm for nm in comp if _tune_compat(nm) == "hard_breaker"]
+
+
+def _untunable_reason(breakers: list[str]) -> str:
+    """Human reason for the untunable verdict, naming the offending hero(es)."""
+    names = ", ".join(breakers)
+    return f"{names}'s Increase SPD breaks the speed-tune cadence"
+
+
+def _untunable_marker(breakers: list[str]) -> str:
+    """Short --compare marker, e.g. 'UNTUNABLE (Teodor the Savant Increase SPD)'."""
+    return f"UNTUNABLE ({', '.join(breakers)} Increase SPD)"
+
+
 def _cb_acc_floor(location: str = "clan_boss") -> int:
     """ACC floor (boss-RES-derived) from game-truth boss_constraints; falls back
     to the CB-UNM literal if the constraint table can't be loaded."""
@@ -338,7 +379,52 @@ def _gear_feasibility_note(gf: dict) -> str:
 
 
 _SCHEMA_KEYS = ("spd_assignment", "tuned_fitness", "holds_t50",
-                "tune_found", "notes")
+                "tune_found", "tunable", "untunable_reason", "notes")
+
+
+def _untunable_result(comp_names, setup, base_spd, element_id, gear,
+                      breakers, notes) -> dict:
+    """A hard_breaker comp is UNTUNABLE by construction (a fixed speed-tune can't
+    hold the cadence). DO NOT search SPD-space for a holding tune; instead score
+    the comp ONCE on its NATURAL speeds as a STALL (a hard_breaker comp may still
+    survive without a tune) and EXPLAIN why no tune is reported.
+    """
+    base_combo = tuple(base_spd)
+    natural = _score_combo(setup, base_combo, element_id)
+    reason = _untunable_reason(breakers)
+    notes.append(
+        f"UNTUNABLE by construction: {reason}. A FIXED speed-tune cannot hold "
+        f"the boss cadence for this comp, so NO holding speed-tune is reported "
+        f"(the SPD search was skipped — it would only surface a doomed pseudo-"
+        f"tune).")
+    notes.append(
+        f"Scored as a STALL on natural speeds (untunable): T{natural['turns']} "
+        f"/ {natural['total']/1e6:.1f}M — a hard_breaker comp can still survive "
+        f"as a stall without a tune.")
+    notes.append("Damage is a cb_sim ESTIMATE (sim under-survives, over-rates "
+                 "stalls); use it to rank, not as an absolute clear check.")
+    return {
+        # natural speeds, clearly NOT presented as a found tune (tune_found=False,
+        # tunable=False) — informational so the user sees the actual speeds.
+        "spd_assignment": dict(zip(comp_names, [int(x) for x in base_combo])),
+        "tuned_fitness": natural["total"],
+        "holds_t50": natural["holds"],
+        "tune_found": False,
+        "tunable": False,
+        "untunable_reason": reason,
+        "notes": notes,
+        # extras
+        "base_spd": dict(zip(comp_names, base_spd)),
+        "natural": natural,
+        "best": natural,
+        "combos_evaluated": 1,
+        "gear": gear,
+        "gear_feasibility": None,
+        "element": element_id,
+        "source": "hard_breaker detection -> natural-speed STALL sim "
+                  "(no SPD search)",
+        "team": list(comp_names),
+    }
 
 
 def tune_and_score(comp: list[str], *, element="spirit", gear: str = "current",
@@ -382,6 +468,12 @@ def tune_and_score(comp: list[str], *, element="spirit", gear: str = "current",
     element_id = _resolve_element(element)
     notes: list[str] = []
 
+    # --- UNTUNABLE-by-construction gate (task #50 B2). ----------------------- #
+    # If the comp contains a hard_breaker (flat team Increase SPD), no FIXED
+    # speed-tune can hold the boss cadence. Detect up front so we never present a
+    # doomed pseudo-tune; we still score it as a natural-speed STALL below.
+    breakers = _hard_breakers(comp)
+
     # --- build the team once (real gear + flagship preset). ----------------- #
     try:
         from cb_sim import _build_team_setup, SPD
@@ -392,11 +484,17 @@ def tune_and_score(comp: list[str], *, element="spirit", gear: str = "current",
     if isinstance(setup, dict) and setup.get("error"):
         # Can't set up on current/optimal gear (e.g. unowned + no gear). Fall
         # back to the potential-gear NATURAL sim — UNTUNED, clearly labelled.
-        return _potential_fallback(comp, element_id, gear, setup["error"], notes)
+        return _potential_fallback(comp, element_id, gear, setup["error"], notes,
+                                   breakers=breakers)
 
     hero_names = setup["hero_names"]
     base_spd = [int(round(setup["stats_per_hero"][i][SPD]))
                 for i in range(len(hero_names))]
+
+    if breakers:
+        # Skip the SPD search entirely — score natural speeds as a stall + explain.
+        return _untunable_result(hero_names, setup, base_spd, element_id, gear,
+                                 breakers, notes)
 
     # --- build the SPD search grid (slot-indexed). -------------------------- #
     import itertools
@@ -512,6 +610,8 @@ def tune_and_score(comp: list[str], *, element="spirit", gear: str = "current",
         "tuned_fitness": best["total"],
         "holds_t50": best["holds"],
         "tune_found": tune_found,
+        "tunable": True,
+        "untunable_reason": "",
         "notes": notes,
         # extras
         "base_spd": dict(zip(hero_names, base_spd)),
@@ -543,10 +643,21 @@ def _normalize_vary(vary, hero_names) -> dict:
     return out
 
 
-def _potential_fallback(comp, element_id, gear, err, notes) -> dict:
+def _potential_fallback(comp, element_id, gear, err, notes,
+                        breakers: Optional[list[str]] = None) -> dict:
     """Current/optimal-gear setup failed — report the potential-gear NATURAL
     (untuned) sim so the caller still gets a comparable number, clearly flagged
-    as UNTUNED."""
+    as UNTUNED.
+
+    `breakers` (hard_breaker members) is carried through so the result still
+    reports tunable=False + the reason even when the comp couldn't be set up on
+    current/optimal gear (the SPD search never runs in this path anyway)."""
+    breakers = breakers or []
+    tunable = not breakers
+    untunable_reason = _untunable_reason(breakers) if breakers else ""
+    if breakers:
+        notes.append(f"UNTUNABLE by construction: {untunable_reason} "
+                     f"(no fixed speed-tune holds; SPD search skipped).")
     notes.append(f"Could not build the comp on {gear} gear ({err}). "
                  f"speed_tune_finder needs gearable (owned) heroes to tune; "
                  f"falling back to the potential-gear NATURAL sim — UNTUNED.")
@@ -558,7 +669,9 @@ def _potential_fallback(comp, element_id, gear, err, notes) -> dict:
     if r.get("error"):
         notes.append(f"Potential-gear sim also failed: {r['error']}.")
         return {"spd_assignment": None, "tuned_fitness": 0.0,
-                "holds_t50": False, "tune_found": False, "notes": notes,
+                "holds_t50": False, "tune_found": False,
+                "tunable": tunable, "untunable_reason": untunable_reason,
+                "notes": notes,
                 "natural": None, "best": None, "combos_evaluated": 0,
                 "gear": "potential", "gear_feasibility": None,
                 "element": element_id,
@@ -568,7 +681,9 @@ def _potential_fallback(comp, element_id, gear, err, notes) -> dict:
     notes.append("TUNED damage is a cb_sim ESTIMATE; this is the UNTUNED "
                  "potential-gear floor (no SPD search ran).")
     return {"spd_assignment": None, "tuned_fitness": total,
-            "holds_t50": holds, "tune_found": False, "notes": notes,
+            "holds_t50": holds, "tune_found": False,
+            "tunable": tunable, "untunable_reason": untunable_reason,
+            "notes": notes,
             "natural": {"turns": r.get("cb_turns"), "gaps": None,
                         "holds": holds, "total": total},
             "best": {"turns": r.get("cb_turns"), "gaps": None,
@@ -625,9 +740,12 @@ def _print_compare(rows, element_id: int) -> None:
           f"{'turns':>5} {'gear':>9}  team")
     print("  " + "-" * 100)
     for i, (label, team, res) in enumerate(rows, 1):
-        dmg = f"{res['tuned_fitness']/1e6:.2f}M"
+        untunable = res.get("tunable") is False
+        # For an untunable comp show the marker in place of a tuned number, so it
+        # reads "UNTUNABLE (...)" rather than a fake "31.1M dies T41" tune.
+        dmg = "UNTUNABLE" if untunable else f"{res['tuned_fitness']/1e6:.2f}M"
         holds = "Y" if res["holds_t50"] else "."
-        tuned = "Y" if res["tune_found"] else "."
+        tuned = "UNT" if untunable else ("Y" if res["tune_found"] else ".")
         turns = res["best"]["turns"] if res.get("best") else "?"
         gf = res.get("gear_feasibility")
         gear_c = ("buildable" if gf and gf["feasible"]
@@ -636,6 +754,7 @@ def _print_compare(rows, element_id: int) -> None:
               f"{gear_c:>9}  {label}")
     print()
     for label, team, res in rows:
+        untunable = res.get("tunable") is False
         spd = res.get("spd_assignment")
         spd_s = (", ".join(f"{k}={v}" for k, v in spd.items())
                  if spd else "(no SPD tune — see notes)")
@@ -644,10 +763,19 @@ def _print_compare(rows, element_id: int) -> None:
                  f"{(nat.get('total') or 0)/1e6:.1f}M"
                  if nat else "n/a")
         print(f"  • {label}")
-        print(f"      tuned SPD: {spd_s}")
-        print(f"      tuned: T{res['best']['turns'] if res.get('best') else '?'}"
-              f"/{res['tuned_fitness']/1e6:.1f}M   vs   {nat_s}   "
-              f"(combos={res['combos_evaluated']}, gear={res['gear']})")
+        if untunable:
+            # No fake tuned number — explain the verdict instead.
+            print(f"      {_untunable_marker(_hard_breakers(team))}: "
+                  f"{res.get('untunable_reason', '')}")
+            print(f"      scored as STALL (untunable): "
+                  f"T{res['best']['turns'] if res.get('best') else '?'}"
+                  f"/{res['tuned_fitness']/1e6:.1f}M natural speeds   "
+                  f"(combos={res['combos_evaluated']}, gear={res['gear']})")
+        else:
+            print(f"      tuned SPD: {spd_s}")
+            print(f"      tuned: T{res['best']['turns'] if res.get('best') else '?'}"
+                  f"/{res['tuned_fitness']/1e6:.1f}M   vs   {nat_s}   "
+                  f"(combos={res['combos_evaluated']}, gear={res['gear']})")
         gf = res.get("gear_feasibility")
         if gf:
             verdict = "BUILDABLE" if gf["feasible"] else "NOT buildable as-is"
@@ -755,16 +883,26 @@ def _print_single(team, res) -> None:
         res["element"], res["element"])
     print(f"\n=== team_tune: {', '.join(team)} (element={elem}, "
           f"gear={res['gear']}) ===")
-    spd = res.get("spd_assignment")
-    if spd:
-        print("tuned SPD:", ", ".join(f"{k}={v}" for k, v in spd.items()))
+    untunable = res.get("tunable") is False
     nat = res.get("natural") or {}
-    print(f"natural : T{nat.get('turns')} / "
-          f"{(nat.get('total') or 0)/1e6:.2f}M")
-    print(f"tuned   : T{res['best']['turns'] if res.get('best') else '?'} / "
-          f"{res['tuned_fitness']/1e6:.2f}M  "
-          f"holds_t50={res['holds_t50']}  tune_found={res['tune_found']}  "
-          f"(combos={res['combos_evaluated']})")
+    if untunable:
+        print(_untunable_marker(_hard_breakers(team)) + ":",
+              res.get("untunable_reason", ""))
+        print(f"natural : T{nat.get('turns')} / "
+              f"{(nat.get('total') or 0)/1e6:.2f}M")
+        print(f"stall   : T{res['best']['turns'] if res.get('best') else '?'} / "
+              f"{res['tuned_fitness']/1e6:.2f}M  holds_t50={res['holds_t50']}  "
+              f"tunable=False  (scored as stall, no SPD search)")
+    else:
+        spd = res.get("spd_assignment")
+        if spd:
+            print("tuned SPD:", ", ".join(f"{k}={v}" for k, v in spd.items()))
+        print(f"natural : T{nat.get('turns')} / "
+              f"{(nat.get('total') or 0)/1e6:.2f}M")
+        print(f"tuned   : T{res['best']['turns'] if res.get('best') else '?'} / "
+              f"{res['tuned_fitness']/1e6:.2f}M  "
+              f"holds_t50={res['holds_t50']}  tune_found={res['tune_found']}  "
+              f"(combos={res['combos_evaluated']})")
     gf = res.get("gear_feasibility")
     if gf:
         verdict = "BUILDABLE" if gf["feasible"] else "NOT buildable as-is"
