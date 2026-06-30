@@ -80,6 +80,22 @@ _OFFSET_POOLS = (
     (0,),                      # 1 value   (single-point = natural only)
 )
 
+# Adaptive search (coarse->fine). The COARSE pass sweeps these WIDE offsets per
+# hero (so a tune needing a big move — e.g. MEN Ninja +18, see memory
+# project_speed_tune_finder — is reachable, which the narrow auto grid above
+# misses). The FINE pools refine around the basin the coarse pass located.
+_ADAPT_WIDE = (-20, -10, 0, 10, 20)
+_FINE_POOLS = (
+    (-6, -3, 0, 3, 6),         # 5 values
+    (-6, 0, 6),                # 3 values
+    (-6, 0),                   # 2 values
+    (0,),                      # 1 value
+)
+
+# CB UNM ACC floor (boss RES derived) — game-truth from boss_constraints; the
+# literal is only the fallback if that table can't be imported.
+_DEFAULT_ACC_FLOOR = 225
+
 
 def _resolve_element(element) -> int:
     if isinstance(element, int):
@@ -92,18 +108,21 @@ def _resolve_element(element) -> int:
 
 
 def auto_grids(base_spd: list[int], max_combos: int,
-               lever_idx: Optional[list[int]] = None) -> dict:
+               lever_idx: Optional[list[int]] = None,
+               pools=_OFFSET_POOLS) -> dict:
     """Build a bounded per-hero SPD grid (as a finder --vary dict keyed by
     slot index) that searches SPD-space without exceeding `max_combos`.
 
     Varies every hero by default (lever_idx=None); pass lever_idx to restrict
     the search to specific slots. Picks the richest offset pool whose cartesian
     product fits the budget, so the search is as fine as the time allows.
+    `pools` overrides the offset schedule (the adaptive FINE pass passes a
+    centered small-offset schedule).
     """
     n = len(base_spd)
     vary_idx = list(range(n)) if lever_idx is None else list(lever_idx)
-    chosen = _OFFSET_POOLS[-1]
-    for pool in _OFFSET_POOLS:
+    chosen = pools[-1]
+    for pool in pools:
         if len(pool) ** len(vary_idx) <= max_combos:
             chosen = pool
             break
@@ -146,6 +165,178 @@ def _score_combo(setup, combo, element_id) -> dict:
             "total": float(res.get("total", 0.0) or 0.0)}
 
 
+def _coarse_basin(score_fn, base_spd, wide_offsets, budget) -> tuple:
+    """COARSE pass of the adaptive search: coordinate-descent over WIDE offsets.
+
+    Sweep each hero across `wide_offsets` (holding the others at the running-best
+    center) and keep the offset that most improves survival, then move to the
+    next hero. Cost is ≤ 1 + n*(len(wide)-1) sims — it finds the survival BASIN
+    without paying for a full wide cartesian (5 wide values over 5 heroes would
+    be 3125 sims, way over budget). Returns (center_spd_list, sims_used).
+    `score_fn` is the memoized scorer, so re-tried combos are free.
+    """
+    center = list(base_spd)
+    base_m = score_fn(tuple(center))
+    best_key = (base_m["holds"], base_m["turns"], base_m["total"])
+    used = 1
+    for i in range(len(center)):
+        local_best = center[i]
+        for off in wide_offsets:
+            cand = max(1, base_spd[i] + off)
+            if cand == center[i]:
+                continue
+            if used >= budget:
+                break
+            trial = list(center)
+            trial[i] = cand
+            m = score_fn(tuple(trial))
+            used += 1
+            key = (m["holds"], m["turns"], m["total"])
+            if key > best_key:
+                best_key, local_best = key, cand
+        center[i] = local_best
+        if used >= budget:
+            break
+    return center, used
+
+
+def _base_name(name: str) -> str:
+    """Strip a duplicate-instance suffix ('Maneater_2' -> 'Maneater') so the gear
+    optimizer (keyed by real hero name) resolves the champion."""
+    if "_" in name:
+        head, _, tail = name.rpartition("_")
+        if tail.isdigit() and head:
+            return head
+    return name
+
+
+def _cb_acc_floor(location: str = "clan_boss") -> int:
+    """ACC floor (boss-RES-derived) from game-truth boss_constraints; falls back
+    to the CB-UNM literal if the constraint table can't be loaded."""
+    try:
+        import boss_constraints
+        v = boss_constraints.acc_floor(location)
+        if v:
+            return int(v)
+    except Exception:
+        pass
+    return _DEFAULT_ACC_FLOOR
+
+
+def gear_feasibility(comp: list[str], spd_targets: dict, element="spirit", *,
+                     acc_floor: Optional[int] = None, location: str = "clan_boss",
+                     anneal: int = 3, opt=None, spd_tol: int = 2) -> dict:
+    """Feasibility-check a FOUND tune against the user's ACTUAL VAULT gear.
+
+    A tune from `tune_and_score` only re-assigns SPD INSIDE the sim — it does NOT
+    prove the user can BUILD those speeds (plus the debuffers' ACC floor) from
+    their vault. This wires in the existing per-champion gear optimizer
+    (`gear_target_optimizer.Optimizer.optimize` — the M6 stat-target solver, the
+    same one `cb_recommender._solve_rec` uses for on-demand regear feasibility)
+    to answer "buildable on your gear?".
+
+    Per hero the targets are {SPD: tuned spd} and, for DEBUFFERS only (heroes the
+    game-truth `cb_profiles` profile flags `needs_acc`), {ACC: acc_floor}. Heroes
+    are solved hardest-SPD-first with artifact CONTENTION — a piece assigned to
+    one hero is removed from the next hero's candidate vault (`exclude_ids`),
+    exactly as `_solve_rec` does — so the verdict reflects the whole team sharing
+    ONE vault, not five independent solves double-counting the same speed boots.
+
+    Args:
+      comp: the 5 hero names (order is informational; the solve order is by SPD).
+      spd_targets: {hero_name: spd} — the tuned SPD assignment to feasibility-check.
+      element: accepted for symmetry / validation; the ACC floor is the CB-UNM
+               boss-RES floor (the only location with a fixed CB tune today).
+      acc_floor: override the boss_constraints floor (else 225 for clan_boss).
+      opt: a pre-built gear_target_optimizer.Optimizer to REUSE across comps
+           (building it loads + indexes the whole vault). Built on demand if None.
+
+    Returns:
+      {feasible: bool, acc_floor: int,
+       per_hero: {name: {reachable, spd_gap, acc_ok, achieved_spd, achieved_acc,
+                         target_spd, needs_acc, notes}}}.
+    """
+    from cb_optimizer import SPD, ACC
+    import cb_profiles
+    import gear_target_optimizer as gto
+
+    _resolve_element(element)          # validate the element name/id
+    floor = int(acc_floor) if acc_floor is not None else _cb_acc_floor(location)
+
+    if opt is None:
+        arts, heroes, account = gto.load_data()
+        opt = gto.Optimizer(arts, heroes, account)
+
+    names = list(comp) if comp else list(spd_targets.keys())
+    needs_acc = {}
+    for nm in names:
+        try:
+            needs_acc[nm] = bool(cb_profiles.resolve(_base_name(nm)).needs_acc)
+        except Exception:
+            needs_acc[nm] = False
+
+    per_hero: dict = {}
+    used: set = set()
+    order = sorted(names, key=lambda nm: -int(spd_targets.get(nm, 0)))
+    for nm in order:
+        tspd = int(round(spd_targets.get(nm, 0)))
+        mins = {SPD: tspd}
+        if needs_acc[nm]:
+            mins[ACC] = floor
+        targets = gto.build_targets(mins, {}, {}, None)
+        notes: list[str] = []
+        try:
+            r = opt.optimize(_base_name(nm), targets, anneal=anneal,
+                             exclude_ids=used)
+        except Exception as e:
+            per_hero[nm] = {"reachable": False, "spd_gap": tspd, "acc_ok": False,
+                            "achieved_spd": None, "achieved_acc": None,
+                            "target_spd": tspd, "needs_acc": needs_acc[nm],
+                            "notes": [f"gear solve failed: {type(e).__name__}: {e}"]}
+            continue
+        for a in (r.get("assignment") or {}).values():
+            if a and a.get("id") is not None:
+                used.add(a["id"])
+        stats = r["stats"]
+        aspd = int(round(stats.get(SPD, 0)))
+        aacc = int(round(stats.get(ACC, 0)))
+        spd_gap = (tspd - aspd) if aspd < tspd - spd_tol else 0
+        acc_ok = (not needs_acc[nm]) or aacc >= floor
+        reachable = (spd_gap == 0) and acc_ok
+        if spd_gap:
+            notes.append(f"needs +{spd_gap} SPD (vault best {aspd}, target {tspd})")
+        if needs_acc[nm] and not acc_ok:
+            notes.append(f"short {floor - aacc} ACC (vault best {aacc}, "
+                         f"floor {floor})")
+        if reachable:
+            notes.append("buildable on your gear")
+        per_hero[nm] = {"reachable": reachable, "spd_gap": spd_gap,
+                        "acc_ok": acc_ok, "achieved_spd": aspd,
+                        "achieved_acc": aacc, "target_spd": tspd,
+                        "needs_acc": needs_acc[nm], "notes": notes}
+    feasible = bool(per_hero) and all(h["reachable"] for h in per_hero.values())
+    return {"feasible": feasible, "acc_floor": floor, "per_hero": per_hero}
+
+
+def _gear_feasibility_note(gf: dict) -> str:
+    """One-line human summary of a gear_feasibility result for the CLI/notes."""
+    if not gf:
+        return ""
+    if gf["feasible"]:
+        return "GEAR: buildable on your vault (all SPD targets + ACC floor met)."
+    shorts = []
+    for nm, h in gf["per_hero"].items():
+        if h["reachable"]:
+            continue
+        bits = []
+        if h["spd_gap"]:
+            bits.append(f"+{h['spd_gap']} SPD")
+        if h["needs_acc"] and not h["acc_ok"] and h["achieved_acc"] is not None:
+            bits.append(f"{gf['acc_floor'] - h['achieved_acc']} ACC")
+        shorts.append(f"{nm} short {' / '.join(bits) or 'gear'}")
+    return "GEAR: NOT buildable as-is — " + "; ".join(shorts) + "."
+
+
 _SCHEMA_KEYS = ("spd_assignment", "tuned_fitness", "holds_t50",
                 "tune_found", "notes")
 
@@ -153,7 +344,8 @@ _SCHEMA_KEYS = ("spd_assignment", "tuned_fitness", "holds_t50",
 def tune_and_score(comp: list[str], *, element="spirit", gear: str = "current",
                    vary: Optional[dict] = None, max_combos: int = 243,
                    lever_idx: Optional[list[int]] = None,
-                   verbose: bool = False) -> dict:
+                   adaptive: bool = False, check_gear: bool = False,
+                   gear_opt=None, verbose: bool = False) -> dict:
     """TUNE `comp` (search SPD-space for the holding assignment) then SCORE the
     tuned config via cb_sim. The stage-2 primitive.
 
@@ -166,8 +358,19 @@ def tune_and_score(comp: list[str], *, element="spirit", gear: str = "current",
             dict or a "Name=lo..hi:step,..." string (parsed). When given it is
             used VERBATIM (finer, precise search); else a bounded auto grid is
             built under `max_combos`.
-      max_combos: hard cap on the auto search (≈ seconds at ~1s/combo).
+      max_combos: hard cap on the auto search (≈ seconds at ~1s/combo). For the
+            adaptive search this caps coarse + fine sims COMBINED.
       lever_idx: restrict the auto search to these slot indices (default: all).
+      adaptive: COARSE-then-FINE search (only without an explicit `vary`). A
+            coordinate-descent coarse pass over WIDE offsets {-20..+20} locates
+            the survival basin, then a fine cartesian over small offsets refines
+            around it — reaching big tune moves the narrow auto grid misses,
+            still within `max_combos`.
+      check_gear: also feasibility-check the found tune against the user's actual
+            VAULT gear (gear_feasibility). OFF by default — the gear solve loads
+            and SA-searches the whole vault per hero (a few seconds).
+      gear_opt: reuse a pre-built gear_target_optimizer.Optimizer for check_gear
+            (so --compare builds the vault index once, not per comp).
 
     Returns a dict with the requested schema keys:
       spd_assignment {name: spd}, tuned_fitness (best total damage, float),
@@ -196,50 +399,74 @@ def tune_and_score(comp: list[str], *, element="spirit", gear: str = "current",
                 for i in range(len(hero_names))]
 
     # --- build the SPD search grid (slot-indexed). -------------------------- #
-    if vary:
+    import itertools
+    n = len(hero_names)
+    base_combo = tuple(base_spd)
+    explicit = bool(vary)
+
+    # memoized survival+damage scorer — one full sim per UNIQUE combo, so the
+    # adaptive coarse pass and the fine grid never pay twice for the same combo.
+    cache: dict = {}
+
+    def _score(combo):
+        combo = tuple(int(x) for x in combo)
+        if combo not in cache:
+            cache[combo] = _score_combo(setup, combo, element_id)
+        return cache[combo]
+
+    if explicit:
         gv = _normalize_vary(vary, hero_names)
-        grids = {i: gv.get(i, [base_spd[i]]) for i in range(len(hero_names))}
-        for i in range(len(hero_names)):       # ensure natural speeds are tried
+        grids = {i: gv.get(i, [base_spd[i]]) for i in range(n)}
+        for i in range(n):                     # ensure natural speeds are tried
             if base_spd[i] not in grids[i]:
                 grids[i] = sorted(set(grids[i]) | {base_spd[i]})
         offsets = None
+    elif adaptive:
+        # COARSE (coordinate-descent over WIDE {-20..+20}) -> FINE (small-offset
+        # cartesian centered on the basin). Budget schedule: the coarse pass uses
+        # ~1+n*(len(WIDE)-1) sims (≤21 for 5 heroes); the FINE grid is then
+        # picked to fit the REMAINING budget so coarse+fine ≤ max_combos.
+        center, _used = _coarse_basin(_score, base_spd, _ADAPT_WIDE, max_combos)
+        fine_budget = max(1, max_combos - len(cache))
+        ag = auto_grids(center, fine_budget, lever_idx, pools=_FINE_POOLS)
+        grids = ag["grids"]
+        offsets = ag["offsets"]
+        if verbose:
+            print(f"[team_tune] adaptive: coarse basin "
+                  f"{dict(zip(hero_names, center))} in {len(cache)} sims; "
+                  f"fine offsets {offsets} (budget {fine_budget})")
     else:
         ag = auto_grids(base_spd, max_combos, lever_idx)
         grids = ag["grids"]
         offsets = ag["offsets"]
 
-    combos = _product([len(grids[i]) for i in range(len(hero_names))])
-    if combos > max_combos:
+    combos = _product([len(grids[i]) for i in range(n)])
+    # The fine grid is already bounded to the remaining budget; only the explicit
+    # / narrow-auto paths can over-shoot, so guard those.
+    if not adaptive and combos > max_combos:
         raise ValueError(f"search grid is {combos} combos (> max_combos "
                          f"{max_combos}); narrow --vary or raise --max-combos")
-    if verbose:
-        mode = "explicit --vary" if vary else f"auto offsets {offsets}"
+    if verbose and not adaptive:
+        mode = "explicit --vary" if explicit else f"auto offsets {offsets}"
         print(f"[team_tune] {','.join(comp)} | {gear} gear | "
               f"element={element_id} | {combos} combos ({mode})")
 
-    # --- evaluate every combo (survival + damage in one sim each). ---------- #
-    import itertools
-    base_combo = tuple(base_spd)
-    natural = None
-    best = None
-    best_combo = None
-    n_eval = 0
-    for combo in itertools.product(*(grids[i] for i in range(len(hero_names)))):
-        m = _score_combo(setup, combo, element_id)
-        n_eval += 1
-        if combo == base_combo:
-            natural = m
-        # rank: holds first, then survival depth, then damage.
+    # --- evaluate the grid (coarse results already cached for adaptive). ----- #
+    for combo in itertools.product(*(grids[i] for i in range(n))):
+        m = _score(combo)
+        if verbose:
+            print(f"    {dict(zip(hero_names, tuple(int(x) for x in combo)))} -> "
+                  f"T{m['turns']} gaps={m['gaps']} {m['total']/1e6:.2f}M"
+                  f"{' HOLDS' if m['holds'] else ''}")
+    natural = _score(base_combo)               # always evaluate natural speeds
+
+    # best over EVERYTHING evaluated (coarse + fine + natural).
+    best = best_combo = None
+    for combo, m in cache.items():
         key = (m["holds"], m["turns"], m["total"])
         if best is None or key > (best["holds"], best["turns"], best["total"]):
             best, best_combo = m, combo
-        if verbose:
-            print(f"    {dict(zip(hero_names, combo))} -> "
-                  f"T{m['turns']} gaps={m['gaps']} {m['total']/1e6:.2f}M"
-                  f"{' HOLDS' if m['holds'] else ''}")
-    if natural is None:                         # base not in an explicit grid
-        natural = _score_combo(setup, base_combo, element_id)
-        n_eval += 1
+    n_eval = len(cache)
 
     # --- did the search actually improve on the natural speeds? ------------- #
     nat_key = (natural["holds"], natural["turns"], natural["total"])
@@ -267,8 +494,21 @@ def tune_and_score(comp: list[str], *, element="spirit", gear: str = "current",
                  "rates stalls); use it to rank tune-vs-tune, not as an absolute "
                  "clear check.")
 
+    spd_assignment = dict(zip(hero_names, [int(x) for x in best_combo]))
+
+    # --- ACTIONABILITY: can the user actually BUILD this tune? --------------- #
+    gear_feas = None
+    if check_gear and gear == "current":
+        try:
+            gear_feas = gear_feasibility(list(hero_names), spd_assignment,
+                                         element=element_id, opt=gear_opt)
+            notes.append(_gear_feasibility_note(gear_feas))
+        except Exception as e:                  # surface, don't swallow
+            notes.append(f"GEAR: feasibility check failed "
+                         f"({type(e).__name__}: {e}).")
+
     return {
-        "spd_assignment": dict(zip(hero_names, best_combo)),
+        "spd_assignment": spd_assignment,
         "tuned_fitness": best["total"],
         "holds_t50": best["holds"],
         "tune_found": tune_found,
@@ -279,6 +519,7 @@ def tune_and_score(comp: list[str], *, element="spirit", gear: str = "current",
         "best": best,
         "combos_evaluated": n_eval,
         "gear": gear,
+        "gear_feasibility": gear_feas,
         "element": element_id,
         "source": "speed_tune_finder SPD search + cb_sim survival sim",
         "team": list(hero_names),
@@ -319,7 +560,8 @@ def _potential_fallback(comp, element_id, gear, err, notes) -> dict:
         return {"spd_assignment": None, "tuned_fitness": 0.0,
                 "holds_t50": False, "tune_found": False, "notes": notes,
                 "natural": None, "best": None, "combos_evaluated": 0,
-                "gear": "potential", "element": element_id,
+                "gear": "potential", "gear_feasibility": None,
+                "element": element_id,
                 "source": "fallback (failed)", "team": list(comp)}
     total = float(r.get("total", 0.0) or 0.0)
     holds = (r.get("cb_turns", 0) >= 50) and bool(r.get("valid"))
@@ -332,6 +574,7 @@ def _potential_fallback(comp, element_id, gear, err, notes) -> dict:
             "best": {"turns": r.get("cb_turns"), "gaps": None,
                      "holds": holds, "total": total},
             "combos_evaluated": 0, "gear": "potential",
+            "gear_feasibility": None,
             "element": element_id,
             "source": "cb_potential.simulate_team (UNTUNED fallback)",
             "team": list(comp)}
@@ -339,10 +582,22 @@ def _potential_fallback(comp, element_id, gear, err, notes) -> dict:
 
 # ====================================================================== compare
 def compare(comps: list, *, element="spirit", gear: str = "current",
-            max_combos: int = 243, verbose: bool = False) -> list:
+            max_combos: int = 243, adaptive: bool = False,
+            check_gear: bool = False, verbose: bool = False) -> list:
     """Tune+score each comp; return rows sorted by TUNED damage (desc) so the
     comps are comparable tune-vs-tune. `comps` is a list of (label, team)
     tuples or bare team lists."""
+    # Build the vault-wide gear optimizer ONCE and share it across comps (its
+    # construction indexes the whole vault — per-comp rebuild would be wasteful).
+    gear_opt = None
+    if check_gear and gear == "current":
+        try:
+            import gear_target_optimizer as gto
+            arts, heroes, account = gto.load_data()
+            gear_opt = gto.Optimizer(arts, heroes, account)
+        except Exception as e:
+            if verbose:
+                print(f"[team_tune] gear optimizer unavailable: {e}")
     rows = []
     for item in comps:
         if isinstance(item, tuple):
@@ -352,7 +607,9 @@ def compare(comps: list, *, element="spirit", gear: str = "current",
         if verbose:
             print(f"\n=== tuning: {label} ===")
         res = tune_and_score(team, element=element, gear=gear,
-                             max_combos=max_combos, verbose=verbose)
+                             max_combos=max_combos, adaptive=adaptive,
+                             check_gear=check_gear, gear_opt=gear_opt,
+                             verbose=verbose)
         rows.append((label, team, res))
     rows.sort(key=lambda r: (r[2]["holds_t50"], r[2]["tuned_fitness"]),
               reverse=True)
@@ -365,14 +622,18 @@ def _print_compare(rows, element_id: int) -> None:
     print("  cb_sim under-survives + over-rates stalls; numbers are ESTIMATES "
           "for tune-vs-tune ranking.\n")
     print(f"  {'#':>2} {'tuned dmg':>10} {'holds':>5} {'tuned?':>6} "
-          f"{'turns':>5}  team")
-    print("  " + "-" * 96)
+          f"{'turns':>5} {'gear':>9}  team")
+    print("  " + "-" * 100)
     for i, (label, team, res) in enumerate(rows, 1):
         dmg = f"{res['tuned_fitness']/1e6:.2f}M"
         holds = "Y" if res["holds_t50"] else "."
         tuned = "Y" if res["tune_found"] else "."
         turns = res["best"]["turns"] if res.get("best") else "?"
-        print(f"  {i:>2} {dmg:>10} {holds:>5} {tuned:>6} {str(turns):>5}  {label}")
+        gf = res.get("gear_feasibility")
+        gear_c = ("buildable" if gf and gf["feasible"]
+                  else "INFEAS" if gf else "-")
+        print(f"  {i:>2} {dmg:>10} {holds:>5} {tuned:>6} {str(turns):>5} "
+              f"{gear_c:>9}  {label}")
     print()
     for label, team, res in rows:
         spd = res.get("spd_assignment")
@@ -387,8 +648,19 @@ def _print_compare(rows, element_id: int) -> None:
         print(f"      tuned: T{res['best']['turns'] if res.get('best') else '?'}"
               f"/{res['tuned_fitness']/1e6:.1f}M   vs   {nat_s}   "
               f"(combos={res['combos_evaluated']}, gear={res['gear']})")
-        for n in res["notes"]:
-            print(f"      - {n}")
+        gf = res.get("gear_feasibility")
+        if gf:
+            verdict = "BUILDABLE" if gf["feasible"] else "NOT buildable as-is"
+            print(f"      gear feasibility: {verdict} "
+                  f"(ACC floor {gf['acc_floor']}):")
+            for nm, h in gf["per_hero"].items():
+                mark = "ok" if h["reachable"] else "XX"
+                acc_s = (f" ACC{h['achieved_acc']}" if h["needs_acc"] else "")
+                print(f"        [{mark}] {nm}: SPD {h['achieved_spd']}"
+                      f"/target {h['target_spd']}{acc_s}"
+                      f"{('  -> ' + '; '.join(h['notes'])) if h['notes'] else ''}")
+        for nt in res["notes"]:
+            print(f"      - {nt}")
     print()
 
 
@@ -415,7 +687,16 @@ def main(argv=None) -> int:
                     help="explicit finder vary, 'Name=lo..hi:step,...' "
                          "(precise search; overrides the auto grid)")
     ap.add_argument("--max-combos", type=int, default=243,
-                    help="cap on the auto SPD search (~1s/combo)")
+                    help="cap on the auto SPD search (~1s/combo); for --adaptive "
+                         "this caps coarse + fine sims combined")
+    ap.add_argument("--adaptive", action="store_true",
+                    help="coarse-then-refine SPD search (wide {-20..+20} basin "
+                         "scan, then fine refine) — finds big tune moves the "
+                         "narrow auto grid misses, still within --max-combos")
+    ap.add_argument("--check-gear", action="store_true",
+                    help="feasibility-check the found tune against your actual "
+                         "VAULT gear (SPD targets + CB ACC floor). Slower (gear "
+                         "solve per hero); default off.")
     ap.add_argument("--verbose", action="store_true")
     args = ap.parse_args(argv)
 
@@ -427,7 +708,8 @@ def main(argv=None) -> int:
             ap.error("--compare needs one of --validate / --teams / "
                      "--from-generator")
         rows = compare(comps, element=args.element, gear=args.gear,
-                       max_combos=args.max_combos, verbose=args.verbose)
+                       max_combos=args.max_combos, adaptive=args.adaptive,
+                       check_gear=args.check_gear, verbose=args.verbose)
         _print_compare(rows, element_id)
         return 0
 
@@ -436,6 +718,7 @@ def main(argv=None) -> int:
     team = [t.strip() for t in args.team.split(",") if t.strip()]
     res = tune_and_score(team, element=args.element, gear=args.gear,
                          vary=(args.vary or None), max_combos=args.max_combos,
+                         adaptive=args.adaptive, check_gear=args.check_gear,
                          verbose=args.verbose)
     _print_single(team, res)
     return 0
@@ -482,6 +765,16 @@ def _print_single(team, res) -> None:
           f"{res['tuned_fitness']/1e6:.2f}M  "
           f"holds_t50={res['holds_t50']}  tune_found={res['tune_found']}  "
           f"(combos={res['combos_evaluated']})")
+    gf = res.get("gear_feasibility")
+    if gf:
+        verdict = "BUILDABLE" if gf["feasible"] else "NOT buildable as-is"
+        print(f"gear    : {verdict} (ACC floor {gf['acc_floor']})")
+        for nm, h in gf["per_hero"].items():
+            mark = "ok" if h["reachable"] else "XX"
+            acc_s = (f" ACC{h['achieved_acc']}" if h["needs_acc"] else "")
+            print(f"          [{mark}] {nm}: SPD {h['achieved_spd']}"
+                  f"/target {h['target_spd']}{acc_s}"
+                  f"{('  -> ' + '; '.join(h['notes'])) if h['notes'] else ''}")
     print("notes:")
     for n in res["notes"]:
         print("  -", n)

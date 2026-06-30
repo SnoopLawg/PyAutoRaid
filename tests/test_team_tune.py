@@ -76,6 +76,77 @@ def test_tune_and_score_men_schema():
     assert res["base_spd"]["Demytha"] in (174, 184)
 
 
+@pytest.fixture(scope="module")
+def gear_opt():
+    """Shared vault-wide gear optimizer (building it indexes the whole vault, so
+    do it once for all gear tests)."""
+    import gear_target_optimizer as gto
+    arts, heroes, account = gto.load_data()
+    return gto.Optimizer(arts, heroes, account)
+
+
+GEAR_SCHEMA = ("feasible", "acc_floor", "per_hero")
+PER_HERO_KEYS = ("reachable", "spd_gap", "acc_ok", "achieved_spd",
+                 "achieved_acc", "target_spd", "needs_acc", "notes")
+# MEN's daily-robust tune (memory project_speed_tune_finder) — the user's real,
+# fielded comp, so its gear must be BUILDABLE.
+MEN_TUNE = {"Maneater": 292, "Demytha": 174, "Ninja": 206,
+            "Geomancer": 177, "Venomage": 162}
+
+
+def test_cb_acc_floor_is_225():
+    # game-truth CB UNM boss-RES ACC floor from boss_constraints (225).
+    assert team_tune._cb_acc_floor("clan_boss") == 225
+
+
+def test_gear_feasibility_schema_and_men_feasible(gear_opt):
+    """gear_feasibility returns the documented schema AND marks MEN's tune
+    FEASIBLE — it's the user's real, fielded comp, so the vault can build it
+    (SPD targets + the 225 ACC floor on the debuffers)."""
+    gf = team_tune.gear_feasibility(MEN, MEN_TUNE, element="spirit",
+                                    opt=gear_opt)
+    for k in GEAR_SCHEMA:
+        assert k in gf, f"missing gear schema key {k}"
+    assert gf["acc_floor"] == 225
+    assert set(gf["per_hero"]) == set(MEN)
+    for nm, h in gf["per_hero"].items():
+        for k in PER_HERO_KEYS:
+            assert k in h, f"{nm} missing per-hero key {k}"
+        assert isinstance(h["reachable"], bool)
+        assert isinstance(h["notes"], list)
+    # the debuffers (Ninja/Geo/Venomage) carry the ACC floor; tank/protector don't.
+    assert gf["per_hero"]["Ninja"]["needs_acc"] is True
+    assert gf["per_hero"]["Maneater"]["needs_acc"] is False
+    # MEN is buildable.
+    assert gf["feasible"] is True
+
+
+def test_gear_feasibility_reports_spd_gap(gear_opt):
+    """An unreachable SPD target is reported as a gap (reachable False, positive
+    spd_gap, a note) rather than silently passing — the actionable signal."""
+    gf = team_tune.gear_feasibility(["Maneater"], {"Maneater": 400},
+                                    element="spirit", opt=gear_opt)
+    assert gf["feasible"] is False
+    h = gf["per_hero"]["Maneater"]
+    assert h["reachable"] is False
+    assert h["spd_gap"] > 0
+    assert any("SPD" in n for n in h["notes"])
+
+
+def test_adaptive_search_finds_men_hold_within_budget():
+    """The adaptive coarse->fine search finds MEN's T50 hold and stays within the
+    combo budget (coarse + fine sims combined <= max_combos)."""
+    budget = 24
+    res = team_tune.tune_and_score(MEN, element="spirit", gear="current",
+                                   adaptive=True, max_combos=budget)
+    assert res["holds_t50"] is True
+    assert res["best"]["turns"] >= 50
+    assert res["combos_evaluated"] <= budget
+    # adaptive without explicit vary still fills the full schema.
+    for k in SCHEMA:
+        assert k in res
+
+
 def test_compare_two_comps_tuned_side_by_side():
     """The --compare primitive tunes BOTH comps and ranks by tuned damage so
     they're comparable. Tiny vary (1 combo each) to stay fast."""
