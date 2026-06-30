@@ -78,6 +78,87 @@ DOT_NAMES = {"Poison", "HP Burn", "Leech"}
 CONTROL_DEBUFFS = {"Stun", "Freeze", "Sleep", "Provoke", "Fear", "True Fear",
                    "Petrification", "Sheep"}
 
+# ---------------------------------------------------------------------------
+# M1 — channel-split + role-classification semantics (game-truth derived).
+#
+# The team scorer needs to know which damage CHANNEL an amplifier helps and
+# which channel a damage engine fires through, because the channels are
+# physically separate in the game:
+#   * Decrease DEF / Weaken amplify HITS (+ Warmaster/Giant-Slayer procs and
+#     %-MAX-HP "Bring It Down" hits) — they DO NOT touch DoTs.
+#   * Poison Sensitivity amplifies POISON ticks ONLY.
+#   * HP Burn is amplified by NOTHING.
+# Mismatching an amplifier to a DoT is the single most common modelling error
+# this milestone exists to prevent.
+# ---------------------------------------------------------------------------
+
+# Debuffs that amplify the HIT channel (and only the hit channel).
+HIT_AMP_DEBUFFS = {"Decrease DEF", "Weaken"}
+# DoT effect names whose co-placement on a skill makes an amp a "rider"
+# (part of the DoT package) rather than a dedicated hit-amplifier role.
+DOT_AMP_BLOCKERS = {"Poison", "HP Burn"}
+
+# survival_currency: the survival mechanic a hero PROVIDES to the team, in
+# keystone-priority order (a hero that gives several keeps the strongest).
+SURVIVAL_PRIORITY = [
+    ("unkillable",      ("team_buff:Unkillable",)),
+    ("block_damage",    ("team_buff:Block Damage",)),
+    ("shield",          ("team_buff:Shield",)),
+    ("revive_on_death", ("team_buff:Revive On Death", "team_buff:Revive on Death",
+                         "revive")),
+    ("ally_protect",    ("team_buff:Ally Protection",)),
+    ("heal_lifesteal",  ("team_buff:Continuous Heal", "heal")),
+]
+# Bracketed buff name(s) to look up for each survival currency's keystone
+# (used to read the keystone skill's buff DURATION for the CD-vs-duration test).
+SURVIVAL_BUFF_NAMES = {
+    "unkillable":      ["Unkillable"],
+    "block_damage":    ["Block Damage"],
+    "shield":          ["Shield"],
+    "revive_on_death": ["Revive On Death", "Revive on Death"],
+    "ally_protect":    ["Ally Protection"],
+    "heal_lifesteal":  ["Continuous Heal"],
+}
+
+_FOR_TURNS = re.compile(r"for (\d+) turn")
+_N_TIMES = re.compile(r"attacks[^.]*?(\d+)\s+times", re.IGNORECASE)
+_MAXHP_DMG = re.compile(r"(?:proportional to|equal to|based on)\s+([^.]{0,40}?max hp)",
+                        re.IGNORECASE)
+
+
+def _buff_duration(text: str, names: list[str]):
+    """Shortest 'for N turns' attached to any of the named buffs (or None)."""
+    best = None
+    for nm in names:
+        idx = text.find("[" + nm + "]")
+        if idx < 0:
+            continue
+        m = _FOR_TURNS.search(text, idx)
+        if m:
+            d = int(m.group(1))
+            best = d if best is None else min(best, d)
+    return best
+
+
+def _is_multi_hit(text: str) -> bool:
+    m = _N_TIMES.search(text or "")
+    return bool(m and int(m.group(1)) >= 2)
+
+
+def _hits_enemy_maxhp(text: str) -> bool:
+    """True if the skill deals damage scaling off the ENEMY's MAX HP
+    (the 'Bring It Down' channel) — excludes self-MAX-HP nukers."""
+    tl = (text or "").lower()
+    if "max hp" not in tl:
+        return False
+    for m in _MAXHP_DMG.finditer(tl):
+        seg = m.group(1)
+        if "champion" in seg or "their max hp" in seg:
+            continue  # this Champion's own MAX HP — different engine
+        if "enemy" in seg or "target" in seg:
+            return True
+    return False
+
 
 def _load_json(name):
     p = STATIC / name
@@ -103,6 +184,13 @@ def main() -> None:
     desc_blob = _load_json("skill_descriptions_all.json")
     sd = desc_blob.get("skill_descriptions", {})
     ht = _unwrap(_load_json("hero_types.json"))
+
+    # Authoritative per-skill cooldowns (for keystone_needs_enabler: a survival
+    # buff whose skill CD exceeds the buff's own duration can't self-sustain).
+    cd_by_id: dict[int, int] = {}
+    for sk in _unwrap(_load_json("skills_all.json")):
+        if isinstance(sk, dict) and "Id" in sk:
+            cd_by_id[int(sk["Id"])] = int(sk.get("Cooldown", 0) or 0)
 
     # Load per-hero effect kinds from the Phase 2 catalog (for DoT-detonate /
     # TM-control / cleanse signals that come from effect kinds, not bracket names).
@@ -149,10 +237,19 @@ def main() -> None:
         dot_kinds: set[str] = set()
         control_only = True  # becomes False if any non-control debuff present
 
+        # M1 per-skill bookkeeping (channel-split + keystone CD/duration test).
+        nonrider_hit_amp = False   # places Dec DEF / Weaken on a non-DoT skill
+        multi_hit = False          # any "Attacks ... N times" (>=2) → WM/GS density
+        enemy_maxhp_dmg = False    # damage scales off enemy MAX HP → bring_it_down
+        skill_texts: dict[int, str] = {}
+
         for sid in sids:
             txt = _clean(sd.get(str(sid), ""))
             if not txt:
                 continue
+            skill_texts[sid] = txt
+            sk_hit_amp = False
+            sk_has_dot = False
             for raw in _BRACKET.findall(txt):
                 nm = raw.strip()
                 if nm in BUFF_NAMES:
@@ -164,9 +261,23 @@ def main() -> None:
                         provides.add(f"enemy_debuff:{nm}")
                         if nm not in CONTROL_DEBUFFS:
                             control_only = False
+                        if nm in HIT_AMP_DEBUFFS:
+                            sk_hit_amp = True
                 elif nm in DOT_NAMES:
                     provides.add(f"dot:{nm}")
                     dot_kinds.add(nm)
+                    if nm in DOT_AMP_BLOCKERS:
+                        sk_has_dot = True
+            # A Dec-DEF/Weaken that rides on the SAME skill as a Poison/HP-Burn
+            # application is part of the DoT package (e.g. Geomancer A3 = HP Burn
+            # + Weaken on one cast), NOT a dedicated hit-amplifier role. Only a
+            # non-rider placement flags the hero as a hit-channel amplifier.
+            if sk_hit_amp and not sk_has_dot:
+                nonrider_hit_amp = True
+            if _is_multi_hit(txt):
+                multi_hit = True
+            if _hits_enemy_maxhp(txt):
+                enemy_maxhp_dmg = True
 
         # Effect-kind-derived signals (full-roster reliable).
         kinds = kinds_by_hero.get(name, set())
@@ -229,6 +340,70 @@ def main() -> None:
         else:
             role = hero.get("role", "?").lower()
 
+        # ------------------------------------------------------------------
+        # M1 derived semantics (channel-split + survival/enabler taxonomy).
+        # ------------------------------------------------------------------
+
+        # amplifier_channel — which damage channel this hero amplifies for the
+        # team. Dec-DEF/Weaken (non-rider) -> hit; Poison Sensitivity -> poison;
+        # otherwise none (incl. HP-burn dealers whose only "amp" is a DoT rider).
+        if nonrider_hit_amp:
+            amplifier_channel = "hit"
+        elif "enables:poison" in provides:
+            amplifier_channel = "poison"
+        else:
+            amplifier_channel = "none"
+
+        # engine_channel — which damage channel(s) this hero's own damage flows
+        # through (multi allowed). DoT channels come straight from the DoTs the
+        # kit places; hit / wm_gs apply to direct-damage attackers.
+        engine_channel: list[str] = []
+        if "dot:Poison" in provides:
+            engine_channel.append("poison")
+        if "dot:HP Burn" in provides:
+            engine_channel.append("hp_burn")
+        if enemy_maxhp_dmg:
+            engine_channel.append("bring_it_down")
+        if is_attacker:
+            engine_channel.append("hit")
+            if multi_hit:  # many small hits => Warmaster/Giant-Slayer density
+                engine_channel.append("wm_gs")
+
+        # survival_currency — the strongest survival mechanic this hero PROVIDES
+        # to the team (keystone priority); absent if it provides none.
+        survival_currency = None
+        for currency, tags in SURVIVAL_PRIORITY:
+            if any(t in provides for t in tags):
+                survival_currency = currency
+                break
+
+        # enabler — does the kit SUSTAIN a survival keystone (reduce ally
+        # cooldowns or extend ally buff lifetimes)? absent if neither.
+        if "cooldown_reduction" in provides:
+            enabler = "cooldown_reduction"
+        elif "buff_extension" in provides:
+            enabler = "buff_extension"
+        else:
+            enabler = None
+
+        # keystone_needs_enabler — a survival provider whose keystone buff's
+        # COOLDOWN exceeds its DURATION can't self-sustain (e.g. Maneater
+        # Unkillable 2-turn buff on a 7-turn cooldown) and needs an enabler.
+        keystone_needs_enabler = False
+        if survival_currency:
+            buff_names = SURVIVAL_BUFF_NAMES.get(survival_currency, [])
+            best_cd = None  # the dedicated keystone = highest-CD placement skill
+            best_dur = None
+            for sid, txt in skill_texts.items():
+                if not any(("[" + bn + "]") in txt for bn in buff_names):
+                    continue
+                cd = cd_by_id.get(sid, 0)
+                if best_cd is None or cd > best_cd:
+                    best_cd = cd
+                    best_dur = _buff_duration(txt, buff_names)
+            if best_cd and best_dur is not None and best_cd > best_dur:
+                keystone_needs_enabler = True
+
         rec = {
             "name": name,
             "base_id": hero.get("base_id"),
@@ -240,6 +415,11 @@ def main() -> None:
             "provides": sorted(provides),
             "needs": sorted(needs),
             "debuffs_control_only": control_only and n_debuff > 0,
+            "amplifier_channel": amplifier_channel,
+            "engine_channel": engine_channel,
+            "survival_currency": survival_currency,
+            "enabler": enabler,
+            "keystone_needs_enabler": keystone_needs_enabler,
         }
         records.append(rec)
         for p in provides:
