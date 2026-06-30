@@ -1796,7 +1796,17 @@ class CBSimulator:
                         # under on T50 (real ramps 37K->78K/event as the boss
                         # damage ramps). Grounded: Geo deflect was the biggest
                         # remaining per-hero gap (Geo -53.8% @ Spirit 090946).
-                        base_deflect = team_aoe_dmg_taken * buff_mult("strengthen_15", 0.15)
+                        # Deflect 15% of the actual aoe damage allies took.
+                        # NOTE: must be the LITERAL 0.15 — a prior version used
+                        # `buff_mult("strengthen_15", 0.15)`, but that registry
+                        # entry resolves to the Strengthen DAMAGE-REDUCTION
+                        # factor 0.85 (take 85% damage), NOT the 0.15 fallback,
+                        # so the base deflect reflected 85% of team damage (~5.7x
+                        # over). Grounded on 090946: real Geo deflect = 24 events
+                        # / 1.37M; the 0.85 bug put sim base alone at 1.57M.
+                        # Fixed -> team passive +25.7% -> ~0% (task #36).
+                        STONEGUARD_DEFLECT_FRAC = 0.15
+                        base_deflect = team_aoe_dmg_taken * STONEGUARD_DEFLECT_FRAC
                         # Reflect bonus (skill 48805 Effects 488055/488056,
                         # "0.03*TRG_HP" capped at the CB 75K DoT cap): ONE 30%
                         # roll per boss AoE while a Geo-placed burn is on the
@@ -2792,11 +2802,11 @@ class CBSimulator:
                 return 1.0 - WEAK_HIT_GLANCE_CHANCE
             return 0.0 if glance_this_cast else 1.0
 
-        # HP-Burn activation is once PER SKILL (game-truth: effect 9002 fires
-        # once/skill, not per hit). load_game_profiles emits one activate
-        # effect per hit, so dedupe to a single activation per cast — otherwise
-        # Ninja A2 (3 hits) triggers each burn 3x, ~3x over-attributing burn.
-        _burns_activated_this_cast = False
+        # HP-Burn activation fires once PER activate_hp_burns effect (game-truth
+        # FORCE-TICK COUNT, task #36): a multi-hit attack that places+ticks a
+        # fresh burn each hit (Ninja A2 = 3) produces N distinct instant ticks
+        # per cast. load_game_profiles emits one activate_hp_burns per kind=9002
+        # effect, so the burn handler below does NOT dedupe — see its comment.
         # Same once-per-cast guard for poison activation: Venom A1 loads TWO
         # activate_poisons effects (one per hit) but "activate up to 2 poisons"
         # is ONE budget per cast, not per hit. Grounded (090946): sim 22 vs real
@@ -2971,11 +2981,26 @@ class CBSimulator:
                                           if s.debuff_type != "poison_5pct"]
 
             elif eff.effect_type == "activate_hp_burns":
-                # Once per skill cast (see _burns_activated_this_cast above) —
-                # NOT once per hit.
-                if _burns_activated_this_cast:
-                    continue
-                _burns_activated_this_cast = True
+                # FORCE-TICK COUNT is per-skill game-truth, NOT once-per-cast.
+                # load_game_profiles emits one activate_hp_burns per kind=9002
+                # ForceStatusEffectTick effect, and a multi-hit attack that
+                # places + ticks a fresh burn EACH hit produces N distinct burn
+                # ticks per cast (Ninja A2 skill 62002 = 3 ApplyDebuff(HP Burn)
+                # +ForceStatusEffectTick pairs -> 3 instant ticks/cast). The
+                # burn stays GLOBALLY SINGULAR on the bar (each hit re-places +
+                # ticks the same one slot), so this is NOT coexistence — the
+                # natural boss-turn tick still credits one slot. We simply fire
+                # one force-tick PER activate effect (no dedupe), deriving the
+                # count from the skill's effects (task #36). This closes the
+                # burn-under (-32%): real Ninja = 83 ticks (~21 A2 casts x3
+                # force + natural), sim previously fired 1 force/cast.
+                #
+                # NOTE: Venom A1's TWO activate_poisons are a SHARED single
+                # budget ("activate up to 2 poisons"), NOT distinct per-hit
+                # ticks, so the poison path below KEEPS its once-per-cast
+                # dedupe (_poisons_activated_this_cast). Only the burn path
+                # is per-effect.
+                #
                 # Ninja A2 / Sicia A2: instantly trigger all HP Burn debuffs
                 # (1 tick each). GAME-TRUTH (clean2 tick log, kind 3014):
                 # activated tick damage credits the BURN'S OWNER (placer =

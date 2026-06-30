@@ -130,8 +130,25 @@ class TestCBSimDeterministicSmoke(unittest.TestCase):
     #   owned heroes (Demytha A1 3.2x Count2 -> 6.4 total): Demytha direct
     #   -54.5% -> -8.9% on 090946. (Multi-effect heroes Venom/Ninja were already
     #   summed by load_game_profiles.) Minimal-team total rises accordingly.
+    #   Re-baselined 2026-06-29 — task #36 (HP-burn force-tick COUNT +
+    #   Geo deflect bug). TWO game-truth fixes, net +1.56M on this synthetic
+    #   (crit-off) minimal team; cb_turns unchanged at 23 (both fixes only
+    #   touch OUTGOING boss damage, not hero HP/cadence):
+    #     (1) activate_hp_burns now fires once PER kind=9002 ForceStatusEffectTick
+    #         effect (Ninja A2 = 3 distinct per-hit burns) instead of a flat
+    #         once-per-cast dedupe. Burn stays GLOBALLY singular on the bar; this
+    #         is per-effect force-tick COUNT, NOT coexistence. Closed hp_burn
+    #         -31.6% -> +3.1% on Spirit fixture 090946. (Venom A1's two
+    #         activate_POISONS still collapse to one shared budget — only the
+    #         burn path is per-effect.)
+    #     (2) Geo Stoneguard deflect base was `team_taken *
+    #         buff_mult("strengthen_15", 0.15)` — but that registry entry
+    #         resolves to the Strengthen damage-reduction factor 0.85 (the 0.15
+    #         fallback was never used), so the base reflected 85% of team damage
+    #         (~5.7x over). Now the literal 0.15 (15% deflect). Un-stacks team
+    #         passive +25.7% -> +0.4% and team TOTAL -3.0% -> +0.36% on 090946.
     LOCKED_CB_TURNS = 23
-    LOCKED_TOTAL_DMG = 8_628_236.84  # +multi-hit owned parser (Demytha 6.4x)
+    LOCKED_TOTAL_DMG = 10_187_844.20  # task #36: burn force-tick count + deflect 0.15 fix
     LOCKED_TOTAL_TOL = 20.0  # widened for additive arithmetic noise
 
     def _build_men_team(self):
