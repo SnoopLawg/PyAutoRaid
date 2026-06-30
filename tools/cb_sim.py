@@ -3818,7 +3818,7 @@ def _build_team_setup(hero_names: List[str], use_current_gear: bool = True,
     else:
         all_arts = [a for a in artifacts_data.get("artifacts", []) if not a.get("error")]
         used = set()
-        from cb_optimizer import stun_priority
+        from cb_potential import stun_priority
         has_uk = sum(1 for p in team_p if p and p.unkillable) >= 2
         dps_idx = [i for i, p in enumerate(team_p) if p and not p.unkillable]
         stun_idx = (min(dps_idx, key=lambda i: stun_priority(team_p[i]))
