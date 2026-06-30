@@ -389,6 +389,243 @@ def solve_gear(template_id: str, root: Path | None = None, anneal: int = 3) -> d
     return _solve_rec(rec, _SolveCtx(root), anneal=anneal)
 
 
+# ============================================================================
+# Generative path — DERIVE teams from game-truth (tools/team_generator.py).
+#
+# The template path above (build/solve_gear) only SCORES scraped DWJ tunes; it
+# can't recommend a team the community hasn't published. The generative path
+# calls team_generator.generate(), which assembles teams from abstract archetype
+# skeletons + M2 synergy resolve (synergy_resolver) + M3 boss constraints
+# (boss_constraints) + M5 fitness (fitness.score) — ZERO champion names in the
+# search, so it works from game-truth tags alone and needs NO DWJ tune list.
+#
+# For CB, the existing DWJ readiness (rediscovered-tune match + holds-T50 badge
+# + on-demand solve_gear) is layered back on as an ADDITIVE cross-check overlay
+# (the `dwj` field per comp), never as the source of the team.
+# ============================================================================
+_ELEMENT_TO_INT = {"magic": 1, "force": 2, "spirit": 3, "void": 4}
+_GEN_CACHE_NAME = "cb_generative_recommendations.json"
+# A comp "rediscovers" a DWJ tune when it contains ALL of that tune's NAMED core
+# heroes (scraped tunes name only 2-4; the rest are generic "dps" slots) and the
+# tune names at least this many, or when raw overlap hits the absolute floor.
+_MIN_DWJ_CORE = 3
+_MIN_DWJ_OVERLAP = 4
+_DWJ_PLACEHOLDERS = ("dps", "flex", "generic")  # non-champion tune slot tokens
+
+
+def _gen_base_name(name: str) -> str:
+    """Strip a duplicate-instance suffix ('Maneater_2' -> 'Maneater')."""
+    if "_" in name:
+        head, _, tail = name.rpartition("_")
+        if tail.isdigit() and head:
+            return head
+    return name
+
+
+def _dwj_template_index(root: Path) -> list:
+    """DWJ scraped templates as name-set entries, for the CB cross-check overlay.
+    Reuses potential_teams.build(quick=True) — the same scraped tunes the
+    template recommender scores. Each entry carries the template's id / name /
+    key_capability / dwj_url / sim_hash so a matched comp can show the badge and
+    reuse solve_gear(template_id)."""
+    if str(root / "tools") not in sys.path:
+        sys.path.insert(0, str(root / "tools"))
+    import potential_teams as pt
+    try:
+        pteams = pt.build(max_count=300, root=root, quick=True)
+    except Exception:
+        return []
+    idx = []
+    for t in pteams.get("potential_teams", []):
+        names = {h.lower() for h in (t.get("heroes") or []) if h}
+        names |= {s.get("hero", "").lower() for s in t.get("slots", [])
+                  if s.get("hero") and s.get("status") != "generic"}
+        # Drop generic DPS / flex placeholder tokens — they are not champions.
+        names = {n for n in names if n
+                 and not any(p in n for p in _DWJ_PLACEHOLDERS)}
+        if names:
+            idx.append({"names": names, "id": t.get("id"), "name": t.get("name"),
+                        "key_capability": t.get("key_capability"),
+                        "dwj_url": t.get("dwj_url"), "sim_hash": t.get("sim_hash")})
+    return idx
+
+
+def _crosscheck_dwj(team: list, dwj_idx: list) -> dict | None:
+    """Best-matching DWJ template for a generated comp (rediscovered-tune label).
+
+    A scraped tune names only its core (2-4 heroes); the rest are generic DPS
+    slots. So a comp rediscovers a tune when it CONTAINS that tune's whole named
+    core (>= _MIN_DWJ_CORE named) — or, for fully-named tunes, when raw overlap
+    hits _MIN_DWJ_OVERLAP. Ranked by overlap, then by smallest tune (tightest
+    match)."""
+    base = {_gen_base_name(n).lower() for n in team}
+    best, best_score = None, ()
+    for tpl in dwj_idx:
+        names = tpl["names"]
+        ov = len(base & names)
+        contains_core = (names <= base and len(names) >= _MIN_DWJ_CORE)
+        if contains_core or ov >= _MIN_DWJ_OVERLAP:
+            score = (ov, -len(names))
+            if best is None or score > best_score:
+                best, best_score = tpl, score
+    if best is None:
+        return None
+    return {"template_id": best["id"], "template_name": best["name"],
+            "overlap": len(base & best["names"]),
+            "key_capability": best["key_capability"],
+            "dwj_url": best["dwj_url"], "sim_hash": best["sim_hash"]}
+
+
+def _gen_cache_key(location: str, pool: str, rank_with: str, elem: int,
+                   survival: bool, top: int, root: Path) -> str:
+    return (f"{location}|{pool}|{rank_with}|{elem}|{int(survival)}|{top}|"
+            f"{_roster_hash(root)}")
+
+
+def _read_gen_cache(root: Path, key: str) -> dict | None:
+    cache = root / "data" / _GEN_CACHE_NAME
+    if not cache.exists():
+        return None
+    try:
+        return json.loads(cache.read_text()).get(key)
+    except Exception:
+        return None
+
+
+def _write_gen_cache(root: Path, key: str, result: dict) -> None:
+    cache = root / "data" / _GEN_CACHE_NAME
+    cache.parent.mkdir(exist_ok=True)
+    try:
+        store = json.loads(cache.read_text()) if cache.exists() else {}
+    except Exception:
+        store = {}
+    if not isinstance(store, dict):
+        store = {}
+    store[key] = result
+    # keep the file bounded — drop the oldest keys past a cap.
+    if len(store) > 24:
+        for k in list(store.keys())[:-24]:
+            store.pop(k, None)
+    cache.write_text(json.dumps(store, indent=2))
+
+
+def generate_recommendations(location: str = "clan_boss", *,
+                             root: Path | None = None, pool: str = "owned",
+                             top: int = 15, rank_with: str = "heuristic",
+                             cb_element: str | None = None,
+                             refine_sim: bool = False, sim_top: int = 12,
+                             cross_check: bool = True,
+                             cross_check_survival: bool = False,
+                             roster: list | None = None,
+                             force: bool = False) -> dict:
+    """Generative recommendations: DERIVE teams from game-truth for `location`.
+
+    Calls tools/team_generator.generate (archetype skeletons + M2 synergy
+    resolve + M3 boss constraints + M5 fitness.score). The recommender no longer
+    REQUIRES the scraped DWJ tune list to produce a team.
+
+    Ranking defaults to the FAST structural/heuristic fitness (rank_with=
+    "heuristic") for interactive use; refine_sim=True (or rank_with="cb_sim")
+    turns on team_generator's two-phase cb_sim refine of the top cores (CB only,
+    ~minutes). Heuristic results are cached by roster hash.
+
+    For CB, each comp gets a `dwj` cross-check overlay when it rediscovers a
+    scraped tune (>= 4 shared heroes): the template id (reuse solve_gear), its
+    key_capability, dwj_url, and — when cross_check_survival — the DWJ-parity
+    holds-T50 badge. Comps with no overlay are genuinely novel.
+    """
+    root = _root(root)
+    if str(root / "tools") not in sys.path:
+        sys.path.insert(0, str(root / "tools"))
+    import team_generator as tg
+
+    is_cb = tg._is_cb(location)
+    if refine_sim and is_cb:
+        rank_with = "cb_sim"
+
+    # element: explicit arg > today's live CB element > void default.
+    elem_str = cb_element.lower() if cb_element else None
+    elem_src = "arg" if elem_str else None
+    if is_cb and not elem_str:
+        elem_str, elem_src = _today_element(root)
+    elem_int = _ELEMENT_TO_INT.get(elem_str or "", 4)
+
+    do_survival = bool(cross_check_survival and cross_check and is_cb)
+    # Cache only the deterministic-input runs over the default owned roster.
+    cacheable = (roster is None)
+    ckey = _gen_cache_key(location, pool, rank_with, elem_int, do_survival,
+                          top, root)
+    if cacheable and not force:
+        cached = _read_gen_cache(root, ckey)
+        if cached is not None:
+            cached["cached"] = True
+            return cached
+
+    opts = tg.GenOpts(pool=pool, top=top, rank_with=rank_with,
+                      cb_element=elem_int, sim_top=sim_top)
+    res = tg.generate(location, roster, opts)
+
+    dwj_idx = _dwj_template_index(root) if (cross_check and is_cb) else []
+    _dwj_box = {"d": None}
+
+    def _dwj_loader():
+        if _dwj_box["d"] is None:
+            from dwj_tunes import load_all as _load
+            _dwj_box["d"] = _load()
+        return _dwj_box["d"]
+
+    teams = []
+    for c in res:
+        row = {
+            "team": list(c.team),
+            "skeleton": c.skeleton,
+            "fitness": c.fitness,
+            "fitness_kind": c.fitness_kind,          # "heuristic" | "cb_sim"
+            "label": "novel" if c.novelty else "rediscovered",
+            "novelty": c.novelty,
+            "constraint_report": c.constraint_report,
+        }
+        if dwj_idx:
+            xc = _crosscheck_dwj(c.team, dwj_idx)
+            if xc:
+                # The explicit core-containment overlay is the precise signal —
+                # it wins over team_generator's coarse novelty flag.
+                row["label"] = "rediscovered"
+                row["novelty"] = False
+                if do_survival and xc.get("sim_hash"):
+                    try:
+                        import potential_teams as pt
+                        par = pt.parity_survival(xc["sim_hash"], _dwj_loader,
+                                                 root=root)
+                        if par:
+                            xc["holds_t50"] = bool(par.get("survived"))
+                            xc["dwj_boss_turns"] = int(par.get("boss_turns") or 0)
+                    except Exception:
+                        pass
+                row["dwj"] = xc
+        teams.append(row)
+
+    result = {
+        "location": location,
+        "pool": pool,
+        "rank_with": rank_with,
+        "cb_element": elem_str,
+        "cb_element_source": elem_src,
+        "generative": True,
+        "cross_check": bool(dwj_idx),
+        "cached": False,
+        "report": res.report,
+        "teams": teams,
+        "count": len(teams),
+    }
+    if cacheable:
+        try:
+            _write_gen_cache(root, ckey, result)
+        except Exception:
+            pass
+    return result
+
+
 def _write_cache(root: Path, result: dict) -> Path:
     result = dict(result)
     result["generated_at"] = int(time.time())
@@ -409,6 +646,23 @@ def _main() -> int:
     li.add_argument("--tab", choices=["ready", "need"], default="ready")
     sg = sub.add_parser("solve", help="solve gear for one template (can you regear?)")
     sg.add_argument("id", help="template id (slug), e.g. budget-maneater-unkillable")
+    gn = sub.add_parser("generate",
+                        help="GENERATIVE: derive teams from game-truth (any location)")
+    gn.add_argument("location", nargs="?", default="clan_boss",
+                    help="boss_constraints location key (clan_boss, dragon, ...)")
+    gn.add_argument("--pool", choices=["owned", "all"], default="owned")
+    gn.add_argument("--top", type=int, default=15)
+    gn.add_argument("--rank-with", choices=["heuristic", "cb_sim", "auto"],
+                    default="heuristic", help="default heuristic (fast)")
+    gn.add_argument("--cb-element", choices=["magic", "force", "spirit", "void"])
+    gn.add_argument("--sim", action="store_true",
+                    help="opt-in cb_sim refine of the top cores (CB only, slow)")
+    gn.add_argument("--survival", action="store_true",
+                    help="attach DWJ holds-T50 badge to rediscovered comps")
+    gn.add_argument("--no-cross-check", action="store_true",
+                    help="skip the DWJ rediscovered-tune overlay")
+    gn.add_argument("--force", action="store_true", help="ignore the cache")
+    gn.add_argument("--json", action="store_true")
     args = ap.parse_args()
     root = _root(None)
 
@@ -454,6 +708,43 @@ def _main() -> int:
             surv = "holds T50 (DWJ)" if out.get("holds_t50") else (
                 f"DWJ T{out['dwj_boss_turns']}" if out.get("dwj_boss_turns") else "")
             print(f"  -> regear-feasible · {out.get('key_capability') or ''} {surv}".rstrip())
+        return 0
+    if args.cmd == "generate":
+        res = generate_recommendations(
+            args.location, root=root, pool=args.pool, top=args.top,
+            rank_with=args.rank_with, cb_element=args.cb_element,
+            refine_sim=args.sim, cross_check=not args.no_cross_check,
+            cross_check_survival=args.survival, force=args.force)
+        if args.json:
+            print(json.dumps(res, indent=2, default=str)); return 0
+        if res.get("report", {}).get("error"):
+            print("ERROR:", res["report"]["error"]); return 1
+        el = res.get("cb_element")
+        el_txt = f" element={el} ({res.get('cb_element_source')})" if el else ""
+        print(f"=== generative recommendations: {res['location']} "
+              f"(pool={res['pool']}, rank={res['rank_with']}{el_txt}"
+              f"{', cached' if res.get('cached') else ''}) ===")
+        rep = res.get("report", {})
+        print(f"skeletons_run={rep.get('skeletons_run')}  "
+              f"candidates_evaluated={rep.get('candidates_evaluated')}  "
+              f"returned={res['count']}")
+        if res.get("cross_check"):
+            print("DWJ cross-check: ON (rediscovered = matches a scraped tune)")
+        print(f"\n{'#':>3} {'fitness':>11} {'kind':>9} {'label':>13}  team / [dwj]")
+        print("-" * 100)
+        for i, t in enumerate(res["teams"], 1):
+            fv = (f"{t['fitness']/1e6:.2f}M" if t["fitness_kind"] == "cb_sim"
+                  else f"{t['fitness']:.2f}")
+            dwj = ""
+            if t.get("dwj"):
+                d = t["dwj"]
+                badge = ""
+                if "holds_t50" in d:
+                    badge = " holds-T50" if d["holds_t50"] else f" DWJ-T{d.get('dwj_boss_turns')}"
+                dwj = (f"  [~{d['template_name']} ({d['key_capability'] or '?'})"
+                       f"{badge}]")
+            print(f"{i:>3} {fv:>11} {t['fitness_kind']:>9} {t['label']:>13}  "
+                  f"{', '.join(t['team'])}{dwj}")
         return 0
     return 0
 

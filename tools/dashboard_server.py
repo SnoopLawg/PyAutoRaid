@@ -1003,6 +1003,21 @@ def build_cb_recommendations(force: bool = False):
     return res
 
 
+def build_cb_generative(location: str = "clan_boss", pool: str = "owned",
+                        rank_with: str = "heuristic", cb_element: str = "",
+                        sim: bool = False, survival: bool = False,
+                        top: int = 15, force: bool = False):
+    """Generative Team Recommendation panel: DERIVE teams from game-truth via
+    tools/team_generator (archetype skeletons + M2/M3/M5), instead of only
+    scoring scraped DWJ tunes. Thin wrapper over the same domain function the
+    CLI uses (cb_recommender.generate_recommendations). Defaults to the FAST
+    heuristic rank; sim=1 opts into the cb_sim refine (CB only, slow)."""
+    return _cb_recommender.generate_recommendations(
+        location or "clan_boss", root=ROOT, pool=pool, top=top,
+        rank_with=rank_with, cb_element=(cb_element or None),
+        refine_sim=sim, cross_check_survival=survival, force=force)
+
+
 _SOLVE_GEAR_CACHE: dict = {}
 
 
@@ -3339,6 +3354,11 @@ GET_ROUTES = {
     "/api/cb-battles":             lambda q: build_cb_battles(int(_q(q, "n", 12))),
     "/api/cb-replay":              lambda q: build_cb_replay(_q(q, "file")),
     "/api/cb-recommendations":     lambda q: build_cb_recommendations(_q(q, "force") == "1"),
+    "/api/cb-generative":          lambda q: build_cb_generative(
+        location=_q(q, "location", "clan_boss"), pool=_q(q, "pool", "owned"),
+        rank_with=_q(q, "rank_with", "heuristic"), cb_element=_q(q, "element", ""),
+        sim=_q(q, "sim") == "1", survival=_q(q, "survival") == "1",
+        top=int(_q(q, "top", 15)), force=_q(q, "force") == "1"),
     "/api/cb-solve-gear":          lambda q: build_cb_solve_gear(_q(q, "id")),
     "/api/sim-last-run":           lambda q: build_sim_last_run(),
     "/api/tune-library":           lambda q: build_tune_library(),
