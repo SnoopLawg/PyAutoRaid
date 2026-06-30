@@ -166,8 +166,12 @@ def test_poison_engine_does_not_credit_weaken_amplifier(owned):
     """A poison engine carrying needs:def_break (m5_synergy_graph adds it to all
     attackers) must NOT be credited a Dec-DEF/Weaken edge — that amplifier is a
     HIT-channel multiplier, not a poison one.  Asserted via M2 resolve."""
+    # top=300: after the 2026-06-30 amp-tag fix more heroes are correctly credited
+    # as hit-amplifiers, so hit/wm_gs comps outscore poison comps in the heuristic
+    # and push unified[poison] below the old top-60 window. This test verifies
+    # channel CREDITING (not ranking), so widen the window to capture poison comps.
     res = tg.generate("clan_boss", owned,
-                      tg.GenOpts(rank_with="heuristic", top=60))
+                      tg.GenOpts(rank_with="heuristic", top=300))
     poison_comps = [c for c in res if c.skeleton == "unified[poison]"]
     assert poison_comps, "no poison-engine comps generated"
 
@@ -278,6 +282,99 @@ def test_double_survival_skeleton_is_abstract_and_valid():
     names = [s.name for s in sks]
     assert any(n.startswith("unified") for n in names)
     assert any(n.startswith("double_survival") for n in names)
+
+
+# --------------------------------------------------------------------------- #
+# 5c. Tune awareness — a hard_breaker (flat team Inc-SPD that desyncs a fixed
+#     speed-tune, e.g. Teodor the Savant) can't tune in a TUNE-RELIANT comp, but
+#     is fine in a buff-coverage STALL.  `manageable` (e.g. Ninja) is allowed
+#     everywhere.  Each emitted comp carries a tune_compat summary.
+# --------------------------------------------------------------------------- #
+# Tune-reliant comp = unified speed-tune skeleton whose survival rests on a
+# CADENCE keystone (unkillable). Hand-built (champion names live only in the
+# TEST, never in team_generator's source).
+TUNE_RELIANT_WITH_BREAKER = ["Maneater", "Demytha", "Teodor the Savant",
+                             "Venomage", "Geomancer"]   # Maneater=unkillable
+# A buff-coverage stall (double_survival) the same hard_breaker is welcome in.
+STALL_WITH_BREAKER = ["Demytha", "Cardiel", "Teodor the Savant",
+                      "Venomage", "Mithrala Lifebane"]
+
+
+def test_hard_breaker_is_disqualifying_in_tune_reliant_comp():
+    """Teodor (hard_breaker) inside an unkillable speed-tune comp -> the comp is
+    tune-reliant and therefore NOT tunable; _tune_ok prunes it."""
+    recs = [r for r in (tg.record_for(n) for n in TUNE_RELIANT_WITH_BREAKER)
+            if r is not None]
+    assert len(recs) == len(TUNE_RELIANT_WITH_BREAKER)
+    # the fixture really does contain a hard_breaker and a cadence keystone.
+    assert any(r.get("tune_compat") == "hard_breaker" for r in recs)
+    assert any(r.get("survival_currency") in tg.CADENCE_KEYSTONES for r in recs)
+
+    sk = tg.build_unified_skeleton("poison")
+    assert tg._is_tune_reliant(sk, recs) is True
+    summary = tg.tune_compat_summary(recs, sk)
+    assert summary["tune_reliant"] is True
+    assert "Teodor the Savant" in summary["breakers"]
+    assert summary["tunable"] is False
+    # the hard prune rejects it from a tune-reliant skeleton.
+    assert tg._tune_ok(recs, sk) is False
+
+
+def test_hard_breaker_is_allowed_in_stall_archetype():
+    """The SAME hard_breaker is fine in a double_survival (buff-coverage) stall:
+    the stall does not need a tight tune, so tunable is not required."""
+    recs = [r for r in (tg.record_for(n) for n in STALL_WITH_BREAKER)
+            if r is not None]
+    assert len(recs) == len(STALL_WITH_BREAKER)
+    assert any(r.get("tune_compat") == "hard_breaker" for r in recs)
+
+    sk = tg.build_double_survival_skeleton("poison")
+    assert tg._is_tune_reliant(sk, recs) is False     # stall -> never tune-reliant
+    summary = tg.tune_compat_summary(recs, sk)
+    assert summary["tune_reliant"] is False
+    assert "Teodor the Savant" in summary["breakers"]   # still REPORTED
+    assert summary["tunable"] is True                   # but not disqualifying
+    assert tg._tune_ok(recs, sk) is True
+
+
+def test_manageable_hero_allowed_in_tune_reliant_comp():
+    """A `manageable` hero (the tune is built AROUND it) is NOT a breaker — a
+    tune-reliant comp containing it stays tunable."""
+    comp = ["Maneater", "Demytha", "Ninja", "Geomancer", "Venomage"]
+    recs = [r for r in (tg.record_for(n) for n in comp) if r is not None]
+    sk = tg.build_unified_skeleton("hit")
+    summary = tg.tune_compat_summary(recs, sk)
+    assert summary["tune_reliant"] is True
+    assert "Ninja" in summary["manageable"]
+    assert summary["breakers"] == []
+    assert summary["tunable"] is True
+    assert tg._tune_ok(recs, sk) is True
+
+
+def test_generated_tune_reliant_comps_never_contain_a_hard_breaker(owned):
+    """End-to-end: no emitted TUNE-RELIANT comp (unified + cadence keystone)
+    places a hard_breaker; stall comps may, and every comp carries tune_compat
+    with a consistent `tunable`."""
+    res = tg.generate("clan_boss", owned,
+                      tg.GenOpts(rank_with="heuristic", top=200))
+    assert len(res) > 0
+    saw_tune_reliant = False
+    saw_stall_with_breaker = False
+    for c in res:
+        tc = c.tune_compat
+        assert tc is not None and "tunable" in tc
+        breakers = tc["breakers"]
+        # every emitted comp is tunable (non-tunable comps are pruned upstream).
+        assert tc["tunable"] is True, (sorted(c.team), tc)
+        if tc["tune_reliant"]:
+            saw_tune_reliant = True
+            assert breakers == [], (sorted(c.team), "breaker in tune-reliant comp")
+        elif c.skeleton.startswith("double_survival") and breakers:
+            saw_stall_with_breaker = True
+    assert saw_tune_reliant, "expected at least one tune-reliant comp"
+    # the owned roster has hard_breakers, so they MUST surface in stalls (routed
+    # there instead of being globally banned).
+    assert saw_stall_with_breaker, "hard_breakers were not routed to any stall"
 
 
 # --------------------------------------------------------------------------- #

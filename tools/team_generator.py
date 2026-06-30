@@ -20,7 +20,10 @@ Pipeline (spec docs/organic_team_m2_m4_spec.md "M4"):
      team-rule pruning (branch-and-bound `can_add`) + cheap pre-score
      (cb_team_explorer.predict_score) ; dedup by frozenset(team)
   4. M2 resolve each comp; drop comps with unmet HARD edges (no survival /
-     broken keystone-enabler / no channel-consistent amplifier->engine)
+     broken keystone-enabler / no channel-consistent amplifier->engine) AND
+     tune-awareness: drop a `hard_breaker` (flat team Inc-SPD that desyncs a
+     fixed speed-tune) from a TUNE-RELIANT comp — routing it to a stall instead
+     (see tune_compat_summary); each emitted comp carries a tune_compat summary
   5. rank by M5 fitness (cb_sim for CB via rank_with=auto, heuristic elsewhere)
   6. novelty flag vs scraped DWJ templates
 
@@ -88,6 +91,15 @@ _CB_LOCATIONS = {"clan_boss", "cb", "demon_lord", "demon_lord_unm", "clanboss"}
 STRONG_KEYSTONES = ("unkillable", "block_damage", "shield",
                     "ally_protect", "revive_on_death")
 
+# CADENCE keystones: survival that must be RE-CAST on an exact SPD beat (the
+# Unkillable / Block-Damage recast has to land *before* the next boss AoE, which
+# is the whole point of a CB speed-tune). These are the keystones whose survival
+# is bound to a precise SPD cadence — so a flat team Increase SPD (a
+# `hard_breaker` hero) desyncs them and the comp can never tune.
+# The OTHER strong keystones (shield / ally_protect / revive_on_death) are
+# always-on covers a buff-coverage STALL refreshes without a tight cadence.
+CADENCE_KEYSTONES = ("unkillable", "block_damage")
+
 
 # ============================================================ options / output
 @dataclass
@@ -123,6 +135,11 @@ class CandidateComp:
     fitness_kind: str               # "cb_sim" | "heuristic"
     constraint_report: dict
     novelty: bool
+    # tune-compatibility summary (see tune_compat_summary): why a comp can or
+    # can't be speed-tuned. {tune_reliant: bool, breakers: [names],
+    # manageable: [names], tunable: bool}. Downstream (recommender / team_tune)
+    # surfaces this so the user sees WHY a role-valid comp is/ isn't tunable.
+    tune_compat: Optional[dict] = None
 
     def as_dict(self) -> dict:
         return {
@@ -131,6 +148,7 @@ class CandidateComp:
             "fitness": self.fitness,
             "fitness_kind": self.fitness_kind,
             "novelty": self.novelty,
+            "tune_compat": self.tune_compat,
             "constraint_report": self.constraint_report,
         }
 
@@ -467,6 +485,63 @@ def team_rules_report(recs: list, skeleton: Skeleton, location: str,
                 and acc_ok and faction_ok)
     rep["all_pass"] = all_pass
     return all_pass, rep
+
+
+# ------------------------------------------------------------ tune awareness
+# WHY: the generator proposes role-valid comps but is blind to whether a comp
+# can actually be SPEED-TUNED. A `hard_breaker` hero (m5_synergy `tune_compat`)
+# emits a flat team Increase SPD that desyncs any fixed speed-tune cadence —
+# POISON in a tune-reliant comp, but FINE in a buff-coverage stall.
+# `manageable` (conditional/self TM the tune is built AROUND) is allowed
+# everywhere — the sim/tune verifies it. `ok` has no tune issue.
+#
+# HEURISTIC for "is this comp tune-reliant?" (kept deliberately simple, per the
+# task brief — infer from skeleton type + survival_currency):
+#   - The `double_survival` skeleton is a buff-COVERAGE stall: it survives via
+#     multiple always-on keystones refreshed over the 50-turn fight, NOT a tight
+#     SPD cadence -> NOT tune-reliant (a hard_breaker is welcome here).
+#   - The `unified` skeleton is the MEN-style speed-tune skeleton. It is
+#     tune-reliant when a CADENCE keystone (unkillable / block_damage, which must
+#     be recast on an exact SPD beat) carries survival. A unified comp surviving
+#     purely on an always-on cover (shield only) is not cadence-bound.
+def _is_tune_reliant(skeleton: "Skeleton", recs: list) -> bool:
+    """True iff this comp's SURVIVAL rests on a precise SPD cadence (see note)."""
+    if skeleton.name.startswith("double_survival"):
+        return False
+    return any(r.get("survival_currency") in CADENCE_KEYSTONES for r in recs)
+
+
+def tune_compat_summary(recs: list, skeleton: "Skeleton") -> dict:
+    """Per-comp tune-compatibility summary carried on each CandidateComp.
+
+    `tunable` is False only when a tune-reliant comp contains a `hard_breaker`
+    (its flat Increase SPD desyncs the cadence the comp's survival depends on).
+    """
+    tune_reliant = _is_tune_reliant(skeleton, recs)
+    breakers = [r["name"] for r in recs
+                if r.get("tune_compat") == "hard_breaker"]
+    manageable = [r["name"] for r in recs
+                  if r.get("tune_compat") == "manageable"]
+    return {"tune_reliant": tune_reliant, "breakers": breakers,
+            "manageable": manageable,
+            "tunable": not (tune_reliant and breakers)}
+
+
+def _tune_ok(recs: list, skeleton: "Skeleton") -> bool:
+    """A `hard_breaker` is disqualifying ONLY in a tune-reliant comp (it can't
+    tune); in a stall it is allowed. Used as a HARD ranking PENALTY (not a drop):
+    non-tunable comps sink BELOW every tunable comp, so the recommended top is
+    breaker-free tune-reliant comps + stalls, and hard_breakers are routed toward
+    the `double_survival` stall archetype rather than blanket-banned. Comps stay
+    in the output (marked tune_compat.tunable=False) so downstream sees WHY."""
+    return tune_compat_summary(recs, skeleton)["tunable"]
+
+
+def _row_tunable(row: list) -> bool:
+    """Tunability of a scored row ([0]=team names, [1]=skeleton). Primary rank
+    key so the recommended top is always tunable; non-tunable comps sink last."""
+    recs = [r for r in (record_for(n) for n in row[0]) if r is not None]
+    return _tune_ok(recs, row[1])
 
 
 def can_add(partial_recs: list, rec: dict, location: str,
@@ -1032,8 +1107,11 @@ def _cb_rank(scored: list, survivors: list, roster_recs: list,
                 rep[4], rep[5], rep[6] = val, "cb_sim", bd
 
     all_rows = scored + extra_rows
-    # simmed comps (kind cb_sim) outrank heuristic ones; tie-break by value.
-    all_rows.sort(key=lambda x: (0 if x[5] == "cb_sim" else 1, -x[4]))
+    # tunable comps first (a tune-reliant comp carrying a hard_breaker can't hold
+    # its cadence — sink it below every tunable comp); then simmed (cb_sim) over
+    # heuristic; then by value.
+    all_rows.sort(key=lambda x: (0 if _row_tunable(x) else 1,
+                                 0 if x[5] == "cb_sim" else 1, -x[4]))
     return all_rows, n1, n2
 
 
@@ -1133,7 +1211,8 @@ def generate(location: str, roster: list, opts: Optional[GenOpts] = None
         pre = skeleton_prescore(recs, sk, roles_by_hero)
         scored.append([team, sk, rr, rule_rep, h["fitness"], "heuristic",
                        h.get("breakdown", {}), pre, core])
-    scored.sort(key=lambda x: -x[4])
+    # tunable comps first (tune-reliant + hard_breaker can't tune -> sinks last).
+    scored.sort(key=lambda x: (0 if _row_tunable(x) else 1, -x[4]))
 
     if rank_with == "cb_sim" and is_cb:
         scored, n_phase1, n_phase2 = _cb_rank(
@@ -1147,10 +1226,12 @@ def generate(location: str, roster: list, opts: Optional[GenOpts] = None
     for team, sk, rr, rule_rep, fit, kind, bd, _pre, _core in scored[:opts.top]:
         rep = dict(rule_rep)
         rep["fitness_breakdown"] = bd
+        recs = [r for r in (record_for(n) for n in team) if r is not None]
         out.append(CandidateComp(
             team=team, skeleton=sk.name, resolve=rr, fitness=fit,
             fitness_kind=kind, constraint_report=rep,
-            novelty=_is_novel(team)))
+            novelty=_is_novel(team),
+            tune_compat=tune_compat_summary(recs, sk)))
     report["candidates_evaluated"] = len(survivors)
     report["candidates_returned"] = len(out)
     return _Result(out, report)
