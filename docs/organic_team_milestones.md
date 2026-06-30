@@ -135,8 +135,8 @@ Each: **Goal · Deliverables · Files · Acceptance · Depends-on · Parallel-sa
 ## Execution waves (parallelization)
 
 - **Wave 1 (parallel now):** M1, M3, and a **CB-only M6 proof-of-concept**
-  against the existing `cb_team_explorer` (independent files). M2+M4 get a
-  detailed implementation spec authored in parallel.
+  against the existing `cb_team_explorer` (independent files). M2+M4 detailed
+  implementation spec authored in parallel → **`docs/organic_team_m2_m4_spec.md`**.
 - **Wave 2:** M2, then M4 (need M1; M4 needs M2+M3).
 - **Wave 3:** M5 (5a heuristic, then 5b), full multi-location M6.
 

@@ -1,0 +1,441 @@
+{
+  "_meta": {
+    "milestone": "M3 — Boss / location constraint tables",
+    "generated_by": "hand-authored from game-truth + flagged community claims (tools/boss_constraints.py consumes this)",
+    "date": "2026-06-29",
+    "purpose": "Machine-readable per-location HARD FILTERS for a team generator (M4) and the synergy resolver (M2). Every field carries a `source` tag: 'game-truth' (verified against data/static/* or project memory) or 'community' (RSL community knowledge, flagged for later in-game verification).",
+    "field_convention": "Each constraint is an object {value, source, note}. `value` is what code reads; `source` ∈ {game-truth, community, mixed}; `note` cites the origin.",
+    "sources_cited": {
+      "effects": "data/static/effects.json (StackCount, IsResistable, family flags)",
+      "status_ids": "data/static/status_effect_type_id.json (effect name → type id)",
+      "alliance_bosses": "data/static/alliance_bosses.json (CB/Demon Lord base SPD/RES/element per difficulty)",
+      "stage_targets": "data/static/stage_stat_targets.json via tools/m5_stat_targets.py (per-stage absolute boss RES → ACC floor)",
+      "gameplay": "data/static/gameplay.json (ElementDisadvantageCoef -0.2, GlancingHitCoef -0.3, CrushingHitCoef 0.3)",
+      "cb_memory": "project memory: project_cb_boss_tm_immunity (TM/CC no-op), project_cb_boss_turn_50_bypass (T50 cliff), project_cb_speed_compensating_wrong (UNM SPD 190)"
+    }
+  },
+  "_effect_tags": {
+    "_note": "Canonical control/effect tags this table reasons about, mapped to game status_effect_type_id values where applicable. The .py helper normalises synonyms (e.g. tm_drain/tm_fill -> turn_meter) onto these.",
+    "stun": 10,
+    "freeze": 20,
+    "sleep": 30,
+    "provoke": 40,
+    "fear": [490, 491],
+    "petrification": 630,
+    "polymorph": 770,
+    "dec_spd": [170, 171],
+    "turn_meter": "no type id (turn-meter manipulation is a battle action, not a status effect)",
+    "hp_reduction": "max-HP reduction (e.g. Maim/Devour-style); no single status id",
+    "poison": [80, 81],
+    "hp_burn": 470,
+    "dec_def": [150, 151],
+    "weaken": [350, 351],
+    "poison_sensitivity": [500, 501],
+    "block_damage": 60,
+    "unkillable": 320,
+    "shield": 280,
+    "revive_on_death": 300,
+    "block_revive": 360
+  },
+  "_slot_caps_default": {
+    "max_debuffs": {"value": 10, "source": "community", "note": "Standard Raid per-target debuff cap (RSL community); not isolated in static data. Flag for in-game verify."},
+    "max_poison_stacks": {"value": 10, "source": "community", "note": "Standard 10-poison-stack cap per target (RSL community)."},
+    "max_hp_burn": {"value": 1, "source": "game-truth", "note": "HP Burn (Burn, type 470) StackCount=1 in data/static/effects.json — singular, never stacks. CLAUDE.md confirms."}
+  },
+  "locations": {
+    "clan_boss": {
+      "display_name": "Clan Boss / Demon Lord (UNM, also NM)",
+      "aliases": ["cb", "demon_lord", "demon_lord_unm", "clanboss"],
+      "boss_element_note": "Boss is Void for the first ~50% HP, then switches to the day's rotated affinity (Magic/Force/Spirit). alliance_bosses.json lists base element 'Spirit'. See memory project_cb_void_first_half_mechanic.",
+      "cc_immunities": {
+        "value": ["stun", "sleep", "freeze", "provoke", "fear", "petrification", "polymorph", "turn_meter", "dec_spd", "hp_reduction"],
+        "source": "game-truth",
+        "note": "CB/Demon Lord ignores ALL turn-meter manipulation (drains are full no-op; caster does NOT retain would-be-drained TM), Stun/Sleep/Freeze/Provoke/Fear, Decrease SPD, and MAX-HP reduction. Source: project memory project_cb_boss_tm_immunity + CLAUDE.md 'CB is immune to' list."
+      },
+      "dot_reactions": {
+        "value": {"poison": "works (capped)", "hp_burn": "works (capped)", "poison_capped_per_tick": 50000, "hp_burn_capped_per_proc": 75000},
+        "source": "game-truth",
+        "note": "Poison and HP Burn both work but are per-tick capped on CB to prevent %-max-HP nukes of the ~1.17B boss. Caps from CLAUDE.md / memory project_spirit_fixture_attribution_20260623 (poison 50K/tick, HP burn 75K, WM/GS 67626/proc)."
+      },
+      "acc_floor": {
+        "value": 225,
+        "value_by_difficulty": {"UNM": 225, "NM": 150},
+        "source": "game-truth",
+        "note": "From data/static/stage_stat_targets.json (tools/m5_stat_targets.py): AllianceBoss stage number 6 (UNM) effective RES = base 30 + absolute modifier 195 = 225; number 5 (NM) = 30+120 = 150. ACC>=floor lands debuffs at 100% of skill base chance (land = 1+(ACC-RES)*0.01). Community rule-of-thumb 'CB ~230-250' overshoots; game-truth floor is 225."
+      },
+      "affinity_rule": {
+        "value": true,
+        "source": "game-truth",
+        "note": "Affinity advantage/glance applies (gameplay.json ElementDisadvantageCoef -0.2, GlancingHitCoef -0.3). Magic heroes glance vs the boss's Force phase, etc. Glances also gate TM-on-hit passives (e.g. Ninja). See memory project_affinity_table_inversion_fix."
+      },
+      "faction_lock": {"value": false, "source": "game-truth", "note": "No faction restriction on CB."},
+      "slot_caps": {
+        "value": {"max_debuffs": 10, "max_poison_stacks": 10, "max_hp_burn": 1},
+        "source": "mixed",
+        "note": "max_hp_burn=1 game-truth (effects.json type 470 StackCount=1); 10-debuff/10-poison caps community."
+      },
+      "survival_cliff": {
+        "value": {"turn": 50, "ignores": ["block_damage", "unkillable"], "applies": ["block_revive"], "not_bypassed": ["shield", "damage_reduction"]},
+        "source": "game-truth",
+        "note": "At CB turn 50+ the Demon Lord's enrage skill 222904 IGNORES Block Damage + Unkillable and applies Block Revive; Shield + Damage Reduction are NOT bypassed (stall comps survive via those). Damage ramps DMG×(7.5+turn-19) after turn 20. Source: memory project_cb_boss_turn_50_bypass. Real-game survival pattern: Magic/Spirit/Void reach T50, Force does not (memory)."
+      },
+      "script_notes": {
+        "value": ["No scripted shield/clone mechanic; pure DoT/hit damage race to the T50 enrage cliff. Boss cycle is [aoe1, aoe2, stun] per element; only the aoe2 skill id + its debuff differ per affinity."],
+        "source": "game-truth",
+        "note": "memory project_cb_boss_skill_pattern."
+      }
+    },
+    "hydra": {
+      "display_name": "Hydra (Clan vs Hydra)",
+      "aliases": ["hydra_clash"],
+      "cc_immunities": {
+        "value": ["stun", "sleep", "freeze", "provoke", "fear", "petrification", "polymorph", "turn_meter"],
+        "source": "community",
+        "note": "Hydra heads are CC- and turn-meter-immune (multi-head boss; standard RSL community knowledge). Flag for in-game verify against the Hydra head skill/effect immunity lists."
+      },
+      "dot_reactions": {
+        "value": {"poison": "varies by head — some heads resist/are immune to poison", "hp_burn": "works", "note_detail": "Decapitate / Suppression heads can resist debuffs; Torment head punishes; community-mapped, not yet game-extracted."},
+        "source": "community",
+        "note": "Per-head debuff resistance is community knowledge; data/static/hydra.json exists but per-head poison-resist not yet parsed here."
+      },
+      "acc_floor": {
+        "value": null,
+        "source": "community",
+        "note": "Not isolated in stage_stat_targets.json (no Hydra area there). Community: high RES, debuffers want ~300+ ACC for NM/UNM heads. Mark TODO: extract Hydra head RES from data/static/hydra.json."
+      },
+      "affinity_rule": {"value": true, "source": "game-truth", "note": "Affinity/glance applies (gameplay.json coefs). Each head has its own element."},
+      "faction_lock": {"value": false, "source": "game-truth"},
+      "slot_caps": {"value": {"max_debuffs": 10, "max_poison_stacks": 10, "max_hp_burn": 1}, "source": "mixed", "note": "hp_burn=1 game-truth; rest community. Hydra has its own counter effects (HydraHitCounter 660, HydraNeckIncreaseDamageTaken 431) per status_effect_type_id.json."},
+      "survival_cliff": {"value": null, "source": "community", "note": "Hydra has a turn/clash damage-window model rather than a hard enrage cliff; not modeled here."},
+      "script_notes": {
+        "value": ["Multi-head: heads share an HP pool segment; Head of Torment increases damage taken counters; killing heads / managing the neck (HydraNeckIncreaseDamageTaken 431) matters."],
+        "source": "community",
+        "note": "Flag for in-game verification from data/static/hydra.json head skills."
+      }
+    },
+    "chimera": {
+      "display_name": "Chimera",
+      "aliases": [],
+      "cc_immunities": {
+        "value": ["stun", "sleep", "freeze", "provoke", "fear", "petrification", "polymorph", "turn_meter"],
+        "source": "community",
+        "note": "Chimera (Hydra-like clash boss) is CC/TM-immune per RSL community. Flag for verify against data/static/chimera.json."
+      },
+      "dot_reactions": {
+        "value": {"poison": "works", "hp_burn": "works", "note_detail": "Chimera uses Cocoon (600) / Devour (Devoured 690, Digestion 700) mechanics that remove a champion from the fight; DoTs continue but the cocooned champ is out."},
+        "source": "community",
+        "note": "Cocoon/Devour effect ids exist in status_effect_type_id.json; per-skill behaviour not parsed here."
+      },
+      "acc_floor": {
+        "value": 400,
+        "source": "game-truth",
+        "note": "stage_stat_targets.json Chimera area max effective-RES-derived ACC floor = 400 (hardest stage). Lower difficulties lower. NOTE: stage_stat_targets uses base_res=0 for non-AllianceBoss areas, so this is the absolute Resistance modifier; treat as a strong lower bound."
+      },
+      "affinity_rule": {"value": true, "source": "game-truth"},
+      "faction_lock": {"value": false, "source": "game-truth"},
+      "slot_caps": {"value": {"max_debuffs": 10, "max_poison_stacks": 10, "max_hp_burn": 1}, "source": "mixed"},
+      "survival_cliff": {"value": null, "source": "community", "note": "Clash-window model; cocoon/devour are the survival pressure, not a fixed enrage turn."},
+      "script_notes": {
+        "value": ["Cocoons (600) a champion (removes them) and Devours; teams need cleanse / cocoon-immunity or fast clears. Same chest/HP-tier reward model as Hydra."],
+        "source": "community",
+        "note": "Flag for verify from data/static/chimera.json."
+      }
+    },
+    "dragon": {
+      "display_name": "Dragon's Lair (Dragon)",
+      "aliases": ["dragons_lair", "spirit_keep_dragon"],
+      "cc_immunities": {
+        "value": [],
+        "source": "community",
+        "note": "Dragon dungeon boss is NOT CC-immune (Decrease SPD, Decrease ATK all work; this is why Dec-DEF/Weaken/Dec-ATK comps clear). Community standard. Flag for verify."
+      },
+      "dot_reactions": {
+        "value": {"poison": "works", "hp_burn": "works"},
+        "source": "community",
+        "note": "No special DoT reaction known for the Dragon dungeon boss."
+      },
+      "acc_floor": {
+        "value": 290,
+        "source": "game-truth",
+        "note": "stage_stat_targets.json region DragonsLair max ACC floor = 290 (Dragon 25/hardest). Lower stages lower. Dragon 20 debuffers target ~ this. (stage_stat_targets uses base_res=0 for dungeons → this is the absolute RES modifier.)"
+      },
+      "affinity_rule": {"value": true, "source": "game-truth"},
+      "faction_lock": {"value": false, "source": "game-truth"},
+      "slot_caps": {"value": {"max_debuffs": 10, "max_poison_stacks": 10, "max_hp_burn": 1}, "source": "mixed"},
+      "survival_cliff": {"value": null, "source": "community"},
+      "script_notes": {
+        "value": ["3-round structure (5v5 mobs r1+r2, 5v1 boss r3 — memory project_dragon_20_structure). Boss hits hard with AoE; Dec-ATK + Dec-DEF + DEF-stacking standard. Decrease SPD lands (boss is tunable)."],
+        "source": "mixed",
+        "note": "Round structure game-truth (memory); counter approach community."
+      }
+    },
+    "spider": {
+      "display_name": "Spider's Den (Spider)",
+      "aliases": ["spider_den", "spiders_den", "spider_cave"],
+      "cc_immunities": {
+        "value": [],
+        "source": "community",
+        "note": "Spider boss itself takes debuffs; spiderlings spawn each turn. Not CC-immune."
+      },
+      "dot_reactions": {
+        "value": {"poison": "works", "hp_burn": "works", "note_detail": "Spiderlings (adds) heal the boss / sustain it; AoE to clear lings is the key, and damage to lings transfers pressure to the boss."},
+        "source": "community"
+      },
+      "acc_floor": {
+        "value": 290,
+        "source": "game-truth",
+        "note": "stage_stat_targets.json region SpiderCave max ACC floor = 290 (hardest stage)."
+      },
+      "affinity_rule": {"value": true, "source": "game-truth"},
+      "faction_lock": {"value": false, "source": "game-truth"},
+      "slot_caps": {"value": {"max_debuffs": 10, "max_poison_stacks": 10, "max_hp_burn": 1}, "source": "mixed"},
+      "survival_cliff": {"value": null, "source": "community"},
+      "script_notes": {
+        "value": ["Kill the spiderlings — they feed/heal the boss; clearing lings is what lets the boss take damage. AoE + AoE-debuff comps preferred. (community)"],
+        "source": "community"
+      }
+    },
+    "fire_knight": {
+      "display_name": "Fire Knight's Castle (Fire Knight)",
+      "aliases": ["fire_knight_castle", "fk", "fire_golem_cave"],
+      "cc_immunities": {
+        "value": [],
+        "source": "community",
+        "note": "Fire Knight takes debuffs. Freeze is specifically USEFUL here (see script_notes), so NOT CC-immune."
+      },
+      "dot_reactions": {
+        "value": {"poison": "works", "hp_burn": "works"},
+        "source": "community"
+      },
+      "acc_floor": {
+        "value": 290,
+        "source": "game-truth",
+        "note": "stage_stat_targets.json region FireGolemCave (Fire Knight) max ACC floor = 290 (hardest stage)."
+      },
+      "affinity_rule": {"value": true, "source": "game-truth"},
+      "faction_lock": {"value": false, "source": "game-truth"},
+      "slot_caps": {"value": {"max_debuffs": 10, "max_poison_stacks": 10, "max_hp_burn": 1}, "source": "mixed"},
+      "survival_cliff": {"value": null, "source": "community"},
+      "script_notes": {
+        "value": ["Fire Knight has a Shield that must be broken by a number of HITS (multi-hit / hit-count skills, NOT raw damage) before the boss takes real damage. When FROZEN the boss loses ~15% turn meter. Freeze + multi-hit attackers are the meta. (community — verify hit/shield count + TM-loss from data/static/skills_all.json)"],
+        "source": "community"
+      }
+    },
+    "ice_golem": {
+      "display_name": "Ice Golem's Peak (Ice Golem)",
+      "aliases": ["ice_golem_peak", "ig", "ice_golem_cave"],
+      "cc_immunities": {
+        "value": [],
+        "source": "community",
+        "note": "Ice Golem takes debuffs."
+      },
+      "dot_reactions": {
+        "value": {"poison": "immune (Hard / Tainted Klyssus)", "hp_burn": "works, +10% damage taken", "poison_immune": true, "hp_burn_bonus_pct": 10},
+        "source": "community",
+        "note": "Ice Golem HARD (boss 'Tainted Klyssus') is IMMUNE to Poison and takes +10% extra from HP Burn — so HP-Burn comps are favoured over poison here. From docs/dungeon_farming.md / RSL community. FLAG for in-game verify against data/static/skills_all.json Ice Golem boss passive. This is the headline 'DoT-vs-boss reaction' M3 must encode."
+      },
+      "acc_floor": {
+        "value": 290,
+        "source": "game-truth",
+        "note": "stage_stat_targets.json region IceGolemCave max ACC floor = 290 (hardest stage)."
+      },
+      "affinity_rule": {"value": true, "source": "game-truth"},
+      "faction_lock": {"value": false, "source": "game-truth"},
+      "slot_caps": {"value": {"max_debuffs": 10, "max_poison_stacks": 10, "max_hp_burn": 1}, "source": "mixed"},
+      "survival_cliff": {"value": null, "source": "community"},
+      "script_notes": {
+        "value": ["Two side-totems / arms mechanic on higher stages. Prefer HP Burn over Poison (poison immune on Hard); HP Burn does +10%. (community)"],
+        "source": "community"
+      }
+    },
+    "magma_dragon": {
+      "display_name": "Magma Dragon (Doom Tower)",
+      "aliases": ["dt_magma_dragon"],
+      "cc_immunities": {
+        "value": ["stun", "sleep", "freeze", "provoke", "petrification"],
+        "source": "community",
+        "note": "Doom Tower bosses are broadly CC-immune; verify per-boss."
+      },
+      "dot_reactions": {"value": {"poison": "works", "hp_burn": "works"}, "source": "community"},
+      "acc_floor": {
+        "value": 300,
+        "source": "mixed",
+        "note": "stage_stat_targets.json DoomTower area max ACC floor = 300 (game-truth upper bound across DT); per-boss/per-floor value not isolated here. Treat 300 as Hard-floor ceiling; community ~250+ for NM."
+      },
+      "affinity_rule": {"value": true, "source": "game-truth"},
+      "faction_lock": {"value": false, "source": "game-truth"},
+      "slot_caps": {"value": {"max_debuffs": 10, "max_poison_stacks": 10, "max_hp_burn": 1}, "source": "mixed"},
+      "survival_cliff": {"value": null, "source": "community"},
+      "script_notes": {
+        "value": ["Magma Dragon: PROVOKE on the boss NEUTRALIZES its Hex/curse mechanic — bring a reliable Provoker. (community — verify from boss skill set)"],
+        "source": "community"
+      }
+    },
+    "frost_spider": {
+      "display_name": "Frost Spider (Doom Tower)",
+      "aliases": ["dt_frost_spider"],
+      "cc_immunities": {
+        "value": ["stun", "sleep", "freeze", "provoke", "petrification"],
+        "source": "community"
+      },
+      "dot_reactions": {
+        "value": {"poison": "works", "hp_burn": "works (used to finish through revive)", "note_detail": "Passive REVIVE — HP Burn ticking through the revive window helps finish."},
+        "source": "community",
+        "note": "Frost Spider passive revive; HP Burn finishes it. (community — flag for verify)"
+      },
+      "acc_floor": {"value": 300, "source": "mixed", "note": "DoomTower area ceiling from stage_stat_targets.json; per-floor not isolated."},
+      "affinity_rule": {"value": true, "source": "game-truth"},
+      "faction_lock": {"value": false, "source": "game-truth"},
+      "slot_caps": {"value": {"max_debuffs": 10, "max_poison_stacks": 10, "max_hp_burn": 1}, "source": "mixed"},
+      "survival_cliff": {"value": null, "source": "community"},
+      "script_notes": {
+        "value": ["Spawns spiderlings AND has a passive revive; HP Burn / sustained DoT finishes through the revive. Clear lings. (community)"],
+        "source": "community"
+      }
+    },
+    "nether_spider": {
+      "display_name": "Nether Spider (Doom Tower)",
+      "aliases": ["dt_nether_spider"],
+      "cc_immunities": {
+        "value": ["stun", "sleep", "freeze", "provoke", "petrification"],
+        "source": "community"
+      },
+      "dot_reactions": {
+        "value": {"poison": "works (key channel)", "hp_burn": "works", "note_detail": "Lings apply UNBLOCKABLE Poison to your team; the boss is a poison-DPS fight (Frozen Banshee / poison comps)."},
+        "source": "community",
+        "note": "Nether Spider broodlings apply unblockable poison to allies; the boss is itself cleared with heavy poison stacking. (community — flag for verify)"
+      },
+      "acc_floor": {"value": 300, "source": "mixed", "note": "DoomTower ceiling from stage_stat_targets.json."},
+      "affinity_rule": {"value": true, "source": "game-truth"},
+      "faction_lock": {"value": false, "source": "game-truth"},
+      "slot_caps": {"value": {"max_debuffs": 10, "max_poison_stacks": 10, "max_hp_burn": 1}, "source": "mixed"},
+      "survival_cliff": {"value": null, "source": "community"},
+      "script_notes": {
+        "value": ["Spiderlings apply unblockable Poison to your team (need cleanse / high HP). Poison-stacking on the boss is the standard kill (10-poison cap matters). (community)"],
+        "source": "community"
+      }
+    },
+    "eternal_dragon": {
+      "display_name": "Eternal Dragon (Doom Tower)",
+      "aliases": ["dt_eternal_dragon"],
+      "cc_immunities": {
+        "value": ["stun", "sleep", "freeze", "provoke", "petrification"],
+        "source": "community"
+      },
+      "dot_reactions": {"value": {"poison": "works", "hp_burn": "works"}, "source": "community"},
+      "acc_floor": {"value": 300, "source": "mixed", "note": "DoomTower ceiling from stage_stat_targets.json."},
+      "affinity_rule": {"value": true, "source": "game-truth"},
+      "faction_lock": {"value": false, "source": "game-truth"},
+      "slot_caps": {"value": {"max_debuffs": 10, "max_poison_stacks": 10, "max_hp_burn": 1}, "source": "mixed"},
+      "survival_cliff": {"value": null, "source": "community"},
+      "script_notes": {
+        "value": ["Eternal Dragon periodically BLOCKS ACTIVE SKILLS (BlockActiveSkills 290) — only A1 / passive damage gets through during that window, so passive-damage and strong-A1 comps are favoured. Wants Decrease ATK to survive its hits. (community — verify against boss skill BlockActiveSkills application)"],
+        "source": "community"
+      }
+    },
+    "scarab_king": {
+      "display_name": "Scarab King (Doom Tower)",
+      "aliases": ["dt_scarab_king"],
+      "cc_immunities": {
+        "value": ["stun", "sleep", "freeze", "provoke", "petrification"],
+        "source": "community"
+      },
+      "dot_reactions": {"value": {"poison": "works", "hp_burn": "works"}, "source": "community"},
+      "acc_floor": {"value": 300, "source": "mixed", "note": "DoomTower ceiling from stage_stat_targets.json."},
+      "affinity_rule": {"value": true, "source": "game-truth"},
+      "faction_lock": {"value": false, "source": "game-truth"},
+      "slot_caps": {"value": {"max_debuffs": 10, "max_poison_stacks": 10, "max_hp_burn": 1}, "source": "mixed"},
+      "survival_cliff": {"value": null, "source": "community"},
+      "script_notes": {
+        "value": ["Scarab King puts a SHIELD on itself before attacking and RETALIATES (counterattack-style) — burst it / break the shield and manage the retaliation. (community — verify Shield 280 + Counterattack/retaliate skill)"],
+        "source": "community"
+      }
+    },
+    "celestial_griffin": {
+      "display_name": "Celestial Griffin (Doom Tower)",
+      "aliases": ["dt_celestial_griffin"],
+      "cc_immunities": {
+        "value": ["stun", "sleep", "freeze", "provoke", "petrification"],
+        "source": "community"
+      },
+      "dot_reactions": {"value": {"poison": "works", "hp_burn": "works"}, "source": "community"},
+      "acc_floor": {"value": 300, "source": "mixed", "note": "DoomTower ceiling from stage_stat_targets.json."},
+      "affinity_rule": {"value": true, "source": "game-truth"},
+      "faction_lock": {"value": false, "source": "game-truth"},
+      "slot_caps": {"value": {"max_debuffs": 10, "max_poison_stacks": 10, "max_hp_burn": 1}, "source": "mixed"},
+      "survival_cliff": {"value": null, "source": "community"},
+      "script_notes": {
+        "value": ["Celestial Griffin gains stacks / increasing damage over time and has windows of heavy AoE; sustain + control its ramp. (community — verify from boss skill set)"],
+        "source": "community"
+      }
+    },
+    "dark_fae": {
+      "display_name": "Dark Fae (Doom Tower)",
+      "aliases": ["dt_dark_fae"],
+      "cc_immunities": {
+        "value": ["stun", "sleep", "freeze", "provoke", "petrification"],
+        "source": "community"
+      },
+      "dot_reactions": {"value": {"poison": "works", "hp_burn": "works"}, "source": "community"},
+      "acc_floor": {"value": 300, "source": "mixed", "note": "DoomTower ceiling from stage_stat_targets.json."},
+      "affinity_rule": {"value": true, "source": "game-truth"},
+      "faction_lock": {"value": false, "source": "game-truth"},
+      "slot_caps": {"value": {"max_debuffs": 10, "max_poison_stacks": 10, "max_hp_burn": 1}, "source": "mixed"},
+      "survival_cliff": {"value": null, "source": "community"},
+      "script_notes": {
+        "value": ["Dark Fae summons CLONES and casts AoE + Decrease DEF; AoE to clear clones and decrease-DEF amplification on the boss. (community — verify clone summon + Dec-DEF application)"],
+        "source": "community"
+      }
+    },
+    "faction_wars": {
+      "display_name": "Faction Wars",
+      "aliases": ["fw", "factions", "faction_crypt"],
+      "cc_immunities": {
+        "value": ["stun", "sleep", "freeze", "provoke", "fear", "petrification"],
+        "source": "community",
+        "note": "FW bosses (crypt keepers) have ALMIGHTY IMMUNITY: immune to hard CC, but NOT to Decrease SPD or Decrease/Reduce Turn Meter (those DO work). So turn_meter and dec_spd are deliberately NOT in this immunity list. (community — flag for in-game verify)"
+      },
+      "dot_reactions": {"value": {"poison": "works", "hp_burn": "works"}, "source": "community"},
+      "acc_floor": {
+        "value": 400,
+        "source": "game-truth",
+        "note": "stage_stat_targets.json area 'Fractions' (Faction Wars) max ACC floor = 400 (stage 21/hardest). Lower stages lower."
+      },
+      "affinity_rule": {"value": true, "source": "game-truth"},
+      "faction_lock": {
+        "value": true,
+        "source": "game-truth",
+        "note": "Faction Wars REQUIRES all team members share the boss's faction — this is THE defining hard constraint. The team generator must filter the roster to a single faction (16 factions). Faction membership from data/static/factions.json / hero_types.json fraction field."
+      },
+      "slot_caps": {"value": {"max_debuffs": 10, "max_poison_stacks": 10, "max_hp_burn": 1}, "source": "mixed"},
+      "survival_cliff": {"value": null, "source": "community"},
+      "script_notes": {
+        "value": ["Single-faction-only (16 factions × 21 stages). Crypt boss has Almighty Immunity to CC; Decrease SPD / Decrease TM still work to control it. (community)"],
+        "source": "community"
+      }
+    },
+    "arena": {
+      "display_name": "Arena (Classic / Tag-team PvP)",
+      "aliases": ["classic_arena", "pvp"],
+      "cc_immunities": {
+        "value": [],
+        "source": "game-truth",
+        "note": "PvP — enemy is another player's team of champions; no boss-level CC immunity. Stun/Freeze/Provoke/TM-control are all HIGH-VALUE here (opposite of CB). Individual champs may bring Block Debuff / immunity sets."
+      },
+      "dot_reactions": {"value": {"poison": "works", "hp_burn": "works"}, "source": "game-truth", "note": "No boss DoT immunity; DoTs work but PvP is decided by speed/nuke, DoTs are rarely the win condition."},
+      "acc_floor": {
+        "value": null,
+        "source": "community",
+        "note": "No fixed boss RES — depends on the opposing defense team's RES. Debuffers want enough ACC to land control (community ~ defense RES + buffer). Not a static floor."
+      },
+      "affinity_rule": {"value": true, "source": "game-truth", "note": "Affinity/glance applies vs enemy champions."},
+      "faction_lock": {"value": false, "source": "game-truth"},
+      "slot_caps": {"value": {"max_debuffs": 10, "max_poison_stacks": 10, "max_hp_burn": 1}, "source": "mixed"},
+      "survival_cliff": {"value": null, "source": "game-truth", "note": "No turn cliff; PvP is a race — usually decided turn 1 (speed + AoE control + nuke)."},
+      "script_notes": {
+        "value": ["Speed-first: out-speed the enemy, AoE Stun/Freeze/Decrease TM, then nuke. Control effects that are NO-OP on CB are the WIN CONDITION here — the generator must NOT reuse CB's immunity filter for arena."],
+        "source": "game-truth"
+      }
+    }
+  }
+}
