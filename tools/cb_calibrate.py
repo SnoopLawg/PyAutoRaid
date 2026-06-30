@@ -238,6 +238,13 @@ def calibrate(real_data, sim_result):
     print(f"{'='*80}")
     print(f"Real: {real_data['total_damage']:>12,} over {real_data['boss_turns']} boss turns")
     print(f"Sim:  {sim_result['total']:>12,} over {sim_result['cb_turns']} CB turns")
+    if not real_data.get("total_damage"):
+        # Real battle-log capture failed (0 damage / 0 turns) — e.g. a fouled
+        # run or a missed /battle-log snapshot. Don't crash the whole calibrate;
+        # report it so the run is flagged invalid rather than silently 0%.
+        print("Diff: n/a — real battle-log capture is empty (0 damage); "
+              "calibration skipped (invalid run, not a sim error).")
+        return
     diff_pct = (sim_result["total"] - real_data["total_damage"]) / real_data["total_damage"] * 100
     print(f"Diff: {diff_pct:+.1f}%")
     print(f"CB Element: {ELEMENT_NAMES.get(sim_result.get('cb_element', 4), '?')}")
