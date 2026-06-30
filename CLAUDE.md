@@ -323,7 +323,7 @@ restore pick-max+zero-reset; do not just edit the assertions. Full detail:
 Key mechanics:
 - All fights uncapped (no FA damage caps)
 - CB element defaults Void; pass `--cb-element` for day's affinity (Magic heroes do -30% vs Force)
-- WM/GS: flat 67,626 cap per proc (game-truth 2026-06-22; Plarium tuned down from 75K), NOT multiplied by DEF Down/Weaken. HP Burn cap is a distinct 75K.
+- WM/GS: per-proc flat cap. **CORRECTION 2026-06-29: WM IS ×1.25 by Weaken** — real procs cluster at calc_raw 75000 (no Weaken) and 93750 = 75000×1.25 (Weaken), verified on 96 procs via cb_component_diff (commit 996a50b). This SUPERSEDES the earlier "NOT × Weaken" claim. Base flat ≈ 75,000 (not 67,626). DEF-mitigation of the proc is mixed in captures (some mitigated ×0.46, some flat) — confirm before relying. HP Burn cap is a distinct 75K. NOTE: the WM-isolation in cb_component_diff must count BOTH 75000 and 93750 or it mis-splits Weaken-boosted procs as direct (the bug fixed in 996a50b).
 - Debuff placement: >=50% chance places immediately, <50% uses fractional accumulator
 - Debuff duration: `remaining < 0` expiry (2-turn debuff lasts 2 CB turns)
 - Book bonuses on debuff chances auto-applied from skills_db level_bonuses
