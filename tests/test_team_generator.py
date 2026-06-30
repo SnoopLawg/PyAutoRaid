@@ -209,6 +209,78 @@ def test_resolve_channel_gate_rejects_weaken_to_poison_directly():
 
 
 # --------------------------------------------------------------------------- #
+# 5b. Channel-consistent AMPLIFIER is a PREFERENCE, not a gate (task #45).
+#     An amp-less WM/GS stall (no Dec-DEF/Weaken amplifier) used to be
+#     structurally EXCLUDED by the old hard `channel_consistent` rule; it is now
+#     FEASIBLE — the stall accrues damage passively over the 50-turn fight, and
+#     the amplifier is rewarded only by the structural pre-score.  Crediting
+#     stays channel-correct: NO amplifier->engine edge is credited.
+# --------------------------------------------------------------------------- #
+AMPLESS_WM_GS_STALL = ["Coldheart", "Scyl of the Drakes", "Demytha",
+                       "Maneater", "Apothecary"]
+
+
+def test_ampless_wm_gs_stall_is_now_feasible():
+    recs = [r for r in (tg.record_for(n) for n in AMPLESS_WM_GS_STALL)
+            if r is not None]
+    assert len(recs) == len(AMPLESS_WM_GS_STALL), "fixture heroes must be owned"
+
+    # (a) genuinely amp-less: no hero is a hit-channel amplifier AND no hero
+    #     provides the Dec-DEF/Weaken multiplier the old HARD rule demanded.
+    assert not any(r.get("amplifier_channel") == "hit" for r in recs)
+    amp_types = set()
+    for r in recs:
+        amp_types |= tg.sd.hit_amplifier_types(r)
+    assert amp_types == set(), amp_types
+
+    # (b) the OLD rule required an amplifier whose channel == AMP_FOR_ENGINE for
+    #     the bound channel; with none present it would have been EXCLUDED. The
+    #     relaxed rule is satisfied by the channel ENGINE alone.
+    assert tg.AMP_FOR_ENGINE["wm_gs"] == "hit"
+    assert not any(r.get("amplifier_channel") == "hit" for r in recs)  # old gate
+    assert tg._channel_consistent(recs, "wm_gs")                       # new rule
+    assert any("wm_gs" in (r.get("engine_channel") or []) for r in recs)
+
+    # (c) end-to-end FEASIBLE: passes the skeleton team rules and the hard-edge
+    #     drop (survival present, keystones enabled, channel-consistent engine).
+    sk = tg.build_unified_skeleton("wm_gs")
+    ok_rules, rep = tg.team_rules_report(recs, sk, "clan_boss", is_cb=True)
+    assert ok_rules, rep
+    assert rep["channel_consistent"]
+    assert rep["survival_present"] and rep["keystone_ok"]
+    rr = sr.resolve(AMPLESS_WM_GS_STALL,
+                    sr.ResolveContext(location="clan_boss", mode="cb"))
+    ok_edge, reason = tg._hard_edges_ok(rr, recs, "wm_gs")
+    assert ok_edge, reason
+
+    # (d) CREDITING stays channel-correct: the comp is feasible WITHOUT crediting
+    #     any amplifier->engine edge (preference, not requirement).
+    assert not tg._value_edge_present(rr, "wm_gs")
+
+
+def test_double_survival_skeleton_is_abstract_and_valid():
+    """The new multi-keystone stall skeleton is a TAG-PREDICATE skeleton (no
+    champion names), has >1 survival slot, and obeys the predicate vocabulary."""
+    for ch in tg.ENGINE_CHANNELS:
+        sk = tg.build_double_survival_skeleton(ch)
+        assert sk.name.startswith("double_survival")
+        survival_slots = [s for s in sk.slots
+                          if s.name.startswith("survival")]
+        assert len(survival_slots) >= 2, "must have >1 survival slot"
+        for slot in sk.slots:
+            assert slot.require_any, slot
+            for pred in slot.require_any:
+                assert _PRED_RE.match(pred), f"non-vocab predicate {pred!r}"
+                for champ in CHAMPION_NAMES:
+                    assert champ.lower() not in pred.lower()
+    # both skeleton families are emitted for a roster with engine channels.
+    sks = tg.build_named_skeletons({"hit", "poison"})
+    names = [s.name for s in sks]
+    assert any(n.startswith("unified") for n in names)
+    assert any(n.startswith("double_survival") for n in names)
+
+
+# --------------------------------------------------------------------------- #
 # 6. Tractability — pool=all under budget, max_candidates respected, deterministic
 # --------------------------------------------------------------------------- #
 def test_pool_all_tractable_and_deterministic():

@@ -188,10 +188,46 @@ def build_unified_skeleton(channel: str, size: int = 5) -> Skeleton:
     return Skeleton(name=f"unified[{channel}]", slots=slots, channel=channel)
 
 
-# Named presets are THIN wrappers over the unified skeleton (spec).
+def build_double_survival_skeleton(channel: str, size: int = 5) -> Skeleton:
+    """A multi-keystone STALL skeleton bound to one engine `channel`: TWO
+    distinct survival slots (+ optional enabler + engine + flex).
+
+    Slots are TAG PREDICATES only — no champion names. The single-survival
+    `unified` skeleton under-produces 2-/3-currency stalls (the Batman Forever /
+    Budget-UK / Deacon / CatEater family) because two sustained keystones rarely
+    co-occur in one beam; a dedicated second survival slot makes the
+    multi-keystone stall systematic. No amplifier slot — these are the
+    amp-less passive-damage stalls (the amplifier remains a SCORED preference via
+    skeleton_prescore when one happens to fill a flex/engine slot).
+    """
+    keystone_preds = [f"survival:{k}" for k in STRONG_KEYSTONES]
+    slots = [
+        SlotConstraint("survival", list(keystone_preds), optional=False),
+        SlotConstraint("survival2", list(keystone_preds), optional=False),
+        # enabler conditionally required (team rule enabler_if_keystone);
+        # modeled optional so the search fills it when a keystone needs it.
+        SlotConstraint("enabler", ["enabler:any"], optional=True),
+        SlotConstraint("engine", [f"engine:{channel}"], optional=False),
+    ]
+    flex_pred = [f"engine:{channel}", "dot_detonate", "cleanse", "heal"]
+    slots.append(SlotConstraint("flex", flex_pred, optional=True))
+    while len(slots) < size:
+        slots.append(SlotConstraint(f"flex{len(slots)}", flex_pred,
+                                    optional=True))
+    slots = slots[:max(size, 4)]
+    return Skeleton(name=f"double_survival[{channel}]", slots=slots,
+                    channel=channel)
+
+
+# Named presets are THIN wrappers over the unified skeleton (spec). The unified
+# (primary) skeletons are emitted FIRST for every channel, then the
+# double_survival (multi-keystone stall) variants — so a comp the canonical
+# unified skeleton can build is attributed to it (the stall variant only claims
+# the lean comps unified cannot produce, via the cross-skeleton team dedup).
 def build_named_skeletons(channels_present: set, size: int = 5) -> list:
-    out = [build_unified_skeleton(ch, size) for ch in ENGINE_CHANNELS
-           if ch in channels_present]
+    present = [ch for ch in ENGINE_CHANNELS if ch in channels_present]
+    out = [build_unified_skeleton(ch, size) for ch in present]
+    out += [build_double_survival_skeleton(ch, size) for ch in present]
     return out
 
 
@@ -357,13 +393,23 @@ def filter_roster(roster_names: list, location: str, cb_element: int,
 
 # ============================================================ team-rule checks
 def _channel_consistent(recs: list, channel: str) -> bool:
-    has_engine = any(channel in (r.get("engine_channel") or []) for r in recs)
-    if not has_engine:
-        return False
-    amp_ch = AMP_FOR_ENGINE[channel]
-    if amp_ch is None:               # hp_burn — engine presence is enough
-        return True
-    return any(r.get("amplifier_channel") == amp_ch for r in recs)
+    """A comp is channel-consistent iff it fields a damage ENGINE of `channel`.
+
+    RELAXED (task #45, 2026-06): the engine's channel-correct AMPLIFIER
+    (Dec-DEF/Weaken for hit/wm_gs/bring_it_down; Poison-Sens for poison) used to
+    be HARD-REQUIRED here, which structurally excluded the amp-less pure-hit /
+    WM-GS stall tunes (BatManSaladEater, Bateater, Man Salad, Myth Heir Salad).
+    Those stalls are VIABLE without an amplifier — damage accrues passively over
+    the 50-turn stall (WM/GS procs + DoTs). The amplifier genuinely HELPS (e.g.
+    our capture showed WM procced at calc_raw 93750 = 75000 x 1.25 Weaken), so
+    it is now a strong SCORED preference (skeleton_prescore) instead of a gate:
+    amp-less stalls are FEASIBLE but rank below their amp'd equivalents.
+
+    Channel-CORRECTNESS for CREDITING is unchanged: M2 resolve never routes a
+    hit amplifier to a poison engine, and skeleton_prescore only credits an
+    amplifier whose channel matches AMP_FOR_ENGINE[channel].
+    """
+    return any(channel in (r.get("engine_channel") or []) for r in recs)
 
 
 def team_rules_report(recs: list, skeleton: Skeleton, location: str,
@@ -494,6 +540,43 @@ def skeleton_prescore(recs: list, skeleton: Skeleton,
     amp_ch = AMP_FOR_ENGINE[ch]
     score = 0.0
     enablers_present = {r["enabler"] for r in recs if r.get("enabler")}
+
+    # ---- multi-keystone STALL skeleton: score by SURVIVAL DEPTH, not damage. -
+    # The double_survival archetype's value is COVERAGE — multiple distinct,
+    # enabler-satisfied keystones holding the boss AoE/stun for 50 turns — and
+    # its damage accrues passively. Scoring it with the damage-breadth/amplifier
+    # terms below would let rich amp'd cores out-compete the lean multi-keystone
+    # cores out of the per-anchor beam, which is exactly what under-produced the
+    # amp-less multi-keystone stall signatures (Batman / Budget-UK / Deacon
+    # tunes). So a stall core is ranked
+    # by how many distinct keystone currencies it lands (each weighted by
+    # enabler satisfaction), with only a light channel-engine presence nudge.
+    if skeleton.name.startswith("double_survival"):
+        per_currency: dict = {}
+        for r in recs:
+            cur = r.get("survival_currency")
+            if not cur:
+                continue
+            w = sd.survival_weight(r)
+            if r.get("keystone_needs_enabler"):
+                compat = KEYSTONE_ENABLER_COMPAT.get(cur, set())
+                w *= 1.0 if (enablers_present & compat) else 0.25
+            per_currency[cur] = max(per_currency.get(cur, 0.0), w)
+        # depth across DISTINCT currencies (so a 2nd/3rd cover is rewarded,
+        # unlike the capped single-survival coverage term below).
+        score += 3.0 * sum(per_currency.values())
+        if any(ch in (r.get("engine_channel") or []) for r in recs):
+            score += 1.0
+        # detonation is the only damage lever a passive stall really wants.
+        if any("dot_detonate" in r.get("provides", []) for r in recs):
+            score += 0.3
+        if roles_by_hero is not None:
+            flat: set = set()
+            for r in recs:
+                flat |= roles_by_hero.get(r["name"], set())
+            score += 0.05 * len(flat)
+        return score
+
     # Survival COVERAGE — a stall needs the boss AoE/stun covered, but only ~2
     # *sustained* strong keystones; beyond that the extra survival slot is a
     # wasted damage slot (cb_sim does not reward a 3rd cover). So coverage is
@@ -752,30 +835,39 @@ def search_skeleton(skeleton: Skeleton, roster_recs: list, opts: GenOpts,
 
 
 # ============================================================ hard-edge drop
-def _value_edge_ok(resolve_result, channel: str) -> bool:
-    """A comp must carry a SATISFIED channel-consistent amplifier->engine edge
-    (M2). hit-class engines need a Dec-DEF/Weaken (ch="hit") edge; poison needs
-    a poison_synergy edge; hp_burn has no amplifier (engine presence suffices).
+def _value_edge_present(resolve_result, channel: str) -> bool:
+    """Whether the comp carries a SATISFIED channel-consistent amplifier->engine
+    edge (M2). hit-class engines look for a Dec-DEF/Weaken (ch="hit") edge;
+    poison for a poison_synergy edge; hp_burn has no amplifier channel.
+
+    This is now a PREFERENCE signal (see _channel_consistent / skeleton_prescore)
+    rather than a hard gate — an amp-less stall has no such edge yet is still
+    feasible. The channel CHECK stays channel-correct so a poison engine never
+    treats a hit (def_break) edge as its multiplier.
     """
     sat = resolve_result.satisfied
     if channel in ("hit", "wm_gs", "bring_it_down"):
         return any(e.tag == "def_break" and e.channel == "hit" for e in sat)
     if channel == "poison":
         return any(e.tag == "poison_synergy" for e in sat)
-    if channel == "hp_burn":
-        return True
-    return False
+    return False             # hp_burn (and anything else): no amplifier channel
 
 
 def _hard_edges_ok(resolve_result, recs: list, channel: str) -> tuple:
-    """Drop comps with unmet HARD edges (spec step 6). Returns (ok, reason)."""
+    """Drop comps with unmet HARD edges (spec step 6). Returns (ok, reason).
+
+    The HARD edges are: a survival currency, every keystone's enabler satisfied,
+    and a channel-consistent damage ENGINE. The channel-correct AMPLIFIER is NO
+    longer a hard edge (task #45) — amp-less stalls accrue damage passively, so
+    the amplifier is a scored preference (skeleton_prescore), not a gate.
+    """
     if not any(r.get("survival_currency") for r in recs):
         return False, "no survival currency"
     for k in resolve_result.keystones:
         if k.get("needs_enabler") and not k.get("enabler_ok"):
             return False, f"broken keystone-enabler ({k['keystone']})"
-    if not _value_edge_ok(resolve_result, channel):
-        return False, f"no channel-consistent amplifier->engine for {channel}"
+    if not _channel_consistent(recs, channel):
+        return False, f"no channel-consistent {channel} engine"
     return True, "ok"
 
 
