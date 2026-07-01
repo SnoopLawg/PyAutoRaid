@@ -53,6 +53,7 @@ import argparse
 import copy
 import json
 import sys
+import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -67,10 +68,32 @@ from gear_target_optimizer import STAT_ID_TO_NAME  # noqa: E402
 from gear_constants import SLOT_NAMES  # noqa: E402
 from speed_tune_finder import _validity, ELEMENT_NAME_TO_ID  # noqa: E402
 import team_tune  # noqa: E402
+import loadouts  # noqa: E402  (snapshot / apply / restore + live /all-heroes)
 
 MEN = ["Maneater", "Demytha", "Ninja", "Geomancer", "Venomage"]
 DEALERS = ["Ninja", "Geomancer", "Venomage"]
 SURVIVORS = ["Maneater", "Demytha"]
+
+MOD_BASE = "http://localhost:6790"
+
+# Instance IDs of the MEN team (game-truth, verified live via /hero-computed-stats
+# and /all-heroes 2026-06-30). Used as the authoritative hint when resolving
+# name->id (a name lookup could pick the wrong instance if the roster has dupes).
+SURVIVOR_IDS = {"Maneater": 15120, "Demytha": 18607}
+DEALER_IDS = {"Ninja": 2643, "Geomancer": 13615, "Venomage": 5692}
+MEN_ID_HINT = {**SURVIVOR_IDS, **DEALER_IDS}
+
+# /hero-computed-stats returns per-column stat bonuses; the game's *Total Stats*
+# is their sum. These are ALL the columns the endpoint emits (a missing column
+# reads as 0). SPD from summing these matches the in-game tune EXACTLY.
+_COMPUTED_COLS = (
+    "base_computed", "blessing_bonus", "empower_bonus", "classic_arena_bonus",
+    "affinity_bonus", "area_bonus", "artifact_bonus", "relic_bonus",
+    "mastery_bonus", "faction_guardians_bonus",
+)
+# Endpoint stat key -> cb_sim stat id.
+_COL_STAT_TO_SID = {"HP": HP, "ATK": ATK, "DEF": DEF, "SPD": SPD,
+                    "RES": RES, "ACC": ACC, "CR": CR, "CD": CD}
 
 # SPD slack the gear solve may use above the pinned tune value. The re-score
 # sim FORCES SPD back to the exact tune, so this only loosens the gear search
@@ -146,6 +169,351 @@ def _apply_spd(setup, idx, spd_by_name):
             setup["stats_per_hero"][idx[n]][SPD] = float(spd)
 
 
+# ---------------------------------------------------------------------------- #
+#  Reliable computed-stat read (game-truth *Total Stats* via the mod endpoint)
+# ---------------------------------------------------------------------------- #
+def read_computed_stats(hero_ids, timeout=30):
+    """{hero_id: {stat_id: total}} from the live /hero-computed-stats.
+
+    The endpoint returns EVERY hero (the hero_id query arg is ignored), each as a
+    row of per-column stat bonuses. The in-game *Total Stats* is the SUM of those
+    columns — that's what we return, keyed by cb_sim's stat ids (SPD/ACC/... = the
+    same 1..8 constants the sim uses). CR/CD are FRACTIONS in the endpoint
+    (0.15 = 15%); cb_sim/calc_stats use PERCENT, so we scale them ×100 to match.
+
+    Earlier parses returned SPD=None because they read a per-hero `total` field
+    that doesn't exist and/or indexed by the wrong id. Summing the columns is the
+    correct structure and yields real numbers for the 5 MEN heroes.
+    """
+    with urllib.request.urlopen(f"{MOD_BASE}/hero-computed-stats",
+                                timeout=timeout) as r:
+        data = json.loads(r.read())
+    rows = data.get("heroes", data) if isinstance(data, dict) else data
+    by_id = {h["id"]: h for h in rows if isinstance(h, dict) and "id" in h}
+    out = {}
+    for hid in hero_ids:
+        h = by_id.get(hid)
+        if not h:
+            out[hid] = None
+            continue
+        totals = {sid: 0.0 for sid in _COL_STAT_TO_SID.values()}
+        for col in _COMPUTED_COLS:
+            c = h.get(col) or {}
+            for key, sid in _COL_STAT_TO_SID.items():
+                totals[sid] += float(c.get(key, 0) or 0)
+        totals[CR] *= 100.0   # fraction -> percent (cb_sim format)
+        totals[CD] *= 100.0
+        out[hid] = totals
+    return out
+
+
+def read_computed_spd(hero_ids, timeout=30):
+    """{hero_id: SPD(int)} — the SPD-only slice of read_computed_stats. Returns
+    real integers for the 5 MEN heroes (None only if a hero isn't in the game)."""
+    stats = read_computed_stats(hero_ids, timeout=timeout)
+    return {hid: (int(round(s[SPD])) if s else None)
+            for hid, s in stats.items()}
+
+
+def _resolve_ids():
+    """{MEN_name: instance_id}. Prefer the known instance ids (they're the ones
+    that actually appear in /all-heroes + /hero-computed-stats); fall back to a
+    live name lookup only if a hinted id is somehow absent."""
+    try:
+        heroes = loadouts._fetch_heroes()
+    except Exception:
+        return dict(MEN_ID_HINT)
+    by_name = {}
+    for hid, h in heroes.items():
+        by_name.setdefault(h.get("name"), hid)
+    out = {}
+    for n in MEN:
+        hint = MEN_ID_HINT[n]
+        out[n] = hint if hint in heroes else by_name.get(n, hint)
+    return out
+
+
+def _survivor_equipped_ids(id_by_name=None):
+    """(set_of_artifact_ids, {name: {slot: art_id}}) currently equipped on the
+    SURVIVORS, read LIVE from /all-heroes (freshest source — not a cached json).
+    These ids are the airtight exclude-set for the dealers' gear solve: the
+    survivors hold the SPD tune, so not one of their pieces may move."""
+    id_by_name = id_by_name or _resolve_ids()
+    heroes = loadouts._fetch_heroes()
+    ids, per = set(), {}
+    for n in SURVIVORS:
+        hid = id_by_name[n]
+        h = heroes.get(hid)
+        by_slot = loadouts._equipped_by_slot(h) if h else {}
+        per[n] = by_slot
+        ids.update(by_slot.values())
+    return ids, per
+
+
+def _current_owners(art_ids):
+    """{hero_id} currently wearing any of art_ids (via /all-artifacts ownership).
+    Used to snapshot DONOR heroes so an apply never leaves a non-team hero
+    stripped — every piece we pull can be put back on restore."""
+    resp = loadouts._get("/all-artifacts?limit=20000")
+    arts = resp.get("artifacts", []) if isinstance(resp, dict) else []
+    owner = {int(a["id"]): a.get("hero_id") for a in arts
+             if isinstance(a, dict) and "id" in a}
+    return {owner[a] for a in art_ids if owner.get(a)}
+
+
+def _acc_floor():
+    try:
+        import boss_constraints
+        return int(boss_constraints.acc_floor("clan_boss") or 225)
+    except Exception:
+        return 225
+
+
+def _assignment_ids(solves):
+    """Flat set of every artifact id across the dealers' solved assignments."""
+    ids = set()
+    for r in solves.values():
+        for a in (r.get("assignment") or {}).values():
+            if a and a.get("id") is not None:
+                ids.add(a["id"])
+    return ids
+
+
+def _assert_no_survivor_overlap(solves, survivor_ids):
+    """AIRTIGHT survivor exclusion guard: the dealers' assignment must share ZERO
+    artifact ids with the survivors' equipped gear. A single leaked piece is how
+    a survivor SPD source (Maneater's speed boots) ended up on a dealer and
+    slowed the UK provider 1.65->1.25 turns/boss (the T24 wipe)."""
+    overlap = _assignment_ids(solves) & set(survivor_ids)
+    assert not overlap, (
+        f"survivor-exclusion VIOLATED: dealer assignment reuses survivor "
+        f"artifact ids {sorted(overlap)} — this desyncs the tune")
+    return _assignment_ids(solves)
+
+
+def _solve_dealer_gear(opt, cur_spd, floor, exclude_ids, anneal=8, verbose=False,
+                       spd_tol=SPD_TOL):
+    """Team-aware dealer gear solve (hardest-SPD-first, with contention). Each
+    dealer's SPD is pinned to its tuned value; ACC is a MIN (floor), damage stats
+    (CD/ATK/CR) are the soft objective. `exclude_ids` (survivor gear) is removed
+    from every dealer's vault, and each dealer's picks are removed from the next
+    dealer's vault so no piece is double-assigned.
+
+    spd_tol: SPD slack above the tune the solve may accept. The DEFAULT (2) is a
+    LOOSE gear search; but because MEN holds by buff-cadence sync, even +1 SPD on
+    a dealer breaks the tune when actually equipped (proven by the gate). Pass
+    spd_tol=0 to force the EXACT tune SPD (a SPD-LOCKED solve)."""
+    used = set(exclude_ids)
+    solves = {}
+    for name in sorted(DEALERS, key=lambda n: -cur_spd[n]):
+        tspd = cur_spd[name]
+        mins = {SPD: tspd, ACC: floor}
+        maxs = {SPD: tspd + spd_tol}
+        targets = gto.build_targets(mins, maxs, dict(DAMAGE_WEIGHTS), None)
+        r = opt.optimize(name, targets, anneal=anneal, exclude_ids=used)
+        for a in (r.get("assignment") or {}).values():
+            if a and a.get("id") is not None:
+                used.add(a["id"])
+        solves[name] = r
+        if verbose:
+            st = r["stats"]
+            print(f"[solve] {name}: SPD {st[SPD]:.0f} ACC {st[ACC]:.0f} "
+                  f"ATK {st[ATK]:.0f} CR {st[CR]:.0f} CD {st[CD]:.0f} "
+                  f"mins_met={r['mins_met']}")
+    return solves
+
+
+def _inject_live_stats(setup, idx, id_by_name, stats_by_id):
+    """Overwrite each hero's in-sim stat block with the LIVE computed stats
+    (the real *Total Stats* after whatever gear is currently equipped). Used so
+    the re-sim reflects the ACTUAL post-equip build, not a cached/hypothetical
+    one. SPD included — that's the load-bearing cadence value."""
+    for name, i in idx.items():
+        hid = id_by_name.get(name)
+        st = stats_by_id.get(hid) if hid is not None else None
+        if not st:
+            continue
+        d = dict(setup["stats_per_hero"][i])
+        for sid in ALL_STATS:
+            if st.get(sid) is not None:
+                d[sid] = float(st[sid])
+        setup["stats_per_hero"][i] = d
+
+
+def safe_regear(element="spirit", dry_run=True, anneal=8,
+                snapshot_name="men_safe_regear",
+                baseline_name="men_baseline_20260630",
+                spd_tol=0, verbose=False):
+    """PROVE a dealer re-gear holds the tune BEFORE any key is spent.
+
+    Flow: snapshot(all 5 + donors) -> apply(dealer assignment) -> read the ACTUAL
+    live computed stats of all 5 -> RE-SIM the team with those REAL post-equip
+    SPDs/stats -> gate on three checks:
+        (a) every SURVIVOR's SPD == its baseline (the tune's SPD sources are
+            untouched — this is what the T24 wipe violated),
+        (b) the team still HOLDS T50 with 0 UK/BD gaps (survival intact),
+        (c) team damage > baseline (the re-gear was worth it).
+    If ANY check fails -> ALWAYS restore the baseline gear and report which check
+    and the actual-vs-expected SPDs. Only if all pass (and not dry_run) is the
+    re-gear left applied ("READY FOR KEY").
+
+    dry_run (default True): run apply->read->resim then RESTORE regardless, so we
+    learn whether the config holds WITHOUT committing. NEVER runs a CB battle or
+    spends a key.
+    """
+    element_id = ELEMENT_NAME_TO_ID[element]
+    floor = _acc_floor()
+    id_by_name = _resolve_ids()
+    all_ids = [id_by_name[n] for n in MEN]
+
+    # ---- 0) baseline = CURRENT (restored) gear; read its real computed stats. -- #
+    baseline_stats = read_computed_stats(all_ids)
+    missing = [hid for hid in all_ids if not baseline_stats.get(hid)]
+    if missing:
+        raise RuntimeError(f"computed stats missing for hero ids {missing} "
+                           "(is the mod up at localhost:6790?)")
+    baseline_spd = {hid: int(round(baseline_stats[hid][SPD])) for hid in all_ids}
+
+    # ---- 1) baseline sim with the REAL current SPDs/stats. ------------------- #
+    setup = _build_team_setup(MEN, use_current_gear=True)
+    if isinstance(setup, dict) and setup.get("error"):
+        raise RuntimeError(setup["error"])
+    names = setup["hero_names"]
+    idx = {n: i for i, n in enumerate(names)}
+    base_setup = copy.deepcopy(setup)
+    _inject_live_stats(base_setup, idx, id_by_name, baseline_stats)
+    baseline = _run_sim(base_setup, element_id)
+
+    # ---- 2) AIRTIGHT survivor exclusion + team-aware dealer solve. ----------- #
+    arts, heroes, account = gto.load_data()
+    opt = gto.Optimizer(arts, heroes, account)
+    survivor_ids, survivor_by_hero = _survivor_equipped_ids(id_by_name)
+    # defensive union with the optimizer's own record of survivor gear.
+    for n in SURVIVORS:
+        h = opt.heroes_by_name.get(n.lower())
+        for a in (h.get("artifacts") if h else []) or []:
+            if a.get("id") is not None:
+                survivor_ids.add(a["id"])
+    cur_spd = {n: baseline_spd[id_by_name[n]] for n in MEN}
+    solves = _solve_dealer_gear(opt, cur_spd, floor, survivor_ids,
+                                anneal=anneal, verbose=verbose, spd_tol=spd_tol)
+    assigned_ids = _assert_no_survivor_overlap(solves, survivor_ids)
+
+    # ---- 3) build the live equip mapping {hero_id: [art_ids]}. --------------- #
+    mapping = {}
+    for name in DEALERS:
+        ids = [a["id"] for a in solves[name]["assignment"].values()
+               if a and a.get("id") is not None]
+        mapping[id_by_name[name]] = ids
+
+    # snapshot the 5 MEN + any DONOR hero currently wearing an assigned piece so
+    # nothing is left stripped after restore.
+    donor_ids = _current_owners(assigned_ids) - set(all_ids)
+    snap_ids = sorted(set(all_ids) | donor_ids)
+
+    # ---- 4) snapshot -> apply -> read -> resim. ----------------------------- #
+    loadouts.snapshot(snapshot_name, snap_ids)
+    apply_res = loadouts.apply(snapshot_name, mapping, snapshot_first=False)
+    post_stats = read_computed_stats(all_ids)
+    post_spd = {hid: (int(round(post_stats[hid][SPD]))
+                      if post_stats.get(hid) else None) for hid in all_ids}
+    post_setup = copy.deepcopy(setup)
+    _inject_live_stats(post_setup, idx, id_by_name, post_stats)
+    regeared = _run_sim(post_setup, element_id)
+
+    # ---- 5) THE GATE. -------------------------------------------------------- #
+    survivor_spd_check = {}
+    survivor_ok = True
+    for n in SURVIVORS:
+        hid = id_by_name[n]
+        b, p = baseline_spd[hid], post_spd.get(hid)
+        ok = (p is not None and b == p)
+        survivor_spd_check[n] = {"baseline": b, "post": p, "ok": ok}
+        survivor_ok = survivor_ok and ok
+    holds_ok = bool(regeared["holds"])
+    damage_ok = regeared["total"] > baseline["total"]
+    passed = survivor_ok and holds_ok and damage_ok
+
+    failed_checks = []
+    if not survivor_ok:
+        failed_checks.append("(a) survivor SPD changed")
+    if not holds_ok:
+        failed_checks.append(f"(b) does not hold T50 "
+                             f"(survives T{regeared['turns']}, gaps={regeared['gaps']})")
+    if not damage_ok:
+        failed_checks.append("(c) damage not above baseline")
+
+    # ---- 6) restore unless we committed AND everything passed. --------------- #
+    committed = (not dry_run) and passed
+    restored = False
+    restore_res = None
+    if not committed:
+        restore_res = loadouts.restore(snapshot_name)
+        restored = True
+
+    return {
+        "element": element, "element_id": element_id, "acc_floor": floor,
+        "dry_run": dry_run, "passed": passed, "committed": committed,
+        "restored": restored, "failed_checks": failed_checks,
+        "baseline": baseline, "regeared": regeared,
+        "baseline_spd": {n: baseline_spd[id_by_name[n]] for n in MEN},
+        "post_spd": {n: post_spd.get(id_by_name[n]) for n in MEN},
+        "survivor_spd_check": survivor_spd_check,
+        "dealer_spd_check": {n: {"target": cur_spd[n],
+                                 "post": post_spd.get(id_by_name[n])}
+                             for n in DEALERS},
+        "solves": solves, "mapping": mapping, "id_by_name": id_by_name,
+        "survivor_excluded": sorted(survivor_ids),
+        "assigned_ids": sorted(assigned_ids),
+        "snap_ids": snap_ids, "donor_ids": sorted(donor_ids),
+        "apply_res": apply_res, "restore_res": restore_res,
+        "snapshot_name": snapshot_name,
+    }
+
+
+def _print_safe_report(R):
+    print("\n" + "=" * 78)
+    print(f" MEN safe re-gear GATE  -  element={R['element']}  "
+          f"(dry_run={R['dry_run']})")
+    print("=" * 78)
+    print(" survivor exclusion: dealer assignment shares "
+          f"{len(set(R['assigned_ids']) & set(R['survivor_excluded']))} ids with "
+          f"survivor gear (must be 0)  [ASSERT PASSED]")
+    print("\n SPD (game-truth /hero-computed-stats):")
+    print(f"   {'hero':10s} {'baseline':>9s} {'post':>7s}  role")
+    for n in MEN:
+        role = "SURVIVOR" if n in SURVIVORS else "dealer"
+        b = R["baseline_spd"][n]
+        p = R["post_spd"][n]
+        flag = ""
+        if n in SURVIVORS and p is not None and b != p:
+            flag = "  <-- CHANGED (tune broken)"
+        print(f"   {n:10s} {b:>9} {str(p):>7}  {role}{flag}")
+
+    base, re = R["baseline"], R["regeared"]
+    print("\n team cb_sim (ESTIMATE; real numbers under-survive):")
+    print(f"   BEFORE: {base['total']/1e6:6.2f}M  holds={base['holds']} "
+          f"(T{base['turns']}, gaps={base['gaps']})")
+    print(f"   AFTER : {re['total']/1e6:6.2f}M  holds={re['holds']} "
+          f"(T{re['turns']}, gaps={re['gaps']})")
+    d = re["total"] - base["total"]
+    print(f"   DELTA : {d/1e6:+6.2f}M")
+
+    print("\n GATE:")
+    print(f"   (a) survivors' SPD unchanged : "
+          f"{all(v['ok'] for v in R['survivor_spd_check'].values())}")
+    print(f"   (b) holds T50, 0 gaps        : {re['holds']}")
+    print(f"   (c) damage > baseline        : {re['total'] > base['total']}")
+    if R["passed"]:
+        verdict = ("READY FOR KEY" if R["committed"]
+                   else "HOLDS (dry-run) — re-run with --commit to leave applied")
+        print(f"\n   VERDICT: PASS — {verdict}")
+    else:
+        print(f"\n   VERDICT: FAIL — {', '.join(R['failed_checks'])}")
+        print("   -> baseline gear RESTORED (gate caught the desync before a key).")
+    print(f"   gear restored this run: {R['restored']}\n")
+
+
 def regear(element="spirit", anneal=8, max_combos=200, verbose=False):
     element_id = ELEMENT_NAME_TO_ID[element]
     try:
@@ -191,31 +559,22 @@ def regear(element="spirit", anneal=8, max_combos=200, verbose=False):
     arts, heroes, account = gto.load_data()
     opt = gto.Optimizer(arts, heroes, account)
 
-    # exclude survival heroes' CURRENT equipped gear from the dealers' vault.
-    used = set()
-    for sn in SURVIVORS:
+    # exclude survival heroes' CURRENT equipped gear from the dealers' vault —
+    # read LIVE (/all-heroes), not from a cached json, so a piece the survivors
+    # actually wear can never leak into a dealer's assignment (the T24-wipe bug).
+    try:
+        survivor_ids, _ = _survivor_equipped_ids()
+    except Exception:
+        survivor_ids = set()
+    for sn in SURVIVORS:                       # defensive union with cached record
         h = opt.heroes_by_name.get(sn.lower())
         for a in (h.get("artifacts") if h else []) or []:
             if a.get("id") is not None:
-                used.add(a["id"])
+                survivor_ids.add(a["id"])
 
-    solves = {}
-    # hardest-SPD-first so the tightest tune claims its boots before the others.
-    for name in sorted(DEALERS, key=lambda n: -cur_spd[n]):
-        tspd = cur_spd[name]
-        mins = {SPD: tspd, ACC: floor}
-        maxs = {SPD: tspd + SPD_TOL}
-        targets = gto.build_targets(mins, maxs, dict(DAMAGE_WEIGHTS), None)
-        r = opt.optimize(name, targets, anneal=anneal, exclude_ids=used)
-        for a in (r.get("assignment") or {}).values():
-            if a and a.get("id") is not None:
-                used.add(a["id"])
-        solves[name] = r
-        if verbose:
-            st = r["stats"]
-            print(f"[solve] {name}: SPD {st[SPD]:.0f} ACC {st[ACC]:.0f} "
-                  f"ATK {st[ATK]:.0f} CR {st[CR]:.0f} CD {st[CD]:.0f} "
-                  f"mins_met={r['mins_met']}")
+    solves = _solve_dealer_gear(opt, cur_spd, floor, survivor_ids,
+                                anneal=anneal, verbose=verbose)
+    _assert_no_survivor_overlap(solves, survivor_ids)
 
     # ---- re-score: override dealer stats, FORCE SPD to the holding tune. ----- #
     # Survivors keep current-gear stats; all 5 SPDs are pinned to the same
@@ -330,7 +689,34 @@ def main(argv=None):
                     help="cap on the team_tune SPD search that finds the holding tune")
     ap.add_argument("--json", help="also dump the result dict to this path")
     ap.add_argument("--verbose", action="store_true")
+    ap.add_argument("--safe", action="store_true",
+                    help="run the LIVE safe_regear GATE (snapshot->apply->read->"
+                         "resim->restore) instead of the offline report")
+    ap.add_argument("--commit", action="store_true",
+                    help="with --safe: leave the re-gear APPLIED if the gate PASSES "
+                         "(default is dry-run: always restore). Never spends a key.")
+    ap.add_argument("--snapshot-name", default="men_safe_regear")
+    ap.add_argument("--spd-tol", type=int, default=0,
+                    help="with --safe: SPD slack above tune the gear solve may use "
+                         "(0 = exact SPD-lock; 2 = loose). Default 0.")
     args = ap.parse_args(argv)
+
+    if args.safe:
+        R = safe_regear(element=args.element, dry_run=not args.commit,
+                        anneal=args.anneal, snapshot_name=args.snapshot_name,
+                        spd_tol=args.spd_tol, verbose=args.verbose)
+        _print_safe_report(R)
+        if args.json:
+            _json_safe = {k: R[k] for k in (
+                "element", "acc_floor", "dry_run", "passed", "committed",
+                "restored", "failed_checks", "baseline", "regeared",
+                "baseline_spd", "post_spd", "survivor_spd_check",
+                "dealer_spd_check", "mapping", "survivor_excluded",
+                "assigned_ids", "snap_ids")}
+            Path(args.json).write_text(json.dumps(_json_safe, indent=2),
+                                       encoding="utf-8")
+            print(f"[json] wrote {args.json}")
+        return 0 if R["passed"] else 1
 
     R = regear(element=args.element, anneal=args.anneal,
                max_combos=args.max_combos, verbose=args.verbose)
