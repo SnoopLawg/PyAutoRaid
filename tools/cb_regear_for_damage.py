@@ -71,16 +71,21 @@ import team_tune  # noqa: E402
 import loadouts  # noqa: E402  (snapshot / apply / restore + live /all-heroes)
 
 MEN = ["Maneater", "Demytha", "Ninja", "Geomancer", "Venomage"]
-DEALERS = ["Ninja", "Geomancer", "Venomage"]
-SURVIVORS = ["Maneater", "Demytha"]
+# TUNE TRIO frozen (2026-07-01, user-directed): Maneater(UK)+Demytha(BD)+NINJA are
+# the survival CADENCE — all three must KEEP their exact speeds or the tune desyncs
+# and the team wipes (proven: re-gearing Ninja -> T23 wipe even at computed-tune SPD,
+# because the tune runs on in-battle s_spd which a gear swap can shift). So Ninja is
+# frozen too now; only Geo/Venom (pure DPS at ~1.0/boss-turn) are re-geared.
+DEALERS = ["Geomancer", "Venomage"]
+SURVIVORS = ["Maneater", "Demytha", "Ninja"]
 
 MOD_BASE = "http://localhost:6790"
 
 # Instance IDs of the MEN team (game-truth, verified live via /hero-computed-stats
 # and /all-heroes 2026-06-30). Used as the authoritative hint when resolving
 # name->id (a name lookup could pick the wrong instance if the roster has dupes).
-SURVIVOR_IDS = {"Maneater": 15120, "Demytha": 18607}
-DEALER_IDS = {"Ninja": 2643, "Geomancer": 13615, "Venomage": 5692}
+SURVIVOR_IDS = {"Maneater": 15120, "Demytha": 18607, "Ninja": 2643}
+DEALER_IDS = {"Geomancer": 13615, "Venomage": 5692}
 MEN_ID_HINT = {**SURVIVOR_IDS, **DEALER_IDS}
 
 # /hero-computed-stats returns per-column stat bonuses; the game's *Total Stats*
