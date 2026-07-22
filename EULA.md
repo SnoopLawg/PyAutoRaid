@@ -1,4 +1,4 @@
-> **DRAFT — subject to change before public release.** Governing-law and contact fields are placeholders still to be finalized.
+> **Free, in-development tool — these terms may change before the public release. Not legal advice.**
 
 # PyAutoRaid — End User License Agreement and Terms of Use
 
@@ -131,7 +131,7 @@ Upon termination, you must stop using the Software and delete all copies of it i
 
 ## 12. Governing Law
 
-These Terms are governed by and construed in accordance with the laws of **[JURISDICTION]**, without regard to its conflict-of-laws principles. You agree that any dispute arising out of or relating to the Software or these Terms shall be subject to the exclusive jurisdiction of the courts located in **[JURISDICTION]**, and you consent to their personal jurisdiction and venue, to the extent permitted by applicable law.
+These Terms are governed by and construed in accordance with the laws of **the Developer's principal place of residence**, without regard to its conflict-of-laws principles. Any dispute arising out of or relating to the Software or these Terms shall be subject to the courts having jurisdiction over the Developer's principal place of residence, to the extent permitted by applicable law.
 
 Nothing in these Terms limits any mandatory consumer-protection rights you may have under the laws of your country or place of residence that cannot be waived by agreement.
 
@@ -149,7 +149,7 @@ The Developer may update or change these Terms at any time. When the Terms chang
 - **Severability.** If any provision of these Terms is held to be unenforceable or invalid, that provision will be limited or eliminated to the minimum extent necessary, and the remaining provisions will remain in full force and effect.
 - **No Waiver.** The Developer's failure to enforce any provision is not a waiver of its right to do so later.
 - **Assignment.** You may not assign or transfer these Terms or your license. The Developer may assign these Terms freely.
-- **Contact.** Questions about these Terms can be directed to the Developer at **[CONTACT EMAIL / PROJECT PAGE]**.
+- **Contact.** Questions about these Terms can be directed to the Developer at **walangkaalam@gmail.com**.
 
 ---
 

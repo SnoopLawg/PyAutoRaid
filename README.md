@@ -9,7 +9,16 @@ Key-free battle simulation, team &amp; gear optimization, and battle history for
 <strong>Raid: Shadow Legends</strong> — free, and running entirely on your own PC.
 </p>
 
-<b>🚧 In active development — public download coming soon. Watch / ★ this repo to catch the release.</b>
+<p>by <a href="https://youtube.com/@walangkaalam"><b>WalangKaalam</b></a></p>
+
+<p>
+<a href="https://youtube.com/@walangkaalam">▶ YouTube</a> &nbsp;·&nbsp;
+<a href="https://discord.gg/walangkaalam">💬 Discord</a> &nbsp;·&nbsp;
+<a href="https://reddit.com/user/walangkaalam">👽 Reddit</a>
+</p>
+
+<b>🚧 In active development — public download coming soon.</b><br/>
+<sub>★ this repo and join the <a href="https://discord.gg/walangkaalam">Discord</a> to catch the release.</sub>
 
 </div>
 
@@ -45,10 +54,13 @@ private API on your machine that the tool talks to directly.
 
 ---
 
-## Status
+## Community &amp; updates
 
-PyAutoRaid is being prepared for an easy, no-setup public release. Downloads, a community
-Discord, and a support link are on the way — **watch / ★ this repo** to be here when it drops.
+Development, guides, tune sharing, and release news:
+
+- **▶ YouTube** — <https://youtube.com/@walangkaalam>
+- **💬 Discord** — <https://discord.gg/walangkaalam>
+- **👽 Reddit** — <https://reddit.com/user/walangkaalam>
 
 ---
 
@@ -81,5 +93,5 @@ page and (soon) release host, not the source code.
 ---
 
 <div align="center">
-<sub>Not affiliated with Plarium · Raid: Shadow Legends © Plarium · Use at your own risk</sub>
+<sub>PyAutoRaid by WalangKaalam · Not affiliated with Plarium · Raid: Shadow Legends © Plarium · Use at your own risk</sub>
 </div>
