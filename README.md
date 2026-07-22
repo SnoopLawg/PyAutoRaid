@@ -13,12 +13,12 @@ Key-free battle simulation, team &amp; gear optimization, and battle history for
 
 <p>
 <a href="https://youtube.com/@walangkaalam">▶ YouTube</a> &nbsp;·&nbsp;
-<a href="https://discord.gg/walangkaalam">💬 Discord</a> &nbsp;·&nbsp;
+<a href="https://discord.gg/cH5cfyf9D">💬 Discord</a> &nbsp;·&nbsp;
 <a href="https://reddit.com/user/walangkaalam">👽 Reddit</a>
 </p>
 
 <b>🚧 In active development — public download coming soon.</b><br/>
-<sub>★ this repo and join the <a href="https://discord.gg/walangkaalam">Discord</a> to catch the release.</sub>
+<sub>★ this repo and join the <a href="https://discord.gg/cH5cfyf9D">Discord</a> to catch the release.</sub>
 
 </div>
 
@@ -59,7 +59,7 @@ private API on your machine that the tool talks to directly.
 Development, guides, tune sharing, and release news:
 
 - **▶ YouTube** — <https://youtube.com/@walangkaalam>
-- **💬 Discord** — <https://discord.gg/walangkaalam>
+- **💬 Discord** — <https://discord.gg/cH5cfyf9D>
 - **👽 Reddit** — <https://reddit.com/user/walangkaalam>
 
 ---
