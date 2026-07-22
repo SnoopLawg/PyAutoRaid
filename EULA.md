@@ -131,7 +131,7 @@ Upon termination, you must stop using the Software and delete all copies of it i
 
 ## 12. Governing Law
 
-These Terms are governed by and construed in accordance with the laws of **the Developer's principal place of residence**, without regard to its conflict-of-laws principles. Any dispute arising out of or relating to the Software or these Terms shall be subject to the courts having jurisdiction over the Developer's principal place of residence, to the extent permitted by applicable law.
+These Terms are governed by and construed in accordance with the laws of **the United States** and, where applicable, the State in which the Developer resides, without regard to conflict-of-laws principles. Any dispute arising out of or relating to the Software or these Terms shall be subject to the courts of the United States having jurisdiction over the Developer's place of residence, to the extent permitted by applicable law.
 
 Nothing in these Terms limits any mandatory consumer-protection rights you may have under the laws of your country or place of residence that cannot be waived by agreement.
 
