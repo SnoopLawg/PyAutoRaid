@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PyAutoRaid — See your real Clan Boss fight before you spend a key</title>
+<meta name="description" content="PyAutoRaid is a free, local tool for Raid: Shadow Legends. Simulate your real Clan Boss fight key-free, optimize teams and gear, and review battle history. By WalangKaalam.">
+<meta name="theme-color" content="#0f0d0b">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="PyAutoRaid">
+<meta property="og:description" content="See your real Clan Boss fight before you spend a key.">
+<meta property="og:site_name" content="PyAutoRaid">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg:            #0d0b0a;
+    --bg-2:          #14100d;
+    --bg-panel:      #1a1512;
+    --bg-panel-2:    #211a15;
+    --line:          #2c231c;
+    --line-warm:     #3a2c20;
+    --text:          #e9e0d4;
+    --text-dim:      #b0a292;
+    --text-faint:    #7d7264;
+    --amber:         #d8a657;
+    --amber-bright:  #eec078;
+    --ember:         #c25a3a;
+    --ember-bright:  #e07a52;
+    --glow-amber:    rgba(216, 166, 87, 0.28);
+    --glow-ember:    rgba(194, 90, 58, 0.30);
+    --serif:  'Cinzel', Georgia, 'Times New Roman', serif;
+    --mono:   'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+    --sans:   'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --maxw: 1120px;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 17px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+  }
+
+  /* Layered ember-forge backdrop */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    background:
+      radial-gradient(900px 620px at 15% -8%, rgba(194,90,58,0.16), transparent 62%),
+      radial-gradient(1000px 700px at 88% 4%, rgba(216,166,87,0.13), transparent 60%),
+      radial-gradient(1200px 900px at 50% 118%, rgba(194,90,58,0.10), transparent 68%),
+      linear-gradient(180deg, #0d0b0a 0%, #100c0a 45%, #0a0807 100%);
+  }
+  /* Faint forge-spark grain */
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0.4;
+    background-image:
+      radial-gradient(1px 1px at 20% 30%, rgba(238,192,120,0.25), transparent),
+      radial-gradient(1px 1px at 70% 60%, rgba(224,122,82,0.22), transparent),
+      radial-gradient(1px 1px at 40% 80%, rgba(216,166,87,0.18), transparent),
+      radial-gradient(1px 1px at 85% 25%, rgba(238,192,120,0.16), transparent);
+  }
+
+  a { color: var(--amber); text-decoration: none; transition: color .18s ease; }
+  a:hover { color: var(--amber-bright); }
+
+  .wrap {
+    max-width: var(--maxw);
+    margin: 0 auto;
+    padding: 0 28px;
+  }
+
+  .mono { font-family: var(--mono); }
+  .accent { color: var(--amber); }
+  .ember { color: var(--ember-bright); }
+
+  /* ---------- Header / nav ---------- */
+  header.site {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    backdrop-filter: blur(10px);
+    background: rgba(13,11,10,0.72);
+    border-bottom: 1px solid var(--line);
+  }
+  .nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 66px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--serif);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    font-size: 1.12rem;
+    color: var(--text);
+  }
+  .brand .mark {
+    width: 30px; height: 30px;
+    display: grid; place-items: center;
+    border-radius: 7px;
+    background: linear-gradient(150deg, var(--ember), var(--amber));
+    box-shadow: 0 0 16px var(--glow-ember);
+    color: #150f0a;
+    font-family: var(--mono);
+    font-weight: 700;
+    font-size: 0.95rem;
+  }
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 26px;
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+  .nav-links a { color: var(--text-dim); letter-spacing: 0.02em; }
+  .nav-links a:hover { color: var(--amber-bright); }
+  .nav-cta {
+    padding: 8px 16px;
+    border: 1px solid var(--line-warm);
+    border-radius: 8px;
+    color: var(--amber) !important;
+    font-family: var(--mono);
+    font-size: 0.82rem;
+  }
+  .nav-cta:hover { border-color: var(--amber); background: rgba(216,166,87,0.06); }
+  @media (max-width: 720px) { .nav-links a.navlink { display:none; } }
+
+  /* ---------- Hero ---------- */
+  .hero {
+    position: relative;
+    padding: 96px 0 84px;
+    text-align: center;
+  }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 22px;
+    opacity: 0.9;
+  }
+  .hero h1 {
+    font-family: var(--serif);
+    font-weight: 800;
+    font-size: clamp(3rem, 9vw, 6rem);
+    line-height: 1;
+    margin: 0 0 8px;
+    letter-spacing: 0.02em;
+    background: linear-gradient(180deg, #fbe6cf 0%, var(--amber) 62%, var(--ember) 118%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 0 60px var(--glow-amber);
+  }
+  .byline {
+    font-family: var(--mono);
+    font-size: 0.9rem;
+    color: var(--text-faint);
+    letter-spacing: 0.12em;
+    margin-bottom: 30px;
+  }
+  .byline b { color: var(--amber); font-weight: 700; }
+  .tagline {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: clamp(1.25rem, 3.4vw, 1.95rem);
+    line-height: 1.35;
+    max-width: 760px;
+    margin: 0 auto 42px;
+    color: var(--text);
+  }
+  .tagline .flame { color: var(--ember-bright); }
+
+  .cta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    justify-content: center;
+    align-items: center;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 15px 30px;
+    border-radius: 11px;
+    font-family: var(--mono);
+    font-weight: 500;
+    font-size: 0.95rem;
+    letter-spacing: 0.02em;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: transform .16s ease, box-shadow .2s ease, background .2s ease, border-color .2s ease;
+  }
+  .btn:hover { transform: translateY(-2px); }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--ember) 0%, var(--amber) 100%);
+    color: #160f09;
+    font-weight: 700;
+    box-shadow: 0 10px 34px var(--glow-ember), inset 0 1px 0 rgba(255,255,255,0.22);
+  }
+  .btn-primary:hover { box-shadow: 0 14px 42px var(--glow-ember), inset 0 1px 0 rgba(255,255,255,0.3); color:#160f09; }
+  .btn-primary .soon {
+    font-size: 0.68rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: rgba(22,15,9,0.32);
+    color: #22160c;
+    font-weight: 700;
+  }
+
+  .btn-ghost {
+    background: var(--bg-panel);
+    border: 1px solid var(--line-warm);
+    color: var(--text-dim);
+  }
+  .btn-ghost:hover { color: var(--amber-bright); border-color: var(--amber); background: var(--bg-panel-2); }
+  .btn-ghost svg { flex-shrink: 0; }
+
+  .community {
+    margin-top: 26px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 10px 18px;
+    border-radius: 999px;
+    background: rgba(26,21,18,0.7);
+    border: 1px solid var(--line);
+    color: var(--text-dim);
+    font-size: 0.86rem;
+    font-family: var(--mono);
+    letter-spacing: 0.02em;
+    transition: border-color .2s ease, color .2s ease, transform .16s ease;
+  }
+  .chip:hover { color: var(--text); border-color: var(--amber); transform: translateY(-2px); }
+  .chip svg { width: 17px; height: 17px; flex-shrink: 0; }
+
+  /* ---------- Section scaffolding ---------- */
+  section { position: relative; }
+  .section-pad { padding: 84px 0; }
+  .section-head { text-align: center; margin-bottom: 56px; }
+  .kicker {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    letter-spacing: 0.26em;
+    text-transform: uppercase;
+    color: var(--ember-bright);
+    margin-bottom: 14px;
+  }
+  h2.section-title {
+    font-family: var(--serif);
+    font-weight: 700;
+    font-size: clamp(1.9rem, 4.6vw, 2.85rem);
+    margin: 0 0 14px;
+    letter-spacing: 0.02em;
+    color: var(--text);
+  }
+  .section-sub {
+    max-width: 640px;
+    margin: 0 auto;
+    color: var(--text-dim);
+    font-size: 1.02rem;
+  }
+
+  .divider {
+    height: 1px;
+    max-width: var(--maxw);
+    margin: 0 auto;
+    background: linear-gradient(90deg, transparent, var(--line-warm) 20%, var(--amber) 50%, var(--line-warm) 80%, transparent);
+    opacity: 0.5;
+  }
+
+  /* ---------- Features grid ---------- */
+  .features {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 22px;
+  }
+  @media (max-width: 780px) { .features { grid-template-columns: 1fr; } }
+
+  .feat {
+    position: relative;
+    padding: 30px 28px;
+    border-radius: 16px;
+    background: linear-gradient(180deg, var(--bg-panel) 0%, var(--bg-2) 100%);
+    border: 1px solid var(--line);
+    overflow: hidden;
+    transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+  }
+  .feat:hover { transform: translateY(-4px); border-color: var(--line-warm); box-shadow: 0 18px 40px rgba(0,0,0,0.4); }
+  .feat::before {
+    content: "";
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, var(--ember), var(--amber));
+    opacity: 0;
+    transition: opacity .2s ease;
+  }
+  .feat:hover::before { opacity: 1; }
+
+  .feat.marquee {
+    grid-column: 1 / -1;
+    background:
+      radial-gradient(600px 240px at 8% -30%, rgba(194,90,58,0.16), transparent 70%),
+      linear-gradient(160deg, var(--bg-panel-2) 0%, var(--bg-2) 100%);
+    border-color: var(--line-warm);
+  }
+  .feat.marquee::before { opacity: 1; }
+  @media (min-width: 781px) {
+    .feat.marquee { display: grid; grid-template-columns: 1.35fr 1fr; gap: 34px; align-items: center; }
+  }
+
+  .badge {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--amber);
+    border: 1px solid var(--line-warm);
+    padding: 4px 11px;
+    border-radius: 999px;
+    margin-bottom: 16px;
+  }
+  .feat-icon {
+    width: 46px; height: 46px;
+    display: grid; place-items: center;
+    border-radius: 11px;
+    background: rgba(216,166,87,0.09);
+    border: 1px solid var(--line-warm);
+    color: var(--amber);
+    margin-bottom: 18px;
+  }
+  .feat-icon svg { width: 24px; height: 24px; }
+  .feat h3 {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: 1.32rem;
+    margin: 0 0 10px;
+    letter-spacing: 0.02em;
+    color: var(--text);
+  }
+  .feat.marquee h3 { font-size: 1.7rem; }
+  .feat p { margin: 0; color: var(--text-dim); font-size: 0.98rem; }
+  .feat p + p { margin-top: 12px; }
+
+  /* Terminal mock for marquee */
+  .term {
+    border-radius: 12px;
+    border: 1px solid var(--line-warm);
+    background: #0a0807;
+    overflow: hidden;
+    box-shadow: 0 14px 34px rgba(0,0,0,0.5);
+  }
+  .term-bar {
+    display: flex; align-items: center; gap: 7px;
+    padding: 10px 14px;
+    background: #120d0a;
+    border-bottom: 1px solid var(--line);
+  }
+  .term-dot { width: 11px; height: 11px; border-radius: 50%; }
+  .term-dot.r { background: #c25a3a; }
+  .term-dot.y { background: #d8a657; }
+  .term-dot.g { background: #6f7d4a; }
+  .term-title { margin-left: 8px; font-family: var(--mono); font-size: 0.72rem; color: var(--text-faint); }
+  .term-body {
+    padding: 16px 18px;
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    line-height: 1.9;
+    color: var(--text-dim);
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .term-body .p { color: var(--ember-bright); }
+  .term-body .k { color: var(--amber); }
+  .term-body .g { color: #9db06a; }
+  .term-body .d { color: var(--text-faint); }
+
+  /* ---------- How it works ---------- */
+  .how-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 22px;
+  }
+  @media (max-width: 780px) { .how-grid { grid-template-columns: 1fr; } }
+  .how {
+    display: flex;
+    gap: 20px;
+    padding: 26px 24px;
+    border-radius: 14px;
+    background: var(--bg-panel);
+    border: 1px solid var(--line);
+  }
+  .how .num {
+    flex-shrink: 0;
+    font-family: var(--serif);
+    font-weight: 700;
+    font-size: 1.5rem;
+    width: 46px; height: 46px;
+    display: grid; place-items: center;
+    border-radius: 11px;
+    color: var(--amber);
+    background: rgba(194,90,58,0.08);
+    border: 1px solid var(--line-warm);
+  }
+  .how h4 {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: 1.14rem;
+    margin: 2px 0 8px;
+    color: var(--text);
+    letter-spacing: 0.01em;
+  }
+  .how p { margin: 0; color: var(--text-dim); font-size: 0.94rem; }
+  .how code {
+    font-family: var(--mono);
+    font-size: 0.85em;
+    color: var(--amber);
+    background: rgba(216,166,87,0.08);
+    padding: 1px 6px;
+    border-radius: 5px;
+  }
+
+  .trust-banner {
+    margin-top: 40px;
+    text-align: center;
+    padding: 30px 28px;
+    border-radius: 16px;
+    background:
+      radial-gradient(500px 200px at 50% -40%, rgba(216,166,87,0.14), transparent 70%),
+      var(--bg-panel);
+    border: 1px solid var(--line-warm);
+  }
+  .trust-banner .lead {
+    font-family: var(--serif);
+    font-size: clamp(1.2rem, 3vw, 1.55rem);
+    font-weight: 500;
+    color: var(--text);
+    margin: 0 auto 8px;
+    max-width: 720px;
+    line-height: 1.4;
+  }
+  .trust-banner .sub { color: var(--text-dim); margin: 0; font-size: 0.96rem; }
+
+  /* ---------- Final CTA ---------- */
+  .final {
+    text-align: center;
+    padding: 90px 0 40px;
+  }
+  .final h2 {
+    font-family: var(--serif);
+    font-weight: 700;
+    font-size: clamp(1.8rem, 4.6vw, 2.7rem);
+    margin: 0 0 16px;
+    color: var(--text);
+    letter-spacing: 0.02em;
+  }
+  .final p { color: var(--text-dim); max-width: 560px; margin: 0 auto 34px; }
+
+  /* ---------- Footer ---------- */
+  footer.site {
+    border-top: 1px solid var(--line);
+    background: #0a0807;
+    padding: 46px 0 60px;
+    margin-top: 40px;
+  }
+  .foot-top {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 34px;
+  }
+  .foot-brand {
+    font-family: var(--serif);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    font-size: 1.15rem;
+    color: var(--text);
+  }
+  .foot-brand span { display:block; font-family: var(--mono); font-weight:400; font-size: 0.78rem; color: var(--text-faint); letter-spacing: 0.1em; margin-top: 6px; }
+  .foot-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 22px;
+    font-family: var(--mono);
+    font-size: 0.84rem;
+  }
+  .foot-links a { color: var(--text-dim); }
+  .foot-links a:hover { color: var(--amber-bright); }
+
+  .disclaimer {
+    border-top: 1px solid var(--line);
+    padding-top: 26px;
+    color: var(--text-faint);
+    font-size: 0.82rem;
+    line-height: 1.75;
+  }
+  .disclaimer p { margin: 0 0 10px; }
+  .disclaimer strong { color: var(--text-dim); font-weight: 600; }
+  .disclaimer a { color: var(--amber); }
+
+  ::selection { background: rgba(194,90,58,0.4); color: #fff; }
+</style>
+</head>
+<body>
+
+<!-- ============ HEADER ============ -->
+<header class="site">
+  <div class="wrap nav">
+    <a class="brand" href="#top">
+      <span class="mark">PA</span>
+      PyAutoRaid
+    </a>
+    <nav class="nav-links">
+      <a class="navlink" href="#features">Features</a>
+      <a class="navlink" href="#how">How it works</a>
+      <a class="navlink" href="https://discord.gg/cH5cfyf9D" target="_blank" rel="noopener">Community</a>
+      <a class="nav-cta" href="#download">Download</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- ============ HERO ============ -->
+  <section class="hero" id="download">
+    <div class="wrap">
+      <div class="eyebrow">Raid: Shadow Legends · Offline Assistant</div>
+      <h1>PyAutoRaid</h1>
+      <div class="byline">by <b>WalangKaalam</b></div>
+      <p class="tagline">
+        See your <span class="flame">real Clan Boss fight</span><br>
+        before you spend a key.
+      </p>
+
+      <div class="cta-row">
+        <button class="btn btn-primary" type="button" aria-disabled="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download
+          <span class="soon">Coming soon</span>
+        </button>
+        <a class="btn btn-ghost" href="https://discord.gg/cH5cfyf9D" target="_blank" rel="noopener">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M19.27 5.33A16.9 16.9 0 0 0 15.06 4l-.24.44c1.4.38 2.65 1 3.82 1.83A11.6 11.6 0 0 0 12 5.1c-2.36 0-4.55.55-6.64 1.17a15.8 15.8 0 0 1 3.82-1.83L8.94 4C7.5 4.3 6.08 4.75 4.73 5.33 2.13 9.17 1.42 12.9 1.77 16.6a16.9 16.9 0 0 0 5.18 2.6l.42-.62c-.72-.27-1.4-.6-2.03-1l.5-.37c3.9 1.82 8.14 1.82 12 0l.5.37c-.63.4-1.31.73-2.03 1l.42.62a16.7 16.7 0 0 0 5.18-2.6c.42-4.28-.72-7.98-2.64-11.27ZM8.52 14.4c-1 0-1.83-.92-1.83-2.05 0-1.13.8-2.05 1.83-2.05s1.85.93 1.83 2.05c0 1.13-.81 2.05-1.83 2.05Zm6.96 0c-1 0-1.83-.92-1.83-2.05 0-1.13.8-2.05 1.83-2.05s1.85.93 1.83 2.05c0 1.13-.8 2.05-1.83 2.05Z"/></svg>
+          Discord
+        </a>
+        <a class="btn btn-ghost" href="https://youtube.com/@walangkaalam" target="_blank" rel="noopener">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8ZM9.6 15.6V8.4L15.8 12l-6.2 3.6Z"/></svg>
+          YouTube
+        </a>
+        <a class="btn btn-ghost" href="https://reddit.com/user/walangkaalam" target="_blank" rel="noopener">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0a12 12 0 1 0 0 24 12 12 0 0 0 0-24Zm6.7 12.6c.02.2.03.4.03.6 0 3.05-3.55 5.52-7.93 5.52s-7.93-2.47-7.93-5.52c0-.2 0-.4.03-.6a1.7 1.7 0 0 1-.98-1.54 1.7 1.7 0 0 1 2.88-1.23 8.36 8.36 0 0 1 4.5-1.42l.85-3.98a.36.36 0 0 1 .43-.27l2.8.6a1.2 1.2 0 1 1-.16.72l-2.5-.53-.76 3.6a8.33 8.33 0 0 1 4.44 1.42 1.7 1.7 0 0 1 2.87 1.24 1.7 1.7 0 0 1-.98 1.53ZM8.4 12.9a1.2 1.2 0 1 0 2.4 0 1.2 1.2 0 0 0-2.4 0Zm6.85 3.06c-.83.82-2.4.88-2.86.88-.46 0-2.03-.06-2.85-.88a.3.3 0 0 1 .42-.44c.52.52 1.63.7 2.43.7.8 0 1.92-.18 2.43-.7a.3.3 0 1 1 .43.44Zm-.25-1.86a1.2 1.2 0 1 1 0-2.4 1.2 1.2 0 0 1 0 2.4Z"/></svg>
+          Reddit
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ============ FEATURES ============ -->
+  <section class="section-pad" id="features">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="kicker">What it does</div>
+        <h2 class="section-title">Forged for the fight</h2>
+        <p class="section-sub">A complete offline assistant that runs your battles, simulates them without spending resources, and optimizes what you take in.</p>
+      </div>
+
+      <div class="features">
+
+        <!-- Marquee -->
+        <article class="feat marquee">
+          <div>
+            <span class="badge">Marquee feature</span>
+            <h3>Key-free Clan Boss simulation</h3>
+            <p>PyAutoRaid runs the game's <strong style="color:var(--text)">real battle engine</strong> to play out your Clan Boss fight offline — turn by turn, hit by hit — <em>without spending a single key.</em></p>
+            <p>Test a tune, a re-gear, or a new champion and watch exactly how the fight unfolds before it costs you anything.</p>
+          </div>
+          <div class="term" aria-hidden="true">
+            <div class="term-bar">
+              <span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span>
+              <span class="term-title">cb_sim.py — void UNM</span>
+            </div>
+            <div class="term-body"><span class="d">$</span> <span class="k">pyautoraid</span> cb sim
+<span class="d">──────────────────────────</span>
+turn 12  <span class="p">Maneater</span> A1
+turn 13  <span class="p">Demytha</span>  A3 <span class="g">[Block DMG]</span>
+turn 14  <span class="k">Ninja</span>    A2 <span class="g">[detonate]</span>
+   ...
+<span class="d">survives → T50 enrage</span>
+total dmg   <span class="k">36.4M</span>  <span class="g">✓ keys spent: 0</span></div>
+          </div>
+        </article>
+
+        <!-- Optimizer -->
+        <article class="feat">
+          <div class="feat-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.9 4.9l2.9 2.9M16.2 16.2l2.9 2.9M2 12h4M18 12h4M4.9 19.1l2.9-2.9M16.2 7.8l2.9-2.9"/><circle cx="12" cy="12" r="3.2"/></svg>
+          </div>
+          <h3>Team & gear optimizer</h3>
+          <p>Assign artifacts to hit location-specific stat targets — ACC floors, speed tunes, crit and damage caps — and get a clean diff of only the swaps that improve your team.</p>
+        </article>
+
+        <!-- History -->
+        <article class="feat">
+          <div class="feat-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3.5 2"/></svg>
+          </div>
+          <h3>Battle history</h3>
+          <p>Every fight is logged in full — per-turn turn meter, buffs, debuffs, per-hit damage. Review any run, compare tunes over time, and calibrate against reality.</p>
+        </article>
+
+        <!-- Automation -->
+        <article class="feat">
+          <div class="feat-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="7"/><path d="M12 8v4l2.5 2.5"/></svg>
+          </div>
+          <h3>Automation — optional</h3>
+          <p>Run a location N times, or schedule daily runs, entirely headless. Every automated action goes through the mod API — <strong style="color:var(--text)">never screen automation</strong>. Fully opt-in.</p>
+        </article>
+
+        <!-- Offline / local -->
+        <article class="feat">
+          <div class="feat-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 21h8M12 18v3"/><path d="M6 8h.01M6 12h.01"/></svg>
+          </div>
+          <h3>Runs entirely on your PC</h3>
+          <p>PyAutoRaid runs locally on your Windows machine alongside the game. No cloud, no account sharing — your data stays with you.</p>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ============ HOW IT WORKS ============ -->
+  <section class="section-pad" id="how">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="kicker">How it works</div>
+        <h2 class="section-title">Trustworthy by design</h2>
+        <p class="section-sub">Because PyAutoRaid drives the game's own battle engine, what you see in the sim is what you'll get in the fight.</p>
+      </div>
+
+      <div class="how-grid">
+        <div class="how">
+          <div class="num">1</div>
+          <div>
+            <h4>A local mod, attached to your game</h4>
+            <p>A lightweight <code>BepInEx</code> mod loads with Raid on your PC and exposes a small local API. Nothing runs remotely.</p>
+          </div>
+        </div>
+        <div class="how">
+          <div class="num">2</div>
+          <div>
+            <h4>Mod API only — never screen automation</h4>
+            <p>Every action reads and writes through the game's real objects. No pixel-hunting, no fake clicks, no bots watching your screen.</p>
+          </div>
+        </div>
+        <div class="how">
+          <div class="num">3</div>
+          <div>
+            <h4>The real engine powers the sim</h4>
+            <p>Simulations run the same battle processor the live game uses — so turn order, procs, and damage match what actually happens.</p>
+          </div>
+        </div>
+        <div class="how">
+          <div class="num">4</div>
+          <div>
+            <h4>Your art, extracted from your game</h4>
+            <p>Champion and item art is read from your own installed game on first run. Nothing proprietary is bundled or redistributed.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="trust-banner">
+        <p class="lead">The engine is the game's. The sim isn't a guess — it's the fight.</p>
+        <p class="sub">That's what makes "before you spend a key" a promise, not a slogan.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ============ FINAL CTA ============ -->
+  <section class="final">
+    <div class="wrap">
+      <h2>Free. Local. Coming soon.</h2>
+      <p>PyAutoRaid is a free tool for the Raid community. Releases will land here and in the Discord — join to be first in line.</p>
+      <div class="cta-row">
+        <button class="btn btn-primary" type="button" aria-disabled="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download
+          <span class="soon">Coming soon</span>
+        </button>
+        <a class="btn btn-ghost" href="https://discord.gg/cH5cfyf9D" target="_blank" rel="noopener">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M19.27 5.33A16.9 16.9 0 0 0 15.06 4l-.24.44c1.4.38 2.65 1 3.82 1.83A11.6 11.6 0 0 0 12 5.1c-2.36 0-4.55.55-6.64 1.17a15.8 15.8 0 0 1 3.82-1.83L8.94 4C7.5 4.3 6.08 4.75 4.73 5.33 2.13 9.17 1.42 12.9 1.77 16.6a16.9 16.9 0 0 0 5.18 2.6l.42-.62c-.72-.27-1.4-.6-2.03-1l.5-.37c3.9 1.82 8.14 1.82 12 0l.5.37c-.63.4-1.31.73-2.03 1l.42.62a16.7 16.7 0 0 0 5.18-2.6c.42-4.28-.72-7.98-2.64-11.27ZM8.52 14.4c-1 0-1.83-.92-1.83-2.05 0-1.13.8-2.05 1.83-2.05s1.85.93 1.83 2.05c0 1.13-.81 2.05-1.83 2.05Zm6.96 0c-1 0-1.83-.92-1.83-2.05 0-1.13.8-2.05 1.83-2.05s1.85.93 1.83 2.05c0 1.13-.8 2.05-1.83 2.05Z"/></svg>
+          Join the Discord
+        </a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ============ FOOTER ============ -->
+<footer class="site">
+  <div class="wrap">
+    <div class="foot-top">
+      <div class="foot-brand">
+        PyAutoRaid
+        <span>by WalangKaalam · walangkaalam@gmail.com</span>
+      </div>
+      <nav class="foot-links">
+        <a href="#features">Features</a>
+        <a href="#how">How it works</a>
+        <a href="https://discord.gg/cH5cfyf9D" target="_blank" rel="noopener">Discord</a>
+        <a href="https://youtube.com/@walangkaalam" target="_blank" rel="noopener">YouTube</a>
+        <a href="https://reddit.com/user/walangkaalam" target="_blank" rel="noopener">Reddit</a>
+        <a href="https://github.com/SnoopLawg/PyAutoRaid/blob/main/EULA.md">EULA</a>
+      </nav>
+    </div>
+
+    <div class="disclaimer">
+      <p><strong>Not affiliated with Plarium.</strong> PyAutoRaid is an independent, unofficial fan-made tool and is not endorsed by, sponsored by, or associated with Plarium Games Ltd.</p>
+      <p><strong>Raid: Shadow Legends</strong>, all related characters, names, artwork, and other game assets are trademarks and © Plarium Games Ltd. All rights to game content belong to their respective owners. PyAutoRaid does not bundle or redistribute game assets — they are read from your own installed copy of the game.</p>
+      <p><strong>Use at your own risk.</strong> This software is provided free of charge, "as is", without warranty of any kind. Use of third-party tools may carry risk under the game's terms of service; you are responsible for how you use it. See the <a href="https://github.com/SnoopLawg/PyAutoRaid/blob/main/EULA.md">EULA</a> for full terms.</p>
+      <p style="margin-top:16px; color:var(--text-faint);">© <span class="mono">2026</span> WalangKaalam · PyAutoRaid is free software.</p>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
