@@ -17,7 +17,11 @@ Key-free battle simulation, team &amp; gear optimization, and battle history for
 <a href="https://reddit.com/user/walangkaalam">👽 Reddit</a>
 </p>
 
-<b>🚧 In active development — public download coming soon.</b><br/>
+<p>
+<a href="https://snooplawg.github.io/PyAutoRaid/"><b>🌐 Visit the website — info &amp; downloads →</b></a>
+</p>
+
+<b>🚧 In active development.</b> Full details and downloads live on the <a href="https://snooplawg.github.io/PyAutoRaid/"><b>website</b></a>.<br/>
 <sub>★ this repo and join the <a href="https://discord.gg/cH5cfyf9D">Discord</a> to catch the release.</sub>
 
 </div>
@@ -48,7 +52,7 @@ private API on your machine that the tool talks to directly.
 
 - **Mod API only — no screen automation.** It reads game state and issues actions through
   the mod, never by faking mouse clicks or scraping the screen.
-- **Everything runs locally.** Your account data stays on your PC; nothing is streamed anywhere.
+- **Runs locally.** Your account data (roster, gear, progress) stays on your PC. An optional, pseudonymous **battle-telemetry** feature shares *game* data (teams, speeds, results — never account info) to build aggregate community insights; it's on by default and can be turned off any time with `PYAUTORAID_TELEMETRY=0`. See the [EULA](./EULA.md).
 - Because it uses the game's real battle engine, simulated fights match what you see live —
   that's what makes the "before you spend a key" preview trustworthy.
 
@@ -80,8 +84,13 @@ Use of PyAutoRaid is governed by the [End User License Agreement](./EULA.md).
 
 ## Free — donations welcome
 
-PyAutoRaid is **100% free**. No paywall, no premium tier. An optional way to support
-development will be added with the public release.
+PyAutoRaid is **100% free** — no paywall, no premium tier. If it saves you keys and you'd
+like to support development, it genuinely helps:
+
+- **❤️ Patreon** (monthly) — <https://www.patreon.com/cw/WalangKaalam/membership>
+- **☕ One-time** — [Ko-fi](https://ko-fi.com/walangkaalam)
+
+Donations are entirely optional and never gate any feature.
 
 ---
 
@@ -89,6 +98,9 @@ development will be added with the public release.
 
 The tool will be **free to use, but the source is closed** — this repository is the landing
 page and (soon) release host, not the source code.
+
+PyAutoRaid is developed and maintained by **[WalangKaalam](https://youtube.com/@walangkaalam)**.
+This repository is hosted under the **SnoopLawg** GitHub account.
 
 ---
 

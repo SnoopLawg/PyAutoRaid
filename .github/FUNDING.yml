@@ -1,0 +1,3 @@
+# Adds the "Sponsor" button to the repo, pointing at the WalangKaalam funding pages.
+# Kept separate from the SnoopLawg GitHub identity (no GitHub Sponsors).
+custom: ["https://www.patreon.com/cw/WalangKaalam/membership", "https://ko-fi.com/walangkaalam"]
