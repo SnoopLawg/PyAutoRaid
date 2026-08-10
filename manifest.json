@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "app": {
+    "latest": "2.6.0",
+    "min_supported": "2.6.0",
+    "url": "https://github.com/SnoopLawg/PyAutoRaid/releases/download/v2.6.0/PyAutoRaid-2.6.0.zip",
+    "sha256": "bf89c7430c0be74149ee220c4980dac0ec1194cfc76862040e12f10f6f2b08a0",
+    "setup_url": "https://github.com/SnoopLawg/PyAutoRaid/releases/download/v2.6.0/PyAutoRaid-Setup-2.6.0.exe"
+  },
+  "mod": {
+    "latest": "2.0-bepinex",
+    "dll_url": "https://github.com/SnoopLawg/PyAutoRaid/releases/download/v2.6.0/RaidAutomationPlugin.dll",
+    "sha256": "3f3d48d2cfffe591b21b17e42b787e24662bef5135064c2609af3046b90b6756",
+    "supported_game_versions": [
+      "11.70.0"
+    ]
+  },
+  "notice": "PyAutoRaid 2.6.0 \u2014 built for Raid 11.70.0.",
+  "block_below_app": null
+}
