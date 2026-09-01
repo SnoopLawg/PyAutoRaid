@@ -8,14 +8,14 @@
     "setup_url": "https://github.com/SnoopLawg/PyAutoRaid/releases/download/v2.6.0/PyAutoRaid-Setup-2.6.0.exe"
   },
   "mod": {
-    "latest": "2.0-bepinex",
+    "latest": "2.1-bepinex",
     "dll_url": "https://github.com/SnoopLawg/PyAutoRaid/releases/download/v2.6.0/RaidAutomationPlugin.dll",
-    "sha256": "3f3d48d2cfffe591b21b17e42b787e24662bef5135064c2609af3046b90b6756",
+    "sha256": "be195f9675d9a445b2aa6f46128e330901fa6b7465db812eecdf2652f7d8e3fa",
     "supported_game_versions": [
       "11.70.0",
       "11.71.0"
     ]
   },
-  "notice": "PyAutoRaid 2.6.0 \u2014 supports Raid 11.70.0\u201311.71.0. Validated on 11.71.0 (mod 2.0-bepinex): battle capture + data confirmed.",
+  "notice": "PyAutoRaid mod 2.1-bepinex \u2014 fixes a crash that closed the game a few seconds into rendered combat (GitHub issue #13). Update the mod: dashboard \u201cRepair mod\u201d or re-run Install-Mod (or reinstall). Supports Raid 11.70.0\u201311.71.0.",
   "block_below_app": null
 }
