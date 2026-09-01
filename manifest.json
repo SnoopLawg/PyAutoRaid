@@ -12,9 +12,10 @@
     "dll_url": "https://github.com/SnoopLawg/PyAutoRaid/releases/download/v2.6.0/RaidAutomationPlugin.dll",
     "sha256": "3f3d48d2cfffe591b21b17e42b787e24662bef5135064c2609af3046b90b6756",
     "supported_game_versions": [
-      "11.70.0"
+      "11.70.0",
+      "11.71.0"
     ]
   },
-  "notice": "PyAutoRaid 2.6.0 \u2014 built for Raid 11.70.0.",
+  "notice": "PyAutoRaid 2.6.0 \u2014 supports Raid 11.70.0\u201311.71.0. Validated on 11.71.0 (mod 2.0-bepinex): battle capture + data confirmed.",
   "block_below_app": null
 }
