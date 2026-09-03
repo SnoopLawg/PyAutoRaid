@@ -1,21 +1,20 @@
 {
   "schema": 1,
   "app": {
-    "latest": "2.7.0",
-    "min_supported": "2.7.0",
-    "url": "https://github.com/SnoopLawg/PyAutoRaid/releases/download/v2.7.0/PyAutoRaid-2.7.0.zip",
-    "sha256": "4eaeb360ebbb051d4fe7e35cd0863577d18e92167eefa324d4df9f5c8b3ca1d8",
-    "setup_url": "https://github.com/SnoopLawg/PyAutoRaid/releases/download/v2.7.0/PyAutoRaid-Setup-2.7.0.exe"
+    "latest": "2.8-beta",
+    "min_supported": "2.8-beta",
+    "url": "https://github.com/SnoopLawg/PyAutoRaid/releases/download/v2.8-beta/PyAutoRaid-2.8-beta.zip",
+    "sha256": "743801015dc08745c6e7446da9229c44fd30efbcf955306e941077729308ab79",
+    "setup_url": "https://github.com/SnoopLawg/PyAutoRaid/releases/download/v2.8-beta/PyAutoRaid-Setup-2.8-beta.exe"
   },
   "mod": {
-    "latest": "2.1-bepinex",
-    "dll_url": "https://github.com/SnoopLawg/PyAutoRaid/releases/download/v2.7.0/RaidAutomationPlugin.dll",
-    "sha256": "be195f9675d9a445b2aa6f46128e330901fa6b7465db812eecdf2652f7d8e3fa",
+    "latest": "2.0-bepinex",
+    "dll_url": "https://github.com/SnoopLawg/PyAutoRaid/releases/download/v2.8-beta/RaidAutomationPlugin.dll",
+    "sha256": "335648c0c313cfe2a16f6d3ec78c6fba133b7cd804fe5931f4e2b8f191386e01",
     "supported_game_versions": [
-      "11.70.0",
-      "11.71.0"
+      "11.75.0"
     ]
   },
-  "notice": "PyAutoRaid 2.7.0 \u2014 mod 2.1-bepinex fixes a crash that closed the game a few seconds into rendered combat (GitHub issue #13). Also adds native macOS support + auto-battle/telemetry updates. Supports Raid 11.70.0\u201311.71.0.",
+  "notice": "PyAutoRaid 2.8-beta \u2014 built for Raid 11.75.0.",
   "block_below_app": null
 }
