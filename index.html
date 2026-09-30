@@ -247,6 +247,8 @@
   }
   .btn-ghost:hover { color: var(--amber-bright); border-color: var(--amber); background: var(--bg-panel-2); }
   .btn-ghost svg { flex-shrink: 0; }
+  .btn-off, .btn-off:hover { opacity: .6; cursor: default; transform: none; color: inherit; border-color: inherit; background: transparent; }
+  .btn-ghost .soon { font-size: 11px; opacity: .8; margin-left: 2px; }
   .hero-links {
     display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px 24px;
     margin-top: 22px;
@@ -585,12 +587,17 @@
       </p>
 
       <div class="cta-row">
-        <a class="btn btn-primary" href="https://github.com/SnoopLawg/PyAutoRaid/releases/download/v2.6.0/PyAutoRaid-Setup-2.6.0.exe">
+        <a class="btn btn-primary js-dl-win" href="https://github.com/SnoopLawg/PyAutoRaid/releases/latest">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Download
-          <span class="soon">beta v2.6.0</span>
+          Download for Windows
+          <span class="soon js-dl-ver">latest beta</span>
         </a>
-          <a class="btn btn-ghost" href="https://github.com/SnoopLawg/PyAutoRaid/releases/tag/v2.6.0" target="_blank" rel="noopener">Release notes</a>
+        <span class="btn btn-ghost btn-off" aria-disabled="true" title="The Mac version is being packaged — join the Discord to hear when it lands">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M2 20h20"/></svg>
+          Mac
+          <span class="soon">coming soon</span>
+        </span>
+          <a class="btn btn-ghost js-dl-notes" href="https://github.com/SnoopLawg/PyAutoRaid/releases/latest" target="_blank" rel="noopener">Release notes</a>
       </div>
       <div class="hero-links">
         <a href="https://discord.gg/cH5cfyf9D" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.27 5.33A16.9 16.9 0 0 0 15.06 4l-.24.44c1.4.38 2.65 1 3.82 1.83A11.6 11.6 0 0 0 12 5.1c-2.36 0-4.55.55-6.64 1.17a15.8 15.8 0 0 1 3.82-1.83L8.94 4C7.5 4.3 6.08 4.75 4.73 5.33 2.13 9.17 1.42 12.9 1.77 16.6a16.9 16.9 0 0 0 5.18 2.6l.42-.62c-.72-.27-1.4-.6-2.03-1l.5-.37c3.9 1.82 8.14 1.82 12 0l.5.37c-.63.4-1.31.73-2.03 1l.42.62a16.7 16.7 0 0 0 5.18-2.6c.42-4.28-.72-7.98-2.64-11.27ZM8.52 14.4c-1 0-1.83-.92-1.83-2.05 0-1.13.8-2.05 1.83-2.05s1.85.93 1.83 2.05c0 1.13-.81 2.05-1.83 2.05Zm6.96 0c-1 0-1.83-.92-1.83-2.05 0-1.13.8-2.05 1.83-2.05s1.85.93 1.83 2.05c0 1.13-.8 2.05-1.83 2.05Z"/></svg>Discord</a>
@@ -672,7 +679,7 @@ total dmg   <span class="k">36.4M</span>  <span class="g">✓ keys spent: 0</spa
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 21h8M12 18v3"/><path d="M6 8h.01M6 12h.01"/></svg>
           </div>
           <h3>Runs entirely on your PC</h3>
-          <p>PyAutoRaid runs locally on your Windows machine alongside the game. No cloud, no account sharing — your data stays with you.</p>
+          <p>PyAutoRaid runs locally on your computer alongside the game — Windows today, Mac coming soon. No cloud, no account sharing — your data stays with you.</p>
         </article>
 
       </div>
@@ -736,12 +743,17 @@ total dmg   <span class="k">36.4M</span>  <span class="g">✓ keys spent: 0</spa
       <h2>Free. Local. In beta.</h2>
       <p>PyAutoRaid is a free tool for the Raid community. Releases will land here and in the Discord — join to be first in line.</p>
       <div class="cta-row">
-        <a class="btn btn-primary" href="https://github.com/SnoopLawg/PyAutoRaid/releases/download/v2.6.0/PyAutoRaid-Setup-2.6.0.exe">
+        <a class="btn btn-primary js-dl-win" href="https://github.com/SnoopLawg/PyAutoRaid/releases/latest">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Download
-          <span class="soon">beta v2.6.0</span>
+          Download for Windows
+          <span class="soon js-dl-ver">latest beta</span>
         </a>
-          <a class="btn btn-ghost" href="https://github.com/SnoopLawg/PyAutoRaid/releases/tag/v2.6.0" target="_blank" rel="noopener">Release notes</a>
+        <span class="btn btn-ghost btn-off" aria-disabled="true" title="The Mac version is being packaged — join the Discord to hear when it lands">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M2 20h20"/></svg>
+          Mac
+          <span class="soon">coming soon</span>
+        </span>
+          <a class="btn btn-ghost js-dl-notes" href="https://github.com/SnoopLawg/PyAutoRaid/releases/latest" target="_blank" rel="noopener">Release notes</a>
         <a class="btn btn-ghost" href="https://discord.gg/cH5cfyf9D" target="_blank" rel="noopener">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M19.27 5.33A16.9 16.9 0 0 0 15.06 4l-.24.44c1.4.38 2.65 1 3.82 1.83A11.6 11.6 0 0 0 12 5.1c-2.36 0-4.55.55-6.64 1.17a15.8 15.8 0 0 1 3.82-1.83L8.94 4C7.5 4.3 6.08 4.75 4.73 5.33 2.13 9.17 1.42 12.9 1.77 16.6a16.9 16.9 0 0 0 5.18 2.6l.42-.62c-.72-.27-1.4-.6-2.03-1l.5-.37c3.9 1.82 8.14 1.82 12 0l.5.37c-.63.4-1.31.73-2.03 1l.42.62a16.7 16.7 0 0 0 5.18-2.6c.42-4.28-.72-7.98-2.64-11.27ZM8.52 14.4c-1 0-1.83-.92-1.83-2.05 0-1.13.8-2.05 1.83-2.05s1.85.93 1.83 2.05c0 1.13-.81 2.05-1.83 2.05Zm6.96 0c-1 0-1.83-.92-1.83-2.05 0-1.13.8-2.05 1.83-2.05s1.85.93 1.83 2.05c0 1.13-.8 2.05-1.83 2.05Z"/></svg>
           Join the Discord
@@ -782,5 +794,21 @@ total dmg   <span class="k">36.4M</span>  <span class="g">✓ keys spent: 0</spa
   </div>
 </footer>
 
+<script>
+/* The Windows buttons always offer the newest release's installer. Without JS (or if
+   GitHub's API is unreachable) they still open the latest release page. */
+(function () {
+  fetch("https://api.github.com/repos/SnoopLawg/PyAutoRaid/releases/latest")
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (rel) {
+      if (!rel) return;
+      var exe = (rel.assets || []).filter(function (a) { return /^PyAutoRaid-Setup-.*\.exe$/.test(a.name); })[0];
+      document.querySelectorAll(".js-dl-win").forEach(function (a) { if (exe) a.href = exe.browser_download_url; });
+      document.querySelectorAll(".js-dl-ver").forEach(function (el) { el.textContent = rel.tag_name.replace(/^v/, "v") ; });
+      document.querySelectorAll(".js-dl-notes").forEach(function (a) { a.href = rel.html_url; });
+    })
+    .catch(function () {});
+})();
+</script>
 </body>
 </html>
