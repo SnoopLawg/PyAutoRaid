@@ -10,13 +10,13 @@ on the game's own engine, organises your roster and vault, and runs entirely on 
 </p>
 
 <p>
-<a href="https://snooplawg.github.io/PyAutoRaid/"><b>🌐 Website — downloads, a tour of every page, and how it works →</b></a>
+<a href="https://snooplawg.github.io/PyAutoRaid/"><b><img src="icons/globe.svg" width="16" height="16" alt=""> Website — downloads, a tour of every page, and how it works →</b></a>
 </p>
 
 <p>
-<a href="https://snooplawg.github.io/PyAutoRaid/#download"><b>⬇ Download for Windows or Mac</b></a> &nbsp;·&nbsp;
-<a href="https://discord.gg/cH5cfyf9D">💬 Discord</a> &nbsp;·&nbsp;
-<a href="https://youtube.com/@walangkaalam">▶ YouTube</a>
+<a href="https://snooplawg.github.io/PyAutoRaid/#download"><b><img src="icons/download.svg" width="16" height="16" alt=""> Download for Windows or Mac</b></a> &nbsp;·&nbsp;
+<a href="https://discord.gg/cH5cfyf9D"><img src="icons/discord.svg" width="16" height="16" alt=""> Discord</a> &nbsp;·&nbsp;
+<a href="https://youtube.com/@walangkaalam"><img src="icons/youtube.svg" width="16" height="16" alt=""> YouTube</a>
 </p>
 
 <sub>Free · Windows 10/11 and macOS · In beta · by <a href="https://youtube.com/@walangkaalam">WalangKaalam</a></sub>
@@ -32,14 +32,14 @@ on the game's own engine, organises your roster and vault, and runs entirely on 
 
 ## What it does
 
-- **🔑 Clan Boss sim** — pick five champions, the affinity and the difficulty, and watch the
+- <img src="icons/key.svg" width="16" height="16" alt=""> **Clan Boss sim** — pick five champions, the affinity and the difficulty, and watch the
   whole fight on the game's own battle engine: every hit, buff, debuff and stun, and the total
   damage. Prove a tune, a re-gear or a new champion before it costs a key.
-- **🐉 Hydra &amp; Chimera sims** — see which chest tier a team actually reaches.
-- **🛡️ Champions &amp; Gear** — your roster in the game's own card art, and a vault cleanse
+- <img src="icons/hydra.svg" width="16" height="16" alt=""> **Hydra &amp; Chimera sims** — see which chest tier a team actually reaches.
+- <img src="icons/shield.svg" width="16" height="16" alt=""> **Champions &amp; Gear** — your roster in the game's own card art, and a vault cleanse
   where you set the Keep/Sell rules and review every piece before anything is sold.
-- **📊 One place for the daily grind** — loot, quests, events, arena and summon mercy.
-- **🤖 Automation, if you want it** — farm a stage or run your dailies on a timer. Off unless
+- <img src="icons/chart.svg" width="16" height="16" alt=""> **One place for the daily grind** — loot, quests, events, arena and summon mercy.
+- <img src="icons/bot.svg" width="16" height="16" alt=""> **Automation, if you want it** — farm a stage or run your dailies on a timer. Off unless
   you turn it on; the sims work without it.
 
 <p align="center">
@@ -47,7 +47,7 @@ on the game's own engine, organises your roster and vault, and runs entirely on 
 <img src="shots/champions.jpg" alt="The Champions page in the game's own card art" width="49%">
 </p>
 
-**[See all sixteen pages on the website →](https://snooplawg.github.io/PyAutoRaid/#tour)**
+**<img src="icons/map.svg" width="16" height="16" alt=""> [See all sixteen pages on the website →](https://snooplawg.github.io/PyAutoRaid/#tour)**
 
 ---
 
@@ -55,10 +55,10 @@ on the game's own engine, organises your roster and vault, and runs entirely on 
 
 | | Platform | File |
 |---|---|---|
-| 🪟 | **Windows 10 / 11** | `PyAutoRaid-Setup-<version>.exe` — run the installer |
-| 🍎 | **macOS** (Apple Silicon &amp; Intel) | `PyAutoRaid-<version>-mac.dmg` — drag PyAutoRaid into Applications |
+| <img src="icons/windows.svg" width="20" height="20" alt=""> | **Windows 10 / 11** | `PyAutoRaid-Setup-<version>.exe` — run the installer |
+| <img src="icons/apple.svg" width="20" height="20" alt=""> | **macOS** (Apple Silicon &amp; Intel) | `PyAutoRaid-<version>-mac.dmg` — drag PyAutoRaid into Applications |
 
-**[⬇ Download from the website →](https://snooplawg.github.io/PyAutoRaid/#download)**
+**<img src="icons/download.svg" width="16" height="16" alt=""> [Download from the website →](https://snooplawg.github.io/PyAutoRaid/#download)**
 
 On first launch a short setup walks you through everything — adding the mod to your own copy
 of Raid, connecting to it, and copying the game's pictures from your install. No terminal,
@@ -87,7 +87,7 @@ to the game.
 
 ---
 
-## ⚠️ Use at your own risk
+## <img src="icons/alert.svg" width="22" height="22" alt=""> Use at your own risk
 
 PyAutoRaid is a **fan-made, unofficial tool**, **not affiliated with or endorsed by Plarium**.
 *Raid: Shadow Legends* and all related names and art belong to Plarium. Modding or automating a
@@ -100,8 +100,7 @@ entirely at your own risk. Use is governed by the [EULA](./EULA.md).
 
 PyAutoRaid is **free** — no paywall, no premium tier, and donations never unlock anything.
 If it saves you keys and you'd like to help:
-[❤️ Patreon](https://www.patreon.com/cw/WalangKaalam/membership) ·
-[☕ Ko-fi](https://ko-fi.com/walangkaalam)
+<img src="icons/heart.svg" width="16" height="16" alt=""> [Patreon](https://www.patreon.com/cw/WalangKaalam/membership) · <img src="icons/coffee.svg" width="16" height="16" alt=""> [Ko-fi](https://ko-fi.com/walangkaalam)
 
 Help, bug reports and tune sharing happen on the [**Discord**](https://discord.gg/cH5cfyf9D).
 This repository hosts the website and the downloads; the app itself is closed-source.
