@@ -14,7 +14,7 @@ on the game's own engine, organises your roster and vault, and runs entirely on 
 </p>
 
 <p>
-<a href="https://github.com/SnoopLawg/PyAutoRaid/releases/latest"><b>⬇ Download for Windows or Mac</b></a> &nbsp;·&nbsp;
+<a href="https://snooplawg.github.io/PyAutoRaid/#download"><b>⬇ Download for Windows or Mac</b></a> &nbsp;·&nbsp;
 <a href="https://discord.gg/cH5cfyf9D">💬 Discord</a> &nbsp;·&nbsp;
 <a href="https://youtube.com/@walangkaalam">▶ YouTube</a>
 </p>
@@ -58,7 +58,7 @@ on the game's own engine, organises your roster and vault, and runs entirely on 
 | 🪟 | **Windows 10 / 11** | `PyAutoRaid-Setup-<version>.exe` — run the installer |
 | 🍎 | **macOS** (Apple Silicon &amp; Intel) | `PyAutoRaid-<version>-mac.dmg` — drag PyAutoRaid into Applications |
 
-**[⬇ Get the latest release →](https://github.com/SnoopLawg/PyAutoRaid/releases/latest)**
+**[⬇ Download from the website →](https://snooplawg.github.io/PyAutoRaid/#download)**
 
 On first launch a short setup walks you through everything — adding the mod to your own copy
 of Raid, connecting to it, and copying the game's pictures from your install. No terminal,
