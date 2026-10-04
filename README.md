@@ -19,6 +19,12 @@ on the game's own engine, organises your roster and vault, and runs entirely on 
 <a href="https://youtube.com/@walangkaalam"><img src="icons/youtube.svg" width="16" height="16" alt=""> YouTube</a>
 </p>
 
+<p>
+<a href="https://snooplawg.github.io/PyAutoRaid/#download"><img src="https://img.shields.io/github/downloads/SnoopLawg/PyAutoRaid/total?style=for-the-badge&labelColor=1d1d22&color=d8a657&label=downloads" alt="Total downloads"></a>
+<a href="https://snooplawg.github.io/PyAutoRaid/#download"><img src="https://img.shields.io/github/v/release/SnoopLawg/PyAutoRaid?style=for-the-badge&labelColor=1d1d22&color=d8a657&label=latest" alt="Latest version"></a>
+<a href="https://github.com/SnoopLawg/PyAutoRaid/stargazers"><img src="https://img.shields.io/github/stars/SnoopLawg/PyAutoRaid?style=for-the-badge&labelColor=1d1d22&color=d8a657&label=stars" alt="GitHub stars"></a>
+</p>
+
 <sub>Free · Windows 10/11 and macOS · In beta · by <a href="https://youtube.com/@walangkaalam">WalangKaalam</a></sub>
 
 </div>

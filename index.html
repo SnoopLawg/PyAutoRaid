@@ -260,6 +260,13 @@
     transition: color .15s;
   }
   .hero-links a:hover { color: var(--amber-bright); }
+  .hero-stats { display: flex; flex-wrap: wrap; justify-content: center; align-items: baseline; gap: 6px 10px;
+    margin: 16px 0 4px; font-family: var(--mono); font-size: 13px; color: var(--text-faint); letter-spacing: .02em; }
+  .hero-stats[hidden] { display: none; }
+  .hero-stats b { color: var(--amber); font-weight: 700; font-size: 15px; }
+  .hero-stats a { color: inherit; }
+  .hero-stats a:hover b, .hero-stats a:hover { color: var(--amber-bright); }
+  .hero-stats__dot { opacity: .5; }
   .hero-links svg { width: 16px; height: 16px; flex-shrink: 0; }
 
   .community {
@@ -651,6 +658,13 @@
           <span class="soon js-dl-mac-label">coming soon</span>
         </a>
           <a class="btn btn-ghost js-dl-notes" href="https://github.com/SnoopLawg/PyAutoRaid/releases/latest" target="_blank" rel="noopener">Release notes</a>
+      </div>
+      <div class="hero-stats js-stats" hidden>
+        <span><b class="js-stat-dl"></b> downloads</span>
+        <span class="hero-stats__dot">·</span>
+        <a href="https://github.com/SnoopLawg/PyAutoRaid" target="_blank" rel="noopener"><b class="js-stat-stars"></b> stars on GitHub</a>
+        <span class="hero-stats__dot">·</span>
+        <span>Windows &amp; Mac</span>
       </div>
       <div class="dl-note js-mac-note" hidden>
         <b>If your Mac won't open PyAutoRaid</b> — the app is not yet notarised by Apple, so
@@ -1048,6 +1062,27 @@
       }
     })
     .catch(function () {});
+})();
+</script>
+
+<script>
+/* Live popularity: every download of every release file (GitHub's own count, the same
+   number as the README badge) and the repo's stars. Shown only once both are read, so
+   the page never shows a blank or a zero when GitHub can't be reached. */
+(function () {
+  var gh = "https://api.github.com/repos/SnoopLawg/PyAutoRaid";
+  var j = function (u) { return fetch(u).then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); }); };
+  Promise.all([j(gh + "/releases?per_page=100"), j(gh)]).then(function (res) {
+    var dl = 0;
+    (res[0] || []).forEach(function (rel) {
+      (rel.assets || []).forEach(function (a) { dl += a.download_count || 0; });
+    });
+    var stars = res[1] && res[1].stargazers_count;
+    if (!dl || stars == null) return;
+    document.querySelectorAll(".js-stat-dl").forEach(function (el) { el.textContent = dl.toLocaleString(); });
+    document.querySelectorAll(".js-stat-stars").forEach(function (el) { el.textContent = stars.toLocaleString(); });
+    document.querySelectorAll(".js-stats").forEach(function (el) { el.hidden = false; });
+  }).catch(function () {});
 })();
 </script>
 
