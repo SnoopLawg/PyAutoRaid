@@ -326,6 +326,12 @@
   .dl-note b { color: var(--text-dim); font-weight: 500; }
   .dl-note ol { margin: 6px 0 0; padding-left: 20px; }
 
+  .pbp { margin: 0; }
+  .pbp figcaption {
+    margin-top: 12px; color: var(--text-faint);
+    font-size: 0.86rem; line-height: 1.6; text-align: center;
+  }
+
   /* ---------- Tour ---------- */
   .spot { display: grid; grid-template-columns: 1.15fr 1fr; gap: 40px; align-items: center; }
   .spot + .spot { margin-top: 64px; }
@@ -433,7 +439,8 @@
   }
   .feat.marquee::before { opacity: 1; }
   @media (min-width: 781px) {
-    .feat.marquee { display: grid; grid-template-columns: 1.35fr 1fr; gap: 34px; align-items: center; }
+    .feat.marquee { display: block; }
+    .feat.marquee .pbp { margin-top: 26px; }
   }
 
   .badge {
@@ -469,39 +476,6 @@
   .feat.marquee h3 { font-size: 1.7rem; }
   .feat p { margin: 0; color: var(--text-dim); font-size: 0.98rem; }
   .feat p + p { margin-top: 12px; }
-
-  /* Terminal mock for marquee */
-  .term {
-    border-radius: 12px;
-    border: 1px solid var(--line-warm);
-    background: #0a0807;
-    overflow: hidden;
-    box-shadow: 0 14px 34px rgba(0,0,0,0.5);
-  }
-  .term-bar {
-    display: flex; align-items: center; gap: 7px;
-    padding: 10px 14px;
-    background: #120d0a;
-    border-bottom: 1px solid var(--line);
-  }
-  .term-dot { width: 11px; height: 11px; border-radius: 50%; }
-  .term-dot.r { background: #c25a3a; }
-  .term-dot.y { background: #d8a657; }
-  .term-dot.g { background: #6f7d4a; }
-  .term-title { margin-left: 8px; font-family: var(--mono); font-size: 0.72rem; color: var(--text-faint); }
-  .term-body {
-    padding: 16px 18px;
-    font-family: var(--mono);
-    font-size: 0.8rem;
-    line-height: 1.9;
-    color: var(--text-dim);
-    white-space: pre-wrap;
-    word-break: break-word;
-  }
-  .term-body .p { color: var(--ember-bright); }
-  .term-body .k { color: var(--amber); }
-  .term-body .g { color: #9db06a; }
-  .term-body .d { color: var(--text-faint); }
 
   /* ---------- How it works ---------- */
   .how-grid {
@@ -720,20 +694,16 @@
             <p>PyAutoRaid runs the game's <strong style="color:var(--text)">real battle engine</strong> to play out your Clan Boss fight offline — turn by turn, hit by hit — <em>without spending a single key.</em></p>
             <p>Test a tune, a re-gear, or a new champion and watch exactly how the fight unfolds before it costs you anything.</p>
           </div>
-          <div class="term" aria-hidden="true">
-            <div class="term-bar">
-              <span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span>
-              <span class="term-title">cb_sim.py — void UNM</span>
-            </div>
-            <div class="term-body"><span class="d">$</span> <span class="k">pyautoraid</span> cb sim
-<span class="d">──────────────────────────</span>
-turn 12  <span class="p">Maneater</span> A1
-turn 13  <span class="p">Demytha</span>  A3 <span class="g">[Block DMG]</span>
-turn 14  <span class="k">Ninja</span>    A2 <span class="g">[detonate]</span>
-   ...
-<span class="d">survives → T50 enrage</span>
-total dmg   <span class="k">36.4M</span>  <span class="g">✓ keys spent: 0</span></div>
-          </div>
+          <figure class="pbp">
+            <img class="shot" loading="lazy" width="1148" height="925"
+                 src="shots/playbyplay.jpg"
+                 alt="The Clan Boss sim's turn-by-turn board: nine boss turns, each listing
+                      the champions who acted, the damage they dealt, their buffs and debuffs
+                      with stack counts, the skill used, and the boss's own AoE or Stun.">
+            <figcaption>The fight as PyAutoRaid plays it out — every champion's turn, the
+              damage, the buffs and debuffs with their stacks, and what the boss did back.
+              Nine of fifty turns shown.</figcaption>
+          </figure>
         </article>
 
         <!-- Optimizer -->
@@ -760,7 +730,7 @@ total dmg   <span class="k">36.4M</span>  <span class="g">✓ keys spent: 0</spa
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="7"/><path d="M12 8v4l2.5 2.5"/></svg>
           </div>
           <h3>Automation — optional</h3>
-          <p>Run a location N times, or schedule daily runs, entirely headless. Every automated action goes through the mod API — <strong style="color:var(--text)">never screen automation</strong>. Fully opt-in.</p>
+          <p>Run a location a set number of times, or let daily runs fire on their own timers while you are away. Every automated action goes through the mod API — <strong style="color:var(--text)">never screen automation</strong>. Fully opt-in.</p>
         </article>
 
         <!-- Offline / local -->
@@ -769,7 +739,7 @@ total dmg   <span class="k">36.4M</span>  <span class="g">✓ keys spent: 0</spa
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 21h8M12 18v3"/><path d="M6 8h.01M6 12h.01"/></svg>
           </div>
           <h3>Runs entirely on your PC</h3>
-          <p>PyAutoRaid runs locally on your computer alongside the game — Windows today, Mac coming soon. No cloud, no account sharing — your data stays with you.</p>
+          <p>PyAutoRaid runs locally on your computer alongside the game. No cloud, no account sharing, nothing uploaded about your account — your data stays with you.</p>
         </article>
 
       </div>
