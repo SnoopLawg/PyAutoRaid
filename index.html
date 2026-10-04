@@ -337,10 +337,9 @@
   .dl-note summary { cursor: pointer; list-style: none; }
   .dl-note summary::-webkit-details-marker { display: none; }
   .dl-note__cta { display: flex; width: max-content; align-items: center; gap: 6px; margin-top: 10px;
-    padding: 4px 12px; border-radius: 999px; border: 1px solid var(--amber);
-    color: var(--amber); font-weight: 700; background: rgba(216,166,87,0.08);
-    transition: background .15s ease, color .15s ease; }
-  .dl-note summary:hover .dl-note__cta { background: rgba(216,166,87,0.18); color: var(--amber-bright); }
+    color: var(--amber); font-weight: 700; text-decoration: underline; text-decoration-thickness: 1px;
+    text-underline-offset: 4px; transition: color .15s ease; }
+  .dl-note summary:hover .dl-note__cta { color: var(--amber-bright); }
   .dl-note__hide { display: none; }
   .dl-note[open] .dl-note__show { display: none; }
   .dl-note[open] .dl-note__hide { display: inline; }
