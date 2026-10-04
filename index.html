@@ -313,6 +313,82 @@
     font-size: 1.02rem;
   }
 
+
+  /* ---------- Download row: platform buttons ---------- */
+  .btn-plat { position: relative; }
+  .dl-note {
+    max-width: 560px; margin: 18px auto 0;
+    font-family: var(--mono); font-size: 0.78rem; line-height: 1.7;
+    color: var(--text-faint); text-align: left;
+    border: 1px solid var(--line); border-radius: 10px;
+    background: rgba(26,21,18,0.6); padding: 12px 16px;
+  }
+  .dl-note b { color: var(--text-dim); font-weight: 500; }
+  .dl-note ol { margin: 6px 0 0; padding-left: 20px; }
+
+  /* ---------- Tour ---------- */
+  .spot { display: grid; grid-template-columns: 1.15fr 1fr; gap: 40px; align-items: center; }
+  .spot + .spot { margin-top: 64px; }
+  .spot.flip .spot-media { order: 2; }
+  .spot-copy h3 {
+    font-family: var(--serif); font-size: 1.6rem; font-weight: 700;
+    margin: 12px 0 10px; color: var(--text); letter-spacing: .01em;
+  }
+  .spot-copy p { color: var(--text-dim); margin: 0 0 12px; font-size: 1rem; }
+  .spot-why {
+    border-left: 2px solid var(--ember); padding-left: 14px;
+    color: var(--text); font-size: 0.97rem;
+  }
+  .shot {
+    display: block; width: 100%; height: auto; border-radius: 12px;
+    border: 1px solid var(--line-warm);
+    box-shadow: 0 18px 50px rgba(0,0,0,0.55);
+    background: var(--bg-panel); cursor: zoom-in;
+    transition: transform .18s ease, box-shadow .2s ease, border-color .2s ease;
+  }
+  .shot:hover { transform: translateY(-3px); border-color: var(--amber); box-shadow: 0 22px 60px rgba(0,0,0,0.65); }
+
+  .tour-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr);
+    gap: 30px; margin-top: 64px;
+  }
+  .tcard {
+    background: var(--bg-panel); border: 1px solid var(--line);
+    border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 12px;
+  }
+  .tcard h4 {
+    font-family: var(--serif); font-size: 1.15rem; font-weight: 700;
+    margin: 0; color: var(--text); letter-spacing: .01em;
+  }
+  .tcard p { margin: 0; color: var(--text-dim); font-size: 0.92rem; line-height: 1.6; }
+  .tcard .tour-why { font-size: 0.9rem; }
+  .tgroup {
+    font-family: var(--mono); font-size: 0.64rem; letter-spacing: .2em;
+    text-transform: uppercase; color: var(--ember-bright);
+  }
+
+  /* ---------- Lightbox ---------- */
+  .lb {
+    position: fixed; inset: 0; z-index: 90;
+    background: rgba(8,6,5,0.93); backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center; padding: 32px;
+  }
+  .lb img {
+    max-width: 100%; max-height: 100%; border-radius: 10px;
+    border: 1px solid var(--line-warm); box-shadow: 0 30px 80px rgba(0,0,0,0.7);
+  }
+  .lb-close {
+    position: absolute; top: 18px; right: 24px;
+    background: none; border: 0; color: var(--text-dim);
+    font-family: var(--mono); font-size: 28px; cursor: pointer; line-height: 1;
+  }
+  .lb-close:hover { color: var(--amber-bright); }
+
+  @media (max-width: 860px) {
+    .spot, .spot.flip .spot-media { grid-template-columns: 1fr; order: 0; }
+    .tour-grid { grid-template-columns: 1fr; }
+  }
+
   .divider {
     height: 1px;
     max-width: var(--maxw);
@@ -566,6 +642,7 @@
     </a>
     <nav class="nav-links">
       <a class="navlink" href="#features">Features</a>
+      <a class="navlink" href="#tour">Tour</a>
       <a class="navlink" href="#how">How it works</a>
       <a class="navlink" href="https://discord.gg/cH5cfyf9D" target="_blank" rel="noopener">Community</a>
       <a class="nav-cta" href="#download">Download</a>
@@ -592,12 +669,25 @@
           Download for Windows
           <span class="soon js-dl-ver">latest beta</span>
         </a>
-        <span class="btn btn-ghost btn-off" aria-disabled="true" title="The Mac version is being packaged — join the Discord to hear when it lands">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M2 20h20"/></svg>
-          Mac
-          <span class="soon">coming soon</span>
-        </span>
+        <a class="btn btn-ghost btn-off btn-plat js-dl-mac" aria-disabled="true"
+           href="https://github.com/SnoopLawg/PyAutoRaid/releases/latest"
+           title="The Mac build is being packaged — join the Discord to hear when it lands">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.37 12.78c.02 2.5 2.19 3.33 2.22 3.34-.02.06-.35 1.2-1.16 2.37-.7 1.01-1.42 2.02-2.57 2.04-1.12.02-1.48-.66-2.77-.66-1.28 0-1.68.64-2.74.68-1.1.04-1.94-1.07-2.65-2.08-1.45-2.1-2.56-5.93-1.07-8.52.74-1.28 2.06-2.1 3.49-2.12 1.08-.02 2.1.73 2.77.73.66 0 1.9-.9 3.2-.77.55.02 2.1.2 3.09 1.5-.08.05-1.85 1.08-1.83 3.22M14.2 4.63c.6-.72 1-1.72.89-2.72-.86.03-1.9.57-2.52 1.29-.55.63-1.03 1.65-.9 2.63.96.07 1.93-.49 2.53-1.2"/></svg>
+          <span class="js-dl-mac-text">Mac</span>
+          <span class="soon js-dl-mac-label">coming soon</span>
+        </a>
           <a class="btn btn-ghost js-dl-notes" href="https://github.com/SnoopLawg/PyAutoRaid/releases/latest" target="_blank" rel="noopener">Release notes</a>
+      </div>
+      <div class="dl-note js-mac-note" hidden>
+        <b>If your Mac won't open PyAutoRaid</b> — the app is not yet notarised by Apple, so
+        Gatekeeper blocks the first launch.
+        <ol>
+          <li>Open the <b>.dmg</b> and drag <b>PyAutoRaid</b> into <b>Applications</b>.</li>
+          <li>Open <b>Applications</b> and double-click <b>PyAutoRaid</b>.</li>
+          <li>On the warning, press <b>Done</b>.</li>
+          <li>Go to <b>System Settings &rsaquo; Privacy &amp; Security</b> and scroll down.</li>
+          <li>Next to "PyAutoRaid was blocked", press <b>Open Anyway</b>.</li>
+        </ol>
       </div>
       <div class="hero-links">
         <a href="https://discord.gg/cH5cfyf9D" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.27 5.33A16.9 16.9 0 0 0 15.06 4l-.24.44c1.4.38 2.65 1 3.82 1.83A11.6 11.6 0 0 0 12 5.1c-2.36 0-4.55.55-6.64 1.17a15.8 15.8 0 0 1 3.82-1.83L8.94 4C7.5 4.3 6.08 4.75 4.73 5.33 2.13 9.17 1.42 12.9 1.77 16.6a16.9 16.9 0 0 0 5.18 2.6l.42-.62c-.72-.27-1.4-.6-2.03-1l.5-.37c3.9 1.82 8.14 1.82 12 0l.5.37c-.63.4-1.31.73-2.03 1l.42.62a16.7 16.7 0 0 0 5.18-2.6c.42-4.28-.72-7.98-2.64-11.27ZM8.52 14.4c-1 0-1.83-.92-1.83-2.05 0-1.13.8-2.05 1.83-2.05s1.85.93 1.83 2.05c0 1.13-.81 2.05-1.83 2.05Zm6.96 0c-1 0-1.83-.92-1.83-2.05 0-1.13.8-2.05 1.83-2.05s1.85.93 1.83 2.05c0 1.13-.8 2.05-1.83 2.05Z"/></svg>Discord</a>
@@ -688,6 +778,162 @@ total dmg   <span class="k">36.4M</span>  <span class="g">✓ keys spent: 0</spa
 
   <div class="divider"></div>
 
+
+  <div class="divider"></div>
+
+  <!-- ============ TOUR ============ -->
+  <section class="section-pad" id="tour">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="kicker">The console</div>
+        <h2 class="section-title">Every page, and what it saves you</h2>
+        <p class="section-sub">PyAutoRaid runs in your browser on your own machine. Sixteen pages,
+          drawn with the game's own art, each built around one decision you would otherwise make
+          blind. Click any screenshot to enlarge.</p>
+      </div>
+
+        <div class="spot">
+          <div class="spot-media">
+            <img class="shot" loading="lazy" width="1280" height="800"
+                 src="shots/home.jpg" alt="PyAutoRaid — the Today page">
+          </div>
+          <div class="spot-copy">
+            <div class="tgroup">The one screen</div>
+            <h3>Today</h3>
+            <p>Every daily run with its result, each boss with keys left and time to reset, today's loot, and a <em>Needs you</em> list for the few things only you can do.</p>
+            <p class="spot-why">You open one page and know what is done, what is still owed and what is waiting on you — instead of checking five places in the game.</p>
+          </div>
+        </div>
+        <div class="spot flip">
+          <div class="spot-media">
+            <img class="shot" loading="lazy" width="1280" height="800"
+                 src="shots/cb.jpg" alt="PyAutoRaid — the Clan Boss sim page">
+          </div>
+          <div class="spot-copy">
+            <div class="tgroup">Marquee</div>
+            <h3>Clan Boss sim</h3>
+            <p>Pick five champions, choose affinity and difficulty, and play the fight out turn by turn on the game's own battle engine — with a team recommendation and a damage trend beside it.</p>
+            <p class="spot-why">A Clan Boss key is the scarcest thing you own. This spends <strong>zero</strong> of them, so a tune, a re-gear or a new champion can be proven before it costs you anything.</p>
+          </div>
+        </div>
+
+      <div class="tour-grid">
+          <article class="tcard">
+            <img class="shot" loading="lazy" width="1280" height="800"
+                 src="shots/hydra.jpg" alt="PyAutoRaid — the Hydra sim page">
+            <div class="tgroup">Boss sims</div>
+            <h4>Hydra sim</h4>
+            <p>Six champions against the Hydra's heads, per difficulty and layout, with the damage spread and the chest tier your run lands in.</p>
+            <p class="tour-why">Hydra keys refill weekly, so a wasted set is a week gone. You see which tier a team actually reaches before you commit.</p>
+          </article>
+          <article class="tcard">
+            <img class="shot" loading="lazy" width="1280" height="800"
+                 src="shots/chimera.jpg" alt="PyAutoRaid — the Chimera sim page">
+            <div class="tgroup">Boss sims</div>
+            <h4>Chimera sim</h4>
+            <p>The Chimera's phases laid out by form, with damage attributed to each form the boss morphs through.</p>
+            <p class="tour-why">Chimera punishes teams that cannot follow the morph. The phase strip shows where a run falls apart, which is the part a damage total hides.</p>
+          </article>
+          <article class="tcard">
+            <img class="shot" loading="lazy" width="1280" height="800"
+                 src="shots/champions.jpg" alt="PyAutoRaid — the Champions page">
+            <div class="tgroup">Roster</div>
+            <h4>Champions</h4>
+            <p>Your whole roster drawn with the game's own card art — rarity frames, stars, affinity and level — filtered by rarity, affinity, role, rank, empowerment and faction.</p>
+            <p class="tour-why">Finding the one champion who fits a slot stops being a scroll through the game's list and becomes a filter.</p>
+          </article>
+          <article class="tcard">
+            <img class="shot" loading="lazy" width="1280" height="800"
+                 src="shots/gear.jpg" alt="PyAutoRaid — the Gear page">
+            <div class="tgroup">Vault</div>
+            <h4>Gear</h4>
+            <p>The vault organised for cleansing, with a count of what your rules would sell and your Guardian relics under the game's own names.</p>
+            <p class="tour-why">Vault clutter is the quiet tax of playing. Rules <em>you</em> approve do the sorting, and nothing leaves without your say.</p>
+          </article>
+          <article class="tcard">
+            <img class="shot" loading="lazy" width="1280" height="800"
+                 src="shots/loot.jpg" alt="PyAutoRaid — the Loot page">
+            <div class="tgroup">Track</div>
+            <h4>Loot</h4>
+            <p>What you actually earned, by day and by source, with the game's own icons on every figure.</p>
+            <p class="tour-why">The game shows rewards once, as they land. Here they are still there tomorrow, so you can tell a good farm from a bad one.</p>
+          </article>
+          <article class="tcard">
+            <img class="shot" loading="lazy" width="1280" height="800"
+                 src="shots/quests.jpg" alt="PyAutoRaid — the Quests page">
+            <div class="tgroup">Track</div>
+            <h4>Quests</h4>
+            <p>Every daily, weekly and event quest with how far along it is and whether its reward is sitting unclaimed.</p>
+            <p class="tour-why">Unclaimed rewards expire. This is the list that stops that happening.</p>
+          </article>
+          <article class="tcard">
+            <img class="shot" loading="lazy" width="1280" height="800"
+                 src="shots/arena.jpg" alt="PyAutoRaid — the Arena page">
+            <div class="tgroup">Track</div>
+            <h4>Arena</h4>
+            <p>Classic and Live Arena side by side, with your defence team drawn as champion cards and each champion's flags written out in words.</p>
+            <p class="tour-why">Your defence is what other players actually meet. Seeing it as cards makes a weak slot obvious.</p>
+          </article>
+          <article class="tcard">
+            <img class="shot" loading="lazy" width="1280" height="800"
+                 src="shots/tournaments.jpg" alt="PyAutoRaid — the Events page">
+            <div class="tgroup">Track</div>
+            <h4>Events</h4>
+            <p>Fusions, tournaments and events being monitored — time remaining and the next tier you are short of.</p>
+            <p class="tour-why">Fusion tiers are lost to the clock, not to difficulty. Knowing you are 100 short with a day left is the whole game.</p>
+          </article>
+          <article class="tcard">
+            <img class="shot" loading="lazy" width="1280" height="800"
+                 src="shots/summoning.jpg" alt="PyAutoRaid — the Summoning page">
+            <div class="tgroup">Track</div>
+            <h4>Summoning</h4>
+            <p>Your shard vault by type, with mercy progress counted per shard.</p>
+            <p class="tour-why">Mercy is the only certainty in summoning. Pulling without knowing where you stand is throwing shards away.</p>
+          </article>
+          <article class="tcard">
+            <img class="shot" loading="lazy" width="1280" height="800"
+                 src="shots/autobattle.jpg" alt="PyAutoRaid — the Auto battle page">
+            <div class="tgroup">Automate</div>
+            <h4>Auto battle</h4>
+            <p>Choose a team and a stage, set a time to stop, and let it run.</p>
+            <p class="tour-why">Farming is the part of Raid that is work rather than play. It runs through the mod's API — never by moving your mouse — and stops when you said.</p>
+          </article>
+          <article class="tcard">
+            <img class="shot" loading="lazy" width="1280" height="800"
+                 src="shots/schedule.jpg" alt="PyAutoRaid — the Daily runs page">
+            <div class="tgroup">Automate</div>
+            <h4>Daily runs</h4>
+            <p>Jobs on their own timers, each working through its steps in order, with the result of every past run kept.</p>
+            <p class="tour-why">Dailies get done whether or not you remember them, and when one fails you can see which step it was.</p>
+          </article>
+          <article class="tcard">
+            <img class="shot" loading="lazy" width="1280" height="800"
+                 src="shots/inbox.jpg" alt="PyAutoRaid — the Messages page">
+            <div class="tgroup">More</div>
+            <h4>Messages</h4>
+            <p>What happened and what needs you, in plain sentences.</p>
+            <p class="tour-why">No log files, no ports, no stack traces. If something needs a decision it is written as a sentence with a button.</p>
+          </article>
+          <article class="tcard">
+            <img class="shot" loading="lazy" width="1280" height="800"
+                 src="shots/diagnostics.jpg" alt="PyAutoRaid — the Health page">
+            <div class="tgroup">More</div>
+            <h4>Health</h4>
+            <p>Every part checked in order — the game, the mod, the connection, the data — each with a button that fixes it.</p>
+            <p class="tour-why">When something breaks you are not reading a log. The page names the broken part and offers the repair.</p>
+          </article>
+          <article class="tcard">
+            <img class="shot" loading="lazy" width="1280" height="800"
+                 src="shots/settings.jpg" alt="PyAutoRaid — the Settings page">
+            <div class="tgroup">More</div>
+            <h4>Settings</h4>
+            <p>Pause while you are playing, desktop notifications, automatic mod updates, release channel, and one button to send a problem report.</p>
+            <p class="tour-why">It stays out of your way: it can stand down the moment you sit down to play.</p>
+          </article>
+      </div>
+    </div>
+  </section>
+
   <!-- ============ HOW IT WORKS ============ -->
   <section class="section-pad" id="how">
     <div class="wrap">
@@ -748,11 +994,13 @@ total dmg   <span class="k">36.4M</span>  <span class="g">✓ keys spent: 0</spa
           Download for Windows
           <span class="soon js-dl-ver">latest beta</span>
         </a>
-        <span class="btn btn-ghost btn-off" aria-disabled="true" title="The Mac version is being packaged — join the Discord to hear when it lands">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M2 20h20"/></svg>
-          Mac
-          <span class="soon">coming soon</span>
-        </span>
+        <a class="btn btn-ghost btn-off btn-plat js-dl-mac" aria-disabled="true"
+           href="https://github.com/SnoopLawg/PyAutoRaid/releases/latest"
+           title="The Mac build is being packaged — join the Discord to hear when it lands">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.37 12.78c.02 2.5 2.19 3.33 2.22 3.34-.02.06-.35 1.2-1.16 2.37-.7 1.01-1.42 2.02-2.57 2.04-1.12.02-1.48-.66-2.77-.66-1.28 0-1.68.64-2.74.68-1.1.04-1.94-1.07-2.65-2.08-1.45-2.1-2.56-5.93-1.07-8.52.74-1.28 2.06-2.1 3.49-2.12 1.08-.02 2.1.73 2.77.73.66 0 1.9-.9 3.2-.77.55.02 2.1.2 3.09 1.5-.08.05-1.85 1.08-1.83 3.22M14.2 4.63c.6-.72 1-1.72.89-2.72-.86.03-1.9.57-2.52 1.29-.55.63-1.03 1.65-.9 2.63.96.07 1.93-.49 2.53-1.2"/></svg>
+          <span class="js-dl-mac-text">Mac</span>
+          <span class="soon js-dl-mac-label">coming soon</span>
+        </a>
           <a class="btn btn-ghost js-dl-notes" href="https://github.com/SnoopLawg/PyAutoRaid/releases/latest" target="_blank" rel="noopener">Release notes</a>
         <a class="btn btn-ghost" href="https://discord.gg/cH5cfyf9D" target="_blank" rel="noopener">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M19.27 5.33A16.9 16.9 0 0 0 15.06 4l-.24.44c1.4.38 2.65 1 3.82 1.83A11.6 11.6 0 0 0 12 5.1c-2.36 0-4.55.55-6.64 1.17a15.8 15.8 0 0 1 3.82-1.83L8.94 4C7.5 4.3 6.08 4.75 4.73 5.33 2.13 9.17 1.42 12.9 1.77 16.6a16.9 16.9 0 0 0 5.18 2.6l.42-.62c-.72-.27-1.4-.6-2.03-1l.5-.37c3.9 1.82 8.14 1.82 12 0l.5.37c-.63.4-1.31.73-2.03 1l.42.62a16.7 16.7 0 0 0 5.18-2.6c.42-4.28-.72-7.98-2.64-11.27ZM8.52 14.4c-1 0-1.83-.92-1.83-2.05 0-1.13.8-2.05 1.83-2.05s1.85.93 1.83 2.05c0 1.13-.81 2.05-1.83 2.05Zm6.96 0c-1 0-1.83-.92-1.83-2.05 0-1.13.8-2.05 1.83-2.05s1.85.93 1.83 2.05c0 1.13-.8 2.05-1.83 2.05Z"/></svg>
@@ -774,6 +1022,7 @@ total dmg   <span class="k">36.4M</span>  <span class="g">✓ keys spent: 0</spa
       </div>
       <nav class="foot-links">
         <a href="#features">Features</a>
+        <a href="#tour">Tour</a>
         <a href="#how">How it works</a>
         <a href="https://discord.gg/cH5cfyf9D" target="_blank" rel="noopener">Discord</a>
         <a href="https://youtube.com/@walangkaalam" target="_blank" rel="noopener">YouTube</a>
@@ -806,8 +1055,53 @@ total dmg   <span class="k">36.4M</span>  <span class="g">✓ keys spent: 0</spa
       document.querySelectorAll(".js-dl-win").forEach(function (a) { if (exe) a.href = exe.browser_download_url; });
       document.querySelectorAll(".js-dl-ver").forEach(function (el) { el.textContent = rel.tag_name.replace(/^v/, "v") ; });
       document.querySelectorAll(".js-dl-notes").forEach(function (a) { a.href = rel.html_url; });
+
+      /* The Mac button activates ITSELF the moment a .dmg is attached to the newest
+         release, and stays an inert "coming soon" until then. That way the page can
+         never offer a download that 404s, and shipping the Mac build needs no edit
+         here -- upload the asset and the button lights up. */
+      var dmg = (rel.assets || []).filter(function (a) { return /-mac\.dmg$/.test(a.name); })[0];
+      if (dmg) {
+        document.querySelectorAll(".js-dl-mac").forEach(function (a) {
+          a.href = dmg.browser_download_url;
+          a.classList.remove("btn-off");
+          a.classList.add("btn-primary");
+          a.classList.remove("btn-ghost");
+          a.removeAttribute("aria-disabled");
+          a.title = "Download the Mac disk image (" + Math.round(dmg.size / 1048576) + " MB)";
+          var t = a.querySelector(".js-dl-mac-text");
+          if (t) t.textContent = "Download for Mac";
+          var l = a.querySelector(".js-dl-mac-label");
+          if (l) l.textContent = rel.tag_name;
+        });
+        document.querySelectorAll(".js-mac-note").forEach(function (n) { n.hidden = false; });
+      }
     })
     .catch(function () {});
+})();
+</script>
+
+<script>
+/* Click a tour screenshot to see it full size. Built on demand; Esc or a click closes. */
+(function () {
+  var box = null;
+  function close() { if (box) { box.remove(); box = null; document.body.style.overflow = ""; } }
+  document.addEventListener("click", function (e) {
+    var img = e.target.closest ? e.target.closest("img.shot") : null;
+    if (!img) return;
+    close();
+    box = document.createElement("div");
+    box.className = "lb";
+    box.innerHTML = '<button class="lb-close" aria-label="Close">&times;</button>';
+    var big = document.createElement("img");
+    big.src = img.getAttribute("src");
+    big.alt = img.getAttribute("alt") || "";
+    box.appendChild(big);
+    box.addEventListener("click", close);
+    document.body.appendChild(box);
+    document.body.style.overflow = "hidden";
+  });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") close(); });
 })();
 </script>
 </body>

@@ -28,6 +28,33 @@ Key-free battle simulation, team &amp; gear optimization, and battle history for
 
 ---
 
+## Download
+
+| | Platform | File | Notes |
+|---|---|---|---|
+| 🪟 | **Windows 10 / 11** | `PyAutoRaid-Setup-<ver>.exe` | Run the installer. Nothing else to install. |
+| 🍎 | **macOS** (Intel &amp; Apple Silicon) | `PyAutoRaid-<ver>-mac.dmg` | Drag **PyAutoRaid** into **Applications** and open it. |
+
+**[⬇ Get the latest release →](https://github.com/SnoopLawg/PyAutoRaid/releases/latest)** &nbsp;·&nbsp;
+[All releases](https://github.com/SnoopLawg/PyAutoRaid/releases) &nbsp;·&nbsp;
+[Website, with a tour of every page](https://snooplawg.github.io/PyAutoRaid/#tour)
+
+Either build walks you through setup on first launch — installing the mod into your own
+copy of Raid, connecting to it, and copying the game's art across. No terminal, no Python,
+no developer tools. Game art is copied from **your** install rather than shipped, which is
+why the download is small and why the first launch takes a few minutes.
+
+> **macOS — the first launch.** The app is not yet notarised by Apple, so Gatekeeper blocks
+> it the first time. Open **Applications**, double-click **PyAutoRaid**, press **Done** on the
+> warning, then go to **System Settings › Privacy & Security**, scroll down, and press
+> **Open Anyway** next to "PyAutoRaid was blocked".
+
+> Each platform's download is attached to the release that ships it; if a platform's file is
+> not listed on the latest release yet, it is not out yet — the
+> [Discord](https://discord.gg/cH5cfyf9D) gets told first.
+
+---
+
 ## What it does
 
 PyAutoRaid runs the game's *actual* Clan Boss engine on your own machine, so you can
