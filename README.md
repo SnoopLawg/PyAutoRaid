@@ -5,132 +5,107 @@
 <h3>See your real Clan Boss fight before you spend a key.</h3>
 
 <p>
-Key-free battle simulation, team &amp; gear optimization, and battle history for
-<strong>Raid: Shadow Legends</strong> — free, and running entirely on your own PC.
+A free companion app for <strong>Raid: Shadow Legends</strong> that plays out your boss fights
+on the game's own engine, organises your roster and vault, and runs entirely on your computer.
 </p>
 
-<p>by <a href="https://youtube.com/@walangkaalam"><b>WalangKaalam</b></a></p>
+<p>
+<a href="https://snooplawg.github.io/PyAutoRaid/"><b>🌐 Website — downloads, a tour of every page, and how it works →</b></a>
+</p>
 
 <p>
-<a href="https://youtube.com/@walangkaalam">▶ YouTube</a> &nbsp;·&nbsp;
+<a href="https://github.com/SnoopLawg/PyAutoRaid/releases/latest"><b>⬇ Download for Windows or Mac</b></a> &nbsp;·&nbsp;
 <a href="https://discord.gg/cH5cfyf9D">💬 Discord</a> &nbsp;·&nbsp;
-<a href="https://reddit.com/user/walangkaalam">👽 Reddit</a>
+<a href="https://youtube.com/@walangkaalam">▶ YouTube</a>
 </p>
 
-<p>
-<a href="https://snooplawg.github.io/PyAutoRaid/"><b>🌐 Visit the website — info &amp; downloads →</b></a>
-</p>
-
-<b>🚧 In active development.</b> Full details and downloads live on the <a href="https://snooplawg.github.io/PyAutoRaid/"><b>website</b></a>.<br/>
-<sub>★ this repo and join the <a href="https://discord.gg/cH5cfyf9D">Discord</a> to catch the release.</sub>
+<sub>Free · Windows 10/11 and macOS · In beta · by <a href="https://youtube.com/@walangkaalam">WalangKaalam</a></sub>
 
 </div>
 
 ---
 
-## Download
-
-| | Platform | File | Notes |
-|---|---|---|---|
-| 🪟 | **Windows 10 / 11** | `PyAutoRaid-Setup-<ver>.exe` | Run the installer. Nothing else to install. |
-| 🍎 | **macOS** (Intel &amp; Apple Silicon) | `PyAutoRaid-<ver>-mac.dmg` | Drag **PyAutoRaid** into **Applications** and open it. |
-
-**[⬇ Get the latest release →](https://github.com/SnoopLawg/PyAutoRaid/releases/latest)** &nbsp;·&nbsp;
-[All releases](https://github.com/SnoopLawg/PyAutoRaid/releases) &nbsp;·&nbsp;
-[Website, with a tour of every page](https://snooplawg.github.io/PyAutoRaid/#tour)
-
-Either build walks you through setup on first launch — installing the mod into your own
-copy of Raid, connecting to it, and copying the game's art across. No terminal, no Python,
-no developer tools. Game art is copied from **your** install rather than shipped, which is
-why the download is small and why the first launch takes a few minutes.
-
-> **macOS — the first launch.** The app is not yet notarised by Apple, so Gatekeeper blocks
-> it the first time. Open **Applications**, double-click **PyAutoRaid**, press **Done** on the
-> warning, then go to **System Settings › Privacy & Security**, scroll down, and press
-> **Open Anyway** next to "PyAutoRaid was blocked".
-
-> Each platform's download is attached to the release that ships it; if a platform's file is
-> not listed on the latest release yet, it is not out yet — the
-> [Discord](https://discord.gg/cH5cfyf9D) gets told first.
-
----
+<p align="center">
+<img src="shots/playbyplay.jpg" alt="A Clan Boss fight played out turn by turn: every champion's hit, buffs, debuffs and the boss's moves" width="820">
+<br><sub>A full Clan Boss fight, turn by turn — with zero keys spent.</sub>
+</p>
 
 ## What it does
 
-PyAutoRaid runs the game's *actual* Clan Boss engine on your own machine, so you can
-preview a fight turn-by-turn **without spending a key**. Tune a team, swap gear, check
-whether you hold to Turn 50 — then commit the key only when you know it works.
+- **🔑 Clan Boss sim** — pick five champions, the affinity and the difficulty, and watch the
+  whole fight on the game's own battle engine: every hit, buff, debuff and stun, and the total
+  damage. Prove a tune, a re-gear or a new champion before it costs a key.
+- **🐉 Hydra &amp; Chimera sims** — see which chest tier a team actually reaches.
+- **🛡️ Champions &amp; Gear** — your roster in the game's own card art, and a vault cleanse
+  where you set the Keep/Sell rules and review every piece before anything is sold.
+- **📊 One place for the daily grind** — loot, quests, events, arena and summon mercy.
+- **🤖 Automation, if you want it** — farm a stage or run your dailies on a timer. Off unless
+  you turn it on; the sims work without it.
 
-- **🔑 Key-free CB simulation** — the marquee. Play out a full Clan Boss fight (turn
-  order, buffs/debuffs, damage, survival) before you burn a real key.
-- **🧮 Team &amp; gear optimizer** — search team combos and assign artifacts to hit speed
-  tunes and stat targets (ACC floors, CR/CD, speed steps).
-- **📜 Battle history** — every run logged turn-by-turn: damage per hero, buff uptime,
-  and where a tune broke.
-- **🤖 Automation (optional)** — hands-off dailies and farming if you want it. Entirely
-  opt-in; the sim and optimizer work fine without it.
+<p align="center">
+<img src="shots/cb.jpg" alt="The Clan Boss sim: five champions with their real stats" width="49%">
+<img src="shots/champions.jpg" alt="The Champions page in the game's own card art" width="49%">
+</p>
+
+**[See all sixteen pages on the website →](https://snooplawg.github.io/PyAutoRaid/#tour)**
+
+---
+
+## Download
+
+| | Platform | File |
+|---|---|---|
+| 🪟 | **Windows 10 / 11** | `PyAutoRaid-Setup-<version>.exe` — run the installer |
+| 🍎 | **macOS** (Apple Silicon &amp; Intel) | `PyAutoRaid-<version>-mac.dmg` — drag PyAutoRaid into Applications |
+
+**[⬇ Get the latest release →](https://github.com/SnoopLawg/PyAutoRaid/releases/latest)**
+
+On first launch a short setup walks you through everything — adding the mod to your own copy
+of Raid, connecting to it, and copying the game's pictures from your install. No terminal,
+no Python, nothing else to install. On Windows it keeps itself up to date; on a Mac, download the new version from here when one comes out.
+
+> **Mac — the first time you open it.** PyAutoRaid isn't registered with Apple yet, so your
+> Mac blocks the first launch. Press **Done** on the warning, open **System Settings ›
+> Privacy &amp; Security**, scroll down, click **Open Anyway** next to "PyAutoRaid was
+> blocked", and enter your password. After that it opens like any other app.
 
 ---
 
 ## How it works
 
-PyAutoRaid installs a small **local mod** into your own copy of Raid, which exposes a
-private API on your machine that the tool talks to directly.
+A small mod loads with Raid on your computer and gives PyAutoRaid a private, local connection
+to the game.
 
-- **Mod API only — no screen automation.** It reads game state and issues actions through
-  the mod, never by faking mouse clicks or scraping the screen.
-- **Runs locally.** Your account data (roster, gear, progress) stays on your PC. An optional, pseudonymous **battle-telemetry** feature shares *game* data (teams, speeds, results — never account info) to build aggregate community insights; it's on by default and can be turned off any time with `PYAUTORAID_TELEMETRY=0`. See the [EULA](./EULA.md).
-- Because it uses the game's real battle engine, simulated fights match what you see live —
-  that's what makes the "before you spend a key" preview trustworthy.
-
----
-
-## Community &amp; updates
-
-Development, guides, tune sharing, and release news:
-
-- **▶ YouTube** — <https://youtube.com/@walangkaalam>
-- **💬 Discord** — <https://discord.gg/cH5cfyf9D>
-- **👽 Reddit** — <https://reddit.com/user/walangkaalam>
+- **The game's own engine.** The sims run the same battle code the game does, so what you see
+  is how the fight plays.
+- **No screen automation.** Everything goes through the game's own data — never fake clicks
+  or screen reading.
+- **Your data stays with you.** Your account, roster and gear stay on your computer.
+  Anonymous battle stats (teams, speeds, results — never account details) are shared to build
+  community insights; this is on by default and can be turned off. See the [EULA](./EULA.md).
+- **Nothing of Plarium's is shipped.** Game art is copied from your own install.
 
 ---
 
-## ⚠️ Disclaimer — use at your own risk
+## ⚠️ Use at your own risk
 
-PyAutoRaid is a **fan-made, unofficial tool**. It is **not affiliated with, endorsed by, or
-associated with Plarium**. *Raid: Shadow Legends*, its name, artwork, and all related assets
-are the property of Plarium.
-
-Modifying or automating a game may violate the game's Terms of Service and could put your
-account at risk. **You use this tool entirely at your own risk** — the author accepts no
-liability for any consequences, including account action.
-
-Use of PyAutoRaid is governed by the [End User License Agreement](./EULA.md).
+PyAutoRaid is a **fan-made, unofficial tool**, **not affiliated with or endorsed by Plarium**.
+*Raid: Shadow Legends* and all related names and art belong to Plarium. Modding or automating a
+game may break its Terms of Service and could put your account at risk — you use PyAutoRaid
+entirely at your own risk. Use is governed by the [EULA](./EULA.md).
 
 ---
 
-## Free — donations welcome
+## Free — support welcome
 
-PyAutoRaid is **100% free** — no paywall, no premium tier. If it saves you keys and you'd
-like to support development, it genuinely helps:
+PyAutoRaid is **free** — no paywall, no premium tier, and donations never unlock anything.
+If it saves you keys and you'd like to help:
+[❤️ Patreon](https://www.patreon.com/cw/WalangKaalam/membership) ·
+[☕ Ko-fi](https://ko-fi.com/walangkaalam)
 
-- **❤️ Patreon** (monthly) — <https://www.patreon.com/cw/WalangKaalam/membership>
-- **☕ One-time** — [Ko-fi](https://ko-fi.com/walangkaalam)
-
-Donations are entirely optional and never gate any feature.
-
----
-
-## About the source
-
-The tool will be **free to use, but the source is closed** — this repository is the landing
-page and (soon) release host, not the source code.
-
-PyAutoRaid is developed and maintained by **[WalangKaalam](https://youtube.com/@walangkaalam)**.
-This repository is hosted under the **SnoopLawg** GitHub account.
-
----
+Help, bug reports and tune sharing happen on the [**Discord**](https://discord.gg/cH5cfyf9D).
+This repository hosts the website and the downloads; the app itself is closed-source.
 
 <div align="center">
-<sub>PyAutoRaid by WalangKaalam · Not affiliated with Plarium · Raid: Shadow Legends © Plarium · Use at your own risk</sub>
+<sub>PyAutoRaid by WalangKaalam · Not affiliated with Plarium · Raid: Shadow Legends © Plarium</sub>
 </div>
