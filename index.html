@@ -334,13 +334,20 @@
   .dl-note b { color: var(--text-dim); font-weight: 500; }
   .dl-note ol { margin: 6px 0 0; padding-left: 20px; }
   .dl-note[hidden] { display: none; }
-  .dl-note summary { cursor: pointer; list-style: none; position: relative; padding-right: 22px; }
+  .dl-note summary { cursor: pointer; list-style: none; }
   .dl-note summary::-webkit-details-marker { display: none; }
-  .dl-note summary::after { content: "+"; position: absolute; right: 0; top: 0; color: var(--amber);
-    font-weight: 700; font-size: 1rem; line-height: 1.5; }
-  .dl-note[open] summary::after { content: "−"; }
-  .dl-note summary:hover b { color: var(--amber-bright); }
-  .dl-note[open] summary { margin-bottom: 4px; }
+  .dl-note__cta { display: flex; width: max-content; align-items: center; gap: 6px; margin-top: 10px;
+    padding: 4px 12px; border-radius: 999px; border: 1px solid var(--amber);
+    color: var(--amber); font-weight: 700; background: rgba(216,166,87,0.08);
+    transition: background .15s ease, color .15s ease; }
+  .dl-note summary:hover .dl-note__cta { background: rgba(216,166,87,0.18); color: var(--amber-bright); }
+  .dl-note__hide { display: none; }
+  .dl-note[open] .dl-note__show { display: none; }
+  .dl-note[open] .dl-note__hide { display: inline; }
+  .dl-note__chev { display: inline-block; transition: transform .2s ease; }
+  .dl-note[open] .dl-note__chev { transform: rotate(180deg); }
+  .dl-note[open] summary { margin-bottom: 6px; }
+  .dl-note summary:focus-visible { outline: 2px solid var(--amber); outline-offset: 4px; border-radius: 6px; }
 
   .pbp { margin: 0; }
   .pbp figcaption {
@@ -676,7 +683,8 @@
       </div>
       <details class="dl-note js-mac-note" hidden>
         <summary><b>If your Mac won't open PyAutoRaid</b> — the app is not yet notarised by Apple, so
-        Gatekeeper blocks the first launch.</summary>
+        Gatekeeper blocks the first launch.
+        <span class="dl-note__cta"><span class="dl-note__show">See how to fix it</span><span class="dl-note__hide">Hide the steps</span> <span class="dl-note__chev" aria-hidden="true">&#9662;</span></span></summary>
         <ol>
           <li>Open the <b>.dmg</b> and drag <b>PyAutoRaid</b> into <b>Applications</b>.</li>
           <li>Open <b>Applications</b> and double-click <b>PyAutoRaid</b>.</li>
