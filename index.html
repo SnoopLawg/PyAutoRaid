@@ -995,35 +995,64 @@
 </footer>
 
 <script>
-/* The Windows buttons always offer the newest release's installer. Without JS (or if
-   GitHub's API is unreachable) they still open the latest release page. */
-(function () {
-  fetch("https://api.github.com/repos/SnoopLawg/PyAutoRaid/releases/latest")
-    .then(function (r) { return r.ok ? r.json() : null; })
-    .then(function (rel) {
-      if (!rel) return;
-      var exe = (rel.assets || []).filter(function (a) { return /^PyAutoRaid-Setup-.*\.exe$/.test(a.name); })[0];
-      document.querySelectorAll(".js-dl-win").forEach(function (a) { if (exe) a.href = exe.browser_download_url; });
-      document.querySelectorAll(".js-dl-ver").forEach(function (el) { el.textContent = rel.tag_name.replace(/^v/, "v") ; });
-      document.querySelectorAll(".js-dl-notes").forEach(function (a) { a.href = rel.html_url; });
+/* Each platform resolves its OWN newest download, independently.
 
-      /* The Mac button activates ITSELF the moment a .dmg is attached to the newest
-         release, and stays an inert "coming soon" until then. That way the page can
-         never offer a download that 404s, and shipping the Mac build needs no edit
-         here -- upload the asset and the button lights up. */
-      var dmg = (rel.assets || []).filter(function (a) { return /-mac\.dmg$/.test(a.name); })[0];
-      if (dmg) {
+   Not from /releases/latest: Windows and Mac no longer ship together. The .dmg is
+   built by hand on a Mac, so a Windows-only patch release becomes "latest" with no
+   .dmg on it -- and reading one release would then switch the Mac button back off
+   and strand Mac players on a page that says "coming soon" while a perfectly good
+   build sits one release back. So walk the releases newest-first and take the first
+   one that actually carries each platform's file.
+
+   Without JS (or if GitHub is unreachable) both buttons still open the releases
+   page, and the Mac button stays inert rather than offering a download that 404s. */
+(function () {
+  fetch("https://api.github.com/repos/SnoopLawg/PyAutoRaid/releases?per_page=20")
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (rels) {
+      if (!rels || !rels.length) return;
+      rels = rels.filter(function (r) { return !r.draft; });
+
+      /* newest release carrying a file that matches, as {rel, asset} */
+      function newestWith(re) {
+        for (var i = 0; i < rels.length; i++) {
+          var hit = (rels[i].assets || []).filter(function (a) { return re.test(a.name); })[0];
+          if (hit) return { rel: rels[i], asset: hit };
+        }
+        return null;
+      }
+
+      var win = newestWith(/^PyAutoRaid-Setup-.*\.exe$/);
+      var mac = newestWith(/-mac\.dmg$/);
+      var newest = rels[0];
+
+      if (win) {
+        document.querySelectorAll(".js-dl-win").forEach(function (a) {
+          a.href = win.asset.browser_download_url;
+          a.title = "Download the Windows installer (" +
+                    Math.round(win.asset.size / 1048576) + " MB)";
+        });
+        document.querySelectorAll(".js-dl-ver").forEach(function (el) {
+          el.textContent = win.rel.tag_name;
+        });
+      }
+      document.querySelectorAll(".js-dl-notes").forEach(function (a) { a.href = newest.html_url; });
+
+      /* The Mac button turns itself on as soon as a .dmg exists on ANY recent
+         release, and stays an inert "coming soon" until one does -- so shipping the
+         Mac build needs no edit here, and a Windows-only release cannot take it away. */
+      if (mac) {
         document.querySelectorAll(".js-dl-mac").forEach(function (a) {
-          a.href = dmg.browser_download_url;
-          a.classList.remove("btn-off");
+          a.href = mac.asset.browser_download_url;
+          a.classList.remove("btn-off", "btn-ghost");
           a.classList.add("btn-primary");
-          a.classList.remove("btn-ghost");
           a.removeAttribute("aria-disabled");
-          a.title = "Download the Mac disk image (" + Math.round(dmg.size / 1048576) + " MB)";
+          a.title = "Download the Mac disk image (" +
+                    Math.round(mac.asset.size / 1048576) + " MB)";
           var t = a.querySelector(".js-dl-mac-text");
           if (t) t.textContent = "Download for Mac";
           var l = a.querySelector(".js-dl-mac-label");
-          if (l) l.textContent = rel.tag_name;
+          if (l) l.textContent = mac.rel.tag_name;
         });
         document.querySelectorAll(".js-mac-note").forEach(function (n) { n.hidden = false; });
       }
