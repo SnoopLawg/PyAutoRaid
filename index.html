@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PyAutoRaid — See your real Clan Boss fight before you spend a key</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
 <meta name="description" content="PyAutoRaid is a free, local tool for Raid: Shadow Legends. Simulate your real Clan Boss fight key-free, optimize teams and gear, and review battle history. By WalangKaalam.">
 <meta name="theme-color" content="#0f0d0b">
 
@@ -260,6 +261,13 @@
     transition: color .15s;
   }
   .hero-links a:hover { color: var(--amber-bright); }
+  .hero-stats { display: flex; flex-wrap: wrap; justify-content: center; align-items: baseline; gap: 6px 10px;
+    margin: 16px 0 4px; font-family: var(--mono); font-size: 13px; color: var(--text-faint); letter-spacing: .02em; }
+  .hero-stats[hidden] { display: none; }
+  .hero-stats b { color: var(--amber); font-weight: 700; font-size: 15px; }
+  .hero-stats a { color: inherit; }
+  .hero-stats a:hover b, .hero-stats a:hover { color: var(--amber-bright); }
+  .hero-stats__dot { opacity: .5; }
   .hero-links svg { width: 16px; height: 16px; flex-shrink: 0; }
 
   .community {
@@ -325,6 +333,20 @@
   }
   .dl-note b { color: var(--text-dim); font-weight: 500; }
   .dl-note ol { margin: 6px 0 0; padding-left: 20px; }
+  .dl-note[hidden] { display: none; }
+  .dl-note summary { cursor: pointer; list-style: none; }
+  .dl-note summary::-webkit-details-marker { display: none; }
+  .dl-note__cta { display: flex; width: max-content; align-items: center; gap: 6px; margin-top: 10px;
+    color: var(--amber); font-weight: 700; text-decoration: underline; text-decoration-thickness: 1px;
+    text-underline-offset: 4px; transition: color .15s ease; }
+  .dl-note summary:hover .dl-note__cta { color: var(--amber-bright); }
+  .dl-note__hide { display: none; }
+  .dl-note[open] .dl-note__show { display: none; }
+  .dl-note[open] .dl-note__hide { display: inline; }
+  .dl-note__chev { display: inline-block; transition: transform .2s ease; }
+  .dl-note[open] .dl-note__chev { transform: rotate(180deg); }
+  .dl-note[open] summary { margin-bottom: 6px; }
+  .dl-note summary:focus-visible { outline: 2px solid var(--amber); outline-offset: 4px; border-radius: 6px; }
 
   .pbp { margin: 0; }
   .pbp figcaption {
@@ -611,13 +633,12 @@
 <header class="site">
   <div class="wrap nav">
     <a class="brand" href="#top">
-      <span class="mark">PA</span>
+      <span class="mark" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18"><path d="M12 2.6l2.78 5.64 6.22.9-4.5 4.39 1.06 6.2L12 16.8l-5.56 2.93 1.06-6.2L3 9.14l6.22-.9z" fill="currentColor" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg></span>
       PyAutoRaid
     </a>
     <nav class="nav-links">
       <a class="navlink" href="#features">Features</a>
       <a class="navlink" href="#tour">Tour</a>
-      <a class="navlink" href="#how">How it works</a>
       <a class="navlink" href="https://discord.gg/E8qf7y8sc6" target="_blank" rel="noopener">Community</a>
       <a class="nav-cta" href="#download">Download</a>
     </nav>
@@ -652,9 +673,17 @@
         </a>
           <a class="btn btn-ghost js-dl-notes" href="https://github.com/SnoopLawg/PyAutoRaid/releases/latest" target="_blank" rel="noopener">Release notes</a>
       </div>
-      <div class="dl-note js-mac-note" hidden>
-        <b>If your Mac won't open PyAutoRaid</b> — the app is not yet notarised by Apple, so
+      <div class="hero-stats js-stats" hidden>
+        <span><b class="js-stat-dl"></b> downloads</span>
+        <span class="hero-stats__dot">·</span>
+        <a href="https://github.com/SnoopLawg/PyAutoRaid" target="_blank" rel="noopener"><b class="js-stat-stars"></b> stars on GitHub</a>
+        <span class="hero-stats__dot">·</span>
+        <span>Windows &amp; Mac</span>
+      </div>
+      <details class="dl-note js-mac-note" hidden>
+        <summary><b>If your Mac won't open PyAutoRaid</b> — the app is not yet notarised by Apple, so
         Gatekeeper blocks the first launch.
+        <span class="dl-note__cta"><span class="dl-note__show">See how to fix it</span><span class="dl-note__hide">Hide the steps</span> <span class="dl-note__chev" aria-hidden="true">&#9662;</span></span></summary>
         <ol>
           <li>Open the <b>.dmg</b> and drag <b>PyAutoRaid</b> into <b>Applications</b>.</li>
           <li>Open <b>Applications</b> and double-click <b>PyAutoRaid</b>.</li>
@@ -662,7 +691,7 @@
           <li>Go to <b>System Settings &rsaquo; Privacy &amp; Security</b> and scroll down.</li>
           <li>Next to "PyAutoRaid was blocked", press <b>Open Anyway</b>.</li>
         </ol>
-      </div>
+      </details>
       <div class="hero-links">
         <a href="https://discord.gg/E8qf7y8sc6" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.27 5.33A16.9 16.9 0 0 0 15.06 4l-.24.44c1.4.38 2.65 1 3.82 1.83A11.6 11.6 0 0 0 12 5.1c-2.36 0-4.55.55-6.64 1.17a15.8 15.8 0 0 1 3.82-1.83L8.94 4C7.5 4.3 6.08 4.75 4.73 5.33 2.13 9.17 1.42 12.9 1.77 16.6a16.9 16.9 0 0 0 5.18 2.6l.42-.62c-.72-.27-1.4-.6-2.03-1l.5-.37c3.9 1.82 8.14 1.82 12 0l.5.37c-.63.4-1.31.73-2.03 1l.42.62a16.7 16.7 0 0 0 5.18-2.6c.42-4.28-.72-7.98-2.64-11.27ZM8.52 14.4c-1 0-1.83-.92-1.83-2.05 0-1.13.8-2.05 1.83-2.05s1.85.93 1.83 2.05c0 1.13-.81 2.05-1.83 2.05Zm6.96 0c-1 0-1.83-.92-1.83-2.05 0-1.13.8-2.05 1.83-2.05s1.85.93 1.83 2.05c0 1.13-.8 2.05-1.83 2.05Z"/></svg>Discord</a>
         <a href="https://youtube.com/@walangkaalam" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8ZM9.6 15.6V8.4L15.8 12l-6.2 3.6Z"/></svg>YouTube</a>
@@ -757,7 +786,7 @@
       <div class="section-head">
         <div class="kicker">The console</div>
         <h2 class="section-title">Every page, and what it saves you</h2>
-        <p class="section-sub">PyAutoRaid runs in your browser on your own machine. Sixteen pages,
+        <p class="section-sub">PyAutoRaid runs on your own computer — in your browser on Windows, in its own app window on a Mac. Sixteen pages,
           drawn with the game's own art, each built around one decision you would otherwise make
           blind. Click any screenshot to enlarge.</p>
       </div>
@@ -904,53 +933,6 @@
     </div>
   </section>
 
-  <!-- ============ HOW IT WORKS ============ -->
-  <section class="section-pad" id="how">
-    <div class="wrap">
-      <div class="section-head">
-        <div class="kicker">How it works</div>
-        <h2 class="section-title">Trustworthy by design</h2>
-        <p class="section-sub">Because PyAutoRaid drives the game's own battle engine, what you see in the sim is what you'll get in the fight.</p>
-      </div>
-
-      <div class="how-grid">
-        <div class="how">
-          <div class="num">1</div>
-          <div>
-            <h4>A local mod, attached to your game</h4>
-            <p>A lightweight <code>BepInEx</code> mod loads with Raid on your PC and exposes a small local API. Nothing runs remotely.</p>
-          </div>
-        </div>
-        <div class="how">
-          <div class="num">2</div>
-          <div>
-            <h4>Mod API only — never screen automation</h4>
-            <p>Every action reads and writes through the game's real objects. No pixel-hunting, no fake clicks, no bots watching your screen.</p>
-          </div>
-        </div>
-        <div class="how">
-          <div class="num">3</div>
-          <div>
-            <h4>The real engine powers the sim</h4>
-            <p>Simulations run the same battle processor the live game uses — so turn order, procs, and damage match what actually happens.</p>
-          </div>
-        </div>
-        <div class="how">
-          <div class="num">4</div>
-          <div>
-            <h4>Your art, extracted from your game</h4>
-            <p>Champion and item art is read from your own installed game on first run. Nothing proprietary is bundled or redistributed.</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="trust-banner">
-        <p class="lead">The engine is the game's. The sim isn't a guess — it's the fight.</p>
-        <p class="sub">That's what makes "before you spend a key" a promise, not a slogan.</p>
-      </div>
-    </div>
-  </section>
-
   <div class="divider"></div>
 
   <!-- ============ FINAL CTA ============ -->
@@ -993,7 +975,6 @@
       <nav class="foot-links">
         <a href="#features">Features</a>
         <a href="#tour">Tour</a>
-        <a href="#how">How it works</a>
         <a href="https://discord.gg/E8qf7y8sc6" target="_blank" rel="noopener">Discord</a>
         <a href="https://youtube.com/@walangkaalam" target="_blank" rel="noopener">YouTube</a>
         <a href="https://reddit.com/user/walangkaalam" target="_blank" rel="noopener">Reddit</a>
@@ -1048,6 +1029,27 @@
       }
     })
     .catch(function () {});
+})();
+</script>
+
+<script>
+/* Live popularity: every download of every release file (GitHub's own count, the same
+   number as the README badge) and the repo's stars. Shown only once both are read, so
+   the page never shows a blank or a zero when GitHub can't be reached. */
+(function () {
+  var gh = "https://api.github.com/repos/SnoopLawg/PyAutoRaid";
+  var j = function (u) { return fetch(u).then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); }); };
+  Promise.all([j(gh + "/releases?per_page=100"), j(gh)]).then(function (res) {
+    var dl = 0;
+    (res[0] || []).forEach(function (rel) {
+      (rel.assets || []).forEach(function (a) { dl += a.download_count || 0; });
+    });
+    var stars = res[1] && res[1].stargazers_count;
+    if (!dl || stars == null) return;
+    document.querySelectorAll(".js-stat-dl").forEach(function (el) { el.textContent = dl.toLocaleString(); });
+    document.querySelectorAll(".js-stat-stars").forEach(function (el) { el.textContent = stars.toLocaleString(); });
+    document.querySelectorAll(".js-stats").forEach(function (el) { el.hidden = false; });
+  }).catch(function () {});
 })();
 </script>
 
