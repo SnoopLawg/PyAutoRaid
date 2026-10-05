@@ -1,22 +1,22 @@
 {
   "schema": 1,
   "app": {
-    "latest": "3.0-beta",
-    "min_supported": "3.0-beta",
-    "url": "https://github.com/SnoopLawg/PyAutoRaid/releases/download/v3.0-beta/PyAutoRaid-3.0-beta.zip",
-    "sha256": "d47e2ee189b95e97ef5c7315b6a289d81b9c667cfd9613ec9519a3b53eb32376",
-    "setup_url": "https://github.com/SnoopLawg/PyAutoRaid/releases/download/v3.0-beta/PyAutoRaid-Setup-3.0-beta.exe",
-    "setup_sha256": "a3f0f44ba35a54415022c35b88c713985be3f0d25e9e736e788daea7d1e08869",
-    "setup_size": 36577578
+    "latest": "3.0.1-beta",
+    "min_supported": "3.0.1-beta",
+    "url": "https://github.com/SnoopLawg/PyAutoRaid/releases/download/v3.0.1-beta/PyAutoRaid-3.0.1-beta.zip",
+    "sha256": "8c43a050608ab516a2228e37d31503bc1f22b1684706b9c325bbe4bd0ed5205f",
+    "setup_url": "https://github.com/SnoopLawg/PyAutoRaid/releases/download/v3.0.1-beta/PyAutoRaid-Setup-3.0.1-beta.exe",
+    "setup_sha256": "3524dcf1679aa378bb0d7646a119c777749410755eb795a363ca83f81061353e",
+    "setup_size": 36582575
   },
   "mod": {
     "latest": "2.4-bepinex",
-    "dll_url": "https://github.com/SnoopLawg/PyAutoRaid/releases/download/v3.0-beta/RaidAutomationPlugin.dll",
+    "dll_url": "https://github.com/SnoopLawg/PyAutoRaid/releases/download/v3.0.1-beta/RaidAutomationPlugin.dll",
     "sha256": "09b1a02832cabe5955c1d5eae7c6dff9e827db777b9d637633ecb1bc43d6aca8",
     "supported_game_versions": [
       "11.75.0"
     ]
   },
-  "notice": "PyAutoRaid 3.0-beta \u2014 built for Raid 11.75.0.",
+  "notice": "PyAutoRaid 3.0.1-beta \u2014 built for Raid 11.75.0.",
   "block_below_app": null
 }
