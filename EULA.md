@@ -2,7 +2,7 @@
 
 # PyAutoRaid — End User License Agreement and Terms of Use
 
-**Last updated: 2026-07-22**
+**Last updated: 2026-10-08**
 
 Please read this End User License Agreement and Terms of Use ("Terms") carefully before downloading, installing, or using PyAutoRaid (the "Software"). By downloading, installing, or using the Software, you agree to be bound by these Terms. **If you do not agree to these Terms, do not download, install, or use the Software.**
 
@@ -143,7 +143,24 @@ The Developer may update or change these Terms at any time. When the Terms chang
 
 ---
 
-## 14. General
+## 14. Data Collection and Telemetry
+
+To improve the Software and to build aggregate, community-wide insights (for example, which teams and setups other players use for a given battle), the Software includes a **battle-logging and telemetry feature**. It records **game data** — such as the champions used, their speeds, and battle results (damage, turns) — and sends it to a service operated by the Developer, where it is combined with data from other users into aggregate statistics that may be shown back to users.
+
+What you should know:
+
+- **Game data only; no account personal information.** The telemetry contains in-game data (champion names, speeds, damage, and similar). It does **not** include your Plarium account name, email, password, or other personal identifiers. Each installation is tagged with a random, app-generated identifier (a pseudonym), not your identity.
+- **Pseudonymous, not anonymous.** Because a stable per-installation identifier is used, the data is *pseudonymous* — not directly tied to your identity, but it should not be treated as fully anonymous.
+- **Consent through use.** This feature is part of how the Software works. **By downloading, installing, or using the Software, you consent to this collection and to the Developer's use of the aggregated data**, including displaying aggregate insights to other users.
+- **Not an optional feature.** Telemetry is a standard part of how the Software works, and there is no setting in the Software's interface to switch it off. If you do not want this collection, do not download, install, or use the Software.
+- **Development setting.** The Software reads an environment variable (`PYAUTORAID_TELEMETRY`) and a configuration file (`data/telemetry/config.json`) that the Developer uses when testing, so that test data is kept out of the live dataset. These are internal development controls, not a supported end-user feature, and they may change or be removed in any release without notice.
+- **Best-effort and non-essential.** Telemetry is a background, best-effort feature; it is not required for the Software to function, and telemetry failures do not affect your use of the Software.
+
+The Developer uses the collected data to operate, maintain, and improve the Software and its community features, and does **not** sell your data.
+
+---
+
+## 15. General
 
 - **Entire Agreement.** These Terms are the entire agreement between you and the Developer regarding the Software and supersede any prior agreements or understandings.
 - **Severability.** If any provision of these Terms is held to be unenforceable or invalid, that provision will be limited or eliminated to the minimum extent necessary, and the remaining provisions will remain in full force and effect.
