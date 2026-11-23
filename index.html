@@ -637,7 +637,6 @@
       PyAutoRaid
     </a>
     <nav class="nav-links">
-      <a class="navlink" href="#whats-new">What's new</a>
       <a class="navlink" href="#features">Features</a>
       <a class="navlink" href="#tour">Tour</a>
       <a class="navlink" href="https://discord.gg/E8qf7y8sc6" target="_blank" rel="noopener">Community</a>
@@ -700,64 +699,6 @@
         <a href="https://www.patreon.com/cw/WalangKaalam/membership" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M0 .48v23.04h4.22V.48zm15.385 0c-4.764 0-8.641 3.88-8.641 8.65 0 4.755 3.877 8.623 8.641 8.623 4.75 0 8.615-3.868 8.615-8.623C24 4.36 20.136.48 15.385.48z"></path></svg>Patreon</a>
         <a href="https://ko-fi.com/walangkaalam" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M2 3h15v8a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V3z"></path><path d="M17 5h1.6a2.7 2.7 0 0 1 0 5.4H17V5z"></path><rect x="2" y="18.5" width="15" height="2" rx="1"></rect></svg>Ko-fi</a>
       </div>
-    </div>
-  </section>
-
-  <div class="divider"></div>
-
-  <!-- ============ WHAT'S NEW (one block per release; newest on top) ============ -->
-  <style>
-    .wn-card { max-width: 860px; margin: 0 auto; padding: 30px 28px; border-radius: 16px;
-      background: linear-gradient(180deg, var(--bg-panel) 0%, var(--bg-2) 100%);
-      border: 1px solid var(--line-warm); }
-    .wn-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px 16px; margin-bottom: 18px; }
-    .wn-head h3 { margin: 0; font-size: 1.25rem; }
-    .wn-meta { font-family: var(--mono); font-size: 0.78rem; color: var(--text-faint); letter-spacing: .04em; }
-    .wn-list { list-style: none; margin: 0 0 22px; padding: 0; display: grid; gap: 12px; }
-    .wn-list li { padding-left: 22px; position: relative; line-height: 1.55; }
-    .wn-list li::before { content: ""; position: absolute; left: 4px; top: .62em; width: 7px; height: 7px;
-      border-radius: 50%; background: var(--amber); }
-    .wn-list b { color: var(--text); }
-    .wn-tested { border-top: 1px solid var(--line); padding-top: 16px; }
-    .wn-tested .kicker { margin-bottom: 10px; text-align: left; }
-    .wn-chips { display: flex; flex-wrap: wrap; gap: 8px; }
-    .wn-chips span { font-family: var(--mono); font-size: 0.74rem; padding: 5px 10px; border-radius: 999px;
-      border: 1px solid var(--line); color: var(--text-dim, var(--text)); }
-    .wn-chips span::before { content: "\2713\00a0"; color: var(--amber); }
-  </style>
-  <section class="section-pad" id="whats-new">
-    <div class="wrap">
-      <div class="section-head">
-        <div class="kicker">Latest release</div>
-        <h2 class="section-title">What's new</h2>
-        <p class="section-sub">Every Windows release is installed and tested on a real PC against the live game before it ships. Here's what changed, and what was checked.</p>
-      </div>
-
-      <article class="wn-card">
-        <div class="wn-head">
-          <h3>v3.0.15-beta</h3>
-          <span class="wn-meta">Windows · 22 Nov 2026 · Raid 11.95 · mod 2.9</span>
-        </div>
-        <ul class="wn-list">
-          <li><b>Clan Boss Simulate no longer crashes Raid.</b> Raid 11.95 moved some of the game's champion data, and the previous mod could close Raid when you simulated your Clan Boss team. The mod now finds that data by name, so a game update can't break it this way again.</li>
-          <li><b>Simulations use your real stats again.</b> On 11.95, stat overrides in a simulation were being ignored and the Clan Boss's speed and accuracy weren't applied. Both are fixed, so key-free Clan Boss results match the real fight.</li>
-          <li><b>"Your current team" stays accurate.</b> If a simulation couldn't run, the Clan Boss card used to keep showing a rough estimate until you restarted PyAutoRaid. It now tries the real simulation again next time.</li>
-          <li><b>Cleaner Clan Boss charts on a new install.</b> Charts with only one recorded run now draw correctly.</li>
-        </ul>
-        <p style="margin:0 0 18px;color:var(--text-faint);font-size:.9rem">Already on v3.0.14? PyAutoRaid offers the update (and the new mod) automatically.</p>
-        <div class="wn-tested">
-          <div class="kicker">Tested on this build before release</div>
-          <div class="wn-chips">
-            <span>Fresh install &amp; first launch</span>
-            <span>Mod 2.9 on Raid 11.95</span>
-            <span>Clan Boss sim, all 4 affinities</span>
-            <span>All 19 pages</span>
-            <span>113 data views</span>
-            <span>Raid stays up throughout</span>
-            <span>Update check</span>
-          </div>
-        </div>
-      </article>
     </div>
   </section>
 
